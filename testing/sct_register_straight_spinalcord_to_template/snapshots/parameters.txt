@@ -1,0 +1,7 @@
+errsm_11  T2
+
+param1:
+antsRegistration --dimensionality 3 --transform SyN[0.25] --metric CC[../../../data/template/MNI-Poly-AMU_T2.nii.gz,tmp.straight2templateAffine.nii,1,4] --convergence 50x20 --shrink-factors 4x1 --smoothing-sigmas 1x1mm --Restrict-Deformation 1x1x0 --output [tmp.straight2template,tmp.straight2template.nii.gz] --collapse-output-transforms 1 --interpolation Linear --winsorize-image-intensities [0.005,0.995] --float 1 -x ../../../data/template/mask_gaussian_templatespace_sigma20.nii.gz
+Elapsed time: 2366s
+
+
