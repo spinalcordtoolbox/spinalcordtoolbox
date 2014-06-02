@@ -157,7 +157,7 @@ except ImportError:
     sys.exit(2)
 try:
     # library of calculations and processing matrices
-    from numpy import mean, asarray, std, zeros, sum, ones, dot, eye, sqrt, empty, size, linspace, abs, amin, argmin
+    from numpy import mean, asarray, std, zeros, sum, ones, dot, eye, sqrt, empty, size, linspace, abs, amin, argmin, concatenate
     from numpy.linalg import solve,pinv
 except ImportError:
     print '--- numpy not installed! Exit program. ---'
@@ -910,9 +910,14 @@ def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_leve
         print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
         exit_program = 1
 
-    # Check if the vertebral levels selected are not available in the input image
-    if vert_levels_list[0] < numpy.amin(data_vert_labeling) or vert_levels_list > numpy.amax(data_vert_labeling):
+    # Check if the vertebral levels selected are available in the input image
+    min_vert_level, max_vert_level = int(numpy.amin(concatenate(data_vert_labeling,axis=None))), int(numpy.amax(concatenate(data_vert_labeling,axis=None)))
+    if (vert_levels_list[0] < min_vert_level or vert_levels_list[1] > max_vert_level):
         print '\tERROR: The vertebral levels you selected are not available in the input image.'
+        print 'Minimum level asked: '+ str(vert_levels_list[0])
+        print '...minimum level available in the input image: '+str(min_vert_level)
+        print 'Maximum level asked: '+ str(vert_levels_list[1])
+        print '...maximum level available in the input image: '+str(max_vert_level)
         exit_program = 1
 
     # Exit program if error is detect in sizes
