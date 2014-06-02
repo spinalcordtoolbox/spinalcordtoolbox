@@ -36,7 +36,14 @@ for subject in $SUBJECT_LIST; do
       -c ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz"
     echo "$cmd"
     $cmd
-
+	
+	# Isotropic smoothing of the same image with same standard deviation (for the Gaussian) for comparison purposes
+	cmd="c3d
+		../../data/${subject}/${contrast}/${contrast}.nii.gz
+		-smooth 4x4x4vox
+		-o ${contrast}_isotropic_smoothed.nii.gz"
+	echo "$cmd"
+	$cmd
 
   done
 done
