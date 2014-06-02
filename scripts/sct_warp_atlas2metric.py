@@ -34,6 +34,7 @@ class param:
 
 import re
 import sys
+import commands
 import getopt
 import os
 import time
@@ -44,14 +45,15 @@ import sct_utils as sct
 def main():
 
     # Initialization
-    path_script = os.path.dirname(__file__)
-    # THIS DOES NOT WORK IN MY LAPTOP: path_sct = os.environ['SCT_DIR'] # path to spinal cord toolbox
-    path_sct = path_script[:-8] # TODO: make it cleaner!
     fname_src = ''
     fname_transfo = ''
     path_out = 'atlas'
     verbose = param.verbose
     start_time = time.time()
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    print path_sct
 
     # Parameters for debug mode
     if param.debug:
