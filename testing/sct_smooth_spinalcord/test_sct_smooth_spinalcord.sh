@@ -7,23 +7,21 @@ green='\e[1;32m'
 blue='\e[4;34m'
 NC='\e[0m'
 
-
 # subject list
-SUBJECT_LIST="errsm_23" #"errsm_20 errsm_21 errsm_22 errsm_23 errsm_24"
+SUBJECT_LIST="errsm_23" 
 CONTRAST_LIST="t1 t2" #"t1 t2"
+
 # standard deviation of the Gaussian kernel used to smooth the image
 sigma=4 # default value
+
 while getopts “s:” OPTION
 do
-	case $OPTION in
-		
-         s)
-             sigma=$OPTARG
-             ;;
-
-     esac
+  case $OPTION in
+    s)
+      sigma=$OPTARG
+      ;;
+  esac
 done
-
 
 # if results folder exists, delete it
 if [ -e "results" ]; then
@@ -47,8 +45,7 @@ for subject in $SUBJECT_LIST; do
 	
 	# display the standard deviation of the Gaussian kernel used to smooth the image
 	echo
-	printf "${blue}Standard deviation of the Gaussian kernel: $sigma${NC}\n"
-	
+	printf "${blue}Standard deviation of the Gaussian kernel: $sigma${NC}\n"	
 	
     # Run sct_smooth_spinalcord.py
     cmd="sct_smooth_spinalcord.py
@@ -63,6 +60,14 @@ for subject in $SUBJECT_LIST; do
 		../../data/${subject}/${contrast}/${contrast}.nii.gz
 		-smooth ${sigma}x${sigma}x${sigma}vox
 		-o ${contrast}_isotropic_smoothed.nii.gz"
+	echo "$cmd"
+	$cmd
+
+	# Smoothing along Z
+	cmd="c3d
+		../../data/${subject}/${contrast}/${contrast}.nii.gz
+		-smooth 0x0x${sigma}vox
+		-o ${contrast}_z_smoothed.nii.gz"
 	echo "$cmd"
 	$cmd
 
