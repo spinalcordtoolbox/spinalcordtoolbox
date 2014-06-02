@@ -1,10 +1,24 @@
 #!/usr/bin/env python
+#########################################################################################
+#
+# Flatten spinal cord in sagittal plane.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Benjamin De Leener, Julien Cohen-Adad
+# Modified: 2014-06-02
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
+
+# TODO: check input param with -s flag
 
 ## Default parameters
 class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
+        self.interp = 'sinc' # final interpolation
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.remove_temp_files = 1 # remove temporary files
 
@@ -41,6 +55,7 @@ def main():
     fname_centerline = ''
     centerline_fitting = 'splines'
     remove_temp_files = param.remove_temp_files
+    interp = param.interp
     degree_poly = param.deg_poly
     
     # extract path of the script
@@ -56,7 +71,7 @@ def main():
     
     # Check input param
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -73,6 +88,8 @@ def main():
             degree_poly = int(arg)
         elif opt in ('-f'):
             centerline_fitting = str(arg)
+        elif opt in ('-s'):
+            interp = str(arg)
     
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
@@ -196,7 +213,7 @@ def main():
     file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
-        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp sinc')
+        sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
@@ -225,16 +242,25 @@ def main():
 #=======================================================================================================================
 def usage():
     print 'USAGE: \n' \
-        '  sct_flatten_sagittal.py -i <data> -c <centerline>\n' \
+        ''+os.path.basename(__file__)+'\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
+        'DESCRIPTION\n' \
+        '  Flatten the spinal cord in the sagittal plane (to make nice pictures).\n' \
+        '\n' \
+        'USAGE\n' \
+        '  '+os.path.basename(__file__)+' -i <source> -c <centerline>\n' \
+        '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -i           input volume.\n' \
-        '  -c           centerline.\n' \
+        '  -i <source>       input volume.\n' \
+        '  -c                centerline.\n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
-        '  -r <0,1>     remove temporary files. Default=1. \n' \
-        '  -d           degree of fitting polynome. Default=10. \n' \
-        '  -h           help. Show this message.\n' \
+        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param.interp)+'\n' \
+        '  -d <deg>          degree of fitting polynome. Default='+str(param.deg_poly)+'\n' \
+        '  -r {0, 1}         remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
+        '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
         '  sct_flatten_sagittal.py -i t2.nii.gz -c centerline.nii.gz\n'
