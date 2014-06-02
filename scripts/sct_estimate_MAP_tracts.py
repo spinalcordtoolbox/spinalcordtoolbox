@@ -406,7 +406,8 @@ def main():
           
     # Pretreatment before extraction
     [data_new,tracts_new,  number_tracts] = pretreatment(data, tracts, nb_slice)
-  
+
+    #TODO: only estimate the metric value for selected tracts AND NOT: for all and then display the metric value for the selected tracts (what this script currently does)
     # Extraction with weighted_average
     if mode == "weightedaverage":
   
@@ -591,7 +592,6 @@ def pretreatment(data_start, tracts_start, nb_slice):
   
     # Size of tracts
     print '\nVerify tract size...'
- 
     # Extract total number of tracts
     numtracts = len(tracts_start)
  
@@ -713,7 +713,7 @@ def pretreatment(data_start, tracts_start, nb_slice):
 #=======================================================================================================================
   
 def weighted_average(data_wa, tracts_wa, numtracts_wa):
-  
+
     # Estimation with weighted average
     print '\nEstimation with weighted average ...'
  
@@ -731,10 +731,11 @@ def weighted_average(data_wa, tracts_wa, numtracts_wa):
         if sum(tracts_wa[i, 0]) != 0:
             X_wa[i] = sum(partial_data) / sum(tracts_wa[i, 0])
   
-        # Quit program in case tracts is zero everywhere
-        else :
-            print '\tERROR: Tract number ' + str(i) + ' is zero everywhere . Exit program.'
-            sys.exit(2)
+        # Set the metric estimation to 0 for tracts that are zero everywhere
+        else:
+            print '\tWARNING: Tract number ' + str(i) + ' is zero everywhere . Metric value will be set to 0 for this tract.'
+            X_wa[i] = 0.0
+            #TODO: the program displays a warning message with this warning, it would be cleaner not to display it
   
         # Determinate standard deviation
         std_wa[i] = std(partial_data)
