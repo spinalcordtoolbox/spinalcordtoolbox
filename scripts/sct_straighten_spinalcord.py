@@ -6,7 +6,9 @@
 #
 #
 # Description about how the function works:
-#
+# This program takes as input an anatomic image and the centerline or segmentation of the spinal cord (that you can get
+# using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where where the spinal
+# cord was straightened.
 #
 #
 # USAGE
@@ -593,7 +595,17 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
 # usage
 #=======================================================================================================================
 def usage():
-    print 'USAGE: \n' \
+    print '\n' \
+        'sct_straighten_spinalcord\n' \
+        '--------------------------------------------------------------------------------------------------------------\n' \
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
+        '\n'\
+        'DESCRIPTION\n' \
+        '  This program takes as input an anatomic image and the centerline or segmentation of the spinal cord (that ' \
+        'you can get using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where' \
+        'where the spinal cord was straightened.\n' \
+        '\n'\
+        'USAGE\n' \
         '  sct_straighten_spinalcord.py -i <data> -c <centerline>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
