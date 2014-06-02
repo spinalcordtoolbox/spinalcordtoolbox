@@ -56,6 +56,7 @@ import time
 import sct_utils as sct
 
 
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -64,26 +65,28 @@ def main():
     # Initialization
     fname_anat = ''
     fname_centerline = ''
-    sigma = 4 # standard deviation of the Gaussian smoothing (in terms of number of voxels)
+    sigma = 4 # default value of the standard deviation for the Gaussian smoothing (in terms of number of voxels)
     remove_temp_files = 1
     start_time = time.time()
 
 
     # Check input param
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:r:s:')
     except getopt.GetoptError as err:
         print str(err)
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-i'):
-            fname_anat = arg
         elif opt in ('-c'):
             fname_centerline = arg
+        elif opt in ('-i'):
+            fname_anat = arg
         elif opt in ('-r'):
             remove_temp_files = arg
+        elif opt in ('-s'):
+            sigma = arg
 
 
     # Display usage if a mandatory argument is not provided
@@ -174,7 +177,9 @@ def usage():
           'OPTIONAL ARGUMENTS\n' \
           '  -h                help. Show this message.\n' \
           '  -r                if 1, remove temporary files (straightening output, smoothing output, warping fields),' \
-          '                    default=1.\n'
+          '                    default=1.\n' \
+          '  -s                standard deviation of the Gaussian kernel used to smooth the image (in terms of voxels),' \
+          '                    default=4 vox.\n'
 
     sys.exit(2)
 
