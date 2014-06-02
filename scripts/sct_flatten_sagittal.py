@@ -14,7 +14,7 @@ import getopt
 import commands
 import sys
 import sct_utils as sct
-from nurbs import NURBS
+from sct_nurbs import NURBS
 from sct_utils import fsloutput
 try:
     import nibabel
