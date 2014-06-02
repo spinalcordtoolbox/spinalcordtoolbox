@@ -89,7 +89,13 @@ def main():
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
+    print ''
+    
+    # Get input image orientation
+    status, output = sct.run('sct_orientation -i ' + fname_anat + ' -get')
+    input_image_orientation = output[-3:]
 
+    # Reorient input data into RL PA IS orientation
     sct.run('sct_orientation -i '+fname_anat+' -o tmp.anat_orient.nii -orientation RPI')
     sct.run('sct_orientation -i '+fname_centerline+' -o tmp.centerline_orient.nii -orientation RPI')
 
@@ -196,18 +202,22 @@ def main():
     print '\nMerge into 4D volume...'
     sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
-    # Copy header geometry from input data
-    print '\nCopy header geometry from input data...'
-    sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.anat_orient_fit.nii ')
+    # Reorient data as it was before
+    print '\nReorient data back into native orientation...'
+    sct.run('sct_orientation -i tmp.anat_orient_fit.nii -o tmp.anat_orient_fit_reorient.nii -orientation '+input_image_orientation)
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file('tmp.anat_orient_fit.nii','./',file_anat+'_flatten',ext_anat)
+    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii','./',file_anat+'_flatten',ext_anat)
 
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nDelete temporary files...'
         sct.run('rm tmp.*')
+
+    # to view results
+    print '\nDone! To view results, type:'
+    print 'fslview '+file_anat+ext_anat+' '+file_anat+'_flatten'+ext_anat+' &\n'
 
 
 #=======================================================================================================================
