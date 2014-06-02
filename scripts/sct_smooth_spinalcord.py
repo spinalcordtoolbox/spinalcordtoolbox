@@ -51,6 +51,7 @@
 
 
 import getopt
+import os
 import sys
 import time
 import sct_utils as sct
@@ -91,7 +92,6 @@ def main():
 
     # Display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
-        print '\n \n All mandatory arguments are not provided \n \n'
         usage()
 
     # Check existence of input files
@@ -159,27 +159,26 @@ def main():
 #=======================================================================================================================
 def usage():
     print '\n' \
-          'sct_smooth_spinal_cord_straightening.py\n' \
-          '-------------------------------------------------------------------------------------------------------------\n' \
-          'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-          '\n' \
-          'DESCRIPTION\n' \
-          '  This program straightens the spinal cord of an anatomic image, apply a smoothing in the z dimension and' \
-          'apply the inverse warping field to get back the curve spinal cord but smoothed.' \
-          '\n' \
-          'USAGE\n' \
-          '  sct_smooth_spinal_cord_straightening.py -i <input_image> -c <centerline/segmentation>\n' \
-          '\n' \
-          'MANDATORY ARGUMENTS\n' \
-          '  -i <anat>         input image to smooth.\n' \
-          '  -c <centerline>   spinal cord centerline (given by the function sct_get_centerline.py) or segmentation.\n' \
-          '\n' \
-          'OPTIONAL ARGUMENTS\n' \
-          '  -h                help. Show this message.\n' \
-          '  -r                if 1, remove temporary files (straightening output, smoothing output, warping fields),' \
-          '                    default=1.\n' \
-          '  -s                standard deviation of the Gaussian kernel used to smooth the image (in terms of voxels),' \
-          '                    default=4 vox.\n'
+        ''+os.path.basename(__file__)+'\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
+        '\n'\
+        'DESCRIPTION\n' \
+        '  Smooth the spinal cord along its centerline. First, the cord is straightened (using a centerline), then a\n' \
+        '  gaussian kernel is applied in the superior-inferior dimension, then cord is de-straightened as originally.\n' \
+        '\n' \
+        'USAGE\n' \
+        '  sct_smooth_spinal_cord_straightening.py -i <input_image> -c <centerline/segmentation>\n' \
+        '\n' \
+        'MANDATORY ARGUMENTS\n' \
+        '  -i <anat>         input image to smooth.\n' \
+        '  -c <centerline>   spinal cord centerline (given by the function sct_get_centerline.py) or segmentation.\n' \
+        '\n' \
+        'OPTIONAL ARGUMENTS\n' \
+        '  -h                help. Show this message.\n' \
+        '  -r {0, 1}         remove temporary files. Default=1\n' \
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=4.' \
+        '\n'
 
     sys.exit(2)
 
