@@ -18,7 +18,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
-# Modified: 2014-04-05
+# Modified: 2014-06-03
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
