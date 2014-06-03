@@ -30,6 +30,8 @@
 # TODO: check if destination is axial orientation
 # TODO: set gradient-step-length in mm instead of vox size.
 
+# Note for the developer: DO NOT use --collapse-output-transforms 1, otherise inverse warping field is not output
+
 
 # DEFAULT PARAMETERS
 class param:
@@ -42,7 +44,7 @@ class param:
 #        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
         self.numberIterations    = "50x30" # number of iterations
         self.verbose             = 0 # verbose
-
+        self.compute_dest2sr     = 0 # compute dest2src warping field
 
 import sys
 import getopt
@@ -64,35 +66,38 @@ def main():
     padding = param.padding
     gradientStepLength = '0.1' # TODO: use that?
     numberIterations = param.numberIterations
+    numberIterationsStep2 = "20"
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     use_segmentation = 0 # use spinal cord segmentation to improve robustness
     fname_init_transfo = ''
+    fname_init_transfo_inv = ''
     use_init_transfo = ''
-    output_warping_field = "tmp.regSeg0Warp.nii.gz"
+    compute_dest2src = param.compute_dest2sr
+    #output_warping_field = "tmp.regSeg0Warp.nii.gz"
     start_time = time.time()
 
     # get path of the toolbox
-    path_script = os.path.dirname(__file__)
-    path_sct = path_script[:-8] # TODO: make it cleaner!
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    print path_sct
 
     # Parameters for debug mode
     if param.debug:
-        # without using segmentation (minor displacement and similar contrast)
-        #fname_src = os.path.expanduser("~")+'/code/spinalcordtoolbox_dev/testing/data/errsm_24/mt/mt0.nii.gz'
-        #fname_dest = os.path.expanduser("~")+'/code/spinalcordtoolbox_dev/testing/data/errsm_24/mt/mt1.nii.gz'
-        # using segmentation + initial transformation
         fname_src = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
-        fname_dest = path_sct+'/testing/data/errsm_24/mt/mt0.nii.gz'
+        #fname_src = path_sct+'/testing/data/errsm_23/mt/mtc0.nii.gz'
+        fname_dest = path_sct+'/testing/data/errsm_23/mt/mtc1.nii.gz'
         fname_src_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
-        fname_dest_seg = path_sct+'/testing/data/errsm_24/mt/segmentation_binary.nii.gz'
-        fname_init_transfo = path_sct+'/testing/data/errsm_24/template/warp_template2anat.nii.gz'
-        numberIterations = '50x20'
+        fname_dest_seg = path_sct+'/testing/data/errsm_23/mt/segmentation_binary.nii.gz'
+        fname_init_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2anat.nii.gz'
+        fname_init_transfo_inv = path_sct+'/testing/data/errsm_23/template/warp_anat2template.nii.gz'
+        numberIterations = '3x1'
+        numberIterationsStep2 = "1"
+        compute_dest2src = 0
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'he:d:i:m:n:o:p:q:r:s:t:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'he:d:i:m:n:o:p:q:r:s:t:v:x:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -122,6 +127,10 @@ def main():
             fname_dest_seg = arg
         elif opt in ('-v'):
             verbose = int(arg)
+        elif opt in ('-x'):
+            compute_dest2src = int(arg)
+        elif opt in ('-z'):
+            fname_init_transfo_inv = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -175,26 +184,28 @@ def main():
     print('\nCreate local temp files...')
     file_src_tmp = 'tmp.src'
     file_dest_tmp = 'tmp.dest'
-    sct.run('cp '+fname_src+' '+file_src_tmp+ext_src)
-    sct.run('cp '+fname_dest+' '+file_dest_tmp+ext_dest)
+    sct.run('c3d '+fname_src+' -o tmp.src.nii') # here we use c3d to make sure output is nii. TODO: cleaner way to do it.
+    sct.run('c3d '+fname_dest+' -o tmp.dest.nii')
     if use_segmentation:
         file_src_seg_tmp = 'tmp.src_seg'
         file_dest_seg_tmp = 'tmp.dest_seg'
-        sct.run('cp '+fname_src_seg+' '+file_src_seg_tmp+ext_src_seg)
-        sct.run('cp '+fname_dest_seg+' '+file_dest_seg_tmp+ext_dest_seg)
+        sct.run('c3d '+fname_src_seg+' -o tmp.src_seg.nii')
+        sct.run('c3d '+fname_dest_seg+' -o tmp.dest_seg.nii')
 
     # if use initial transformation (!! needs to be inserted before the --transform field in antsRegistration)
     if fname_init_transfo != '':
         file_src_reg_tmp = file_src_tmp+'_reg'
-        file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
+        if use_segmentation:
+            file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
         # apply initial transformation to moving image, and then estimate transformation between this output and
         # destination image. This approach was chosen instead of inputting the transfo into ANTs, because if the transfo
         # does not bring the image to the same space as the destination image, then warping fields cannot be concatenated at the end.
         print('\nApply initial transformation to moving image...')
         sct.run('WarpImageMultiTransform 3 '+file_src_tmp+'.nii '+file_src_reg_tmp+'.nii -R '+file_dest_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
-        sct.run('WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
         file_src_tmp = file_src_reg_tmp
-        file_src_seg_tmp = file_src_seg_reg_tmp
+        if use_segmentation:
+            sct.run('WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+            file_src_seg_tmp = file_src_seg_reg_tmp
 
     # Pad the target and source image (because ants doesn't deform the extremities)
     if padding:
@@ -276,11 +287,11 @@ def main():
 --Restrict-Deformation 1x1x0 \
 --output [tmp.regSeg,tmp.regSeg.nii]'
 
-#'+use_init_transfo+' \
+        #'+use_init_transfo+' \
 
-        #if fname_init_transfo != '':
-        #    cmd = cmd+' --initial-moving-transform '+fname_init_transfo
-        #    output_warping_field = "tmp.regSeg1Warp.nii.gz"
+            #if fname_init_transfo != '':
+            #    cmd = cmd+' --initial-moving-transform '+fname_init_transfo
+            #    output_warping_field = "tmp.regSeg1Warp.nii.gz"
               
         status, output = sct.run(cmd)
         if verbose:
@@ -290,15 +301,15 @@ def main():
 
         cmd = 'antsRegistration \
 --dimensionality 3 \
---initial-moving-transform '+output_warping_field+' \
+--initial-moving-transform tmp.regSeg0Warp.nii.gz \
 --transform SyN[0.1,1,0] \
 --metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
---convergence 20 \
+--convergence '+numberIterationsStep2+' \
 --shrink-factors 1 \
 --smoothing-sigmas 0mm \
 --Restrict-Deformation 1x1x0 \
 --output [tmp.reg,'+file_src_tmp+'_reg.nii] \
---collapse-output-transforms 1 \
+--collapse-output-transforms 0 \
 --interpolation BSpline[3]'
 
         #if fname_init_transfo != '':
@@ -312,17 +323,53 @@ def main():
     file_src_tmp = file_src_tmp+'_reg'
     file_warp_final = 'tmp.reg0Warp.nii.gz'
 
-    # Concatenate transformations if user had initial transfo
+    # Concatenate transformations
+    print('\nConcatenate transformations...')
+    # if user has initial transfo
     if fname_init_transfo != '':
-        cmd = 'ComposeMultiTransform 3 tmp.reg0WarpConcat.nii.gz -R tmp.dest.nii '+file_warp_final+' '+fname_init_transfo
-        print('>> ' + cmd)
-        commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
-        file_warp_final = 'tmp.reg0WarpConcat.nii.gz'
+        if use_segmentation == 0:
+            # src --> dest
+            cmd1 = 'ComposeMultiTransform 3 tmp.warp_src2dest.nii.gz -R tmp.dest.nii tmp.reg0Warp.nii.gz '+fname_init_transfo
+            # dest --> src
+            if compute_dest2src:
+                cmd2 = 'ComposeMultiTransform 3 tmp.warp_dest2src.nii.gz -R tmp.src.nii '+fname_init_transfo_inv+' tmp.reg0InverseWarp.nii.gz'
+
+        elif use_segmentation == 1:
+            # src --> dest
+            cmd1 = 'ComposeMultiTransform 3 tmp.warp_src2dest.nii.gz -R tmp.dest.nii tmp.reg1Warp.nii.gz tmp.regSeg0Warp.nii.gz '+fname_init_transfo
+            # dest --> src
+            if compute_dest2src:
+                cmd2 = 'ComposeMultiTransform 3 tmp.warp_dest2src.nii.gz -R tmp.src.nii '+fname_init_transfo_inv+' tmp.regSeg0InverseWarp.nii.gz tmp.reg1InverseWarp.nii.gz'
+
+    # if user does not have initial transfo
+    else:
+        if use_segmentation == 0:
+            # src --> dest
+            cmd1 = 'ComposeMultiTransform 3 tmp.warp_src2dest.nii.gz -R tmp.dest.nii tmp.reg0Warp.nii.gz'
+            # dest --> src
+            if compute_dest2src:
+                cmd2 = 'ComposeMultiTransform 3 tmp.warp_dest2src.nii.gz -R tmp.src.nii tmp.reg0InverseWarp.nii.gz'
+
+        elif use_segmentation == 1:
+            # src --> dest
+            cmd1 = 'ComposeMultiTransform 3 tmp.warp_src2dest.nii.gz -R tmp.dest.nii tmp.reg1Warp.nii.gz tmp.regSeg0Warp.nii.gz'
+            # dest --> src
+            if compute_dest2src:
+                cmd2 = 'ComposeMultiTransform 3 tmp.warp_dest2src.nii.gz -R tmp.src.nii tmp.regSeg0InverseWarp.nii.gz tmp.reg1InverseWarp.nii.gz'
+
+    print('>> ' + cmd1)
+    commands.getstatusoutput(cmd1)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
+    if compute_dest2src:
+        print('>> ' + cmd2)
+        commands.getstatusoutput(cmd2)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
 
     # Apply warping field to src data
-    print('\nApply warping field to source data...')
-    cmd = 'WarpImageMultiTransform 3 tmp.src.nii tmp.src_reg.nii -R tmp.dest.nii '+file_warp_final+' --use-BSpline'
-    status, output = sct.run(cmd)
+    print('\nApply transfo source --> dest...')
+    status, output = sct.run('WarpImageMultiTransform 3 tmp.src.nii tmp.src_reg.nii -R tmp.dest.nii tmp.warp_src2dest.nii.gz --use-BSpline')
+    if compute_dest2src:
+        print('\nApply transfo dest --> source...')
+        status, output = sct.run('WarpImageMultiTransform 3 tmp.dest.nii tmp.dest_reg.nii -R tmp.src.nii tmp.warp_dest2src.nii.gz --use-BSpline')
+
 
     ## Remove padding
     #if padding:
@@ -330,12 +377,14 @@ def main():
     #    remove_padding(fname_dest,file_src_tmp,file_src_tmp+'_nopad.nii')
     #    file_src_tmp = file_src_tmp+'_nopad' # update file name
 
-
     # Generate output files
     print('\nGenerate output files...')
 #    if fname_init_transfo == '':
-    fname_output = sct.generate_output_file('tmp.src_reg.nii', path_out, file_out, ext_out)
-    sct.generate_output_file(file_warp_final, path_out, 'warp_src2dest', '.nii.gz')
+    fname_src2dest = sct.generate_output_file('tmp.src_reg.nii', path_out, file_out, ext_out)
+    sct.generate_output_file('tmp.warp_src2dest.nii.gz', path_out, 'warp_src2dest', '.nii.gz')
+    if compute_dest2src:
+        fname_dest2src = sct.generate_output_file('tmp.dest_reg.nii', path_out, file_dest+'_reg', ext_dest)
+        sct.generate_output_file('tmp.warp_dest2src.nii.gz', path_out, 'warp_dest2src', '.nii.gz')
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -348,8 +397,10 @@ def main():
 
     # to view results
     print '\nTo view results, type:'
-    print 'fslview '+fname_dest+' '+fname_output+' &\n'
-
+    print 'fslview '+fname_dest+' '+fname_src2dest+' &'
+    if compute_dest2src:
+        print 'fslview '+fname_src+' '+fname_dest2src+' &'
+    print ''
 
 
 # Print usage
@@ -381,12 +432,13 @@ def usage():
         '  -s <source_seg>              spinal cord segmentation for source image (mandatory if -t is used)\n' \
         '  -t <dest_seg>                spinal cord segmentation for destination image (mandatory if -s is used)\n' \
         '  -q <init_transfo>            transformation file (ITK-based) to apply to source image before registration. Default=none''\n' \
+        '  -x {0,1}                     compute inverse transformation (dest --> source).\n' \
+        '  -z <init_transfo_inv>        inverse transformation file to obtain warp_dest2src deformation field. N.B. Only use this flag with -q and -x\n' \
         '  -o <output>                  name of output file. Default=source_reg\n' \
         '  -n <N1xN2>                   number of iterations for first and second stage. Default='+param.numberIterations+'\n' \
         '  -p <padding>                 size of padding at top and bottom, to enable deformation at volume edge. Default='+str(param.padding)+'\n' \
         '  -r <0,1>                     remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
         '  -v <0,1>                     verbose. Default='+str(param.verbose)+'\n'
-
 
     # exit program
     sys.exit(2)
