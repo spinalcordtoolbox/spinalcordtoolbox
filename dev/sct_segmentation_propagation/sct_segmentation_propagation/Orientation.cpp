@@ -103,7 +103,7 @@ bool Orientation::computeOrientation(double &distance)
     
     typedef itk::ResampleImageFilter<ImageType2D, ImageType2D> ResampleImageFilterType;
     typedef itk::IdentityTransform<double, 2> TransformType;
-    map<double,CVector3,greater<double>> centers;
+    map<double,CVector3,greater<double> > centers;
     while (stretchingFactor <= 1.0)
     {
         if (stretchingFactor != 1.0)

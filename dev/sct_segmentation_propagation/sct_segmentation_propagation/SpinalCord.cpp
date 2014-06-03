@@ -444,7 +444,7 @@ void SpinalCord::saveCrossSectionalArea(string filename, Image3D* im)
     vector<pair<int,double> > cross;
 	for (unsigned int i=0; i<crossSectionalArea_->size(); i++)
     {
-        if (im != nullptr)
+        if (im != 0)
         {
             CVector3 point = (*centerline_)[i];
             im->TransformPhysicalPointToIndex(point, index);
@@ -463,7 +463,7 @@ void SpinalCord::saveCrossSectionalArea(string filename, Image3D* im)
             myfile << (*crossSectionalArea_)[i] << endl;
         }
     }
-    if (im != nullptr)
+    if (im != 0)
     {
         sort(cross.begin(),cross.end());
         for (unsigned int i=0; i<cross.size(); i++)
