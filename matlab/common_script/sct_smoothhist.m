@@ -1,19 +1,32 @@
-function sct_smoothhist(file,varargin)
-% sct_smoothhist(nifti, ([xmin xmax]) )
-data=read_avw(file);
-data=data(:);
-data(data==0)=[];
-[n,xout] = hist(data,length(data)/10);
-[fitresult, gof] = createFit(xout, n);
-
-% plot smooth hist
-n_smooth=feval(fitresult,xout);
-figure, area(xout,n_smooth)
-if ~isempty(varargin)
-    xlim(varargin{1});
+function sct_smoothhist(data,varargin)
+% sct_smoothhist(nifti, ([xmin xmax], smoothness) )
+if length(varargin)>1
+    smoothness=varargin{2};
+else
+    smoothness=0.99;
 end
 
-function [fitresult, gof] = createFit(xout, n)
+data=data(:);
+data(data==0)=[]; data(data==1)=[];
+[n,xout] = hist(data,floor(length(data)/10));
+if ~isempty(varargin)
+    xout =  [varargin{1}(1) xout varargin{1}(2)];
+    n=[0 n 0];
+end
+[fitresult, gof] = createFit(xout, n,smoothness);
+
+% plot smooth hist
+figure(43)
+if ~isempty(varargin)
+    xlim(varargin{1});
+    xout=linspace(varargin{1}(1),varargin{1}(2),100);
+end
+n_smooth=feval(fitresult,xout);
+area(xout,n_smooth)
+disp(['mean: ' num2str(sum(n_smooth'.*xout)/sum(n_smooth))])
+
+
+function [fitresult, gof] = createFit(xout, n,smoothness)
 %CREATEFIT(XOUT,N)
 %  Create a fit.
 %
@@ -35,15 +48,16 @@ function [fitresult, gof] = createFit(xout, n)
 % Set up fittype and options.
 ft = fittype( 'smoothingspline' );
 opts = fitoptions( ft );
-opts.SmoothingParam = 0.99;
+opts.SmoothingParam = smoothness;
 
 % Fit model to data.
 [fitresult, gof] = fit( xData, yData, ft, opts );
 
 % Plot fit with data.
-figure( 'Name', 'untitled fit 1' );
-h = plot( fitresult, xData, yData );
+figure(42);
+h = plot( fitresult, xData, yData,'+');
 legend( h, 'n vs. xout', 'nice histo', 'Location', 'NorthEast' );
+set(h,'MarkerSize',20)
 % Label axes
 xlabel( 'xout' );
 ylabel( 'n' );
