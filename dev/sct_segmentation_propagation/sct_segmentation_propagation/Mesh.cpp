@@ -32,7 +32,7 @@ using namespace std;
 typedef itk::Image< double, 3 > ImageType;
 typedef itk::Image< unsigned char, 3 > BinaryImageType;
 typedef itk::Mesh< double, 3 > MeshTypeB;
-typedef MeshTypeB::CellType		CellInterfaceB;
+typedef MeshTypeB::CellType CellInterfaceB;
 typedef itk::TriangleCell<CellInterfaceB> CellTypeB;
 typedef itk::TriangleMeshToBinaryImageFilter<MeshTypeB, BinaryImageType> MeshFilterType;
 typedef itk::CastImageFilter< ImageType, BinaryImageType > CastFilterType;
@@ -42,32 +42,32 @@ typedef itk::Point< double, 3 > PointType;
 
 Mesh::Mesh()
 {
-	label_ = 1;
-	is_selected = false;
-	repereLocalbool = false;
-	to_draw = true;
+    label_ = 1;
+    is_selected = false;
+    repereLocalbool = false;
+    to_draw = true;
     verbose_ = false;
 }
 
 
 Mesh::Mesh(const Mesh& m)
 {
-	label_ = m.label_;
-	is_selected = m.is_selected;
-	repereLocalbool = m.repereLocalbool;
-	to_draw = m.to_draw;
+    label_ = m.label_;
+    is_selected = m.is_selected;
+    repereLocalbool = m.repereLocalbool;
+    to_draw = m.to_draw;
 
-	for (unsigned int i=0; i<m.points_.size(); i++)
-		points_.push_back(new Vertex(*m.points_[i]));
-	for (unsigned int i=0; i<m.pointsLocal_.size(); i++)
-		pointsLocal_.push_back(new Vertex(*m.pointsLocal_[i]));
-	triangles_ = m.triangles_;
-	for (unsigned int i=0; i<m.trianglesBarycentre_.size(); i++)
-		trianglesBarycentre_.push_back(new Vertex(*m.trianglesBarycentre_[i]));
-	connectiviteTriangles_ = m.connectiviteTriangles_;
-	neighbors_ = m.neighbors_;
-	for (unsigned int i=0; i<m.markers_.size(); i++)
-		markers_.push_back(new Vertex(*m.markers_[i]));
+    for (unsigned int i=0; i<m.points_.size(); i++)
+        points_.push_back(new Vertex(*m.points_[i]));
+    for (unsigned int i=0; i<m.pointsLocal_.size(); i++)
+        pointsLocal_.push_back(new Vertex(*m.pointsLocal_[i]));
+    triangles_ = m.triangles_;
+    for (unsigned int i=0; i<m.trianglesBarycentre_.size(); i++)
+        trianglesBarycentre_.push_back(new Vertex(*m.trianglesBarycentre_[i]));
+    connectiviteTriangles_ = m.connectiviteTriangles_;
+    neighbors_ = m.neighbors_;
+    for (unsigned int i=0; i<m.markers_.size(); i++)
+        markers_.push_back(new Vertex(*m.markers_[i]));
     verbose_ = false;
 }
 
@@ -79,112 +79,112 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-	for (unsigned int i=0; i<points_.size(); i++)
-		delete points_[i];
-	points_.clear();
-	triangles_.clear();
+    for (unsigned int i=0; i<points_.size(); i++)
+        delete points_[i];
+    points_.clear();
+    triangles_.clear();
 }
 
 
 int Mesh::addPoint(Vertex *v)
 {
-	points_.push_back(v);
-	return points_.size()-1;
+    points_.push_back(v);
+    return points_.size()-1;
 }
 
 
 int Mesh::addPointLocal(Vertex *v)
 {
-	pointsLocal_.push_back(v);
-	return points_.size()-1;
+    pointsLocal_.push_back(v);
+    return points_.size()-1;
 }
 
 
 void Mesh::removeLastPoints(int number)
 {
-	for (int i=0; i<number; i++)
-	{
-		delete points_[points_.size()-1];
-		points_.pop_back();
-	}
+    for (int i=0; i<number; i++)
+    {
+        delete points_[points_.size()-1];
+        points_.pop_back();
+    }
 }
 
 
 void Mesh::addTriangle(int p1, int p2, int p3)
 {
-	triangles_.push_back(p1);
-	triangles_.push_back(p2);
-	triangles_.push_back(p3);
+    triangles_.push_back(p1);
+    triangles_.push_back(p2);
+    triangles_.push_back(p3);
 }
 
 
 void Mesh::removeLastTriangles(int number)
 {
-	for (int i=0; i<3*number; i++)
-		triangles_.pop_back();
+    for (int i=0; i<3*number; i++)
+        triangles_.pop_back();
 }
 
 
 void Mesh::setReferential(const Referential& ref, bool local)
 {
-	//cout << "Mise a jour du referentiel. Calcul des points locaux...";
-	repereLocal_ = ref;
-	repereLocalbool = true;
+    //cout << "Mise a jour du referentiel. Calcul des points locaux...";
+    repereLocal_ = ref;
+    repereLocalbool = true;
     CMatrix4x4 transformation = repereLocal_.getTransformation();
     CMatrix3x3 rotation = transformation;
     CVector3 translation(transformation[12],transformation[13],transformation[14]);
-	calculateLocalPoints(rotation,translation);
-	//cout << " Done" << endl;
+    calculateLocalPoints(rotation,translation);
+    //cout << " Done" << endl;
 }
 
 
 void Mesh::calculateLocalPoints(CMatrix3x3 rotation, CVector3 translation)
 {
-	if (pointsLocal_.size() > 0) {
-		//for (unsigned int i=0; i<pointsLocal_.size(); i++)
-			//pointsLocal_[i]->setPosition(
-	}
-	else {
-		for (unsigned int i=0; i<points_.size(); i++)
-		{
-			Vertex* newPoint = new Vertex(*points_[i]);
-			newPoint->setPosition(rotation*(newPoint->getPosition()+translation));
-			pointsLocal_.push_back(newPoint);
-		}
-	}
+    if (pointsLocal_.size() > 0) {
+        //for (unsigned int i=0; i<pointsLocal_.size(); i++)
+        //pointsLocal_[i]->setPosition(
+    }
+    else {
+        for (unsigned int i=0; i<points_.size(); i++)
+        {
+            Vertex* newPoint = new Vertex(*points_[i]);
+            newPoint->setPosition(rotation*(newPoint->getPosition()+translation));
+            pointsLocal_.push_back(newPoint);
+        }
+    }
 }
 
 
 void Mesh::computeTrianglesBarycentre()
 {
-	if (trianglesBarycentre_.size() > 0) {
-		for (unsigned int i=0; i<trianglesBarycentre_.size(); i++)
-			delete trianglesBarycentre_[i];
-		trianglesBarycentre_.clear();
-	}
-	CVector3 point1, point2, point3;
-	for (unsigned int i=0; i<triangles_.size(); i+=3) {
-		point1 = points_[triangles_[i]]->getPosition();
-		point2 = points_[triangles_[i+1]]->getPosition();
-		point3 = points_[triangles_[i+2]]->getPosition();
-		trianglesBarycentre_.push_back(new Vertex((point1+point2+point3)/3,((point1-point2)^(point1-point3)).Normalize()));
-	}
+    if (trianglesBarycentre_.size() > 0) {
+        for (unsigned int i=0; i<trianglesBarycentre_.size(); i++)
+            delete trianglesBarycentre_[i];
+        trianglesBarycentre_.clear();
+    }
+    CVector3 point1, point2, point3;
+    for (unsigned int i=0; i<triangles_.size(); i+=3) {
+        point1 = points_[triangles_[i]]->getPosition();
+        point2 = points_[triangles_[i+1]]->getPosition();
+        point3 = points_[triangles_[i+2]]->getPosition();
+        trianglesBarycentre_.push_back(new Vertex((point1+point2+point3)/3,((point1-point2)^(point1-point3)).Normalize()));
+    }
 }
 
 
 void Mesh::transform(CMatrix4x4 transformation)
 {
-	for (unsigned int i=0; i<points_.size(); i++)
-		points_[i]->setPosition(transformation*points_[i]->getPosition());
-	computeTrianglesBarycentre();
+    for (unsigned int i=0; i<points_.size(); i++)
+        points_[i]->setPosition(transformation*points_[i]->getPosition());
+    computeTrianglesBarycentre();
 }
 
 
 void Mesh::transform(CMatrix4x4 transformation, CVector3 rotationPoint)
 {
-	for (unsigned int i=0; i<points_.size(); i++)
-		points_[i]->setPosition(transformation*(points_[i]->getPosition()-rotationPoint)+rotationPoint);
-	computeTrianglesBarycentre();
+    for (unsigned int i=0; i<points_.size(); i++)
+        points_[i]->setPosition(transformation*(points_[i]->getPosition()-rotationPoint)+rotationPoint);
+    computeTrianglesBarycentre();
 }
 
 void Mesh::localTransform(CMatrix4x4 transformation)
@@ -256,7 +256,7 @@ void Mesh::save(string filename, ImageType::Pointer image_ref)
 		source->InsertNextCell(VTK_TRIANGLE,3,pts);
 	}
     
-    if (image_ref != nullptr)
+    if (image_ref.IsNotNull())
     {
         ImageType::RegionType largestRegion = image_ref->GetLargestPossibleRegion();
         ImageType::IndexType downSliceIndex, downSliceMIndex, upperSliceIndex, upperSliceMIndex;
@@ -697,7 +697,7 @@ void Mesh::smoothing(int numberOfIterations)
 }
 
 
-// Les points entre les deux maillages doivent être en nombres égaux et correspondants
+// Les points entre les deux maillages doivent \EAtre en nombres \E9gaux et correspondants
 double Mesh::distanceMean(Mesh *sp)
 {
 	double result = 0.0;
