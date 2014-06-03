@@ -18,8 +18,6 @@ function param = j_mri_moco_v8(param)
 %   fname_data_moco		string
 %   folder_mat			cell		ONLY IF todo=apply. Contains a cell of strings with file name of mat file used by FLIRT to apply correction.
 %   output_path         sting       Default='tmp_moco/'
-%	split_data			binary		0 || 1*. If data are already splitted, then indicated the file name in the following flag.
-%       fname_data_splitT	string		Default='[output_path tmp_moco.data_splitT]'
 %	fname_log			string		fname to log file
 %   slicewise			binary		0* || 1. slice by slice or volume-based motion correction?
 %   index				1xn int		indexation that tells which files to correct
@@ -27,6 +25,11 @@ function param = j_mri_moco_v8(param)
 %   flirt_options		string		Additional FLIRT options. E.g., '-interp sinc'. Default is ''.
 %   merge_back			binary		0 || 1*. Merge data back after moco?
 %   gaussian_mask       float       <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
+%
+%
+% HIGHLY FACULTATIVE
+%	split_data			binary		0 || 1*. If data are already splitted, then indicated the file name in the following flag.
+%       fname_data_splitT	string		Default='[output_path tmp_moco.data_splitT]'
 %
 % OUTPUT
 % param
