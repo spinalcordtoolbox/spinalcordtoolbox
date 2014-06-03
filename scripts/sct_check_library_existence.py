@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
-# Modified: 2014-05-30
+# Modified: 2014-06-03
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -49,10 +49,15 @@ def main():
     if log:
         logging.basicConfig(filename=fname_log, level=logging.INFO)
         logging.info('Started')
+        # check if log file was created
+        if os.path.isfile(fname_log):
+            print '\nLog file was created: '+fname_log
+        else:
+            print '\n WARNING: Log file was not created.'
 
     # check installation packages
     try:
-        print '\nCheck if numpy is installed...'
+        print 'Check if numpy is installed...',
         import numpy
         print 'OK!'
         logging.info('numpy installed')
@@ -61,7 +66,7 @@ def main():
         logging.info('numpy NOT installed')
 
     try:
-        print '\nCheck if scipy is installed...'
+        print 'Check if scipy is installed...',
         import scipy
         print 'OK!'
         logging.info('scipy installed')
@@ -70,7 +75,7 @@ def main():
         logging.info('scipy NOT installed')
 
     try:
-        print '\nCheck if nibabel is installed...'
+        print 'Check if nibabel is installed...',
         import nibabel
         print 'OK!'
         logging.info('nibabel installed')
@@ -79,7 +84,7 @@ def main():
         logging.info('nibabel NOT installed')
 
     # check if FSL is installed
-    print '\nCheck if FSL is installed...'
+    print 'Check if FSL is installed...',
     (status, output) = commands.getstatusoutput('flirt -help')
     logging.info('FSL: status='+str(status))
     if status not in [0,256]:
@@ -90,7 +95,7 @@ def main():
         logging.info('FSL installed')
 
     # check if ANTs is installed
-    print '\nCheck if ANTS is installed...'
+    print 'Check if ANTS is installed...',
     status, output = commands.getstatusoutput('antsRegistration')
     logging.info('ANTS: status='+str(status))
     if status not in [0,256]:
@@ -101,7 +106,7 @@ def main():
         logging.info('ANTS installed')
 
     # check if itksnap is installed
-    print '\nCheck if itksnap/c3d is installed...'
+    print 'Check if itksnap/c3d is installed...',
     status, output = commands.getstatusoutput('c3d -h')
     logging.info('c3d: status='+str(status))
     if status not in [0,256]:
