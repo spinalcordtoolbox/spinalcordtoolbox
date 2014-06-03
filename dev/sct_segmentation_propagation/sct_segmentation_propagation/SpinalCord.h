@@ -48,7 +48,7 @@ public:
 	int getRadialResolution() { return radialResolution_; };
 	void setRadialResolution(int radialResolution) { radialResolution_ = radialResolution; };
 
-	vector<double> computeCrossSectionalArea(bool saveFile=false, string filename="", bool spline=false, Image3D* im=nullptr);
+	vector<double> computeCrossSectionalArea(bool saveFile=false, string filename="", bool spline=false, Image3D* im=0);
 	double computeLastCrossSectionalArea();
 
 	void reduceMeshUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal, string filename);
@@ -67,7 +67,7 @@ public:
     
 private:
 	void saveCenterline(string filename="");
-	void saveCrossSectionalArea(string filename="", Image3D* im=nullptr);
+	void saveCrossSectionalArea(string filename="", Image3D* im=0);
 
 	int radialResolution_;
 	vector<CVector3>* centerline_, *centerline_derivative_;
