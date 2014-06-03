@@ -37,24 +37,14 @@ for subject in $SUBJECT_LIST; do
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
 
-#        # register T2
-#        cmd="sct_register_multimodal.py
-#            -i ../../data/${subject}/t2/t2.nii.gz
-#            -d ../../data/${subject}/${contrast}/${file}
-#            -s ../../data/${subject}/t2/manual_segmentation.nii.gz
-#            -t ../../data/${subject}/${contrast}/segmentation_binary.nii.gz
-#            -o ${subject}_t2_reg_maskT2.nii.gz
-#            -n 50x20
-#            -r 0
-#            -v 1"
-
-	    # register template
 	    cmd="sct_register_multimodal.py
 	        -i ${SCT_DIR}/data/template/MNI-Poly-AMU_T2.nii.gz
 	        -d ../../data/${subject}/${contrast}/${file}
 	        -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
 	        -t ../../data/${subject}/${contrast}/segmentation_binary.nii.gz
 	        -q ../../data/${subject}/template/warp_template2anat.nii.gz
+	        -x 1
+	        -z ../../data/${subject}/template/warp_anat2template.nii.gz
 	        -o template2${file}
 	        -n 50x20
 	        -r 1
