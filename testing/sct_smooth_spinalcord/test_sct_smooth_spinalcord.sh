@@ -45,7 +45,7 @@ for subject in $SUBJECT_LIST; do
 	
 	# display the standard deviation of the Gaussian kernel used to smooth the image
 	echo
-	printf "${blue}Standard deviation of the Gaussian kernel: $sigma${NC}\n"	
+	printf "${blue}Standard deviation of the Gaussian kernel (in terms of voxels): $sigma${NC}\n"	
 	
     # Run sct_smooth_spinalcord.py
     cmd="sct_smooth_spinalcord.py
