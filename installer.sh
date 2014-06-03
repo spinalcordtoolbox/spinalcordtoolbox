@@ -63,7 +63,12 @@ else
   echo '' >> ~/.bash_profile
   echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
   echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bash_profile
-  echo 'export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8' >> ~/.bash_profile
+  unamestr=`uname`
+  if [[ "$unamestr" == 'Linux' ]]; then
+    echo 'export PATH=${PATH}:$SCT_DIR/bin/Debian_7.5' >> ~/.bash_profile
+  else
+    echo 'export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8' >> ~/.bash_profile
+  fi
   echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
   echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
   echo 'export SCT_DIR PATH' >> ~/.bash_profile
