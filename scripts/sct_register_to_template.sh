@@ -182,6 +182,8 @@ elif [ ${speed} == "normal" ]; then
     nb_iteration="50x15"
 elif [ ${speed} == "fast" ]; then
     nb_iteration="10x3"
+elif [ ${speed} == "superfast" ]; then
+    nb_iteration="3x1"
 else
     echo "ERROR: Wrong input registration speed {slow, normal, fast}."
     exit 1
