@@ -16,7 +16,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.log                = 1
+        self.log                = 0
 
 import os
 import sys
@@ -33,6 +33,10 @@ def main():
     # Initialization
     log = param.log
     fname_log = 'sct_check_library_existence.log'
+
+    # old_stdout = sys.stdout
+    # log_file = open(fname_log,"w")
+    # sys.stdout = log_file
 
     # Check input parameters
     try:
@@ -118,6 +122,9 @@ def main():
 
     # logging info
     logging.info('Finished')
+
+    # sys.stdout = old_stdout
+    # log_file.close()
 
 
 # Print usage
