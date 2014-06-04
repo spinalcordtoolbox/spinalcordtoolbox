@@ -25,7 +25,7 @@ class param:
     def __init__(self):
         self.debug               = 0
         self.remove_temp_files   = 1 # remove temporary files
-        self.output              = 0
+        self.output_type         = 1
         self.speed               = 'fast' # speed of registration. slow | normal | fast
         self.verbose             = 0 # verbose
 
@@ -45,7 +45,7 @@ def main():
     fname_data = ''
     fname_landmarks = ''
     fname_seg = ''
-    output = param.output
+    output_type = param.output_type
     remove_temp_files = param.remove_temp_files
     start_time = time.time()
 
@@ -190,7 +190,7 @@ def main():
     commands.getstatusoutput('ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+path_template+'/MNI-Poly-AMU_T2.nii.gz warp_straight2template.nii.gz warp_curve2straight.nii.gz')
 
     # Apply warping fields to anat and template
-    if output == 1:
+    if output_type == 1:
         sct.run('WarpImageMultiTransform 3 '+path_template+'/MNI-Poly-AMU_T2.nii.gz template2anat.nii.gz -R data.nii.gz warp_template2anat.nii.gz')
         sct.run('WarpImageMultiTransform 3 data.nii.gz anat2template.nii.gz -R '+path_template+'/MNI-Poly-AMU_T2.nii.gz warp_anat2template.nii.gz')
 
@@ -198,7 +198,7 @@ def main():
     print('\nGenerate output files...')
     sct.generate_output_file('warp_template2anat.nii.gz','../','warp_template2anat','.nii.gz')
     sct.generate_output_file('warp_anat2template.nii.gz','../','warp_anat2template','.nii.gz')
-    if output == 1:
+    if output_type == 1:
         sct.generate_output_file('template2anat.nii.gz','../','template2anat','.nii.gz')
         sct.generate_output_file('anat2template.nii.gz','../','anat2template','.nii.gz')
 
@@ -241,7 +241,7 @@ def usage():
         '  -m <segmentation>            segmentation or centerline. \n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+param.output+'\n' \
+        '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+param.output_type+'\n' \
         '  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default='+param.speed+'\n' \
         '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
 
