@@ -43,8 +43,8 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
-# Authors: Julien Cohen-Adad, Geoffrey Leveque
-# Modified: 2014-05-16
+# Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
+# Modified: 2014-06-03
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -61,12 +61,12 @@
 class param:
     ## The constructor
     def __init__(self):
+        self.debug = 1 # debug mode
         self.deg_poly = 20 # maximum degree of polynomial function for fitting centerline. Default = 10.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 20 # gap between landmarks along z
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.remove_temp_files = 1 # remove temporary files
-        self.debug = 0 # debug mode
 
 # check if needed Python libraries are already installed or not
 import os
@@ -128,8 +128,11 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_rpi.nii.gz'
-        fname_centerline = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_centerline.nii.gz'
+        fname_anat = '/home/django/jcohen2/Dropbox/FailedRegistration/tmp.140603220836/data_rpi.nii.gz'
+        fname_centerline = '/home/django/jcohen2/Dropbox/FailedRegistration/tmp.140603220836/segmentation_rpi.nii.gz'
+        # fname_anat = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_rpi.nii.gz'
+        # fname_centerline = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_centerline.nii.gz'
+        remove_temp_files = 0
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
     
@@ -244,42 +247,7 @@ def main():
         x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit,polyx,polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
-    
-    
-    #    # Fit polynomial function through centerline
-    #    #==========================================================================================
-    #    # fit centerline in the Z-X plane using polynomial function
-    #    print '\nFit centerline in the Z-X plane using polynomial function...'
-    #    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=param.deg_poly)
-    #    polyx = numpy.poly1d(coeffsx)
-    #    x_centerline_fit = numpy.polyval(polyx, z_centerline)
-    #
-    #    # fit centerline in the Z-Y plane using polynomial function
-    #    print '\nFit centerline in the Z-Y plane using polynomial function...'
-    #    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=param.deg_poly)
-    #    polyy = numpy.poly1d(coeffsy)
-    #    y_centerline_fit = numpy.polyval(polyy, z_centerline)
-    #
-    #    #tck,u = interpolate.splprep([x_centerline,y_centerline,z_centerline])
-    #    #unew = numpy.arange(0,1,1/float(len(z_centerline)))
-    #    #centerline_fit = interpolate.splev(unew,tck,der=0)
-    #    #centerline_fit_deriv = interpolate.splev(unew,tck,der=1)
-    #    #print centerline_fit[2]
-    #
-    #    # display fitting
-    #    #plt.figure()
-    #    #plt.plot(z_centerline,x_centerline,'.',z_centerline,x_centerline_fit,'r')
-    #    #plt.legend(['Data','Polynomial Fit'])
-    #    #plt.title('Z-X plane polynomial interpolation')
-    #    #plt.show()
-    #    ##
-    #    #plt.figure()
-    #    #plt.plot(z_centerline,y_centerline,'.',z_centerline,y_centerline_fit,'r')
-    #    #plt.legend(['Data','Polynomial Fit'])
-    #    #plt.title('Z-Y plane polynomial interpolation')
-    #    #plt.show()
-    
-    
+
     
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -412,13 +380,13 @@ def main():
     # Pad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV
     # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
     print '\nPad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV...'
-    sct.run('c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii')
+    sct.run('c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
     
     # TODO: don't pad input volume: no need for that! instead, try to increase size of hdr when saving landmarks.
     
     # Open padded centerline for reading
     print '\nOpen padded centerline for reading...'
-    file = nibabel.load('tmp.centerline_pad.nii')
+    file = nibabel.load('tmp.centerline_pad.nii.gz')
     data = file.get_data()
     hdr = file.get_header()
     
@@ -443,14 +411,14 @@ def main():
             landmark_value = landmark_value + 1
     
     # Write NIFTI volumes
-    hdr.set_data_dtype('uint8') # set imagetype to uint8
+    hdr.set_data_dtype('uint32') # set imagetype to uint8 #TODO: maybe use int32
     print '\nWrite NIFTI volumes...'
     img = nibabel.Nifti1Image(data_curved_landmarks, None, hdr)
-    nibabel.save(img, 'tmp.landmarks_curved.nii')
+    nibabel.save(img, 'tmp.landmarks_curved.nii.gz')
     print '.. File created: tmp.landmarks_curved.nii'
     img = nibabel.Nifti1Image(data_straight_landmarks, None, hdr)
-    nibabel.save(img, 'tmp.landmarks_straight.nii')
-    print '.. File created: tmp.landmarks_straight.nii'
+    nibabel.save(img, 'tmp.landmarks_straight.nii.gz')
+    print '.. File created: tmp.landmarks_straight.nii.gz'
     
     
     # Estimate deformation field by pairing landmarks
@@ -463,34 +431,34 @@ def main():
     
     # Estimate rigid transformation
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii tmp.landmarks_curved.nii rigid tmp.curve2straight_rigid.txt')
+    sct.run('ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
-    sct.run('WarpImageMultiTransform 3 tmp.landmarks_curved.nii tmp.landmarks_curved_rigid.nii -R tmp.landmarks_straight.nii tmp.curve2straight_rigid.txt --use-NN')
+    sct.run('WarpImageMultiTransform 3 tmp.landmarks_curved.nii.gz tmp.landmarks_curved_rigid.nii.gz -R tmp.landmarks_straight.nii.gz tmp.curve2straight_rigid.txt --use-NN')
     
     # Estimate b-spline transformation curve --> straight
     print '\nEstimate b-spline transformation: curve --> straight...'
-    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii tmp.landmarks_curved_rigid.nii tmp.warp_curve2straight.nii 5x5x5 3 2 0')
+    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
     #sct.run('ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'ComposeMultiTransform 3 tmp.curve2straight.nii -R tmp.landmarks_straight.nii tmp.warp_curve2straight.nii tmp.curve2straight_rigid.txt'
+    cmd = 'ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     print '\nEstimate b-spline transformation: straight --> curve...'
-    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii tmp.landmarks_straight.nii tmp.warp_straight2curve.nii 5x5x5 3 2 0')
+    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
     #sct.run('ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'ComposeMultiTransform 3 tmp.straight2curve.nii -R tmp.landmarks_straight.nii -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii'
+    cmd = 'ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
@@ -499,19 +467,19 @@ def main():
     
     # Unpad landmarks...
     print '\nUnpad landmarks...'
-    sct.run('fslroi tmp.landmarks_straight.nii tmp.landmarks_straight_crop.nii '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
+    sct.run('fslroi tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
     
     # Apply deformation to input image. NB: no need to pad the input image!
     print '\nApply transformation to input image...'
-    sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii -R tmp.landmarks_straight_crop.nii '+
+    sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+
             interpolation_warp+ ' tmp.curve2straight.nii')
     
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file('tmp.curve2straight.nii','./','warp_curve2straight',ext_anat) # warping field
-    sct.generate_output_file('tmp.straight2curve.nii','./','warp_straight2curve',ext_anat) # warping field
-    sct.generate_output_file('tmp.anat_rigid_warp.nii','./',file_anat+'_straight',ext_anat) # straightened anatomic
+    sct.generate_output_file('tmp.curve2straight.nii.gz','./','warp_curve2straight',ext_anat) # warping field
+    sct.generate_output_file('tmp.straight2curve.nii.gz','./','warp_straight2curve',ext_anat) # warping field
+    sct.generate_output_file('tmp.anat_rigid_warp.nii.gz','./',file_anat+'_straight',ext_anat) # straightened anatomic
     
     # Delete temporary files
     if remove_temp_files == 1:
