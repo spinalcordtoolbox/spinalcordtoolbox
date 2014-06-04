@@ -40,6 +40,10 @@ sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/atlas')
 sct.run('ls data/atlas/vol*.* | while read F; do cp $F '+folder_sct+'spinalcordtoolbox/data/atlas/; done')
 sct.run('cp data/atlas/list.txt '+folder_sct+'spinalcordtoolbox/data/atlas/')
 
+# copy spinal_level
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/spinal_level')
+sct.run('cp -rf data/spinal_level '+folder_sct+'spinalcordtoolbox/data/')
+
 # copy template
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/template')
 sct.run('cp data/template/MNI-Poly-AMU_T2.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
