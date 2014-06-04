@@ -42,7 +42,7 @@
 #
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
+# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
 # Modified: 2014-06-03
 #
@@ -61,7 +61,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1 # debug mode
+        self.debug = 0 # debug mode
         self.deg_poly = 20 # maximum degree of polynomial function for fitting centerline. Default = 10.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 20 # gap between landmarks along z
@@ -182,7 +182,7 @@ def main():
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
-    print '.... Centerline fitting option:' + centerline_fitting
+    print '  Centerline fitting option ......... '+centerline_fitting
     
     
     
@@ -466,13 +466,14 @@ def main():
     #sct.run('c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
     
     # Unpad landmarks...
-    print '\nUnpad landmarks...'
-    sct.run('fslroi tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
+    # THIS WAS REMOVED ON 2014-06-03 because the output data was cropped at the edge, which caused landmarks to sometimes disappear
+    # print '\nUnpad landmarks...'
+    # sct.run('fslroi tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
     
-    # Apply deformation to input image. NB: no need to pad the input image!
+    # Apply deformation to input image
     print '\nApply transformation to input image...'
-    sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+
-            interpolation_warp+ ' tmp.curve2straight.nii')
+    sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
+    # sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
