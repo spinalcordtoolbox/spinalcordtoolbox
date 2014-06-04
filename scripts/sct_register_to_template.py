@@ -162,7 +162,7 @@ def main():
     status, output = sct.run('sct_label_utils.py -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
     # Push the input labels in the template space
-    print('\nPush the input labels in the template space...')
+    print('\nPush the input labels to the straight space...')
     status, output = sct.run('WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii.gz warp_curve2straight.nii.gz --use-NN')
 
     # Registration of the straight spinal cord on the template - ${nb_iteration} slow 50x30, normal 50x15, fast 10x3
