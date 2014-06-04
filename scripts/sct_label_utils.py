@@ -1,22 +1,33 @@
 #!/usr/bin/env python
-
+#########################################################################################
+#
+# Register anatomical image to the template using the spinal cord centerline/segmentation.
 # we assume here that we have a RPI orientation, where Z axis is inferior-superior direction
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Benjamin De Leener, Julien Cohen-Adad
+# Modified: 2014-06-03
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
+
+# TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 import os, sys
 import getopt
 import commands
 import sys
 import sct_utils as sct
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
+import nibabel
+import numpy as np
+
+# DEFAULT PARAMETERS
+class param:
+    ## The constructor
+    def __init__(self):
+        self.debug               = 0
+
 
 #=======================================================================================================================
 # main
@@ -31,6 +42,18 @@ def main():
     fname_ref = ''
     type_process = ''
     output_level = 0 # 0 for image with point ; 1 for txt file
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
+    # Parameters for debug mode
+    if param.debug:
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        fname_label = path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
+        fname_label_output = 'landmarks_rpi_output.nii.gz'
+        type_process = 'cross'
+        cross_radius = 5
+        dilate = True
 
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
@@ -103,12 +126,14 @@ def main():
         write_vertebral_levels(data,fname_ref)
 
     if (output_level == 0):
-        hdr.set_data_dtype('uint8') # set imagetype to uint8
+        hdr.set_data_dtype('int32') # set imagetype to uint8
         print '\nWrite NIFTI volumes...'
         img = nibabel.Nifti1Image(data, None, hdr)
-        nibabel.save(img, 'tmp.'+file_label_output+'.nii')
-        sct.generate_output_file('tmp.'+file_label_output+'.nii','./',file_label_output,ext_label_output)
+        nibabel.save(img, 'tmp.'+file_label_output+'.nii.gz')
+        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz','./',file_label_output,ext_label_output)
 
+
+#=======================================================================================================================
 def cross(data, cross_radius, fname_ref, dilate, px, py):
     X, Y, Z = (data > 0).nonzero()
     a = len(X)
@@ -192,6 +217,7 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
     return data
 
 
+#=======================================================================================================================
 def remove_label(data, fname_ref):
     X, Y, Z = (data > 0).nonzero()
 
@@ -215,6 +241,7 @@ def remove_label(data, fname_ref):
     return data
 
 # need binary centerline and segmentation with vertebral level. output_level=1 -> write .txt file. output_level=1 -> write centerline with vertebral levels
+#=======================================================================================================================
 def extract_disk_position(data_level, fname_centerline, output_level, fname_label_output):
     X, Y, Z = (data_level > 0).nonzero()
     
@@ -264,6 +291,7 @@ def extract_disk_position(data_level, fname_centerline, output_level, fname_labe
 
     return data_centerline
 
+#=======================================================================================================================
 def extract_centerline(data,fname_label_output):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
@@ -286,6 +314,7 @@ def extract_centerline(data,fname_label_output):
         fo.write("%i %i %i\n" %line)
     fo.close()
 
+#=======================================================================================================================
 def extract_segmentation(data,fname_label_output):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
@@ -307,6 +336,7 @@ def extract_segmentation(data,fname_label_output):
         fo.write("%i %i %i\n" %line)
     fo.close()
 
+#=======================================================================================================================
 def fraction_volume(data,fname_ref,fname_label_output):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_ref)
     img_ref = nibabel.load(fname_ref)
@@ -366,6 +396,7 @@ def fraction_volume(data,fname_ref,fname_label_output):
         fo.write("%i %f\n" %(i,volume_fraction[i]))
     fo.close()
 
+#=======================================================================================================================
 def write_vertebral_levels(data,fname_vert_level_input):
     fo = open(fname_vert_level_input)
     vertebral_levels = fo.readlines()
@@ -412,5 +443,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    # initialize parameters
+    param = param()
     # call main function
     main()
