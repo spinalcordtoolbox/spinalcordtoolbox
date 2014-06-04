@@ -38,7 +38,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_register_to_template.sh 
+    cmd="sct_register_to_template.py 
         -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
         -l ../../data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
         -m ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
