@@ -23,7 +23,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug               = 1
+        self.debug               = 0
         self.remove_temp_files   = 1 # remove temporary files
         self.output              = 0
         self.speed               = 'fast' # speed of registration. slow | normal | fast
@@ -216,7 +216,7 @@ def main():
 
     # to view results
     print '\nTo view results, type:'
-    print 'fslview template2anat '+fname_anat+' &'
+    print 'fslview template2anat '+fname_data+' &'
     print 'fslview anat2template '+path_template+'/MNI-Poly-AMU_T2.nii.gz &\n'
 
 
