@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Check the existence of external libraries that are required for sct modules
+# Check the installation and environment variables of the toolbox and its dependences.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
-# Modified: 2014-06-03
+# Modified: 2014-06-05
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: also check the SCT
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
 
@@ -229,14 +230,13 @@ def usage():
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
-        '  Check the existence of external libraries that are required for sct modules.\n' \
+        '  Check the installation and environment variables of the toolbox and its dependences.\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -h            print this help.\n' \
-        '  -l            output log file.\n'
+        '  -h            print this help.\n'
 
     # exit program
     sys.exit(2)
