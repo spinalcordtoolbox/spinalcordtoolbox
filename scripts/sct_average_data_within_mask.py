@@ -182,7 +182,15 @@ def extract_fname(fname):
 # ==========================================================================================
 def usage():
     path_func, file_func, ext_func = extract_fname(sys.argv[0])
-    print '\nUsage:\n' \
+    print '\n' \
+        ''+os.path.basename(__file__)+'\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
+        '\n'\
+        'DESCRIPTION\n' \
+        '  Average data within mask. Compute a weighted average if mask is non-binary (values distributed between 0 and 1).\n' \
+        '\n' \
+        'USAGE\n' \
         '   '+file_func+ext_func+' -i <inputvol> -m <mask>\n\n' \
         'Options:' \
         '  -i inputvol          image to extract values from\n' \
