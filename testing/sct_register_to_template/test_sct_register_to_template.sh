@@ -42,7 +42,8 @@ for subject in $SUBJECT_LIST; do
         -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
         -l ../../data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
         -m ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
-        -s fast
+        -r 0
+	-s fast
 	-o 1"
     echo ==============================================================================================
     echo "$cmd"
