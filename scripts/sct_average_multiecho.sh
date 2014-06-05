@@ -10,7 +10,7 @@
 
 function usage() {
     echo usage:
-    echo `basename ${0}` 'path_data'
+    echo `basename ${0}` '<path_data>'
 }
 
 function askhelp() {

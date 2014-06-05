@@ -18,7 +18,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug              = 1
+        self.debug              = 0
         self.verbose            = 0 # verbose
 
 import re
