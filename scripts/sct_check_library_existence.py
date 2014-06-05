@@ -76,13 +76,21 @@ def main():
     c3d_is_installed = 1
     install_software = 0
     restart_terminal = 0
-    
-    
-    # check installation packages
+    os_running = ''
     print
+        
+    # check OS
+    print
+    print 'Check which OS is running ... '
+    if (sys.platform == 'darwin'):
+        os_running = 'osx'
+    print '  '+os_running+' ('+sys.platform+')'
+
+    # check installation packages
     print 'Check which Python is running ... '
     print '  '+sys.executable
-    
+
+    # check numpy
     print_line('Check if numpy is installed ................... ')
     try:
         import numpy
@@ -92,6 +100,7 @@ def main():
         print '  numpy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/)'
         install_software = 1
 
+    # check scipy
     print_line('Check if scipy is installed ................... ')
     try:
         import scipy
@@ -101,6 +110,7 @@ def main():
         print '  scipy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/).'
         install_software = 1
 
+    # check nibabel
     print_line('Check if nibabel is installed ................. ')
     try:
         import nibabel
@@ -166,14 +176,20 @@ def main():
 
     # check if C3D is installed
     print_line('Check if c3d is installed ..................... ')
-    (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
+    output = ''
+    if os_running == 'osx':
+        # in OSX, c3d is typically installed under /Applications
+        (status, output) = commands.getstatusoutput('find /Applications -name "c3d" -type f -print -quit 2>/dev/null')
+    if not output:
+        # if it is not OSX, or if it is OSX and it did not find c3d yet
+        (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
     if output:
         print_ok()
         path_c3d = os.path.dirname(output)
         print '  '+path_c3d
     else:
         print_fail()
-        print '  Please install it from there: http://www.itksnap.org/'
+        print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.C3D'
         c3d_is_installed = 0
         install_software = 1
 
