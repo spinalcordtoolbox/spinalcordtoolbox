@@ -11,6 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: find another way to create log file. E.g. sct.print(). For color as well.
+# TODO: manage .cshrc files
+
 
 # DEFAULT PARAMETERS
 class param:
@@ -20,111 +23,208 @@ class param:
 
 import os
 import sys
-import getopt
+#import getopt
 import commands
-import logging
+import time
+#import logging
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
 # MAIN
 # ==========================================================================================
 def main():
 
     # Initialization
-    log = param.log
-    fname_log = 'sct_check_library_existence.log'
+#    log = param.log
+#    fname_log = 'sct_check_library_existence.log'
 
     # old_stdout = sys.stdout
     # log_file = open(fname_log,"w")
     # sys.stdout = log_file
 
     # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hl')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-        elif opt in ("-l"):
-            log = 1
+#    try:
+#        opts, args = getopt.getopt(sys.argv[1:],'hl')
+#    except getopt.GetoptError:
+#        usage()
+#    for opt, arg in opts:
+#        if opt == '-h':
+#            usage()
+#        elif opt in ("-l"):
+#            log = 1
 
     # open log file
-    if log:
-        logging.basicConfig(filename=fname_log, level=logging.INFO)
-        logging.info('Started')
-        # check if log file was created
-        if os.path.isfile(fname_log):
-            print '\nLog file was created: '+fname_log
-        else:
-            print '\n WARNING: Log file was not created.'
+#    if log:
+#        logging.basicConfig(filename=fname_log, level=logging.INFO)
+#        logging.info('Started')
+#        # check if log file was created
+#        if os.path.isfile(fname_log):
+#            print '\nLog file was created: '+fname_log
+#        else:
+#            print '\n WARNING: Log file was not created.'
 
+    # initialization
+    fsl_is_installed = 1
+    ants_is_installed = 1
+    c3d_is_installed = 1
+    install_software = 0
+    restart_terminal = 0
+    
+    
     # check installation packages
+    print
+    print 'Check which Python is running ... '
+    print '  '+sys.executable
+    
+    print_line('Check if numpy is installed ................... ')
     try:
-        print 'Check if numpy is installed...',
         import numpy
-        print 'OK!'
-        logging.info('numpy installed')
+        print_ok()
     except ImportError:
-        print 'WARNING: numpy is not installed! Please install CANOPY (http://www.neuro.polymtl.ca/doku.php?id=tips_and_tricks:python:canopy).'
-        logging.info('numpy NOT installed')
+        print_fail()
+        print '  numpy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/)'
+        install_software = 1
 
+    print_line('Check if scipy is installed ................... ')
     try:
-        print 'Check if scipy is installed...',
         import scipy
-        print 'OK!'
-        logging.info('scipy installed')
+        print_ok()
     except ImportError:
-        print 'WARNING: scipy is not installed! Please install CANOPY (http://www.neuro.polymtl.ca/doku.php?id=tips_and_tricks:python:canopy).'
-        logging.info('scipy NOT installed')
+        print_fail()
+        print '  scipy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/).'
+        install_software = 1
 
+    print_line('Check if nibabel is installed ................. ')
     try:
-        print 'Check if nibabel is installed...',
         import nibabel
-        print 'OK!'
-        logging.info('nibabel installed')
+        print_ok()
     except ImportError:
-        print 'WARNING: nibabel is not installed! Install it by typing in the Terminal: easy_install nibabel'
-        logging.info('nibabel NOT installed')
+        print_fail()
+        print '  nibabel is not installed! Install it by typing in the Terminal: easy_install nibabel'
+        install_software = 1
 
     # check if FSL is installed
-    print 'Check if FSL is installed...',
-    (status, output) = commands.getstatusoutput('flirt -help')
-    logging.info('FSL: status='+str(status))
-    if status not in [0,256]:
-        print 'WARNING: FSL is not installed! Install it from: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/'
-        logging.info('FSL NOT installed')
+    print_line('Check if FSL is installed ..................... ')
+    (status, output) = commands.getstatusoutput('find /usr -name "fsl" -type d -print -quit 2>/dev/null')
+    if output:
+        print_ok()
+        path_fsl = output
+        print '  '+path_fsl
     else:
-        print 'OK!'
-        logging.info('FSL installed')
+        print_fail()
+        print '  FSL is not installed! Install it from: http://fsl.fmrib.ox.ac.uk/'
+        fsl_is_installed = 0
+        install_software = 1
 
-    # check if ANTs is installed
-    print 'Check if ANTS is installed...',
-    status, output = commands.getstatusoutput('antsRegistration')
-    logging.info('ANTS: status='+str(status))
-    if status not in [0,256]:
-        print 'WARNING: ANTS is not installed! Install it from: http://stnava.github.io/ANTs/ (You have to build the source!! Do not use the binaries)'
-        logging.info('ANTS NOT installed')
+    # check if FSL is declared
+    if fsl_is_installed:
+        print_line('Check if FSL is declared ...................... ')
+        (status, output) = commands.getstatusoutput('which fsl')
+        if output:
+            print_ok()
+        else:
+            print_warning()
+            print '  FSL is not declared! Modifying .bash_profile ...'
+            add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
+                'FSLDIR='+path_fsl+'\n' \
+                '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
+                'export FSLDIR PATH')
+            restart_terminal = 1
+
+    # check if ANTS is installed
+    print_line('Check if ANTs is installed .................... ')
+    (status, output) = commands.getstatusoutput('find /usr -name "antsRegistration" -type f -print -quit 2>/dev/null')
+    if output:
+        print_ok()
+        path_ants = os.path.dirname(output)
+        print '  '+path_ants
     else:
-        print 'OK!'
-        logging.info('ANTS installed')
+        print_fail()
+        print '  ANTs is not installed! Follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/ants_installation/'
+        ants_is_installed = 0
+        install_software = 1
 
-    # check if itksnap is installed
-    print 'Check if itksnap/c3d is installed...',
-    status, output = commands.getstatusoutput('c3d -h')
-    logging.info('c3d: status='+str(status))
-    if status not in [0,256]:
-        print 'WARNING: itksnap/c3d is not installed! Install it from: http://www.itksnap.org'
-        logging.info('c3d NOT installed')
+    # check if ANTS is declared
+    if ants_is_installed:
+        print_line('Check if ANTs is declared ..................... ')
+        (status, output) = commands.getstatusoutput('which antsRegistration')
+        if output:
+            print_ok()
+        else:
+            print_warning()
+            print '  ANTs is not declared! Modifying .bash_profile ...'
+            add_bash_profile('#ANTS (added on '+time.strftime("%Y-%m-%d")+')\n' \
+                'PATH=${PATH}:'+path_ants)
+            restart_terminal = 1
+
+    # check if C3D is installed
+    print_line('Check if c3d is installed ..................... ')
+    (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
+    if output:
+        print_ok()
+        path_c3d = os.path.dirname(output)
+        print '  '+path_c3d
     else:
-        print 'OK!\n'
-        logging.info('c3d installed')
+        print_fail()
+        print '  Please install it from there: http://www.itksnap.org/'
+        c3d_is_installed = 0
+        install_software = 1
 
-    # logging info
-    logging.info('Finished')
+    # check if C3D is declared
+    if c3d_is_installed:
+        print_line('Check if c3d is declared ...................... ')
+        (status, output) = commands.getstatusoutput('which c3d')
+        if output:
+            print_ok()
+        else:
+            print_warning()
+            print '  c3d is not declared! Modifying .bash_profile ...'
+            add_bash_profile('#C3D (added on '+time.strftime("%Y-%m-%d")+')\n' \
+                'PATH=${PATH}:'+path_c3d)
+            restart_terminal = 1
 
-    # sys.stdout = old_stdout
-    # log_file.close()
+    if install_software:
+        print '\nDone! Please install the required software, then run this script again.'
+    elif restart_terminal:
+        print '\nDone! Please restart your Terminal for changes to take effect.'
+    else:
+        print '\nDone! Everything is in order :-)'
+    print
+
+
+# Print without new carriage return
+# ==========================================================================================
+def print_line(string):
+    import sys
+    sys.stdout.write(string)
+    sys.stdout.flush()
+
+
+def print_ok():
+    print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
+
+
+def print_warning():
+    print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
+
+
+def print_fail():
+    print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
+    
+
+def add_bash_profile(string):
+    from os.path import expanduser
+    home = expanduser("~")
+    with open(home+"/.bash_profile", "a") as file_bash:
+    # with open("test.txt", "a") as file_bash:
+        file_bash.write("\n"+string)
 
 
 # Print usage
