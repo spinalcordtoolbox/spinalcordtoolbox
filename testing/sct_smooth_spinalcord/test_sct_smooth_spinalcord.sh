@@ -9,7 +9,7 @@ NC='\e[0m'
 
 # subject list
 SUBJECT_LIST="errsm_23" 
-CONTRAST_LIST="t1 t2" #"t1 t2"
+CONTRAST_LIST="t1" #"t1 t2"
 
 # standard deviation of the Gaussian kernel used to smooth the image
 sigma=4 # default value
@@ -63,10 +63,10 @@ for subject in $SUBJECT_LIST; do
 	echo "$cmd"
 	$cmd
 
-	# Smoothing along Z
+	# Smoothing along Z (corresponding to X, given the orientation of the image)
 	cmd="c3d
 		../../data/${subject}/${contrast}/${contrast}.nii.gz
-		-smooth 0x0x${sigma}vox
+		-smooth ${sigma}x0x0vox
 		-o ${contrast}_z_smoothed.nii.gz"
 	echo "$cmd"
 	$cmd
