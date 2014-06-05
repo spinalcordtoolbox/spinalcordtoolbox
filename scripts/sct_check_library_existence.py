@@ -41,34 +41,6 @@ class bcolors:
 # ==========================================================================================
 def main():
 
-    # Initialization
-#    log = param.log
-#    fname_log = 'sct_check_library_existence.log'
-
-    # old_stdout = sys.stdout
-    # log_file = open(fname_log,"w")
-    # sys.stdout = log_file
-
-    # Check input parameters
-#    try:
-#        opts, args = getopt.getopt(sys.argv[1:],'hl')
-#    except getopt.GetoptError:
-#        usage()
-#    for opt, arg in opts:
-#        if opt == '-h':
-#            usage()
-#        elif opt in ("-l"):
-#            log = 1
-
-    # open log file
-#    if log:
-#        logging.basicConfig(filename=fname_log, level=logging.INFO)
-#        logging.info('Started')
-#        # check if log file was created
-#        if os.path.isfile(fname_log):
-#            print '\nLog file was created: '+fname_log
-#        else:
-#            print '\n WARNING: Log file was not created.'
 
     # initialization
     fsl_is_installed = 1
@@ -78,7 +50,12 @@ def main():
     restart_terminal = 0
     os_running = ''
     print
-        
+
+    # check if user is root (should not be!)
+    if os.geteuid() == 0:
+       print 'Looks like you are root. Please run this script without sudo. Exit program\n'
+       sys.exit(2)
+       
     # check OS
     print
     print 'Check which OS is running ... '
