@@ -50,22 +50,22 @@
 #=======================================================================================================================
 
 
-# TODO: crop warping field at the size of the landmark straights
-# TODO: option -r to remove tmp files (default = 1)
-# TODO: write landmarks as
+# TODO: fix bug of label creation when using splines (2014-06-05: error with data from Falk with small FOV along z)
+# TODO: generate cross at both edge (top and bottom) and populate in between --> this will ensure better quality of the warping field.
+# TODO: check if there is an overlap of labels, in case of high curvature and high density of cross along z.
 # TODO: convert gap definition to mm (more intuitive than voxel)
-# TODO: output landmarks in NIFTI_GZ because much smaller in size
 
 
 ## Create a structure to pass important user parameters to the main function
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0 # debug mode
-        self.deg_poly = 20 # maximum degree of polynomial function for fitting centerline. Default = 10.
+        self.debug = 0
+        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 20 # gap between landmarks along z
+        self.gapz = 10 # gap between landmarks along z
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
+        self.fitting_method = 'polynomial' # splines | polynomial
         self.remove_temp_files = 1 # remove temporary files
 
 # check if needed Python libraries are already installed or not
@@ -76,31 +76,12 @@ import sys
 import sct_utils as sct
 from sct_utils import fsloutput
 from sct_nurbs import NURBS
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    from scipy import interpolate
-except ImportError:
-    print '--- scipy not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    from sympy.solvers import solve
-except ImportError:
-    print '--- sympy not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    from sympy import Symbol
-except ImportError:
-    print '--- sympy not installed! Exit program. ---'
-    sys.exit(2)
+import nibabel
+import numpy
+from scipy import interpolate # TODO: check if used
+from sympy.solvers import solve
+from sympy import Symbol
+
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
 sct.check_if_installed('WarpImageMultiTransform -h','ANTS')
@@ -120,7 +101,7 @@ def main():
     padding = param.padding
     remove_temp_files = param.remove_temp_files
     interpolation_warp = ''
-    centerline_fitting = 'splines'
+    centerline_fitting = param.fitting_method
     
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
@@ -128,11 +109,12 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = '/home/django/jcohen2/Dropbox/FailedRegistration/tmp.140603220836/data_rpi.nii.gz'
-        fname_centerline = '/home/django/jcohen2/Dropbox/FailedRegistration/tmp.140603220836/segmentation_rpi.nii.gz'
+        fname_anat = '/home/django/jcohen2/data/11shortFOV/tmp.140605093151/data_rpi.nii.gz'
+        fname_centerline = '/home/django/jcohen2/data/11shortFOV/tmp.140605093151/segmentation_rpi.nii.gz'
         # fname_anat = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_rpi.nii.gz'
         # fname_centerline = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_centerline.nii.gz'
         remove_temp_files = 0
+        centerline_fitting = 'splines'
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
     
@@ -315,17 +297,17 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     
-    ## display
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111, projection='3d')
-    #ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
-    #ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    # # display
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
+    # ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
     #        [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
     #        [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-    #ax.set_xlabel('x')
-    #ax.set_ylabel('y')
-    #ax.set_zlabel('z')
-    #plt.show()
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # plt.show()
     
     
     # Get coordinates of landmarks along straight centerline
@@ -415,7 +397,7 @@ def main():
     print '\nWrite NIFTI volumes...'
     img = nibabel.Nifti1Image(data_curved_landmarks, None, hdr)
     nibabel.save(img, 'tmp.landmarks_curved.nii.gz')
-    print '.. File created: tmp.landmarks_curved.nii'
+    print '.. File created: tmp.landmarks_curved.nii.gz'
     img = nibabel.Nifti1Image(data_straight_landmarks, None, hdr)
     nibabel.save(img, 'tmp.landmarks_straight.nii.gz')
     print '.. File created: tmp.landmarks_straight.nii.gz'
@@ -523,7 +505,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     print '\nFit centerline using B-spline approximation'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     
-    nurbs = NURBS(4,1000,points) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(4,500,points) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
@@ -545,13 +527,13 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
     
     # Fit centerline in the Z-X plane using polynomial function
     print '\nFit centerline in the Z-X plane using polynomial function...'
-    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=10)
+    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=param.deg_poly)
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
     
     #Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
-    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=10)
+    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=param.deg_poly)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
     
@@ -587,7 +569,7 @@ def usage():
         '               WarpImageMultiTransform (example --use-BSpline to use 3rd order B-Spline Interpolation) \n' \
         '  -h           help. Show this message.\n' \
         '  -f           option to choose the centerline fitting method: \'splines\' to fit the centerline with \n'\
-        '               splines, \'polynomial\' to fit the centerline with a polynome (default=\'splines\').\n'
+        '               splines, \'polynomial\' to fit the centerline with a polynome. Default='+str(param.fitting_method)+'\n'
     
     '\n'\
         'EXAMPLE:\n' \
