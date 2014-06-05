@@ -168,7 +168,7 @@ def usage():
         '  gaussian kernel is applied in the superior-inferior dimension, then cord is de-straightened as originally.\n' \
         '\n' \
         'USAGE\n' \
-        '  sct_smooth_spinal_cord_straightening.py -i <input_image> -c <centerline/segmentation>\n' \
+        '  sct_smooth_spinalcord.py -i <input_image> -c <centerline/segmentation>\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <anat>         input image to smooth.\n' \
@@ -177,7 +177,7 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -h                help. Show this message.\n' \
         '  -r {0, 1}         remove temporary files. Default=1\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=4.' \
+        '  -s                sigma of the smoothing Gaussian kernel (expressed in voxels). Default=4.' \
         '\n'
 
     sys.exit(2)
