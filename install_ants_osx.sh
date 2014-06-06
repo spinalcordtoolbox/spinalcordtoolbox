@@ -14,18 +14,32 @@ PATH_ANTS="/usr/local/ants"
 PATH_INSTALL="/usr/local/"
 echo
 
+
 # check if user is sudoer
 if [ "$(whoami)" != "root" ]; then
   echo "Sorry, you are not root. Please type: sudo ./install_ants.sh"
   echo
-  exit 1
+  exit
 fi
 
+echo ============
+echo INSTALL ANTS
+echo ============
 # check if folder already exists - if so, delete it
 echo
 echo "Check if ants folder is already there (if so, delete it)..."
 if [ -e "${PATH_ANTS}" ]; then
   echo ".. Yup! found it. "
+  # check if user is sure to delete it
+  echo
+  while true; do
+      read -p 'Are you sure you want to remove your current version of ANTS? [yes/no]: ' yn
+      case $yn in
+          [Yy]* ) break;;
+          [Nn]* ) echo "Exit program"; exit;;
+          * ) echo "Please answer yes or no.";;
+      esac
+  done
   cmd="rm -rf ${PATH_ANTS}"
   echo ">> $cmd"; $cmd
 else
