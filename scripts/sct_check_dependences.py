@@ -58,7 +58,6 @@ def main():
        sys.exit(2)
        
     # check OS
-    print
     print 'Check which OS is running ... '
     if (sys.platform == 'darwin'):
         os_running = 'osx'
@@ -159,7 +158,10 @@ def main():
         # in OSX, c3d is typically installed under /Applications
         (status, output) = commands.getstatusoutput('find /Applications -name "c3d" -type f -print -quit 2>/dev/null')
     if not output:
-        # if it is not OSX, or if it is OSX and it did not find c3d yet
+        # check the typical /usr folder
+        (status, output) = commands.getstatusoutput('find /usr -name "c3d" -type f -print -quit 2>/dev/null')
+    if not output:
+        # if still not found, check everywhere (takes a while)
         (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
     if output:
         print_ok()
