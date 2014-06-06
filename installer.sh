@@ -3,7 +3,7 @@
 # Installer for spinal cord toolbox.
 #
 # This script will install the spinal cord toolbox under and configure your environment.
-# Must be run as an administrator.
+# Must be run as a non-administrator (no sudo).
 # Installation location: /usr/local/spinalcordtoolbox/
 
 # parameters
@@ -13,8 +13,8 @@ SCT_DIR="/usr/local/spinalcordtoolbox"
 echo
 
 # check if user is sudoer
-if [ "$(whoami)" != "root" ]; then
-  echo "Sorry, you are not root. Please type: sudo ./installer"
+if [ "$(whoami)" == "root" ]; then
+  echo "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later."
   echo
   exit 1
 fi
@@ -23,34 +23,34 @@ fi
 echo
 echo "Check if spinalcordtoolbox is already installed (if so, delete it)..."
 if [ -e "${SCT_DIR}" ]; then
-  cmd="rm -rf ${SCT_DIR}"
+  cmd="sudo rm -rf ${SCT_DIR}"
   echo ">> $cmd"; $cmd
 fi
 
 # create folder
 echo
 echo "Create folder: /usr/local/spinalcordtoolbox..."
-cmd="mkdir ${SCT_DIR}"
+cmd="sudo mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
 # copy files
 echo
 echo "Copy toolbox..."
-cmd="cp -r spinalcordtoolbox/ ${SCT_DIR}"
+cmd="sudo cp -r spinalcordtoolbox/ ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
 # copy testing files
 echo
 echo "Copy example data & scripts..."
 if [ -e "../sct_testing" ]; then
-  cmd="rm -rf ../sct_testing"
+  cmd="sudo rm -rf ../sct_testing"
   echo ">> $cmd"; $cmd
 fi
-cmd="mkdir ../sct_testing"
+cmd="sudo mkdir ../sct_testing"
 echo ">> $cmd"; $cmd
-cmd="cp -r spinalcordtoolbox/testing/ ../sct_testing"
+cmd="sudo cp -r spinalcordtoolbox/testing/ ../sct_testing"
 echo ">> $cmd"; $cmd
-cmd="chmod -R 775 ../sct_testing"
+cmd="sudo chmod -R 775 ../sct_testing"
 echo ">> $cmd"; $cmd
 
 # edit bash_profile
@@ -70,20 +70,23 @@ else
     echo 'export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8' >> ~/.bash_profile
   fi
   echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
-  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
+  if [[ "$unamestr" == 'Linux' ]]; then  
+    echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bash_profile
+  else
+    echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
   echo 'export SCT_DIR PATH' >> ~/.bash_profile
 fi
 
 # check if other dependent software are installed
 echo
 echo "Check if other dependent software are installed..."
-cmd="python ${SCT_DIR}/scripts/sct_check_library_existence.py"
+cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
 # display stuff
 echo
 echo "---"
-echo "Done! you can now delete this folder."
+echo "Done! If no error appeared above, you can delete this folder."
 echo "To see all commands available, type \"sct\" then backslash"
 echo "To get more info about the toolbox, please see /usr/local/spinalcordtoolbox/README.txt"
 echo "To get started, look at the created folder: \"sct_testing\""
