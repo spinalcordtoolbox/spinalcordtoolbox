@@ -55,17 +55,18 @@
 # TODO: check if there is an overlap of labels, in case of high curvature and high density of cross along z.
 # TODO: convert gap definition to mm (more intuitive than voxel)
 
+# 2014-06-06: corrected bug related to small FOV volumes Solution: reduced spline order (3), computation of a lot of point (1000)
 
 ## Create a structure to pass important user parameters to the main function
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 10 # gap between landmarks along z
+        self.gapz = 15 # gap between landmarks along z
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        self.fitting_method = 'polynomial' # splines | polynomial
+        self.fitting_method = 'splines' # splines | polynomial
         self.remove_temp_files = 1 # remove temporary files
 
 # check if needed Python libraries are already installed or not
@@ -81,6 +82,7 @@ import numpy
 from scipy import interpolate # TODO: check if used
 from sympy.solvers import solve
 from sympy import Symbol
+from math import floor
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
@@ -247,11 +249,14 @@ def main():
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy.
     
     # find derivative of polynomial
+    #nb_interval = floor((z_centerline[-1]-z_centerline[0])/gapz)   friday
     iz_curved = [i for i in range (0, nz, gapz)]
-    iz_curved[-1] = nz-1
+    #iz_curved.append(nz-1)     #friday
+    # print iz_curved
     n_iz_curved = len(iz_curved)
+    # print n_iz_curved
     landmark_curved = [ [ [ 0 for i in range(0,3)] for i in range(0,5) ] for i in iz_curved ]
-    
+    # print x_centerline_deriv,len(x_centerline_deriv)
     # landmark[a][b][c]
     #   a: index along z. E.g., the first cross with have index=0, the next index=1, and so on...
     #   b: index of element on the cross. I.e., 0: center of the cross, 1: +x, 2 -x, 3: +y, 4: -y
@@ -276,6 +281,7 @@ def main():
     elif centerline_fitting=='splines':
         for index in range(0, n_iz_curved, 1):
             # calculate d (ax+by+cz+d=0)
+            # print iz_curved[index]
             a=x_centerline_deriv[iz_curved[index]]
             b=y_centerline_deriv[iz_curved[index]]
             c=z_centerline_deriv[iz_curved[index]]
@@ -354,18 +360,18 @@ def main():
         # set x, y and z coordinates for landmarks -y
         landmark_straight[index][4][0], landmark_straight[index][4][1], landmark_straight[index][4][2] = x0, y0-gapxy, iz_straight[index]
     
-    ## display
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111, projection='3d')
-    ##ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
-    #ax.plot([landmark_straight[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    # # display
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # #ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
+    # ax.plot([landmark_straight[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
     #        [landmark_straight[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
     #        [landmark_straight[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-    #ax.set_xlabel('x')
-    #ax.set_ylabel('y')
-    #ax.set_zlabel('z')
-    #plt.show()
-    
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # plt.show()
+    #
     
     # Create NIFTI volumes with landmarks
     #==========================================================================================
@@ -515,7 +521,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     print '\nFit centerline using B-spline approximation'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     
-    nurbs = NURBS(3,1000,points) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(4,1000,points) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
@@ -578,8 +584,8 @@ def usage():
         '  -w           interpolation option when applying the transformation to input image using the syntax of  \n'\
         '               WarpImageMultiTransform (example --use-BSpline to use 3rd order B-Spline Interpolation) \n' \
         '  -h           help. Show this message.\n' \
-        '  -f           option to choose the centerline fitting method: \'splines\' to fit the centerline with \n'\
-        '               splines, \'polynomial\' to fit the centerline with a polynome. Default='+str(param.fitting_method)+'\n'
+        '  -f           option to choose the centerline fitting method: splines to fit the centerline with \n'\
+        '               splines, polynomial to fit the centerline with a polynome. Default='+str(param.fitting_method)+'\n'
     
     '\n'\
         'EXAMPLE:\n' \
