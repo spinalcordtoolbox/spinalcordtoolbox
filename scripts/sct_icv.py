@@ -282,10 +282,21 @@ def main():
 def usage():
     """ Print usage. """
     path_func, file_func, ext_func = extract_fname(sys.argv[0])
-    print '\nUsage:\n' \
+    print '\n' \
+        ''+os.path.basename(__file__)+'\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
+        '\n'\
+        'DESCRIPTION\n' \
+        '  This program extracts raw intracranial volume in cubic millimeters.\n' \
+        '  Method: bias field correction (N4) followed by SIENAx or RBM. RBM (reverse MNI brain masking) is adapted from Keihaninejad (2010).' \
+        '\n' \
+        'USAGE\n' \
         '   '+file_func+ext_func+' -i <inputvol> [options]\n\n' \
-        'Options:\n' \
+        'MANDATORY ARGUMENTS\n' \
         '  -i inputvol          image to extract values from\n' \
+        '\n' \
+        'OPTIONAL ARGUMENTS\n' \
         '  -c contrast          image contrast. t1 or t2 (default=t1), e.g. -c t1\n' \
         '  -o output            set output directory (create directory if not exists) \n' \
         '  -d method            method to estimate ICV. sienax or rbm (default=sienax), e.g. -d rbm \n' \
