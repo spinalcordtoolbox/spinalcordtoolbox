@@ -122,6 +122,7 @@ def main():
             add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
                 'FSLDIR='+path_fsl+'\n' \
                 '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
+                'PATH=${FSLDIR}/bin:${PATH}\n' \
                 'export FSLDIR PATH')
             restart_terminal = 1
 
