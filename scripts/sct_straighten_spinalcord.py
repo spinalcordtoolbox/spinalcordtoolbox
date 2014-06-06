@@ -521,7 +521,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     print '\nFit centerline using B-spline approximation'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     
-    nurbs = NURBS(4,1000,points) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(3,1000,points) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
