@@ -448,15 +448,20 @@ void SpinalCord::saveCrossSectionalArea(string filename, Image3D* im)
         {
             CVector3 point = (*centerline_)[i];
             im->TransformPhysicalPointToIndex(point, index);
-            if (index[1] >= 0 && index[1] < size_image)
+            if (index[1] >= 0 && index[1] <= size_image)
             {
-                value_mean += (*crossSectionalArea_)[i];
-                nb_mean += 1.0;
-                if (index[1] != last_index[1]) {
-                    cross.push_back(make_pair(index[1],value_mean/nb_mean));
+                if (index[1] == last_index[1]) {
+                    value_mean += (*crossSectionalArea_)[i];
+                    nb_mean += 1.0;
+                    if (i == crossSectionalArea_->size() && index[1] < size_image)
+                        cross.push_back(make_pair(last_index[1]+1,value_mean/nb_mean));
+                }
+                else {
+                    if (index[1] <= size_image)
+                        cross.push_back(make_pair(last_index[1]+1,value_mean/nb_mean));
                     last_index = index;
-                    value_mean = 0.0;
-                    nb_mean = 0;
+                    value_mean = (*crossSectionalArea_)[i];
+                    nb_mean = 1.0;
                 }
             }
         } else {
