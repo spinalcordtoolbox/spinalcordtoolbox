@@ -63,7 +63,7 @@ class param:
         self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 20 # gap between landmarks along z
+        self.gapz = 10 # gap between landmarks along z
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.fitting_method = 'polynomial' # splines | polynomial
         self.remove_temp_files = 1 # remove temporary files
@@ -103,14 +103,17 @@ def main():
     interpolation_warp = ''
     centerline_fitting = param.fitting_method
     
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    print path_sct
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
     
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = '/home/django/jcohen2/data/11shortFOV/tmp.140605093151/data_rpi.nii.gz'
-        fname_centerline = '/home/django/jcohen2/data/11shortFOV/tmp.140605093151/segmentation_rpi.nii.gz'
+        fname_anat = path_sct+'/testing/data/11shortFOV/t1_cropped_short.nii.gz'
+        fname_centerline = path_sct+'/testing/data/11shortFOV/spine_cropped_short.nii.gz'
         # fname_anat = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_rpi.nii.gz'
         # fname_centerline = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_centerline.nii.gz'
         remove_temp_files = 0
@@ -219,7 +222,10 @@ def main():
     
     # TODO: find a way to do the previous loop with this, which is more neat:
     # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-    
+    # plt.plot(y_centerline,z_centerline)
+    # plt.show()
+
+
     # clear variable
     del data
     
@@ -230,6 +236,10 @@ def main():
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit,polyx,polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
 
+    # plt.plot(y_centerline,z_centerline)
+    # plt.plot(y_centerline_fit,z_centerline)
+    # plt.show()
+
     
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -238,6 +248,7 @@ def main():
     
     # find derivative of polynomial
     iz_curved = [i for i in range (0, nz, gapz)]
+    iz_curved[-1] = nz-1
     n_iz_curved = len(iz_curved)
     landmark_curved = [ [ [ 0 for i in range(0,3)] for i in range(0,5) ] for i in iz_curved ]
     
@@ -297,7 +308,7 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     
-    # # display
+    # #display
     # fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
     # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
@@ -308,7 +319,6 @@ def main():
     # ax.set_ylabel('y')
     # ax.set_zlabel('z')
     # plt.show()
-    
     
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
@@ -505,7 +515,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     print '\nFit centerline using B-spline approximation'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     
-    nurbs = NURBS(4,500,points) # for the third argument (number of points), give at least len(z_centerline)
+    nurbs = NURBS(3,1000,points) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
