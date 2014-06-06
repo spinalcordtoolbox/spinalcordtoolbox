@@ -63,7 +63,7 @@ class param:
         self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 10 # gap between landmarks along z
+        self.gapz = 20 # gap between landmarks along z
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.fitting_method = 'polynomial' # splines | polynomial
         self.remove_temp_files = 1 # remove temporary files
