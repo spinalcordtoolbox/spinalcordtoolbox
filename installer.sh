@@ -36,7 +36,7 @@ echo ">> $cmd"; $cmd
 # copy files
 echo
 echo "Copy toolbox..."
-cmd="sudo cp -r spinalcordtoolbox/ ${SCT_DIR}"
+cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
 # copy testing files
@@ -63,17 +63,15 @@ else
   echo '' >> ~/.bash_profile
   echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
   echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bash_profile
+  echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
   unamestr=`uname`
   if [[ "$unamestr" == 'Linux' ]]; then
     echo 'export PATH=${PATH}:$SCT_DIR/bin/Debian_7.5' >> ~/.bash_profile
-  else
-    echo 'export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8' >> ~/.bash_profile
-  fi
-  echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
-  if [[ "$unamestr" == 'Linux' ]]; then  
     echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bash_profile
   else
+    echo 'export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8' >> ~/.bash_profile
     echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
+  fi
   echo 'export SCT_DIR PATH' >> ~/.bash_profile
 fi
 
