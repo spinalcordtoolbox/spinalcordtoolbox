@@ -72,7 +72,8 @@ try:
 except ImportError:
     print '--- scipy not installed! ---'
     sys.exit(2)
-
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 class NURBS():
     def __init__(self,degre=3,precision=1000,liste=None,sens=False):
         """
@@ -275,6 +276,22 @@ class NURBS():
         P_x_d=coord_mean_d[:,:][:,0]
         P_y_d=coord_mean_d[:,:][:,1]
         P_z_d=coord_mean_d[:,:][:,2]
+
+
+        # p=len(P_x)/3
+        # n=1
+        # # plotting a tangent
+        # p1 = [P_x[p],P_y[p],P_z[p]]
+        # p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
+        #        #### 3D plot
+        # fig1 = plt.figure()
+        # ax = Axes3D(fig1)
+        # #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
+        # ax.plot(P_x,P_y,P_z,zdir='z')
+        # ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
+        # #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
+        # plt.show()
+
 
         #print 'Construction effectuee'
         return [P_x,P_y,P_z], [P_x_d,P_y_d,P_z_d]
