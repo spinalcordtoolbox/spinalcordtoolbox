@@ -45,7 +45,7 @@ def main():
     fname_data = ''
     fname_landmarks = ''
     fname_seg = ''
-    output = param.output_type
+    output_type = param.output_type
     remove_temp_files = param.remove_temp_files
     speed = param.speed
     start_time = time.time()
@@ -79,7 +79,7 @@ def main():
         elif opt in ("-m"):
             fname_seg = arg
         elif opt in ("-o"):
-            output = int(arg)
+            output_type = int(arg)
         elif opt in ("-r"):
             remove_temp_files = int(arg)
         elif opt in ("-s"):
@@ -94,7 +94,7 @@ def main():
     print '.. Data:                 '+fname_data
     print '.. Landmarks:            '+fname_landmarks
     print '.. Segmentation:         '+fname_seg
-    print '.. Output type:          '+str(output)
+    print '.. Output type:          '+str(output_type)
     print '.. Speed:                '+speed
     print '.. Remove temp files:    '+str(remove_temp_files)
 
