@@ -241,9 +241,9 @@ def usage():
         '  -m <segmentation>            segmentation or centerline. \n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+param.output_type+'\n' \
+        '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+str(param.output_type)+'\n' \
         '  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default='+param.speed+'\n' \
-        '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
+        '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n'
 
 
     # exit program
