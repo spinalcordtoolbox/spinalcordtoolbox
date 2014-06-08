@@ -45,8 +45,9 @@ def main():
     fname_data = ''
     fname_landmarks = ''
     fname_seg = ''
-    output_type = param.output_type
+    output = param.output_type
     remove_temp_files = param.remove_temp_files
+    speed = param.speed
     start_time = time.time()
 
     # get path of the toolbox
