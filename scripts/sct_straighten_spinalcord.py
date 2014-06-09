@@ -82,7 +82,6 @@ import numpy
 from scipy import interpolate # TODO: check if used
 from sympy.solvers import solve
 from sympy import Symbol
-from math import floor
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
@@ -224,8 +223,8 @@ def main():
     
     # TODO: find a way to do the previous loop with this, which is more neat:
     # [numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape) for iz in range(0,nz,1)]
-    # plt.plot(y_centerline,z_centerline)
-    # plt.show()
+#    plt.plot(y_centerline,z_centerline)
+#    plt.show()
 
 
     # clear variable
@@ -237,10 +236,10 @@ def main():
         x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit,polyx,polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
-
-    # plt.plot(y_centerline,z_centerline)
-    # plt.plot(y_centerline_fit,z_centerline)
-    # plt.show()
+#
+#    plt.plot(y_centerline,z_centerline)
+#    plt.plot(y_centerline_fit,z_centerline)
+#    plt.show()
 
     
     # Get coordinates of landmarks along curved centerline
@@ -249,12 +248,13 @@ def main():
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy.
     
     # find derivative of polynomial
-    #nb_interval = floor((z_centerline[-1]-z_centerline[0])/gapz)   friday
-    iz_curved = [i for i in range (0, nz, gapz)]
-    #iz_curved.append(nz-1)     #friday
-    # print iz_curved
+    step_z = round(nz/gapz)
+    #iz_curved = [i for i in range (0, nz, gapz)]
+    iz_curved = [i*step_z for i in range (0, gapz)]
+    iz_curved.append(nz-1)     
+    print iz_curved, len(iz_curved)
     n_iz_curved = len(iz_curved)
-    # print n_iz_curved
+    #print n_iz_curved
     landmark_curved = [ [ [ 0 for i in range(0,3)] for i in range(0,5) ] for i in iz_curved ]
     # print x_centerline_deriv,len(x_centerline_deriv)
     # landmark[a][b][c]
@@ -314,25 +314,26 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     
-    # #display
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
-    # ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-    #        [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-    #        [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-    # ax.set_xlabel('x')
-    # ax.set_ylabel('y')
-    # ax.set_zlabel('z')
-    # plt.show()
-    
+#    #display
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'r')
+#    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+#           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+#           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+#    ax.set_xlabel('x')
+#    ax.set_ylabel('y')
+#    ax.set_zlabel('z')
+#    plt.show()
+
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
     print '\nGet coordinates of landmarks along straight centerline...'
     landmark_straight = [ [ [ 0 for i in range(0,3)] for i in range (0,5) ] for i in iz_curved ] # same structure as landmark_curved
     
     # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the curved centerline (approximation curve --> line)
-    iz_straight = [0 for i in range (0, nz, gapz)]
+    iz_straight = [0 for i in range (0,gapz+1)]
+    print iz_straight,len(iz_straight)
     for index in range(1, n_iz_curved, 1):
         # compute vector between two consecutive points on the curved centerline
         vector_centerline = [x_centerline_fit[iz_curved[index]] - x_centerline_fit[iz_curved[index-1]], \
