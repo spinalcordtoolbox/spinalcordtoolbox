@@ -58,7 +58,9 @@ echo ">> $cmd"; $cmd
 echo
 echo "Edit .bash_profile..."
 if grep -q "SPINALCORDTOOLBOX" ~/.bash_profile; then
-  echo "  .bash_profile was already modified previously."
+  echo "Deleting previous sct entries in .bash_profile"
+  cmd="sed -i -e '/SCT_DIR/d' -e '/SPINALCORDTOOLBOX/d' ~/.bash_profile"
+  echo ">> $cmd"; $cmd
 else
   echo '' >> ~/.bash_profile
   echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
