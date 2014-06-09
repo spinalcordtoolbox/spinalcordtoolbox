@@ -157,7 +157,7 @@ except ImportError:
     sys.exit(2)
 try:
     # library of calculations and processing matrices
-    from numpy import mean, asarray, std, zeros, sum, ones, dot, eye, sqrt, empty, size, linspace, abs, amin, argmin, concatenate, array
+    from numpy import mean, asarray, std, zeros, sum, ones, dot, eye, sqrt, empty, size, linspace, abs, amin, argmin
     from numpy.linalg import solve,pinv
 except ImportError:
     print '--- numpy not installed! Exit program. ---'
@@ -316,9 +316,6 @@ def main():
             # Select the slices of the input image corresponding to the vertebral levels asked
             slice_choice = 1
             slice_number = get_slices_matching_with_vertebral_levels(data,fname_tracts,vert_levels_list)
-    else:
-        vert_levels_list = get_slices_matching_with_vertebral_levels(data,fname_tracts)
-
 
 
     # Extract slices chosen
@@ -406,8 +403,7 @@ def main():
           
     # Pretreatment before extraction
     [data_new,tracts_new,  number_tracts] = pretreatment(data, tracts, nb_slice)
-
-    #TODO: only estimate the metric value for selected tracts AND NOT: for all and then display the metric value for the selected tracts (what this script currently does)
+  
     # Extraction with weighted_average
     if mode == "weightedaverage":
   
@@ -436,9 +432,6 @@ def main():
   
         # Write mode of file
         fid_metric = open(fname_output, 'w')
-
-        # Write selected vertebral levels
-        fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
  
         # Write slices chosen
         fid_metric.write('%s\t%i to %i\n\n'% ('Slices : ',nb_slice[0],nb_slice[1]))
@@ -592,6 +585,7 @@ def pretreatment(data_start, tracts_start, nb_slice):
   
     # Size of tracts
     print '\nVerify tract size...'
+ 
     # Extract total number of tracts
     numtracts = len(tracts_start)
  
@@ -713,7 +707,7 @@ def pretreatment(data_start, tracts_start, nb_slice):
 #=======================================================================================================================
   
 def weighted_average(data_wa, tracts_wa, numtracts_wa):
-
+  
     # Estimation with weighted average
     print '\nEstimation with weighted average ...'
  
@@ -731,11 +725,10 @@ def weighted_average(data_wa, tracts_wa, numtracts_wa):
         if sum(tracts_wa[i, 0]) != 0:
             X_wa[i] = sum(partial_data) / sum(tracts_wa[i, 0])
   
-        # Set the metric estimation to 0 for tracts that are zero everywhere
-        else:
-            print '\tWARNING: Tract number ' + str(i) + ' is zero everywhere . Metric value will be set to 0 for this tract.'
-            X_wa[i] = 0.0
-            #TODO: the program displays a warning message with this warning, it would be cleaner not to display it
+        # Quit program in case tracts is zero everywhere
+        else :
+            print '\tERROR: Tract number ' + str(i) + ' is zero everywhere . Exit program.'
+            sys.exit(2)
   
         # Determinate standard deviation
         std_wa[i] = std(partial_data)
@@ -878,7 +871,7 @@ def MAP(P, Y, R_X, sigmaX, sigmaN, U_comp, X0):
 #=======================================================================================================================
 # get_slices_matching_with_vertebral_levels
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_levels_list=None):
+def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_levels_list):
     """Return the slices of the input image corresponding to the vertebral levels given as argument."""
 
     # check existence of "vertebral_labeling.nii.gz" file
@@ -917,55 +910,38 @@ def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_leve
         print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
         exit_program = 1
 
-    # Compute the minimum and maximum vertebral levels available in the input image
-    min_vert_level, max_vert_level = int(numpy.amin(concatenate(data_vert_labeling,axis=None))), int(numpy.amax(concatenate(data_vert_labeling,axis=None)))
+    # Check if the vertebral levels selected are not available in the input image
+    if vert_levels_list[0] < numpy.amin(data_vert_labeling) or vert_levels_list > numpy.amax(data_vert_labeling):
+        print '\tERROR: The vertebral levels you selected are not available in the input image.'
+        exit_program = 1
 
-    if vert_levels_list!=None:
-        # Check if the vertebral levels selected are available in the input image
-        if (vert_levels_list[0] < min_vert_level or vert_levels_list[1] > max_vert_level):
-            print '\tERROR: The vertebral levels you selected are not available in the input image.'
-            print 'Minimum level asked: '+ str(vert_levels_list[0])
-            print '...minimum level available in the input image: '+str(min_vert_level)
-            print 'Maximum level asked: '+ str(vert_levels_list[1])
-            print '...maximum level available in the input image: '+str(max_vert_level)
-            exit_program = 1
-
-        # Exit program if error is detect in sizes
-        if exit_program == 1 :
-            print '\nExit program.\n'
-            sys.exit(2)
+    # Exit program if error is detect in sizes
+    if exit_program == 1 :
+        print '\nExit program.\n'
+        sys.exit(2)
 
 
-        # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
-        X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
-        # Record the bottom of slice of this level
-        slice_min_bottom = min(Z_bottom_level)
+    # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
+    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
+    # Record the bottom of slice of this level
+    slice_min_bottom = min(Z_bottom_level)
 
-        # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
-        X_top_level, Y_top_level, Z_top_level = (data_vert_labeling==vert_levels_list[1]).nonzero()
-        # Record the top slice of this level
-        slice_max_top = max(Z_top_level)
+    # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
+    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling==vert_levels_list[1]).nonzero()
+    # Record the top slice of this level
+    slice_max_top = max(Z_top_level)
 
-        # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral level
-        if slice_min_bottom > slice_max_top:
-            slice_min = min(Z_top_level)
-            slice_max = max(Z_bottom_level)
-        else:
-            slice_min = min(Z_bottom_level)
-            slice_max = max(Z_top_level)
-
-        # Return the slice numbers in the right format
-        return str(slice_min)+':'+str(slice_max)
-
+    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral level
+    if slice_min_bottom > slice_max_top:
+        slice_min = min(Z_top_level)
+        slice_max = max(Z_bottom_level)
     else:
+        slice_min = min(Z_bottom_level)
+        slice_max = max(Z_top_level)
 
-        # Exit program if error is detect in sizes
-        if exit_program == 1 :
-            print '\nExit program.\n'
-            sys.exit(2)
+    # Return the slice numbers in the right format
+    return str(slice_min)+':'+str(slice_max)
 
-        # Return the minimum and maximum vertebral levels available in the input image
-        return [min_vert_level, max_vert_level]
   
 #=======================================================================================================================
 # usage
