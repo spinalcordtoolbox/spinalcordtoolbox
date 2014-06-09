@@ -115,6 +115,9 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
+# TODO: HIGH PRIORITY!! FIX BUG WHEN USER DOES NOT HAVE vertebral_labeling.nii.gz.
+# TODO: NEVER hard code file name such as: vertebral_labeling.nii.gz. Especially when duplicated in the code!
+
 
 
 # Initialisation of default parameters
@@ -295,7 +298,7 @@ def main():
     # Make data in array format
     data = data.get_data()
 
-
+    
     # Select the input image slices corresponding to the selected vertebral levels
     if vertebral_levels != '':
         if slice_choice == 1:
@@ -318,7 +321,6 @@ def main():
             slice_number = get_slices_matching_with_vertebral_levels(data,fname_tracts,vert_levels_list)
     else:
         vert_levels_list = get_slices_matching_with_vertebral_levels(data,fname_tracts)
-
 
 
     # Extract slices chosen
