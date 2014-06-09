@@ -5,6 +5,8 @@
 # Author: Julien Cohen-Adad, Benjamin De Leener
 #
 
+# TODO: remove quick fix with folder_sct_temp
+
 import os
 import getopt
 import sys
@@ -150,8 +152,13 @@ sct.run('rm '+folder_sct+'spinalcordtoolbox/scripts/*.pyc')
 if os.path.exists(folder_sct+'spinalcordtoolbox/scripts/.idea'):
     sct.run('rm -rf '+folder_sct+'spinalcordtoolbox/scripts/.idea')
 
+# go to parent directory to be able to tar without de-tarring error in mac OSX
+os.chdir('../')
+
 # compress folder
-sct.run('tar -cvzf ../spinalcordtoolbox_v'+version+'.tar.gz '+folder_sct)
+folder_sct_temp = 'spinalcordtoolbox_v'+version+'/'
+
+sct.run('tar -cvzf spinalcordtoolbox_v'+version+'.tar.gz '+folder_sct_temp)
 
 print "done!\n"
 

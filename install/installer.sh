@@ -77,6 +77,8 @@ else
 fi
 echo 'export SCT_DIR PATH' >> ~/.bash_profile
 
+# source .bash_profile
+source ~/.bash_profile
 
 # check if other dependent software are installed
 echo
@@ -87,11 +89,15 @@ echo ">> $cmd"; $cmd
 # display stuff
 echo
 echo "---"
-echo "Done! If no error appeared above, you can delete this folder."
+echo "Done! If no error appeared above, you can delete this folder by typing:"
+echo "> cd .."
+echo "> rm -rf spinalcordtoolbox_v*"
+echo
 echo "To see all commands available, type \"sct\" then backslash"
-echo "To get more info about the toolbox, please see /usr/local/spinalcordtoolbox/README.txt"
-echo "To get started, look at the created folder: \"sct_testing\""
-echo "Please send your comments here: http://sourceforge.net/p/spinalcordtoolbox/discussion/"
+echo 
+echo "To get started, go the created folder by typing:"
+echo "> cd sct_testing"
+echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 echo "Enjoy :-)"
 echo "---"
 echo
