@@ -61,20 +61,22 @@ if grep -q "SPINALCORDTOOLBOX" ~/.bash_profile; then
   echo "Deleting previous sct entries in .bash_profile"
   cmd="awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
   echo ">> $cmd"; $cmd
-else
-  echo '' >> ~/.bash_profile
-  echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
-  echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bash_profile
-  echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
-  echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bash_profile
-  unamestr=`uname`
-  if [[ "$unamestr" == 'Linux' ]]; then
-    echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bash_profile
-  else
-    echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
-  fi
-  echo 'export SCT_DIR PATH' >> ~/.bash_profile
 fi
+
+# edit .bash_profile
+echo '' >> ~/.bash_profile
+echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
+echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bash_profile
+echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
+echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bash_profile
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
+  echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bash_profile
+else
+  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
+fi
+echo 'export SCT_DIR PATH' >> ~/.bash_profile
+
 
 # check if other dependent software are installed
 echo
