@@ -126,74 +126,74 @@ def main():
                 'export FSLDIR PATH')
             restart_terminal = 1
 
-    # check if ANTS is installed
-    print_line('Check if ANTs is installed .................... ')
-    (status, output) = commands.getstatusoutput('find /usr -name "antsRegistration" -type f -print -quit 2>/dev/null')
-    if output:
-        print_ok()
-        path_ants = os.path.dirname(output)
-        print '  '+path_ants
-    else:
-        print_fail()
-        print '  ANTs is not installed! Follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/ants_installation/'
-        ants_is_installed = 0
-        install_software = 1
+    # # check if ANTS is installed
+    # print_line('Check if ANTs is installed .................... ')
+    # (status, output) = commands.getstatusoutput('find /usr -name "antsRegistration" -type f -print -quit 2>/dev/null')
+    # if output:
+    #     print_ok()
+    #     path_ants = os.path.dirname(output)
+    #     print '  '+path_ants
+    # else:
+    #     print_fail()
+    #     print '  ANTs is not installed! Follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/ants_installation/'
+    #     ants_is_installed = 0
+    #     install_software = 1
+    # 
+    # # check if ANTS is declared
+    # if ants_is_installed:
+    #     print_line('Check if ANTs is declared ..................... ')
+    #     (status, output) = commands.getstatusoutput('which antsRegistration')
+    #     if output:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  ANTs is not declared! Modifying .bash_profile ...'
+    #         add_bash_profile('#ANTS (added on '+time.strftime("%Y-%m-%d")+')\n' \
+    #             'PATH=${PATH}:'+path_ants)
+    #         restart_terminal = 1
 
-    # check if ANTS is declared
-    if ants_is_installed:
-        print_line('Check if ANTs is declared ..................... ')
-        (status, output) = commands.getstatusoutput('which antsRegistration')
-        if output:
-            print_ok()
-        else:
-            print_warning()
-            print '  ANTs is not declared! Modifying .bash_profile ...'
-            add_bash_profile('#ANTS (added on '+time.strftime("%Y-%m-%d")+')\n' \
-                'PATH=${PATH}:'+path_ants)
-            restart_terminal = 1
-
-    # check if C3D is installed
-    print_line('Check if c3d is installed ..................... ')
-    output = ''
-    if os_running == 'osx':
-        # in OSX, c3d is typically installed under /Applications
-        (status, output) = commands.getstatusoutput('find /Applications -name "c3d" -type f -print -quit 2>/dev/null')
-    if not output:
-        # check the typical /usr folder
-        (status, output) = commands.getstatusoutput('find /usr -name "c3d" -type f -print -quit 2>/dev/null')
-    if not output:
-        # if still not found, check everywhere (takes a while)
-        (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
-    if output:
-        print_ok()
-        path_c3d = os.path.dirname(output)
-        print '  '+path_c3d
-    else:
-        print_fail()
-        print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.C3D'
-        c3d_is_installed = 0
-        install_software = 1
-
-    # check if C3D is declared
-    if c3d_is_installed:
-        print_line('Check if c3d is declared ...................... ')
-        (status, output) = commands.getstatusoutput('which c3d')
-        if output:
-            print_ok()
-        else:
-            print_warning()
-            print '  c3d is not declared! Modifying .bash_profile ...'
-            add_bash_profile('#C3D (added on '+time.strftime("%Y-%m-%d")+')\n' \
-                'PATH=${PATH}:'+path_c3d)
-            restart_terminal = 1
-
-    if install_software:
-        print '\nDone! Please install the required software, then run this script again.'
-    elif restart_terminal:
-        print '\nDone! Please restart your Terminal for changes to take effect.'
-    else:
-        print '\nDone! Everything is in order :-)'
-    print
+    # # check if C3D is installed
+    # print_line('Check if c3d is installed ..................... ')
+    # output = ''
+    # if os_running == 'osx':
+    #     # in OSX, c3d is typically installed under /Applications
+    #     (status, output) = commands.getstatusoutput('find /Applications -name "c3d" -type f -print -quit 2>/dev/null')
+    # if not output:
+    #     # check the typical /usr folder
+    #     (status, output) = commands.getstatusoutput('find /usr -name "c3d" -type f -print -quit 2>/dev/null')
+    # if not output:
+    #     # if still not found, check everywhere (takes a while)
+    #     (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
+    # if output:
+    #     print_ok()
+    #     path_c3d = os.path.dirname(output)
+    #     print '  '+path_c3d
+    # else:
+    #     print_fail()
+    #     print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.C3D'
+    #     c3d_is_installed = 0
+    #     install_software = 1
+    # 
+    # # check if C3D is declared
+    # if c3d_is_installed:
+    #     print_line('Check if c3d is declared ...................... ')
+    #     (status, output) = commands.getstatusoutput('which c3d')
+    #     if output:
+    #         print_ok()
+    #     else:
+    #         print_warning()
+    #         print '  c3d is not declared! Modifying .bash_profile ...'
+    #         add_bash_profile('#C3D (added on '+time.strftime("%Y-%m-%d")+')\n' \
+    #             'PATH=${PATH}:'+path_c3d)
+    #         restart_terminal = 1
+    # 
+    # if install_software:
+    #     print '\nDone! Please install the required software, then run this script again.'
+    # elif restart_terminal:
+    #     print '\nDone! Please restart your Terminal for changes to take effect.'
+    # else:
+    #     print '\nDone! Everything is in order :-)'
+    # print
 
 
 # Print without new carriage return
