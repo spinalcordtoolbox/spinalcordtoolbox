@@ -139,7 +139,7 @@ sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/data')
 sct.run('cp -r ../testing/data/errsm_23 '+folder_sct+'spinalcordtoolbox/testing/data/')
 
 # remove .DS_Store files
-sct.run('find . -type f -name .DS_Store -delete')
+sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
 
 # remove AppleDouble files - doesn't work on Linux
 if OSname == 'osx':
