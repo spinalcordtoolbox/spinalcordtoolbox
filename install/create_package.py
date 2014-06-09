@@ -28,14 +28,14 @@ def usage():
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,debian}. Default=osx.\n' \
+        '  -s <OS name>      name of the OS {osx,debian}.\n' \
         '\n'\
         'EXAMPLE:\n' \
         '  create_package.py -s debian\n'
     sys.exit(2)
 
 listOS = ['osx','debian']
-OSname = listOS[0]
+OSname = ''
 # Check input param
 try:
     opts, args = getopt.getopt(sys.argv[1:],'hs:')
@@ -71,9 +71,9 @@ sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 if OSname == 'osx':
-    sct.run('cp -r ../bin/OSX_10.6-7-8/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r OSX_10.6.7.8/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r OSX_10.6.7.8/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r ../bin/OSX/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r OSX/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r OSX/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r ../lib '+folder_sct+'spinalcordtoolbox/')
 elif OSname == 'debian':
     sct.run('cp -r ../bin/Debian_7.5/* '+folder_sct+'spinalcordtoolbox/bin/')
