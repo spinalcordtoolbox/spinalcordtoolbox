@@ -104,8 +104,8 @@ class NURBS():
             P_x = [x[0] for x in liste]
             P_y = [x[1] for x in liste]
             P_z = [x[2] for x in liste]
-
-            self.nbControle = len(P_z)/10  ## permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
+            
+            self.nbControle = len(P_z)/7  ## permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
             self.pointsControle = self.reconstructGlobalApproximation(P_x,P_y,P_z,self.degre,self.nbControle)
             self.courbe3D, self.courbe3D_deriv= self.construct3D(self.pointsControle,self.degre,self.precision)
 
@@ -257,40 +257,54 @@ class NURBS():
             P_y_d.append(sum_num_y_der)
             P_z_d.append(sum_num_z_der)
 
-        #on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  . Si non necessaire commenter les lignes 260->277
+        #on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
         P_x=array(P_x)
         P_y=array(P_y)
+        P_x_d=array(P_x_d)
+        P_y_d=array(P_y_d)
+        P_z_d=array(P_z_d)
         P_z=array([int(round(P_z[i])) for i in range(0,len(P_z))])
+    
+        #not perfect but works (if "enough" points), in order to deal with missing z slices
+        for i in range (min(P_z),max(P_z)+1,1):
+            if (i in P_z) is False :
+                #print ' Missing z slice '
+                #print i
+                P_z = insert(P_z,where(P_z==i-1)[-1][-1]+1,i)
+                P_x = insert(P_x,where(P_z==i-1)[-1][-1]+1,(P_x[where(P_z==i-1)[-1][-1]+1-1]+P_x[where(P_z==i-1)[-1][-1]+1+1])/2)
+                P_y = insert(P_y,where(P_z==i-1)[-1][-1]+1,(P_y[where(P_z==i-1)[-1][-1]+1-1]+P_y[where(P_z==i-1)[-1][-1]+1+1])/2)
+                P_x_d = insert(P_x_d,where(P_z==i-1)[-1][-1]+1,(P_x_d[where(P_z==i-1)[-1][-1]+1-1]+P_x_d[where(P_z==i-1)[-1][-1]+1+1])/2)
+                P_y_d = insert(P_y_d,where(P_z==i-1)[-1][-1]+1,(P_y_d[where(P_z==i-1)[-1][-1]+1-1]+P_y_d[where(P_z==i-1)[-1][-1]+1+1])/2)
+                P_z_d = insert(P_z_d,where(P_z==i-1)[-1][-1]+1,(P_z_d[where(P_z==i-1)[-1][-1]+1-1]+P_z_d[where(P_z==i-1)[-1][-1]+1+1])/2)
+
+
         coord_mean = array([[mean(P_x[P_z==i]),mean(P_y[P_z==i]),i] for i in range(min(P_z),max(P_z)+1,1)])
 
         P_x=coord_mean[:,:][:,0]
         P_y=coord_mean[:,:][:,1]
 
-        P_x_d=array(P_x_d)
-        P_y_d=array(P_y_d)
-        P_z_d=array(P_z_d)
         coord_mean_d = array([[mean(P_x_d[P_z==i]),mean(P_y_d[P_z==i]),mean(P_z_d[P_z==i])] for i in range(min(P_z),max(P_z)+1,1)])
 
         P_z=coord_mean[:,:][:,2]
-
+    
         P_x_d=coord_mean_d[:,:][:,0]
         P_y_d=coord_mean_d[:,:][:,1]
         P_z_d=coord_mean_d[:,:][:,2]
+        print P_x_d,P_y_d,P_z_d
 
-
-        # p=len(P_x)/3
-        # n=1
-        # # plotting a tangent
-        # p1 = [P_x[p],P_y[p],P_z[p]]
-        # p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
-        #        #### 3D plot
-        # fig1 = plt.figure()
-        # ax = Axes3D(fig1)
-        # #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
-        # ax.plot(P_x,P_y,P_z,zdir='z')
-        # ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
-        # #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
-        # plt.show()
+#        p=len(P_x)/3
+#        n=1
+#        #plotting a tangent
+#        p1 = [P_x[p],P_y[p],P_z[p]]
+#        p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
+#                #### 3D plot
+#        fig1 = plt.figure()
+#        ax = Axes3D(fig1)
+#        #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
+#        ax.plot(P_x,P_y,P_z,zdir='z')
+#        ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
+#        #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
+#        plt.show()
 
 
         #print 'Construction effectuee'
