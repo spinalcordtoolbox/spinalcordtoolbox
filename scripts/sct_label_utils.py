@@ -83,7 +83,7 @@ def main():
             output_level = int(arg)
 
     # display usage if a mandatory argument is not provided
-    if fname_label == '' or fname_label_output == '':
+    if fname_label == '':
         usage()
         
     # check existence of input files
@@ -124,6 +124,9 @@ def main():
         output_level = 1
     elif type_process == 'write-vert-levels':
         write_vertebral_levels(data,fname_ref)
+    elif type_process == 'display-voxel':
+        display_voxel(data)
+        output_level = 1
 
     if (output_level == 0):
         hdr.set_data_dtype('int32') # set imagetype to uint8
@@ -416,6 +419,13 @@ def write_vertebral_levels(data,fname_vert_level_input):
             for k in range(0,len(vert)-1):
                 if vert[k+1] < Y[i] <= vert[k]:
                     data[X[i]][Y[i]][Z[i]] = k+1
+
+#=======================================================================================================================
+def display_voxel(data):
+    # the Z image is assume to be in second dimension
+    X, Y, Z = (data > 0).nonzero()
+    for k in range(0,len(X)):
+        print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k],Y[k],Z[k]])
 
 #=======================================================================================================================
 # usage
