@@ -292,19 +292,19 @@ class NURBS():
         P_z_d=coord_mean_d[:,:][:,2]
         #print P_x_d,P_y_d,P_z_d
 
-        p=len(P_x)/3
-        n=1
-        #plotting a tangent
-        p1 = [P_x[p],P_y[p],P_z[p]]
-        p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
-                #### 3D plot
-        fig1 = plt.figure()
-        ax = Axes3D(fig1)
-        #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
-        ax.plot(P_x,P_y,P_z,zdir='z')
-        ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
-        #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
-        plt.show()
+#        p=len(P_x)/3
+#        n=1
+#        #plotting a tangent
+#        p1 = [P_x[p],P_y[p],P_z[p]]
+#        p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
+#                #### 3D plot
+#        fig1 = plt.figure()
+#        ax = Axes3D(fig1)
+#        #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
+#        ax.plot(P_x,P_y,P_z,zdir='z')
+#        ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
+#        #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
+#        plt.show()
 
 
         #print 'Construction effectuee'
