@@ -1,0 +1,5 @@
+
+# CHANGES TO RELEASE
+
+0.6
+XXX
