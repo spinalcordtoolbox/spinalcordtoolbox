@@ -1,4 +1,7 @@
 
+# insert in anti-chronological order please!!
+
+
 not able to read nifti files
 --> update version of fsl to >5.0
 
