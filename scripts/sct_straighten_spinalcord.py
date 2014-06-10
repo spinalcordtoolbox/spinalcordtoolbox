@@ -61,7 +61,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 15 # gap between landmarks along z
@@ -236,10 +236,10 @@ def main():
         x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit,polyx,polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
-#
-#    plt.plot(y_centerline,z_centerline)
-#    plt.plot(y_centerline_fit,z_centerline)
-#    plt.show()
+
+    plt.plot(y_centerline,z_centerline)
+    plt.plot(y_centerline_fit,z_centerline)
+    plt.show()
 
     
     # Get coordinates of landmarks along curved centerline
@@ -252,7 +252,7 @@ def main():
     #iz_curved = [i for i in range (0, nz, gapz)]
     iz_curved = [i*step_z for i in range (0, gapz)]
     iz_curved.append(nz-1)     
-    print iz_curved, len(iz_curved)
+    #print iz_curved, len(iz_curved)
     n_iz_curved = len(iz_curved)
     #print n_iz_curved
     landmark_curved = [ [ [ 0 for i in range(0,3)] for i in range(0,5) ] for i in iz_curved ]
@@ -314,18 +314,18 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     
-#    #display
-#    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-#    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
-#    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
-#    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-#    ax.set_xlabel('x')
-#    ax.set_ylabel('y')
-#    ax.set_zlabel('z')
-#    plt.show()
+    #display
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
+    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
+    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
@@ -334,7 +334,7 @@ def main():
     
     # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the curved centerline (approximation curve --> line)
     iz_straight = [0 for i in range (0,gapz+1)]
-    print iz_straight,len(iz_straight)
+    #print iz_straight,len(iz_straight)
     for index in range(1, n_iz_curved, 1):
         # compute vector between two consecutive points on the curved centerline
         vector_centerline = [x_centerline_fit[iz_curved[index]] - x_centerline_fit[iz_curved[index-1]], \
@@ -523,7 +523,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     print '\nFit centerline using B-spline approximation'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
     
-    nurbs = NURBS(4,1000,points) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    nurbs = NURBS(3,1000,points) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
     y_centerline_fit=P[1]
