@@ -61,7 +61,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 15 # gap between landmarks along z
@@ -237,9 +237,9 @@ def main():
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit,polyx,polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
 
-    plt.plot(y_centerline,z_centerline)
-    plt.plot(y_centerline_fit,z_centerline)
-    plt.show()
+#    plt.plot(y_centerline,z_centerline)
+#    plt.plot(y_centerline_fit,z_centerline)
+#    plt.show()
 
     
     # Get coordinates of landmarks along curved centerline
@@ -314,18 +314,18 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     
-    #display
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
-    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
-    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
-    plt.show()
+#    #display
+#    fig = plt.figure()
+#    ax = fig.add_subplot(111, projection='3d')
+#    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
+#    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
+#    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+#           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+#           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+#    ax.set_xlabel('x')
+#    ax.set_ylabel('y')
+#    ax.set_zlabel('z')
+#    plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
