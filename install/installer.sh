@@ -60,7 +60,8 @@ echo "Edit .bash_profile..."
 if grep -q "SPINALCORDTOOLBOX" ~/.bash_profile; then
   echo "Deleting previous sct entries in .bash_profile"
   cmd="awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-  echo ">> $cmd"; $cmd
+  echo ">> $cmd"
+  awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp
 fi
 
 # edit .bash_profile
@@ -93,7 +94,7 @@ echo "Done! If no error appeared above, you can delete this folder by typing:"
 echo "> cd .."
 echo "> rm -rf spinalcordtoolbox_v*"
 echo
-echo "To see all commands available, type \"sct\" then backslash"
+echo "To see all commands available, start a new Terminal and type \"sct\" then backslash"
 echo 
 echo "To get started, go the created folder by typing:"
 echo "> cd sct_testing"
