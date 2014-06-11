@@ -39,9 +39,9 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_register_to_template.py 
-        -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
-        -l ../../data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
-        -m ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
+        -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}.nii.gz 
+        -l ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
+        -m ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
         -r 0
 	-s fast
 	-o 1"
@@ -54,7 +54,7 @@ for subject in $SUBJECT_LIST; do
         3
         ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
         templatecord2anat.nii.gz
-        -R ../../data/${subject}/${contrast}/${contrast}.nii.gz 
+        -R ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}.nii.gz 
         warp_template2anat.nii.gz
         --use-NN"
     echo ==============================================================================================
@@ -63,7 +63,7 @@ for subject in $SUBJECT_LIST; do
     $cmd
 
     cmd="sct_dice_coefficient
-        ../../data/${subject}/${contrast}/${contrast}_manual_segmentation.nii.gz
+        ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}_manual_segmentation.nii.gz
         templatecord2anat.nii.gz
         -bmax"
     echo ==============================================================================================
