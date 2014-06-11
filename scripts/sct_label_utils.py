@@ -129,8 +129,9 @@ def main():
         output_level = 1
 
     if (output_level == 0):
-        hdr.set_data_dtype('int32') # set imagetype to uint8
+        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32. 
         print '\nWrite NIFTI volumes...'
+        data.astype('int')
         img = nibabel.Nifti1Image(data, None, hdr)
         nibabel.save(img, 'tmp.'+file_label_output+'.nii.gz')
         sct.generate_output_file('tmp.'+file_label_output+'.nii.gz','./',file_label_output,ext_label_output)
