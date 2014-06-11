@@ -166,6 +166,10 @@ def main():
     print('\nPush the input labels to the straight space...')
     status, output = sct.run('WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii.gz warp_curve2straight.nii.gz --use-NN')
 
+    # Convert landmarks from FLOAT32 to INT
+    print '\nConvert landmarks from FLOAT32 to INT...'
+    sct.run('c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+
     # Registration of the straight spinal cord on the template - ${nb_iteration} slow 50x30, normal 50x15, fast 10x3
     # straighten the segmentation
     # TODO: when using the segmentation in the future, de-comment this
