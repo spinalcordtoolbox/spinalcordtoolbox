@@ -78,8 +78,8 @@ else
 fi
 echo 'export SCT_DIR PATH' >> ~/.bash_profile
 
-# source .bash_profile
-source ~/.bash_profile
+# launch .bash_profile
+. ~/.bash_profile
 
 # check if other dependent software are installed
 echo
