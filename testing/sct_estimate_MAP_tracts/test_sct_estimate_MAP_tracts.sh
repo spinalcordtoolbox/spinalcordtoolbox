@@ -34,8 +34,8 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_estimate_MAP_tracts.py
-        -i ../../data/${subject}/${contrast}/${file}
-        -t ../../data/${subject}/${folder_atlas}
+        -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
+        -t ${SCT_DIR}/testing/data/${subject}/${folder_atlas}
         -m weightedaverage
         -o quantif_${CONTRAST_LIST}.txt"
     echo ==============================================================================================
