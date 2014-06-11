@@ -317,10 +317,6 @@ def main():
             # Select the slices of the input image corresponding to the vertebral levels asked
             slice_choice = 1
             slice_number = get_slices_matching_with_vertebral_levels(data,fname_tracts,vert_levels_list)
-    elif vertebral_levels == '' and slice_choice == 0:
-        vert_levels_list = get_slices_matching_with_vertebral_levels(data,fname_tracts)
-
-
 
 
     # Extract slices chosen
@@ -367,9 +363,7 @@ def main():
     # Display vertebral levels where the metric will be estimated
     if vertebral_levels != '':
         print '\tVertebral levels selected : ' + (str(vert_levels_list)[1:-1]).replace(',', ':').replace(' ', '')
-    elif vertebral_levels == '' and slice_choice == 0:
-        print '\tVertebral levels selected : ' + (str(vert_levels_list)[1:-1]).replace(',', ':').replace(' ', '')
-    elif vertebral_levels == '' and slice_choice == 1:
+    else:
         print '\tNo vertebral level selected.'
 
     # Display slices where the metric sill be estimated
@@ -446,9 +440,7 @@ def main():
         # Write selected vertebral levels
         if vertebral_levels != '':
             fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
-        elif vertebral_levels == '' and slice_choice == 0:
-            fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
-        elif vertebral_levels == '' and slice_choice == 1:
+        else:
             fid_metric.write('No vertebral level selected.\n\n')
 
         # Write slices chosen
