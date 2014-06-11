@@ -43,12 +43,24 @@ for subject in $SUBJECT_LIST; do
 	        -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
 	        -t ${SCT_DIR}/testing/data/${subject}/${contrast}/segmentation_binary.nii.gz
 	        -q ${SCT_DIR}/testing/data/${subject}/template/warp_template2anat.nii.gz
-	        -x 1
-	        -z ${SCT_DIR}/testing/data/${subject}/template/warp_anat2template.nii.gz
+	        -x 0
 	        -o template2${file}
 	        -n 50x20
-	        -r 1
+	        -r 0
 	        -v 1"
+
+		    # cmd="sct_register_multimodal.py
+		    #     -i ${SCT_DIR}/data/template/MNI-Poly-AMU_T2.nii.gz
+		    #     -d ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
+		    #     -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
+		    #     -t ${SCT_DIR}/testing/data/${subject}/${contrast}/segmentation_binary.nii.gz
+		    #     -q ${SCT_DIR}/testing/data/${subject}/template/warp_template2anat.nii.gz
+		    #     -x 1
+		    #     -z ${SCT_DIR}/testing/data/${subject}/template/warp_anat2template.nii.gz
+		    #     -o template2${file}
+		    #     -n 50x20
+		    #     -r 0
+		    #     -v 1"
 
         echo ==============================================================================================
         echo "$cmd"
