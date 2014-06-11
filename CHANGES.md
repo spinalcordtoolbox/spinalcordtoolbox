@@ -2,4 +2,4 @@
 # CHANGES TO RELEASE
 
 0.6
-XXX
+- BUG: fixed bug when labels are >99
