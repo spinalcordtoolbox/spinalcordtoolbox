@@ -173,6 +173,30 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	desiredStart[1] = startZ;
 	desiredStart[2] = 0;
 	desiredSize[1] = 0;
+
+	ImageType::RegionType desiredRegionImage(desiredStart, desiredSize);
+    typedef itk::ExtractImageFilter< ImageType, ImageType2D > Crop2DFilterType;
+    Crop2DFilterType::Pointer cropFilter = Crop2DFilterType::New();
+    cropFilter->SetExtractionRegion(desiredRegionImage);
+    cropFilter->SetInput(inputImage_);
+	#if ITK_VERSION_MAJOR >= 4
+    cropFilter->SetDirectionCollapseToIdentity(); // This is required.
+	#endif
+    try {
+        cropFilter->Update();
+    } catch( itk::ExceptionObject & e ) {
+        std::cerr << "Exception caught while updating cropFilter " << std::endl;
+        std::cerr << e << std::endl;
+    }
+    ImageType2D::Pointer image_test_minmax = cropFilter->GetOutput();
+	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
+	minMaxCalculator->SetImage(image_test_minmax);
+	minMaxCalculator->ComputeMaximum();
+	minMaxCalculator->ComputeMinimum();
+	ImageType2D::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
+	if (maxIm == minIm) {
+		cerr << "WARNING: The principal axial slice where the spinal cord detection will be performed (slice " << startZ << ") is full of constant value (" << maxIm << "). You can change it using -init parameter." << endl;
+	}
     
     if (verbose_) cout << "Initialization" << endl;
     

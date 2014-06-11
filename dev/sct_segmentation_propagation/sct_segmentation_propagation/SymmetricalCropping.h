@@ -25,6 +25,8 @@ public:
     
     void setInputImage(ImageType::Pointer inputImage) { inputImage_=inputImage; };
     ImageType::Pointer getOutput() { return outputImage_; };
+
+	void setInitSlice(float initSlice) { initSlice_=initSlice; };
     
     int symmetryDetection();
     ImageType::Pointer cropping();
@@ -34,5 +36,6 @@ private:
     double cropWidth_; // in millimeters
     double bandWidth_; // width of band to correlate
     int middleSlice_; // -1 if not yet computed
+	float initSlice_;
 };
 #endif /* defined(__Test__SymmetricalCropping__) */
