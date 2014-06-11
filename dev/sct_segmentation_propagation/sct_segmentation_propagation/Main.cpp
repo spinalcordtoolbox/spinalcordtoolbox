@@ -81,6 +81,7 @@
  * 
  */
 #define _SCL_SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS
 
 // std libraries
 #include <iostream>
@@ -114,8 +115,8 @@
 #include <itkBSplineScatteredDataPointSetToImageFilter.h>
 #include <itkBSplineControlPointImageFunction.h>
 #include <itkImageSeriesReader.h>
-#include <itkGDCMImageIO.h>
-#include <itkGDCMSeriesFileNames.h>
+//#include <itkGDCMImageIO.h>
+//#include <itkGDCMSeriesFileNames.h>
 
 using namespace std;
 
@@ -134,8 +135,8 @@ typedef itk::ImageFileReader<BinaryImageType> BinaryReaderType;
 typedef itk::ImageRegionConstIterator<BinaryImageType> BinaryImageIterator;
 
 typedef itk::ImageSeriesReader< ImageType > DICOMReaderType;
-typedef itk::GDCMImageIO ImageIOType;
-typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
+//typedef itk::GDCMImageIO ImageIOType;
+//typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
 
 bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &normal1, CVector3 &normal2);
 vector<CVector3> extractCenterline(string filename);
@@ -161,7 +162,7 @@ void help()
     
     cout << "General options: " << endl;
     cout << "\t-i <inputfilename> \t (no default)" << endl;
-    cout << "\t-i-dicom <inputfolderpath> \t (replace -i, read DICOM series, output still in NIFTI)" << endl;
+    //cout << "\t-i-dicom <inputfolderpath> \t (replace -i, read DICOM series, output still in NIFTI)" << endl;
     cout << "\t-o <outputfolderpath> \t (default is current folder)" << endl;
     cout << "\t-t <imagetype> {t1,t2} \t (string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default)" << endl;
 	cout << "\t-down <down_slice> \t (int, down limit of the propagation, default is 0)" << endl;
@@ -227,8 +228,8 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i],"-i-dicom")==0) {
             i++;
-            inputFilename = argv[i];
-            input_dicom = true;
+            //inputFilename = argv[i];
+            //input_dicom = true;
         }
         else if (strcmp(argv[i],"-o")==0) {
             i++;
@@ -375,7 +376,7 @@ int main(int argc, char *argv[])
     
     if (input_dicom)
     {
-        ImageIOType::Pointer gdcmIO = ImageIOType::New();
+        /*ImageIOType::Pointer gdcmIO = ImageIOType::New();
         InputNamesGeneratorType::Pointer inputNames = InputNamesGeneratorType::New();
         inputNames->SetInputDirectory( inputFilename );
         
@@ -392,7 +393,7 @@ int main(int argc, char *argv[])
             std::cerr << excp << std::endl;
             return EXIT_FAILURE;
         }
-        initialImage = reader->GetOutput();
+        initialImage = reader->GetOutput();*/
     }
     else
     {
@@ -403,7 +404,7 @@ int main(int argc, char *argv[])
         try {
             reader->Update();
         } catch( itk::ExceptionObject & e ) {
-            cerr << "Exception caught while reading input image " << endl;
+            cerr << "Exception caught while reading input image" << endl;
             cerr << e << endl;
             return EXIT_FAILURE;
         }
@@ -419,13 +420,26 @@ int main(int argc, char *argv[])
 	// Crop image if it is too large in left-right direction. No need to compute the initialization on the whole image. We assume the spinal cord is included in a 5cm large region.
 	ImageType::SizeType desiredSize = initialImage->GetLargestPossibleRegion().GetSize();
     ImageType::SpacingType spacingI = initialImage->GetSpacing();
-	if (desiredSize[2]*spacingI[2] > 60)
+	if (desiredSize[2]*spacingI[2] > 60 && !init_with_mask && !init_with_centerline)
 	{
 		SymmetricalCropping symCroppingFilter;
         symCroppingFilter.setInputImage(initialImage);
-        int crop_slice = symCroppingFilter.symmetryDetection();
-		if (verbose) cout << "Cropping input image in left-right direction around slice = " << crop_slice << endl;
-        image = symCroppingFilter.cropping();
+		symCroppingFilter.setInitSlice(initialisation);
+		int crop_slice = -1;
+		try {
+			crop_slice = symCroppingFilter.symmetryDetection();
+		} catch(exception & e) {
+		    cerr << "Exception caught while computing symmetry" << endl;
+            cerr << e.what() << endl;
+            return EXIT_FAILURE;
+		}
+		if (crop_slice != -1) {
+			if (verbose) cout << "Cropping input image in left-right direction around slice = " << crop_slice << endl;
+			image = symCroppingFilter.cropping();
+		} else {
+			if (verbose) cout << "Image non cropped for symmetry" << endl;
+			image = initialImage;
+		}
 	}
 	else image = initialImage;
     
@@ -741,7 +755,6 @@ int main(int argc, char *argv[])
     
 	
 	delete image3DGrad, prop;
-    
     return EXIT_SUCCESS;
 }
 

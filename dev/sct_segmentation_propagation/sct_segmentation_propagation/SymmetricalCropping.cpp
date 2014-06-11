@@ -13,16 +13,19 @@
 #include <itkNearestNeighborInterpolateImageFunction.h>
 #include <itkMattesMutualInformationImageToImageMetric.h>
 #include <itkIdentityTransform.h>
+#include <itkMinimumMaximumImageCalculator.h>
 #include <map>
 using namespace std;
 
 typedef itk::Image< double, 3 > ImageType;
+
 
 SymmetricalCropping::SymmetricalCropping()
 {
     cropWidth_ = 50.0;
     bandWidth_ = 40.0;
     middleSlice_ = -1;
+	initSlice_ = -1.0;
 }
 
 int SymmetricalCropping::symmetryDetection()
@@ -39,6 +42,51 @@ int SymmetricalCropping::symmetryDetection()
         startSlice = cropSize/2;
         endSlice = desiredSizeInitial[2]-cropSize/2;
     }
+
+	float init_slice;
+	if (initSlice_ != -1.0) init_slice = initSlice_;
+    if (initSlice_ == -1.0) {
+        init_slice = 3*desiredSizeInitial[1]/4;
+    }
+    else if (initSlice_ < 1.0) {
+        init_slice = desiredSize[1]*init_slice;
+    }
+	else init_slice = initSlice_;
+
+	// Check for non-null intensity in the image. If null, mutual information cannot be computed...
+	ImageType::IndexType desiredStart_i;
+    ImageType::SizeType desiredSize_i = desiredSizeInitial;
+    desiredStart_i[0] = 0;
+    desiredStart_i[1] = (int)init_slice;
+    desiredStart_i[2] = 0;
+    desiredSize_i[1] = 0;
+    desiredSize_i[2] = desiredSizeInitial[2];
+	ImageType::RegionType desiredRegionImage(desiredStart_i, desiredSize_i);
+    typedef itk::ExtractImageFilter< ImageType, ImageType2D > Crop2DFilterType;
+    Crop2DFilterType::Pointer cropFilter = Crop2DFilterType::New();
+    cropFilter->SetExtractionRegion(desiredRegionImage);
+    cropFilter->SetInput(inputImage_);
+	#if ITK_VERSION_MAJOR >= 4
+    cropFilter->SetDirectionCollapseToIdentity(); // This is required.
+	#endif
+    try {
+        cropFilter->Update();
+    } catch( itk::ExceptionObject & e ) {
+        std::cerr << "Exception caught while updating cropFilter " << std::endl;
+        std::cerr << e << std::endl;
+    }
+    ImageType2D::Pointer image = cropFilter->GetOutput();
+	typedef itk::MinimumMaximumImageCalculator<ImageType2D> MinMaxCalculatorType;
+	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
+	minMaxCalculator->SetImage(image);
+	minMaxCalculator->ComputeMaximum();
+	minMaxCalculator->ComputeMinimum();
+	ImageType2D::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
+	if (maxIm == minIm) {
+		cerr << "ERROR: The axial slice where the symmetry will be detected (slice " << init_slice << ") is full of constant value (" << maxIm << "). You can change it using -init parameter." << endl;
+		return -1;
+	}
+
     for (int i=startSlice; i<endSlice; i++)
     {
         float startCrop = i, size;
@@ -48,7 +96,7 @@ int SymmetricalCropping::symmetryDetection()
         ImageType::IndexType desiredStart;
         ImageType::SizeType desiredSize = desiredSizeInitial;
         desiredStart[0] = 0;
-        desiredStart[1] = 3*desiredSizeInitial[1]/4;
+        desiredStart[1] = (int)init_slice;
         desiredStart[2] = startCrop;
         desiredSize[1] = 0;
         desiredSize[2] = size;
