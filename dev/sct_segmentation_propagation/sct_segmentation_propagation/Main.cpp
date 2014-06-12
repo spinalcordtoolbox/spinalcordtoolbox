@@ -143,7 +143,7 @@ vector<CVector3> extractCenterline(string filename);
 
 void help()
 {
-    cout << "sct_segmentation_propagation - Version 0.2.5 (2014-04-23)" << endl;
+    cout << "sct_segmentation_propagation - Version 0.2.7 (2014-06-12)" << endl;
     cout << "Author : Benjamin De Leener - NeuroPoly lab - Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>" << endl << endl;
     
     cout << "Description:" << endl;
