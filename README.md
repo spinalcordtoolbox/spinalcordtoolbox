@@ -31,7 +31,7 @@ If not already present, add the following lines to your .bash_profile:
 ````
 # SPINALCORDTOOLBOX
 SCT_DIR="/usr/local/spinalcordtoolbox"
-export PATH=${PATH}:$SCT_DIR/bin/OSX_10.6-7-8
+export PATH=${PATH}:$SCT_DIR/bin
 export PATH=${PATH}:$SCT_DIR/scripts
 export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH
 export SCT_DIR PATH
