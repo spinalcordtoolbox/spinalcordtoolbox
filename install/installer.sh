@@ -46,9 +46,9 @@ if [ -e "../sct_testing" ]; then
   cmd="sudo rm -rf ../sct_testing"
   echo ">> $cmd"; $cmd
 fi
-cmd="sudo mkdir ../sct_testing"
+cmd="mkdir ../sct_testing"
 echo ">> $cmd"; $cmd
-cmd="sudo cp -r spinalcordtoolbox/testing/ ../sct_testing"
+cmd="cp -r spinalcordtoolbox/testing/ ../sct_testing"
 echo ">> $cmd"; $cmd
 cmd="sudo chmod -R 775 ../sct_testing"
 echo ">> $cmd"; $cmd
