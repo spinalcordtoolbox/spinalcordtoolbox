@@ -34,7 +34,7 @@ for subject in $SUBJECT_LIST; do
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
         cmd="sct_segmentation_propagation
-            -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}.nii.gz
+            -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
             -t ${contrast}
             -mesh
             -cross
@@ -46,7 +46,7 @@ for subject in $SUBJECT_LIST; do
         $cmd
 
         cmd="sct_dice_coefficient
-            ${SCT_DIR}/testing/data/${subject}/${contrast}/${contrast}_manual_segmentation.nii.gz
+            ../../data/${subject}/${contrast}/${contrast}_manual_segmentation.nii.gz
             segmentation_binary.nii.gz
             -bmax"
         echo ==============================================================================================

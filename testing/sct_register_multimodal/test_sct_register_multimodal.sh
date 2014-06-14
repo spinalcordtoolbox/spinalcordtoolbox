@@ -39,10 +39,10 @@ for subject in $SUBJECT_LIST; do
 
 	    cmd="sct_register_multimodal.py
 	        -i ${SCT_DIR}/data/template/MNI-Poly-AMU_T2.nii.gz
-	        -d ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
+	        -d ../../data/${subject}/${contrast}/${file}
 	        -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
-	        -t ${SCT_DIR}/testing/data/${subject}/${contrast}/segmentation_binary.nii.gz
-	        -q ${SCT_DIR}/testing/data/${subject}/template/warp_template2anat.nii.gz
+	        -t ../../data/${subject}/${contrast}/segmentation_binary.nii.gz
+	        -q ../../data/${subject}/template/warp_template2anat.nii.gz
 	        -x 0
 	        -o template2${file}
 	        -n 50x20

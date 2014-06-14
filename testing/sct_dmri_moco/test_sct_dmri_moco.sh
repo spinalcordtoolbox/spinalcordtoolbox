@@ -34,8 +34,8 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_dmri_moco.py
-        -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${file1}
-        -b ${SCT_DIR}/testing/data/${subject}/${contrast}/${file2}
+        -i ../../data/${subject}/${contrast}/${file1}
+        -b ../../data/${subject}/${contrast}/${file2}
         -p sinc"
     echo ==============================================================================================
     echo "$cmd"
