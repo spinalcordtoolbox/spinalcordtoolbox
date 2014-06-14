@@ -87,6 +87,16 @@ def main():
         print '  scipy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
+    # check sympy
+    print_line('Check if sympy is installed ................... ')
+    try:
+        import sympy
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  sympy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
+        install_software = 1
+
     # check nibabel
     print_line('Check if nibabel is installed ................. ')
     try:
@@ -99,10 +109,10 @@ def main():
 
     # check if FSL is installed
     print_line('Check if FSL is installed ..................... ')
-    (status, output) = commands.getstatusoutput('find /usr -name "fsl" -type d -print -quit 2>/dev/null')
+    (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
     if output:
         print_ok()
-        path_fsl = output
+        path_fsl = output[:-10]
         print '  '+path_fsl
     else:
         print_fail()
@@ -125,6 +135,49 @@ def main():
                 'PATH=${FSLDIR}/bin:${PATH}\n' \
                 'export FSLDIR PATH')
             restart_terminal = 1
+
+    # check ANTs
+    print_line('Check if ANTs is declared ..................... ')
+    (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    if not output:
+        print_ok()
+    else:
+        print_warning()
+        print '  ANTs is not declared.'
+
+    # check if ANTs is compatible with OS
+    print_line('Check ANTs compatibility with your OS ......... ')
+    (status, output) = commands.getstatusoutput('antsRegistration')
+    if status in [0, 256]:
+        print_ok()
+    else:
+        print_fail()
+
+    # check c3d
+    print_line('Check if c3d is working ....................... ')
+    (status, output) = commands.getstatusoutput('command -v c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
+    if not output:
+        print_ok()
+    else:
+        print_warning()
+        print '  c3d is not installed or not declared.'
+
+    # check c3d compatibility with OS
+    print_line('Check c3d compatibility with your OS .......... ')
+    (status, output) = commands.getstatusoutput('c3d -h')
+    if status in [0, 256]:
+        print_ok()
+    else:
+        print_fail()
+
+    # check PropSeg compatibility with OS
+    print_line('Check PropSeg compatibility with your OS ...... ')
+    (status, output) = commands.getstatusoutput('sct_segmentation_propagation')
+    if status in [0, 256]:
+        print_ok()
+    else:
+        print_fail()
+
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
@@ -187,13 +240,13 @@ def main():
     #             'PATH=${PATH}:'+path_c3d)
     #         restart_terminal = 1
     # 
-    # if install_software:
-    #     print '\nDone! Please install the required software, then run this script again.'
-    # elif restart_terminal:
-    #     print '\nDone! Please restart your Terminal for changes to take effect.'
-    # else:
-    #     print '\nDone! Everything is in order :-)'
-    # print
+    if install_software:
+        print '\nDone! Please install the required software, then run this script again.'
+    elif restart_terminal:
+        print '\nDone! Please restart your Terminal for changes to take effect.'
+    else:
+        print '\nDone! Everything is in order :-)'
+    print
 
 
 # Print without new carriage return
