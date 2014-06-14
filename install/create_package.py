@@ -36,7 +36,7 @@ def usage():
         '  create_package.py -s debian\n'
     sys.exit(2)
 
-listOS = ['osx','debian']
+listOS = ['osx', 'debian']
 OSname = ''
 # Check input param
 try:
@@ -59,7 +59,7 @@ with open ("../version.txt", "r") as myfile:
     version = myfile.read().replace('\n', '')
 
 # create output folder
-folder_sct = '../spinalcordtoolbox_v'+version+'/'
+folder_sct = '../spinalcordtoolbox_v'+version+'_'+OSname+'/'
 if os.path.exists(folder_sct):
     sct.run('rm -rf '+folder_sct)
 sct.run('mkdir '+folder_sct)
@@ -155,7 +155,7 @@ if os.path.exists(folder_sct+'spinalcordtoolbox/scripts/.idea'):
 os.chdir('../')
 
 # compress folder
-folder_sct_temp = 'spinalcordtoolbox_v'+version+'/'
+folder_sct_temp = 'spinalcordtoolbox_v'+version+'_'+OSname+'/'
 
 sct.run('tar -cvzf spinalcordtoolbox_v'+version+'.tar.gz '+folder_sct_temp)
 
