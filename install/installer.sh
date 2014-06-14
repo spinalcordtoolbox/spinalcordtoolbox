@@ -11,6 +11,9 @@
 SCT_DIR="/usr/local/spinalcordtoolbox"
 
 echo
+echo "============================="
+echo "SPINAL CORD TOOLBOX INSTALLER"
+echo "============================="
 
 # check if user is sudoer
 if [ "$(whoami)" == "root" ]; then
@@ -46,11 +49,15 @@ if [ -e "../sct_testing" ]; then
   cmd="sudo rm -rf ../sct_testing"
   echo ">> $cmd"; $cmd
 fi
-cmd="mkdir ../sct_testing"
-echo ">> $cmd"; $cmd
-cmd="cp -r spinalcordtoolbox/testing/ ../sct_testing"
+cmd="mv spinalcordtoolbox/testing ../sct_testing"
 echo ">> $cmd"; $cmd
 cmd="sudo chmod -R 775 ../sct_testing"
+echo ">> $cmd"; $cmd
+
+# remove testing in installation folder
+echo
+echo "Remove testing in installation folder"
+cmd="sudo rm -rf ${SCT_DIR}/testing"
 echo ">> $cmd"; $cmd
 
 # check if .bashrc was already modified. If so, we delete lines about sct to be sure.
@@ -65,21 +72,22 @@ fi
 
 # edit .bashrc. Add bin and libraries
 echo '' >> ~/.bashrc
-echo '# SPINALCORDTOOLBOX' >> ~/.bashrc
+echo '# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))' >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 unamestr=`uname`
-if [[ ! "$unamestr" == 'Linux' ]]; then
-  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
-fi
+#if [[ ! "$unamestr" == 'Linux' ]]; then
+#  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
+#fi
 echo 'export SCT_DIR PATH' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
 if [ -e "$HOME/.bash_profile" ]; then
   if grep -q "source ~/.bashrc" ~/.bash_profile; then
     echo
-    echo ".bashrc correctly called in .bash_profile"
+    echo ".bashrc seems to be called in .bash_profile"
+	# TOOD: check for the case if the user did comment source ~/.bashrc in his .bash_profile 
   else
     echo
     echo "edit .bash_profile..."
@@ -98,18 +106,30 @@ echo "Check if other dependent software are installed..."
 cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
+# go to testing folder
+path_toolbox_temp=`pwd`
+cd ../sct_testing/
+path_testing=`pwd` 
+
 # display stuff
 echo
 echo "---"
-echo "Done! If no error appeared above, you can delete this folder by typing:"
-echo "> cd .."
-echo "> rm -rf spinalcordtoolbox_v*"
+echo "Done! If you had error(s), please start a new Terminal and run the following command:"
+echo "> sct_check_dependences.py"
 echo
-echo "To see all commands available, start a new Terminal and type \"sct\" then backslash"
-echo 
-echo "To get started, go the created folder by typing:"
-echo "> cd sct_testing"
+echo "If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/"
+echo "or contact the developers."
+echo
+echo "You can now delete this folder by typing:"
+echo "> cd .."
+echo "> rm -rf ${path_toolbox_temp}*"
+echo
+echo "To get started, open a new Terminal and go to the testing folder:"
+echo "> cd $path_testing"
 echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
+echo
+echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
+echo 
 echo "Enjoy :-)"
 echo "---"
 echo
