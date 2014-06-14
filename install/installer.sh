@@ -72,7 +72,7 @@ fi
 
 # edit .bashrc. Add bin and libraries
 echo '' >> ~/.bashrc
-echo '# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))' >> ~/.bashrc
+echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
@@ -113,7 +113,8 @@ path_testing=`pwd`
 
 # display stuff
 echo
-echo "---"
+echo "========================================================================================"
+echo
 echo "Done! If you had error(s), please start a new Terminal and run the following command:"
 echo "> sct_check_dependences.py"
 echo
@@ -131,5 +132,6 @@ echo
 echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
 echo 
 echo "Enjoy :-)"
-echo "---"
+echo 
+echo "========================================================================================"
 echo
