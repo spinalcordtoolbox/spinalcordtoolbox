@@ -14,6 +14,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: spline and z regularization
 # TODO: check if masking is effective (doesn't seem to make a difference)
 # TODO: check inputs, e.g. cost function...
 # TODO: add flag for selecting output images
