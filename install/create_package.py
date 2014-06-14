@@ -55,7 +55,8 @@ if OSname not in listOS:
     usage()
 
 # get version
-version = str(loadtxt("../version.txt", comments="#", delimiter=",", unpack=False))
+with open ("../version.txt", "r") as myfile:
+    version = myfile.read().replace('\n', '')
 
 # create output folder
 folder_sct = '../spinalcordtoolbox_v'+version+'/'
