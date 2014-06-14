@@ -53,33 +53,43 @@ echo ">> $cmd"; $cmd
 cmd="sudo chmod -R 775 ../sct_testing"
 echo ">> $cmd"; $cmd
 
-# edit bash_profile
-# check if .bash_profile was already modified
+# check if .bashrc was already modified. If so, we delete lines about sct to be sure.
 echo
-echo "Edit .bash_profile..."
+echo "Edit .bashrc..."
 if grep -q "SPINALCORDTOOLBOX" ~/.bash_profile; then
   echo "Deleting previous sct entries in .bash_profile"
-  cmd="awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
+  cmd="awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
   echo ">> $cmd"
   awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp
 fi
 
-# edit .bash_profile
-echo '' >> ~/.bash_profile
-echo '# SPINALCORDTOOLBOX' >> ~/.bash_profile
-echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bash_profile
-echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bash_profile
-echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bash_profile
+# edit .bashrc. Add bin and libraries
+echo '' >> ~/.bashrc
+echo '# SPINALCORDTOOLBOX' >> ~/.bashrc
+echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
+echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
+echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
-  echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bash_profile
+  echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
 else
-  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bash_profile
+  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
 fi
-echo 'export SCT_DIR PATH' >> ~/.bash_profile
+echo 'export SCT_DIR PATH' >> ~/.bashrc
 
-# launch .bash_profile
-. ~/.bash_profile
+# check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
+if [ -e "~/.bash_profile" ]; then
+  if [ grep -q "source .bashrc" ~/.bash_profile -o grep -q ". .bashrc" ~/.bash_profile ]; then
+    echo ".bashrc correctly called in .bash_profile"
+  else
+    echo "if [ -f ~/.bashrc ]; then" >> ~/.bash_profile
+    echo '  source ~/.bashrc' >> ~/.bash_profile
+    echo 'fi' >> ~/.bash_profile
+  fi
+fi
+
+# launch .bash_profile. This line doesn't always work. Best way is to open a new terminal.
+. ~/.bashrc
 
 # check if other dependent software are installed
 echo
