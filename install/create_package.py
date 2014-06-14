@@ -76,12 +76,10 @@ if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r osx/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r osx/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r ../lib '+folder_sct+'spinalcordtoolbox/')
 elif OSname == 'debian':
     sct.run('cp -r ../bin/debian/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r debian/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r debian/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('mkdir '+folder_sct+'spinalcordtoolbox/lib') # not required but we still create lib folder
 
 # copy colormap
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
