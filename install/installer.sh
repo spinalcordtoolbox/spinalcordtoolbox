@@ -77,7 +77,6 @@ echo 'export SCT_DIR PATH' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
 if [ -e "$HOME/.bash_profile" ]; then
-  echo "TEST"
   if grep -q "source ~/.bashrc" ~/.bash_profile; then
     echo
     echo ".bashrc correctly called in .bash_profile"
