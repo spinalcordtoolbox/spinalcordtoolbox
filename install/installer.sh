@@ -56,11 +56,11 @@ echo ">> $cmd"; $cmd
 # check if .bashrc was already modified. If so, we delete lines about sct to be sure.
 echo
 echo "Edit .bashrc..."
-if grep -q "SPINALCORDTOOLBOX" ~/.bash_profile; then
-  echo "Deleting previous sct entries in .bash_profile"
+if grep -q "SPINALCORDTOOLBOX" ~/.bashrc; then
+  echo "Deleting previous sct entries in .bashrc"
   cmd="awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
   echo ">> $cmd"
-  awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp
+  awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp
 fi
 
 # edit .bashrc. Add bin and libraries
@@ -70,18 +70,20 @@ echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 unamestr=`uname`
-if [[ "$unamestr" == 'Linux' ]]; then
-  echo 'export LD_LIBRARY_PATH=${SCT_DIR}/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
-else
+if [[ ! "$unamestr" == 'Linux' ]]; then
   echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
 fi
 echo 'export SCT_DIR PATH' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
-if [ -e "~/.bash_profile" ]; then
-  if [ grep -q "source .bashrc" ~/.bash_profile -o grep -q ". .bashrc" ~/.bash_profile ]; then
+if [ -e "$HOME/.bash_profile" ]; then
+  echo "TEST"
+  if grep -q "source ~/.bashrc" ~/.bash_profile; then
+    echo
     echo ".bashrc correctly called in .bash_profile"
   else
+    echo
+    echo "edit .bash_profile..."
     echo "if [ -f ~/.bashrc ]; then" >> ~/.bash_profile
     echo '  source ~/.bashrc' >> ~/.bash_profile
     echo 'fi' >> ~/.bash_profile
