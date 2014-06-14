@@ -87,7 +87,7 @@ CMatrix4x4 GlobalAdaptation::adaptation(bool itkAmoeba)
 		f->setPointRotation(pointRotation_);
 		f->setGaussianRegion(region);
 		optimizer->SetCostFunction(f);
-		optimizer->SetOptimizeWithRestarts(true);
+		optimizer->SetOptimizeWithRestarts(false);
 		optimizer->SetMaximumNumberOfIterations(250);
 		optimizer->AutomaticInitialSimplexOn();
 		
