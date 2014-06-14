@@ -157,7 +157,7 @@ os.chdir('../')
 # compress folder
 folder_sct_temp = 'spinalcordtoolbox_v'+version+'_'+OSname+'/'
 
-sct.run('tar -cvzf spinalcordtoolbox_v'+version+'.tar.gz '+folder_sct_temp)
+sct.run('tar -cvzf spinalcordtoolbox_v'+version+'_'+OSname+'.tar.gz '+folder_sct_temp)
 
 print "done!\n"
 
