@@ -74,7 +74,7 @@ def main():
         print_ok()
     except ImportError:
         print_fail()
-        print '  numpy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/)'
+        print '  numpy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
     # check scipy
@@ -84,7 +84,7 @@ def main():
         print_ok()
     except ImportError:
         print_fail()
-        print '  scipy is not installed! Please install ENTHOUGH CANOPY (https://www.enthought.com/downloads/).'
+        print '  scipy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
     # check nibabel
@@ -94,7 +94,7 @@ def main():
         print_ok()
     except ImportError:
         print_fail()
-        print '  nibabel is not installed! Install it by typing in the Terminal: easy_install nibabel'
+        print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
     # check if FSL is installed
