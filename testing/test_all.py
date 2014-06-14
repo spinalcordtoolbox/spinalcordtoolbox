@@ -73,6 +73,7 @@ status.append( test_function('sct_register_to_template') )
 status.append( test_function('sct_register_multimodal') )
 status.append( test_function('sct_warp_atlas2metric') )
 status.append( test_function('sct_estimate_MAP_tracts') )
+status.append( test_function('sct_dmri_moco') )
 
 print str(status)
 
