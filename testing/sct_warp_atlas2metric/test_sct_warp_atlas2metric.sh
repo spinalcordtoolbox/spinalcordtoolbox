@@ -34,8 +34,8 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_warp_atlas2metric.py
-        -d ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
-        -w ${SCT_DIR}/testing/data/${subject}/template/warp_template2${contrast}.nii.gz
+        -d ../../data/${subject}/${contrast}/${file}
+        -w ../../data/${subject}/template/warp_template2${contrast}.nii.gz
         -o atlas"
     echo ==============================================================================================
     echo "$cmd"

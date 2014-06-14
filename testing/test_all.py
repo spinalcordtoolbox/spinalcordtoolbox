@@ -52,14 +52,16 @@ def write_to_log_file(fname_log,string):
     f.write(string+'\n')
     f.close()
 
-def test_function(folder_test):
+def test_function(folder_test,dot_lines):
     fname_log = folder_test + ".log" 
-    print_line('Checking '+folder_test+' ................... ')
-    status, output = commands.getstatusoutput(folder_test+'/test_'+folder_test+'.sh')
+    print_line('Checking '+folder_test+dot_lines)
+    os.chdir(folder_test)
+    status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
     if status == 0:
         print_ok()
     else:
         print_fail()
+    os.chdir('../')
     write_to_log_file(fname_log,output)
     return status
 
@@ -68,12 +70,12 @@ def test_function(folder_test):
 # ==========================================================================================
 
 status = []
-status.append( test_function('sct_segmentation_propagation') )
-status.append( test_function('sct_register_to_template') )
-status.append( test_function('sct_register_multimodal') )
-status.append( test_function('sct_warp_atlas2metric') )
-status.append( test_function('sct_estimate_MAP_tracts') )
-status.append( test_function('sct_dmri_moco') )
+status.append( test_function('sct_segmentation_propagation',' .............. ') )
+status.append( test_function('sct_register_to_template',' .................. ') )
+status.append( test_function('sct_register_multimodal',' ................... ') )
+status.append( test_function('sct_warp_atlas2metric',' ..................... ') )
+status.append( test_function('sct_estimate_MAP_tracts',' ................... ') )
+status.append( test_function('sct_dmri_moco',' ............................. ') )
 
 print str(status)
 
