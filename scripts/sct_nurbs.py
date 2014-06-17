@@ -72,8 +72,8 @@ try:
 except ImportError:
     print '--- scipy not installed! ---'
     sys.exit(2)
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.pyplot as plt
+#from mpl_toolkits.mplot3d import Axes3D
 class NURBS():
     def __init__(self,degre=3,precision=1000,liste=None,sens=False):
         """
