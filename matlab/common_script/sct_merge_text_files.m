@@ -1,5 +1,5 @@
 function sct_merge_text_files(text_files, output,transpose)
-% sct_merge_text_files(text_files, output)
+% sct_merge_text_files(text_files(cell), output, transpose?)
 dbstop if error
 
 
