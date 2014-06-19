@@ -25,7 +25,7 @@ class param:
     def __init__(self):
         self.debug              = 0
         self.verbose            = 1 # verbose
-        self.step               = 1 # step of discrtized plane in mm
+        self.step               = 1 # step of discretized plane in mm
         self.remove_temp_files  = 1
 
 import re
@@ -249,8 +249,8 @@ def compute_CSA(fname_segmentation):
     #
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
-    #coords = np.array([str([X[i],Y[i],Z[i]]) for i in range(0,len(Z))]) #don't know why but finding strings in array of array of strings is WAY fater than doing the same with integers
-    coords = [[X[i],Y[i],Z[i]] for i in range(0,len(Z))]
+    coords = np.array([str([X[i],Y[i],Z[i]]) for i in range(0,len(Z))]) #don't know why but finding strings in array of array of strings is WAY fater than doing the same with integers
+    #coords = [[X[i],Y[i],Z[i]] for i in range(0,len(Z))]
     
     min_z_index, max_z_index = min(Z), max(Z)
     x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
@@ -388,6 +388,18 @@ def normalize(vect):
     """take an 1x3 matrix vector and return the normalised vector"""
     norm=np.linalg.norm(vect)
     return vect/norm
+
+# def find_in_list(small_list,list_lists):
+#     """find a list in a list of lists"""
+#     test=0
+#     cpt2=0
+#     while (test==0) & (cpt2<len(coords)):                      ## find in list
+#         if (int(coord_voxel[0])==int(coords[cpt2][0]))&(int(coord_voxel[1])==int(coords[cpt2][1]))&(int(coord_voxel[2])==int(coords[cpt2][2])):
+#             cpt=cpt+1
+#             test=1
+#         cpt2=cpt2+1
+
+
 
 
 # Print usage
