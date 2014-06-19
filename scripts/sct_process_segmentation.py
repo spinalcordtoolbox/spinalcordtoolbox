@@ -25,6 +25,8 @@ class param:
     def __init__(self):
         self.debug              = 0
         self.verbose            = 1 # verbose
+        self.step               = 1 # step of discrtized plane in mm
+        self.remove_temp_files  = 1
 
 import re
 import math
@@ -32,12 +34,13 @@ import sys
 import getopt
 import os
 import commands
-import numpy
+import numpy as np
 import time
 import sct_utils as sct
 from sct_nurbs import NURBS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.misc import imsave
 try:
     import nibabel
 except ImportError:
@@ -59,11 +62,13 @@ def main():
     processes = ['extract_centerline','compute_CSA']
     verbose = param.verbose
     start_time = time.time()
+    remove_temp_files = param.remove_temp_files
     
     # Parameters for debug mode
     if param.debug:
         fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
         verbose = 1
+        remove_temp_files = 0
     
     # Check input parameters
     try:
@@ -124,7 +129,9 @@ def extract_centerline(fname_segmentation):
     
     # go to tmp folder
     os.chdir(path_tmp)
-	
+    
+    remove_temp_files = param.remove_temp_files
+    
     # Change orientation of the input segmentation into RPI
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
@@ -155,8 +162,8 @@ def extract_centerline(fname_segmentation):
     # Extract segmentation points and average per slice
     for iz in range(min_z_index, max_z_index+1):
         x_seg, y_seg = (data[:,:,iz]>0).nonzero()
-        x_centerline[iz-min_z_index] = numpy.mean(x_seg)
-        y_centerline[iz-min_z_index] = numpy.mean(y_seg)
+        x_centerline[iz-min_z_index] = np.mean(x_seg)
+        y_centerline[iz-min_z_index] = np.mean(y_seg)
     for k in range(len(X)):
 	    data[X[k],Y[k],Z[k]] = 0
     # Fit the centerline points with splines and return the new fitted coordinates
@@ -186,8 +193,9 @@ def extract_centerline(fname_segmentation):
 
 
     # Remove temporary files
-    print('\nRemove temporary files...')
-    sct.run('rm -rf '+path_tmp)
+    if remove_temp_files == 1 :
+        print('\nRemove temporary files...')
+        sct.run('rm -rf '+path_tmp)
 
 
     # to view results
@@ -215,16 +223,14 @@ def compute_CSA(fname_segmentation):
     
     # go to tmp folder
     os.chdir(path_tmp)
-	
-    # Change orientation of the input segmentation into RPI
+    
+    remove_temp_files = param.remove_temp_files
+    step = param.step
+    
+    # # Change orientation of the input segmentation into RPI
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
     sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
-	
-    # Extract orientation of the input segmentation
-    status,sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data + ' -get')
-    orientation = sct_orientation_output[-3:]
-    print '\nOrientation of segmentation image: ' + orientation
 	
     # Get size of data
     print '\nGet dimensions data...'
@@ -240,18 +246,12 @@ def compute_CSA(fname_segmentation):
     y_scale=hdr['pixdim'][2]
     z_scale=hdr['pixdim'][3]
     
+    #
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
-    coords = numpy.array([str([X[i],Y[i],Z[i]]) for i in range(0,len(Z))])
-    print type(coords[1])
-    print coords
-    #    pseudo_3D_coords= [[[0 for i in range(0,max(X)+1)] for j in range(0,max(Y)+1)] for k in range(0,max(Z)+1)]
-    #    print pseudo_3D_coords
-    #    for i in coords:
-    #        print i[0],i[1],i[2]
-    #        pseudo_3D_coords[i[0]][i[1]][i[2]] = 1
-    #
-    #    print pseudo_3D_coords
+    #coords = np.array([str([X[i],Y[i],Z[i]]) for i in range(0,len(Z))]) #don't know why but finding strings in array of array of strings is WAY fater than doing the same with integers
+    coords = [[X[i],Y[i],Z[i]] for i in range(0,len(Z))]
+    
     min_z_index, max_z_index = min(Z), max(Z)
     x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
     y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
@@ -260,31 +260,31 @@ def compute_CSA(fname_segmentation):
     # Extract segmentation points and average per slice
     for iz in range(min_z_index, max_z_index+1):
         x_seg, y_seg = (data[:,:,iz]>0).nonzero()
-        #print x_seg,y_seg
-        x_centerline[iz-min_z_index] = numpy.mean(x_seg)
-        y_centerline[iz-min_z_index] = numpy.mean(y_seg)
-
-
+        x_centerline[iz-min_z_index] = np.mean(x_seg)
+        y_centerline[iz-min_z_index] = np.mean(y_seg)
+    
+	
     # Fit the centerline points with splines and return the new fitted coordinates
     x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
-
-    #    fig=plt.figure()
+    
+    # fig=plt.figure()
     #    ax=Axes3D(fig)
     #    ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
     #    ax.plot(x_centerline_fit,y_centerline_fit,z_centerline,zdir='z')
-    ##ax.plot(X,Y,Z,zdir='z')
     #    plt.show()
     
-    step = min([x_scale,y_scale])/2
-    print step
-    x=numpy.array([1,0,0])
-    y=numpy.array([0,1,0])
-    z=numpy.array([0,0,1])
+    # step = min([x_scale,y_scale])
+    # print step
+    x=np.array([1,0,0])
+    y=np.array([0,1,0])
+    z=np.array([0,0,1])
     
     
     print('\nComputing CSA...')
     sections=[0 for i in range(0,max_z_index-min_z_index+1)]
+    
     for iz in range(0,len(z_centerline)):
+        
         a = x_centerline_deriv[iz]
         b = y_centerline_deriv[iz]
         c = z_centerline_deriv[iz]
@@ -293,48 +293,72 @@ def compute_CSA(fname_segmentation):
         z_center = z_centerline[iz]
         d = -(a*x_center+b*y_center+c*z_center)
         
-        normal=normalize(numpy.array([a,b,c]))
+        normal=normalize(np.array([a,b,c]))
         
-        basis_1 = normalize(numpy.cross(normal,x)) # use of x in order to get orientation of each plane
-        basis_2 = normalize(numpy.cross(normal,basis_1))
-        angle = numpy.arccos(numpy.dot(normal,z))
-        max_diameter = (max([(max(X)-min(X))*x_scale,(max(Y)-min(Y))*y_scale])*numpy.sqrt(2))/(numpy.cos(angle)) # maximum dimension of the tilted plane
-        #plane = numpy.zeros((int((max_diameter)/step)),(int((max_diameter)/step)))
-        plane_discrete = numpy.linspace(-int(max_diameter/2),int(max_diameter/2),(max_diameter/step)+1)
+        basis_1 = normalize(np.cross(normal,x)) # use of x in order to get orientation of each plane, basis_1 is in the plane ax+by+cz+d=0
+        basis_2 = normalize(np.cross(normal,basis_1)) # third vector of base
+        
+        angle = np.arccos(np.dot(normal,z))
+        max_diameter = (max([(max(X)-min(X))*x_scale,(max(Y)-min(Y))*y_scale])*np.sqrt(2))/(np.cos(angle)) # maximum dimension of the tilted plane
+        
+        plane = np.zeros((int(max_diameter/step),int(max_diameter/step)))  ## discretized plane which will be filled with 0/1
+        plane_grid = np.linspace(-int(max_diameter/2),int(max_diameter/2),(max_diameter/step)) # how the plane will be skimmed through
+        
         cpt=0
-        for i_b1 in plane_discrete :
-            for i_b2 in plane_discrete :
-                point = numpy.array([x_center*x_scale,y_center*y_scale,z_center*z_scale]) + i_b1*basis_1 +i_b2*basis_2
-                coord_voxel = str([ int(round(point[0]/x_scale)), int(round(point[1]/y_scale)), int(round(point[2]/z_scale))])
-                
-                if (coord_voxel in coords) is True :
-                    cpt = cpt+1
-        #                    test=0
-        #                    cpt2=0
-        #                    while (test==0) & (cpt2<len(coords)):                      ## find in list
-        #                        if (int(coord_voxel[0])==int(coords[cpt2][0]))&(int(coord_voxel[1])==int(coords[cpt2][1]))&(int(coord_voxel[2])==int(coords[cpt2][2])):
-        #                            cpt=cpt+1
-        #                            test=1
-        #                        cpt2=cpt2+1
-        #
-        #
         
-        sections[iz]=cpt*step*step
+        for i_b1 in plane_grid :
+            
+            for i_b2 in plane_grid :    # we go through the plane
+                
+                point = np.array([x_center*x_scale,y_center*y_scale,z_center*z_scale]) + i_b1*basis_1 +i_b2*basis_2
+                coord_voxel = str([ int(round(point[0]/x_scale)), int(round(point[1]/y_scale)), int(round(point[2]/z_scale))])  ## to which voxel belongs each point of the plane
+                #coord_voxel = [ int(round(point[0]/x_scale)), int(round(point[1]/y_scale)), int(round(point[2]/z_scale))]  ## to which voxel belongs each point of the plane
+                
+                if (coord_voxel in coords) is True :  ## if this voxel is 1
+                    
+                    plane[i_b1+int(max_diameter/2)][i_b2+int(max_diameter/2)]=1
+                    cpt = cpt+1
+        
+        
+        
+        sections[iz]=cpt*step*step  # number of voxels that are in the intersection of each plane and the nonzeros values of segmentation, times the area of one cell of the discretized plane
+        
         print sections[iz]
-    #            for i in range(0,len(X)):
-    #                if (round(a*coords[i][0]+b*coords[i][1]+c*coords[i][2]+d) == 0):
-    #                    cpt=cpt+1
-    #            sections[iz]=cpt*x_scale*y_scale
-
-    print sections
+    
+    #os.chdir('..')
+    #sct.run('mkdir JPG_Results')
+    #os.chdir('JPG_Results')
+    #imsave('plane_' + str(iz) + '.jpg', plane)     # if you want ot save the images with the sections
+    #os.chdir('..')
+    #os.chdir('path_tmp')
+    
+    #print sections
+    
+    
+    ## plotting results
+    
+    fig=plt.figure()
+    plt.plot(z_centerline*z_scale, sections)
+    plt.show()
+    
     
     # come back to parent folder
     os.chdir('..')
     
+    # creating output text file
+    print('\nGenerating output text file...')
+    file = open('Cross_Area_Sections.txt','w')
+    file.write('List of Cross Section Areas for each z slice\n')
     
+    for i in range(min_z_index, max_z_index+1):
+        file.write('\nz = ' + str(i*z_scale) + ' mm -> CSA = ' + str(sections[i]) + ' mm^2')
+
+    file.close()
+
     # Remove temporary files
-    print('\nRemove temporary files...')
-    sct.run('rm -rf '+path_tmp)
+    if remove_temp_files == 1 :
+        print('\nRemove temporary files...')
+        sct.run('rm -rf '+path_tmp)
 
 # End of compute_CSA
 
@@ -362,8 +386,9 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
 
 def normalize(vect):
     """take an 1x3 matrix vector and return the normalised vector"""
-    norm=numpy.linalg.norm(vect)
+    norm=np.linalg.norm(vect)
     return vect/norm
+
 
 # Print usage
 # ==========================================================================================
@@ -382,7 +407,7 @@ def usage():
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <segmentation>          segmentation data\n' \
-        '  -p <process>               process to perform {extract_centerline}\n' \
+        '  -p <process>               process to perform {extract_centerline},{compute_CSA}\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -v <0,1>                   verbose. Default='+str(param.verbose)+'.\n'
