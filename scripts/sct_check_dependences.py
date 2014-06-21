@@ -97,6 +97,16 @@ def main():
         print '  sympy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
+    # check matplotlib
+    print_line('Check if matplotlib is installed .............. ')
+    try:
+        import matplotlib
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  matplotlib is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
+        install_software = 1
+
     # check nibabel
     print_line('Check if nibabel is installed ................. ')
     try:
