@@ -143,8 +143,8 @@ vector<CVector3> extractCenterline(string filename);
 
 void help()
 {
-    cout << "sct_segmentation_propagation - Version 0.2.7 (2014-06-12)" << endl;
-    cout << "Author : Benjamin De Leener - NeuroPoly lab - Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>" << endl << endl;
+    cout << "sct_segmentation_propagation - Version 1.0.0 (2014-06-22)" << endl;
+    cout << "Author : Benjamin De Leener - NeuroPoly - Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>" << endl << endl;
     
     cout << "Description:" << endl;
 	cout << "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path." << endl;
@@ -200,7 +200,7 @@ void help()
     cout << "\t-max-area <number> \t (double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2)" << endl;
     cout << "\t-max-deformation <number> \t (double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm)" << endl;
     cout << "\t-min-contrast <number> \t (double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50)" << endl;
-	
+	cout << "\t-d <number> \t (double, trade-off between distance of most promising point and feature strength, default depend on the contrast)" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -220,7 +220,8 @@ int main(int argc, char *argv[])
 	int gapInterSlices = 4, nbSlicesInitialisation = 5;
 	double radius = 4.0;
     int numberOfPropagationIteration = 200;
-    double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0;
+    double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
+	bool tradeoff_d_bool = false;
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
             i++;
@@ -324,6 +325,11 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i],"-min-contrast")==0) {
             i++;
             minContrast = atof(argv[i]);
+        }
+		else if (strcmp(argv[i],"-d")==0) {
+            i++;
+            tradeoff_d = atof(argv[i]);
+			tradeoff_d_bool = true;
         }
         else if (strcmp(argv[i],"-CSF")==0) {
             CSF_segmentation = true;
@@ -658,6 +664,9 @@ int main(int argc, char *argv[])
         for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
         if (initialisation <= 1) prop->setInitPosition(initialisation);
     }
+	if (tradeoff_d_bool) {
+		prop->setTradeOffDistanceFeature(tradeoff_d);
+	}
     prop->setVerbose(verbose);
 	prop->computeMeshInitial();
     if (output_init_tube) {

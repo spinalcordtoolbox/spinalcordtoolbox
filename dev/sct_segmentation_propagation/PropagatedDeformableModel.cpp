@@ -48,6 +48,9 @@ PropagatedDeformableModel::PropagatedDeformableModel()
     minContrast = 50.0;
     
     range = 500;
+
+	tradeoff_d_bool = false;
+	tradeoff_d_ = 0.0;
 }
 
 
@@ -79,6 +82,9 @@ PropagatedDeformableModel::PropagatedDeformableModel(int resolutionRadiale, int 
     minContrast = 50.0;
     
     range = 500;
+
+	tradeoff_d_bool = false;
+	tradeoff_d_ = 0.0;
 }
 
 
@@ -467,6 +473,7 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
     deformableAdaptator->setVerbose(verbose_);
     deformableAdaptator->setNumberOfIteration(8);
     deformableAdaptator->setStopCondition(0.05);
+	if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
     //deformableAdaptator->setProgressiveLineSearchLength(true);// tested but not optimal
     deformableAdaptator->adaptation(); // launch the deformation
     meshOutput = deformableAdaptator->getSpinalCordOutput(); // get the spinal cord segmentation mesh
@@ -663,7 +670,8 @@ SpinalCord* PropagatedDeformableModel::propagationMesh(int numberOfMesh)
                  * Creation of the deformation object, including the image, the mesh and the deformation parameters
                  *****************************************************************************************/
                 deformableAdaptator = new DeformableModelBasicAdaptator(image3D_,partMesh,numberOfDeformIteration_,meanContrast,false);
-                deformableAdaptator->setVerbose(verbose_);
+                if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
+				deformableAdaptator->setVerbose(verbose_);
                 if (this->changedParameters_) {
                     deformableAdaptator->changedParameters();
                     deformableAdaptator->setAlpha(alpha);
@@ -781,7 +789,8 @@ void PropagatedDeformableModel::rafinementGlobal()
 	
 	//DeformableModelBasicAdaptator *deformableAdaptator = new DeformableModelBasicAdaptator(image3D_,meshOutputFinal,numberOfDeformIteration_,445.00);
     DeformableModelBasicAdaptator *deformableAdaptator = new DeformableModelBasicAdaptator(image3D_,meshOutputFinal,numberOfDeformIteration_,contrast);
-    deformableAdaptator->setVerbose(verbose_);
+    if (tradeoff_d_bool) deformableAdaptator->setTradeOff(tradeoff_d_);
+	deformableAdaptator->setVerbose(verbose_);
 	deformableAdaptator->changedParameters();
 	deformableAdaptator->setAlpha(25);
 	deformableAdaptator->setBeta(50);
