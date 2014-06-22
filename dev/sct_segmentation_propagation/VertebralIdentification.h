@@ -10,7 +10,7 @@
 #define __sct_segmentation_propagation__VertebralIdentification__
 
 #include <iostream>
-#include "Vector3.h"
+#include "util/Vector3.h"
 #include <vector>
 #include <itkImage.h>
 using namespace std;

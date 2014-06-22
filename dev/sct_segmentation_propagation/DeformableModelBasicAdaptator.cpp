@@ -48,6 +48,9 @@ DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mes
 	stopCondition = 0.4;
 	numberOptimizerIteration = 500;
     progressiveLineSearchLength = false;
+
+	tradeOff = 0.0;
+	tradeoff_bool = false;
     
     verbose_ = false;
 }
@@ -60,6 +63,9 @@ DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mes
 	stopCondition = 0.4;
 	numberOptimizerIteration = 500;
     progressiveLineSearchLength = false;
+
+	tradeOff = 0.0;
+	tradeoff_bool = false;
     
     verbose_ = false;
 }
@@ -112,7 +118,8 @@ double DeformableModelBasicAdaptator::adaptation()
     } else { // T1
         a = 0.0001, b = 0.02, c = -1.6242; //b = 0.013
     }
-    if (contrast != -1.0) costFunction->setTradeOff(a*contrast*contrast+b*contrast+c);
+	if (tradeoff_bool) costFunction->setTradeOff(tradeOff);
+    else if (contrast != -1.0) costFunction->setTradeOff(a*contrast*contrast+b*contrast+c);
     else {
         double mean = 0.0;
         for (unsigned int i=0; i<contrastvector.size(); i++)
