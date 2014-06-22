@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Benjamin De Leener. All rights reserved.
 //
 
+#define _USE_MATH_DEFINES
+
 #include "VertebralIdentification.h"
 #include <string>
 #include <fstream>

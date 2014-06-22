@@ -306,7 +306,7 @@ public:
 	void setFinalMeshBool(bool f) { meshBool_ = f; };
 	void changedParameters() { this->changedParameters_ = true; };
 	void setDeltaNormale(double deltaNormale) { this->deltaNormale = deltaNormale; };
-	void setTradeOff(double tradeOff) { this->tradeOff = tradeOff; };
+	void setTradeOff(double tradeOff) { this->tradeOff = tradeOff; tradeoff_bool = true; };
 	void setContrast(double contrast) { this->contrast = contrast; };
 
 	void setLineSearch(double line_search) { this->line_search = line_search; };
@@ -331,7 +331,7 @@ private:
     vector<pair<CVector3,double> > contrastvector;
 	double stopCondition;
 	int numberOptimizerIteration;
-    bool progressiveLineSearchLength;
+    bool progressiveLineSearchLength, tradeoff_bool;
     
     bool verbose_;
 };

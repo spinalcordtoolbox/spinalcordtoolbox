@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <vector>
-#include "Vector3.h"
+#include "util/Vector3.h"
 
 #include <itkPointSet.h>
 #include <itkBSplineScatteredDataPointSetToImageFilter.h>

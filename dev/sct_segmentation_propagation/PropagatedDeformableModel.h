@@ -58,6 +58,8 @@ public:
     void setMaxDeformation(double max) { maxDeformation = max; };
     void setMaxArea(double max) { maxArea =  max; };
     void setMinContrast(double min) { minContrast = min; };
+
+	void setTradeOffDistanceFeature(double tradeoff_d) { tradeoff_d_ = tradeoff_d; tradeoff_d_bool = true; };
     
     void setVerbose(bool verbose) { verbose_ = verbose; };
     bool getVerbose() { return verbose_; };
@@ -94,6 +96,9 @@ private:
     vector< pair<CVector3,double> > contrast;
     
     double maxDeformation, maxArea, minContrast;
+
+	double tradeoff_d_;
+	bool tradeoff_d_bool;
     
     BSplineApproximation centerline_approximator;
     double range;
