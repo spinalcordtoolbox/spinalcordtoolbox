@@ -48,7 +48,7 @@ void help()
 int main(int argc, const char * argv[])
 {
     string filename_target, filename_source, filename_output;
-    bool boundingBox = false, maxBoundingBox = false, verbose = true, slices = false;
+    bool boundingBox = false, maxBoundingBox = false, maxZBoundingBox = false, verbose = true, slices = false;
     int boundingBoxIndex[3], boundingBoxSize[3], dimension = -1;
     
     if (argc < 3)
@@ -80,6 +80,10 @@ int main(int argc, const char * argv[])
         else if (strcmp(argv[i],"-bmax")==0)
         {
             maxBoundingBox = true;
+        }
+	else if (strcmp(argv[i],"-bzmax")==0)
+        {
+            maxZBoundingBox = true;
         }
         else if (strcmp(argv[i],"-o")==0)
         {
@@ -169,6 +173,49 @@ int main(int argc, const char * argv[])
                 if (indexTarget[0] > end[0]) end[0] = indexTarget[0];
                 if (indexTarget[1] > end[1]) end[1] = indexTarget[1];
                 if (indexTarget[2] > end[2]) end[2] = indexTarget[2];
+            }
+            ++itTarget;
+        }
+        desiredStart[0] = start[0];
+        desiredStart[1] = start[1];
+        desiredStart[2] = start[2];
+        desiredSize[0] = end[0]-start[0]+1;
+        desiredSize[1] = end[1]-start[1]+1;
+        desiredSize[2] = end[2]-start[2]+1;
+        
+        if (verbose)
+        {
+            cout << "WARNING: please check bounding box" << endl;
+            cout << "Origin: \t" << desiredStart[0] << "\t" << desiredStart[1] << "\t" << desiredStart[2] << endl;
+            cout << "Size: \t\t" << desiredSize[0] << "\t" << desiredSize[1] << "\t" << desiredSize[2] << endl << endl;
+        }
+    }
+    else if (maxZBoundingBox)
+    {
+	BinaryImageType::RegionType region = imageTarget->GetLargestPossibleRegion();
+        ImageIterator itTarget( imageTarget, region );
+        itTarget.GoToBegin();
+        BinaryImageType::PixelType pixelTarget;
+        BinaryImageType::IndexType indexTarget, start, end;
+	BinaryImageType::SizeType sizeRegion=region.GetSize();
+        start.Fill(0); end.Fill(0);
+	start[0] = 0;
+	start[2] = 0;
+	end[0] = sizeRegion[0]-1;
+	end[2] = sizeRegion[2]-1;
+        while( !itTarget.IsAtEnd() )
+        {
+            indexTarget = itTarget.GetIndex();
+            pixelTarget = itTarget.Get() && imageSource->GetPixel(indexTarget);
+            if (pixelTarget != 0)
+            {
+                if (start[1]==0)
+                    start[1] = indexTarget[1];
+                if (end[1]==0)
+                    end[1] = indexTarget[1];
+
+                if (indexTarget[1] < start[1]) start[1] = indexTarget[1];
+                if (indexTarget[1] > end[1]) end[1] = indexTarget[1];
             }
             ++itTarget;
         }
