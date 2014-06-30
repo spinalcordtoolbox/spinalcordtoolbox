@@ -26,14 +26,15 @@ All files are licensed as described in the LICENSE.TXT file.
 
 Environment variable
 -------------------
-If not already present, add the following lines to your .bash_profile:
+If you install the toolbox from GitHub, DO NOT RUN THE INSTALLER. The installer is only made for packages (created by create_package.py). So, if you get the toolbox from GitHub, you need to edite your .bash_profile accordingly:
 
 ````
 # SPINALCORDTOOLBOX
-SCT_DIR="/usr/local/spinalcordtoolbox"
-export PATH=${PATH}:$SCT_DIR/bin
+SCT_DIR="path_to_the_toolbox"
 export PATH=${PATH}:$SCT_DIR/scripts
-export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH
+export PATH=${PATH}:$SCT_DIR/bin/osx
 export SCT_DIR PATH
+export PATH=${PATH}:$SCT_DIR/install/osx/ants
+export PATH=${PATH}:$SCT_DIR/install/osx/c3d
 ````
-
+N.B. If you are running debian/ubuntu, replace "osx" by "debian"
