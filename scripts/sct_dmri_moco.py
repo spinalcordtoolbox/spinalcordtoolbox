@@ -18,11 +18,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: use first DW group as target
-# TODO: identify b=0 image that is just before the first DW group --> important: check if exists
-# TODO: add usage for eddy
-# TODO: correct bug related to path name
-
 import sys
 import os
 import commands
@@ -80,6 +75,7 @@ class param_class:
         #============================================
         #Eddy Current Distortion Parameters
         #============================================
+        self.run_eddy                  = 0
         self.mat_eddy                  = ''
         self.min_norm                  = 0.001
         self.swapXY                    = 0
@@ -95,7 +91,6 @@ def main():
     print '===================================================\n\n\n\n'
 
     # initialization
-    run_eddy = 0
     start_time = time.time()
     param = param_class()
 
@@ -121,7 +116,7 @@ def main():
         elif opt in ('-l'):
             param.fname_centerline = arg
         elif opt in ('-e'):
-            run_eddy = int(arg)
+            param.run_eddy = int(arg)
         elif opt in ('-s'):
             param.mask_size = float(arg)
         elif opt in ('-c'):
@@ -171,7 +166,7 @@ def main():
     fname_data_initial = param.fname_data
 
     # EDDY CORRECTION -- for debugging, it is possible to run code by commenting the next lines
-    if run_eddy:
+    if param.run_eddy:
         sct_eddy_correct(param)
         param.fname_data = path_data+file_data+'_eddy.nii'
 
@@ -396,8 +391,9 @@ def sct_dmri_moco(param,fname_data_initial):
     #Spline Regularization along T
     sct_moco_spline(mat_final,nt,nz,param.verbose)
 
-    #combining eddy Matrices
-    sct_moco_combine_matrix((path_data+'mat_eddy'),mat_final)
+    if param.run_eddy:
+        #combining eddy Matrices
+        sct_moco_combine_matrix((path_data+'mat_eddy'),mat_final)
 
     #Apply moco on all dmri data
     print '\n\n\n------------------------------------------------------------------------------'
