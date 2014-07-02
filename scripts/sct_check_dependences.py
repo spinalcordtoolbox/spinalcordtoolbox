@@ -208,6 +208,13 @@ def main():
     else:
         print_fail()
 
+    # Check ANTs integrity
+    print_line('Check integrity of ANTs output ................ ')
+    (status, output) = commands.getstatusoutput('isct_test_ants.py -v 0')
+    if status in [0]:
+        print_ok()
+    else:
+        print_fail()
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
