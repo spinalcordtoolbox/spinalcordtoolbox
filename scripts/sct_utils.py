@@ -1,8 +1,16 @@
 #!/usr/bin/env python
-
-## @package sct_utils
+#########################################################################################
 #
-# Module that contains several useful functions.
+# Module containing several useful functions.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
+# Modified: 2014-07-01
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
+
 import os
 import sys
 import commands
@@ -60,7 +68,7 @@ def check_file_exist(fname):
     if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz'):
         pass
     else:
-        print('\nERROR: ' + fname + ' does not exist. Exit program.\n')
+        print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
 
 

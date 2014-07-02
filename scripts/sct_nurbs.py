@@ -55,7 +55,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
 # Authors: Benjamin De Leener, Julien Touati
-# Modified: 2014-05-09
+# Modified: 2014-07-01
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
