@@ -1,6 +1,10 @@
 
 # CHANGES TO RELEASE
 
+1.0.1 ()
+
+- INST: toolbox now requires matplotlib
+
 1.0 (2014-06-15)
 
 - first public release!
