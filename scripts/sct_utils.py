@@ -26,8 +26,9 @@ fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs 
 # run
 #=======================================================================================================================
 # Run UNIX command
-def run(cmd):
-    print('>> ' + cmd)
+def run(cmd, verbose=1):
+    if verbose:
+        print('>> ' + cmd)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         print('\nERROR!!! \n'+output+'\nExit program.\n')
