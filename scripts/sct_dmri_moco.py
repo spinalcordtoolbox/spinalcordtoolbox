@@ -22,6 +22,7 @@
 # TODO: identify b=0 image that is just before the first DW group --> important: check if exists
 # TODO: add usage for eddy
 # TODO: correct bug related to path name
+# test
 
 import sys
 import os
