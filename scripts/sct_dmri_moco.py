@@ -356,7 +356,7 @@ def sct_dmri_moco(param,fname_data_initial):
     param.fname_data = 'b0.nii'
     if index_dwi[0]!=0:
         param.fname_target = 'tmp.data_splitT' + numT[index_b0[index_dwi[0]-1]] + '.nii' #numT[index_b0[len(index_b0)-1]]
-    else
+    else:
         param.fname_target = 'tmp.data_splitT' + numT[index_b0[0]] + '.nii'
     param.todo = 'estimate_and_apply'
     param.mat_moco = 'b0groups_param.mat'
