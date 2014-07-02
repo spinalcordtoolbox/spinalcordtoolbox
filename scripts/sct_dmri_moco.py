@@ -18,6 +18,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: remove: dwi_averaged_groups.nii, dwi_averaged_groups_moco.nii, dwi_mean.nii, b0_mean.nii
+# TODO: remove // in some executions
+# TODO: provide b0_mean and dwi_mean after moco
+# TODO: add flag to remove temp files
+# TODO: make sure final interp is what the user asks
+
+
 import sys
 import os
 import commands
