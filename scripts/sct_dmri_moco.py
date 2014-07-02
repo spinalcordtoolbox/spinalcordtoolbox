@@ -22,7 +22,6 @@
 # TODO: identify b=0 image that is just before the first DW group --> important: check if exists
 # TODO: add usage for eddy
 # TODO: correct bug related to path name
-# test
 
 import sys
 import os
@@ -135,7 +134,10 @@ def main():
             param.verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
-    if param.fname_data == '' or param.fname_bvecs == '' :
+    if param.fname_data == '':
+        print '\n\n\033[91mAll mandatory arguments are not provided\033[0m \n'
+        usage()
+    elif param.fname_bvecs == '' and param.fname_bvals == '':
         print '\n\n\033[91mAll mandatory arguments are not provided\033[0m \n'
         usage()
 
@@ -146,9 +148,6 @@ def main():
     if param.fname_bvals!='':
         print 'Bvals File:', param.fname_bvals
 
-    # Extract path, file and extension
-    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
-
     # check existence of input files
     sct.check_file_exist(param.fname_data)
     sct.check_file_exist(param.fname_bvecs)
@@ -158,6 +157,9 @@ def main():
     param.fname_bvecs = os.path.abspath(param.fname_bvecs)
     if param.fname_bvals!='':
         param.fname_bvals = os.path.abspath(param.fname_bvals)
+
+    # Extract path, file and extension
+    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
@@ -173,10 +175,8 @@ def main():
         sct_eddy_correct(param)
         param.fname_data = path_data+file_data+'_eddy.nii'
 
-    # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, wherease
+    # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
     # the param.fname_data will be the output of sct_eddy_correct.
-    print param.fname_data
-    sys.exit(0)
     sct_dmri_moco(param,fname_data_initial)
 
     # come back to parent folder
@@ -204,13 +204,6 @@ def sct_dmri_moco(param,fname_data_initial):
     fname_bvals    = param.fname_bvals
     dwi_group_size = param.dwi_group_size
 
-    # # Get full path
-    # fname_data = os.path.abspath(fname_data)
-    # if fname_bvecs!='':
-    #     fname_bvecs = os.path.abspath(fname_bvecs)
-    # if fname_bvals!='':
-    #     fname_bvals = os.path.abspath(fname_bvals)
-    #
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     
@@ -353,14 +346,18 @@ def sct_dmri_moco(param,fname_data_initial):
     print 'Estimating motion based on DW groups...'
     print '------------------------------------------------------------------------------\n'
     param.fname_data =  path_data + '/dwi_averaged_groups.nii'
-    param.fname_target =  path_data + '/dwi_mean.nii'
+#    param.fname_target =  path_data + '/dwi_mean.nii'
+    param.fname_target =  file_dwi + '_mean_' + str(0)
     param.todo = 'estimate_and_apply'
     param.mat_moco = 'dwigroups_param.mat'
     sct_moco(param)
 
     # Estimate moco on b0 groups
     param.fname_data = 'b0.nii'
-    param.fname_target = 'tmp.data_splitT' + numT[index_b0[len(index_b0)-1]] + '.nii'
+    if index_dwi[0]!=0:
+        param.fname_target = 'tmp.data_splitT' + numT[index_b0[index_dwi[0]-1]] + '.nii' #numT[index_b0[len(index_b0)-1]]
+    else
+        param.fname_target = 'tmp.data_splitT' + numT[index_b0[0]] + '.nii'
     param.todo = 'estimate_and_apply'
     param.mat_moco = 'b0groups_param.mat'
     sct_moco(param)
@@ -434,6 +431,7 @@ def usage():
         '  -d           DWI Group Size. Default: 5 successive images are merged to increase SNR and robustness\n' \
         '  -s           Gaussian mask_size - Specify mask_size in millimeters. Default value of mask_size is 0. \n' \
         '  -l           Centerline file can be given to specify the centre of Gaussian Mask. Need -s. \n' \
+        '  -e           For Eddy Correction, set the value to 1. Default value is 0 \n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
         '  -a <bvals>                 bvals file. Used to detect low-bvals images : more robust \n' \
