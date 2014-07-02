@@ -14,6 +14,7 @@
 # TODO: also check the SCT
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
+# TODO: add linux distrib when checking OS
 
 
 # DEFAULT PARAMETERS
@@ -44,9 +45,9 @@ def main():
 
 
     # initialization
-    fsl_is_installed = 1
-    ants_is_installed = 1
-    c3d_is_installed = 1
+    fsl_is_working = 1
+    # ants_is_installed = 1
+    # c3d_is_installed = 1
     install_software = 0
     restart_terminal = 0
     os_running = ''
@@ -66,6 +67,15 @@ def main():
     # check installation packages
     print 'Check which Python is running ... '
     print '  '+sys.executable
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
+    # fetch version of the toolbox
+    print 'Fetch version of the Spinal Cord Toolbox... '
+    with open (path_sct+"/version.txt", "r") as myfile:
+        version_sct = myfile.read().replace('\n', '')
+    print "  version: "+version_sct
 
     # check numpy
     print_line('Check if numpy is installed ................... ')
@@ -117,34 +127,44 @@ def main():
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
-    # check if FSL is installed
-    print_line('Check if FSL is installed ..................... ')
-    (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
+    # check if FSL is declared
+    print_line('Check if FSL is working ....................... ')
+    (status, output) = commands.getstatusoutput('which fsl')
     if output:
         print_ok()
-        path_fsl = output[:-10]
-        print '  '+path_fsl
     else:
         print_fail()
-        print '  FSL is not installed! Install it from: http://fsl.fmrib.ox.ac.uk/'
-        fsl_is_installed = 0
-        install_software = 1
+        fsl_is_working = 1
+        print '  FSL is not working!'
+        # In a previous version we edited the bash_profile. We don't do that anymore because some users might have funky configurations.
+        # add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
+        #     'FSLDIR='+path_fsl+'\n' \
+        #     '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
+        #     'PATH=${FSLDIR}/bin:${PATH}\n' \
+        #     'export FSLDIR PATH')
+        # restart_terminal = 1
 
-    # check if FSL is declared
-    if fsl_is_installed:
-        print_line('Check if FSL is declared ...................... ')
-        (status, output) = commands.getstatusoutput('which fsl')
+    # check if FSL is installed
+    if not fsl_is_working:
+        print_line('Check if FSL is installed ..................... ')
+        # check first under /usr for faster search
+        (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
         if output:
             print_ok()
+            path_fsl = output[:-10]
+            print '  '+path_fsl
         else:
-            print_warning()
-            print '  FSL is not declared! Modifying .bash_profile ...'
-            add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
-                'FSLDIR='+path_fsl+'\n' \
-                '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
-                'PATH=${FSLDIR}/bin:${PATH}\n' \
-                'export FSLDIR PATH')
-            restart_terminal = 1
+            # some users might have installed it under /home, so check it...
+            (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
+            if output:
+                print_ok()
+                path_fsl = output[:-10]
+                print '  '+path_fsl
+            else:
+                print_fail()
+                print '  FSL does not seem to be installed! Install it from: http://fsl.fmrib.ox.ac.uk/'
+                fsl_is_installed = 0
+                install_software = 1
 
     # check ANTs
     print_line('Check if ANTs is declared ..................... ')
@@ -156,7 +176,7 @@ def main():
         print '  ANTs is not declared.'
 
     # check if ANTs is compatible with OS
-    print_line('Check ANTs compatibility with your OS ......... ')
+    print_line('Check ANTs compatibility with OS .............. ')
     (status, output) = commands.getstatusoutput('antsRegistration')
     if status in [0, 256]:
         print_ok()
@@ -173,7 +193,7 @@ def main():
         print '  c3d is not installed or not declared.'
 
     # check c3d compatibility with OS
-    print_line('Check c3d compatibility with your OS .......... ')
+    print_line('Check c3d compatibility with OS ............... ')
     (status, output) = commands.getstatusoutput('c3d -h')
     if status in [0, 256]:
         print_ok()
@@ -181,7 +201,7 @@ def main():
         print_fail()
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with your OS ...... ')
+    print_line('Check PropSeg compatibility with OS ........... ')
     (status, output) = commands.getstatusoutput('sct_segmentation_propagation')
     if status in [0, 256]:
         print_ok()
