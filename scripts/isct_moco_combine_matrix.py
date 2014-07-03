@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#########################################################################################
+#
+# Code for combining matrices generated during motion correction.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
+# Modified: 2014-07-02
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 
 # check if needed Python libraries are already installed or not
 import os

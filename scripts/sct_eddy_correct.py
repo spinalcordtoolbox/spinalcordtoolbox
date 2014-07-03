@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#########################################################################################
+#
+# Eddy Current Correction.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
+# Modified: 2014-07-02
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 
 # check if needed Python libraries are already installed or not
 import sys
@@ -34,6 +45,7 @@ class eddy_class:
         #============================================
         self.fname_data                = ''
         self.fname_bvecs               = ''
+        self.output_path               = ''
         self.mat_eddy                  = ''
         self.min_norm                  = 0.001
         self.swapXY                    = 0
@@ -52,7 +64,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:b:m:c:p:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:m:p:r:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -62,22 +74,25 @@ def main():
             param.fname_data = arg
         elif opt in ('-b'):
             param.fname_bvecs = arg
-        elif opt in ('-m'):
-            param.mat_eddy = arg
         elif opt in ('-c'):
             param.cost_function_flirt = arg
+        elif opt in ('-m'):
+            param.mat_eddy = arg
+        elif opt in ('-o'):
+            param.output_path = arg
         elif opt in ('-p'):
             param.interp = arg
         elif opt in ('-v'):
             param.verbose = int(arg)
+        elif opt in ('-r'):
+            param.delete_tmp_files = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data=='' or param.fname_bvecs=='':
         print '\n\nAll mandatory arguments are not provided \n'
         usage()
 
-    #Extract path, file and extension
-    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
+    if param.output_path=='': param.output_path = os.getcwd() + '/'
 
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
@@ -120,7 +135,7 @@ def sct_eddy_correct(param):
     #Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     
-    if param.mat_eddy=='': param.mat_eddy= path_data + 'mat_eddy/'
+    if param.mat_eddy=='': param.mat_eddy= 'mat_eddy/'
     if not os.path.exists(param.mat_eddy): os.makedirs(param.mat_eddy)
     mat_eddy    = param.mat_eddy
     
@@ -147,21 +162,11 @@ def sct_eddy_correct(param):
     print '\nSplit along T dimension...'
     cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + 'tmp.data_splitT'
     status, output = sct.run(cmd)
-    numT = []
-    for i in range(nt):
-        if len(str(i))==1:
-            numT.append('000' + str(i))
-        elif len(str(i))==2:
-            numT.append('00' + str(i))
-        elif len(str(i))==3:
-            numT.append('0' + str(i))
-        else:
-            numT.append(str(nt))
 
     nb_loops = nz
     file_suffix=[]
     for iZ in range(nz):
-        file_suffix.append('_Z'+numT[iZ])
+        file_suffix.append('_Z'+ str(iZ).zfill(4))
 
     # Identify pairs of opposite gradient directions
     print '\nIdentify pairs of opposite gradient directions...'
@@ -215,25 +220,25 @@ def sct_eddy_correct(param):
         
         #Slicewise correction
         print '\nSplit volumes across Z...'
-        fname_plus = 'tmp.data_splitT' + numT[i_plus]
-        fname_plus_Z = 'tmp.data_splitT' + numT[i_plus] + '_Z'
+        fname_plus = 'tmp.data_splitT' + str(i_plus).zfill(4)
+        fname_plus_Z = 'tmp.data_splitT' + str(i_plus).zfill(4) + '_Z'
         cmd = fsloutput + 'fslsplit ' + fname_plus + ' ' + fname_plus_Z + ' -z'
         status, output = sct.run(cmd)
 
-        fname_minus = 'tmp.data_splitT' + numT[i_minus]
-        fname_minus_Z = 'tmp.data_splitT' + numT[i_minus] + '_Z'
+        fname_minus = 'tmp.data_splitT' + str(i_minus).zfill(4)
+        fname_minus_Z = 'tmp.data_splitT' + str(i_minus).zfill(4) + '_Z'
         cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
         status, output = sct.run(cmd)
 
         #loop across Z
         for iZ in range(nb_loops):
-            fname_plus = 'tmp.data_splitT' + numT[i_plus] + file_suffix[iZ]
+            fname_plus = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ]
 
-            fname_minus = 'tmp.data_splitT' + numT[i_minus] + file_suffix[iZ]
+            fname_minus = 'tmp.data_splitT' + str(i_minus).zfill(4) + file_suffix[iZ]
             #Find transformation on opposite gradient directions
             print '\nFind transformation for each pair of opposite gradient directions...'
-            fname_plus_corr = 'tmp.data_splitT' + numT[i_plus] + file_suffix[iZ] + '_corr_'
-            omat = 'mat__tmp.data_splitT' + numT[i_plus] + file_suffix[iZ] + '.txt'
+            fname_plus_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_'
+            omat = 'mat__tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '.txt'
             cmd = fsloutput+'flirt -in '+fname_plus+' -ref '+fname_minus+' -paddingsize 3 -schedule '+schedule_file+' -verbose 2 -omat '+omat+' -cost '+cost_function+' -forcescaling'
             status, output = sct.run(cmd)
 
@@ -276,7 +281,7 @@ def sct_eddy_correct(param):
                 i_file = opposite_gradients_jT[iN]
 
             for iZ in range(nb_loops):
-                fname = 'tmp.data_splitT' + numT[i_file] + file_suffix[iZ]
+                fname = 'tmp.data_splitT' + str(i_file).zfill(4) + file_suffix[iZ]
                 fname_corr = fname + '_corr_' + '__div2'
                 omat = mat_eddy + 'mat.T' + str(i_file) + '_Z' + str(iZ) + '.txt'
                 cmd = fsloutput + 'flirt -in ' + fname + ' -ref ' + fname + ' -out ' + fname_corr + ' -init ' + omat + ' -applyxfm -paddingsize 3 -interp ' + param.interp
@@ -292,20 +297,20 @@ def sct_eddy_correct(param):
 
     for iN in range(nb_oppositeGradients):
         i_plus = opposite_gradients_iT[iN]
-        fname_plus_corr = 'tmp.data_splitT' + numT[i_plus] + '_corr_' + '__div2'
+        fname_plus_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + '_corr_' + '__div2'
         cmd = fsloutput + 'fslmerge -z ' + fname_plus_corr
 
         for iZ in range(nz):
-            fname_plus_Z_corr = 'tmp.data_splitT' + numT[i_plus] + file_suffix[iZ] + '_corr_' + '__div2'
+            fname_plus_Z_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
             cmd = cmd + ' ' + fname_plus_Z_corr
         status, output = sct.run(cmd)
 
         i_minus = opposite_gradients_jT[iN]
-        fname_minus_corr = 'tmp.data_splitT' + numT[i_minus] + '_corr_' + '__div2'
+        fname_minus_corr = 'tmp.data_splitT' + str(i_minus).zfill(4) + '_corr_' + '__div2'
         cmd = fsloutput + 'fslmerge -z ' + fname_minus_corr
 
         for iZ in range(nz):
-            fname_minus_Z_corr = 'tmp.data_splitT' + numT[i_minus] + file_suffix[iZ] + '_corr_' + '__div2'
+            fname_minus_Z_corr = 'tmp.data_splitT' + str(i_minus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
             cmd = cmd + ' ' + fname_minus_Z_corr
         status, output = sct.run(cmd)
 
@@ -315,14 +320,14 @@ def sct_eddy_correct(param):
     print '\nMerge back across T...'
     print '------------------------------------------------------------------------------------\n'
     
-    fname_data_corr = path_data + file_data + '_eddy'
+    fname_data_corr = param.output_path + file_data + '_eddy'
     cmd = fsloutput + 'fslmerge -t ' + fname_data_corr
     path_tmp = os.getcwd()
     for iT in range(nt):
-        if os.path.isfile((path_tmp + '/' + 'tmp.data_splitT' + numT[iT] + '_corr_' + '__div2.nii')):
-            fname_data_corr_3d = 'tmp.data_splitT' + numT[iT] + '_corr_' + '__div2'
+        if os.path.isfile((path_tmp + '/' + 'tmp.data_splitT' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
+            fname_data_corr_3d = 'tmp.data_splitT' + str(iT).zfill(4) + '_corr_' + '__div2'
         elif iT in index_b0:
-            fname_data_corr_3d = 'tmp.data_splitT' + numT[iT]
+            fname_data_corr_3d = 'tmp.data_splitT' + str(iT).zfill(4)
         
         cmd = cmd + ' ' + fname_data_corr_3d
     status, output = sct.run(cmd)
@@ -364,6 +369,7 @@ def usage():
         '  -m           matrix folder \n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
+        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
