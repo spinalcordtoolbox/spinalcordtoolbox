@@ -22,7 +22,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad
-# Modified: 2014-07-01
+# Modified: 2014-07-03
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -34,6 +34,7 @@
 import sys
 import commands
 import os
+import platform
 
 # get path of the toolbox to be able to import sct_utils
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -45,13 +46,19 @@ import sct_utils as sct
 #=======================================================================================================================
 def main():
 
+    # initialization
+    os_running = 'not identified'
+
     print
 
     # check OS
     print 'Check which OS is running... '
-    if (sys.platform == 'darwin'):
+    platform_running = sys.platform
+    if (platform_running.find('darwin') != -1):
         os_running = 'osx'
-    print '  '+os_running+' ('+sys.platform+')'
+    elif (platform_running.find('linux') != -1):
+        os_running = 'linux'
+    print '  '+os_running+' ('+platform.platform()+')'
 
     # fetch version of the toolbox
     print 'Fetch version of the toolbox... '
