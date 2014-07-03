@@ -153,7 +153,7 @@ def usage():
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -h                         show this help\n' \
-        '  -v {0, 1}                  verbose. Default='+str(param.verbose)+'.\n' \
+        '  -v {0, 1}                  verbose. Default=1\n' \
         '\n'\
 
     # exit program
