@@ -15,11 +15,10 @@
 #########################################################################################
 
 
+# TODO: flag to remove temp files (r)
+
 
 # DEFAULT PARAMETERS
-
-
-
 class param:
     ## The constructor
     def __init__(self):
@@ -80,7 +79,7 @@ def main():
         
     # Check input parameters
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:v')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -94,7 +93,7 @@ def main():
             name_method = arg
         elif opt in('-b'):
             volume_output = int(arg)
-        elif opt in('-v'):
+        elif opt in ('-v'):
             verbose = int(arg)
             
     # display usage if a mandatory argument is not provided
@@ -103,10 +102,10 @@ def main():
 	
     # display usage if the requested process is not available
     if name_process not in processes:
-	usage()
+        usage()
 	
-    # display usage if incorrect method 
-    if name_method not in method_CSA:
+    # display usage if incorrect method
+    if name_process == 'compute_CSA' and (name_method not in method_CSA):
         usage()
     
     # display usage if no method provided
@@ -115,7 +114,7 @@ def main():
     
     # check existence of input files
     sct.check_file_exist(fname_segmentation)
-        
+    
     # print arguments
     print '\nCheck parameters:'
     print '.. segmentation file:             '+fname_segmentation
@@ -673,24 +672,33 @@ def edge_detection(f) :
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
-        '  Perform various types of processing from the spinal cord segmentation (e.g. extract centerline, compute CSA,' \
-        ' etc.).\n' \
+        '  This function performs various types of processing from the spinal cord segmentation, e.g.,\n' \
+        '  extract centerline, compute cross-sectional area (CSA).\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+' -i <segmentation> -p <process>\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -i <segmentation>          segmentation data\n' \
-        '  -p <process>               process to perform {extract_centerline},{compute_CSA}\n' \
-        '  -m <method CSA>            4 computing method are available : counting_ortho_plane , counting_z_plane , ellipse_ortho_plane , ellipse_z_plane\n' \
+        '  -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)\n' \
+        '  -p <process>              type of process to be performed {extract_centerline}, {compute_CSA}\n' \
+        '  -m <method_CSA>           if process is "compute_CSA", the following methods are available:\n' \
+        '                            counting_ortho_plane: resample planes orthogonal to centerline and count\n' \
+        '                                                  pixels in each plane.\n' \
+        '                            counting_z_plane: count pixels in each slice and then geometrically\n' \
+        '                                              adjust using centerline orientation.\n' \
+        '                            ellipse_ortho_plane: same process as counting_ortho_plane, but fit\n' \
+        '                                                 ellipse instead of counting pixels.\n' \
+        '                            ellipse_z_plane: same process as counting_z_plane, but fit ellipse\n' \
+        '                                                 instead of counting pixels.\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -v <0,1>                   verbose. Default='+str(param.verbose)+'.\n' \
-        '  -b <0,1>                   outputs a volume in which each slice\'s value is equal to the CSA in mm^2. Default = 0\n' \
+        '  -b <0,1>                   outputs a volume in which each slice\'s value is equal to the CSA in\n' \
+        '                             mm^2. Default = 0\n' \
         '\n' \
         'EXAMPLE\n' \
         '  sct_process_segmentation.py -i binary_segmentation.nii.gz -p compute_CSA -m counting_z_plane\n'
