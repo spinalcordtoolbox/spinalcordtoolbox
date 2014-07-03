@@ -516,7 +516,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose):
     if volume_output == 1 : 
     
         # Extract orientation of the input segmentation
-        status,sct_orientation_output = sct.run('sct_orientation -i '+file_data_seg+ext_data_seg + ' -get')
+        status,sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
         orientation = sct_orientation_output[-3:]
         
         for iz in range(0,len(z_centerline)):
