@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#########################################################################################
+#
+# Code for Spline regularization along T during motion correction.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
+# Modified: 2014-07-02
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 
 # check if needed Python libraries are already installed or not
 import sys
@@ -8,7 +19,6 @@ import commands
 import getopt
 import scipy.signal
 import scipy.fftpack
-import pylab as pl
 
 try:
     import numpy as np
@@ -91,6 +101,9 @@ def sct_moco_spline(folder_mat,nt,nz,verbose):
     # Generate motion splines
     print '\nGenerate motion splines...'
     T = np.arange(nt)
+    if verbose==1:
+        import pylab as pl
+
     for iZ in range(nz):
 
         frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)

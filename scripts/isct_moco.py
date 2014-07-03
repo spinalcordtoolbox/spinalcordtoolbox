@@ -39,6 +39,7 @@ class param_class:
         self.fname_data                = ''
         self.fname_target              = ''
         self.fname_centerline          = ''
+        self.output_path               = ''
         self.mat_final                 = ''
         self.mat_moco                  = ''
         self.todo                      = ''              # 'estimate' || 'apply' || 'estimate_and_apply'. NB: 'apply' requires input matrix. Default is 'estimate_and_apply'.
@@ -61,7 +62,7 @@ def main():
     
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:r:m:s:f:c:p:g:l:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:t:c:f:g:l:m:o:p:r:s:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -69,22 +70,26 @@ def main():
             usage()
         elif opt in ('-i'):
             param.fname_data = arg
-        elif opt in ('-r'):
+        elif opt in ('-t'):
             param.fname_target = arg
+        elif opt in ('-c'):
+            param.cost_function_flirt = arg
+        elif opt in ('-f'):
+            param.mat_final = arg
+        elif opt in ('-g'):
+            param.mat_moco = arg
         elif opt in ('-l'):
             param.fname_centerline = arg
         elif opt in ('-m'):
             param.todo = arg
-        elif opt in ('-s'):
-            param.mask_size = float(arg)
-        elif opt in ('-f'):
-            param.mat_final = arg
-        elif opt in ('-c'):
-            param.cost_function_flirt = arg
+        elif opt in ('-o'):
+            param.output_path = arg
         elif opt in ('-p'):
             param.interp = arg
-        elif opt in ('-g'):
-            param.mat_moco = arg
+        elif opt in ('-r'):
+            param.delete_tmp_files = int(arg)
+        elif opt in ('-s'):
+            param.mask_size = float(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
@@ -103,6 +108,7 @@ def main():
 
     if param.todo=='':  param.todo = 'estimate_and_apply'                         #Default Value
     if param.cost_function_flirt=='':  param.cost_function_flirt = 'normcorr'     #Default Value
+    if param.output_path=='': param.output_path = os.getcwd() + '/'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -179,25 +185,22 @@ def sct_moco(param):
     
     if todo=='estimate':
         if param.mat_moco=='':
-            folder_mat = path_data + 'mat_moco/'
+            folder_mat = 'mat_moco/'
         else:
-            folder_mat = path_data + param.mat_moco + '/'
+            folder_mat = param.mat_moco + '/'
     elif todo=='estimate_and_apply':
         if param.mat_moco=='':
-            folder_mat = path_data + 'tmp_param.mat/'
+            folder_mat = 'tmp_param.mat/'
         else:
-            folder_mat = path_data + param.mat_moco + '/'
+            folder_mat = param.mat_moco + '/'
     else:
         folder_mat = mat_final
-
-    fname_data_moco = path_data + file_data + suffix + ext_data
+    if not os.path.exists(folder_mat): os.makedirs(folder_mat)
     
     # Get size of data
     print '\nGet dimensions data...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
     print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
-    
-    if not os.path.exists(folder_mat): os.makedirs(folder_mat)
     
     # split along T dimension
     fname_data_splitT = 'tmp_param.data_splitT'
@@ -222,11 +225,11 @@ def sct_moco(param):
         
         if param.fname_centerline=='':
             center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
-            fname_mask = 'tmp_param.gaussian_mask_in' + '.nii'
+            fname_mask = 'tmp_param.gaussian_mask_in'
             M_mask = gauss2d(dims, sigma, center)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(M_mask, None, hdr)
-            nibabel.save(img,fname_mask)
+            nibabel.save(img,(fname_mask+'.nii'))
             for iZ in range(nz):
                 fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
             print '\n.. File created: ',fname_mask
@@ -245,40 +248,18 @@ def sct_moco(param):
                 # Write NIFTI volumes
                 img = nibabel.Nifti1Image(M_mask, None, hdr)
                 nibabel.save(img,(fname_mask+str(iZ)+'.nii'))
-                fslmask.append(' -inweight ' + (fname_mask+str(iZ)+'.nii') + ' -refweight ' + (fname_mask+str(iZ)+'.nii'))
-                print '\n.. File created: ',(fname_mask+str(iZ)+'.nii')
+                fslmask.append(' -inweight ' + fname_mask+str(iZ) + ' -refweight ' + fname_mask+str(iZ))
+                print '\n.. File created: ',(fname_mask+str(iZ))
 
-        #Merging all masks
-        cmd = 'fslmerge -z ' + path_data + 'mask '
-        for iZ in range(nz):
-            cmd = cmd + fname_mask+str(iZ)+'.nii '
-        status, output = sct.run(cmd)
+            #Merging all masks
+            cmd = 'fslmerge -z ' + path_data + 'mask '
+            for iZ in range(nz):
+                cmd = cmd + fname_mask+str(iZ)+' '
+            status, output = sct.run(cmd)
     else:
         for iZ in range(nz):
             fslmask.append('')
-
     index = np.arange(nt)
-    numT = []
-    for i in range(nt):
-        if len(str(i))==1:
-            numT.append('000' + str(i))
-        elif len(str(i))==2:
-            numT.append('00' + str(i))
-        elif len(str(i))==3:
-            numT.append('0' + str(i))
-        else:
-            numT.append(str(nt))
-
-    numZ = []
-    for i in range(nz):
-        if len(str(i))==1:
-            numZ.append('000' + str(i))
-        elif len(str(i))==2:
-            numZ.append('00' + str(i))
-        elif len(str(i))==3:
-            numZ.append('0' + str(i))
-        else:
-            numZ.append(str(i))
 
     # MOTION CORRECTION
     nb_fails = 0
@@ -296,8 +277,8 @@ def sct_moco(param):
         print '\nVolume ',str((iT+1)),'/',str(nt),':'
         print '--------------------'
         
-        fname_data_splitT_num.append(fname_data_splitT + numT[iT])
-        fname_data_splitT_moco_num.append(fname_data_splitT + suffix + numT[iT])
+        fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4)) 
+        fname_data_splitT_moco_num.append(fname_data_splitT + suffix + str(iT).zfill(4)) 
         
         # SLICE-WISE MOTION CORRECTION
         print 'Slicewise motion correction...'
@@ -314,9 +295,9 @@ def sct_moco(param):
         
         fname_data_ref_splitZ_num = []
         for iZ in range(nz):
-            fname_data_splitT_splitZ_num[iT][iZ] = fname_data_splitT_splitZ + numZ[iZ]
+            fname_data_splitT_splitZ_num[iT][iZ] = fname_data_splitT_splitZ + str(iZ).zfill(4) 
             fname_data_splitT_splitZ_moco_num[iT][iZ] = fname_data_splitT_splitZ_num[iT][iZ] + suffix
-            fname_data_ref_splitZ_num.append(fname_data_ref_splitZ + numZ[iZ])
+            fname_data_ref_splitZ_num.append(fname_data_ref_splitZ + str(iZ).zfill(4)) 
             fname_mat[iT][iZ] = folder_mat + 'mat.T' + str(iT) + '_Z' + str(iZ) + '.txt'
             
             if todo == 'estimate':
@@ -379,6 +360,7 @@ def sct_moco(param):
         cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
         status, output = sct.run(cmd)
 
+    fname_data_moco = param.output_path + file_data + suffix + '.nii'
     # Merge data along T
     if todo!='estimate':
         if merge_back==1:
@@ -415,9 +397,10 @@ def usage():
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i           input_file \n' \
-        '  -r           reference file - if -m !=apply \n' \
+        '  -t           reference file - if -m !=apply \n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
+        '  -o           Specify Output path.\n' \
         '  -l           Centerline file can be given to specify the centre of Gaussian Mask. \n' \
         '  -m           method - estimate | apply | estimate_and_apply. NB: <apply> requires -f. Default is estimate_and_apply \n' \
         '  -s           Gaussian Mask_size - Specify mask_size in millimeters. Default value of mask_size is 0.\n' \
@@ -425,6 +408,7 @@ def usage():
         '  -g           Output Matrix Folder name. (Used if -m is not <apply>)\n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
+        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
