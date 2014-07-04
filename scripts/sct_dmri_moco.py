@@ -445,12 +445,12 @@ def usage():
         '  -o           Specify Output path.\n' \
         '  -a <bvals>   bvals file. Used to detect low-bvals images : more robust \n' \
         '  -d           DWI Group Size. Default: 5 successive images are merged to increase SNR and robustness\n' \
+        '  -e           For Eddy Correction, set the value to 1. Default value is 0 \n' \
         '  -s           Gaussian mask_size - Specify mask_size in millimeters. Default value of mask_size is 0. We recommend s=15. \n' \
         '  -l           Centerline file can be given to specify the centre of Gaussian Mask (by default, gaussian mask is centered). Need -s. \n' \
-        '  -e           For Eddy Correction, set the value to 1. Default value is 0 \n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -f           set value to 0 if spline regularization along t is not required. Default value is 1. \n' \
+        '  -f           set value to 0 if spline regularization along T is not required. Default value is 1. \n' \
         '  -v           Set verbose=1 for plotting graphs. Default value is 0 \n' \
         '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -h           help. Show this message.\n' \
