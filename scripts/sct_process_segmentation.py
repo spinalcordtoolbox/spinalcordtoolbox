@@ -14,8 +14,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-# TODO: flag to remove temp files (r)
+# TODO: output text file: csa.txt
+# TODO: output text file: z,csa
+# TODO: output in float
+# TODO: add flag (-f) for figure that shows CSA values and fit (if exists).
+# TODO: spline param under initialization for easy debugging
 
 
 # DEFAULT PARAMETERS
@@ -715,16 +718,20 @@ def usage():
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)\n' \
-        '  -p <process>              type of process to be performed {extract_centerline}, {compute_CSA}\n' \
+        '  -p <process>              type of process to be performed:\n' \
+        '                            - extract_centerline: extract centerline as binay file from segmentation\n' \
+        '                            - compute_CSA: compute cross-sectional area from binary segmentation\n' \
+        '                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column)\n' \
+        '                              The method to compute CSA is defined with flag "-m".\n' \
         '  -m <method_CSA>           if process is "compute_CSA", the following methods are available:\n' \
-        '                            counting_ortho_plane: resample planes orthogonal to centerline and count\n' \
-        '                                                  pixels in each plane.\n' \
-        '                            counting_z_plane: count pixels in each slice and then geometrically\n' \
-        '                                              adjust using centerline orientation.\n' \
-        '                            ellipse_ortho_plane: same process as counting_ortho_plane, but fit\n' \
-        '                                                 ellipse instead of counting pixels.\n' \
-        '                            ellipse_z_plane: same process as counting_z_plane, but fit ellipse\n' \
-        '                                                 instead of counting pixels.\n' \
+        '                            - counting_ortho_plane: resample planes orthogonal to centerline and\n' \
+        '                              count pixels in each plane.\n' \
+        '                            - counting_z_plane: count pixels in each slice and then geometrically\n' \
+        '                              adjust using centerline orientation.\n' \
+        '                            - ellipse_ortho_plane: same process as counting_ortho_plane, but fit\n' \
+        '                              ellipse instead of counting pixels.\n' \
+        '                            - ellipse_z_plane: same process as counting_z_plane, but fit ellipse\n' \
+        '                              instead of counting pixels.\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -v <0,1>                   verbose. Default='+str(param.verbose)+'.\n' \
