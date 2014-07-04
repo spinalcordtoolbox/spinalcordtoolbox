@@ -369,8 +369,11 @@ def sct_dmri_moco(param,fname_data_initial):
     # Estimate moco on b0 groups
     param.fname_data = 'b0_mean.nii'
     if index_dwi[0]!=0:
+        # If first DWI is not the first volume, then there is a least one b=0 image before. In that case
+        # select it as the target image for registration of all b=0
         param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
+        # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
         param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'
     param.output_path = ''
     param.todo = 'estimate_and_apply'
