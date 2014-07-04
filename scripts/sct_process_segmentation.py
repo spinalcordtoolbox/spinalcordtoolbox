@@ -461,7 +461,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
     
     
     if spline_smoothing == 1 :
-        print('\nSmooting results with spline ...')
+        print('\nSmoothing results with spline ...')
 
         if name_method == 'counting_ortho_plane':
 
