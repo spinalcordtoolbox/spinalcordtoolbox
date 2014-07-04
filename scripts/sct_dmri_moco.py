@@ -22,9 +22,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: line 371: param.fname_data = 'b0_mean.nii'. That does not make sense, since b0_mean is 3d, not 4d.
+# TODO: use 3D spline approximation instead of LP filter.
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
 # TODO: provide b0_mean and dwi_mean after moco
-# TODO: verbose (see with julien later)
+# TODO: verbose 1: txt, verbose 2: printed fig in png
+# TDOD: we need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 
 import sys
 import os
@@ -367,8 +370,11 @@ def sct_dmri_moco(param,fname_data_initial):
     # Estimate moco on b0 groups
     param.fname_data = 'b0.nii'
     if index_dwi[0]!=0:
+        # If first DWI is not the first volume, then there is a least one b=0 image before. In that case
+        # select it as the target image for registration of all b=0
         param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
+        # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
         param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'
     param.output_path = ''
     param.todo = 'estimate_and_apply'
