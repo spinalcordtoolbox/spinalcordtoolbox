@@ -14,11 +14,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: output text file: csa.txt
-# TODO: output text file: z,csa
 # TODO: output in float
-# TODO: add flag (-f) for figure that shows CSA values and fit (if exists).
-# TODO: spline param under initialization for easy debugging
 
 
 # DEFAULT PARAMETERS
@@ -31,6 +27,8 @@ class param:
         self.remove_temp_files  = 1
         self.volume_output      = 0
         self.spline_smoothing   = 1
+        self.smoothing_param    = 2000
+        self.figure_fit         = 0
         
 import re
 import math
@@ -78,6 +76,9 @@ def main():
     remove_temp_files = param.remove_temp_files
     spline_smoothing = param.spline_smoothing
     step = param.step
+    smoothing_param = param.smoothing_param
+    figure_fit = param.figure_fit
+    
     # Parameters for debug mode
     if param.debug:
         fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii'
@@ -86,7 +87,7 @@ def main():
         
     # Check input parameters
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:r:s:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:r:s:f:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -104,6 +105,8 @@ def main():
             remove_temp_files = int(arg)
         elif opt in ('-s'):
             spline_smoothing = int(arg)
+        elif opt in ('-f'):
+            figure_fit = int(arg)
         elif opt in ('-v'):
             verbose = int(arg)
 
@@ -135,7 +138,7 @@ def main():
         extract_centerline(fname_segmentation,remove_temp_files)
 
     if name_process == 'compute_CSA' : 
-        compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step)
+        compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit)
     
 
     # display elapsed time
@@ -238,7 +241,7 @@ def extract_centerline(fname_segmentation,remove_temp_files):
 # ==========================================================================================
 
 
-def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step):
+def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit):
 
     # Extract path, file and extension
     path_data_seg, file_data_seg, ext_data_seg = sct.extract_fname(fname_segmentation)
@@ -462,22 +465,60 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
 
         if name_method == 'counting_ortho_plane':
 
-            tck = splrep((z_centerline*z_scale), sections_ortho_counting, s=2000 )
+            tck = splrep((z_centerline*z_scale), sections_ortho_counting, s = smoothing_param )
+            
+            if figure_fit == 1 :
+                sections_smooth = splev((z_centerline*z_scale),tck)
+                figure =plt.figure()
+                plt.plot((z_centerline*z_scale),sections_ortho_counting)
+                plt.plot((z_centerline*z_scale),sections_smooth)
+                plt.legend(['CSA values','Smoothed values'],2)
+                plt.savefig('Spline_fit.png')
+                
             sections_ortho_counting = splev((z_centerline*z_scale),tck)
-
+        
         if name_method == 'counting_z_plane':
 
-            tck = splrep((z_centerline*z_scale), sections_z_counting, s=2000 )
+            tck = splrep((z_centerline*z_scale), sections_z_counting, s = smoothing_param)
+            
+            if figure_fit == 1 :
+                sections_smooth = splev((z_centerline*z_scale),tck)
+                figure =plt.figure()
+                plt.plot((z_centerline*z_scale),sections_z_counting)
+                plt.plot((z_centerline*z_scale),sections_smooth)
+                plt.legend(['CSA values','Smoothed values'],2)
+                plt.savefig('Spline_fit.png')
+            
+            
             sections_z_counting = splev((z_centerline*z_scale),tck)
 
         if name_method == 'ellipse_ortho_plane':
 
-            tck = splrep((z_centerline*z_scale), sections_ortho_ellipse, s=2000 )
+            tck = splrep((z_centerline*z_scale), sections_ortho_ellipse, s = smoothing_param )
+            
+            if figure_fit == 1 :
+                sections_smooth = splev((z_centerline*z_scale),tck)
+                figure =plt.figure()
+                plt.plot((z_centerline*z_scale),sections_ortho_ellipse)
+                plt.plot((z_centerline*z_scale),sections_smooth)
+                plt.legend(['CSA values','Smoothed values'],2)
+                plt.savefig('Spline_fit.png')
+            
+            
             sections_ortho_ellipse = splev((z_centerline*z_scale),tck)
 
         if name_method == 'ellipse_z_plane':
 
-            tck = splrep((z_centerline*z_scale), sections_z_ellipse, s=2000 )
+            tck = splrep((z_centerline*z_scale), sections_z_ellipse, s = smoothing_param)
+            
+            if figure_fit == 1 :
+                sections_smooth = splev((z_centerline*z_scale),tck)
+                figure =plt.figure()
+                plt.plot((z_centerline*z_scale),sections_z_ellipse)
+                plt.plot((z_centerline*z_scale),sections_smooth)
+                plt.legend(['CSA values','Smoothed values'],2)
+                plt.savefig('Spline_fit.png')
+            
             sections_z_ellipse = splev((z_centerline*z_scale),tck)
 
 
@@ -486,43 +527,39 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
     if name_method == 'counting_ortho_plane' : 
         
         print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area_ortho_counting.txt','w')
-        file_results.write('List of Cross Section Areas for each z slice\n')
+        file_results = open('Cross_Section_Area.txt','w')
         for i in range(min_z_index, max_z_index+1):
-            file_results.write('\nz = ' + str(i*z_scale) + ' mm -> CSA = ' + str(sections_ortho_counting[i-min_z_index]) + ' mm^2')
+            file_results.write(str(i*z_scale) + ',' + str(sections_ortho_counting[i-min_z_index])+'\n')
 
         file_results.close()
 
     if name_method == 'ellipse_ortho_plane' : 
         
         print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area_ortho_ellipse.txt','w')
-        file_results.write('List of Cross Section Areas for each z slice\n')
+        file_results = open('Cross_Section_Area.txt','w')
 
         for i in range(min_z_index, max_z_index+1):
-            file_results.write('\nz = ' + str(i*z_scale) + ' mm -> CSA = ' + str(sections_ortho_ellipse[i-min_z_index]) + ' mm^2')
+            file_results.write(str(i*z_scale) + ',' + str(sections_ortho_ellipse[i-min_z_index])+'\n')
 
         file_results.close()
         
     if name_method == 'ellipse_z_plane' : 
         
         print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area_z_ellipse.txt','w')
-        file_results.write('List of Cross Section Areas for each z slice\n')
+        file_results = open('Cross_Section_Area.txt','w')
 
         for i in range(min_z_index, max_z_index+1):
-            file_results.write('\nz = ' + str(i*z_scale) + ' mm -> CSA = ' + str(sections_z_ellipse[i-min_z_index]) + ' mm^2')
+            file_results.write(str(i*z_scale) + ',' + str(sections_z_ellipse[i-min_z_index])+'\n')
 
         file_results.close()
     
     if name_method == 'counting_z_plane' : 
         
         print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area_z_counting.txt','w')
-        file_results.write('List of Cross Section Areas for each z slice\n')
+        file_results = open('Cross_Section_Area.txt','w')
 
         for i in range(min_z_index, max_z_index+1):
-            file_results.write('\nz = ' + str(i*z_scale) + ' mm -> CSA = ' + str(sections_z_counting[i-min_z_index]) + ' mm^2')
+            file_results.write(str(i*z_scale) + ',' + str(sections_z_counting[i-min_z_index])+'\n')
 
         file_results.close()
         
@@ -579,6 +616,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         hdr_seg.set_data_dtype('uint8') # set imagetype to uint8
         
         print '\nWrite NIFTI volumes...'
+        data_seg = data_seg.astype(np.float32, copy =False)
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
         file_name = path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg
         nibabel.save(img,file_name)
