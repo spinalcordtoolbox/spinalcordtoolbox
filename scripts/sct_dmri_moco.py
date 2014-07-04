@@ -22,6 +22,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: line 371: param.fname_data = 'b0_mean.nii'. That does not make sense, since b0_mean is 3d, not 4d.
 # TODO: use 3D spline approximation instead of LP filter.
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
 # TODO: provide b0_mean and dwi_mean after moco
