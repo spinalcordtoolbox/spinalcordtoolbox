@@ -109,15 +109,11 @@ def sct_moco_spline(folder_mat,nt,nz,verbose):
         frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)
         spectrum = np.abs(scipy.fftpack.fft(X[iZ][:], n=None, axis=-1, overwrite_x=False))
         Wn = np.amax(frequency)/10
-        N = 9              #Order of the filter
+        N = 5              #Order of the filter
         b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
         X_smooth[iZ][:] = scipy.signal.filtfilt(b, a, X[iZ][:], axis=-1, padtype=None)
                 
         if verbose==1:
-            pl.plot(frequency,spectrum)
-            pl.title('Spectrum')
-            pl.show()
-            
             pl.plot(T,X_smooth[iZ][:])
             pl.plot(T,X[iZ][:],marker='o',linestyle='None')
             pl.title('X')
@@ -126,15 +122,11 @@ def sct_moco_spline(folder_mat,nt,nz,verbose):
         frequency = scipy.fftpack.fftfreq(len(Y[iZ][:]), d=1)
         spectrum = np.abs(scipy.fftpack.fft(Y[iZ][:], n=None, axis=-1, overwrite_x=False))
         Wn = np.amax(frequency)/10
-        N = 9              #Order of the filter
+        N = 5              #Order of the filter
         b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
         Y_smooth[iZ][:] = scipy.signal.filtfilt(b, a, Y[iZ][:], axis=-1, padtype=None)
 
         if verbose==1:
-            pl.plot(frequency,spectrum)
-            pl.title('Spectrum')
-            pl.show()
-            
             pl.plot(T,Y_smooth[iZ][:])
             pl.plot(T,Y[iZ][:],marker='*', linestyle='None')
             pl.title('Y')

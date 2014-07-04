@@ -12,7 +12,7 @@
 # - average DWI of all groups
 # - moco on DWI groups
 # - moco on b=0, using target volume: last b=0
-# - moco on all DMRI data
+# - moco on all dMRI data
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -365,7 +365,7 @@ def sct_dmri_moco(param,fname_data_initial):
     sct_moco(param)
 
     # Estimate moco on b0 groups
-    param.fname_data = 'b0_mean.nii'
+    param.fname_data = 'b0.nii'
     if index_dwi[0]!=0:
         param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
