@@ -7,10 +7,12 @@
 #
 # Details of the algorithm:
 # - grouping of DW data only (every n volumes, default n=5)
+# - average all b0
 # - average DWI data within each group
 # - average DWI of all groups
 # - moco on DWI groups
 # - moco on b=0, using target volume: last b=0
+# - moco on all DMRI data
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
