@@ -363,7 +363,7 @@ def sct_dmri_moco(param,fname_data_initial):
     sct_moco(param)
 
     # Estimate moco on b0 groups
-    param.fname_data = 'b0.nii'
+    param.fname_data = 'b0_mean.nii'
     if index_dwi[0]!=0:
         param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
