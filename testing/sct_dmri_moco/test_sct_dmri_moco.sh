@@ -36,6 +36,10 @@ for subject in $SUBJECT_LIST; do
     cmd="sct_dmri_moco.py
         -i ../../data/${subject}/${contrast}/${file1}
         -b ../../data/${subject}/${contrast}/${file2}
+        -v 1
+        -s 15
+        -d 3
+        -r 0
         -p sinc"
     echo ==============================================================================================
     echo "$cmd"

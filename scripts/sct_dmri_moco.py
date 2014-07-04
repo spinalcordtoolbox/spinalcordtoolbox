@@ -22,9 +22,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: use 3D spline approximation instead of LP filter.
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
 # TODO: provide b0_mean and dwi_mean after moco
-# TODO: verbose (see with julien later)
+# TODO: verbose 1: txt, verbose 2: printed fig in png
+# TDOD: we need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 
 import sys
 import os
