@@ -44,7 +44,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
-# Modified: 2014-06-03
+# Modified: 2014-07-05 by jcohen
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -72,6 +72,7 @@ class param:
 # check if needed Python libraries are already installed or not
 import os
 import getopt
+import time
 import commands
 import sys
 import sct_utils as sct
@@ -142,8 +143,6 @@ def main():
         elif opt in ('-f'):
             centerline_fitting = str(arg)
     
-    
-    
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
         usage()
@@ -159,25 +158,33 @@ def main():
     sct.check_file_exist(fname_anat)
     sct.check_file_exist(fname_centerline)
     
-    # Extract path/file/extension of the input image
-    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-    # Extract path/file/extension of the centerline
-    path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
-    
     # Display arguments
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
-    print '  Centerline fitting option ......... '+centerline_fitting
+    print '  Centerline fitting option ......... '+centerline_fitting+'\n'
     
+    # Extract path/file/extension
+    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
+    path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
     
-    
+    # create temporary folder
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
+
+    # copy files into tmp folder
+    sct.run('cp '+fname_anat+' '+path_tmp)
+    sct.run('cp '+fname_centerline+' '+path_tmp)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
     # Open centerline
     #==========================================================================================
     # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
-    sct.run('sct_orientation -i ' + fname_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
+    sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
     
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
@@ -472,20 +479,20 @@ def main():
     
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
+    sct.run('WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     # sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file('tmp.curve2straight.nii.gz','./','warp_curve2straight',ext_anat) # warping field
-    sct.generate_output_file('tmp.straight2curve.nii.gz','./','warp_straight2curve',ext_anat) # warping field
-    sct.generate_output_file('tmp.anat_rigid_warp.nii.gz','./',file_anat+'_straight',ext_anat) # straightened anatomic
-    
+    sct.generate_output_file('tmp.curve2straight.nii.gz','../','warp_curve2straight',ext_anat) # warping field
+    sct.generate_output_file('tmp.straight2curve.nii.gz','../','warp_straight2curve',ext_anat) # warping field
+    sct.generate_output_file('tmp.anat_rigid_warp.nii.gz','../',file_anat+'_straight',ext_anat) # straightened anatomic
+
     # Delete temporary files
     if remove_temp_files == 1:
-        print '\nDelete temporary files...'
-        sct.run('rm tmp.*')
+        print('\nRemove temporary files...')
+        sct.run('rm -rf '+path_tmp)
     
     print '\nDone!\n'
 
