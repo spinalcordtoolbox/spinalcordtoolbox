@@ -436,7 +436,7 @@ def sct_dmri_moco(param,fname_data_initial):
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
@@ -452,8 +452,9 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -o           Specify Output path.\n' \
         '  -a <bvals>   bvals file. Used to detect low-bvals images : more robust \n' \
-        '  -d           DWI Group Size. Default: 5 successive images are merged to increase SNR and robustness\n' \
-        '  -e           For Eddy Correction, set the value to 1. Default value is 0 \n' \
+        '  -d           DWI Group Size. Successive images are merged to increase robustness. Default=5\n' \
+        '  -e           Eddy Correction using opposite gradient directions. Default=0 \n' \
+        '               N.B. Only use this option if pairs of opposite gradient images were adjacent in time\n' \
         '  -s           Gaussian mask_size - Specify mask_size in millimeters. Default value of mask_size is 0. We recommend s=15. \n' \
         '  -l           Centerline file can be given to specify the centre of Gaussian Mask (by default, gaussian mask is centered). Need -s. \n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
