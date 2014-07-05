@@ -489,7 +489,10 @@ def main():
     sct.generate_output_file('tmp.straight2curve.nii.gz','../','warp_straight2curve',ext_anat) # warping field
     sct.generate_output_file('tmp.anat_rigid_warp.nii.gz','../',file_anat+'_straight',ext_anat) # straightened anatomic
 
-    # Delete temporary files
+    # come back to parent folder
+    os.chdir('..')
+
+    # Remove temporary files
     if remove_temp_files == 1:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
