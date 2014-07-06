@@ -35,9 +35,9 @@
 #
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
+# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad
-# Modified: 2014-01-05
+# Modified: 2014-07-06
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -67,10 +67,7 @@ import commands
 import sys
 import time
 import sct_utils as sct
-from sct_utils import fsloutput
 
-# check if dependant software are installed
-sct.check_if_installed('WarpImageMultiTransform -h','ANTS')
 
 
 
@@ -98,6 +95,7 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_anat = path_script+'../testing/sct_register_straight_spinalcord_to_template/data/errsm_22_t2_cropped_rpi_straight.nii.gz'
         fname_landmark_anat = path_script+'../testing/sct_register_straight_spinalcord_to_template/data/landmarks_C2_T5.nii.gz'
+        fname_seg_anat = path_script+'../testing/sct_register_straight_spinalcord_to_template/data/landmarks_C2_T5.nii.gz'
         fname_template = path_script+'../data/template/MNI-Poly-AMU_T2.nii.gz'
         fname_landmark_template = path_script+'../data/template/landmarks_C2_T5.nii.gz'
 
@@ -140,23 +138,35 @@ def main():
     sct.check_file_exist(fname_landmark_anat)
     sct.check_file_exist(fname_template)
     sct.check_file_exist(fname_landmark_template)
-
-    # extract path/file/extension
-    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-    path_template, file_template, ext_template = sct.extract_fname(fname_template)
+    sct.check_file_exist(fname_seg_template)
 
     # Display arguments
     print '\nCheck input arguments:'
     print '  straight anatomic:    '+fname_anat
     print '  landmarks anatomic:   '+fname_landmark_anat
-    print '  template:             '+fname_template
-    print '  landmarks template:   '+fname_landmark_template
+    print '  template T2:          '+fname_template
+    print '  template landmarks:   '+fname_landmark_template
+    print '  template segmentation:'+fname_landmark_template
     print '  number of iterations: '+str(number_iterations)
     print '  mask anatomic:        '+fname_mask
     print '  Verbose:              '+str(verbose)
 
+    # Get full path
+    fname_anat = os.path.abspath(fname_anat)
+    fname_landmark_anat = os.path.abspath(fname_landmark_anat)
+    fname_template = os.path.abspath(fname_template)
+    fname_landmark_template = os.path.abspath(fname_landmark_template)
 
+    # extract path/file/extension
+    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
+    path_template, file_template, ext_template = sct.extract_fname(fname_template)
 
+    # create temporary folder
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
 
     # Estimate transfo: straight --> template (affine landmark-based)'
     print '\nEstimate transfo: straight anat --> template (affine landmark-based)...'
@@ -313,21 +323,23 @@ def main():
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
-        '--------------------------------------------------------------------------------------------------------------\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
         '  This program estimates a deformation field between a straightened spinal cord and the template. First,\n' \
         '  an affine transformation is calculated (based on landmarks set by the user on the straight spinal cord).\n' \
         '  Second, a warping field is estimated. The program outputs the forward (straight --> template) and the inverse\n' \
-        '  (template --> straight) transformations. Required program: ANTS. \n' \
+        '  (template --> straight) transformations. \n' \
         '\n'\
         'USAGE \n' \
         '  '+os.path.basename(__file__)+' -i <anat> -l <landmarks_anat> -t <template> -f <landmarks_template>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i <anat>                   straight anatomic (generated with sct_straighted_spinalcord).\n' \
-        '  -l <landmarks_anat>         anatomical landmarks.\n' \
+        '  -l <anat_labels>         anatomical landmarks.\n' \
+        '  -m <anat_seg>         anatomical landmarks.\n' \
+
         '  -t <template>               template.\n' \
         '  -f <landmarks_template>     template landmarks (should match the anatomical landmarks).\n' \
         '\n'\
