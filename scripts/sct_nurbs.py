@@ -75,7 +75,7 @@ except ImportError:
 #import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
 class NURBS():
-    def __init__(self,degre=3,precision=1000,liste=None,sens=False):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False):
         """
         Ce constructeur initialise une NURBS et la construit.
         Si la variable sens est True : On construit la courbe en fonction des points de controle
@@ -121,7 +121,6 @@ class NURBS():
 
     def getCourbe3D_deriv(self):
         return self.courbe3D_deriv
-
 
     # Multiplie deux polynomes
     def multipolynome(self,polyA,polyB):
