@@ -61,7 +61,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 15 # gap between landmarks along z
