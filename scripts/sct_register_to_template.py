@@ -33,6 +33,7 @@ class param:
         self.file_template       = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg   = 'MNI-Poly-AMU_cord.nii.gz'
+        self.smoothing_sigma = 5 # Smoothing along centerline to improve accuracy and remove step effects
 
 
 import sys
@@ -58,6 +59,8 @@ def main():
     speed = param.speed
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
+    smoothing_sigma = param.smoothing_sigma
+    # start timer
     start_time = time.time()
 
     # get path of the toolbox
@@ -139,6 +142,8 @@ def main():
     sct.check_file_exist(fname_landmarks,verbose)
     sct.check_file_exist(fname_seg,verbose)
 
+    path_data, file_data, ext_data = sct.extract_fname(fname_data)
+
     # create temporary folder
     print('\nCreate temporary folder...')
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
@@ -155,13 +160,22 @@ def main():
 
     # Change orientation of input images to RPI
     print('\nChange orientation of input images to RPI...')
-    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii.gz -orientation RPI')
+    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
     status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
     status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    status, output = sct.run('sct_straighten_spinalcord.py -i data_rpi.nii.gz -c segmentation_rpi.nii.gz -r 1')
+    status, output = sct.run('sct_straighten_spinalcord.py -i data_rpi.nii -c segmentation_rpi.nii.gz -r 1')
+
+    # Apply straightening to segmentation
+    print('\nApply straightening to segmentation...')
+    sct.run('WarpImageMultiTransform 3 segmentation_rpi.nii.gz segmentation_rpi_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz')
+
+    # Smoothing along centerline to improve accuracy and remove step effects
+    print('\nSmoothing along centerline to improve accuracy and remove step effects...')
+    sct.run('c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
+    sct.run('c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
@@ -179,7 +193,7 @@ def main():
 
     # Push the input labels in the template space
     print('\nPush the input labels to the straight space...')
-    status, output = sct.run('WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii.gz warp_curve2straight.nii.gz --use-NN')
+    status, output = sct.run('WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz --use-NN')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
@@ -190,33 +204,33 @@ def main():
     sct.run('ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
 
     # Apply affine transformation: straight --> template
-    print '\nApply affine transformation to data: straight --> template...'
-    sct.run('WarpImageMultiTransform 3 data_rpi_straight.nii.gz data_rpi_straight2templateAffine.nii.gz straight2templateAffine.txt -R '+fname_template)
-
-    # Apply straightening + affine to segmentation
-    print('\nApply straightening + affine to segmentation...')
-    #TODO: combine the two transfo into one
-    sct.run('WarpImageMultiTransform 3 segmentation_rpi.nii.gz segmentation_rpi_straight.nii.gz -R data_rpi_straight.nii.gz warp_curve2straight.nii.gz')
+    print '\nApply affine transformation: straight --> template...'
+    sct.run('WarpImageMultiTransform 3 data_rpi_straight.nii data_rpi_straight2templateAffine.nii straight2templateAffine.txt -R '+fname_template)
     sct.run('WarpImageMultiTransform 3 segmentation_rpi_straight.nii.gz segmentation_rpi_straight2templateAffine.nii.gz straight2templateAffine.txt -R '+fname_template)
+
     # now threshold at 0.5 (for partial volume interpolation)
     # do not do that anymore-- better to estimate transformation using trilinear interp image to avoid step effect. See issue #31 on github.
     # sct.run('c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
 
-    # Registration of straight spinal cord to template
+    # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
     nb_iterations = '50x15'
     # TODO: nb iteration for step 2
-    sct.run('sct_register_multimodal.py -i data_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose),verbose)
+    sct.run('sct_register_multimodal.py -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
     # status, output = sct.run('sct_register_straight_spinalcord_to_template.py -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate warping fields: template2anat & anat2template...')
-    commands.getstatusoutput('ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii.gz warp_straight2curve.nii.gz straight2templateAffine.txt warp_dest2src.nii.gz')
-    commands.getstatusoutput('ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz -i straight2templateAffine.txt warp_curve2straight.nii.gz')
+    cmd = 'ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii warp_straight2curve.nii.gz -i straight2templateAffine.txt warp_dest2src.nii.gz'
+    print '>> '+cmd
+    commands.getstatusoutput(cmd)
+    cmd = 'ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
+    print '>> '+cmd
+    commands.getstatusoutput(cmd)
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('WarpImageMultiTransform 3 '+fname_template+' template2anat.nii.gz -R data.nii.gz warp_template2anat.nii.gz')
+        sct.run('WarpImageMultiTransform 3 '+fname_template+' template2anat.nii.gz -R data.nii warp_template2anat.nii.gz')
         sct.run('WarpImageMultiTransform 3 data.nii.gz anat2template.nii.gz -R '+fname_template+' warp_anat2template.nii.gz')
 
     # come back to parent folder
@@ -227,8 +241,8 @@ def main():
     sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz','','warp_template2anat','.nii.gz')
     sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz','','warp_anat2template','.nii.gz')
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz','','template2anat','.nii.gz')
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz','','anat2template','.nii.gz')
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz','','template2anat',ext_data)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz','','anat2template',ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -242,7 +256,7 @@ def main():
     # to view results
     print '\nTo view results, type:'
     print 'fslview template2anat '+fname_data+' &'
-    print 'fslview anat2template '+path_template+'/MNI-Poly-AMU_T2.nii.gz &\n'
+    print 'fslview anat2template '+fname_template+' &\n'
 
 
 
