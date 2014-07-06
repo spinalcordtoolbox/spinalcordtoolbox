@@ -49,7 +49,7 @@
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 
-
+# TODO: calculate backward transformation from forward instead of estimating it
 # TODO: fix bug of label creation when using splines (2014-06-05: error with data from Falk with small FOV along z)
 # TODO: generate cross at both edge (top and bottom) and populate in between --> this will ensure better quality of the warping field.
 # TODO: check if there is an overlap of labels, in case of high curvature and high density of cross along z.
@@ -61,7 +61,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 15 # gap between landmarks along z
@@ -104,8 +104,8 @@ def main():
     gapxy = param.gapxy
     gapz = param.gapz
     padding = param.padding
-    remove_temp_files = param.remove_temp_files
     centerline_fitting = param.fitting_method
+    remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
 
@@ -120,8 +120,10 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         #fname_anat = path_sct+'/testing/data/11shortFOV/t1_cropped_short.nii.gz'
         #fname_centerline = path_sct+'/testing/data/11shortFOV/spine_cropped_short.nii.gz'
-        fname_anat = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
-        fname_centerline = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
+        # fname_anat = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
+        # fname_centerline = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
+        fname_anat = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data.nii'
+        fname_centerline = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data.nii'
         remove_temp_files = 0
         centerline_fitting = 'splines'
         import matplotlib.pyplot as plt
@@ -258,7 +260,7 @@ def main():
     # get center of mass of the centerline/segmentation
     print '\nGet center of mass of the centerline/segmentation...'
     for iz in range(0, nz, 1):
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(data[:,:,iz])
+        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(numpy.array(data[:,:,iz]))
 
     # clear variable
     del data
@@ -519,15 +521,15 @@ def main():
     sct.run('WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     # sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     
+    # come back to parent folder
+    os.chdir('..')
+
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
     print '\nGenerate output file (in current folder)...'
     sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz','','warp_curve2straight',ext_anat) # warping field
     sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz','','warp_straight2curve',ext_anat) # warping field
     sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz','',file_anat+'_straight',ext_anat) # straightened anatomic
-
-    # come back to parent folder
-    os.chdir('..')
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -629,7 +631,7 @@ def usage():
         '  -p <padding>      amount of padding for generating labels. Default='+str(param.padding)+'\n' \
         '  -f {splines,polynomial}  Method used to fit the centerline (or segmentation). Default='+str(param.fitting_method)+'\n' \
         '  -w {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param.interpolation_warp)+'\n' \
-        '  -r {0,1}          remove temporary files. Default=1. \n' \
+        '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
         '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
