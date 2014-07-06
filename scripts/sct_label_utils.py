@@ -438,7 +438,7 @@ def usage():
         'MANDATORY ARGUMENTS\n' \
         '  -i           input volume.\n' \
         '  -o           output volume.\n' \
-        '  -t           process: cross, remove.\n' \
+        '  -t           process: cross, remove, display-voxel\n' \
         '  -c           cross radius in mm (default=5mm).\n' \
         '  -r           reference image for label removing' \
         '\n'\
