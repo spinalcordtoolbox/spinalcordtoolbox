@@ -60,13 +60,16 @@ def extract_fname(fname):
     return path_fname, file_fname, ext_fname
 
 
+
 #=======================================================================================================================
 # check_file_exist
 #=======================================================================================================================
 # Check existence of a file
-def check_file_exist(fname):
+def check_file_exist(fname, verbose=1):
 
     if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz'):
+        if verbose:
+            print('  '+fname+' --> OK')
         pass
     else:
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
@@ -137,3 +140,11 @@ def check_if_installed(cmd, name_software):
     if status != 0:
         print('\nERROR: '+name_software+' is not installed.\nExit program.\n')
         sys.exit(2)
+
+
+#=======================================================================================================================
+# printv: enables to print or not, depending on verbose status
+#=======================================================================================================================
+def printv(string, verbose=1):
+    if verbose:
+        print(string)
