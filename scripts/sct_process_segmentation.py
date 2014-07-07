@@ -27,7 +27,7 @@ class param:
         self.remove_temp_files  = 1
         self.volume_output      = 0
         self.spline_smoothing   = 1
-        self.smoothing_param    = 1000
+        self.smoothing_param    = 700
         self.figure_fit         = 0
         
 import re
@@ -78,6 +78,7 @@ def main():
     step = param.step
     smoothing_param = param.smoothing_param
     figure_fit = param.figure_fit
+    name_output = 'CSA_slices.nii.gz'
     
     # Parameters for debug mode
     if param.debug:
@@ -87,7 +88,7 @@ def main():
         
     # Check input parameters
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:r:s:f:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:r:s:f:o:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -107,6 +108,8 @@ def main():
             spline_smoothing = int(arg)
         elif opt in ('-f'):
             figure_fit = int(arg)
+        elif opt in ('-o'):
+            name_output = arg
         elif opt in ('-v'):
             verbose = int(arg)
 
@@ -126,6 +129,7 @@ def main():
     # display usage if no method provided
     if name_process=='compute_CSA' and method_CSA == '':
         usage() 
+        
     
     # check existence of input files
     sct.check_file_exist(fname_segmentation)
@@ -138,7 +142,7 @@ def main():
         extract_centerline(fname_segmentation,remove_temp_files)
 
     if name_process == 'compute_CSA' : 
-        compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit)
+        compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output)
     
 
     # display elapsed time
@@ -241,7 +245,7 @@ def extract_centerline(fname_segmentation,remove_temp_files):
 # ==========================================================================================
 
 
-def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit):
+def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output):
 
     # Extract path, file and extension
     path_data_seg, file_data_seg, ext_data_seg = sct.extract_fname(fname_segmentation)
@@ -624,7 +628,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         
         # Change orientation of the output centerline into input orientation
         print '\nOrient  image to input orientation: '
-        sct.run('sct_orientation -i '+path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg + ' -o ' + file_data_seg+'_CSA_slices'+ext_data_seg + ' -orientation ' + orientation)
+        sct.run('sct_orientation -i '+path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg + ' -o ' + name_output + ' -orientation ' + orientation)
         
    
 
@@ -777,6 +781,8 @@ def usage():
         '                             mm^2. Default = 0\n' \
         '  -r <0,1>                   remove temporary files. Default = 1\n' \
         '  -s <0,1>                   smooth CSA values with spline. Default = 1\n' \
+        '  -o <output_name>           name of the output volume if -b 1. Specify extension.\n' \
+        '                             Default = \'CSA_slices.nii.gz\'\n' \
         '\n' \
         'EXAMPLE\n' \
         '  sct_process_segmentation.py -i binary_segmentation.nii.gz -p compute_CSA -m counting_z_plane\n'
