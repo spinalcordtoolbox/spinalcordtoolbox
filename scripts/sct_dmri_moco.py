@@ -26,7 +26,11 @@
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
 # TODO: provide b0_mean and dwi_mean after moco
 # TODO: verbose 1: txt, verbose 2: printed fig in png
-# TDOD: we need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
+# TODO: flag to output fig (-z).
+# TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
+# TODO (no priority): for sinc interp, use ANTs or c3d instead of flirt
+# TODO (no priority): output ext same as input
+
 
 import sys
 import os
@@ -212,7 +216,10 @@ def main():
 
     #To view results
     print '\nTo view results, type:'
-    print 'fslview ' + param.output_path + file_data + param.suffix
+    print 'fslview ' + file_data + ' ' + param.output_path + file_data + param.suffix + ' &\n\n'
+
+
+
 
 #=======================================================================================================================
 # Function sct_dmri_moco - Preparing Data For MOCO
@@ -435,7 +442,7 @@ def sct_dmri_moco(param,fname_data_initial):
 def usage():
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
@@ -451,15 +458,18 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -o           Specify Output path.\n' \
         '  -a <bvals>   bvals file. Used to detect low-bvals images : more robust \n' \
-        '  -d           DWI Group Size. Default: 5 successive images are merged to increase SNR and robustness\n' \
-        '  -e           For Eddy Correction, set the value to 1. Default value is 0 \n' \
-        '  -s           Gaussian mask_size - Specify mask_size in millimeters. Default value of mask_size is 0. We recommend s=15. \n' \
-        '  -l           Centerline file can be given to specify the centre of Gaussian Mask (by default, gaussian mask is centered). Need -s. \n' \
+        '  -d           DWI Group Size. Successive images are merged to increase robustness. Default=5\n' \
+        '  -e {0,1}     Eddy Correction using opposite gradient directions. Default=0 \n' \
+        '               N.B. Only use this option if pairs of opposite gradient images were adjacent in time\n' \
+        '  -s <int>     Size of Gaussian mask for motion correction (in mm). For no mask, put 0. Default=0.\n' \
+        '               N.B. if centerline is provided, mask is centered on centerline. If not, mask is\n' \
+        '               centered in the middle of each slice.\n' \
+        '  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.\n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
-        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -f           set value to 0 if spline regularization along T is not required. Default value is 1. \n' \
-        '  -v           Set verbose=1 for plotting graphs. Default value is 0 \n' \
-        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
+        '  -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.\n' \
+        '  -f {0,1}     set value to 0 if spline regularization along T is not required. Default value is 1. \n' \
+        '  -v {0,1}     Set verbose=1 for plotting graphs. Default value is 0 \n' \
+        '  -r {0,1}     Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \

@@ -30,7 +30,7 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_straighten_spinalcord.py 
-      -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
+      -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
       -c ../../data/${subject}/${contrast}/${contrast}_centerline.nii.gz 
       -f polynomial
       -r 1"
