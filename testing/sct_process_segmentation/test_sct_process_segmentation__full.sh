@@ -50,7 +50,7 @@ for subject in $SUBJECT_LIST; do
 			    cmd="sct_process_segmentation.py
 	                -i ${SCT_DATA_DIR}/${subject}/${contrast}/$file
 	                -p compute_CSA
-	                -m counting_z_plane
+	                -m $method
 	                -s 1
 	                -r 0
 	                -b 1
