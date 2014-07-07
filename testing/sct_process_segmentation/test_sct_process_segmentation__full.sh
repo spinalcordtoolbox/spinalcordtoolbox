@@ -8,7 +8,7 @@
 SUBJECT_LIST="errsm_23"
 CONTRAST_LIST="t2"
 FILE_LIST="t2_segmentation_PropSeg.nii.gz t2_segmentation_PropSeg_crop190-220.nii.gz t2_segmentation_PropSeg_Ysubsampled5.nii.gz"
-
+METHOD_LIST="counting_z_plane counting_ortho_plane ellipse_z_plane ellipse_ortho_plane"
 
 # START BATCH HERE
 # =================================
@@ -34,33 +34,38 @@ for subject in $SUBJECT_LIST; do
     for contrast in $CONTRAST_LIST; do
 
 		for file in $FILE_LIST; do
-
-	        # display subject
-	        echo
-	        printf "${green}Subject: $subject${NC}\n"
-	        printf "${red}Contrast: ${contrast}${NC}\n\n"
-
-			# create folder
+			
 			mkdir $file
 			cd $file
 			
-		    cmd="sct_process_segmentation.py
-                -i ${SCT_DATA_DIR}/${subject}/${contrast}/$file
-                -p compute_CSA
-                -m counting_z_plane
-                -s 1
-                -r 0
-                -b 1
-                -f 1
-                -v 1"
+			for method in $METHOD_LIST; do
+		        # display subject
+		        echo
+		        printf "${green}Subject: $subject${NC}\n"
+		        printf "${red}Contrast: ${contrast}${NC}\n\n"
 
-	        echo ==============================================================================================
-	        echo "$cmd"
-	        echo ==============================================================================================
-	        $cmd
-			echo 
+				mkdir $method
+				cd $method
 			
-			# come back to parent folder
+			    cmd="sct_process_segmentation.py
+	                -i ${SCT_DATA_DIR}/${subject}/${contrast}/$file
+	                -p compute_CSA
+	                -m counting_z_plane
+	                -s 1
+	                -r 0
+	                -b 1
+	                -f 1
+	                -v 1"
+
+		        echo ==============================================================================================
+		        echo "$cmd"
+		        echo ==============================================================================================
+		        $cmd
+				echo 
+			
+				# come back to parent folder
+				cd ..
+			done
 			cd ..
 		done
     done
