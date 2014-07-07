@@ -289,7 +289,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
    
     x_centerline = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     y_centerline = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    z_centerline = [iz for iz in xrange(min_z_index, max_z_index+1)]
+    z_centerline = np.array([iz for iz in xrange(min_z_index, max_z_index+1)])
     
     # Extract segmentation points and average per slice
     for iz in xrange(min_z_index, max_z_index+1):
@@ -464,7 +464,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         print('\nSmoothing results with spline ...')
 
         if name_method == 'counting_ortho_plane':
-
+            
             tck = splrep((z_centerline*z_scale), sections_ortho_counting, s = smoothing_param )
             
             if figure_fit == 1 :
