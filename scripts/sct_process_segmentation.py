@@ -22,12 +22,12 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug              = 0
-        self.verbose            = 1 # verbose
+        self.verbose            = 0 # verbose
         self.step               = 1 # step of discretized plane in mm default is min(x_scale,y_scale)
         self.remove_temp_files  = 1
         self.volume_output      = 0
         self.spline_smoothing   = 1
-        self.smoothing_param    = 2000
+        self.smoothing_param    = 1000
         self.figure_fit         = 0
         
 import re
@@ -303,12 +303,12 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
     # Fit the centerline points with spline and return the new fitted coordinates
     x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
-    # 3D plot of the fit
-   # fig=plt.figure()
- #   ax=Axes3D(fig)
- #   ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
- #   ax.plot(x_centerline_fit,y_centerline_fit,z_centerline,zdir='z')
- #   plt.show()
+   # # 3D plot of the fit
+ #    fig=plt.figure()
+ #    ax=Axes3D(fig)
+ #    ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
+ #    ax.plot(x_centerline_fit,y_centerline_fit,z_centerline,zdir='z')
+ #    plt.show()
 
     # Defining cartesian basis vectors 
     x=np.array([1,0,0])
