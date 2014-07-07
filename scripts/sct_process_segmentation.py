@@ -590,28 +590,28 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         status,sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
         orientation = sct_orientation_output[-3:]
         
-        for iz in range(0,len(z_centerline)):
+        for iz in range(min_z_index,max_z_index+1):
             
             x_seg, y_seg = (data_seg[:,:,iz]>0).nonzero()
             seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
-            
+
             for i in seg :
                  
                 if name_method == 'counting_ortho_plane':
                     
-                    data_seg[i[0],i[1],iz] = sections_ortho_counting[iz]
+                    data_seg[i[0],i[1],iz] = sections_ortho_counting[iz-min_z_index]
                 
                 if name_method == 'counting_z_plane':
         
-                    data_seg[i[0],i[1],iz] = sections_z_counting[iz]
+                    data_seg[i[0],i[1],iz] = sections_z_counting[iz-min_z_index]
             
                 if name_method == 'ellipse_ortho_plane':
             
-                    data_seg[i[0],i[1],iz] = sections_ortho_ellipse[iz]
+                    data_seg[i[0],i[1],iz] = sections_ortho_ellipse[iz-min_z_index]
                 
                 if name_method == 'ellipse_z_plane':
             
-                    data_seg[i[0],i[1],iz] = sections_z_ellipse[iz]
+                    data_seg[i[0],i[1],iz] = sections_z_ellipse[iz-min_z_index]
         
         hdr_seg.set_data_dtype('uint8') # set imagetype to uint8
         
