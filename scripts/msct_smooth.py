@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Module containing 2D fitting functions 
+# Module containing fitting functions 
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -22,11 +22,15 @@ except ImportError:
 #=======================================================================================================================
 # Polynomial fit
 #=======================================================================================================================
-def polynomial_fit(x,y,degree):
+def polynomial_fit(x,y,degree, dic):
     
     coeffs = np.polyfit(x, y, degree)
     poly = np.poly1d(coeffs)
     y_fit = np.polyval(poly, x)
+    for var in ["y_fit", "poly"]:
+        if var in dic:
+            dic={"q":obj.q, "s":obj.calcs}
+    return_dict=ft(a,b, a_dict)
     
     return y_fit,poly
 #=======================================================================================================================
@@ -42,7 +46,7 @@ def polynomial_deriv(x,poly):
 #=======================================================================================================================
 # Evaluate derivative of data points
 #=======================================================================================================================
-def evaluate_derivative(x,y):
+def evaluate_derivative_2D(x,y):
         
     y_deriv = np.array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range (0,len(x)-1)])
     y_deriv = np.insert(y_deriv,-1,(y[-1] - y[-2])/(x[-1] - x[-2]))
@@ -101,7 +105,27 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
     ys = s(x)
     
     return ys    
+#=======================================================================================================================
+# 3D B-Spline function, sct_nurbs
+#=======================================================================================================================   
+def b_spline_nurbs(x, y, z, degree = 3, points = 3000):
     
+    from sct_nurbs import NURBS
+    data = [[x[n], y[n], z[n]] for n in range(len(x))]
     
+    nurbs = NURBS(degree,points, data)
+    # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points),
+    # give at least len(z_centerline)+500 or higher
+    
+    P = nurbs.getCourbe3D()
+    x_fit = P[0]
+    y_fit = P[1]
+    Q = nurbs.getCourbe3D_deriv()
+    x_deriv = Q[0]
+    y_deriv = Q[1]
+    z_deriv = Q[2]
+    
+    return x_fit, y_fit, x_deriv, y_deriv, z_deriv
+
     
     
