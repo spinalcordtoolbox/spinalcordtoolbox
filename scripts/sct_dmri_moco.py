@@ -22,9 +22,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: use 3D spline approximation instead of LP filter.
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
-# TODO: provide b0_mean and dwi_mean after moco
 # TODO: verbose 1: txt, verbose 2: printed fig in png
 # TODO: flag to output fig (-z).
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
@@ -216,10 +214,7 @@ def main():
 
     #To view results
     print '\nTo view results, type:'
-    print 'fslview ' + file_data + ' ' + param.output_path + file_data + param.suffix + ' &\n\n'
-
-
-
+    print 'fslview ' + ' ' + param.output_path + file_data + param.suffix + ' &\n\n'
 
 #=======================================================================================================================
 # Function sct_dmri_moco - Preparing Data For MOCO
@@ -233,6 +228,7 @@ def sct_dmri_moco(param,fname_data_initial):
     fname_bvecs    = param.fname_bvecs
     fname_bvals    = param.fname_bvals
     dwi_group_size = param.dwi_group_size
+    interp         = param.interp
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -282,7 +278,7 @@ def sct_dmri_moco(param,fname_data_initial):
         with open(fname_bvals) as f:
             for line in f:
                 bvals_new = map(float, line.split())
-                bvals.append(bvecs_new)
+                bvals.append(bvals_new)
 
         # Identify b=0 and DWI images
         print '\nIdentify b=0 and DWI images...'
@@ -365,12 +361,12 @@ def sct_dmri_moco(param,fname_data_initial):
     print '\n\n------------------------------------------------------------------------------'
     print 'Estimating motion based on DW groups...'
     print '------------------------------------------------------------------------------\n'
-    param.fname_data = 'dwi_averaged_groups.nii'
-#    param.fname_target =  path_data + 'dwi_mean.nii'
-    param.fname_target =  file_dwi + '_mean_' + str(0)
-    param.output_path = ''
-    param.todo = 'estimate_and_apply'
-    param.mat_moco = 'dwigroups_param.mat'
+    param.fname_data   = 'dwi_averaged_groups.nii'
+    param.fname_target = file_dwi + '_mean_' + str(0)
+    param.output_path  = ''
+    param.todo         = 'estimate_and_apply'
+    param.mat_moco     = 'dwigroups_param.mat'
+    param.interp       = 'trilinear'
     sct_moco(param)
 
     # Estimate moco on b0 groups
@@ -381,10 +377,11 @@ def sct_dmri_moco(param,fname_data_initial):
         param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
         # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
-        param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'
+        param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'    
     param.output_path = ''
-    param.todo = 'estimate_and_apply'
-    param.mat_moco = 'b0groups_param.mat'
+    param.todo        = 'estimate_and_apply'
+    param.mat_moco    = 'b0groups_param.mat'
+    param.interp      = 'trilinear'
     sct_moco(param)
 
     #Copy registration matrix for every dwi based on dwi_averaged_groups
@@ -420,7 +417,7 @@ def sct_dmri_moco(param,fname_data_initial):
 
     if param.spline_fitting:
         #Spline Regularization along T
-        sct_moco_spline(mat_final,nt,nz,param.verbose)
+        sct_moco_spline(mat_final,nt,nz,param.verbose,np.array(index_b0))
 
     if param.run_eddy:
         #combining eddy Matrices
@@ -430,12 +427,72 @@ def sct_dmri_moco(param,fname_data_initial):
     print '\n\n\n------------------------------------------------------------------------------'
     print 'Apply moco on all dmri data...'
     print '------------------------------------------------------------------------------\n'
-    param.fname_data =  fname_data_initial
+    param.fname_data   = fname_data_initial
     param.fname_target = fname_data_initial
-    param.output_path = output_path
-    param.mat_final = mat_final
-    param.todo = 'apply'
+    param.output_path  = output_path
+    param.mat_final    = mat_final
+    param.todo         = 'apply'
+    param.interp       = interp
     sct_moco(param)
+
+    #===================================================================
+    #Generating b=0 mean and DWI mean after motion correction
+    #===================================================================
+    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
+    fname_final = param.output_path + file_data + param.suffix
+    # Split into T dimension
+    print '\nSplit along T dimension...'
+    status, output = sct.run(fsloutput+'fslsplit '+fname_final + ' ' + 'tmp.data_splitT_final')
+
+    # Merge b=0 images
+    print '\nMerge b=0...'
+    fname_b0_merge_final = file_b0 + '_final'
+    cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge_final
+    for iT in range(n_b0):
+        cmd = cmd + ' ' + 'tmp.data_splitT_final' + str(index_b0[iT]).zfill(4)
+    status, output = sct.run(cmd)
+    print '.. File created: ',fname_b0_merge_final
+
+    # Average b=0 images
+    print '\nAverage b=0...'
+    fname_b0_mean_final = param.output_path + 'b0_mean_final'
+    cmd = fsloutput + 'fslmaths ' + fname_b0_merge_final + ' -Tmean ' + fname_b0_mean_final
+    status, output = sct.run(cmd)
+
+    # Size of DWI groups
+    for iGroup in range(nb_groups):
+        print  '\nGroup ',str((iGroup+1)),' of DW images'
+    
+        index_dwi_i = group_indexes[iGroup]
+        nb_dwi_i = len(index_dwi_i)
+    
+        # Merge DW Images
+        print '\nMerge DW images...'
+        fname_dwi_merge_i_final = file_dwi + '_' + str(iGroup)
+        cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i_final
+        for iT in range(nb_dwi_i):
+            cmd = cmd +' ' + 'tmp.data_splitT_final' + str(index_dwi_i[iT]).zfill(4)
+        status, output = sct.run(cmd)
+    
+        # Average DW Images
+        print '\nAverage DW images...'
+        fname_dwi_mean_final = file_dwi + '_mean_final' + str(iGroup)
+        cmd = fsloutput + 'fslmaths ' + fname_dwi_merge_i_final + ' -Tmean ' + fname_dwi_mean_final
+        status, output = sct.run(cmd)
+
+    # Merge DWI groups means
+    print '\nMerging DW files...'
+    fname_dwi_groups_means_merge_final = 'dwi_averaged_groups_final'
+    cmd = fsloutput + 'fslmerge -t ' + fname_dwi_groups_means_merge_final
+    for iGroup in range(nb_groups):
+        cmd = cmd + ' ' + file_dwi + '_mean_final' + str(iGroup)
+    status, output = sct.run(cmd)
+
+    # Average DW Images
+    print '\nAveraging all DW images...'
+    fname_dwi_mean_final = param.output_path + 'dwi_mean_final'
+    cmd = fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge_final + ' -Tmean ' + fname_dwi_mean_final
+    status, output = sct.run(cmd)
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
