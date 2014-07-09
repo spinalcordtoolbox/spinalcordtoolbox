@@ -178,6 +178,7 @@ def sct_moco(param):
     
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+    target_path_data, target_file_data, target_ext_data = sct.extract_fname(fname_target)
     
     #Schedule file for FLIRT
     schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'
@@ -203,14 +204,14 @@ def sct_moco(param):
     print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
     
     # split along T dimension
-    fname_data_splitT = 'data_splitT'
+    fname_data_splitT = file_data + '_T'
     cmd = fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT
     status, output = sct.run(cmd)
     
     #SLICE-by-SLICE MOTION CORRECTION
     print '\n   Motion correction...'
     #split target data along Z
-    fname_data_ref_splitZ = 'target_splitZ'
+    fname_data_ref_splitZ = target_file_data + '_Z'
     cmd = fsloutput + 'fslsplit ' + fname_target + ' ' + fname_data_ref_splitZ + ' -z'
     status, output = sct.run(cmd)
     
@@ -278,7 +279,7 @@ def sct_moco(param):
         print '--------------------'
         
         fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4)) 
-        fname_data_splitT_moco_num.append(fname_data_splitT + suffix + str(iT).zfill(4)) 
+        fname_data_splitT_moco_num.append(file_data + suffix + '_T' + str(iT).zfill(4))
         
         # SLICE-WISE MOTION CORRECTION
         print 'Slicewise motion correction...'
@@ -286,7 +287,7 @@ def sct_moco(param):
         # split data along Z
         print 'Split data along Z...\n'
         
-        fname_data_splitT_splitZ = fname_data_splitT_num[iT] + '_splitZ'
+        fname_data_splitT_splitZ = fname_data_splitT_num[iT] + '_Z'
         cmd = fsloutput + 'fslsplit ' + fname_data_splitT_num[iT] + ' ' + fname_data_splitT_splitZ + ' -z'
         status, output = sct.run(cmd)
         
