@@ -37,7 +37,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:g:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -45,6 +45,8 @@ def main():
             usage()
         elif opt in ('-i'):
             folder_mat = arg
+        elif opt in ('-g'):
+            graph = arg
         elif opt in ('-v'):
             verbose = int(arg)
 
@@ -58,20 +60,20 @@ def main():
     nz = len(glob.glob(folder_mat + 'mat.T0_Z*.txt'))
     nt = len(glob.glob(folder_mat + 'mat.T*_Z0.txt'))
 
-    sct_moco_spline(folder_mat,nt,nz,verbose)
+    sct_moco_spline(folder_mat,nt,nz,verbose,graph)
 
 #=======================================================================================================================
 # sct_moco_spline
 #=======================================================================================================================
-def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
-    print '\n\n\n------------------------------------------------------------------------------'
-    print 'Spline Regularization along T: Smoothing Patient Motion...'
-    
+def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     # append path that contains scripts, to be able to load modules
     sys.path.append(path_sct + '/scripts')
     import sct_utils as sct
+
+    sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
+    sct.printv('Spline Regularization along T: Smoothing Patient Motion...',verbose)
     
     fname_mat = [[[] for i in range(nz)] for i in range(nt)]
     for iT in range(nt):
@@ -82,9 +84,9 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
     old_mat = folder_mat + 'old/'
     if not os.path.exists(old_mat): os.makedirs(old_mat)    
     cmd = 'cp ' + folder_mat + '*.txt ' + old_mat
-    status, output = sct.run(cmd)
+    status, output = sct.run(cmd, verbose)
 
-    print '\nloading matrices...'
+    sct.printv('\nloading matrices...',verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]
     Y = [[[] for i in range(nt)] for i in range(nz)]
     X_smooth = [[[] for i in range(nt)] for i in range(nz)]
@@ -99,9 +101,9 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
             Y[iZ][iT] = Matrix[1,3]
 
     # Generate motion splines
-    print '\nGenerate motion splines...'
+    sct.printv('\nGenerate motion splines...',verbose)
     T = np.arange(nt)
-    if verbose==1:
+    if graph:
         import pylab as pl
 
     for iZ in range(nz):
@@ -116,7 +118,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
         spline = scipy.interpolate.UnivariateSpline(T, X[iZ][:], w=None, bbox=[None, None], k=3, s=None)
         X_smooth[iZ][:] = spline(T)
         
-        if verbose==1:
+        if graph:
             pl.plot(T,X_smooth[iZ][:],label='spline_smoothing')
             pl.plot(T,X[iZ][:],marker='*',linestyle='None',label='original_val')
             if len(index_b0)!=0:
@@ -137,7 +139,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
         spline = scipy.interpolate.UnivariateSpline(T, Y[iZ][:], w=None, bbox=[None, None], k=3, s=None)
         Y_smooth[iZ][:] = spline(T)
 
-        if verbose==1:
+        if graph:
             pl.plot(T,Y_smooth[iZ][:],label='spline_smoothing')
             pl.plot(T,Y[iZ][:],marker='*', linestyle='None',label='original_val')
             if len(index_b0)!=0:
@@ -149,7 +151,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
             pl.show()
 
     #Storing the final Matrices
-    print '\nStoring the final Matrices...'
+    sct.printv('\nStoring the final Matrices...',verbose)
     for iZ in range(nz):
         for iT in range(nt):
             file =  open(fname_mat[iT][iZ])
@@ -163,8 +165,8 @@ def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
             np.savetxt(fname_mat[iT][iZ], Matrix, fmt='%.9e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
 
-    print '\n...Done. Patient motion has been smoothed'
-    print '------------------------------------------------------------------------------\n'
+    sct.printv('\n...Done. Patient motion has been smoothed',verbose)
+    sct.printv('------------------------------------------------------------------------------\n',verbose)
 
 #=======================================================================================================================
 # usage
@@ -184,7 +186,8 @@ def usage():
         '  -i           folder_path \n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
-        '  -v           Set verbose=1 for plotting graphs. Default value is 0\n' \
+        '  -v           Set verbose=1 for printing text. Default value is 0\n' \
+        '  -g           Set value to 1 for plotting graphs. Default value is 0\n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
