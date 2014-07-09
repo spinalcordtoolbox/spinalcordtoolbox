@@ -191,7 +191,7 @@ def main():
     fname_data_initial = param.fname_data
     
     #Copying input data to the tmp folder
-    cmd = 'cp ' + param.fname_data + ' ' + file_data + ext_data
+    cmd = 'cp ' + param.fname_data + ' Input_data' + ext_data
     status, output = sct.run(cmd)
     cmd = 'cp ' + param.fname_bvecs + ' bvecs.txt'
     status, output = sct.run(cmd)
@@ -201,7 +201,7 @@ def main():
     if param.run_eddy:
         param.output_path = ''
         sct_eddy_correct(param)
-        param.fname_data = file_data+'_eddy.nii'
+        param.fname_data = file_data + '_eddy.nii'
 
     # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
     # the param.fname_data will be the output of sct_eddy_correct.
@@ -298,14 +298,14 @@ def sct_dmri_moco(param,fname_data_initial):
 
     # Split into T dimension
     print '\nSplit along T dimension...'
-    status, output = sct.run(fsloutput+'fslsplit '+fname_data + ' ' + 'tmp.data_splitT')
+    status, output = sct.run(fsloutput+'fslsplit '+fname_data + ' ' + file_data + '_T')
 
     # Merge b=0 images
     print '\nMerge b=0...'
     fname_b0_merge = file_b0
     cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge
     for iT in range(n_b0):
-        cmd = cmd + ' ' + 'tmp.data_splitT' + str(index_b0[iT]).zfill(4) 
+        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[iT]).zfill(4)
     status, output = sct.run(cmd)
     print '.. File created: ',fname_b0_merge
 
@@ -341,7 +341,7 @@ def sct_dmri_moco(param,fname_data_initial):
         fname_dwi_merge_i = file_dwi + '_' + str(iGroup)
         cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i
         for iT in range(nb_dwi_i):
-            cmd = cmd +' ' + 'tmp.data_splitT' + str(index_dwi_i[iT]).zfill(4) 
+            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[iT]).zfill(4)
         status, output = sct.run(cmd)
 
         # Average DW Images
@@ -381,10 +381,10 @@ def sct_dmri_moco(param,fname_data_initial):
     if index_dwi[0]!=0:
         # If first DWI is not the first volume, then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
-        param.fname_target = 'tmp.data_splitT' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
+        param.fname_target = file_data + '_T' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
     else:
         # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
-        param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'    
+        param.fname_target = file_data + '_T' + str(index_b0[0]).zfill(4) + '.nii'
     param.output_path = ''
     param.todo        = 'estimate_and_apply'
     param.mat_moco    = 'mat_b0groups'
@@ -411,8 +411,8 @@ def sct_dmri_moco(param,fname_data_initial):
             status, output = sct.run(cmd)
 
     #Renaming Files
-    nz1 = len(glob.glob('b0groups_param.mat/mat.T0_Z*.txt'))
-    nt1 = len(glob.glob('b0groups_param.mat/mat.T*_Z0.txt'))
+    nz1 = len(glob.glob('mat_b0groups/mat.T0_Z*.txt'))
+    nt1 = len(glob.glob('mat_b0groups/mat.T*_Z0.txt'))
     for iT in range(nt1):
         if iT!=index_b0[iT]:
             for iZ in range(nz1):
@@ -449,14 +449,14 @@ def sct_dmri_moco(param,fname_data_initial):
     fname_final = param.output_path + file_data + param.suffix
     # Split into T dimension
     print '\nSplit along T dimension...'
-    status, output = sct.run(fsloutput+'fslsplit '+fname_final + ' ' + 'tmp.data_splitT_final')
+    status, output = sct.run(fsloutput+'fslsplit '+fname_final + ' ' + file_data + '_moco_T')
 
     # Merge b=0 images
     print '\nMerge b=0...'
     fname_b0_merge_final = file_b0 + '_final'
     cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge_final
     for iT in range(n_b0):
-        cmd = cmd + ' ' + 'tmp.data_splitT_final' + str(index_b0[iT]).zfill(4)
+        cmd = cmd + ' ' + file_data + '_moco_T' + str(index_b0[iT]).zfill(4)
     status, output = sct.run(cmd)
     print '.. File created: ',fname_b0_merge_final
 
@@ -478,7 +478,7 @@ def sct_dmri_moco(param,fname_data_initial):
         fname_dwi_merge_i_final = file_dwi + '_' + str(iGroup)
         cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i_final
         for iT in range(nb_dwi_i):
-            cmd = cmd +' ' + 'tmp.data_splitT_final' + str(index_dwi_i[iT]).zfill(4)
+            cmd = cmd +' ' + file_data + '_moco_T' + str(index_dwi_i[iT]).zfill(4)
         status, output = sct.run(cmd)
     
         # Average DW Images
