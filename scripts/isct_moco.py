@@ -190,7 +190,7 @@ def sct_moco(param):
             folder_mat = param.mat_moco + '/'
     elif todo=='estimate_and_apply':
         if param.mat_moco=='':
-            folder_mat = 'tmp_param.mat/'
+            folder_mat = 'mat_tmp/'
         else:
             folder_mat = param.mat_moco + '/'
     else:
@@ -203,14 +203,14 @@ def sct_moco(param):
     print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
     
     # split along T dimension
-    fname_data_splitT = 'tmp_param.data_splitT'
+    fname_data_splitT = 'data_splitT'
     cmd = fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT
     status, output = sct.run(cmd)
     
     #SLICE-by-SLICE MOTION CORRECTION
     print '\n   Motion correction...'
     #split target data along Z
-    fname_data_ref_splitZ = 'tmp_param.target_splitZ'
+    fname_data_ref_splitZ = 'target_splitZ'
     cmd = fsloutput + 'fslsplit ' + fname_target + ' ' + fname_data_ref_splitZ + ' -z'
     status, output = sct.run(cmd)
     
@@ -225,7 +225,7 @@ def sct_moco(param):
         
         if param.fname_centerline=='':
             center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
-            fname_mask = 'tmp_param.gaussian_mask_in'
+            fname_mask = 'gaussian_mask_in'
             M_mask = gauss2d(dims, sigma, center)
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(M_mask, None, hdr)
@@ -241,7 +241,7 @@ def sct_moco(param):
             cz = cz[arg]
             cx = cx[arg]
             cy = cy[arg]
-            fname_mask = 'tmp_param.gaussian_mask_in'
+            fname_mask = 'gaussian_mask_in'
             for iZ in range(nz):
                 center = np.array([cx[iZ],cy[iZ]])
                 M_mask = gauss2d(dims, sigma, center)
