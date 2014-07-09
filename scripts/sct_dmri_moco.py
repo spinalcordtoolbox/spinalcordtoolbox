@@ -189,6 +189,13 @@ def main():
     os.chdir(path_tmp)
 
     fname_data_initial = param.fname_data
+    
+    #Copying input data to the tmp folder
+    cmd = 'cp ' + param.fname_data + ' ' + file_data + ext_data
+    status, output = sct.run(cmd)
+    cmd = 'cp ' + param.fname_bvecs + ' bvecs.txt'
+    status, output = sct.run(cmd)
+    
 
     # EDDY CORRECTION -- for debugging, it is possible to run code by commenting the next lines
     if param.run_eddy:
@@ -365,7 +372,7 @@ def sct_dmri_moco(param,fname_data_initial):
     param.fname_target = file_dwi + '_mean_' + str(0)
     param.output_path  = ''
     param.todo         = 'estimate_and_apply'
-    param.mat_moco     = 'dwigroups_param.mat'
+    param.mat_moco     = 'mat_dwigroups'
     param.interp       = 'trilinear'
     sct_moco(param)
 
@@ -380,7 +387,7 @@ def sct_dmri_moco(param,fname_data_initial):
         param.fname_target = 'tmp.data_splitT' + str(index_b0[0]).zfill(4) + '.nii'    
     param.output_path = ''
     param.todo        = 'estimate_and_apply'
-    param.mat_moco    = 'b0groups_param.mat'
+    param.mat_moco    = 'mat_b0groups'
     param.interp      = 'trilinear'
     sct_moco(param)
 
@@ -394,7 +401,7 @@ def sct_dmri_moco(param,fname_data_initial):
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
             for i_Z in range(nz):
-                cmd = 'cp '+'dwigroups_param.mat/'+'mat.T'+str(iGroup)+'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(i_Z)+'.txt'
+                cmd = 'cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(i_Z)+'.txt'
                 status, output = sct.run(cmd)
 
     index = np.argmin(np.abs(np.array(index_dwi) - index_b0[len(index_b0)-1]))
@@ -409,11 +416,11 @@ def sct_dmri_moco(param,fname_data_initial):
     for iT in range(nt1):
         if iT!=index_b0[iT]:
             for iZ in range(nz1):
-                cmd = 'mv ' + 'b0groups_param.mat/mat.T'+str(iT)+'_Z'+str(iZ)+'.txt' + ' ' + 'b0groups_param.mat/mat.T'+str(index_b0[iT])+'_Z'+str(iZ)+'.txt'
+                cmd = 'mv ' + 'mat_b0groups/mat.T'+str(iT)+'_Z'+str(iZ)+'.txt' + ' ' + 'mat_b0groups/mat.T'+str(index_b0[iT])+'_Z'+str(iZ)+'.txt'
                 status, output = sct.run(cmd)
 
     #combining Motion Matrices
-    sct_moco_combine_matrix('b0groups_param.mat',mat_final)
+    sct_moco_combine_matrix('mat_b0groups',mat_final)
 
     if param.spline_fitting:
         #Spline Regularization along T
@@ -455,7 +462,7 @@ def sct_dmri_moco(param,fname_data_initial):
 
     # Average b=0 images
     print '\nAverage b=0...'
-    fname_b0_mean_final = param.output_path + 'b0_mean_final'
+    fname_b0_mean_final = param.output_path + 'b0_mean'
     cmd = fsloutput + 'fslmaths ' + fname_b0_merge_final + ' -Tmean ' + fname_b0_mean_final
     status, output = sct.run(cmd)
 
@@ -490,7 +497,7 @@ def sct_dmri_moco(param,fname_data_initial):
 
     # Average DW Images
     print '\nAveraging all DW images...'
-    fname_dwi_mean_final = param.output_path + 'dwi_mean_final'
+    fname_dwi_mean_final = param.output_path + 'dwi_mean'
     cmd = fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge_final + ' -Tmean ' + fname_dwi_mean_final
     status, output = sct.run(cmd)
 #=======================================================================================================================
