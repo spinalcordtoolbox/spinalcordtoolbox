@@ -17,7 +17,8 @@ try:
 except ImportError:
     print '--- numpy not installed! ---'
     sys.exit(2)
-    
+from sct_nurbs import NURBS
+
 
 #=======================================================================================================================
 # Polynomial fit
@@ -27,8 +28,8 @@ def polynomial_fit(x,y,degree):
     coeffs = np.polyfit(x, y, degree)
     poly = np.poly1d(coeffs)
     y_fit = np.polyval(poly, x)
-
-    return [y_fit,poly]
+ 
+    return y_fit,poly
 #=======================================================================================================================
 # Polynomial derivative
 #=======================================================================================================================   
@@ -104,24 +105,70 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================   
-def b_spline_nurbs(x, y, z, degree = 3, points = 3000):
+
+def b_spline_nurbs(x,y,z,degree = 3,point_number = 3000):
     
     from sct_nurbs import NURBS
-    data = [[x[n], y[n], z[n]] for n in range(len(x))]
-    
-    nurbs = NURBS(degree,points, data)
-    # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points),
-    # give at least len(z_centerline)+500 or higher
-    
+          
+    print '\nFitting centerline using B-spline approximation...'
+    data = [[x[n],y[n],z[n]] for n in range(len(x))]
+    nurbs = NURBS(degree,point_number,data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+  
     P = nurbs.getCourbe3D()
-    x_fit = P[0]
-    y_fit = P[1]
+    x_fit=P[0]
+    y_fit=P[1]
     Q = nurbs.getCourbe3D_deriv()
-    x_deriv = Q[0]
-    y_deriv = Q[1]
-    z_deriv = Q[2]
-    
-    return x_fit, y_fit, x_deriv, y_deriv, z_deriv
+    x_deriv=Q[0]
+    y_deriv=Q[1]
+    z_deriv=Q[2]
+  
+    return x_fit, y_fit,x_deriv,y_deriv,z_deriv
 
+#=======================================================================================================================
+# 3D B-Spline function, python function
+#=======================================================================================================================   
+
+
+def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
+    """see http://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.splprep.html for full input information"""
+    from scipy.interpolate import splprep,splev
     
+    tckp,u = splprep([x,y,z], s = s, k = k, nest = nest)
+
+    xnew,ynew,znew = splev(u,tckp)
     
+    return xnew, ynew, znew 
+
+#=======================================================================================================================
+# lowpass filter  
+#=======================================================================================================================   
+
+def lowpass (y) :
+    from scipy.fftpack import fftfreq, fft
+    from scipy.signal import filtfilt, iirfilter
+  
+    frequency = fftfreq(len(y))
+    spectrum = np.abs(fft(y, n=None, axis=-1, overwrite_x=False))
+    Wn = np.amax(frequency)/10
+    N = 5              #Order of the filter
+    b, a = iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
+    y_smooth = filtfilt(b, a, y, axis=-1, padtype=None)
+
+
+    return y_smooth
+    
+#=======================================================================================================================
+# moving_average
+#=======================================================================================================================   
+
+def moving_average(y, n=3) :
+    y_smooth = np.cumsum(y, dtype=float)
+    y_smooth[n:] = y_smooth[n:] - y_smooth[:-n]
+    
+    return y_smooth[n - 1:] / n
+
+
+
+
+
+
