@@ -75,7 +75,7 @@ def sct_moco_combine_matrix(mat_2_combine,mat_final):
             Matrix_final[1,3] = Matrix_f[1,3] + Matrix_m2c[1,3]
             
             file =  open(os.path.join(mat_final,fname),'w')
-            np.savetxt(os.path.join(mat_final,fname), Matrix_final, delimiter='  ', newline='\n', header='', footer='', comments='#')
+            np.savetxt(os.path.join(mat_final,fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
     print '\n...done. Matrices are combined...'

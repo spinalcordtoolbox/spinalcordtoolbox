@@ -63,7 +63,7 @@ def main():
 #=======================================================================================================================
 # sct_moco_spline
 #=======================================================================================================================
-def sct_moco_spline(folder_mat,nt,nz,verbose):
+def sct_moco_spline(folder_mat,nt,nz,verbose, index_b0 = []):
     print '\n\n\n------------------------------------------------------------------------------'
     print 'Spline Regularization along T: Smoothing Patient Motion...'
     
@@ -106,30 +106,46 @@ def sct_moco_spline(folder_mat,nt,nz,verbose):
 
     for iZ in range(nz):
 
-        frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)
-        spectrum = np.abs(scipy.fftpack.fft(X[iZ][:], n=None, axis=-1, overwrite_x=False))
-        Wn = np.amax(frequency)/10
-        N = 5              #Order of the filter
-        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-        X_smooth[iZ][:] = scipy.signal.filtfilt(b, a, X[iZ][:], axis=-1, padtype=None)
-                
+#        frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(X[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        Wn = np.amax(frequency)/10
+#        N = 5              #Order of the filter
+#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
+#        X_smooth[iZ][:] = scipy.signal.filtfilt(b, a, X[iZ][:], axis=-1, padtype=None)
+
+        spline = scipy.interpolate.UnivariateSpline(T, X[iZ][:], w=None, bbox=[None, None], k=3, s=None)
+        X_smooth[iZ][:] = spline(T)
+        
         if verbose==1:
-            pl.plot(T,X_smooth[iZ][:])
-            pl.plot(T,X[iZ][:],marker='o',linestyle='None')
+            pl.plot(T,X_smooth[iZ][:],label='spline_smoothing')
+            pl.plot(T,X[iZ][:],marker='*',linestyle='None',label='original_val')
+            if len(index_b0)!=0:
+                T_b0 = [T[i_b0] for i_b0 in index_b0]
+                X_b0 = [X[iZ][i_b0] for i_b0 in index_b0]
+                pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('X')
+            pl.legend()
             pl.show()
 
-        frequency = scipy.fftpack.fftfreq(len(Y[iZ][:]), d=1)
-        spectrum = np.abs(scipy.fftpack.fft(Y[iZ][:], n=None, axis=-1, overwrite_x=False))
-        Wn = np.amax(frequency)/10
-        N = 5              #Order of the filter
-        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-        Y_smooth[iZ][:] = scipy.signal.filtfilt(b, a, Y[iZ][:], axis=-1, padtype=None)
+#        frequency = scipy.fftpack.fftfreq(len(Y[iZ][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(Y[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        Wn = np.amax(frequency)/10
+#        N = 5              #Order of the filter
+#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
+#        Y_smooth[iZ][:] = scipy.signal.filtfilt(b, a, Y[iZ][:], axis=-1, padtype=None)
+
+        spline = scipy.interpolate.UnivariateSpline(T, Y[iZ][:], w=None, bbox=[None, None], k=3, s=None)
+        Y_smooth[iZ][:] = spline(T)
 
         if verbose==1:
-            pl.plot(T,Y_smooth[iZ][:])
-            pl.plot(T,Y[iZ][:],marker='*', linestyle='None')
+            pl.plot(T,Y_smooth[iZ][:],label='spline_smoothing')
+            pl.plot(T,Y[iZ][:],marker='*', linestyle='None',label='original_val')
+            if len(index_b0)!=0:
+                T_b0 = [T[i_b0] for i_b0 in index_b0]
+                Y_b0 = [Y[iZ][i_b0] for i_b0 in index_b0]
+                pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('Y')
+            pl.legend()
             pl.show()
 
     #Storing the final Matrices
