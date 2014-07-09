@@ -54,10 +54,11 @@ def main():
 #=======================================================================================================================
 # sct_moco_combine_matrix
 #=======================================================================================================================
-def sct_moco_combine_matrix(mat_2_combine,mat_final):
+def sct_moco_combine_matrix(mat_2_combine,mat_final,verbose):
 
-    print '\n Combining Matrices...'
-    print '------------------------------------------------------------------------------\n'
+    if verbose:
+        print '\n Combining Matrices...'
+        print '------------------------------------------------------------------------------\n'
 
     m2c_fnames = [ fname for fname in os.listdir(mat_2_combine) if os.path.isfile(os.path.join(mat_2_combine,fname)) ]
     for fname in m2c_fnames:
@@ -78,8 +79,9 @@ def sct_moco_combine_matrix(mat_2_combine,mat_final):
             np.savetxt(os.path.join(mat_final,fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
-    print '\n...done. Matrices are combined...'
-    print '------------------------------------------------------------------------------\n'
+    if verbose:
+        print '\n...done. Matrices are combined...'
+        print '------------------------------------------------------------------------------\n'
 
 #=======================================================================================================================
 # usage

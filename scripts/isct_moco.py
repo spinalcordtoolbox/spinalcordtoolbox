@@ -50,6 +50,7 @@ class param_class:
         self.interp                    = 'trilinear'              #  Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline
         self.delete_tmp_files          = 1
         self.merge_back                = 1
+        self.verbose                   = 0
 
 #=======================================================================================================================
 # main
@@ -90,6 +91,8 @@ def main():
             param.delete_tmp_files = int(arg)
         elif opt in ('-s'):
             param.mask_size = float(arg)
+        elif opt in ('-v'):
+            param.verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
@@ -118,7 +121,7 @@ def main():
     
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp)
+    sct.run('mkdir '+ path_tmp,param.verbose)
     
     # go to tmp folder
     os.chdir(path_tmp)
@@ -131,7 +134,7 @@ def main():
     # Delete temporary files
     if param.delete_tmp_files == 1:
         print '\nDelete temporary files...'
-        sct.run('rm -rf '+ path_tmp)
+        sct.run('rm -rf '+ path_tmp,param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -141,14 +144,21 @@ def main():
 #sct_moco Function
 #=======================================================================================================================
 def sct_moco(param):
-    print '\n\n\n\n==================================================='
-    print '                Running: sct_moco'
-    print '===================================================\n'
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # append path that contains scripts, to be able to load modules
+    sys.path.append(path_sct + '/scripts')
+    import sct_utils as sct
+
+    sct.printv('\n\n\n\n===================================================',param.verbose)
+    sct.printv('                Running: sct_moco',param.verbose)
+    sct.printv('===================================================\n',param.verbose)
     
-    print 'Input File:',param.fname_data
-    print 'Reference File:',param.fname_target
-    if param.fname_centerline!='': print 'Centreline File:',param.fname_centerline
-    print 'Method:',param.todo
+    sct.printv(('Input File:'+ param.fname_data),param.verbose)
+    sct.printv(('Reference File:'+param.fname_target),param.verbose)
+    if param.fname_centerline!='': sct.printv(('Centreline File:'+ param.fname_centerline),param.verbose)
+    sct.printv(('Method:' + param.todo),param.verbose)
     
     # Initialization
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
@@ -164,17 +174,12 @@ def sct_moco(param):
     cost_function_flirt = param.cost_function_flirt
     interp              = param.interp
     merge_back          = param.merge_back
-    
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-    # append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
-    import sct_utils as sct
+    verbose             = param.verbose
     
     # check existence of input files
-    sct.check_file_exist(fname_data)
+    sct.check_file_exist(fname_data,verbose)
     if todo!='apply':
-        sct.check_file_exist(fname_target)
+        sct.check_file_exist(fname_target,verbose)
     
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -182,7 +187,7 @@ def sct_moco(param):
     
     #Schedule file for FLIRT
     schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'
-    print '\n.. Schedule file: ',schedule_file
+    sct.printv(('\n.. Schedule file: '+ schedule_file),verbose)
     
     if todo=='estimate':
         if param.mat_moco=='':
@@ -199,21 +204,21 @@ def sct_moco(param):
     if not os.path.exists(folder_mat): os.makedirs(folder_mat)
     
     # Get size of data
-    print '\nGet dimensions data...'
+    sct.printv('\nGet dimensions data...',verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
-    print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
+    sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)),verbose)
     
     # split along T dimension
     fname_data_splitT = file_data + '_T'
     cmd = fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT
-    status, output = sct.run(cmd)
+    status, output = sct.run(cmd,verbose)
     
     #SLICE-by-SLICE MOTION CORRECTION
-    print '\n   Motion correction...'
+    sct.printv('\n   Motion correction...',verbose)
     #split target data along Z
     fname_data_ref_splitZ = target_file_data + '_Z'
     cmd = fsloutput + 'fslsplit ' + fname_target + ' ' + fname_data_ref_splitZ + ' -z'
-    status, output = sct.run(cmd)
+    status, output = sct.run(cmd,verbose)
     
     #Generate Gaussian Mask
     fslmask = []
@@ -233,7 +238,7 @@ def sct_moco(param):
             nibabel.save(img,(fname_mask+'.nii'))
             for iZ in range(nz):
                 fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
-            print '\n.. File created: ',fname_mask
+            sct.printv(('\n.. File created: '+fname_mask),verbose)
         else:
             centerline = nibabel.load(param.fname_centerline)
             data_centerline = centerline.get_data()
@@ -250,13 +255,13 @@ def sct_moco(param):
                 img = nibabel.Nifti1Image(M_mask, None, hdr)
                 nibabel.save(img,(fname_mask+str(iZ)+'.nii'))
                 fslmask.append(' -inweight ' + fname_mask+str(iZ) + ' -refweight ' + fname_mask+str(iZ))
-                print '\n.. File created: ',(fname_mask+str(iZ))
+                sct.printv(('\n.. File created: '+(fname_mask+str(iZ))),verbose)
 
             #Merging all masks
             cmd = 'fslmerge -z ' + path_data + 'mask '
             for iZ in range(nz):
                 cmd = cmd + fname_mask+str(iZ)+' '
-            status, output = sct.run(cmd)
+            status, output = sct.run(cmd,verbose)
     else:
         for iZ in range(nz):
             fslmask.append('')
@@ -271,28 +276,28 @@ def sct_moco(param):
     fname_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
     fname_mat = [[[] for i in range(nz)] for i in range(nt)]
 
-    print 'Loop on iT...'
+    sct.printv('Loop on iT...',verbose)
     for indice_index in range(nt):
         
         iT = index[indice_index]
-        print '\nVolume ',str((iT+1)),'/',str(nt),':'
-        print '--------------------'
+        sct.printv(('\nVolume '+str((iT+1))+'/'+str(nt)+':'),verbose)
+        sct.printv('--------------------',verbose)
         
         fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4)) 
         fname_data_splitT_moco_num.append(file_data + suffix + '_T' + str(iT).zfill(4))
         
         # SLICE-WISE MOTION CORRECTION
-        print 'Slicewise motion correction...'
+        sct.printv('Slicewise motion correction...',verbose)
         
         # split data along Z
-        print 'Split data along Z...\n'
+        sct.printv('Split data along Z...\n',verbose)
         
         fname_data_splitT_splitZ = fname_data_splitT_num[iT] + '_Z'
         cmd = fsloutput + 'fslsplit ' + fname_data_splitT_num[iT] + ' ' + fname_data_splitT_splitZ + ' -z'
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
         
         # Loop On Z
-        print 'Loop on Z...'
+        sct.printv('Loop on Z...',verbose)
         
         fname_data_ref_splitZ_num = []
         for iZ in range(nz):
@@ -303,21 +308,21 @@ def sct_moco(param):
             
             if todo == 'estimate':
                 if program == 'FLIRT':
-                    print '\nProcess with FLIRT...\n'
+                    sct.printv('\nProcess with FLIRT...\n',verbose)
                     cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
         
             if todo == 'apply':
                 if program == 'FLIRT':
-                    print '\nProcess with FLIRT...\n'
+                    sct.printv('\nProcess with FLIRT...\n',verbose)
                     cmd = fsloutput + 'flirt -in ' + fname_data_splitT_splitZ_num[iT][iZ] + ' -ref ' + fname_data_ref_splitZ_num[iZ] + ' -applyxfm -init ' + fname_mat[iT][iZ] + ' -out ' + fname_data_splitT_splitZ_moco_num[iT][iZ] + ' -interp ' + interp
 
             if todo == 'estimate_and_apply':
                 if program == 'FLIRT':
-                    print '\nProcess with FLIRT...\n'
+                    sct.printv('\nProcess with FLIRT...\n',verbose)
                     cmd = fsloutput+'flirt -schedule '+schedule_file+ ' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+ fname_data_ref_splitZ_num[iZ] +' -out '+fname_data_splitT_splitZ_moco_num[iT][iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
 
             if program =='FLIRT':
-                status, output = sct.run(cmd)
+                status, output = sct.run(cmd,verbose)
 
             #Check transformation absurdity
 
@@ -328,18 +333,18 @@ def sct_moco(param):
             if abs(M_transform[0,3]) > 10 or abs(M_transform[1,3]) > 10 or abs(M_transform[2,3]) > 10 or abs(M_transform[3,3]) > 10 :
                 nb_fails = nb_fails + 1
                 fail_mat[iT,iZ] = 1
-                print 'failure... this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '
+                sct.printv('failure... this tranformation matrix is absurd, try others parameters (SPM, cost_function...) ',verbose)
 
         # Merge data along Z
         if todo!='estimate':
             if merge_back==1:
-                print '\n\nConcatenate along Z...\n'
+                sct.printv('\n\nConcatenate along Z...\n',verbose)
                 
                 cmd = fsloutput + 'fslmerge -z ' + fname_data_splitT_moco_num[iT]
                 for iZ in range(nz):
                     cmd = cmd + ' ' + fname_data_splitT_splitZ_moco_num[iT][iZ]
-                status, output = sct.run(cmd)
-                print '.. File created: ',fname_data_splitT_moco_num[iT]
+                status, output = sct.run(cmd,verbose)
+                sct.printv(('.. File created: '+fname_data_splitT_moco_num[iT]),verbose)
     
     
     #Replace failed transformation matrix to the closest good one
@@ -348,39 +353,39 @@ def sct_moco(param):
     gT, gZ = np.where(fail_mat==0)
     
     for iT in range(len(fT)):
-        print '\nReplace failed matrix T',str(fT[iT]), ' Z', str(fZ[iT]),'...'
+        sct.printv(('\nReplace failed matrix T'+str(fT[iT])+' Z'+str(fZ[iT])+'...'),verbose)
         
         # rename failed matrix
         cmd = 'mv ' + fname_mat[fT[iT]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]] + '_failed'
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
         
         good_Zindex = np.where(gZ == fZ[iT])
         good_index = gT[good_Zindex]
         
         I = np.amin(abs(good_index-fT[iT]))
         cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
 
     fname_data_moco = param.output_path + file_data + suffix + '.nii'
     # Merge data along T
     if todo!='estimate':
         if merge_back==1:
-            print '\n\nMerge data back along T...\n'
+            sct.printv('\n\nMerge data back along T...\n',verbose)
             
             cmd = fsloutput + 'fslmerge -t ' + fname_data_moco
             
             for indice_index in range(len(index)):
                 cmd = cmd + ' ' + fname_data_splitT_moco_num[indice_index]
-            status, output = sct.run(cmd)
-            print '.. File created: ',fname_data_moco
+            status, output = sct.run(cmd,verbose)
+            sct.printv(('.. File created: '+fname_data_moco),verbose)
 
     if todo=='estimate_and_apply':
         if param.mat_moco=='':
-            print '\nDelete temporary files...'
-            sct.run('rm -rf '+ folder_mat)
-    print '\n\n==================================================='
-    print '                Completed: sct_moco'
-    print '===================================================\n\n\n'
+            sct.printv('\nDelete temporary files...',verbose)
+            sct.run('rm -rf '+ folder_mat,verbose)
+    sct.printv('\n\n===================================================',verbose)
+    sct.printv('                Completed: sct_moco',verbose)
+    sct.printv('===================================================\n\n\n',verbose)
 
 #=======================================================================================================================
 # usage
@@ -409,7 +414,8 @@ def usage():
         '  -g           Output Matrix Folder name. (Used if -m is not <apply>)\n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
+        '  -v {0,1}     Set verbose=1 for plotting graphs. Default value is 0 \n' \
+        '  -r {0,1}     Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
