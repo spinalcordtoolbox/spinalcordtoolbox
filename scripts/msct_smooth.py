@@ -22,16 +22,12 @@ except ImportError:
 #=======================================================================================================================
 # Polynomial fit
 #=======================================================================================================================
-def polynomial_fit(x,y,degree, dic):
+def polynomial_fit(x,y,degree):
     
     coeffs = np.polyfit(x, y, degree)
     poly = np.poly1d(coeffs)
     y_fit = np.polyval(poly, x)
-    for var in ["y_fit", "poly"]:
-        if var in dic:
-            dic={"q":obj.q, "s":obj.calcs}
-    return_dict=ft(a,b, a_dict)
-    
+
     return y_fit,poly
 #=======================================================================================================================
 # Polynomial derivative
