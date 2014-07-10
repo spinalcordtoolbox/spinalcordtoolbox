@@ -64,7 +64,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:m:p:r:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:m:p:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -82,10 +82,10 @@ def main():
             param.output_path = arg
         elif opt in ('-p'):
             param.interp = arg
-        elif opt in ('-v'):
-            param.verbose = int(arg)
         elif opt in ('-r'):
             param.delete_tmp_files = int(arg)
+        elif opt in ('-v'):
+            param.verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data=='' or param.fname_bvecs=='':
@@ -370,6 +370,7 @@ def usage():
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
         '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
+        '  -v {0,1}     Set verbose=1 for printing text. Default value is 0 \n' \
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
