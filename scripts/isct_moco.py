@@ -376,7 +376,7 @@ def sct_moco(param):
             
             for indice_index in range(len(index)):
                 cmd = cmd + ' ' + fname_data_splitT_moco_num[indice_index]
-            status, output = sct.run(cmd,verbose)
+            status, output = sct.run(cmd,verbose)        
             sct.printv(('.. File created: '+fname_data_moco),verbose)
 
     if todo=='estimate_and_apply':
