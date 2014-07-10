@@ -13,6 +13,7 @@
 # - moco on DWI groups
 # - moco on b=0, using target volume: last b=0
 # - moco on all dMRI data
+# _ generating b=0 mean and DWI mean after motion correction
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -23,12 +24,8 @@
 #########################################################################################
 
 # TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
-# TODO: verbose 1: txt, verbose 2: printed fig in png
-# TODO: flag to output fig (-z).
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs or c3d instead of flirt
-# TODO (no priority): output ext same as input
-
 
 import sys
 import os
@@ -209,6 +206,10 @@ def main():
     # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
     # the param.fname_data will be the output of sct_eddy_correct.
     sct_dmri_moco(param,fname_data_initial)
+
+    #generating output file
+    if ext_data == '.nii.gz':
+        os.system('fslchfiletype NIFTI_GZ '+ param.output_path + file_data + param.suffix + '.nii')
 
     # come back to parent folder
     os.chdir('..')

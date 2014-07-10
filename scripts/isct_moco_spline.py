@@ -126,6 +126,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
                 X_b0 = [X[iZ][i_b0] for i_b0 in index_b0]
                 pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('X')
+            pl.grid()
             pl.legend()
             pl.show()
 
@@ -147,6 +148,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
                 Y_b0 = [Y[iZ][i_b0] for i_b0 in index_b0]
                 pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('Y')
+            pl.grid()
             pl.legend()
             pl.show()
 
