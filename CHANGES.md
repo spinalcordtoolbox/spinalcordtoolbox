@@ -1,7 +1,13 @@
 
 # CHANGES TO RELEASE
 
-1.0.1 ()
+1.0.2 ()
+
+- NEW: virtual machine
+- BUG: fixed sct_check_dependencies for Linux
+- OPT: sct_register_to_template.py now registers the straight spinal cord to the template using sct_register_multimodal.py, which uses the spinal cord segmentation for more accurate results.
+
+1.0.1 (2014-07-03)
 
 - INST: toolbox now requires matplotlib
 
