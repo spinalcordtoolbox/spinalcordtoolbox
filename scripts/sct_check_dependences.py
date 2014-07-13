@@ -25,10 +25,9 @@ class param:
 
 import os
 import sys
-#import getopt
 import commands
 import time
-#import logging
+import platform
 
 
 class bcolors:
@@ -50,7 +49,7 @@ def main():
     # c3d_is_installed = 1
     install_software = 0
     restart_terminal = 0
-    os_running = ''
+    os_running = 'not identified'
     print
 
     # check if user is root (should not be!)
@@ -59,10 +58,13 @@ def main():
        sys.exit(2)
        
     # check OS
-    print 'Check which OS is running ... '
-    if (sys.platform == 'darwin'):
+    print 'Check which OS is running... '
+    platform_running = sys.platform
+    if (platform_running.find('darwin') != -1):
         os_running = 'osx'
-    print '  '+os_running+' ('+sys.platform+')'
+    elif (platform_running.find('linux') != -1):
+        os_running = 'linux'
+    print '  '+os_running+' ('+platform.platform()+')'
 
     # check installation packages
     print 'Check which Python is running ... '
