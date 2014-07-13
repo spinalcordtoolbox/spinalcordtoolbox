@@ -1,10 +1,11 @@
 
 # CHANGES TO RELEASE
 
-1.0.2 ()
+1.0.2 (2014-07-13)
 
 - NEW: virtual machine
 - BUG: fixed sct_check_dependencies for Linux
+- BUG: fix VM failure of sct_register_to_template (issue #41)
 - OPT: sct_register_to_template.py now registers the straight spinal cord to the template using sct_register_multimodal.py, which uses the spinal cord segmentation for more accurate results.
 
 1.0.1 (2014-07-03)
