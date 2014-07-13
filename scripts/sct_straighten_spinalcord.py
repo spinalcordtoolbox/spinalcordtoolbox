@@ -118,12 +118,10 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        #fname_anat = path_sct+'/testing/data/11shortFOV/t1_cropped_short.nii.gz'
-        #fname_centerline = path_sct+'/testing/data/11shortFOV/spine_cropped_short.nii.gz'
+        fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
+        fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         # fname_anat = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
         # fname_centerline = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data_up.nii.gz'
-        fname_anat = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data.nii'
-        fname_centerline = '/Users/julien/code/spinalcordtoolbox/testing/data/errsm_23/t2/tmp.140706150926/data.nii'
         remove_temp_files = 0
         centerline_fitting = 'splines'
         import matplotlib.pyplot as plt
