@@ -103,6 +103,8 @@ def get_dimension(fname):
 #=======================================================================================================================
 # Generate output file (put the extension for input file!!!)
 def generate_output_file(fname_in, path_out, file_out, ext_out):
+    # import stuff
+    import shutil  # for moving files
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     # if output file already exists in nii or nii.gz format, delete it
@@ -111,8 +113,11 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     if os.path.isfile(path_out+file_out+'.nii.gz'):
         os.system('rm '+path_out+file_out+'.nii.gz')
     # Move file to output folder (keep the same extension as input)
-    os.system('mv '+fname_in+' '+path_out+file_out+ext_in)
-    # convert to nii.gz if necessary
+    shutil.move(fname_in, path_out+file_out+ext_in)
+    # convert to nii (only if necessary)
+    if ext_out == '.nii' and ext_in != '.nii':
+        os.system('fslchfiletype NIFTI '+path_out+file_out)
+    # convert to nii.gz (only if necessary)
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
