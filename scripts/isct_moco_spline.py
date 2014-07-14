@@ -164,7 +164,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
             Matrix[1,3] = Y_smooth[iZ][iT]
             
             file =  open(fname_mat[iT][iZ],'w')
-            np.savetxt(fname_mat[iT][iZ], Matrix, fmt='%.9e', delimiter='  ', newline='\n', header='', footer='', comments='#')
+            np.savetxt(fname_mat[iT][iZ], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
     sct.printv('\n...Done. Patient motion has been smoothed',verbose)
