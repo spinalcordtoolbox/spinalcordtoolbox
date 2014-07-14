@@ -68,27 +68,27 @@ def main():
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Calculate b-value (in mm^2/s).\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -g <gradamp> -b <bigdelta> -d <smalldelta>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -g <gradamp>      Amplitude of diffusion gradients (in T/m)\n' \
-        '  -b <bigdelta>     Big delta: time between both diffusion gradients (in s)\n' \
-        '  -d <smalldelta>   Small delta: duration of each diffusion gradient (in s)\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -h                help. Show this message\n' \
-        '\n'\
-        'EXAMPLE\n' \
-        '  '+os.path.basename(__file__)+' -i segmentation.nii \n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  Calculate b-value (in mm^2/s).
+
+USAGE
+  """+os.path.basename(__file__)+""" -g <gradamp> -b <bigdelta> -d <smalldelta>
+
+MANDATORY ARGUMENTS
+  -g <gradamp>      Amplitude of diffusion gradients (in T/m)
+  -b <bigdelta>     Big delta: time between both diffusion gradients (in s)
+  -d <smalldelta>   Small delta: duration of each diffusion gradient (in s)
+
+OPTIONAL ARGUMENTS
+  -h                help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -g 0.04 -b 0.04 -d 0.03\n"""
 
     # exit program
     sys.exit(2)
