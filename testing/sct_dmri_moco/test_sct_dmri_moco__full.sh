@@ -4,7 +4,7 @@
 #
 
 # subject list
-SUBJECT_LIST="errsm_23" 
+SUBJECT_LIST="errsm_03 "
 CONTRAST_LIST="dmri"
 file1="dmri.nii.gz"
 file2="bvecs.txt"
@@ -29,23 +29,30 @@ for subject in $SUBJECT_LIST; do
   # loop across contrast
   for contrast in $CONTRAST_LIST; do
 
+    mkdir $subject
+    cd $subject
+
     # display subject
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_dmri_moco.py
-        -i ../../data/${subject}/${contrast}/${file1}
-        -b ../../data/${subject}/${contrast}/${file2}
+        -i $SCT_DATA_DIR/${subject}/${contrast}/${file1}
+        -b $SCT_DATA_DIR/${subject}/${contrast}/${file2}
         -v 1
-        -f 0
         -s 15
+        -f 1
         -d 3
         -r 0
+	-e 0
         -p sinc"
     echo ==============================================================================================
     echo "$cmd"
     echo ==============================================================================================
     $cmd
+
+    cd ..
+
   done
 done
 
