@@ -191,7 +191,7 @@ def main():
     fname_data_initial = param.fname_data
     
     #Copying input data to the tmp folder
-    cmd = 'cp ' + param.fname_data + ' Input_data' + ext_data
+    cmd = 'cp ' + param.fname_data + ' dmri' + ext_data
     status, output = sct.run(cmd, param.verbose)
     cmd = 'cp ' + param.fname_bvecs + ' bvecs.txt'
     status, output = sct.run(cmd, param.verbose)
@@ -391,7 +391,7 @@ def sct_dmri_moco(param,fname_data_initial):
     param.todo        = 'estimate_and_apply'
     param.mat_moco    = 'mat_b0groups'
     param.interp      = 'trilinear'
-    sct_moco(param)
+    sct_moco(param)    
 
     #Copy registration matrix for every dwi based on dwi_averaged_groups
     sct.printv('\n\n------------------------------------------------------------------------------',verbose)
