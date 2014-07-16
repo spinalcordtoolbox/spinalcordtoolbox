@@ -309,7 +309,7 @@ def sct_moco(param):
             if todo == 'estimate':
                 if program == 'FLIRT':
                     sct.printv('\nProcess with FLIRT...\n',verbose)
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
+                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -out '+fname_data_splitT_splitZ_moco_num[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
         
             if todo == 'apply':
                 if program == 'FLIRT':
