@@ -207,9 +207,6 @@ def main():
     # the param.fname_data will be the output of sct_eddy_correct.
     sct_dmri_moco(param,fname_data_initial)
 
-    #generating output file
-    if ext_data == '.nii.gz':
-        os.system('fslchfiletype NIFTI_GZ '+ param.output_path + file_data + param.suffix + '.nii')
 
     # come back to parent folder
     os.chdir('..')
@@ -351,7 +348,7 @@ def sct_dmri_moco(param,fname_data_initial):
 
         # Average DW Images
         sct.printv('\nAverage DW images...',verbose)
-        fname_dwi_mean = file_dwi + '_mean' + '_' + str(iGroup)
+        fname_dwi_mean = file_dwi + '_mean_' + str(iGroup)
         cmd = fsloutput + 'fslmaths ' + fname_dwi_merge_i + ' -Tmean ' + fname_dwi_mean
         status, output = sct.run(cmd,verbose)
 
@@ -446,6 +443,10 @@ def sct_dmri_moco(param,fname_data_initial):
     param.todo         = 'apply'
     param.interp       = interp
     sct_moco(param)
+
+#    #generating output file
+#    if ext_data == '.nii.gz':
+#        os.system('fslchfiletype NIFTI_GZ '+ param.output_path + file_data + param.suffix + '.nii')
 
     #===================================================================
     #Generating b=0 mean and DWI mean after motion correction

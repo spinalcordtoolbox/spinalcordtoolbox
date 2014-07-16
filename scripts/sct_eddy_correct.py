@@ -17,6 +17,7 @@ import os
 import commands
 import getopt
 import time
+import matplotlib.pyplot as plt
 
 try:
     import nibabel
@@ -45,6 +46,7 @@ class eddy_class:
         #============================================
         self.fname_data                = ''
         self.fname_bvecs               = ''
+        self.slicewise                 = 1
         self.output_path               = ''
         self.mat_eddy                  = ''
         self.min_norm                  = 0.001
@@ -54,6 +56,7 @@ class eddy_class:
         self.delete_tmp_files          = 1
         self.merge_back                = 1
         self.verbose                   = 0
+        self.plot_graph                = 0
 #=======================================================================================================================
 # main
 #=======================================================================================================================
@@ -64,7 +67,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:m:p:r:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:g:m:o:p:r:s:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -76,6 +79,8 @@ def main():
             param.fname_bvecs = arg
         elif opt in ('-c'):
             param.cost_function_flirt = arg
+        elif opt in ('-g'):
+            param.plot_graph = int(arg)
         elif opt in ('-m'):
             param.mat_eddy = arg
         elif opt in ('-o'):
@@ -84,6 +89,8 @@ def main():
             param.interp = arg
         elif opt in ('-r'):
             param.delete_tmp_files = int(arg)
+        elif opt in ('-s'):
+            param.slicewise = int(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
 
@@ -96,7 +103,7 @@ def main():
 
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp)
+    sct.run('mkdir '+ path_tmp, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -110,7 +117,7 @@ def main():
     # Delete temporary files
     if param.delete_tmp_files == 1:
         print '\nDelete temporary files...'
-        sct.run('rm -rf '+ path_tmp)
+        sct.run('rm -rf '+ path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -121,16 +128,17 @@ def main():
 #=======================================================================================================================
 def sct_eddy_correct(param):
 
-    print '\n\n\n\n==================================================='
-    print '              Running: sct_eddy_correct'
-    print '===================================================\n'
+    sct.printv('\n\n\n\n===================================================',param.verbose)
+    sct.printv('              Running: sct_eddy_correct',param.verbose)
+    sct.printv('===================================================\n',param.verbose)
 
     fname_data    = param.fname_data
     min_norm      = param.min_norm
     cost_function = param.cost_function_flirt
+    verbose       = param.verbose
     
-    print 'Input File:',param.fname_data
-    print 'Bvecs File:',param.fname_bvecs    
+    sct.printv(('Input File:'+ param.fname_data),verbose)
+    sct.printv(('Bvecs File:' + param.fname_bvecs),verbose)
     
     #Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
@@ -141,38 +149,43 @@ def sct_eddy_correct(param):
     
     #Schedule file for FLIRT
     schedule_file = path_sct + '/flirtsch/schedule_TxTy_2mmScale.sch'
-    print '\n.. Schedule file: ',schedule_file
+    sct.printv(('\n.. Schedule file: '+ schedule_file),verbose)
 
     #Swap X-Y dimension (to have X as phase-encoding direction)
     if param.swapXY==1:
-        print '\nSwap X-Y dimension (to have X as phase-encoding direction)'
+        sct.printv('\nSwap X-Y dimension (to have X as phase-encoding direction)',verbose)
         fname_data_new = 'tmp.data_swap'
         cmd = fsloutput + 'fslswapdim ' + fname_data + ' -y -x -z ' + fname_data_new
-        status, output = sct.run(cmd)
-        print '\n.. updated data file name: ',fname_data_new
+        status, output = sct.run(cmd,verbose)
+        sct.printv(('\n.. updated data file name: '+fname_data_new),verbose)
     else:
         fname_data_new = fname_data
 
     # Get size of data
-    print '\nGet dimensions data...'
+    sct.printv('\nGet dimensions data...',verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
-    print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
+    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
 
     # split along T dimension
-    print '\nSplit along T dimension...'
-    cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + 'tmp.data_splitT'
-    status, output = sct.run(cmd)
+    sct.printv('\nSplit along T dimension...',verbose)
+    cmd = fsloutput + 'fslsplit ' + fname_data_new + ' ' + file_data + '_T'
+    status, output = sct.run(cmd,verbose)
 
-    nb_loops = nz
-    file_suffix=[]
-    for iZ in range(nz):
-        file_suffix.append('_Z'+ str(iZ).zfill(4))
+    #Slice-wise or Volume based method
+    if param.slicewise:
+        nb_loops = nz
+        file_suffix=[]
+        for iZ in range(nz):
+            file_suffix.append('_Z'+ str(iZ).zfill(4))
+    else:
+        nb_loops = 1
+        file_suffix = ['']
 
     # Identify pairs of opposite gradient directions
-    print '\nIdentify pairs of opposite gradient directions...'
+    sct.printv('\nIdentify pairs of opposite gradient directions...',verbose)
 
     # Open bvecs file
-    print '\nOpen bvecs file...'
+    sct.printv('\nOpen bvecs file...',verbose)
     bvecs = []
     with open(param.fname_bvecs) as f:
         for line in f:
@@ -181,8 +194,8 @@ def sct_eddy_correct(param):
 
     # Check if bvecs file is nx3
     if not len(bvecs[0][:]) == 3:
-        print '.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.'
-        print 'Transpose bvecs...'
+        sct.printv('.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.',verbose)
+        sct.printv('Transpose bvecs...',verbose)
         # transpose bvecs
         bvecs = zip(*bvecs)
     bvecs = np.array(bvecs)
@@ -196,16 +209,16 @@ def sct_eddy_correct(param):
             if iT not in index_identified:
                 jT = iT+1
                 if np.linalg.norm((bvecs[iT,:]+bvecs[jT,:]))<min_norm:
-                    print '.. Opposite gradient for #',str(iT),' is: #',str(jT)
+                    sct.printv(('.. Opposite gradient for #'+str(iT)+' is: #'+str(jT)),verbose)
                     opposite_gradients_iT.append(iT)
                     opposite_gradients_jT.append(jT)
                     index_identified.append(iT)
         else:
             index_b0.append(iT)
-            print '.. Opposite gradient for #',str(iT),' is: NONE (b=0)'
+            sct.printv(('.. Opposite gradient for #'+str(iT)+' is: NONE (b=0)'),verbose)
     nb_oppositeGradients = len(opposite_gradients_iT)
-    print '.. Number of gradient directions: ',str(2*nb_oppositeGradients), ' (2*',str(nb_oppositeGradients),')'
-    print '.. Index b=0: ',str(index_b0)
+    sct.printv(('.. Number of gradient directions: ' + str(2*nb_oppositeGradients) + ' (2*' + str(nb_oppositeGradients) + ')'),verbose)
+    sct.printv('.. Index b=0: '+ str(index_b0),verbose)
 
 
     # =========================================================================
@@ -215,63 +228,64 @@ def sct_eddy_correct(param):
         i_plus = opposite_gradients_iT[iN]
         i_minus = opposite_gradients_jT[iN]
 
-        print '\nFinding affine transformation between volumes #',str(i_plus),' and #',str(i_minus),' (',str(iN),'/',str(nb_oppositeGradients),')'
-        print '------------------------------------------------------------------------------------\n'
+        sct.printv(('\nFinding affine transformation between volumes #'+str(i_plus)+' and #'+str(i_minus)+' (' + str(iN)+'/'+str(nb_oppositeGradients)+')'),verbose)
+        sct.printv('------------------------------------------------------------------------------------\n',verbose)
         
         #Slicewise correction
-        print '\nSplit volumes across Z...'
-        fname_plus = 'tmp.data_splitT' + str(i_plus).zfill(4)
-        fname_plus_Z = 'tmp.data_splitT' + str(i_plus).zfill(4) + '_Z'
-        cmd = fsloutput + 'fslsplit ' + fname_plus + ' ' + fname_plus_Z + ' -z'
-        status, output = sct.run(cmd)
+        if param.slicewise:
+            sct.printv('\nSplit volumes across Z...',verbose)
+            fname_plus = file_data + '_T' + str(i_plus).zfill(4)
+            fname_plus_Z = file_data + '_T' + str(i_plus).zfill(4) + '_Z'
+            cmd = fsloutput + 'fslsplit ' + fname_plus + ' ' + fname_plus_Z + ' -z'
+            status, output = sct.run(cmd,verbose)
 
-        fname_minus = 'tmp.data_splitT' + str(i_minus).zfill(4)
-        fname_minus_Z = 'tmp.data_splitT' + str(i_minus).zfill(4) + '_Z'
-        cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
-        status, output = sct.run(cmd)
+            fname_minus = file_data + '_T' + str(i_minus).zfill(4)
+            fname_minus_Z = file_data + '_T' + str(i_minus).zfill(4) + '_Z'
+            cmd = fsloutput + 'fslsplit ' + fname_minus + ' ' + fname_minus_Z + ' -z'
+            status, output = sct.run(cmd,verbose)
 
         #loop across Z
         for iZ in range(nb_loops):
-            fname_plus = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ]
+            fname_plus = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ]
 
-            fname_minus = 'tmp.data_splitT' + str(i_minus).zfill(4) + file_suffix[iZ]
+            fname_minus = file_data + '_T' + str(i_minus).zfill(4) + file_suffix[iZ]
             #Find transformation on opposite gradient directions
-            print '\nFind transformation for each pair of opposite gradient directions...'
-            fname_plus_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_'
-            omat = 'mat__tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '.txt'
+            sct.printv('\nFind transformation for each pair of opposite gradient directions...',verbose)
+            fname_plus_corr = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_'
+            omat = 'mat_' + file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '.txt'
             cmd = fsloutput+'flirt -in '+fname_plus+' -ref '+fname_minus+' -paddingsize 3 -schedule '+schedule_file+' -verbose 2 -omat '+omat+' -cost '+cost_function+' -forcescaling'
-            status, output = sct.run(cmd)
+            status, output = sct.run(cmd,verbose)
 
             file =  open(omat)
             Matrix = np.loadtxt(file)
             file.close()
             M = Matrix[0:4,0:4]
-            print '.. Transformation matrix:\n',M
-            print '.. Output matrix file: ',omat
+            sct.printv(('.. Transformation matrix:\n'+str(M)),verbose)
+            sct.printv(('.. Output matrix file: '+omat),verbose)
 
             # Divide affine transformation by two
-            print '\nDivide affine transformation by two...'
+            sct.printv('\nDivide affine transformation by two...',verbose)
             A = (M - np.identity(4))/2
             Mplus = np.identity(4)+A
             omat_plus = mat_eddy + 'mat.T' + str(i_plus) + '_Z' + str(iZ) + '.txt'
             file =  open(omat_plus,'w')
             np.savetxt(omat_plus, Mplus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
-            print '.. Output matrix file (plus): ',omat_plus
+            sct.printv(('.. Output matrix file (plus): '+omat_plus),verbose)
 
             Mminus = np.identity(4)-A
             omat_minus = mat_eddy + 'mat.T' + str(i_minus) + '_Z' + str(iZ) + '.txt'
             file =  open(omat_minus,'w')
             np.savetxt(omat_minus, Mminus, fmt='%.6e', delimiter='  ', newline='\n', header='', footer='', comments='#')
             file.close()
-            print '.. Output matrix file (minus): ',omat_minus
+            sct.printv(('.. Output matrix file (minus): '+omat_minus),verbose)
 
     # =========================================================================
     #	Apply affine transformation
     # =========================================================================
 
-    print '\nApply affine transformation matrix'
-    print '------------------------------------------------------------------------------------\n'
+    sct.printv('\nApply affine transformation matrix',verbose)
+    sct.printv('------------------------------------------------------------------------------------\n',verbose)
 
     for iN in range(nb_oppositeGradients):
         for iFile in range(2):
@@ -281,71 +295,71 @@ def sct_eddy_correct(param):
                 i_file = opposite_gradients_jT[iN]
 
             for iZ in range(nb_loops):
-                fname = 'tmp.data_splitT' + str(i_file).zfill(4) + file_suffix[iZ]
+                fname = file_data + '_T' + str(i_file).zfill(4) + file_suffix[iZ]
                 fname_corr = fname + '_corr_' + '__div2'
                 omat = mat_eddy + 'mat.T' + str(i_file) + '_Z' + str(iZ) + '.txt'
                 cmd = fsloutput + 'flirt -in ' + fname + ' -ref ' + fname + ' -out ' + fname_corr + ' -init ' + omat + ' -applyxfm -paddingsize 3 -interp ' + param.interp
-                status, output = sct.run(cmd)
+                status, output = sct.run(cmd,verbose)
 
     
     # =========================================================================
     #	Merge back across Z
     # =========================================================================
 
-    print '\nMerge across Z'
-    print '------------------------------------------------------------------------------------\n'
+    sct.printv('\nMerge across Z',verbose)
+    sct.printv('------------------------------------------------------------------------------------\n',verbose)
 
     for iN in range(nb_oppositeGradients):
         i_plus = opposite_gradients_iT[iN]
-        fname_plus_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + '_corr_' + '__div2'
+        fname_plus_corr = file_data + '_T' + str(i_plus).zfill(4) + '_corr_' + '__div2'
         cmd = fsloutput + 'fslmerge -z ' + fname_plus_corr
 
         for iZ in range(nz):
-            fname_plus_Z_corr = 'tmp.data_splitT' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
+            fname_plus_Z_corr = file_data + '_T' + str(i_plus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
             cmd = cmd + ' ' + fname_plus_Z_corr
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
 
         i_minus = opposite_gradients_jT[iN]
-        fname_minus_corr = 'tmp.data_splitT' + str(i_minus).zfill(4) + '_corr_' + '__div2'
+        fname_minus_corr = file_data + '_T' + str(i_minus).zfill(4) + '_corr_' + '__div2'
         cmd = fsloutput + 'fslmerge -z ' + fname_minus_corr
 
         for iZ in range(nz):
-            fname_minus_Z_corr = 'tmp.data_splitT' + str(i_minus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
+            fname_minus_Z_corr = file_data + '_T' + str(i_minus).zfill(4) + file_suffix[iZ] + '_corr_' + '__div2'
             cmd = cmd + ' ' + fname_minus_Z_corr
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
 
     # =========================================================================
     #	Merge files back
     # =========================================================================
-    print '\nMerge back across T...'
-    print '------------------------------------------------------------------------------------\n'
+    sct.printv('\nMerge back across T...',verbose)
+    sct.printv('------------------------------------------------------------------------------------\n',verbose)
     
     fname_data_corr = param.output_path + file_data + '_eddy'
     cmd = fsloutput + 'fslmerge -t ' + fname_data_corr
     path_tmp = os.getcwd()
     for iT in range(nt):
-        if os.path.isfile((path_tmp + '/' + 'tmp.data_splitT' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
-            fname_data_corr_3d = 'tmp.data_splitT' + str(iT).zfill(4) + '_corr_' + '__div2'
+        if os.path.isfile((path_tmp + '/' + file_data + '_T' + str(iT).zfill(4) + '_corr_' + '__div2.nii')):
+            fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4) + '_corr_' + '__div2'
         elif iT in index_b0:
-            fname_data_corr_3d = 'tmp.data_splitT' + str(iT).zfill(4)
+            fname_data_corr_3d = file_data + '_T' + str(iT).zfill(4)
         
         cmd = cmd + ' ' + fname_data_corr_3d
-    status, output = sct.run(cmd)
+    status, output = sct.run(cmd,verbose)
 
     #Swap back X-Y dimensions
     if param.swapXY==1:
         fname_data_final = fname_data
-        print '\nSwap back X-Y dimensions'
+        sct.printv('\nSwap back X-Y dimensions',verbose)
         cmd = fsloutput_temp + 'fslswapdim ' + fname_data_corr + ' -y -x -z ' + fname_data_final
-        status, output = sct.run(cmd)
+        status, output = sct.run(cmd,verbose)
     else:
         fname_data_final = fname_data_corr
 
-    print '... File created: ',fname_data_final
+    sct.printv(('... File created: '+fname_data_final),verbose)
     
-    print '\n==================================================='
-    print '              Completed: sct_eddy_correct'
-    print '===================================================\n\n\n'
+    sct.printv('\n===================================================',verbose)
+    sct.printv('              Completed: sct_eddy_correct',verbose)
+    sct.printv('===================================================\n\n\n',verbose)
 
 #=======================================================================================================================
 # usage
@@ -366,9 +380,12 @@ def usage():
         '  -b           bvecs file \n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
+        '  -o           Specify Output path.\n' \
+        '  -s           Set value to 0 for volume based correction. Default value is 1 i.e slicewise correction\n' \
         '  -m           matrix folder \n' \
         '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
         '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
+        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n' \
         '  -r           Set value to 0 for not deleting temp files. Default value is 1 \n' \
         '  -v {0,1}     Set verbose=1 for printing text. Default value is 0 \n' \
         '  -h           help. Show this message.\n' \
