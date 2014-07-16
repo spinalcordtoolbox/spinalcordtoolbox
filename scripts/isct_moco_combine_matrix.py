@@ -72,7 +72,7 @@ def sct_moco_combine_matrix(mat_2_combine,mat_final,verbose):
             file.close()
             Matrix_final = np.identity(4)
             Matrix_final[0:3,0:3] = Matrix_f[0:3,0:3]*Matrix_m2c[0:3,0:3]
-            Matrix_final[0,3] = Matrix_f[0,3] + Matrix_m2c[0,3]
+            Matrix_final[0,3] = Matrix_f[0,3] + Matrix_m2c[0,3] 
             Matrix_final[1,3] = Matrix_f[1,3] + Matrix_m2c[1,3]
             
             file =  open(os.path.join(mat_final,fname),'w')
