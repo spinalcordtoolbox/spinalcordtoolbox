@@ -166,7 +166,7 @@ def main():
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    status, output = sct.run('sct_straighten_spinalcord.py -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
+    status, output = sct.run('sct_straighten_spinalcord.py -i data_rpi.nii -c segmentation_rpi.nii.gz -r '+str(remove_temp_files))
 
     # Apply straightening to segmentation
     print('\nApply straightening to segmentation...')
