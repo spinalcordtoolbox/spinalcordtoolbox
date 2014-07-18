@@ -86,6 +86,8 @@ from scipy import interpolate # TODO: check if used
 from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
+import msct_smooth
+
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
@@ -236,12 +238,13 @@ def main():
     
     x_seg_start, y_seg_start = (data[:,:,0]>0).nonzero()
     x_seg_end, y_seg_end = (data[:,:,-1]>0).nonzero()
+# REMOVED: 2014-07-18
     # check if centerline covers all the image
-    if len(x_seg_start)==0 or len(x_seg_end)==0:
-        print '\nERROR: centerline/segmentation must cover all "z" slices of the input image.\n' \
-              'To solve the problem, you need to crop the input image (you can use \'sct_crop_image\') and generate one' \
-              'more time the spinal cord centerline/segmentation from this cropped image.\n'
-        usage()
+#    if len(x_seg_start)==0 or len(x_seg_end)==0:
+#        print '\nERROR: centerline/segmentation must cover all "z" slices of the input image.\n' \
+#              'To solve the problem, you need to crop the input image (you can use \'sct_crop_image\') and generate one' \
+#              'more time the spinal cord centerline/segmentation from this cropped image.\n'
+#        usage()
     
     # X, Y, Z = ((data<1)*(data>0)).nonzero() # X is empty if binary image
     # if (len(X) > 0): # Scenario 1
@@ -265,7 +268,8 @@ def main():
 
     # Fit the centerline points with the kind of curve given as argument of the script and return the new fitted coordinates
     if centerline_fitting == 'splines':
-        x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+        x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
+        #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
 
@@ -564,24 +568,24 @@ def get_points_perpendicular_to_curve(poly, dpoly, x, gap):
 #=======================================================================================================================
 # B-Spline fitting
 #=======================================================================================================================
-def b_spline_centerline(x_centerline,y_centerline,z_centerline):
-    """Give a better fitting of the centerline than the method 'spline_centerline' using b-splines"""
-    
-    print '\nFit centerline using B-spline approximation'
-    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
-    
-    nurbs = NURBS(3, 3000, points) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-    P = nurbs.getCourbe3D()
-    x_centerline_fit = P[0]
-    y_centerline_fit = P[1]
-    Q = nurbs.getCourbe3D_deriv()
-    x_centerline_deriv = Q[0]
-    y_centerline_deriv = Q[1]
-    z_centerline_deriv = Q[2]
-    
-    return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
-
-
+# def b_spline_centerline(x_centerline,y_centerline,z_centerline):
+#     """Give a better fitting of the centerline than the method 'spline_centerline' using b-splines"""
+#
+#     print '\nFit centerline using B-spline approximation'
+#     points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
+#
+#     nurbs = NURBS(3, 3000, points) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+#     P = nurbs.getCourbe3D()
+#     x_centerline_fit = P[0]
+#     y_centerline_fit = P[1]
+#     Q = nurbs.getCourbe3D_deriv()
+#     x_centerline_deriv = Q[0]
+#     y_centerline_deriv = Q[1]
+#     z_centerline_deriv = Q[2]
+#
+#     return x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
+#
+#
 
 #=======================================================================================================================
 # Polynomial fitting
@@ -600,7 +604,6 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=param.deg_poly)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
-    
     
     return x_centerline_fit,y_centerline_fit,polyx,polyy
 
