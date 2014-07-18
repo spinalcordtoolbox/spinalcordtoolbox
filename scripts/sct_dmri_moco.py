@@ -113,6 +113,7 @@ def main():
         param.fname_data = path_sct+'/testing/data/errsm_23/dmri/dmri.nii.gz'
         param.fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
 
+
     # Check input parameters
     try:
         opts, args = getopt.getopt(sys.argv[1:],'hi:a:b:c:d:e:f:g:l:o:p:r:s:v:')
@@ -200,6 +201,7 @@ def main():
     # EDDY CORRECTION -- for debugging, it is possible to run code by commenting the next lines
     if param.run_eddy:
         param.output_path = ''
+        param.slicewise = 1
         sct_eddy_correct(param)
         param.fname_data = file_data + '_eddy.nii'
 
