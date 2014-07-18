@@ -130,13 +130,14 @@ def main():
         install_software = 1
 
     # check if FSL is declared
-    print_line('Check if FSL is working ....................... ')
+    print_line('Check if FSL is installed ..................... ')
     (status, output) = commands.getstatusoutput('which fsl')
     if output:
         print_ok()
+        path_fsl = output[:-7]
+        print '  '+path_fsl
     else:
         print_fail()
-        fsl_is_working = 1
         print '  FSL is not working!'
         # In a previous version we edited the bash_profile. We don't do that anymore because some users might have funky configurations.
         # add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
@@ -169,10 +170,13 @@ def main():
                 install_software = 1
 
     # check ANTs
-    print_line('Check if ANTs is declared ..................... ')
-    (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    if not output:
+    print_line('Check which ANTs is running .................., ')
+    # (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    (status, output) = commands.getstatusoutput('which antsRegistration')
+    if output:
         print_ok()
+        path_ants = output[:-16]
+        print '  '+path_ants
     else:
         print_warning()
         print '  ANTs is not declared.'
@@ -186,10 +190,13 @@ def main():
         print_fail()
 
     # check c3d
-    print_line('Check if c3d is working ....................... ')
-    (status, output) = commands.getstatusoutput('command -v c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    if not output:
+    print_line('Check which c3d is running .................... ')
+    # (status, output) = commands.getstatusoutput('command -v c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
+    (status, output) = commands.getstatusoutput('which c3d')
+    if output:
         print_ok()
+        path_c3d = output[:-3]
+        print '  '+path_c3d
     else:
         print_warning()
         print '  c3d is not installed or not declared.'
@@ -217,6 +224,8 @@ def main():
         print_ok()
     else:
         print_fail()
+
+    print
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
@@ -279,13 +288,13 @@ def main():
     #             'PATH=${PATH}:'+path_c3d)
     #         restart_terminal = 1
     # 
-    if install_software:
-        print '\nDone! Please install the required software, then run this script again.'
-    elif restart_terminal:
-        print '\nDone! Please restart your Terminal for changes to take effect.'
-    else:
-        print '\nDone! Everything is in order :-)'
-    print
+    #    if install_software:
+    #        print '\nDone! Please install the required software, then run this script again.'
+    #    elif restart_terminal:
+    #        print '\nDone! Please restart your Terminal for changes to take effect.'
+    #    else:
+    #        print '\nDone! Everything is in order :-)'
+    #    print
 
 
 # Print without new carriage return
