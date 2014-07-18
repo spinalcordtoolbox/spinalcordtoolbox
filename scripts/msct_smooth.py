@@ -102,6 +102,9 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
     ys = s(x)
     
     return ys    
+    
+    
+    
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================   
@@ -124,10 +127,11 @@ def b_spline_nurbs(x,y,z,degree = 3,point_number = 3000):
   
     return x_fit, y_fit,x_deriv,y_deriv,z_deriv
 
+
+
 #=======================================================================================================================
 # 3D B-Spline function, python function
 #=======================================================================================================================   
-
 
 def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
     """see http://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.splprep.html for full input information"""
@@ -138,6 +142,8 @@ def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
     xnew,ynew,znew = splev(u,tckp)
     
     return xnew, ynew, znew 
+
+
 
 #=======================================================================================================================
 # lowpass filter  
