@@ -1,16 +1,18 @@
 function sct_merge_text_files(text_files, output,transpose)
-% sct_merge_text_files(text_files(cell), output, transpose?)
+% sct_merge_text_files('fsems_*.bvec', output, transpose?)
 dbstop if error
-
+list_text=dir(text_files);
+list_text={list_text.name};
+list_text=sort_nat(list_text);
 
 % =========================================================================
 % DON'T CHANGE BELOW
 % =========================================================================
 
 if transpose
-    for i_seq=1:length(text_files)
-        unix(['sct_dmri_transpose_bvecs.py ' text_files{i_seq}]);
-        text_files{i_seq} = strrep(text_files{i_seq},'.bvec','_t.bvec');
+    for i_seq=1:length(list_text)
+        unix(['sct_dmri_transpose_bvecs.py ' list_text{i_seq}]);
+        list_text{i_seq} = strrep(list_text{i_seq},'.bvec','_t.bvec');
     end
 end
 
@@ -19,15 +21,15 @@ end
 % MERGE BVEC FILE AND GENERATE SCHEME FILE
 % =========================================================================
 
-copyfile(text_files{1},output)
+copyfile(list_text{1},output)
 output_fid = fopen(output,'r+');
 first_file=textscan(output_fid,'%s','delimiter','\n','CommentStyle','#');
 Nb_pt=length(first_file{1});
 
-for i_seq=2:length(text_files)
-    fid=fopen(text_files{i_seq},'r');
+for i_seq=2:length(list_text)
+    fid=fopen(list_text{i_seq},'r');
     text=textscan(fid,'%s','delimiter','\n','CommentStyle','#');
-    text_files{i_seq}
+    list_text{i_seq}
     length(text{1})
     Nb_pt=Nb_pt+length(text{1});
     for i_line=1:length(text{1})
