@@ -26,7 +26,6 @@
 # TODO: testing script for all cases
 # TODO: try to combine seg and image based for 2nd stage
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
-# TODO: check if destination is axial orientation
 # TODO: set gradient-step-length in mm instead of vox size.
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherise inverse warping field is not output
@@ -97,8 +96,6 @@ def main():
         numberIterations = '3x0'
         numberIterationsStep2 = "1"
         gradientStep_input = '0.2'
-        gradientStep_input = gradientStep_input.split(",")
-        print gradientStep_input
         compute_dest2src = 1
         verbose = 1
 
@@ -191,8 +188,10 @@ def main():
     fname_dest = os.path.abspath(fname_dest)
     fname_src_seg = os.path.abspath(fname_src_seg)
     fname_dest_seg = os.path.abspath(fname_dest_seg)
-    fname_init_transfo = os.path.abspath(fname_init_transfo)
-    fname_init_transfo_inv = os.path.abspath(fname_init_transfo_inv)
+    if not fname_init_transfo == '':
+        fname_init_transfo = os.path.abspath(fname_init_transfo)  # test if not empty, otherwise it will transform the empty string into a string with path, which is a problem because the emptiness of the string is tested later.
+    if not fname_init_transfo_inv == '':
+        fname_init_transfo_inv = os.path.abspath(fname_init_transfo_inv)
     #fname_output = os.path.abspath(fname_output)
 
     # Extract path, file and extension
@@ -229,6 +228,35 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # Find orientation of source data
+    print('\nFind orientation of source data...')
+    orientation = sct.get_orientation('src.nii')
+    sct.printv('.. '+orientation, verbose)
+
+    # Find the dimension corresponding to z
+    sct.printv('\nFind the dimension corresponding to the superior-inferior direction...', verbose)
+    dimension_si = 0
+    if orientation.find('I') != '-1':
+        dimension_si = orientation.find('I')
+    elif orientation.find('S') != '-1':
+        dimension_si = orientation.find('S')
+    else:
+        print "ERROR: Cannot find proper dimension. Exit program.\n"
+        sys.exit(2)
+    sct.printv('.. '+str(dimension_si), verbose)
+
+    # Adjust ANTs variable so that the deformation is restricted in the slice plane
+    restrict_deformation = '1x1x1'
+    if dimension_si == 0:
+        restrict_deformation = '0x1x1'
+    elif dimension_si == 1:
+        restrict_deformation = '1x0x1'
+    elif dimension_si == 2:
+        restrict_deformation = '1x1x0'
+    else:
+        print "ERROR: Cannot adjust variable: restrict_deformation. Exit program.\n"
+        sys.exit(2)
 
     # if use initial transformation (!! needs to be inserted before the --transform field in antsRegistration)
     if fname_init_transfo != '':
@@ -279,7 +307,7 @@ def main():
 --convergence '+numberIterations+' \
 --shrink-factors 2x1 \
 --smoothing-sigmas 0x0mm \
---Restrict-Deformation 1x1x0 \
+--Restrict-Deformation '+restrict_deformation+' \
 --output [reg,'+file_src_tmp+'_reg.nii] \
 --collapse-output-transforms 1 \
 --interpolation BSpline[3] \
@@ -302,7 +330,7 @@ def main():
 --convergence '+numberIterations+' \
 --shrink-factors 4x1 \
 --smoothing-sigmas 1x1mm \
---Restrict-Deformation 1x1x0 \
+--Restrict-Deformation '+restrict_deformation+' \
 --output [regSeg,regSeg.nii]'
 
         status, output = sct.run(cmd)
@@ -319,7 +347,7 @@ def main():
 --convergence '+numberIterationsStep2+' \
 --shrink-factors 1 \
 --smoothing-sigmas 0mm \
---Restrict-Deformation 1x1x0 \
+--Restrict-Deformation '+restrict_deformation+' \
 --output [reg,'+file_src_tmp+'_reg.nii] \
 --collapse-output-transforms 0 \
 --interpolation BSpline[3]'
