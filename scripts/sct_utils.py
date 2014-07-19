@@ -69,11 +69,12 @@ def check_file_exist(fname, verbose=1):
 
     if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz'):
         if verbose:
-            print('  '+fname+' --> OK')
+            print('  OK: '+fname)
         pass
     else:
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
+
 
 
 #=======================================================================================================================
