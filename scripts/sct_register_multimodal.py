@@ -144,17 +144,17 @@ def main():
         use_segmentation = 1
 
     # print arguments
-    print '\nPrint parameters:'
-    print '  Source:               '+fname_src
-    print '  Destination:          '+fname_dest
-    print '  Segmentation source:  '+fname_src_seg
-    print '  Segmentation dest:    '+fname_dest_seg
-    print '  Init transfo:         '+fname_init_transfo
-    print '  Output name:          '+fname_output
-    print '  Iterations at step1 (seg):    '+str(numberIterations)
-    print '  Iterations at step2 (image):  '+str(numberIterationsStep2)
-    print '  Remove temp files:    '+str(remove_temp_files)
-    print '  Verbose:              '+str(verbose)
+    print '\nInput parameters:'
+    print '  Source .............. '+fname_src
+    print '  Destinationf ........ '+fname_dest
+    print '  Segmentation source . '+fname_src_seg
+    print '  Segmentation dest ... '+fname_dest_seg
+    print '  Init transfo ........ '+fname_init_transfo
+    print '  Output name ......... '+fname_output
+    print '  Iterations at step1 (seg) .... '+str(numberIterations)
+    print '  Iterations at step2 (image) .. '+str(numberIterationsStep2)
+    print '  Remove temp files ... '+str(remove_temp_files)
+    print '  Verbose ............. '+str(verbose)
     #print '.. gradient step:    '+str(gradientStepLength)
     #print '.. metric type:      '+metricType
 
