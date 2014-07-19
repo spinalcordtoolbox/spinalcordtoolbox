@@ -26,7 +26,6 @@
 # TODO: testing script for all cases
 # TODO: try to combine seg and image based for 2nd stage
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
-# TODO: flag to output warping field
 # TODO: check if destination is axial orientation
 # TODO: set gradient-step-length in mm instead of vox size.
 
@@ -46,6 +45,7 @@ class param:
         self.numberIterationsStep2 = "10" # number of iterations at step 2
         self.verbose             = 0 # verbose
         self.compute_dest2sr     = 0 # compute dest2src warping field
+        self.gradientStep = ['0.2', '0.5']  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
 
 import sys
 import getopt
@@ -73,6 +73,8 @@ def main():
     fname_init_transfo = ''
     fname_init_transfo_inv = ''
     use_init_transfo = ''
+    gradientStep = param.gradientStep
+    gradientStep_input = ''
     compute_dest2src = param.compute_dest2sr
     start_time = time.time()
     print ''
@@ -82,21 +84,27 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        fname_src = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        #fname_src = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
         #fname_src = path_sct+'/testing/data/errsm_23/mt/mtc0.nii.gz'
-        fname_dest = path_sct+'/testing/data/errsm_23/mt/mtc1.nii.gz'
-        fname_src_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
-        fname_dest_seg = path_sct+'/testing/data/errsm_23/mt/segmentation_binary.nii.gz'
-        fname_init_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2anat.nii.gz'
-        fname_init_transfo_inv = path_sct+'/testing/data/errsm_23/template/warp_anat2template.nii.gz'
-        numberIterations = '3x1'
+        #fname_dest = path_sct+'/testing/data/errsm_23/mt/mtc1.nii.gz'
+        fname_src = '/Users/julien/data/errsm/errsm_30/t2/template2anat.nii.gz'
+        fname_dest = '/Users/julien/data/errsm/errsm_30/t1/t1.nii.gz'
+        #fname_src_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
+        #fname_dest_seg = path_sct+'/testing/data/errsm_23/mt/segmentation_binary.nii.gz'
+        #fname_init_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2anat.nii.gz'
+        #fname_init_transfo_inv = path_sct+'/testing/data/errsm_23/template/warp_anat2template.nii.gz'
+        numberIterations = '3x0'
         numberIterationsStep2 = "1"
-        compute_dest2src = 0
+        gradientStep_input = '0.2'
+        gradientStep_input = gradientStep_input.split(",")
+        print gradientStep_input
+        compute_dest2src = 1
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'he:d:i:m:n:o:p:q:r:s:t:v:x:z:')
+        opts, args = getopt.getopt(sys.argv[1:],'hd:g:i:m:n:o:p:q:r:s:t:v:x:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -104,8 +112,8 @@ def main():
             usage()
         elif opt in ("-d"):
             fname_dest = arg
-        elif opt in ('-e'):
-            extentDist = arg
+        elif opt in ('-g'):
+            gradientStep_input = arg
         elif opt in ("-i"):
             fname_src = arg
         elif opt in ("-m"):
@@ -143,6 +151,17 @@ def main():
     elif fname_src_seg != '' and fname_dest_seg != '':
         use_segmentation = 1
 
+    # Parse gradient step
+    print '\nParse gradient step...'
+    gradientStep_input = gradientStep_input.replace(' ', '')  # remove spaces
+    gradientStep_input = gradientStep_input.split(",")  # parse with comma
+    for i in range(len(gradientStep_input)):
+        try:
+            float(gradientStep_input[i])
+            gradientStep[i] = gradientStep_input[i]
+        except:
+            print '  WARNING: Not a float. Use default value for gradientStep['+str(i)+']'
+
     # print arguments
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
@@ -153,13 +172,14 @@ def main():
     print '  Output name ......... '+fname_output
     print '  Iterations at step1 (seg) .... '+str(numberIterations)
     print '  Iterations at step2 (image) .. '+str(numberIterationsStep2)
+    print '  Gradient step ....... '+str(gradientStep)
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
     #print '.. gradient step:    '+str(gradientStepLength)
     #print '.. metric type:      '+metricType
 
     # check existence of input files
-    print '\nCheck input files...'
+    print '\nCheck if files exist...'
     sct.check_file_exist(fname_src)
     sct.check_file_exist(fname_dest)
     if use_segmentation:
@@ -173,7 +193,7 @@ def main():
     fname_dest_seg = os.path.abspath(fname_dest_seg)
     fname_init_transfo = os.path.abspath(fname_init_transfo)
     fname_init_transfo_inv = os.path.abspath(fname_init_transfo_inv)
-    fname_output = os.path.abspath(fname_output)
+    #fname_output = os.path.abspath(fname_output)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -184,7 +204,7 @@ def main():
 
     # define output folder and file name
     if fname_output == '':
-        path_out = path_src
+        path_out = ''  # output in user's current directory
         file_out = file_src+"_reg"
         ext_out = ext_src
     else:
@@ -254,7 +274,7 @@ def main():
         cmd = 'antsRegistration \
 --dimensionality 3 \
 '+use_init_transfo+' \
---transform SyN[0.1,3,0] \
+--transform SyN['+str(gradientStep[0])+',3,0] \
 --metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
 --convergence '+numberIterations+' \
 --shrink-factors 2x1 \
@@ -277,7 +297,7 @@ def main():
 
         cmd = 'antsRegistration \
 --dimensionality 3 \
---transform SyN[0.5,3,0] \
+--transform SyN['+str(gradientStep[1])+',3,0] \
 --metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] \
 --convergence '+numberIterations+' \
 --shrink-factors 4x1 \
@@ -294,7 +314,7 @@ def main():
         cmd = 'antsRegistration \
 --dimensionality 3 \
 --initial-moving-transform regSeg0Warp.nii.gz \
---transform SyN[0.1,3,0] \
+--transform SyN['+str(gradientStep[0])+',3,0] \
 --metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
 --convergence '+numberIterationsStep2+' \
 --shrink-factors 1 \
@@ -420,6 +440,10 @@ OPTIONAL ARGUMENTS
   -o <output>                  name of output file. Default=source_reg
   -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
   -y <N>                       number of iterations at step 2 (if using segmentation). Default="""+param.numberIterationsStep2+"""
+  -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
+                               If you use a segmentation, you can specify gradientStep for each
+                               step as follow: val1,val2 (val1: image, val2: seg).
+                               Default="""+param.gradientStep[0]+""","""+param.gradientStep[1]+"""
   -p <padding>                 size of padding (top & bottom), to enable deformation at edges.
                                Default="""+str(param.padding)+"""
   -r {0,1}                     remove temporary files. Default='+str(param.remove_temp_files)+'
