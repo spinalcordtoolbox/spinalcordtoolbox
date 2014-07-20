@@ -101,7 +101,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hd:g:i:m:n:o:p:q:r:s:t:v:x:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:p:q:r:s:t:v:x:y:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
