@@ -47,7 +47,7 @@ import scipy.ndimage as ndi
 from matplotlib.pyplot import imshow, gray, show
 import scipy
 from numpy.linalg import eig, inv
-import Image
+#import Image
 from scipy.interpolate import splev, splrep
 try:
     import nibabel
@@ -700,11 +700,13 @@ def ellipse_dim(a):
     res2=np.sqrt(up/down2)
     return np.array([res1, res2])
 
+
 #=======================================================================================================================
 # Detect edges of an image
 #=======================================================================================================================
-
-def edge_detection(f) :
+def edge_detection(f):
+    
+    import Image
     
     #sigma = 1.0
     img = Image.open(f) #grayscale
