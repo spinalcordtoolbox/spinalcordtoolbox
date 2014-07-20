@@ -472,146 +472,37 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
             plt.savefig('Spline_fit.png')
         csa = csa_smooth  # update variable
 
-        # if name_method == 'counting_ortho_plane':
-        #     tck = splrep((z_centerline*z_scale), csa, s = smoothing_param )
-        #     if figure_fit == 1 :
-        #         sections_smooth = splev((z_centerline*z_scale),tck)
-        #         figure =plt.figure()
-        #         plt.plot((z_centerline*z_scale),sections_ortho_counting)
-        #         plt.plot((z_centerline*z_scale),sections_smooth)
-        #         plt.legend(['CSA values','Smoothed values'],2)
-        #         plt.savefig('Spline_fit.png')
-        #     sections_ortho_counting = splev((z_centerline*z_scale),tck)
-        #
-        # if name_method == 'counting_z_plane':
-        #     tck = splrep((z_centerline*z_scale), sections_z_counting, s = smoothing_param)
-        #     if figure_fit == 1 :
-        #         sections_smooth = splev((z_centerline*z_scale),tck)
-        #         figure =plt.figure()
-        #         plt.plot((z_centerline*z_scale),sections_z_counting)
-        #         plt.plot((z_centerline*z_scale),sections_smooth)
-        #         plt.legend(['CSA values','Smoothed values'],2)
-        #         plt.savefig('Spline_fit.png')
-        #     sections_z_counting = splev((z_centerline*z_scale),tck)
-        #
-        # if name_method == 'ellipse_ortho_plane':
-        #     tck = splrep((z_centerline*z_scale), sections_ortho_ellipse, s = smoothing_param )
-        #     if figure_fit == 1 :
-        #         sections_smooth = splev((z_centerline*z_scale),tck)
-        #         figure =plt.figure()
-        #         plt.plot((z_centerline*z_scale),sections_ortho_ellipse)
-        #         plt.plot((z_centerline*z_scale),sections_smooth)
-        #         plt.legend(['CSA values','Smoothed values'],2)
-        #         plt.savefig('Spline_fit.png')
-        #     sections_ortho_ellipse = splev((z_centerline*z_scale),tck)
-        #
-        # if name_method == 'ellipse_z_plane':
-        #     tck = splrep((z_centerline*z_scale), sections_z_ellipse, s = smoothing_param)
-        #     if figure_fit == 1 :
-        #         sections_smooth = splev((z_centerline*z_scale),tck)
-        #         figure =plt.figure()
-        #         plt.plot((z_centerline*z_scale),sections_z_ellipse)
-        #         plt.plot((z_centerline*z_scale),sections_smooth)
-        #         plt.legend(['CSA values','Smoothed values'],2)
-        #         plt.savefig('Spline_fit.png')
-        #     sections_z_ellipse = splev((z_centerline*z_scale),tck)
-
-
     # Create output text file
     print('\nGenerating output text file...')
     file_results = open(param.fname_csa,'w')
     for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(i*z_scale) + ',' + str(csa[i-min_z_index])+'\n')
+        file_results.write(str(int(i*z_scale)) + ',' + str(csa[i-min_z_index])+'\n')
     file_results.close()
     print '.. File created: '+param.fname_csa
 
-    # if name_method == 'counting_ortho_plane' :
-    #     print('\nGenerating output text file...\n')
-    #     file_results = open('Cross_Section_Area.txt','w')
-    #     for i in range(min_z_index, max_z_index+1):
-    #         file_results.write(str(i*z_scale) + ',' + str(sections_ortho_counting[i-min_z_index])+'\n')
-    #     file_results.close()
-    #
-    # if name_method == 'ellipse_ortho_plane' :
-    #     print('\nGenerating output text file...\n')
-    #     file_results = open('Cross_Section_Area.txt','w')
-    #     for i in range(min_z_index, max_z_index+1):
-    #         file_results.write(str(i*z_scale) + ',' + str(sections_ortho_ellipse[i-min_z_index])+'\n')
-    #     file_results.close()
-    #
-    # if name_method == 'ellipse_z_plane' :
-    #     print('\nGenerating output text file...\n')
-    #     file_results = open('Cross_Section_Area.txt','w')
-    #     for i in range(min_z_index, max_z_index+1):
-    #         file_results.write(str(i*z_scale) + ',' + str(sections_z_ellipse[i-min_z_index])+'\n')
-    #     file_results.close()
-    #
-    # if name_method == 'counting_z_plane' :
-    #     print('\nGenerating output text file...\n')
-    #     file_results = open('Cross_Section_Area.txt','w')
-    #     for i in range(min_z_index, max_z_index+1):
-    #         file_results.write(str(i*z_scale) + ',' + str(sections_z_counting[i-min_z_index])+'\n')
-    #     file_results.close()
-        
-
-    # if name_method == 'counting_z_plane':
-   #      fig=plt.figure()
-   #      plt.plot(z_centerline*z_scale,sections_z_counting)
-   #      plt.show()
-   #  if name_method == 'counting_ortho_plane':
-   #      fig=plt.figure()
-   #      plt.plot(z_centerline*z_scale,sections_ortho_counting)
-   #      plt.show()
-   #  if name_method == 'ellipse_z_plane':
-   #      fig=plt.figure()
-   #      plt.plot(z_centerline*z_scale,sections_z_ellipse)
-   #      plt.show()
-   #  if name_method == 'ellipse_ortho_plane':
-   #      fig=plt.figure()
-   #      plt.plot(z_centerline*z_scale,sections_ortho_ellipse)
-   #      plt.show()
-   #
-    
- 
+    # output volume of csa values
     if volume_output == 1:
-    
         # Extract orientation of the input segmentation
         status,sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
         orientation = sct_orientation_output[-3:]
-        
+        # loop across slices
         for iz in range(min_z_index,max_z_index+1):
-            
+            # retrieve seg pixels
             x_seg, y_seg = (data_seg[:,:,iz]>0).nonzero()
             seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
-
+            # loop across pixels in segmentation
             for i in seg :
-                data_seg[i[0],i[1],iz] = csa[iz-min_z_index]
-
-                # if name_method == 'counting_ortho_plane':
-                #
-                #     data_seg[i[0],i[1],iz] = sections_ortho_counting[iz-min_z_index]
-                #
-                # if name_method == 'counting_z_plane':
-                #
-                #     data_seg[i[0],i[1],iz] = sections_z_counting[iz-min_z_index]
-                #
-                # if name_method == 'ellipse_ortho_plane':
-                #
-                #     data_seg[i[0],i[1],iz] = sections_ortho_ellipse[iz-min_z_index]
-                #
-                # if name_method == 'ellipse_z_plane':
-                #
-                #     data_seg[i[0],i[1],iz] = sections_z_ellipse[iz-min_z_index]
-        
+                # replace value with csa value
+                data_seg[i[0], i[1], iz] = csa[iz-min_z_index]
+        # create header
         hdr_seg.set_data_dtype('uint8') # set imagetype to uint8
-        
+        # save volume
         print '\nWrite NIFTI volumes...'
         data_seg = data_seg.astype(np.float32, copy =False)
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
         file_name = path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg
         nibabel.save(img,file_name)
         print '.. File created:' + file_name
-        
         # Change orientation of the output centerline into input orientation
         print '\nOrient  image to input orientation: '
         sct.run('sct_orientation -i '+path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg + ' -o ' + name_output + ' -orientation ' + orientation)
