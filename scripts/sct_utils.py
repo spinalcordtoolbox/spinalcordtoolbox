@@ -167,3 +167,17 @@ def check_if_installed(cmd, name_software):
 def printv(string, verbose=1):
     if verbose:
         print(string)
+
+
+
+#=======================================================================================================================
+# slash_at_the_end: make sure there is (or not) a slash at the end of path name
+#=======================================================================================================================
+def slash_at_the_end(path, slash=0):
+    if slash == 0:
+        if path[-1:] == '/':
+            path = path[:-1]
+    if slash == 1:
+        if not path[-1:] == '/':
+            path = path+'/'
+    return path
