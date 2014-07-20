@@ -24,7 +24,7 @@ function data_d = j_detrend(data,deg,func_type,mask)
 
 % initialization
 if (nargin<1), help j_detrend; return; end
-if (nargin<2), deg          = 5; return; end
+if (nargin<2), deg          = 5; end
 if (nargin<3), func_type    = 'cos'; end % TODO
 if (nargin<4), mask         = 0; end
 
