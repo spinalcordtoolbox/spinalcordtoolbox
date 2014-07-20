@@ -120,11 +120,12 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     import shutil  # for moving files
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
-    # if output file already exists in nii or nii.gz format, delete it
-    if os.path.isfile(path_out+file_out+'.nii'):
-        os.system('rm '+path_out+file_out+'.nii')
-    if os.path.isfile(path_out+file_out+'.nii.gz'):
-        os.system('rm '+path_out+file_out+'.nii.gz')
+    # if (i) output path is not local and (ii) output file already exists in nii or nii.gz format, delete it and move file
+    if not path_out == '':
+        if os.path.isfile(path_out+file_out+'.nii'):
+            os.system('rm '+path_out+file_out+'.nii')
+        if os.path.isfile(path_out+file_out+'.nii.gz'):
+            os.system('rm '+path_out+file_out+'.nii.gz')
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
