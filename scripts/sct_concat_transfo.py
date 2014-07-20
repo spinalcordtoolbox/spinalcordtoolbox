@@ -11,6 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: also enable to concatenate reversed transfo
+
+
 import sys
 import os
 import getopt
