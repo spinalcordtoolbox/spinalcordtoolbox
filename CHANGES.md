@@ -1,6 +1,10 @@
 
 # CHANGES TO RELEASE
 
+1.0.3
+
+- OPT: major improvements for sct_dmri_moco, including spline regularization, eddy correction, group-wise registration, gaussian mask.
+
 1.0.2 (2014-07-13)
 
 - NEW: virtual machine
