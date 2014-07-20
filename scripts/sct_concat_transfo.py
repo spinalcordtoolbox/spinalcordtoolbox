@@ -85,16 +85,10 @@ def main():
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
 
-    # print arguments
-    # print '\nCheck parameters:'
-    # print '  gradient amplitude ..... '+str(gradamp*1000)+' mT/m'
-    # print '  big delta .............. '+str(bigdelta*1000)+' ms'
-    # print '  small delta ............ '+str(smalldelta*1000)+' ms'
-    # print '  gyromagnetic ratio ..... '+str(GYRO)+' Hz/T'
-    # print ''
-
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
+    # N.B. Here we take the inverse of the warp list, because WarpImageMultiTransform concatenates in the reverse order
+    fname_warp_list.reverse()
     cmd = 'ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list)
     sct.printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
