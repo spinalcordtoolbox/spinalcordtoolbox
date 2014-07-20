@@ -133,6 +133,8 @@ def main():
             verbose = int(arg)
         elif opt in ('-x'):
             compute_dest2src = int(arg)
+        elif opt in ('-y'):
+            numberIterationsStep2 = arg
         elif opt in ('-z'):
             fname_init_transfo_inv = arg
 
