@@ -9,12 +9,12 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat
-# Created: 2014-05-24
+# Modified: 2014-07-20 by jcohenadad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: output in float
+# N.B. To avoid confusion for the user, I removed from the menu the other options for computing CSA (jcohenadad 2014-07-20)
 
 
 # DEFAULT PARAMETERS
@@ -29,6 +29,10 @@ class param:
         self.spline_smoothing   = 1
         self.smoothing_param    = 700
         self.figure_fit         = 0
+        self.fname_csa = 'csa.txt'  # output name for txt CSA
+        self.name_output = 'CSA_slices.nii.gz'  # output name for slice CSA
+        self.name_method = 'counting_z_plane'  # for compute_CSA
+        
         
 import re
 import math
@@ -67,9 +71,9 @@ def main():
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     fname_segmentation = ''
     name_process = ''
-    processes = ['extract_centerline','compute_CSA']
-    method_CSA = ['counting_ortho_plane','counting_z_plane','ellipse_ortho_plane','ellipse_z_plane']
-    name_method = ''
+    processes = ['extract_centerline', 'compute_csa']
+    method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
+    name_method = param.name_method
     volume_output = param.volume_output
     verbose = param.verbose
     start_time = time.time()
@@ -78,11 +82,11 @@ def main():
     step = param.step
     smoothing_param = param.smoothing_param
     figure_fit = param.figure_fit
-    name_output = 'CSA_slices.nii.gz'
+    name_output = param.name_output
     
     # Parameters for debug mode
     if param.debug:
-        fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii'
+        fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         verbose = 1
         remove_temp_files = 0
         
@@ -113,21 +117,20 @@ def main():
         elif opt in ('-v'):
             verbose = int(arg)
 
-
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
         usage()
-	
+
     # display usage if the requested process is not available
     if name_process not in processes:
         usage()
-	
+
     # display usage if incorrect method
-    if name_process == 'compute_CSA' and (name_method not in method_CSA):
+    if name_process == 'compute_csa' and (name_method not in method_CSA):
         usage()
     
     # display usage if no method provided
-    if name_process=='compute_CSA' and method_CSA == '':
+    if name_process=='compute_csa' and method_CSA == '':
         usage() 
         
     
@@ -137,18 +140,18 @@ def main():
     # print arguments
     print '\nCheck parameters:'
     print '.. segmentation file:             '+fname_segmentation
-	
+
     if name_process == 'extract_centerline':
         extract_centerline(fname_segmentation,remove_temp_files)
 
-    if name_process == 'compute_CSA' : 
-        compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output)
+    if name_process == 'compute_csa' :
+        compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output)
     
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
-	
+    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+
     # End of Main
 
 
@@ -158,7 +161,7 @@ def main():
 def extract_centerline(fname_segmentation,remove_temp_files):
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
-	
+
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir '+path_tmp)
@@ -173,22 +176,22 @@ def extract_centerline(fname_segmentation,remove_temp_files):
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
     sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
-	
+
     # Extract orientation of the input segmentation
     status,sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data + ' -get')
     orientation = sct_orientation_output[-3:]
     print '\nOrientation of segmentation image: ' + orientation
-	
+
     # Get size of data
     print '\nGet dimensions data...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
     print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
-	
+
     print '\nOpen segmentation volume...'
     file = nibabel.load(fname_segmentation_orient)
     data = file.get_data()
     hdr = file.get_header()
-	
+
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
@@ -216,40 +219,36 @@ def extract_centerline(fname_segmentation,remove_temp_files):
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'tmp.centerline.nii')
     sct.generate_output_file('tmp.centerline.nii','./',file_data+'_centerline',ext_data)
-	
+
     del data
-	
+
     # come back to parent folder
     os.chdir('..')
-	
+
     # Change orientation of the output centerline into input orientation
     print '\nOrient centerline image to input orientation: ' + orientation
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
     sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -orientation ' + orientation)
-	
 
    # Remove temporary files
     if remove_temp_files == 1 :
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
 
-
     # to view results
     print '\nTo view results, type:'
     print 'fslview '+file_data+'_centerline &\n'
-	
+
     # End of extract_centerline
 
 
-# COMPUTE_CSA
+
+# compute_csa
 # ==========================================================================================
-
-
-def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output):
+def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output):
 
     # Extract path, file and extension
     path_data_seg, file_data_seg, ext_data_seg = sct.extract_fname(fname_segmentation)
-	
     
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
@@ -265,13 +264,12 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data_seg
     sct.run('sct_orientation -i ' + file_data_seg + ext_data_seg + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
-	
-    
+
     # Get size of data
-    print '\nGet dimensions data...'
+    print '\nGet data dimensions...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
-	
+    print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
+
     print '\nOpen segmentation volume...'
     file_seg = nibabel.load(fname_segmentation_orient)
     data_seg = file_seg.get_data()
@@ -326,22 +324,21 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
     print('\nComputing CSA...')
     
     # Empty arrays in which CSA for each z slice will be stored
-    sections_ortho_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    sections_ortho_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    sections_z_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    sections_z_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    
+    csa = [0 for i in xrange(0,max_z_index-min_z_index+1)]
+    # sections_ortho_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
+    # sections_ortho_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
+    # sections_z_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
+    # sections_z_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     
     for iz in xrange(0, len(z_centerline)):
-            
-            
+
             # Equation of the the plane which is orthogonal to the spline at z=iz
             a = x_centerline_deriv[iz]
             b = y_centerline_deriv[iz]
             c = z_centerline_deriv[iz]
             
             #vector normal to the plane
-            normal=normalize(np.array([a,b,c]))
+            normal = normalize(np.array([a,b,c]))
             
             # angle between normal vector and z
             angle = np.arccos(np.dot(normal,z))
@@ -385,11 +382,11 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
                             
                             # number of voxels that are in the intersection of each plane and the nonzeros values of segmentation, times the area of one cell of the discretized plane
                             if name_method == 'counting_ortho_plane':
-                                sections_ortho_counting[iz] = len((plane_seg>0).nonzero()[0])*step*step 
+                                csa[iz] = len((plane_seg>0).nonzero()[0])*step*step
           
                 if verbose ==1 and name_method == 'counting_ortho_plane' :
                     
-                    print('Cross-Section Area : ' + str(sections_ortho_counting[iz]) + ' mm^2')
+                    print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
             
                 if name_method == 'ellipse_ortho_plane' : 
                          
@@ -412,10 +409,10 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
                     a_ellipse, b_ellipse = ellipse_dim(fit)
                     
                     #Section = pi*a*b
-                    sections_ortho_ellipse[iz] = a_ellipse*b_ellipse*np.pi
+                    csa[iz] = a_ellipse*b_ellipse*np.pi
                     
                     if verbose == 1 and name_method == 'ellipse_ortho_plane':
-                        print('Cross-Section Area : ' + str(sections_ortho_ellipse[iz]) + ' mm^2')          
+                        print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
                     os.chdir('..')
                     
             if name_method == 'counting_z_plane' or name_method == 'ellipse_z_plane':
@@ -424,17 +421,17 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
                  x_seg, y_seg = (data_seg[:,:,iz+min_z_index]>0).nonzero()
                  seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
                  
-                 plane=np.zeros((max(Xp),max(Yp)))
+                 plane = np.zeros((max(Xp),max(Yp)))
                  
                  for i in seg:
                      # filling the plane with 0 and 1 regarding to the segmentation
                      plane[i[0] - 1][i[1] - 1] = 1
                      
                  if name_method == 'counting_z_plane' :
-                     sections_z_counting[iz] = len((plane>0).nonzero()[0])*x_scale*y_scale*np.cos(angle)
+                     csa[iz] = len((plane>0).nonzero()[0])*x_scale*y_scale*np.cos(angle)
                 
                  if verbose == 1 and name_method == 'counting_z_plane':
-                     print('Cross-Section Area : ' + str(sections_z_counting[iz]) + ' mm^2')
+                     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
                 
                  if name_method == 'ellipse_z_plane':
                      
@@ -452,121 +449,109 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
                      # Fitting an ellipse
                      fit = Ellipse_fit(x_contour,y_contour)
                      a_ellipse, b_ellipse = ellipse_dim(fit)
-                     sections_z_ellipse[iz] = a_ellipse*b_ellipse*np.pi*np.cos(angle)
+                     csa[iz] = a_ellipse*b_ellipse*np.pi*np.cos(angle)
                      
                      if verbose == 1 and name_method == 'ellipse_z_plane':
-                         print('Cross-Section Area : ' + str(sections_z_ellipse[iz]) + ' mm^2')
+                         print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
                     
                      os.chdir('..')
 
 
     # come back to parent folder
     os.chdir('..')
-    
-    
+
     if spline_smoothing == 1 :
-        print('\nSmoothing results with spline ...')
+        print('\nSmoothing results with spline...')
+        tck = splrep((z_centerline*z_scale), csa, s=smoothing_param)
+        csa_smooth = splev((z_centerline*z_scale), tck)
+        if figure_fit == 1:
+            plt.figure()
+            plt.plot((z_centerline*z_scale),csa)
+            plt.plot((z_centerline*z_scale),csa_smooth)
+            plt.legend(['CSA values', 'Smoothed values'],2)
+            plt.savefig('Spline_fit.png')
+        csa = csa_smooth  # update variable
 
-        if name_method == 'counting_ortho_plane':
-            
-            tck = splrep((z_centerline*z_scale), sections_ortho_counting, s = smoothing_param )
-            
-            if figure_fit == 1 :
-                sections_smooth = splev((z_centerline*z_scale),tck)
-                figure =plt.figure()
-                plt.plot((z_centerline*z_scale),sections_ortho_counting)
-                plt.plot((z_centerline*z_scale),sections_smooth)
-                plt.legend(['CSA values','Smoothed values'],2)
-                plt.savefig('Spline_fit.png')
-                
-            sections_ortho_counting = splev((z_centerline*z_scale),tck)
-        
-        if name_method == 'counting_z_plane':
-
-            tck = splrep((z_centerline*z_scale), sections_z_counting, s = smoothing_param)
-            
-            if figure_fit == 1 :
-                sections_smooth = splev((z_centerline*z_scale),tck)
-                figure =plt.figure()
-                plt.plot((z_centerline*z_scale),sections_z_counting)
-                plt.plot((z_centerline*z_scale),sections_smooth)
-                plt.legend(['CSA values','Smoothed values'],2)
-                plt.savefig('Spline_fit.png')
-            
-            
-            sections_z_counting = splev((z_centerline*z_scale),tck)
-
-        if name_method == 'ellipse_ortho_plane':
-
-            tck = splrep((z_centerline*z_scale), sections_ortho_ellipse, s = smoothing_param )
-            
-            if figure_fit == 1 :
-                sections_smooth = splev((z_centerline*z_scale),tck)
-                figure =plt.figure()
-                plt.plot((z_centerline*z_scale),sections_ortho_ellipse)
-                plt.plot((z_centerline*z_scale),sections_smooth)
-                plt.legend(['CSA values','Smoothed values'],2)
-                plt.savefig('Spline_fit.png')
-            
-            
-            sections_ortho_ellipse = splev((z_centerline*z_scale),tck)
-
-        if name_method == 'ellipse_z_plane':
-
-            tck = splrep((z_centerline*z_scale), sections_z_ellipse, s = smoothing_param)
-            
-            if figure_fit == 1 :
-                sections_smooth = splev((z_centerline*z_scale),tck)
-                figure =plt.figure()
-                plt.plot((z_centerline*z_scale),sections_z_ellipse)
-                plt.plot((z_centerline*z_scale),sections_smooth)
-                plt.legend(['CSA values','Smoothed values'],2)
-                plt.savefig('Spline_fit.png')
-            
-            sections_z_ellipse = splev((z_centerline*z_scale),tck)
+        # if name_method == 'counting_ortho_plane':
+        #     tck = splrep((z_centerline*z_scale), csa, s = smoothing_param )
+        #     if figure_fit == 1 :
+        #         sections_smooth = splev((z_centerline*z_scale),tck)
+        #         figure =plt.figure()
+        #         plt.plot((z_centerline*z_scale),sections_ortho_counting)
+        #         plt.plot((z_centerline*z_scale),sections_smooth)
+        #         plt.legend(['CSA values','Smoothed values'],2)
+        #         plt.savefig('Spline_fit.png')
+        #     sections_ortho_counting = splev((z_centerline*z_scale),tck)
+        #
+        # if name_method == 'counting_z_plane':
+        #     tck = splrep((z_centerline*z_scale), sections_z_counting, s = smoothing_param)
+        #     if figure_fit == 1 :
+        #         sections_smooth = splev((z_centerline*z_scale),tck)
+        #         figure =plt.figure()
+        #         plt.plot((z_centerline*z_scale),sections_z_counting)
+        #         plt.plot((z_centerline*z_scale),sections_smooth)
+        #         plt.legend(['CSA values','Smoothed values'],2)
+        #         plt.savefig('Spline_fit.png')
+        #     sections_z_counting = splev((z_centerline*z_scale),tck)
+        #
+        # if name_method == 'ellipse_ortho_plane':
+        #     tck = splrep((z_centerline*z_scale), sections_ortho_ellipse, s = smoothing_param )
+        #     if figure_fit == 1 :
+        #         sections_smooth = splev((z_centerline*z_scale),tck)
+        #         figure =plt.figure()
+        #         plt.plot((z_centerline*z_scale),sections_ortho_ellipse)
+        #         plt.plot((z_centerline*z_scale),sections_smooth)
+        #         plt.legend(['CSA values','Smoothed values'],2)
+        #         plt.savefig('Spline_fit.png')
+        #     sections_ortho_ellipse = splev((z_centerline*z_scale),tck)
+        #
+        # if name_method == 'ellipse_z_plane':
+        #     tck = splrep((z_centerline*z_scale), sections_z_ellipse, s = smoothing_param)
+        #     if figure_fit == 1 :
+        #         sections_smooth = splev((z_centerline*z_scale),tck)
+        #         figure =plt.figure()
+        #         plt.plot((z_centerline*z_scale),sections_z_ellipse)
+        #         plt.plot((z_centerline*z_scale),sections_smooth)
+        #         plt.legend(['CSA values','Smoothed values'],2)
+        #         plt.savefig('Spline_fit.png')
+        #     sections_z_ellipse = splev((z_centerline*z_scale),tck)
 
 
+    # Create output text file
+    print('\nGenerating output text file...')
+    file_results = open(param.fname_csa,'w')
+    for i in range(min_z_index, max_z_index+1):
+        file_results.write(str(i*z_scale) + ',' + str(csa[i-min_z_index])+'\n')
+    file_results.close()
+    print '.. File created: '+param.fname_csa
 
-    # Creating output text file
-    if name_method == 'counting_ortho_plane' : 
-        
-        print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area.txt','w')
-        for i in range(min_z_index, max_z_index+1):
-            file_results.write(str(i*z_scale) + ',' + str(sections_ortho_counting[i-min_z_index])+'\n')
-
-        file_results.close()
-
-    if name_method == 'ellipse_ortho_plane' : 
-        
-        print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area.txt','w')
-
-        for i in range(min_z_index, max_z_index+1):
-            file_results.write(str(i*z_scale) + ',' + str(sections_ortho_ellipse[i-min_z_index])+'\n')
-
-        file_results.close()
-        
-    if name_method == 'ellipse_z_plane' : 
-        
-        print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area.txt','w')
-
-        for i in range(min_z_index, max_z_index+1):
-            file_results.write(str(i*z_scale) + ',' + str(sections_z_ellipse[i-min_z_index])+'\n')
-
-        file_results.close()
-    
-    if name_method == 'counting_z_plane' : 
-        
-        print('\nGenerating output text file...\n')
-        file_results = open('Cross_Section_Area.txt','w')
-
-        for i in range(min_z_index, max_z_index+1):
-            file_results.write(str(i*z_scale) + ',' + str(sections_z_counting[i-min_z_index])+'\n')
-
-        file_results.close()
-        
+    # if name_method == 'counting_ortho_plane' :
+    #     print('\nGenerating output text file...\n')
+    #     file_results = open('Cross_Section_Area.txt','w')
+    #     for i in range(min_z_index, max_z_index+1):
+    #         file_results.write(str(i*z_scale) + ',' + str(sections_ortho_counting[i-min_z_index])+'\n')
+    #     file_results.close()
+    #
+    # if name_method == 'ellipse_ortho_plane' :
+    #     print('\nGenerating output text file...\n')
+    #     file_results = open('Cross_Section_Area.txt','w')
+    #     for i in range(min_z_index, max_z_index+1):
+    #         file_results.write(str(i*z_scale) + ',' + str(sections_ortho_ellipse[i-min_z_index])+'\n')
+    #     file_results.close()
+    #
+    # if name_method == 'ellipse_z_plane' :
+    #     print('\nGenerating output text file...\n')
+    #     file_results = open('Cross_Section_Area.txt','w')
+    #     for i in range(min_z_index, max_z_index+1):
+    #         file_results.write(str(i*z_scale) + ',' + str(sections_z_ellipse[i-min_z_index])+'\n')
+    #     file_results.close()
+    #
+    # if name_method == 'counting_z_plane' :
+    #     print('\nGenerating output text file...\n')
+    #     file_results = open('Cross_Section_Area.txt','w')
+    #     for i in range(min_z_index, max_z_index+1):
+    #         file_results.write(str(i*z_scale) + ',' + str(sections_z_counting[i-min_z_index])+'\n')
+    #     file_results.close()
         
 
     # if name_method == 'counting_z_plane':
@@ -588,7 +573,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
    #
     
  
-    if volume_output == 1 : 
+    if volume_output == 1:
     
         # Extract orientation of the input segmentation
         status,sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
@@ -600,22 +585,23 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
             seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
 
             for i in seg :
-                 
-                if name_method == 'counting_ortho_plane':
-                    
-                    data_seg[i[0],i[1],iz] = sections_ortho_counting[iz-min_z_index]
-                
-                if name_method == 'counting_z_plane':
-        
-                    data_seg[i[0],i[1],iz] = sections_z_counting[iz-min_z_index]
-            
-                if name_method == 'ellipse_ortho_plane':
-            
-                    data_seg[i[0],i[1],iz] = sections_ortho_ellipse[iz-min_z_index]
-                
-                if name_method == 'ellipse_z_plane':
-            
-                    data_seg[i[0],i[1],iz] = sections_z_ellipse[iz-min_z_index]
+                data_seg[i[0],i[1],iz] = csa[iz-min_z_index]
+
+                # if name_method == 'counting_ortho_plane':
+                #
+                #     data_seg[i[0],i[1],iz] = sections_ortho_counting[iz-min_z_index]
+                #
+                # if name_method == 'counting_z_plane':
+                #
+                #     data_seg[i[0],i[1],iz] = sections_z_counting[iz-min_z_index]
+                #
+                # if name_method == 'ellipse_ortho_plane':
+                #
+                #     data_seg[i[0],i[1],iz] = sections_ortho_ellipse[iz-min_z_index]
+                #
+                # if name_method == 'ellipse_z_plane':
+                #
+                #     data_seg[i[0],i[1],iz] = sections_z_ellipse[iz-min_z_index]
         
         hdr_seg.set_data_dtype('uint8') # set imagetype to uint8
         
@@ -629,8 +615,6 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         # Change orientation of the output centerline into input orientation
         print '\nOrient  image to input orientation: '
         sct.run('sct_orientation -i '+path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg + ' -o ' + name_output + ' -orientation ' + orientation)
-        
-   
 
     del data_seg
 
@@ -639,7 +623,7 @@ def compute_CSA(fname_segmentation,name_method,volume_output,verbose,remove_temp
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
    
-    # End of compute_CSA
+    # End of compute_csa
 
 
 #=======================================================================================================================
@@ -748,46 +732,36 @@ def edge_detection(f):
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  This function performs various types of processing from the spinal cord segmentation, e.g.,\n' \
-        '  extract centerline, compute cross-sectional area (CSA).\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <segmentation> -p <process>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)\n' \
-        '  -p <process>              type of process to be performed:\n' \
-        '                            - extract_centerline: extract centerline as binay file from segmentation\n' \
-        '                            - compute_CSA: compute cross-sectional area from binary segmentation\n' \
-        '                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column)\n' \
-        '                              The method to compute CSA is defined with flag "-m".\n' \
-        '  -m <method_CSA>           if process is "compute_CSA", the following methods are available:\n' \
-        '                            - counting_ortho_plane: resample planes orthogonal to centerline and\n' \
-        '                              count pixels in each plane.\n' \
-        '                            - counting_z_plane: count pixels in each slice and then geometrically\n' \
-        '                              adjust using centerline orientation.\n' \
-        '                            - ellipse_ortho_plane: same process as counting_ortho_plane, but fit\n' \
-        '                              ellipse instead of counting pixels.\n' \
-        '                            - ellipse_z_plane: same process as counting_z_plane, but fit ellipse\n' \
-        '                              instead of counting pixels.\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -v <0,1>                   verbose. Default='+str(param.verbose)+'.\n' \
-        '  -b <0,1>                   outputs a volume in which each slice\'s value is equal to the CSA in\n' \
-        '                             mm^2. Default = 0\n' \
-        '  -r <0,1>                   remove temporary files. Default = 1\n' \
-        '  -s <0,1>                   smooth CSA values with spline. Default = 1\n' \
-        '  -o <output_name>           name of the output volume if -b 1. Specify extension.\n' \
-        '                             Default = \'CSA_slices.nii.gz\'\n' \
-        '\n' \
-        'EXAMPLE\n' \
-        '  sct_process_segmentation.py -i binary_segmentation.nii.gz -p compute_CSA -m counting_z_plane\n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  This function performs various types of processing from the spinal cord segmentation:
+
+USAGE
+  """+os.path.basename(__file__)+"""  -i <segmentation> -p <process>
+
+MANDATORY ARGUMENTS
+  -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)
+  -p <process>              type of process to be performed:
+                            - extract_centerline: extract centerline as binay file from segmentation
+                            - compute_csa: computes cross-sectional area by counting pixels in each
+                              slice and then geometrically adjusting using centerline orientation.
+                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column)
+
+OPTIONAL ARGUMENTS
+  -s {0,1}                   smooth CSA values with spline. Default="""+str(param.spline_smoothing)+"""
+  -b {0,1}                   outputs a volume in which each slice\'s value is equal to the CSA in
+                             mm^2. Default="""+str(param.volume_output)+"""
+  -o <output_name>           name of the output volume if -b 1. Default="""+str(param.name_output)+"""
+  -r {0,1}                   remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
+  -h                         help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa\n"""
 
     # exit program
     sys.exit(2)
