@@ -30,7 +30,7 @@ class param:
         self.smoothing_param    = 700
         self.figure_fit         = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
-        self.name_output = 'CSA_slices.nii.gz'  # output name for slice CSA
+        self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
         self.name_method = 'counting_z_plane'  # for compute_CSA
         
         
