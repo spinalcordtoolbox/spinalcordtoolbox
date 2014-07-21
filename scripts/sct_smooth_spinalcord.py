@@ -109,6 +109,7 @@ def main():
     print '\nCheck input arguments...'
     print '  Volume to smooth .................. ' + fname_anat
     print '  Centerline ........................ ' + fname_centerline
+    print '  FWHM .............................. '+str(sigma)
     print '  Verbose ........................... '+str(verbose)
 
     # Check existence of input files
