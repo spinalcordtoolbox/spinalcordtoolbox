@@ -1,4 +1,4 @@
-Title : List of tracts names for the white matter atlas
+Title : List of atlas items
 
 Label 0 : left fasciculus gracilis
 Label 1 : left fasciculus cuneatus
@@ -16,7 +16,7 @@ Label 12: left tectospinal tract
 Label 13: left medial reticulospinal tract
 Label 14: left medial longitudinal fasciculus
 
-Label 15: right  asciculus gracilis
+Label 15: right fasciculus gracilis
 Label 16: right fasciculus cuneatus
 Label 17: right lateral corticospinal tract
 Label 18: right ventral spinocerebellar tract
@@ -31,3 +31,7 @@ Label 26: right ventral corticospinal tract
 Label 27: right tectospinal tract
 Label 28: right medial reticulospinal tract
 Label 29: right medial longitudinal fasciculus
+
+Label 30: cerebrospinal fluid
+Label 31: gray matter
+Label 32: white matter
