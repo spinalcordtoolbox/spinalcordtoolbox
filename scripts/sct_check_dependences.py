@@ -6,12 +6,12 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
-# Modified: 2014-06-05
+# Modified: 2014-07-30
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: also check the SCT
+# TODO: check chmod of binaries
 # TODO: find another way to create log file. E.g. sct.print(). For color as well.
 # TODO: manage .cshrc files
 # TODO: add linux distrib when checking OS
@@ -21,13 +21,16 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.log                = 0
+        self.create_log_file = 0
+        self.complete_test = 0
 
 import os
 import sys
 import commands
 import time
 import platform
+import getopt
+import sct_utils as sct
 
 
 class bcolors:
@@ -49,14 +52,49 @@ def main():
     # c3d_is_installed = 1
     install_software = 0
     restart_terminal = 0
+    create_log_file = param.create_log_file
+    file_log = 'sct_check_dependencies.log'
+    complete_test = param.complete_test
     os_running = 'not identified'
     print
+
+    # Check input parameters
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hlc')
+    except getopt.GetoptError:
+        usage()
+    for opt, arg in opts:
+        if opt == '-h':
+            usage()
+        elif opt in ('-c'):
+            complete_test = 1
+        elif opt in ('-l'):
+            create_log_file = 1
+
+    # use variable "verbose" when calling sct.run for more clarity
+    verbose = complete_test
+    
+    # redirect to log file
+    if create_log_file:
+        orig_stdout = sys.stdout
+        handle_log = file(file_log, 'w')
+        sys.stdout = handle_log
+
+    # complete test
+    if complete_test:
+        print sct.run('date', verbose)
+        print sct.run('whoami', verbose)
+        print sct.run('pwd', verbose)
+        (status, output) = sct.run('more ~/.bash_profile', verbose)
+        print output
+        (status, output) = sct.run('more ~/.bashrc', verbose)
+        print output
 
     # check if user is root (should not be!)
     if os.geteuid() == 0:
        print 'Looks like you are root. Please run this script without sudo. Exit program\n'
        sys.exit(2)
-       
+
     # check OS
     print 'Check which OS is running... '
     platform_running = sys.platform
@@ -71,7 +109,10 @@ def main():
     print '  '+sys.executable
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    status, output = sct.run('echo $SCT_DIR', verbose)
+    path_sct = output
+    if complete_test:
+        print (status, output), '\n'
 
     # fetch version of the toolbox
     print 'Fetch version of the Spinal Cord Toolbox... '
@@ -130,8 +171,10 @@ def main():
         install_software = 1
 
     # check if FSL is declared
-    print_line('Check if FSL is installed ..................... ')
-    (status, output) = commands.getstatusoutput('which fsl')
+    print_line('Check if FSL is declared ...................... ')
+    cmd = 'which fsl'
+    status, output = commands.getstatusoutput(cmd)
+#    status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
         path_fsl = output[:-7]
@@ -139,6 +182,13 @@ def main():
     else:
         print_fail()
         print '  FSL is not working!'
+    if complete_test:
+        print '>> '+cmd
+        print (status, output), '\n'
+
+#    if complete_test:
+#        print '\n'+cmd+'\n'+str(status)+'\n'+path_sct+'\n'
+
         # In a previous version we edited the bash_profile. We don't do that anymore because some users might have funky configurations.
         # add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
         #     'FSLDIR='+path_fsl+'\n' \
@@ -172,7 +222,8 @@ def main():
     # check ANTs
     print_line('Check which ANTs is running .................., ')
     # (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    (status, output) = commands.getstatusoutput('which antsRegistration')
+    cmd = 'which antsRegistration'
+    status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
         path_ants = output[:-16]
@@ -180,19 +231,26 @@ def main():
     else:
         print_warning()
         print '  ANTs is not declared.'
+    if complete_test:
+        print '>> '+cmd
+        print (status, output), '\n'
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS .............. ')
-    (status, output) = commands.getstatusoutput('antsRegistration')
+    cmd = 'antsRegistration'
+    status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
         print_ok()
     else:
         print_fail()
+    if complete_test:
+        print '>> '+cmd
+        print (status, output), '\n'
 
     # check c3d
     print_line('Check which c3d is running .................... ')
     # (status, output) = commands.getstatusoutput('command -v c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    (status, output) = commands.getstatusoutput('which c3d')
+    status, output = commands.getstatusoutput('which c3d')
     if output:
         print_ok()
         path_c3d = output[:-3]
@@ -200,6 +258,8 @@ def main():
     else:
         print_warning()
         print '  c3d is not installed or not declared.'
+    if complete_test:
+        print (status, output), '\n'
 
     # check c3d compatibility with OS
     print_line('Check c3d compatibility with OS ............... ')
@@ -208,6 +268,8 @@ def main():
         print_ok()
     else:
         print_fail()
+    if complete_test:
+        print (status, output), '\n'
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ........... ')
@@ -216,6 +278,8 @@ def main():
         print_ok()
     else:
         print_fail()
+    if complete_test:
+        print (status, output), '\n'
 
     # Check ANTs integrity
     print_line('Check integrity of ANTs output ................ ')
@@ -224,8 +288,16 @@ def main():
         print_ok()
     else:
         print_fail()
+    if complete_test:
+        print (status, output), '\n'
 
     print
+    
+    # close log file
+    if create_log_file:
+        sys.stdout = orig_stdout
+        handle_log.close()
+        print "File generated: "+file_log+'\n'
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
@@ -295,7 +367,7 @@ def main():
     #    else:
     #        print '\nDone! Everything is in order :-)'
     #    print
-
+    
 
 # Print without new carriage return
 # ==========================================================================================
@@ -325,22 +397,28 @@ def add_bash_profile(string):
         file_bash.write("\n"+string)
 
 
+
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Check the installation and environment variables of the toolbox and its dependences.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+'\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -h            print this help.\n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  Check the installation and environment variables of the toolbox and its dependences.
+
+USAGE
+  """+os.path.basename(__file__)+"""
+
+OPTIONAL ARGUMENTS
+  -c                complete test.
+  -l                generate log file.
+  -h                print help.
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -l\n"""
 
     # exit program
     sys.exit(2)
