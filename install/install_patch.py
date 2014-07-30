@@ -28,7 +28,6 @@
 #########################################################################################
 
 # TODO: make a script that creates patch files.
-# TODO: add linux distrib when checking OS
 
 
 import sys
