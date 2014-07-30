@@ -16,6 +16,7 @@
 
 # N.B. To avoid confusion for the user, I removed from the menu the other options for computing CSA (jcohenadad 2014-07-20)
 
+# TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 # DEFAULT PARAMETERS
 class param:
@@ -46,7 +47,6 @@ import sct_utils as sct
 from sct_nurbs import NURBS
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from scipy.misc import imsave,imread
 import scipy.ndimage as ndi
 from matplotlib.pyplot import imshow, gray, show
 import scipy
@@ -389,7 +389,10 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
                     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
             
                 if name_method == 'ellipse_ortho_plane' : 
-                         
+                    
+                    # import scipy stuff
+                    from scipy.misc import imsave
+                    
                     os.chdir('JPG_Results')
                     imsave('plane_ortho_' + str(iz) + '.jpg', plane_seg)
                     
@@ -435,6 +438,9 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
                 
                  if name_method == 'ellipse_z_plane':
                      
+                     # import scipy stuff
+                     from scipy.misc import imsave
+                                          
                      os.chdir('JPG_Results')
                      imsave('plane_z_' + str(iz) + '.jpg', plane)     
                      
