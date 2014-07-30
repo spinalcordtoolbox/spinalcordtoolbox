@@ -6,6 +6,7 @@
 - BUG: fixed bug in sct_process_segmentation.py related to import of scipy.misc imsave,imread in miniconda distrib (issue #62)
 - BUG: fixed bug in sct_process_segmentation.py related to import of PIL/Pillow module (issue #58)
 - OPT: sct_register_multimodal now working for images with non-axial orientation (issue #59)
+- OPT: sct_register_straight_spinalcord_to_template has now been replaced by sct_register_multimodal in sct_register_to_template.
 - OPT: major improvements for sct_dmri_moco, including spline regularization, eddy correction, group-wise registration, gaussian mask.
 - OPT: sct_check_dependencies.py can now output log file and do extensive tests (type -h for more info)
 - NEW: sct_apply_transfo.py: apply warping field (wrapper to ANTs WarpImageMultiTransform)
