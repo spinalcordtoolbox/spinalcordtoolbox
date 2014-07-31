@@ -1,6 +1,9 @@
 
 # CHANGES TO RELEASE
 
+1.0.4
+- NEW: sct_crop: function to quickly crop an image.
+
 1.0.3 (2014-07-30)
 
 - BUG: fixed bug in sct_process_segmentation.py related to import of scipy.misc imsave,imread in miniconda distrib (issue #62)
