@@ -123,7 +123,7 @@ def main():
         # create output folder
         sct.run('mkdir '+folder_out+'atlas/')
         # get atlas files
-        status, output = sct.run('ls '+path_sct+'/data/atlas/vol*.nii.gz', verbose)
+        status, output = sct.run('ls '+path_sct+'/data/atlas/*.nii.gz', verbose)
         fname_list = output.split()
         # Warp atlas
         for i in xrange(0, len(fname_list)):
