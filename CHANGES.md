@@ -3,6 +3,7 @@
 
 1.0.4
 - NEW: sct_crop: function to quickly crop an image.
+- REF: sct_estimate_MAP_tracts.py now called sct_estimate_tracts.py. New functionalities added (maximum likelihood estimation and tract grouping).
 
 1.0.3 (2014-07-30)
 
