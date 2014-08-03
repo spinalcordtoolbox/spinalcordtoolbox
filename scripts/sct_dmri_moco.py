@@ -183,7 +183,7 @@ def main():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    path_tmp = output_path+'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir '+ path_tmp, param.verbose)
 
     # go to tmp folder
@@ -192,6 +192,7 @@ def main():
     fname_data_initial = param.fname_data
     
     #Copying input data to the tmp folder
+    os.mkdir('outputs')
     cmd = 'cp ' + param.fname_data + ' dmri' + ext_data
     status, output = sct.run(cmd, param.verbose)
     cmd = 'cp ' + param.fname_bvecs + ' bvecs.txt'
