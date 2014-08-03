@@ -21,7 +21,7 @@ function j_dmri_autoscale(fname_nifti,fname_dicom,opt)
 % 2012-03-18: enable inputs
 % 2012-03-18: doesn't use MATLAB's dicominfo any more
 % =========================================================================
-
+dbstop if error
 
 % Check parameters
 if nargin<2, help j_dmri_autoscale, return, end
@@ -45,6 +45,7 @@ j_disp(fname_log,['.. Started: ',datestr(now)])
 % =========================================================================
 
 % Get file names
+fname_nifti=sct_tool_remove_extension(fname_nifti,1);
 j_disp(fname_log,['\nGet file names...'])
 list_fname = dir(fname_dicom);
 nb_files = size(list_fname,1);
@@ -63,8 +64,9 @@ for i_file = 1:nb_files
 	fid = fopen(fname,'r','ieee-le');
 	fseek(fid,1,'bof');
 	dcm = fread(fid,20000,'*char')';
+    fclose(fid);
 	ind_scale = strfind(dcm,'Scale Factor');
- 	scaling_factor(i_file) = str2num(dcm(ind_scale+14:ind_scale+20));
+ 	scaling_factor(i_file) = sscanf(dcm(ind_scale+14:ind_scale+20),'%f');
 % 	hdr = dicominfo(fname);
 % 	scaling_factor(i_file) = str2num(hdr.ImageComments(15:21));
 	j_disp(fname_log,['.. ',list_fname(i_file).name,' --> Scaling factor = ',num2str(scaling_factor(i_file))])
@@ -80,7 +82,7 @@ save scaling_factor scaling_factor
 
 % Split NIFTI file
 j_disp(fname_log,['\nSplit NIFTI file...'])
-cmd = ['fslsplit ',fname_nifti,' tmp.data_splitT_'];
+cmd = ['fslsplit ',fname_nifti,' tmp.data_splitT_ -t'];
 j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
 numT = j_numbering_local(nb_files,4,0);
 
