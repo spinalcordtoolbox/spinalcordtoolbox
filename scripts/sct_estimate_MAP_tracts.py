@@ -233,12 +233,12 @@ def main():
 
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
-     # Extract title, tract names and label numbers because label names are used by the function "usage"
-    [label_title, label_name, label_num] = read_name(fname_template)[:-1]
-
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or fname_template == '':
         usage()
+        
+    # Extract title, tract names and label numbers because label names are used by the function "usage"
+    [label_title, label_name, label_num] = read_name(fname_template)[:-1]
 
     # Check existence of data file
     sct.check_file_exist(fname_data)
