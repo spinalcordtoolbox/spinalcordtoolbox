@@ -1,9 +1,21 @@
 
 # CHANGES TO RELEASE
 
-1.0.3
+1.0.4
+- NEW: sct_crop: function to quickly crop an image.
+- REF: sct_estimate_MAP_tracts.py now called sct_estimate_tracts.py. New functionalities added (maximum likelihood estimation and tract grouping).
 
+1.0.3 (2014-07-30)
+
+- BUG: fixed bug in sct_process_segmentation.py related to import of scipy.misc imsave,imread in miniconda distrib (issue #62)
+- BUG: fixed bug in sct_process_segmentation.py related to import of PIL/Pillow module (issue #58)
+- OPT: sct_register_multimodal now working for images with non-axial orientation (issue #59)
+- OPT: sct_register_straight_spinalcord_to_template has now been replaced by sct_register_multimodal in sct_register_to_template.
 - OPT: major improvements for sct_dmri_moco, including spline regularization, eddy correction, group-wise registration, gaussian mask.
+- OPT: sct_check_dependencies.py can now output log file and do extensive tests (type -h for more info)
+- NEW: sct_apply_transfo.py: apply warping field (wrapper to ANTs WarpImageMultiTransform)
+- NEW: sct_concat_transfo.py: concatenate warping fields (wrapper to ANTs ComposeMultiTransform)
+- NEW: batch_processing.sh: example batch for processing multi-parametric data
 
 1.0.2 (2014-07-13)
 

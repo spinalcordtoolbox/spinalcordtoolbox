@@ -16,6 +16,7 @@
 
 # N.B. To avoid confusion for the user, I removed from the menu the other options for computing CSA (jcohenadad 2014-07-20)
 
+# TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
 # DEFAULT PARAMETERS
 class param:
@@ -44,20 +45,11 @@ import numpy as np
 import time
 import sct_utils as sct
 from sct_nurbs import NURBS
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.misc import imsave,imread
-import scipy.ndimage as ndi
-from matplotlib.pyplot import imshow, gray, show
 import scipy
-from numpy.linalg import eig, inv
+#from numpy.linalg import eig, inv
 #import Image
-from scipy.interpolate import splev, splrep
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
+#from scipy.interpolate import splev, splrep
+import nibabel
 
 # MAIN
 # ==========================================================================================
@@ -89,6 +81,8 @@ def main():
         fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         verbose = 1
         remove_temp_files = 0
+        from matplotlib.pyplot import imshow, gray, show
+        from mpl_toolkits.mplot3d import Axes3D
         
     # Check input parameters
     try:
@@ -133,7 +127,6 @@ def main():
     if name_process=='compute_csa' and method_CSA == '':
         usage() 
         
-    
     # check existence of input files
     sct.check_file_exist(fname_segmentation)
     
@@ -389,7 +382,10 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
                     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
             
                 if name_method == 'ellipse_ortho_plane' : 
-                         
+                    
+                    # import scipy stuff
+                    from scipy.misc import imsave
+                    
                     os.chdir('JPG_Results')
                     imsave('plane_ortho_' + str(iz) + '.jpg', plane_seg)
                     
@@ -435,6 +431,9 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
                 
                  if name_method == 'ellipse_z_plane':
                      
+                     # import scipy stuff
+                     from scipy.misc import imsave
+                                          
                      os.chdir('JPG_Results')
                      imsave('plane_z_' + str(iz) + '.jpg', plane)     
                      
@@ -462,9 +461,10 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
 
     if spline_smoothing == 1 :
         print('\nSmoothing results with spline...')
-        tck = splrep((z_centerline*z_scale), csa, s=smoothing_param)
-        csa_smooth = splev((z_centerline*z_scale), tck)
+        tck = scipy.interpolate.splrep((z_centerline*z_scale), csa, s=smoothing_param)
+        csa_smooth = scipy.interpolate.splev((z_centerline*z_scale), tck)
         if figure_fit == 1:
+            import matplotlib.pyplot as plt
             plt.figure()
             plt.plot((z_centerline*z_scale),csa)
             plt.plot((z_centerline*z_scale),csa_smooth)
@@ -557,7 +557,7 @@ def Ellipse_fit(x,y):
     C = np.zeros([6,6])
     C[0,2] = C[2,0] = 2
     C[1,1] = -1
-    E, V =  eig(np.dot(inv(S), C))
+    E, V =  np.linalg.eig(np.dot(np.linalg.inv(S), C))
     n = np.argmax(np.abs(E))
     a = V[:,n]
     return a
