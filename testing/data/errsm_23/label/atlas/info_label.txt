@@ -1,0 +1,3 @@
+0, left fasciculus gracilis, vol0000.nii.gz
+1, left fasciculus cuneatus, vol0001.nii.gz
+2, left lateral corticospinal tract, vol0002.nii.gz
