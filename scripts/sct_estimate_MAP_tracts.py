@@ -128,7 +128,7 @@ class param:
         # extraction mode by default is weighted average
         self.mode = "weightedaverage"
         # tract folder by default is atlas white matter of spinalcordtoolbox_dev project
-        self.tract = '../data/atlas'
+        self.template = '../data/template'
         # by default, labels choice is deactivated and program use all labels
         self.label_choice = 0
         # by defaults, the estimation is made accross all vertebral levels
@@ -180,7 +180,7 @@ def main():
 
     # Initialization to defaults parameters
     fname_data = '' # data is empty by default
-    fname_tracts = path_script + param.tract # tracts path by default
+    fname_template = path_script + param.template # tracts path by default
     mode = param.mode # extraction mode by default
     label_choice = param.label_choice # no select label by default
     vertebral_levels = param.vertebral_levels # no vertebral level selected by default
@@ -192,7 +192,7 @@ def main():
     if param.debug == 1:
         print '\n** WARNING: DEBUG MODE ON **'
         fname_data = '/home/django/emagnide/code/spinalcordtoolbox_dev/testing/data/errsm_24/mt/mtr.nii.gz'
-        fname_tracts = '/home/django/emagnide/code/spinalcordtoolbox_dev/testing/data/errsm_24/atlas'
+        fname_template = '/home/django/emagnide/code/spinalcordtoolbox_dev/testing/data/errsm_24/atlas'
         mode = param.mode
         label_choice = 1
         label_number = '2,6'
@@ -201,18 +201,15 @@ def main():
         slice_number = '1'
         fname_output = '../result.txt'
 
-    # Extract title, tract names and label numbers because label names are used by the function "usage"
-    [label_title, label_name, label_num] = read_name(fname_tracts)[:-1]
-
     # Check input parameters
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:t:v:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
-        usage(label_title, label_name, label_num,fname_tracts) # display usage
+        usage() # display usage
     for opt, arg in opts: # explore flags
         if opt == '-h': # help option
-            usage(label_title, label_name, label_num,fname_tracts) # display usage
+            usage() # display usage
         elif opt in '-i': # MRI metric to input
             fname_data = arg # save path of metric MRI
         elif opt in '-l': # labels numbers option
@@ -224,7 +221,7 @@ def main():
             output_choice = 1 # output choice is activate
             fname_output = os.path.abspath(arg) # save path of output
         elif opt in '-t': # tracts to input
-            fname_tracts = os.path.abspath(arg) # save path of tracts folder
+            fname_template = os.path.abspath(arg) # save path of tracts folder
         elif opt in '-v': # vertebral levels option, if the user wants to average the metric accross specific vertebral levels
             vertebral_levels = arg
         elif opt in '-z': # slices numbers option
@@ -237,8 +234,11 @@ def main():
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or fname_tracts == '':
-        usage(label_title, label_name, label_num,fname_tracts)
+    if fname_data == '' or fname_template == '':
+        usage()
+        
+    # Extract title, tract names and label numbers because label names are used by the function "usage"
+    [label_title, label_name, label_num] = read_name(fname_template)[:-1]
 
     # Check existence of data file
     sct.check_file_exist(fname_data)
@@ -257,7 +257,7 @@ def main():
         sys.exit(2)
 
     # Extract title, tract names and label numbers
-    [label_title, label_name, label_num, fname_tract] = read_name(fname_tracts)
+    [label_title, label_name, label_num, fname_atlas_items] = read_name(fname_template)
 
     # Check if mode is correct : "weightedaverage" or "bayesian"
     if (mode != "weightedaverage") & (mode != "bayesian"):
@@ -276,15 +276,18 @@ def main():
         # Remove redundant values of label chosen and convert in integer
         nb = list(set([int(x) for x in label_number.split(",")]))
 
-        # Check if label chosen correspond to a tract
+        # Check if the selected labels correspond to an atlas item
         for num in nb:
-            if not num in range(0, len(fname_tract)):
-                print '\nERROR: "' + str(num) + '" is not a correct tract label. Enter valid number. Exit program.\n'
+            if not num in range(0, len(fname_atlas_items)):
+                print '\nERROR: "' + str(num) + '" is not a correct item label. Enter valid number. Exit program.\n'
                 sys.exit(2)
 
-    # Consider all tracts by default whereas in their names
+    # By default, consider all atlas items
     if label_choice == 0:
-        nb = range(0, len(fname_tract))
+        nb = range(0, len(fname_atlas_items))
+
+    # Sort the list of items numbers in ascending order
+    nb.sort()
 
     # Read files
     print '\nRead files...'
@@ -316,7 +319,7 @@ def main():
 
             # Select the slices of the input image corresponding to the vertebral levels asked
             slice_choice = 1
-            slice_number = get_slices_matching_with_vertebral_levels(data,fname_tracts,vert_levels_list)
+            slice_number = get_slices_matching_with_vertebral_levels(data,fname_template,vert_levels_list)
 
 
     # Extract slices chosen
@@ -352,13 +355,13 @@ def main():
     print '\nCheck input arguments...'
 
     # Display data file
-    print '\tSpinal cord MRI : ' + fname_data
+    print '\tMetric file: ' + fname_data
 
     # Display mode extraction
-    print '\tExtraction mode : ' + mode
+    print '\tExtraction mode: ' + mode
 
-    # Display tracts path
-    print '\tTracts atlas : ' + fname_tracts
+    # Display template folder path
+    print '\tTemplate folder: ' + fname_template
 
     # Display vertebral levels where the metric will be estimated
     if vertebral_levels != '':
@@ -368,51 +371,55 @@ def main():
 
     # Display slices where the metric sill be estimated
     if slice_choice ==1:
-        print '\tSlices : ' + (str(nb_slice)[1:-1]).replace(',', ':').replace(' ', '')
+        print '\tSlices: ' + (str(nb_slice)[1:-1]).replace(',', ':').replace(' ', '')
 
     # Display output file for results
     if output_choice == 1:
-        print '\tOutput : ' + fname_output
+        print '\tOutput: ' + fname_output
 
     # Display labels chosen for results
     if label_choice == 1:
-        print '\tSelected tracts numbers : ' + (str(nb)[1:-1]).replace(' ', '')
+        print '\tSelected items numbers : ' + (str(nb)[1:-1]).replace(' ', '')
 
     # Display label number, label name and file .nii.gz corresponding
     print '\n\t'+label_title+'\n'
-    for label in range(0,len(fname_tract)):
-        print '\tLabel ' + str(label_num[label]) + ' \t\t' + fname_tract[label][(len(fname_tracts) + 1):]+ \
+    for label in range(0,len(fname_atlas_items)):
+        if fname_atlas_items[label][(len(fname_template) + 1):] == 'csf.nii.gz':
+            print '\tLabel ' + str(label_num[label]) + ' \t\t' + fname_atlas_items[label][(len(fname_template) + 1):]+ \
+              '\t\t\t' + label_name[label]
+        else:
+            print '\tLabel ' + str(label_num[label]) + ' \t\t' + fname_atlas_items[label][(len(fname_template) + 1):]+ \
               '\t\t' + label_name[label]
 
     # Initialise tracts variable as object because there are 4 dimensions
-    tracts = empty([len(fname_tract), 1], dtype=object)
+    atlas_items = empty([len(fname_atlas_items), 1], dtype=object)
 
     # Load each partial volumes of each tracts
-    for label in range(0, len(fname_tract)):
-        tracts[label, 0] = load(fname_tract[label]).get_data()
+    for label in range(0, len(fname_atlas_items)):
+        atlas_items [label, 0] = load(fname_atlas_items [label]).get_data()
 
     # Reshape data if it is the 2D image instead of 3D
     if data.ndim == 2:
         data=data.reshape(int(size(data,0)), int(size(data,1)),1)
 
-    # Reshape tracts if it is the 2D image instead of 3D
-    for label in range(0, len(fname_tract)):
-        if (tracts[label,0]).ndim == 2:
-            tracts[label,0] = tracts[label,0].reshape(int(size(tracts[label,0],0)), int(size(tracts[label,0],1)),1)
+    # Reshape atlas items if it is the 2D image instead of 3D
+    for label in range(0, len(fname_atlas_items)):
+        if (atlas_items[label,0]).ndim == 2:
+            atlas_items [label,0] = atlas_items [label,0].reshape(int(size(atlas_items [label,0],0)), int(size(atlas_items [label,0],1)),1)
 
     # Initialization slices if slice choice is off by considering the z size of tracts
     if slice_choice ==0:
-        nb_slice = [0,int(size(tracts[0, 0],2)-1)]
+        nb_slice = [0,int(size(atlas_items [0, 0],2)-1)]
 
     # Pretreatment before extraction
-    [data_new,tracts_new, number_tracts] = pretreatment(data, tracts, nb_slice)
+    [adjust_data,adjust_items,n_items] = pretreatment(data, atlas_items, nb_slice)
 
     #TODO: only estimate the metric value for selected tracts AND NOT: for all and then display the metric value for the selected tracts (what this script currently does)
     # Extraction with weighted_average
     if mode == "weightedaverage":
 
-        # Do extraction with weighted average
-        [X, stand] = weighted_average(data_new, tracts_new, number_tracts)
+        # Extract metric with weighted average
+        [X, stand] = weighted_average(adjust_data, adjust_items, n_items)
         print'\nWeighted average results \n'
 
         # Display results
@@ -423,7 +430,7 @@ def main():
     if mode == "bayesian":
 
         # Do extraction with maximum a posteriori method
-        [X, stand] = bayesian(data_new, tracts_new, number_tracts)
+        [X, stand] = bayesian(adjust_data, adjust_items, n_items)
 
         # Display results
         print'\nBayesian estimation results \n'
@@ -439,19 +446,19 @@ def main():
 
         # Write selected vertebral levels
         if vertebral_levels != '':
-            fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
+            fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels: ',vert_levels_list[0],vert_levels_list[1]))
         else:
             fid_metric.write('No vertebral level selected.\n\n')
 
         # Write slices chosen
-        fid_metric.write('%s\t%i to %i\n\n'% ('Slices : ',nb_slice[0],nb_slice[1]))
+        fid_metric.write('%s\t%i to %i\n\n'% ('Slices: ',nb_slice[0],nb_slice[1]))
 
         # Write header title in file .txt
-        fid_metric.write('%s\t\t%s\t\t\t\t\t\t%s\t\t\t\t%s\n\n' % ('Label', 'Name', 'Metric', 'STD'))
+        fid_metric.write('%s\t\t%s\t\t\t\t\t\t\t\t\t%s\t\t\t\t\t\t\t%s\n\n' % ('Label', 'Name', 'Metric', 'STD'))
 
         # Write metric for label chosen in file .txt
         for i in range(0, len(nb)):
-            fid_metric.write('%i\t%s\t\t\t%f\t\t\t%f\n' % (nb[i], label_name[nb[i]], X[nb[i]], stand[nb[i]]))
+            fid_metric.write('%i\t%s\t\t\t\t\t\t%f\t\t\t\t\t\t\t\t\t%f\n' % (nb[i], label_name[nb[i]], X[nb[i]], stand[nb[i]]))
 
         # Close file .txt
         fid_metric.close()
@@ -478,59 +485,60 @@ def main():
 # Read file of tract names and extract names and labels
 #=======================================================================================================================
 
-def read_name(fname_tracts):
+def read_name(fname_template):
 
     # Check if tracts folder exist
-    if not os.path.isdir(fname_tracts):
-        print('\nERROR: ' + fname_tracts + ' does not exist. Exit program.\n')
+    if not os.path.isdir(fname_template):
+        print('\nERROR: ' + fname_template + ' does not exist. Exit program.\n')
         sys.exit(2)
 
     # Save path of each tracts
-    fname_tract = glob.glob(fname_tracts + '/*.nii.gz')
+    fname_atlas_items = glob.glob(fname_template+'/atlas/*.nii.gz')
+    fname_atlas_items.extend([fname_template+'/csf.nii.gz', fname_template+'/gray_matter.nii.gz', fname_template+'/white_matter.nii.gz'])
 
     # Check if tracts exist in folder
-    if len(fname_tract) == 0:
-        print '\nERROR: There are not tracts in this folder. Exit program.\n'
+    if len(fname_atlas_items) == 3:
+        print '\nERROR: There are not tracts in the folder /atlas. Exit program.\n'
         sys.exit(2)
 
     # Save path of file list.txt
-    fname_list = glob.glob(fname_tracts + '/*.txt')
+    fname_list = glob.glob(fname_template + '/atlas/*.txt')
 
     # Check if tracts list.txt exist in folder
     if len(fname_list) == 0:
-        print '\nWARNING: There are no file txt in this folder. File list.txt will be create in folder \n'
+        print '\nWARNING: There are no file txt in the folder /atlas. File list.txt will be create in this folder. \n'
 
     # Check if tracts list.txt is only txt in folder
     if len(fname_list) > 1:
-        print '\nWARNING: There are more than one file txt in this folder. File list.txt will be create in folder \n'
+        print '\nWARNING: There are more than one .txt file in the folder /atlas. File list.txt will be create in this folder. \n'
 
     # Create list.txt default in list.txt in case there are not file or file is not define correctly
     if len(fname_list) == 0 or len(fname_list) > 1:
 
         # New file list : list.txt
-        fname_list = fname_tracts + '/list.txt'
+        fname_list = fname_template+'/atlas/list.txt'
 
         # Write mode
         fid_list = open(fname_list, 'w')
 
-        # Write "Title : Name of tracts" by default
-        fid_list.write('%s : %s\n' % ('Title', 'Name of tracts'))
+        # Write "Title : Name of atlas items" by default
+        fid_list.write('%s : %s\n' % ('Title', 'Name of atlas items'))
 
-        # Write "Label XX : Label XX" by default for "XX" tract number
-        for j in range(0, len(fname_tract)):
+        # Write "Label XX : Label XX" ("XX" being the number of the atlas item) by default
+        for j in range(0, len(fname_atlas_items)):
             fid_list.write('%s %i : %s %i\n' % ('Label', j, 'Label', j))
 
         # Close file txt
         fid_list.close()
 
-    # Take the value of string instead of array string
+    # Take the value of string instead of an array of strings
     else:
         fname_list = fname_list[0]
 
     # Read file list.txt
     f = open(fname_list)
 
-    # Extract all lines in file.txt
+    # Extract all lines in file "list.txt"
     lines = [lines for lines in f.readlines() if lines.strip()]
 
     # Close file.txt
@@ -538,7 +546,7 @@ def read_name(fname_tracts):
 
     # Check if file contain data
     if len(lines) == 0:
-        print '\nWARNING: File txt is empty. File list.txt will be create in folder. \n'
+        print '\nWARNING: The .txt file supposed to contain the list of atlas items is empty.\n'#File list.txt will be create in the folder /atlas.
 
     # Initialisation of label number
     label_num = [[]] * len(lines)
@@ -546,19 +554,19 @@ def read_name(fname_tracts):
     # Initialisation of label name
     label_name = [[]] * len(lines)
 
-    # Extract of label title, label name and label number
+    # Extract label title, label name and label number
     for k in range(0, len(lines)):
 
         # Check if file.txt contains ":" because it is necessary for split label name to label number
         if not ':' in lines[k]:
-            print '\nERROR: File txt is not in correct form. File list.txt must be in this form :\n'
+            print '\nERROR: File txt is not in correct form. File list.txt must be in this form:\n'
             print '\t\tTitle : Name of tracts'
             print '\t\tLabel 0 : Name Label 0'
             print '\t\tLabel 1 : Name Label 1'
             print '\t\tLabel 2 : Name Label 2'
             print '\t\t...\n '
-            print '\t\tExample of file.txt'
-            print '\t\tTitle : List of tracts names for the white matter atlas'
+            print '\t\tExample of .txt file'
+            print '\t\tTitle : List of atlas items names'
             print '\t\tLabel 0 : left fasciculus gracilis'
             print '\t\tLabel 1 : left fasciculus cuneatus'
             print '\t\tLabel 2 : left lateral corticospinal tract'
@@ -581,34 +589,34 @@ def read_name(fname_tracts):
     label_num = [int(x.group()) for x in re.finditer(r'\d+',label_num)]
 
     # Check corresponding between label name and tract file
-    if label_num != range(0, len(fname_tract)):
-        print '\nERROR: File txt and tracts are not corresponding. Change file txt or tracts .nii.gz. Exit program. \n'
+    if label_num != range(0, len(fname_atlas_items)):
+        print '\nERROR: The .txt file and atlas items are not corresponding. Change the .txt file txt or atlas items .nii.gz. Exit program. \n'
         sys.exit(2)
 
-    return [label_title, label_name, label_num, fname_tract]
+    return [label_title, label_name, label_num, fname_atlas_items]
 
 #=======================================================================================================================
 # Pretreatment before extraction
 #=======================================================================================================================
 
-def pretreatment(data_start, tracts_start, nb_slice):
+def pretreatment(data_start, atlas_items, nb_slice):
 
     # Size of tracts
-    print '\nVerify tract size...'
+    print '\nVerify atlas items size...'
     # Extract total number of tracts
-    numtracts = len(tracts_start)
+    n_items = len(atlas_items)
 
-    # Initialisation of size axis X, Y, Z
-    nx = zeros(numtracts)
-    ny = zeros(numtracts)
-    nz = zeros(numtracts)
+    # Initialization of size axis X, Y, Z
+    nx = zeros(n_items)
+    ny = zeros(n_items)
+    nz = zeros(n_items)
 
     # Initialisation of check error flag
     exit_program = 0
 
     # Save size X, Y, Z of each tracts
-    for i in range(0, numtracts):
-        [nx[i], ny[i], nz[i]] = (tracts_start[i, 0]).shape
+    for i in range(0, n_items):
+        [nx[i], ny[i], nz[i]] = (atlas_items [i, 0]).shape
 
     # Convert list to integer
     nx = nx.astype(int)
@@ -617,8 +625,8 @@ def pretreatment(data_start, tracts_start, nb_slice):
     print '\tSize X : ' + str(list(set(nx)))[1:-1]
 
     # Check if all sizes X of tracts is same and display error message
-    if sum(nx) != nx[0] * numtracts:
-        print '\tERROR: Size X is not the same for all tracts.'
+    if sum(nx) != nx[0] * n_items:
+        print '\tERROR: Size X is not the same for all atlas items.'
         exit_program = 1
 
     # Convert list to integer
@@ -628,8 +636,8 @@ def pretreatment(data_start, tracts_start, nb_slice):
     print '\tSize Y : ' + str(list(set(ny)))[1:-1]
 
     # Check if all sizes Y of tracts is same and display error message
-    if sum(ny) != ny[0] * numtracts:
-        print '\tERROR: Size Y is not the same for all tracts.'
+    if sum(ny) != ny[0] * n_items:
+        print '\tERROR: Size Y is not the same for all atlas items.'
         exit_program = 1
 
     # Convert list to integer
@@ -639,8 +647,8 @@ def pretreatment(data_start, tracts_start, nb_slice):
     print '\tSize Z : ' + str(list(set(nz)))[1:-1]
 
     # Check if all sizes Z of tracts is same and display error message
-    if sum(nz) != nz[0] * numtracts:
-        print '\tERROR: Size Z is not the same for all tracts.'
+    if sum(nz) != nz[0] * n_items:
+        print '\tERROR: Size Z is not the same for all atlas items.'
         exit_program = 1
 
     # Take size in integer instead of integer array
@@ -659,20 +667,20 @@ def pretreatment(data_start, tracts_start, nb_slice):
 
     # Check if sizes X is same with tract
     if mx != nx:
-        print '\tERROR: Size X is not the same for tracts and data.'
+        print '\tERROR: Size X is not the same for atlas items and data.'
         exit_program = 1
 
     # Check if sizes Y is same with tract
     if my != ny:
-        print '\tERROR: Size Y is not the same for tracts and data.'
+        print '\tERROR: Size Y is not the same for atlas items and data.'
         exit_program = 1
 
     # Check if sizes Z is same with tract
     if mz != nz:
-        print '\tERROR: Size Z is not the same for tracts and data.'
+        print '\tERROR: Size Z is not the same for atlas items and data.'
         exit_program = 1
 
-    # Exit program if error is detect in sizes
+    # Exit program if error is detected in sizes
     if exit_program == 1 :
         print '\nExit program.\n'
         sys.exit(2)
@@ -680,7 +688,7 @@ def pretreatment(data_start, tracts_start, nb_slice):
     # Check if slices chosen are presents in tract slices
     for slice in nb_slice:
         if not slice in range(0,mz):
-            print '\nERROR: Slice z = ' + str(slice) + ' does not exist. Exit program.\n'
+            print '\nERROR: Selected slice z = ' + str(slice) + ' does not exist. Exit program.\n'
             sys.exit(2)
 
     # Compute and apply binary mask
@@ -690,8 +698,8 @@ def pretreatment(data_start, tracts_start, nb_slice):
     mask = zeros([nx, ny, nz])
 
     # Select non-zero values in the tracts
-    for i in range(0, numtracts):
-        mask[(tracts_start[i, 0]) > 0] = 1
+    for i in range(0, n_items):
+        mask[(atlas_items [i, 0]) > 0] = 1
     data_adjust = mask * data_start
 
     # Display number of non-zero values
@@ -701,40 +709,40 @@ def pretreatment(data_start, tracts_start, nb_slice):
     # Select slices chosen in data
     data_adjust = data_adjust[:,:,nb_slice[0]:nb_slice[1]+1]
 
-    # Initialisation of new tracts
-    tracts_adjust = empty([numtracts,1], dtype=object)
+    # Initialization of items with only the selected slices
+    items_adjust = empty([n_items,1], dtype=object)
 
-    # Select slices chosen in tracts
-    for i in range(0, numtracts):
-        tracts_adjust[i,0] = tracts_start[i, 0][:,:,nb_slice[0]:nb_slice[1]+1]
+    # Adjust the items according to the selected slices
+    for i in range(0, n_items):
+        items_adjust[i,0] = atlas_items [i, 0][:,:,nb_slice[0]:nb_slice[1]+1]
 
-    # Return data corrected and tracts number
-    return [data_adjust,tracts_adjust, numtracts]
+    # Return the data adjusted according to the selected items and slices and the items adjusted according to the selected slices
+    return [data_adjust,items_adjust, n_items]
 
 #=======================================================================================================================
 # Weighted average
 #=======================================================================================================================
 
-def weighted_average(data_wa, tracts_wa, numtracts_wa):
+def weighted_average(adjust_data, adjust_items, n_items):
 
     # Estimation with weighted average
     print '\nEstimation with weighted average ...'
 
-    # Initialisation of metrics variable
-    X_wa = zeros([numtracts_wa, 1])
+    # Initialization of metrics variable
+    X_wa = zeros([n_items, 1])
 
-    # Initialisation of standard deviation
-    std_wa = zeros([numtracts_wa, 1])
+    # Initialization of standard deviation
+    std_wa = zeros([n_items, 1])
 
     # Calculate partial fractions ignoring the values of zeros
-    for i in range(0, numtracts_wa):
-        partial_data = data_wa [tracts_wa[i, 0]>0]*tracts_wa[i, 0][tracts_wa[i, 0]>0]
+    for i in range(0, n_items):
+        partial_data = adjust_data [adjust_items [i, 0]>0]* adjust_items [i, 0][adjust_items [i, 0]>0]
 
-        # Make weighted average if tracts are not zero everywhere
-        if sum(tracts_wa[i, 0]) != 0:
-            X_wa[i] = sum(partial_data) / sum(tracts_wa[i, 0])
+        # Make weighted average if items are not zero everywhere
+        if sum(adjust_items [i, 0]) != 0:
+            X_wa[i] = sum(partial_data) / sum(adjust_items [i, 0])
 
-        # Set the metric estimation to 0 for tracts that are zero everywhere
+        # Set the metric estimation to 0 for items that are zero everywhere
         else:
             print '\tWARNING: Tract number ' + str(i) + ' is zero everywhere . Metric value will be set to 0 for this tract.'
             X_wa[i] = 0.0
@@ -885,7 +893,7 @@ def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_leve
     """Return the slices of the input image corresponding to the vertebral levels given as argument."""
 
     # check existence of "vertebral_labeling.nii.gz" file
-    fname_vertebral_labeling = fname_tracts + '/../vertebral_labeling.nii.gz'
+    fname_vertebral_labeling = fname_tracts + '/vertebral_labeling.nii.gz'
     sct.check_file_exist(fname_vertebral_labeling)
 
      # Read files vertebral_labeling.nii.gz
@@ -973,7 +981,7 @@ def get_slices_matching_with_vertebral_levels(metric_data,fname_tracts,vert_leve
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
-def usage(label_title, label_name, label_num, fname_tracts):
+def usage():
 
     print '\n' \
         'sct_estimate_MAP_tracts\n' \
@@ -985,16 +993,49 @@ def usage(label_title, label_name, label_num, fname_tracts):
         ' same space coordinates as the input image. The current methods for computing the average metrics are: \n' \
         ' (i) weighted average or (ii) bayesian maximum a posteriori (MAP). The atlas is located in a folder and all \n' \
         ' tracts are defined by .txt file. \n' \
-        '\n' + label_title + ': \n' \
-        ' Label - Tract'
-    for label in range(0,len(label_num)):
-        print '\t ' + str(label_num[label]) + '\t - ' + label_name[label]
+        '\n List of atlas items: \n' \
+        ' Label - Atlas item \n' \
+    	' 0	 -  left fasciculus gracilis \n' \
+	    ' 1	 -  left fasciculus cuneatus \n' \
+	    ' 2	 -  left lateral corticospinal tract \n' \
+	    ' 3	 -  left ventral spinocerebellar tract \n' \
+	    ' 4	 -  left rubrospinal tract \n' \
+	    ' 5	 -  left lateral reticulospinal tract \n' \
+	    ' 6	 -  left spinal lemniscus (spinothalamic and spinoreticular tracts) \n' \
+	    ' 7	 -  left spino-olivary tract \n' \
+	    ' 8	 -  left ventrolateral reticulospinal tract \n' \
+	    ' 9	 -  left lateral vestibulospinal tract \n' \
+	    ' 10    -  left ventral reticulospinal tract \n' \
+	    ' 11    -  left ventral corticospinal tract \n' \
+	    ' 12    -  left tectospinal tract \n' \
+	    ' 13    -  left medial reticulospinal tract \n' \
+	    ' 14    -  left medial longitudinal fasciculus \n\n' \
+	    ' 15    -  right  asciculus gracilis \n' \
+	    ' 16    -  right fasciculus cuneatus \n' \
+	    ' 17    -  right lateral corticospinal tract \n' \
+	    ' 18    -  right ventral spinocerebellar tract \n' \
+	    ' 19    -  right rubrospinal tract \n' \
+	    ' 20    -  right lateral reticulospinal tract \n' \
+	    ' 21    -  right spinal lemniscus (spinothalamic and spinoreticular tracts) \n' \
+	    ' 22    -  right spino-olivary tract \n' \
+	    ' 23    -  right ventrolateral reticulospinal tract \n' \
+	    ' 24    -  right lateral vestibulospinal tract \n' \
+	    ' 25    -  right ventral reticulospinal tract \n' \
+	    ' 26    -  right ventral corticospinal tract \n' \
+	    ' 27    -  right tectospinal tract \n' \
+	    ' 28    -  right medial reticulospinal tract \n' \
+	    ' 29    -  right medial longitudinal fasciculus \n\n' \
+	    ' 30    -  cerebrospinal fluid \n' \
+	    ' 31    -  gray matter \n' \
+	    ' 32    -  white matter \n'
+
     print '\n'\
         'USAGE\n' \
         ' sct_estimate_MAP_tracts.py -i <data> -t <tracts> -m <mode> -l <label> -z <slice> -o <output>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         ' -i <data> : File to extract metrics from.\n' \
+        ' -t <tracts> : Folder that contains atlas. \n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         ' -l <label> : Label(s) corresponding to the tract(s) to extract the metric from. Begin at 0. ' \
@@ -1002,7 +1043,7 @@ def usage(label_title, label_name, label_num, fname_tracts):
         ' -m <method> : Extraction mode : "weightedaverage", "bayesian". Default = weightedaverage. !!! ' \
         ' CURRENTLY, THE bayesian MODE DOES NOT WORK.\n' \
         ' -o <output> : File containing the results of metrics extraction.\n'\
-        ' -t <tracts> : Folder that contains atlas. Default = '+fname_tracts+'\n' \
+        ' -t <tracts> : Folder that contains atlas. \n' \
         ' -v <vertebral_levels> : Vertebral levels to estimate the metric accross. Example: \"-v 6:8\" for C6, C7, T1.' \
         ' By defaults, all levels are ' \
         ' selected.'\
