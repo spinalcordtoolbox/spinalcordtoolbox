@@ -17,7 +17,11 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.folder_out = 'template/'  # name of output folder
+        self.folder_out = 'label'  # name of output folder
+        self.folder_template = 'template'
+        self.folder_atlas = 'atlas'
+        self.folder_spinal_levels = 'spinal_levels'
+        self.file_info_label = 'info_label.txt'
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.verbose = 1  # verbose
@@ -38,7 +42,11 @@ def main():
     # Initialization
     fname_src = ''
     fname_transfo = ''
-    folder_out = ''
+    folder_out = param.folder_out
+    folder_template = param.folder_template
+    folder_atlas = param.folder_atlas
+    folder_spinal_levels = param.folder_spinal_levels
+    file_info_label = param.file_info_label
     warp_atlas = param.warp_atlas
     warp_spinal_levels = param.warp_spinal_levels
     verbose = param.verbose
@@ -86,12 +94,12 @@ def main():
     sct.check_file_exist(fname_src)
     sct.check_file_exist(fname_transfo)
 
-    # Get output folder
-    if folder_out == '':
-        folder_out = param.folder_out  # folder created in user's current directory
-
     # add slash at the end of folder name (in case there is no slash)
+    path_sct = sct.slash_at_the_end(path_sct, 1)
     folder_out = sct.slash_at_the_end(folder_out, 1)
+    folder_template = sct.slash_at_the_end(folder_template, 1)
+    folder_atlas = sct.slash_at_the_end(folder_atlas, 1)
+    folder_spinal_levels = sct.slash_at_the_end(folder_spinal_levels, 1)
 
     # print arguments
     print '\nCheck parameters:'
@@ -108,31 +116,35 @@ def main():
         sct.run('rm -rf '+folder_out)
     sct.run('mkdir '+folder_out)
 
-
     # Warp template objects
     sct.printv('\nWarp template objects...', verbose)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz '+folder_out+'t2.nii.gz -R '+fname_src+' '+fname_transfo)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz '+folder_out+'gray_matter.nii.gz -R '+fname_src+' '+fname_transfo)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_WM.nii.gz '+folder_out+'white_matter.nii.gz -R '+fname_src+' '+fname_transfo)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz '+folder_out+'vertebral_labeling.nii.gz -R '+fname_src+' --use-NN '+fname_transfo)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_out+'csf.nii.gz -R '+fname_src+' --use-NN '+fname_transfo)
+    sct.run('mkdir '+folder_out+folder_template, verbose)
+    # TODO: read info_label, and create a list and loop across list elements-- see sct_extract_metric
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
+    sct.run('cp '+path_sct+'data/'+folder_template+file_info_label+' '+folder_out+folder_template)
 
     # Warp atlas
     if warp_atlas == 1:
         sct.printv('\nWarp atlas of white matter tracts...', verbose)
         # create output folder
-        sct.run('mkdir '+folder_out+'atlas/')
+        sct.run('mkdir '+folder_out+folder_atlas)
         # get atlas files
-        status, output = sct.run('ls '+path_sct+'/data/atlas/*.nii.gz', verbose)
+        # TODO: read info_label.txt instead of ls
+        status, output = sct.run('ls '+path_sct+'data/'+folder_atlas+'*.nii.gz', verbose)
         fname_list = output.split()
         # Warp atlas
         for i in xrange(0, len(fname_list)):
             path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('WarpImageMultiTransform 3 '+fname_list[i]+' '+folder_out+'atlas/'+file_list+ext_list+' -R '+fname_src+' '+fname_transfo)
+            sct.run('WarpImageMultiTransform 3 '+fname_list[i]+' '+folder_out+folder_atlas+file_list+ext_list+' -R '+fname_src+' '+fname_transfo)
         # Copy list.txt
-        sct.run('cp '+path_sct+'/data/atlas/list.txt '+folder_out+'atlas/')
+        sct.run('cp '+path_sct+'data/'+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
 
     # Warp spinal levels
+    # TODO: update below
     if warp_spinal_levels == 1:
         sct.printv('\nWarp spinal levels...', verbose)
         # create output folder
@@ -147,7 +159,7 @@ def main():
 
     # to view results
     print '\nDone! To view results, type:'
-    print 'fslview '+fname_src+' '+folder_out+'t2.nii.gz '+folder_out+'gray_matter.nii.gz '+folder_out+'white_matter.nii.gz '+folder_out+'vertebral_labeling.nii.gz '+folder_out+'csf.nii.gz '+' &'
+# TODO: update that    print 'fslview '+fname_src+' '+folder_out+folder_template+'t2.nii.gz '+folder_out+'gray_matter.nii.gz '+folder_out+'white_matter.nii.gz '+folder_out+'vertebral_labeling.nii.gz '+folder_out+'csf.nii.gz '+' &'
     print ''
 
 
@@ -177,7 +189,7 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -d dwi_mean.nii.gz -w warp_template2dmri.nii.gz -o template -s 1\n"""
+  """+os.path.basename(__file__)+""" -d dwi_mean.nii.gz -w warp_template2dmri.nii.gz -o label\n"""
 
     # exit program
     sys.exit(2)
