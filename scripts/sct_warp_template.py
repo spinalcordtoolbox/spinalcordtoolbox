@@ -60,7 +60,7 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_src = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
         fname_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2mt.nii.gz'
-        warp_atlas = 0
+        warp_atlas = 1
         warp_spinal_levels = 1
         verbose = 1
 
@@ -120,11 +120,11 @@ def main():
     sct.printv('\nWarp template objects...', verbose)
     sct.run('mkdir '+folder_out+folder_template, verbose)
     # TODO: read info_label, and create a list and loop across list elements-- see sct_extract_metric
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
-    sct.run('WarpImageMultiTransform 3 '+path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_T2.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_GM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
     sct.run('cp '+path_sct+'data/'+folder_template+file_info_label+' '+folder_out+folder_template)
 
     # Warp atlas
@@ -144,22 +144,23 @@ def main():
         sct.run('cp '+path_sct+'data/'+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
 
     # Warp spinal levels
-    # TODO: update below
     if warp_spinal_levels == 1:
         sct.printv('\nWarp spinal levels...', verbose)
         # create output folder
-        sct.run('mkdir '+folder_out+'spinal_levels/', verbose)
+        sct.run('mkdir '+folder_out+folder_spinal_levels, verbose)
         # get spinal level files
-        status, output = sct.run('ls '+path_sct+'/data/spinal_level/*.nii.gz', verbose)
+        status, output = sct.run('ls '+path_sct+'data/'+folder_spinal_levels+'*.nii.gz', verbose)
         fname_list = output.split()
         # Warp levels
         for i in xrange(0, len(fname_list)):
             path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('WarpImageMultiTransform 3 '+fname_list[i]+' '+folder_out+'spinal_levels/'+file_list+ext_list+' -R '+fname_src+' '+fname_transfo)
+            sct.run('WarpImageMultiTransform 3 '+fname_list[i]+' '+folder_out+folder_spinal_levels+file_list+ext_list+' -R '+fname_src+' '+fname_transfo)
 
     # to view results
     print '\nDone! To view results, type:'
-# TODO: update that    print 'fslview '+fname_src+' '+folder_out+folder_template+'t2.nii.gz '+folder_out+'gray_matter.nii.gz '+folder_out+'white_matter.nii.gz '+folder_out+'vertebral_labeling.nii.gz '+folder_out+'csf.nii.gz '+' &'
+    print 'fslview '+fname_src+' '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz '+folder_out+folder_template+\
+          'MNI-Poly-AMU_GM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template\
+          +'MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz '+' &'
     print ''
 
 
