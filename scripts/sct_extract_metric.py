@@ -14,7 +14,6 @@
 
 # TODO: print label name in txt file
 
-
 # Import common Python libraries
 import os
 import getopt
@@ -127,7 +126,6 @@ def main():
         elif opt in '-z': # slices numbers option
             slice_choice = 1 # slice choice is activate
             slice_number = arg # save labels numbers
-        # TODO: add flag for folder
 
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
@@ -194,18 +192,18 @@ def main():
 
     # Get dimensions of atlas
     # TODO: no need to do that if size consistency check is done before
-    sct.printv('\nGet dimensions of atlas...', verbose)
+    sct.printv('\nGet dimensions of label...', verbose)
     nx_atlas, ny_atlas, nz_atlas = labels[i_label, :, :, :].shape
     sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas), verbose)
 
-    #
-    ## if user selected labels of interest, then update tract list
-    #if not labels_of_interest == '':
-    #    labels = labels[label_id, :, :, :]
+    # if user selected vertebral levels, then update variable slices_of_interest (i.e., zmin, zmax)
+    # TODO: function here
 
     # select slice of interest by cropping data and atlas
     # if not slices_of_interest == '':
-        # TODO
+        # TODO: crop data and label in z direction. Keep same variable name.
+        # use function-- data = remove_slices(data, slices_of_interest)
+        # use function-- labels = remove_slices(labels, slices_of_interest)
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
@@ -233,18 +231,8 @@ def main():
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
 def read_label_file(path_label):
-    # TODO
 
-
-
-    # Save path of each labels
-    #fname_tract = glob.glob(path_atlas + '/*.nii.gz')
-
-    # TODO
-    # Check if labels exist in folder
-    #if len(fname_tract) == 0:
-    #    print '\nERROR: There are not labels in this folder. Exit program.\n'
-    #    sys.exit(2)
+    # TODO Simon: check if file_info_label exist. If not, ERROR
 
     # file name of info_label.txt
     fname_label = path_label+param.file_info_label
@@ -275,63 +263,12 @@ def read_label_file(path_label):
         label_name.append(line[1])
         label_file.append(line[2][:-1].replace(" ", ""))
 
+    # TODO Simon: check if all files listed are present in folder. If not, WARNING.
+
     # Close file.txt
     f.close()
 
-    # check if files exist
-    # TODO
-    #
-    ## Check if file contain data
-    #if len(lines) == 0:
-    #    print '\nWARNING: File txt is empty. File list.txt will be create in folder. \n'
-    #
-    ## Initialisation of label number
-    #label_num = [[]] * len(lines)
-    #
-    ## Initialisation of label name
-    #label_name = [[]] * len(lines)
-    #
-    ## Extract of label title, label name and label number
-    #for k in range(0, len(lines)):
-    #
-    #    # Check if file.txt contains ":" because it is necessary for split label name to label number
-    #    if not ':' in lines[k]:
-    #        print '\nERROR: File txt is not in correct form. File list.txt must be in this form :\n'
-    #        print '\t\tTitle : Name of labels'
-    #        print '\t\tLabel 0 : Name Label 0'
-    #        print '\t\tLabel 1 : Name Label 1'
-    #        print '\t\tLabel 2 : Name Label 2'
-    #        print '\t\t...\n '
-    #        print '\t\tExample of file.txt'
-    #        print '\t\tTitle : List of labels names for the white matter atlas'
-    #        print '\t\tLabel 0 : left fasciculus gracilis'
-    #        print '\t\tLabel 1 : left fasciculus cuneatus'
-    #        print '\t\tLabel 2 : left lateral corticospinal tract'
-    #        print '\nExit program. \n'
-    #        sys.exit(2)
-    #
-    #    # Split label name to label number without "['" (begin) and "']" (end) (so 2 to end-2)
-    #    else:
-    #        [label_num[k],label_name[k]] = lines[k].split(':')
-    #        label_name[k] = str(label_name[k].splitlines())[2:-2]
-    #
-    ## Extract label title as the first line in file.txt
-    #label_title = label_name[0]
-    #
-    ## Extract label name from the following lines
-    #label_name = label_name[1:]
-    #
-    ## Extract label number from the following lines
-    #label_num = str(label_num[1:])
-    #label_num = [int(x.group()) for x in re.finditer(r'\d+',label_num)]
-    #
-    ## Check corresponding between label name and tract file
-    #if label_num != range(0, len(fname_tract)):
-    #    print '\nERROR: File txt and labels are not corresponding. Change file txt or labels .nii.gz. Exit program. \n'
-    #    sys.exit(2)
-
     return [label_id, label_name, label_file]
-
 
 
 
@@ -393,119 +330,6 @@ def check_labels(labels_of_interest, nb_labels):
         nb = range(0, nb_labels)
 
     return nb
-
-
-#=======================================================================================================================
-# Read file of tract names and extract names and labels
-#=======================================================================================================================
-#def read_name(path_atlas):
-#
-#    # Check if labels folder exist
-#    if not os.path.isdir(path_atlas):
-#        print('\nERROR: ' + path_atlas + ' does not exist. Exit program.\n')
-#        sys.exit(2)
-#
-#    # Save path of each labels
-#    fname_tract = glob.glob(path_atlas + '/*.nii.gz')
-#
-#    # Check if labels exist in folder
-#    if len(fname_tract) == 0:
-#        print '\nERROR: There are not labels in this folder. Exit program.\n'
-#        sys.exit(2)
-#
-#    # Save path of file list.txt
-#    fname_list = glob.glob(path_atlas + '/*.txt')
-#
-#    # Check if labels list.txt exist in folder
-#    if len(fname_list) == 0:
-#        print '\nWARNING: There are no file txt in this folder. File list.txt will be create in folder \n'
-#
-#    # Check if labels list.txt is only txt in folder
-#    if len(fname_list) > 1:
-#        print '\nWARNING: There are more than one file txt in this folder. File list.txt will be create in folder \n'
-#
-#    # Create list.txt default in list.txt in case there are not file or file is not define correctly
-#    if len(fname_list) == 0 or len(fname_list) > 1:
-#
-#        # New file list : list.txt
-#        fname_list = path_atlas + '/list.txt'
-#
-#        # Write mode
-#        fid_list = open(fname_list, 'w')
-#
-#        # Write "Title : Name of labels" by default
-#        fid_list.write('%s : %s\n' % ('Title', 'Name of labels'))
-#
-#        # Write "Label XX : Label XX" by default for "XX" tract number
-#        for j in range(0, len(fname_tract)):
-#            fid_list.write('%s %i : %s %i\n' % ('Label', j, 'Label', j))
-#
-#        # Close file txt
-#        fid_list.close()
-#
-#    # Take the value of string instead of array string
-#    else:
-#        fname_list = fname_list[0]
-#
-#    # Read file list.txt
-#    f = open(fname_list)
-#
-#    # Extract all lines in file.txt
-#    lines = [lines for lines in f.readlines() if lines.strip()]
-#
-#    # Close file.txt
-#    f.close()
-#
-#    # Check if file contain data
-#    if len(lines) == 0:
-#        print '\nWARNING: File txt is empty. File list.txt will be create in folder. \n'
-#
-#    # Initialisation of label number
-#    label_num = [[]] * len(lines)
-#
-#    # Initialisation of label name
-#    label_name = [[]] * len(lines)
-#
-#    # Extract of label title, label name and label number
-#    for k in range(0, len(lines)):
-#
-#        # Check if file.txt contains ":" because it is necessary for split label name to label number
-#        if not ':' in lines[k]:
-#            print '\nERROR: File txt is not in correct form. File list.txt must be in this form :\n'
-#            print '\t\tTitle : Name of labels'
-#            print '\t\tLabel 0 : Name Label 0'
-#            print '\t\tLabel 1 : Name Label 1'
-#            print '\t\tLabel 2 : Name Label 2'
-#            print '\t\t...\n '
-#            print '\t\tExample of file.txt'
-#            print '\t\tTitle : List of labels names for the white matter atlas'
-#            print '\t\tLabel 0 : left fasciculus gracilis'
-#            print '\t\tLabel 1 : left fasciculus cuneatus'
-#            print '\t\tLabel 2 : left lateral corticospinal tract'
-#            print '\nExit program. \n'
-#            sys.exit(2)
-#
-#        # Split label name to label number without "['" (begin) and "']" (end) (so 2 to end-2)
-#        else:
-#            [label_num[k],label_name[k]] = lines[k].split(':')
-#            label_name[k] = str(label_name[k].splitlines())[2:-2]
-#
-#    # Extract label title as the first line in file.txt
-#    label_title = label_name[0]
-#
-#    # Extract label name from the following lines
-#    label_name = label_name[1:]
-#
-#    # Extract label number from the following lines
-#    label_num = str(label_num[1:])
-#    label_num = [int(x.group()) for x in re.finditer(r'\d+',label_num)]
-#
-#    # Check corresponding between label name and tract file
-#    if label_num != range(0, len(fname_tract)):
-#        print '\nERROR: File txt and labels are not corresponding. Change file txt or labels .nii.gz. Exit program. \n'
-#        sys.exit(2)
-#
-#    return [label_title, label_name, label_num, fname_tract]
 
 
 
@@ -577,7 +401,7 @@ def extract_metric_within_tract(data, labels, method):
 # usage
 #=======================================================================================================================
 # TODO: read default path label and display it
-    # TODO
+    # TODO Simon
     #"""
     #for label in range(0,len(label_num)):
     #    print '\t ' + str(label_num[label]) + '\t - ' + label_name[label]
