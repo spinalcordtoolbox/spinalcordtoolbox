@@ -142,7 +142,7 @@ def main():
     # Extract data path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # Check existence of path_label
+    # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
     folder_label = sct.slash_at_the_end(folder_label, 1)
     #if not os.path.isdir(path_label):
