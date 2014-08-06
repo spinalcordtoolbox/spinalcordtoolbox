@@ -125,6 +125,7 @@ def main():
     sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -R '+fname_src+' '+fname_transfo, verbose)
     sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
     sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
+    sct.run('WarpImageMultiTransform 3 '+path_sct+'data/template/MNI-Poly-AMU_cord.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_cord.nii.gz -R '+fname_src+' --use-NN '+fname_transfo, verbose)
     sct.run('cp '+path_sct+'data/'+folder_template+file_info_label+' '+folder_out+folder_template)
 
     # Warp atlas
