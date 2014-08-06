@@ -90,10 +90,6 @@ def main():
         method = 'wa'
         labels_of_interest = '0, 2'
         average_all_labels = 0
-        # label_number = '2,6'
-        output_choice = 1
-        slice_choice = 1
-        slice_number = '1'
         fname_output = 'results.txt'
 
 #    label_id, label_name, label_file = read_label_file(path_atlas+folder_label)
@@ -230,25 +226,16 @@ def main():
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_label):
-
-    # TODO Simon: check if file_info_label exist. If not, ERROR
+def read_label_file(path_info_label):
 
     # file name of info_label.txt
-    fname_label = path_label+param.file_info_label
+    fname_label = path_info_label+param.file_info_label
 
     # Check info_label.txt existence
-    #if len(fname_list) == 0:
-    #    print '\nWARNING: There are no file txt in this folder. File list.txt will be create in folder \n'
     sct.check_file_exist(fname_label)
-
-    # Check if labels list.txt is only txt in folder
-    #if len(fname_list) > 1:
-    #    print '\nWARNING: There are more than one file txt in this folder. File list.txt will be create in folder \n'
 
     # Read file
     f = open(fname_label)
-#    nb = list(set([int(x) for x in labels_of_interest.split(",")]))
 
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
@@ -263,7 +250,15 @@ def read_label_file(path_label):
         label_name.append(line[1])
         label_file.append(line[2][:-1].replace(" ", ""))
 
-    # TODO Simon: check if all files listed are present in folder. If not, WARNING.
+    # check if all files listed are present in folder. If not, WARNING.
+    print 'Check if all files listed in '+param.file_info_label+' are indeed present in +'+path_info_label+' ...\n'
+    for fname in label_file:
+        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or os.path.isfile(path_info_label+fname + '.nii.gz'):
+            print('  OK: '+path_info_label+fname)
+            pass
+        else:
+            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
+
 
     # Close file.txt
     f.close()
@@ -408,6 +403,12 @@ def extract_metric_within_tract(data, labels, method):
     #
     #print """
 def usage():
+
+    # read the .txt files referencing the labels by default
+    default_info_label = open(param.path_label+'/'+param.folder_label+'/'+param.file_info_label, 'r')
+    label_reference = default_info_label.read()
+
+    # display help
     print """
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -420,11 +421,11 @@ DESCRIPTION
   - wa: weighted average (robust and accurate)
   - ml: maximum likelihood (best if >10 slices and low noise)
   - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. By default, the atlas of
-  the MNI-Poly-AMU template is used:
+  The atlas is located in a folder and all labels are defined by .txt file. The label used by default is the template:
 
-  label_title:
-  Label - Tract
+Label ID, label name, corresponding file name
+
+"""+label_reference+"""
 
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -t <path_label>
@@ -449,7 +450,7 @@ OPTIONAL ARGUMENTS
 EXAMPLE
   """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
 
-    #Exit Program
+    #Exit program
     sys.exit(2)
 
 
