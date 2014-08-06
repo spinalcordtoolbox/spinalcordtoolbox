@@ -429,14 +429,14 @@ switch (sct.dmri.crop.method)
             
             if isempty(X)
                 param.interval = floor(sct.dmri.nz/3);
-                param.b0 = file_data_1;
-                centerline_coords = sct_get_centerline(param);
+                param.img = file_data_1;
+                centerline = sct_get_centerline(param);
                 
                 if sct.dmri.crop.margin < 3, margin=15; else margin = sct.dmri.crop.margin; end % crop size around centerline
-                minX = min(centerline_coords(:,1))- margin;
-                maxX = max(centerline_coords(:,1))+ margin;
-                minY = min(centerline_coords(:,2))- margin;
-                maxY = max(centerline_coords(:,2))+ margin;
+                minX = min(centerline(:,1))- margin;
+                maxX = max(centerline(:,1))+ margin;
+                minY = min(centerline(:,2))- margin;
+                maxY = max(centerline(:,2))+ margin;
                 minZ = 1;
                 maxZ = sct.dmri.nz;
             else
@@ -455,7 +455,7 @@ switch (sct.dmri.crop.method)
             
         else
             param.interval = floor(sct.dmri.nz/3);
-            param.b0 = file_data_1;
+            param.img = file_data_1;
             centerline = sct_get_centerline(param);
             
             if sct.dmri.crop.margin < 3, margin=15; else margin = sct.dmri.crop.margin; end % crop size around centerline
@@ -475,6 +475,10 @@ switch (sct.dmri.crop.method)
         % save box coordonates
         save([sct.output_path 'tmp.dmri.crop_box.mat'],'minX','maxX','minY','maxY','minZ','maxZ');
         j_disp(sct.log,['... File created: ','tmp.dmri.crop_box.mat'])
+        
+        % compute centerline_crop
+        centerline(:,1)=centerline(:,1)-minX;
+        centerline(:,2)=centerline(:,2)-minY;
         
         % perform cropping with whole spine min/max postions
         cmd = [fsloutput,'fslroi ',fname_data,' ',fname_datacrop,' ',num2str(minX),' ',num2str(maxX-minX),' ',num2str(minY),' ',num2str(maxY-minY),' ',num2str(minZ),' ',num2str(maxZ-minZ)];
@@ -1109,6 +1113,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         param.index = sct.dmri.index_b0; % correct b0 only
         param.fname_log = sct.log;
         param.suffix = sct.dmri.suffix_moco;
+        param.centerline=centerline;
         
         j_mri_moco_v8(param);
         save([sct.output_path 'workspace.mat'])
@@ -1260,6 +1265,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         param.index = sct.dmri.index_b0; % correct volumes of b0 group
         param.fname_log = sct.log;
         param.suffix = sct.dmri.suffix_moco;
+        param.centerline=centerline;
         
         j_mri_moco_v8(param);
         
