@@ -121,7 +121,7 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     # if (i) output path is not local and (ii) output file already exists in nii or nii.gz format, delete it and move file
-    if not path_out == '':
+    if not path_out == '' and not path_in == path_out:
         if os.path.isfile(path_out+file_out+'.nii'):
             os.system('rm '+path_out+file_out+'.nii')
         if os.path.isfile(path_out+file_out+'.nii.gz'):
