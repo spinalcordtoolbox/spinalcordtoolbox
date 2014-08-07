@@ -173,9 +173,7 @@ def main():
     nx_atlas, ny_atlas, nz_atlas = labels[i_label, :, :, :].shape
     sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas), verbose)
 
-    # if user selected vertebral levels, then update variable slices_of_interest (i.e., zmin, zmax)
-    # TODO: function here
-
+    # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels != '':
         if slices_of_interest != '':
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
