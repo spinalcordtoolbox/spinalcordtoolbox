@@ -12,8 +12,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: print label name in txt file
-
 # Import common Python libraries
 import os
 import getopt
@@ -37,15 +35,14 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
-        self.path_label = path_sct+'/data'  # default is toolbox
-        self.folder_label = 'template'  # default is template (WM, GM, CSF...)
+        self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
+        self.slices_of_interest = '2:4'  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'metrics.txt'
+        self.fname_output = 'quantif_metrics.txt'
         self.file_info_label = 'info_label.txt'
         # # by default, labels choice is deactivated and program use all labels
         #self.label_choice = 0
@@ -65,7 +62,6 @@ def main():
     # Initialization to defaults parameters
     fname_data = '' # data is empty by default
     path_label = param.path_label
-    folder_label = param.folder_label
     method = param.method # extraction mode by default
     labels_of_interest = param.labels_of_interest
     slices_of_interest = param.slices_of_interest
@@ -85,18 +81,16 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/data/errsm_23/label'
-        folder_label = 'atlas'
+        path_label = path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '0, 2'
         average_all_labels = 0
         fname_output = 'results.txt'
 
-#    label_id, label_name, label_file = read_label_file(path_atlas+folder_label)
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:o:t:v:z:') # define flags
+        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:o:v:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
@@ -104,7 +98,7 @@ def main():
         if opt in '-a':
             average_all_labels = 1
         elif opt in '-f':
-            folder_label = arg
+            path_label = os.path.abspath(arg)  # save path of labels folder
         elif opt == '-h': # help option
             usage() # display usage
         elif opt in '-i':
@@ -115,13 +109,10 @@ def main():
             method = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        elif opt in '-t':
-            path_label = os.path.abspath(arg)  # save path of labels folder
         # elif opt in '-v': # vertebral levels option, if the user wants to average the metric accross specific vertebral levels
         #     vertebral_levels = arg
         elif opt in '-z': # slices numbers option
-            slice_choice = 1 # slice choice is activate
-            slice_number = arg # save labels numbers
+            slices_of_interest = arg # save labels numbers
 
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
@@ -138,7 +129,6 @@ def main():
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
-    folder_label = sct.slash_at_the_end(folder_label, 1)
     #if not os.path.isdir(path_label):
     #    print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
     #    sys.exit(2)
@@ -148,7 +138,7 @@ def main():
     check_method(method)
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label+folder_label)
+    label_id, label_name, label_file = read_label_file(path_label)
     nb_labels_total = len(label_id)
 
     ## update label_id given user input
@@ -163,7 +153,7 @@ def main():
     # print parameters
     print '\nCheck parameters:'
     print '  data ................... '+fname_data
-    print '  folder label ........... '+path_label+folder_label
+    print '  folder label ........... '+path_label
 
 
     # Load image
@@ -183,7 +173,7 @@ def main():
     sct.printv('\nLoad labels...', verbose)
     labels = np.empty([nb_labels, nx, ny, nz], dtype=object)  # labels(nb_labels, x, y, z)
     for i_label in range(0, nb_labels):
-        labels[i_label, :, :, :] = nib.load(path_label+folder_label+label_file[label_id[i_label]]).get_data()
+        labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
     sct.printv('  Done.', verbose)
 
     # Get dimensions of atlas
@@ -195,11 +185,10 @@ def main():
     # if user selected vertebral levels, then update variable slices_of_interest (i.e., zmin, zmax)
     # TODO: function here
 
-    # select slice of interest by cropping data and atlas
-    # if not slices_of_interest == '':
-        # TODO: crop data and label in z direction. Keep same variable name.
-        # use function-- data = remove_slices(data, slices_of_interest)
-        # use function-- labels = remove_slices(labels, slices_of_interest)
+    # select slice of interest by cropping data and labels
+    if not slices_of_interest == '':
+        data = remove_slices(data, slices_of_interest)
+        labels = remove_slices(labels, slices_of_interest)
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
@@ -216,7 +205,7 @@ def main():
 
     # save metrics
     if not fname_output == '':
-        save_metrics(label_id, metric_mean, metric_std, fname_output)
+        save_metrics(label_id, label_name, metric_mean, metric_std, fname_output)
 
     # end of main.
     print
@@ -266,11 +255,24 @@ def read_label_file(path_info_label):
     return [label_id, label_name, label_file]
 
 
+#=======================================================================================================================
+# Crop data to only keep the slices asked by user
+#=======================================================================================================================
+def remove_slices(data_to_crop, slices_of_interest):
+
+    # extract slice numbers
+    slices_list = [int(x) for x in slices_of_interest.split(':')] # 2-element list
+
+    # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
+    data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
+
+    return data_cropped
+
 
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, metric_mean, metric_std, fname_output):
+def save_metrics(ind_labels, label_name, metric_mean, metric_std, fname_output):
     print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
@@ -289,20 +291,22 @@ def save_metrics(ind_labels, metric_mean, metric_std, fname_output):
     fid_metric.write('%s,%s,%s\n' % ('Label', 'mean', 'std'))
     # Write metric for label chosen in file .txt
     for i in range(0, len(ind_labels)):
-        fid_metric.write('%i,%f,%f\n' % (ind_labels[i], metric_mean[i], metric_std[i]))
+        fid_metric.write('%i,%s,%f,%f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
 
     # Close file .txt
     fid_metric.close()
 
 
-
+#=======================================================================================================================
+# Check the consistency of the method asked by the user
 #=======================================================================================================================
 def check_method(method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
-
+#=======================================================================================================================
+# Check the consistency of the labels asked by the user
 #=======================================================================================================================
 def check_labels(labels_of_interest, nb_labels):
     nb = ''
@@ -329,7 +333,7 @@ def check_labels(labels_of_interest, nb_labels):
 
 
 #=======================================================================================================================
-# extract metric within labels
+# Extract metric within labels
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method):
 
@@ -393,20 +397,13 @@ def extract_metric_within_tract(data, labels, method):
 
 
 #=======================================================================================================================
-# usage
+# Usage
 #=======================================================================================================================
-# TODO: read default path label and display it
-    # TODO Simon
-    #"""
-    #for label in range(0,len(label_num)):
-    #    print '\t ' + str(label_num[label]) + '\t - ' + label_name[label]
-    #
-    #print """
 def usage():
 
     # read the .txt files referencing the labels by default
-    default_info_label = open(param.path_label+'/'+param.folder_label+'/'+param.file_info_label, 'r')
-    label_reference = default_info_label.read()
+    default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
+    label_references = default_info_label.read()
 
     # display help
     print """
@@ -425,7 +422,7 @@ DESCRIPTION
 
 Label ID, label name, corresponding file name
 
-"""+label_reference+"""
+"""+label_references+"""
 
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -t <path_label>
@@ -434,10 +431,8 @@ MANDATORY ARGUMENTS
   -i <volume>           file to extract metrics from
 
 OPTIONAL ARGUMENTS
-  -t <path_label>       path to the collection of label folders.
+  -f <path_label>       path to the folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
-  -f {atlas,template}   folder of label
-                        Default = """+param.folder_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
   -m <method>           ml (maximum likelihood), wa (weighted average), bin (binary)
   -a                    average all selected labels.
