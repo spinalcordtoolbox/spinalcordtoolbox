@@ -40,18 +40,11 @@ class param:
         self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
-        self.slices_of_interest = '2:4'  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
+        self.vertebral_levels = ''
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'quantif_metrics.txt'
         self.file_info_label = 'info_label.txt'
-        # # by default, labels choice is deactivated and program use all labels
-        #self.label_choice = 0
-        # # by defaults, the estimation is made accross all vertebral levels
-        # self.vertebral_levels = ''
-        # # by default, slices choice is desactivated and program use all slices
-        # self.slice_choice = 0
-        # # by default, program don't export data results in file .txt
-        # self.output_choice = 0
 
 
 
@@ -65,15 +58,10 @@ def main():
     method = param.method # extraction mode by default
     labels_of_interest = param.labels_of_interest
     slices_of_interest = param.slices_of_interest
+    vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    verbose = param.verbose
     file_info_label = param.file_info_label
-
-    # label_choice = param.label_choice # no select label by default
-    # vertebral_levels = param.vertebral_levels # no vertebral level selected by default
-    # slice_choice = param.slice_choice # no select label by default
-    # output_choice = param.output_choice # no select slice by default
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -81,11 +69,13 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/data/errsm_23/label/atlas'
+        path_label = path_sct+'/testing/sct_warp_template/results/label/template' #'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '0, 2'
+        slices_of_interest = '2:4'
+        vertebral_levels = ''#'1:3'
         average_all_labels = 0
-        fname_output = 'results.txt'
+        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
 
     # Check input parameters
@@ -109,10 +99,11 @@ def main():
             method = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        # elif opt in '-v': # vertebral levels option, if the user wants to average the metric accross specific vertebral levels
-        #     vertebral_levels = arg
+        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+             vertebral_levels = arg
         elif opt in '-z': # slices numbers option
             slices_of_interest = arg # save labels numbers
+
 
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
@@ -185,8 +176,15 @@ def main():
     # if user selected vertebral levels, then update variable slices_of_interest (i.e., zmin, zmax)
     # TODO: function here
 
+    if vertebral_levels != '':
+        if slices_of_interest != '':
+            print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
+            usage()
+        else:
+            slices_of_interest = get_slices_matching_with_vertebral_levels(data,vertebral_levels,path_label,label_name,label_file)
+
     # select slice of interest by cropping data and labels
-    if not slices_of_interest == '':
+    if slices_of_interest != '':
         data = remove_slices(data, slices_of_interest)
         labels = remove_slices(labels, slices_of_interest)
 
@@ -204,8 +202,11 @@ def main():
     print '\nEstimated metrics:\n'+str(metric_mean)
 
     # save metrics
-    if not fname_output == '':
-        save_metrics(label_id, label_name, metric_mean, metric_std, fname_output)
+    if fname_output != '':
+        save_metrics(label_id, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+
+    # Print elapsed time
+    print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
 
     # end of main.
     print
@@ -256,6 +257,87 @@ def read_label_file(path_info_label):
 
 
 #=======================================================================================================================
+# get_slices_matching_with_vertebral_levels
+#=======================================================================================================================
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,path_label, label_name, label_file):
+    """Return the slices of the input image corresponding to the vertebral levels given as argument."""
+
+    # check existence of a vertebral labeling file
+    fname_vertebral_labeling = path_label + label_file[label_name.index(' vertebral labeling')]
+    sct.check_file_exist(fname_vertebral_labeling)
+
+    # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
+
+    # If only one vertebral level was selected (n), consider as n:n
+    if len(vert_levels_list) == 1:
+        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
+
+    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
+    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
+        print '\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n'
+        sys.exit(2)
+
+    # Read files vertebral_labeling.nii.gz
+    print '\nRead files '+fname_vertebral_labeling+'...'
+
+    # Load the vertebral labeling file and get the data in array format
+    data_vert_labeling = nib.load(fname_vertebral_labeling).get_data()
+
+    # Extract metric data size X, Y, Z
+    [mx, my, mz] = metric_data.shape
+    # Extract vertebral labeling data size X, Y, Z
+    [vx, vy, vz] = data_vert_labeling.shape
+
+    # Initialisation of check error flag
+    exit_program = 0
+
+    # Check if sizes along X are the same
+    if mx != vx:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.'
+        exit_program = 1
+    # Check if sizes along Y are the same
+    if my != vy:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.'
+        exit_program = 1
+    # Check if sizes along Z are the same
+    if mz != vz:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
+        exit_program = 1
+
+    # Check if the vertebral levels selected are not available in the input image
+    if vert_levels_list[0] < int(np.ndarray.min(data_vert_labeling)) or vert_levels_list[1] > int(np.ndarray.max(data_vert_labeling)):
+        print '\tERROR: The vertebral levels you selected are not available in the input image.'
+        exit_program = 1
+
+    # Exit program if an error was detected
+    if exit_program == 1 :
+        print '\nExit program.\n'
+        sys.exit(2)
+
+
+    # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
+    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
+    # Record the bottom of slice of this level
+    slice_min_bottom = min(Z_bottom_level)
+
+    # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
+    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling==vert_levels_list[1]).nonzero()
+    # Record the top slice of this level
+    slice_max_top = max(Z_top_level)
+
+    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral level
+    if slice_min_bottom > slice_max_top:
+        slice_min = min(Z_top_level)
+        slice_max = max(Z_bottom_level)
+    else:
+        slice_min = min(Z_bottom_level)
+        slice_max = max(Z_top_level)
+
+    # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
+    return str(slice_min)+':'+str(slice_max)
+
+#=======================================================================================================================
 # Crop data to only keep the slices asked by user
 #=======================================================================================================================
 def remove_slices(data_to_crop, slices_of_interest):
@@ -272,20 +354,23 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, metric_mean, metric_std, fname_output):
+def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
     print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
 
     # Write selected vertebral levels
-    # if vertebral_levels != '':
-    #     fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
-    # else:
-    #     fid_metric.write('No vertebral level selected.\n\n')
+    if vertebral_levels != '':
+        fid_metric.write('%s\t%s to %s\n\n'% ('Vertebral levels : ', vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
+    else:
+        fid_metric.write('No vertebral level selected. Considered all vertebral levels.\n\n')
 
-    # # Write slices chosen
-    # fid_metric.write('%s\t%i to %i\n\n'% ('Slices : ',nb_slice[0],nb_slice[1]))
+    # # Write selected slices
+    if slices_of_interest != '':
+        fid_metric.write('%s\t%s to %s\n\n'% ('Slices : ', slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+    else:
+        fid_metric.write('No particular slice selected. Considered all slices.\n\n')
 
     # Write header title in file .txt
     fid_metric.write('%s,%s,%s\n' % ('Label', 'mean', 'std'))
