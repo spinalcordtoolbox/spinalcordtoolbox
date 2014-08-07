@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script tests sct_warp_atlas2metric.
+# This script tests sct_extract_metric.
 #
 
 # subject list
@@ -35,9 +35,9 @@ for subject in $SUBJECT_LIST; do
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_extract_metric.py
         -i ../../data/${subject}/${contrast}/${file}
-        -t ../../sct_warp_template/results/label
-		-f ${label_folder}
+        -f ../../sct_warp_template/results/label/template
         -m wa
+		-v 1:3
         -o quantif_${contrast}.txt"
     echo ==============================================================================================
     echo "$cmd"
