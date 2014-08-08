@@ -70,12 +70,12 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/sct_warp_template/results/label/atlas' #'/testing/data/errsm_23/label/atlas'
+        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'#fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = path_sct+'/data/atlas' #'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '2, 17'#'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '' #'2:4'
-        vertebral_levels = '1:3'
+        vertebral_levels = ''
         average_all_labels = 0
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
@@ -114,7 +114,7 @@ def main():
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck file existence...', verbose)
+    sct.printv('\nCheck data file existence...', verbose)
     sct.check_file_exist(fname_data)
 
     # add slash at the end
@@ -124,6 +124,8 @@ def main():
     if not os.path.isdir(path_label):
         print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
         sys.exit(2)
+    else:
+        print 'OK: '+path_label
 
     # Check input parameters
     check_method(method)
@@ -167,7 +169,7 @@ def main():
     sct.printv('\nLoad labels...', verbose)
     labels = np.empty([nb_labels_total, nx, ny, nz], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
-        labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()to simplify (if it stays like that) by: labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data()
+        labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
     sct.printv('  Done.', verbose)
 
     # Get dimensions of atlas
@@ -253,14 +255,21 @@ def read_label_file(path_info_label):
     label_id = []
     label_name = []
     label_file = []
-    for i in range(0, len(lines)):
+    for i in range(0, len(lines)-1):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
-        label_file.append(line[2][:-1].strip()) #replace(" ", ""))
+        label_file.append(line[2][:-1].strip()) #replace(" ", "").replace("\r", ""))
+    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code lines enable to avoid this error:
+    line = lines[-1].split(',')
+    label_id.append(int(line[0]))
+    label_name.append(line[1])
+    line[2]=line[2]+' '
+    label_file.append(line[2].strip())
+
 
     # check if all files listed are present in folder. If not, WARNING.
-    print 'Check if all files listed in '+param.file_info_label+' are indeed present in +'+path_info_label+' ...\n'
+    print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or os.path.isfile(path_info_label+fname + '.nii.gz'):
             print('  OK: '+path_info_label+fname)
