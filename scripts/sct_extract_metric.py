@@ -35,7 +35,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.method = 'wa'
         self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
@@ -69,11 +69,11 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/sct_warp_template/results/label/template' #'/testing/data/errsm_23/label/atlas'
+        path_label = path_sct+'/testing/sct_warp_template/results/label/atlas' #'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0, 2'
-        slices_of_interest = '2:4'
-        vertebral_levels = ''#'1:3'
+        labels_of_interest = ''#'0, 2, 3, 4'#'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = '' #'2:4'
+        vertebral_levels = '1:3'
         average_all_labels = 0
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
@@ -115,15 +115,12 @@ def main():
     sct.printv('\nCheck file existence...', verbose)
     sct.check_file_exist(fname_data)
 
-    # Extract data path/file/extension
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
+    # TODO: check existence of path_label
     #if not os.path.isdir(path_label):
     #    print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
     #    sys.exit(2)
-    # TODO
 
     # Check input parameters
     check_method(method)
@@ -132,20 +129,16 @@ def main():
     label_id, label_name, label_file = read_label_file(path_label)
     nb_labels_total = len(label_id)
 
-    ## update label_id given user input
-    #if label_choice == 0:
-    #    nb_labels = range(0, nb_labels_total)
-
-    # check consistency of label input parameter
+    # check consistency of label input parameter.
+    # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
     # TODO: test this
-    label_id = check_labels(labels_of_interest, nb_labels_total)
-    nb_labels = len(label_id)
+    label_id_user = check_labels(labels_of_interest, nb_labels_total)
+    #nb_labels_user = len(label_id_user)
 
     # print parameters
     print '\nCheck parameters:'
     print '  data ................... '+fname_data
     print '  folder label ........... '+path_label
-
 
     # Load image
     sct.printv('\nLoad image...', verbose)
@@ -162,9 +155,9 @@ def main():
 
     # load label
     sct.printv('\nLoad labels...', verbose)
-    labels = np.empty([nb_labels, nx, ny, nz], dtype=object)  # labels(nb_labels, x, y, z)
-    for i_label in range(0, nb_labels):
-        labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
+    labels = np.empty([nb_labels_total, nx, ny, nz], dtype=object)  # labels(nb_labels_total, x, y, z)
+    for i_label in range(0, nb_labels_total):
+        labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data() # to simplify (if it stays like that) by: labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data()
     sct.printv('  Done.', verbose)
 
     # Get dimensions of atlas
@@ -188,20 +181,34 @@ def main():
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
-        labels = np.sum(labels, axis=0)
+        if method == 'ml': # in case the maximum likelihood and the average across different labels are wanted
+            sum_labels_user = np.sum(labels[label_id_user, :, :, :], axis=0) # sum the labels selected by user
+            labels = np.delete(labels,label_id_user,axis=0) # remove the labels selected by user
+            labels = np.insert(labels,0,sum_labels_user,axis=0) # insert the previously computed sum in first position
+        else:
+            labels = np.sum(labels[label_id_user, :, :, :], axis=0)
         # TODO: instead of 0, make it clear for the user that all labels are concatenated
-        label_id = [0]
+        label_id_user = [0]
 
     # extract metrics within labels
     # labels can be 3d or 4d
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
+
+    # only keep tracts of interest
+    if average_all_labels == 1:
+        if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
+            metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
+            metric_std = metric_std [0] # idem
+    else:
+            metric_mean = metric_mean[label_id_user]
+            metric_std = metric_std[label_id_user]
 
     # display metrics
     print '\nEstimated metrics:\n'+str(metric_mean)
 
     # save metrics
     if fname_output != '':
-        save_metrics(label_id, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+        save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -236,7 +243,7 @@ def read_label_file(path_info_label):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
-        label_file.append(line[2][:-1].replace(" ", ""))
+        label_file.append(line[2][:-1].strip()) #replace(" ", ""))
 
     # check if all files listed are present in folder. If not, WARNING.
     print 'Check if all files listed in '+param.file_info_label+' are indeed present in +'+path_info_label+' ...\n'
