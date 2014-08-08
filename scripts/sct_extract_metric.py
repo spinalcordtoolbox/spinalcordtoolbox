@@ -45,6 +45,7 @@ class param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'quantif_metrics.txt'
         self.file_info_label = 'info_label.txt'
+        self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
 
 
 
@@ -62,6 +63,7 @@ def main():
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
     file_info_label = param.file_info_label
+    vertebral_labeling_path = param.vertebral_labeling_file
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -172,7 +174,9 @@ def main():
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
             usage()
         else:
-            slices_of_interest = get_slices_matching_with_vertebral_levels(data,vertebral_levels,path_label,label_name,label_file)
+            if path_label.endswith('atlas/'):
+                vertebral_labeling_path=path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+            slices_of_interest = get_slices_matching_with_vertebral_levels(data,vertebral_levels,vertebral_labeling_path)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
@@ -264,12 +268,11 @@ def read_label_file(path_info_label):
 #=======================================================================================================================
 # get_slices_matching_with_vertebral_levels
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,path_label, label_name, label_file):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vertebral_labeling_path):
     """Return the slices of the input image corresponding to the vertebral levels given as argument."""
 
     # check existence of a vertebral labeling file
-    fname_vertebral_labeling = path_label + label_file[label_name.index(' vertebral labeling')]
-    sct.check_file_exist(fname_vertebral_labeling)
+    sct.check_file_exist(vertebral_labeling_path)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -284,10 +287,10 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,path
         sys.exit(2)
 
     # Read files vertebral_labeling.nii.gz
-    print '\nRead files '+fname_vertebral_labeling+'...'
+    print '\nRead files '+vertebral_labeling_path+'...'
 
     # Load the vertebral labeling file and get the data in array format
-    data_vert_labeling = nib.load(fname_vertebral_labeling).get_data()
+    data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
 
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
