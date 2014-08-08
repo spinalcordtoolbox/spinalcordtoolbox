@@ -35,7 +35,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
         self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
@@ -73,7 +73,7 @@ def main():
         fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
         path_label = path_sct+'/testing/sct_warp_template/results/label/atlas' #'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = ''#'0, 2, 3, 4'#'0, 2, 5, 7, 15, 22, 27, 29'
+        labels_of_interest = '2, 17'#'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '' #'2:4'
         vertebral_levels = '1:3'
         average_all_labels = 0
@@ -119,10 +119,11 @@ def main():
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
-    # TODO: check existence of path_label
-    #if not os.path.isdir(path_label):
-    #    print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
-    #    sys.exit(2)
+
+    # Check existence of path_label
+    if not os.path.isdir(path_label):
+        print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
+        sys.exit(2)
 
     # Check input parameters
     check_method(method)
@@ -132,15 +133,22 @@ def main():
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
-    # TODO: test this
-    label_id_user = check_labels(labels_of_interest, nb_labels_total)
-    #nb_labels_user = len(label_id_user)
+    label_id_user = check_labels(labels_of_interest, nb_labels_total) # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
-    print '\nCheck parameters:'
+    print '\nChecked parameters:'
     print '  data ................... '+fname_data
     print '  folder label ........... '+path_label
+    print '  selected labels ........ '+str(label_id_user)
+    print '  estimation method ...... '+method
+    if vertebral_levels !='':
+         print '  vertebral levels ....... '+vertebral_levels
+    else:
+         print '  no vertebral level selected.'
+    if slices_of_interest !='':
+         print '  slices of interest ..... '+slices_of_interest
+    else:
+         print '  no particular slices selected.'
 
     # Load image
     sct.printv('\nLoad image...', verbose)
@@ -159,7 +167,7 @@ def main():
     sct.printv('\nLoad labels...', verbose)
     labels = np.empty([nb_labels_total, nx, ny, nz], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
-        labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data() # to simplify (if it stays like that) by: labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data()
+        labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()to simplify (if it stays like that) by: labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data()
     sct.printv('  Done.', verbose)
 
     # Get dimensions of atlas
@@ -208,11 +216,13 @@ def main():
             metric_std = metric_std[label_id_user]
 
     # display metrics
-    print '\nEstimated metrics:\n'+str(metric_mean)
+    print '\033[1m\nEstimation results:\n'
+    for i in range(0,len(metric_mean)):
+        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i][0])+\
+              '  ['+str(metric_std[i][0])+']'+'\033[0m'
 
-    # save metrics
-    if fname_output != '':
-        save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+    # save and display metrics
+    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -363,6 +373,8 @@ def remove_slices(data_to_crop, slices_of_interest):
 # Save in txt file
 #=======================================================================================================================
 def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
+
+    # Save metric in a .txt file
     print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
@@ -381,13 +393,19 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
         fid_metric.write('No particular slice selected. Considered all slices.\n\n')
 
     # Write header title in file .txt
-    fid_metric.write('%s,%s,%s\n' % ('Label', 'mean', 'std'))
+    fid_metric.write('%s,%s,%s\n' % ('Label', ' mean', ' std'))
     # Write metric for label chosen in file .txt
     for i in range(0, len(ind_labels)):
-        fid_metric.write('%i,%s,%f,%f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
+        fid_metric.write('%i , %s, %f, %f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
 
     # Close file .txt
     fid_metric.close()
+
+    # Display results
+    #print '\nEstimation results:\n'
+    #result_file = open(fname_output)
+    #terminal_display = result_file.read()
+    #print terminal_display
 
 
 #=======================================================================================================================
@@ -402,26 +420,29 @@ def check_method(method):
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
 def check_labels(labels_of_interest, nb_labels):
-    nb = ''
+
+    # by default, all labels are selected
+    list_label_id = range(0, nb_labels)
+
     # only specific labels are selected
-    if not labels_of_interest == '':
+    if labels_of_interest != '':
         # Check if label chosen is in format : 0,1,2,..
         for char in labels_of_interest:
             if not char in '0123456789, ':
                 print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
                 sys.exit(2)
-        # Remove redundant values of label chosen and convert in integer
-        nb = list(set([int(x) for x in labels_of_interest.split(",")]))
-        # Check if label chosen correspond to a tract
-        for num in nb:
-            if not num in range(0, nb_labels):
-                print '\nERROR: "' + str(num) + '" is not a correct tract label. Enter valid number. Exit program.\n'
-                sys.exit(2)
-    # all labels are selected
-    else:
-        nb = range(0, nb_labels)
 
-    return nb
+        # Remove redundant values of label chosen and convert in integer
+        list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
+        list_label_id.sort()
+
+        # Check if label chosen correspond to a label
+        for num in list_label_id:
+            if not num in range(0, nb_labels):
+                print '\nERROR: "' + str(num) + '" is not a correct label. Enter valid number. Exit program.\n'
+                sys.exit(2)
+
+    return list_label_id
 
 
 
