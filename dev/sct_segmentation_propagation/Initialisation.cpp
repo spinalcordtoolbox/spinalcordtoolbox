@@ -131,10 +131,7 @@ void Initialisation::setInputImage(ImageType::Pointer image)
 
 
 bool Initialisation::computeInitialParameters(float startFactor)
-{
-	// Cropping images by search for spinal cord by symetric correlation
-	//int indexCenter = symetricCorrelation();
-    
+{  
 	// Test Hough Transform for Circles Detection in axial images using ITK
 	ImageType::SizeType desiredSize = inputImage_->GetLargestPossibleRegion().GetSize();
 	float startZ;
@@ -150,11 +147,11 @@ bool Initialisation::computeInitialParameters(float startFactor)
     }
 	else startZ = startSlice_;
 
-	 // Change radius depending of the image spacing to provide a radius in pixels - use average spacing of axial slice
+	// Change radius depending of the image spacing to provide a radius in pixels - use average spacing of axial slice
     ImageType::SpacingType spacing = inputImage_->GetSpacing();
     radius_ = radius_/((spacing[0]+spacing[2])/2);
 
-	if ((int)gap_ % (int)round(spacing[1]) != 0)
+	if (round(spacing[1]) != 0 && (int)gap_ % (int)round(spacing[1]) != 0)
 	{
 		gap_ = spacing[1];
 	}
