@@ -34,7 +34,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.method = 'wa'
         self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
@@ -75,7 +75,7 @@ def main():
         labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '2:10' #'2:4'
         vertebral_levels = ''
-        average_all_labels = 0
+        average_all_labels = 1
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
 
