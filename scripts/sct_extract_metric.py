@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Extract metrics within spinal labels as defined by the white matter atlas.
-# The folder atlas should have a txt file that lists all tract files with labels.
+# Extract metrics within spinal labels as defined by the white matter atlas and the
+# template
+# The folder atlas should have a .txt file that lists all tract files with labels.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -17,11 +18,8 @@ import os
 import getopt
 import sys
 import time
-import glob
-import re
 import commands
 import nibabel as nib
-import sct_utils as sct
 import numpy as np
 import sct_utils as sct
 
@@ -71,10 +69,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        #fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
-        #path_label = path_sct+'/testing/data/errsm_23/label/atlas'
-        path_label = path_sct+'/data/atlas'
+        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '2:10' #'2:4'
@@ -159,12 +155,8 @@ def main():
     nx, ny, nz = data.shape
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
-    # TODO: check consistency of size between atlas and data
-    # open one atlas file and check nx, ny and nz
-
     # load label
     sct.printv('\nLoad labels...', verbose)
-#    labels = np.empty([nb_labels_total, nx, ny, nz], dtype=float)  # labels(nb_labels_total, x, y, z)
     labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
         labels[i_label] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
@@ -174,7 +166,11 @@ def main():
     sct.printv('\nGet dimensions of label...', verbose)
     nx_atlas, ny_atlas, nz_atlas = labels[0].shape
     sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_labels_total), verbose)
-    # TODO: no need to do that if size consistency check is done before
+
+    # Check dimensions consistency between atlas and data
+    if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
+        print '\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.'
+        sys.exit(2)
 
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels != '':
@@ -391,29 +387,41 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
 
+    # TODO: add file data
+    # TODO: add method
+
+    # CSV format, header lines start with "#"
+
     # Save metric in a .txt file
     print '\nWrite results in ' + fname_output + ' ...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
 
+    # WRITE HEADER:
+    # TODO: add date and time
+
     # Write selected vertebral levels
     if vertebral_levels != '':
-        fid_metric.write('%s\t%s to %s\n\n'% ('Vertebral levels : ', vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
+        fid_metric.write('%s\t%s to %s\n'% ('# Vertebral levels: ', vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
     else:
-        fid_metric.write('No vertebral level selected. Considered all vertebral levels.\n\n')
+        fid_metric.write('# Vertebral levels: ALL\n')
 
-    # # Write selected slices
+    # Write selected slices
     if slices_of_interest != '':
-        fid_metric.write('%s\t%s to %s\n\n'% ('Slices : ', slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+        fid_metric.write('%s\t%s to %s\n'% ('# Slices: ', slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
     else:
-        fid_metric.write('No particular slice selected. Considered all slices.\n\n')
+        fid_metric.write('# Slices: ALL\n')
 
-    # Write header title in file .txt
-    fid_metric.write('%s,%s,%s\n' % ('Label', ' mean', ' std'))
+    # label info
+    fid_metric.write('%s\n' % ('# ID, label name, mean, std'))
+
+    # WRITE RESULTS
+    fid_metric.write('\n')
+
     # Write metric for label chosen in file .txt
     for i in range(0, len(ind_labels)):
-        fid_metric.write('%i , %s, %f, %f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
+        fid_metric.write('%i, %s, %f, %f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
 
     # Close file .txt
     fid_metric.close()
