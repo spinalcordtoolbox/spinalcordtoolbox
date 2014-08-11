@@ -557,9 +557,10 @@ def extract_metric_within_tract(data, labels, method):
 #=======================================================================================================================
 def usage():
 
-    # TODO: check if file exists
-    # read the .txt files referencing the labels by default
-    default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
+    # read the .txt files referencing the labels
+    file_label = param.path_label+'/'+param.file_info_label
+    sct.check_file_exist(file_label, 0)
+    default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
 
     # display help
