@@ -1,3 +1,31 @@
 0, left fasciculus gracilis, vol0000.nii.gz
 1, left fasciculus cuneatus, vol0001.nii.gz
 2, left lateral corticospinal tract, vol0002.nii.gz
+3, left ventral spinocerebellar tract, vol0003.nii.gz
+4, left rubrospinal tract, vol0004.nii.gz
+5, left lateral reticulospinal tract, vol0005.nii.gz
+6, left spinal lemniscus (spinothalamic and spinoreticular tracts), vol0006.nii.gz
+7, left spino-olivary tract, vol0007.nii.gz
+8, left ventrolateral reticulospinal tract, vol0008.nii.gz
+9, left lateral vestibulospinal tract, vol0009.nii.gz
+10, left ventral reticulospinal tract, vol0010.nii.gz
+11, left ventral corticospinal tract, vol0011.nii.gz
+12, left tectospinal tract, vol0012.nii.gz
+13, left medial reticulospinal tract, vol0013.nii.gz
+14, left medial longitudinal fasciculus, vol0014.nii.gz
+
+15, right  asciculus gracilis, vol0015.nii.gz
+16, right fasciculus cuneatus, vol0016.nii.gz
+17, right lateral corticospinal tract, vol0017.nii.gz
+18, right ventral spinocerebellar tract, vol0018.nii.gz
+19, right rubrospinal tract, vol0019.nii.gz
+20, right lateral reticulospinal tract, vol0020.nii.gz
+21, right spinal lemniscus (spinothalamic and spinoreticular tracts), vol0021.nii.gz
+22, right spino-olivary tract, vol0022.nii.gz
+23, right ventrolateral reticulospinal tract, vol0023.nii.gz
+24, right lateral vestibulospinal tract, vol0024.nii.gz
+25, right ventral reticulospinal tract, vol0025.nii.gz
+26, right ventral corticospinal tract, vol0026.nii.gz
+27, right tectospinal tract, vol0027.nii.gz
+28, right medial reticulospinal tract, vol0028.nii.gz
+29, right medial longitudinal fasciculus, vol0029.nii.gz
