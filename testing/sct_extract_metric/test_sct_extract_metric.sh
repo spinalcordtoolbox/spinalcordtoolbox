@@ -35,7 +35,8 @@ for subject in $SUBJECT_LIST; do
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_extract_metric.py
         -i ../../data/${subject}/${contrast}/${file}
-        -f ../../sct_warp_template/results/label/template
+        -f ../../sct_warp_template/results/label/atlas
+        -l 2,17
         -m wa
 		-v 1:3
         -o quantif_${contrast}.txt"
