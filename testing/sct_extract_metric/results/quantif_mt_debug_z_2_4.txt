@@ -1,0 +1,7 @@
+No vertebral level selected. Considered all vertebral levels.
+
+Slices : 	2 to 4
+
+Label,mean,std
+0, spinal cord,31.376252,4.145226
+2, white matter,27.537602,9.780917
