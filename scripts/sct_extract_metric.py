@@ -109,7 +109,7 @@ def main():
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '':
+    if fname_data == '':
         usage()
 
     # Check existence of data file
@@ -271,7 +271,6 @@ def read_label_file(path_info_label):
     line[2]=line[2]+' '
     label_file.append(line[2].strip())
 
-
     # check if all files listed are present in folder. If not, WARNING.
     print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
     for fname in label_file:
@@ -281,11 +280,11 @@ def read_label_file(path_info_label):
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
 
-
     # Close file.txt
     f.close()
 
     return [label_id, label_name, label_file]
+
 
 
 #=======================================================================================================================
@@ -368,6 +367,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
     return str(slice_min)+':'+str(slice_max)
 
+
+
 #=======================================================================================================================
 # Crop data to only keep the slices asked by user
 #=======================================================================================================================
@@ -380,6 +381,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
 
     return data_cropped
+
 
 
 #=======================================================================================================================
@@ -440,6 +442,8 @@ def check_method(method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
+
+
 
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
@@ -560,30 +564,29 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  This program exlabels metrics (e.g., DTI or MTR) within white matter labels. It requires an atlas,
-  in the same space coordinates as the input image. The current methods for computing the average
-  metrics are:
+  This program extracts metrics (e.g., DTI or MTR) within labels. It requires a label file in the
+  same space coordinates as the input image. The current methods for computing the metrics are:
   - wa: weighted average (robust and accurate)
   - ml: maximum likelihood (best if >10 slices and low noise)
   - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. The label used by
-  default is the template:
+  The atlas is located in a folder and all labels are defined by .txt file. Current label is:
 
+==========
 Label ID, label name, corresponding file name
-
 """+label_references+"""
+==========
 
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -t <path_label>
 
 MANDATORY ARGUMENTS
-  -i <volume>           file to extract metrics from
+  -i <data>             file to extract metrics from
 
 OPTIONAL ARGUMENTS
   -f <path_label>       path to the folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
-  -m <method>           ml (maximum likelihood), wa (weighted average), bin (binary)
+  -m {ml,wa,bin}        method to extract metrics. Default=wa
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
@@ -592,7 +595,7 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
+  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas\n"""
 
     #Exit program
     sys.exit(2)
