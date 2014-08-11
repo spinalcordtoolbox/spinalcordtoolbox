@@ -58,7 +58,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
-class param_class:
+class param:
     def __init__(self):
     
         #============================================
@@ -74,13 +74,13 @@ class param_class:
         self.mat_final                 = ''
         self.mat_moco                  = ''
         self.todo                      = ''              
-        self.dwi_group_size            = 5               # number of images averaged for 'dwi' method.
+        self.dwi_group_size            = 3              # number of images averaged for 'dwi' method.
         self.suffix                    = '_moco'
         self.mask_size                 = 0               # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program                   = 'FLIRT'
         self.cost_function_flirt       = ''              # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp                    = 'trilinear'     #  Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
-        self.spline_fitting            = 1
+        self.spline_fitting            = 0
         self.delete_tmp_files          = 1
         self.merge_back                = 1
         self.verbose                   = 0
@@ -106,7 +106,6 @@ def main():
 
     # initialization
     start_time = time.time()
-    param = param_class()
 
     # Parameters for debug mode
     if param.debug:
@@ -513,41 +512,43 @@ def sct_dmri_moco(param,fname_data_initial):
 # usage
 #=======================================================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Motion correction of DWI data. Uses slice-by-slice and group-wise registration.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <dmri> -b <bvecs>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <dmri>    diffusion data\n' \
-        '  -b <bvecs>   bvecs file\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -o           Specify Output path.\n' \
-        '  -a <bvals>   bvals file. Used to detect low-bvals images : more robust \n' \
-        '  -d           DWI Group Size. Successive images are merged to increase robustness. Default=5\n' \
-        '  -e {0,1}     Eddy Correction using opposite gradient directions. Default=0 \n' \
-        '               N.B. Only use this option if pairs of opposite gradient images were adjacent in time\n' \
-        '  -s <int>     Size of Gaussian mask for motion correction (in mm). For no mask, put 0. Default=0.\n' \
-        '               N.B. if centerline is provided, mask is centered on centerline. If not, mask is\n' \
-        '               centered in the middle of each slice.\n' \
-        '  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.\n' \
-        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
-        '  -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.\n' \
-        '  -f {0,1}     set value to 0 if spline regularization along T is not required. Default value is 1. \n' \
-        '  -v {0,1}     Set verbose=1 for printing text. Default value is 0 \n' \
-        '  -g {0,1}     Set value to 1 for plotting graphs. Default value is 0 \n' \
-        '  -r {0,1}     Set value to 0 for not deleting temp files. Default value is 1 \n' \
-        '  -h           help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  '+os.path.basename(__file__)+' -i dmri.nii -b bvecs_t.txt \n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  Motion correction of DWI data. Uses slice-by-slice and group-wise registration.
+
+USAGE
+  """+os.path.basename(__file__)+""" -i <dmri> -b <bvecs>
+
+MANDATORY ARGUMENTS
+  -i <dmri>        diffusion data
+  -b <bvecs>       bvecs file
+
+OPTIONAL ARGUMENTS
+  -o <path_out>    Output path.
+  -a <bvals>       bvals file. Used to detect low-bvals images : more robust
+  -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
+  -e {0,1}         Eddy Correction using opposite gradient directions. Default=0
+                   N.B. Only use this option if pairs of opposite gradient images were adjacent
+                   in time
+  -s <int>         Size of Gaussian mask for more robust motion correction (in mm). 
+                   For no mask, put 0. Default=0
+                   N.B. if centerline is provided, mask is centered on centerline. If not, mask
+                   is centered in the middle of each slice.
+  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
+  -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
+                   N.B. Use only if you want to correct large drifts with time.
+  -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.
+  -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
+  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param.delete_tmp_files)+"""
+  -h               help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i dmri.nii.gz -b bvecs.txt\n"""
     
     #Exit Program
     sys.exit(2)
@@ -556,5 +557,5 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # call main function
+    param = param()
     main()
