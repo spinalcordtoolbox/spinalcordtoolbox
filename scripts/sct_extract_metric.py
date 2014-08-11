@@ -42,7 +42,7 @@ class param:
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'quantif_metrics.txt'
+        self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
 
@@ -110,6 +110,7 @@ def main():
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '':
+        param.path_label = path_label
         usage()
 
     # Check existence of data file
@@ -254,6 +255,9 @@ def read_label_file(path_info_label):
 
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
+
+    # separate header from (every line starting with "#")
+    lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
 
     # read each line
     label_id = []
@@ -553,6 +557,7 @@ def extract_metric_within_tract(data, labels, method):
 #=======================================================================================================================
 def usage():
 
+    # TODO: check if file exists
     # read the .txt files referencing the labels by default
     default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
     label_references = default_info_label.read()
@@ -572,7 +577,6 @@ DESCRIPTION
   The atlas is located in a folder and all labels are defined by .txt file. Current label is:
 
 ==========
-Label ID, label name, corresponding file name
 """+label_references+"""
 ==========
 
