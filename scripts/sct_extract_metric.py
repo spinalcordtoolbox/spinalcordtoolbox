@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Extract metrics within spinal labels as defined by the white matter atlas.
-# The folder atlas should have a txt file that lists all tract files with labels.
+# Extract metrics within spinal labels as defined by the white matter atlas and the
+# template
+# The folder atlas should have a .txt file that lists all tract files with labels.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -12,50 +13,38 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: print label name in txt file
-
-
 # Import common Python libraries
 import os
 import getopt
 import sys
 import time
-import glob
-import re
 import commands
 import nibabel as nib
-import sct_utils as sct
 import numpy as np
+import sct_utils as sct
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
-import sct_utils as sct
+
 
 # constants
 ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
-        self.path_label = path_sct+'/data'  # default is toolbox
-        self.folder_label = 'template'  # default is template (WM, GM, CSF...)
+        self.path_label = path_sct+'/data/template'  # default is toolbox
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
+        self.vertebral_levels = ''
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'metrics.txt'
+        self.fname_output = 'quantif_metrics.txt'
         self.file_info_label = 'info_label.txt'
-        # # by default, labels choice is deactivated and program use all labels
-        #self.label_choice = 0
-        # # by defaults, the estimation is made accross all vertebral levels
-        # self.vertebral_levels = ''
-        # # by default, slices choice is desactivated and program use all slices
-        # self.slice_choice = 0
-        # # by default, program don't export data results in file .txt
-        # self.output_choice = 0
+        self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
 
 
 
@@ -66,42 +55,33 @@ def main():
     # Initialization to defaults parameters
     fname_data = '' # data is empty by default
     path_label = param.path_label
-    folder_label = param.folder_label
     method = param.method # extraction mode by default
     labels_of_interest = param.labels_of_interest
     slices_of_interest = param.slices_of_interest
+    vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    verbose = param.verbose
     file_info_label = param.file_info_label
-
-    # label_choice = param.label_choice # no select label by default
-    # vertebral_levels = param.vertebral_levels # no vertebral level selected by default
-    # slice_choice = param.slice_choice # no select label by default
-    # output_choice = param.output_choice # no select slice by default
+    vertebral_labeling_path = param.vertebral_labeling_file
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/data/errsm_23/label'
-        folder_label = 'atlas'
+        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0, 2'
+        labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = '2:10' #'2:4'
+        vertebral_levels = ''
         average_all_labels = 0
-        # label_number = '2,6'
-        output_choice = 1
-        slice_choice = 1
-        slice_number = '1'
-        fname_output = 'results.txt'
+        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
-#    label_id, label_name, label_file = read_label_file(path_atlas+folder_label)
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:o:t:v:z:') # define flags
+        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:o:v:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
@@ -109,7 +89,7 @@ def main():
         if opt in '-a':
             average_all_labels = 1
         elif opt in '-f':
-            folder_label = arg
+            path_label = os.path.abspath(arg)  # save path of labels folder
         elif opt == '-h': # help option
             usage() # display usage
         elif opt in '-i':
@@ -120,14 +100,11 @@ def main():
             method = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        elif opt in '-t':
-            path_label = os.path.abspath(arg)  # save path of labels folder
-        # elif opt in '-v': # vertebral levels option, if the user wants to average the metric accross specific vertebral levels
-        #     vertebral_levels = arg
+        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+             vertebral_levels = arg
         elif opt in '-z': # slices numbers option
-            slice_choice = 1 # slice choice is activate
-            slice_number = arg # save labels numbers
-        # TODO: add flag for folder
+            slices_of_interest = arg # save labels numbers
+
 
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
@@ -136,41 +113,37 @@ def main():
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck file existence...', verbose)
+    sct.printv('\nCheck data file existence...', verbose)
     sct.check_file_exist(fname_data)
 
-    # Extract data path/file/extension
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
+    # add slash at the end
+    path_label = sct.slash_at_the_end(path_label, 1)
 
     # Check existence of path_label
-    path_label = sct.slash_at_the_end(path_label, 1)
-    folder_label = sct.slash_at_the_end(folder_label, 1)
-    #if not os.path.isdir(path_label):
-    #    print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
-    #    sys.exit(2)
-    # TODO
+    if not os.path.isdir(path_label):
+        print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
+        sys.exit(2)
+    else:
+        print '\nOK: '+path_label
 
     # Check input parameters
     check_method(method)
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label+folder_label)
+    label_id, label_name, label_file = read_label_file(path_label)
     nb_labels_total = len(label_id)
 
-    ## update label_id given user input
-    #if label_choice == 0:
-    #    nb_labels = range(0, nb_labels_total)
-
-    # check consistency of label input parameter
-    # TODO: test this
-    label_id = check_labels(labels_of_interest, nb_labels_total)
-    nb_labels = len(label_id)
+    # check consistency of label input parameter.
+    label_id_user = check_labels(labels_of_interest, nb_labels_total) # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
-    print '\nCheck parameters:'
+    print '\nChecked parameters:'
     print '  data ................... '+fname_data
-    print '  folder label ........... '+path_label+folder_label
-
+    print '  folder label ........... '+path_label
+    print '  selected labels ........ '+str(label_id_user)
+    print '  estimation method ...... '+method
+    print '  vertebral levels ....... '+vertebral_levels
+    print '  slices of interest ..... '+slices_of_interest
 
     # Load image
     sct.printv('\nLoad image...', verbose)
@@ -182,47 +155,83 @@ def main():
     nx, ny, nz = data.shape
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
-    # TODO: check consistency of size between atlas and data
-    # open one atlas file and check nx, ny and nz
-
     # load label
     sct.printv('\nLoad labels...', verbose)
-    labels = np.empty([nb_labels, nx, ny, nz], dtype=object)  # labels(nb_labels, x, y, z)
-    for i_label in range(0, nb_labels):
-        labels[i_label, :, :, :] = nib.load(path_label+folder_label+label_file[label_id[i_label]]).get_data()
+    labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
+    for i_label in range(0, nb_labels_total):
+        labels[i_label] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
     sct.printv('  Done.', verbose)
 
-    # Get dimensions of atlas
-    # TODO: no need to do that if size consistency check is done before
-    sct.printv('\nGet dimensions of atlas...', verbose)
-    nx_atlas, ny_atlas, nz_atlas = labels[i_label, :, :, :].shape
-    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas), verbose)
+    # Get dimensions of labels
+    sct.printv('\nGet dimensions of label...', verbose)
+    nx_atlas, ny_atlas, nz_atlas = labels[0].shape
+    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_labels_total), verbose)
 
-    #
-    ## if user selected labels of interest, then update tract list
-    #if not labels_of_interest == '':
-    #    labels = labels[label_id, :, :, :]
+    # Check dimensions consistency between atlas and data
+    if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
+        print '\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.'
+        sys.exit(2)
 
-    # select slice of interest by cropping data and atlas
-    # if not slices_of_interest == '':
-        # TODO
+    # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
+    if vertebral_levels != '':
+        if slices_of_interest != '':
+            print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
+            usage()
+        else:
+            if path_label.endswith('atlas/'):
+                vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+            slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels, vertebral_labeling_path)
+
+    # select slice of interest by cropping data and labels
+    if slices_of_interest != '':
+        data = remove_slices(data, slices_of_interest)
+        for i_label in range(0, nb_labels_total):
+            labels[i_label] = remove_slices(labels[i_label], slices_of_interest)
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
-        labels = np.sum(labels, axis=0)
+        sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
+        if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
+            # TODO: make the below code more clean (no use of tmp variable)
+            labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
+            labels = np.delete(labels, label_id_user)  # remove the labels selected by user
+            labels_tmp[0] = sum_labels_user
+            for i_label in range(1, len(labels_tmp)):
+                labels_tmp[i_label] = labels[i_label-1]
+            labels = labels_tmp
+            del labels_tmp
+        else:
+            labels = np.empty(1, dtype=object)
+            labels[0] = sum_labels_user
         # TODO: instead of 0, make it clear for the user that all labels are concatenated
-        label_id = [0]
+        label_id_user = [0]
 
     # extract metrics within labels
     # labels can be 3d or 4d
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
 
-    # display metrics
-    print '\nEstimated metrics:\n'+str(metric_mean)
+    # update label name if average
+    if average_all_labels == 1:
+        # TODO: display concatenated label names
+        label_name[0] = 'AVERAGED'
 
-    # save metrics
-    if not fname_output == '':
-        save_metrics(label_id, metric_mean, metric_std, fname_output)
+    #    if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
+    #        metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
+    #        metric_std = metric_std [0] # idem
+    #else:
+    metric_mean = metric_mean[label_id_user]
+    metric_std = metric_std[label_id_user]
+
+    # display metrics
+    print '\033[1m\nEstimation results:\n'
+    for i in range(0, metric_mean.size):
+        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i])+'\033[0m'
+
+    # save and display metrics
+    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+
+    # Print elapsed time
+    print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
 
     # end of main.
     print
@@ -232,35 +241,16 @@ def main():
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_label):
-    # TODO
-
-
-
-    # Save path of each labels
-    #fname_tract = glob.glob(path_atlas + '/*.nii.gz')
-
-    # TODO
-    # Check if labels exist in folder
-    #if len(fname_tract) == 0:
-    #    print '\nERROR: There are not labels in this folder. Exit program.\n'
-    #    sys.exit(2)
+def read_label_file(path_info_label):
 
     # file name of info_label.txt
-    fname_label = path_label+param.file_info_label
+    fname_label = path_info_label+param.file_info_label
 
     # Check info_label.txt existence
-    #if len(fname_list) == 0:
-    #    print '\nWARNING: There are no file txt in this folder. File list.txt will be create in folder \n'
     sct.check_file_exist(fname_label)
-
-    # Check if labels list.txt is only txt in folder
-    #if len(fname_list) > 1:
-    #    print '\nWARNING: There are more than one file txt in this folder. File list.txt will be create in folder \n'
 
     # Read file
     f = open(fname_label)
-#    nb = list(set([int(x) for x in labels_of_interest.split(",")]))
 
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
@@ -269,282 +259,263 @@ def read_label_file(path_label):
     label_id = []
     label_name = []
     label_file = []
-    for i in range(0, len(lines)):
+    for i in range(0, len(lines)-1):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
-        label_file.append(line[2][:-1].replace(" ", ""))
+        label_file.append(line[2][:-1].strip()) #replace(" ", "").replace("\r", ""))
+    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code lines enable to avoid this error:
+    line = lines[-1].split(',')
+    label_id.append(int(line[0]))
+    label_name.append(line[1])
+    line[2]=line[2]+' '
+    label_file.append(line[2].strip())
+
+
+    # check if all files listed are present in folder. If not, WARNING.
+    print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
+    for fname in label_file:
+        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or os.path.isfile(path_info_label+fname + '.nii.gz'):
+            print('  OK: '+path_info_label+fname)
+            pass
+        else:
+            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
+
 
     # Close file.txt
     f.close()
 
-    # check if files exist
-    # TODO
-    #
-    ## Check if file contain data
-    #if len(lines) == 0:
-    #    print '\nWARNING: File txt is empty. File list.txt will be create in folder. \n'
-    #
-    ## Initialisation of label number
-    #label_num = [[]] * len(lines)
-    #
-    ## Initialisation of label name
-    #label_name = [[]] * len(lines)
-    #
-    ## Extract of label title, label name and label number
-    #for k in range(0, len(lines)):
-    #
-    #    # Check if file.txt contains ":" because it is necessary for split label name to label number
-    #    if not ':' in lines[k]:
-    #        print '\nERROR: File txt is not in correct form. File list.txt must be in this form :\n'
-    #        print '\t\tTitle : Name of labels'
-    #        print '\t\tLabel 0 : Name Label 0'
-    #        print '\t\tLabel 1 : Name Label 1'
-    #        print '\t\tLabel 2 : Name Label 2'
-    #        print '\t\t...\n '
-    #        print '\t\tExample of file.txt'
-    #        print '\t\tTitle : List of labels names for the white matter atlas'
-    #        print '\t\tLabel 0 : left fasciculus gracilis'
-    #        print '\t\tLabel 1 : left fasciculus cuneatus'
-    #        print '\t\tLabel 2 : left lateral corticospinal tract'
-    #        print '\nExit program. \n'
-    #        sys.exit(2)
-    #
-    #    # Split label name to label number without "['" (begin) and "']" (end) (so 2 to end-2)
-    #    else:
-    #        [label_num[k],label_name[k]] = lines[k].split(':')
-    #        label_name[k] = str(label_name[k].splitlines())[2:-2]
-    #
-    ## Extract label title as the first line in file.txt
-    #label_title = label_name[0]
-    #
-    ## Extract label name from the following lines
-    #label_name = label_name[1:]
-    #
-    ## Extract label number from the following lines
-    #label_num = str(label_num[1:])
-    #label_num = [int(x.group()) for x in re.finditer(r'\d+',label_num)]
-    #
-    ## Check corresponding between label name and tract file
-    #if label_num != range(0, len(fname_tract)):
-    #    print '\nERROR: File txt and labels are not corresponding. Change file txt or labels .nii.gz. Exit program. \n'
-    #    sys.exit(2)
-
     return [label_id, label_name, label_file]
 
 
+#=======================================================================================================================
+# get_slices_matching_with_vertebral_levels
+#=======================================================================================================================
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vertebral_labeling_path):
+    """Return the slices of the input image corresponding to the vertebral levels given as argument."""
+
+    # check existence of a vertebral labeling file
+    sct.check_file_exist(vertebral_labeling_path)
+
+    # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
+
+    # If only one vertebral level was selected (n), consider as n:n
+    if len(vert_levels_list) == 1:
+        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
+
+    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
+    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
+        print '\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n'
+        sys.exit(2)
+
+    # Read files vertebral_labeling.nii.gz
+    print '\nRead files '+vertebral_labeling_path+'...'
+
+    # Load the vertebral labeling file and get the data in array format
+    data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
+
+    # Extract metric data size X, Y, Z
+    [mx, my, mz] = metric_data.shape
+    # Extract vertebral labeling data size X, Y, Z
+    [vx, vy, vz] = data_vert_labeling.shape
+
+    # Initialisation of check error flag
+    exit_program = 0
+
+    # Check if sizes along X are the same
+    if mx != vx:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along X is not the same as the metric data.'
+        exit_program = 1
+    # Check if sizes along Y are the same
+    if my != vy:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along Y is not the same as the metric data.'
+        exit_program = 1
+    # Check if sizes along Z are the same
+    if mz != vz:
+        print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
+        exit_program = 1
+
+    # Check if the vertebral levels selected are not available in the input image
+    if vert_levels_list[0] < int(np.ndarray.min(data_vert_labeling)) or vert_levels_list[1] > int(np.ndarray.max(data_vert_labeling)):
+        print '\tERROR: The vertebral levels you selected are not available in the input image.'
+        exit_program = 1
+
+    # Exit program if an error was detected
+    if exit_program == 1 :
+        print '\nExit program.\n'
+        sys.exit(2)
+
+
+    # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
+    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
+    # Record the bottom of slice of this level
+    slice_min_bottom = min(Z_bottom_level)
+
+    # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
+    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling==vert_levels_list[1]).nonzero()
+    # Record the top slice of this level
+    slice_max_top = max(Z_top_level)
+
+    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral level
+    if slice_min_bottom > slice_max_top:
+        slice_min = min(Z_top_level)
+        slice_max = max(Z_bottom_level)
+    else:
+        slice_min = min(Z_bottom_level)
+        slice_max = max(Z_top_level)
+
+    # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
+    return str(slice_min)+':'+str(slice_max)
+
+#=======================================================================================================================
+# Crop data to only keep the slices asked by user
+#=======================================================================================================================
+def remove_slices(data_to_crop, slices_of_interest):
+
+    # extract slice numbers
+    slices_list = [int(x) for x in slices_of_interest.split(':')] # 2-element list
+
+    # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
+    data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
+
+    return data_cropped
 
 
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, metric_mean, metric_std, fname_output):
-    print '\nWrite results in ' + fname_output + '...'
+def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
+
+    # TODO: add file data
+    # TODO: add method
+
+    # CSV format, header lines start with "#"
+
+    # Save metric in a .txt file
+    print '\nWrite results in ' + fname_output + ' ...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
 
+    # WRITE HEADER:
+    # TODO: add date and time
+
     # Write selected vertebral levels
-    # if vertebral_levels != '':
-    #     fid_metric.write('%s\t%i to %i\n\n'% ('Vertebral levels : ',vert_levels_list[0],vert_levels_list[1]))
-    # else:
-    #     fid_metric.write('No vertebral level selected.\n\n')
+    if vertebral_levels != '':
+        fid_metric.write('%s\t%s to %s\n'% ('# Vertebral levels: ', vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
+    else:
+        fid_metric.write('# Vertebral levels: ALL\n')
 
-    # # Write slices chosen
-    # fid_metric.write('%s\t%i to %i\n\n'% ('Slices : ',nb_slice[0],nb_slice[1]))
+    # Write selected slices
+    if slices_of_interest != '':
+        fid_metric.write('%s\t%s to %s\n'% ('# Slices: ', slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+    else:
+        fid_metric.write('# Slices: ALL\n')
 
-    # Write header title in file .txt
-    fid_metric.write('%s,%s,%s\n' % ('Label', 'mean', 'std'))
+    # label info
+    fid_metric.write('%s\n' % ('# ID, label name, mean, std'))
+
+    # WRITE RESULTS
+    fid_metric.write('\n')
+
     # Write metric for label chosen in file .txt
     for i in range(0, len(ind_labels)):
-        fid_metric.write('%i,%f,%f\n' % (ind_labels[i], metric_mean[i], metric_std[i]))
+        fid_metric.write('%i, %s, %f, %f\n' % (ind_labels[i], label_name[ind_labels[i]], metric_mean[i], metric_std[i]))
 
     # Close file .txt
     fid_metric.close()
 
+    # Display results
+    #print '\nEstimation results:\n'
+    #result_file = open(fname_output)
+    #terminal_display = result_file.read()
+    #print terminal_display
 
 
+#=======================================================================================================================
+# Check the consistency of the method asked by the user
 #=======================================================================================================================
 def check_method(method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
-
+#=======================================================================================================================
+# Check the consistency of the labels asked by the user
 #=======================================================================================================================
 def check_labels(labels_of_interest, nb_labels):
-    nb = ''
+
+    # by default, all labels are selected
+    list_label_id = range(0, nb_labels)
+
     # only specific labels are selected
-    if not labels_of_interest == '':
+    if labels_of_interest != '':
         # Check if label chosen is in format : 0,1,2,..
         for char in labels_of_interest:
             if not char in '0123456789, ':
                 print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
                 sys.exit(2)
+
         # Remove redundant values of label chosen and convert in integer
-        nb = list(set([int(x) for x in labels_of_interest.split(",")]))
-        # Check if label chosen correspond to a tract
-        for num in nb:
+        list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
+        list_label_id.sort()
+
+        # Check if label chosen correspond to a label
+        for num in list_label_id:
             if not num in range(0, nb_labels):
-                print '\nERROR: "' + str(num) + '" is not a correct tract label. Enter valid number. Exit program.\n'
+                print '\nERROR: "' + str(num) + '" is not a correct label. Enter valid number. Exit program.\n'
                 sys.exit(2)
-    # all labels are selected
-    else:
-        nb = range(0, nb_labels)
 
-    return nb
-
-
-#=======================================================================================================================
-# Read file of tract names and extract names and labels
-#=======================================================================================================================
-#def read_name(path_atlas):
-#
-#    # Check if labels folder exist
-#    if not os.path.isdir(path_atlas):
-#        print('\nERROR: ' + path_atlas + ' does not exist. Exit program.\n')
-#        sys.exit(2)
-#
-#    # Save path of each labels
-#    fname_tract = glob.glob(path_atlas + '/*.nii.gz')
-#
-#    # Check if labels exist in folder
-#    if len(fname_tract) == 0:
-#        print '\nERROR: There are not labels in this folder. Exit program.\n'
-#        sys.exit(2)
-#
-#    # Save path of file list.txt
-#    fname_list = glob.glob(path_atlas + '/*.txt')
-#
-#    # Check if labels list.txt exist in folder
-#    if len(fname_list) == 0:
-#        print '\nWARNING: There are no file txt in this folder. File list.txt will be create in folder \n'
-#
-#    # Check if labels list.txt is only txt in folder
-#    if len(fname_list) > 1:
-#        print '\nWARNING: There are more than one file txt in this folder. File list.txt will be create in folder \n'
-#
-#    # Create list.txt default in list.txt in case there are not file or file is not define correctly
-#    if len(fname_list) == 0 or len(fname_list) > 1:
-#
-#        # New file list : list.txt
-#        fname_list = path_atlas + '/list.txt'
-#
-#        # Write mode
-#        fid_list = open(fname_list, 'w')
-#
-#        # Write "Title : Name of labels" by default
-#        fid_list.write('%s : %s\n' % ('Title', 'Name of labels'))
-#
-#        # Write "Label XX : Label XX" by default for "XX" tract number
-#        for j in range(0, len(fname_tract)):
-#            fid_list.write('%s %i : %s %i\n' % ('Label', j, 'Label', j))
-#
-#        # Close file txt
-#        fid_list.close()
-#
-#    # Take the value of string instead of array string
-#    else:
-#        fname_list = fname_list[0]
-#
-#    # Read file list.txt
-#    f = open(fname_list)
-#
-#    # Extract all lines in file.txt
-#    lines = [lines for lines in f.readlines() if lines.strip()]
-#
-#    # Close file.txt
-#    f.close()
-#
-#    # Check if file contain data
-#    if len(lines) == 0:
-#        print '\nWARNING: File txt is empty. File list.txt will be create in folder. \n'
-#
-#    # Initialisation of label number
-#    label_num = [[]] * len(lines)
-#
-#    # Initialisation of label name
-#    label_name = [[]] * len(lines)
-#
-#    # Extract of label title, label name and label number
-#    for k in range(0, len(lines)):
-#
-#        # Check if file.txt contains ":" because it is necessary for split label name to label number
-#        if not ':' in lines[k]:
-#            print '\nERROR: File txt is not in correct form. File list.txt must be in this form :\n'
-#            print '\t\tTitle : Name of labels'
-#            print '\t\tLabel 0 : Name Label 0'
-#            print '\t\tLabel 1 : Name Label 1'
-#            print '\t\tLabel 2 : Name Label 2'
-#            print '\t\t...\n '
-#            print '\t\tExample of file.txt'
-#            print '\t\tTitle : List of labels names for the white matter atlas'
-#            print '\t\tLabel 0 : left fasciculus gracilis'
-#            print '\t\tLabel 1 : left fasciculus cuneatus'
-#            print '\t\tLabel 2 : left lateral corticospinal tract'
-#            print '\nExit program. \n'
-#            sys.exit(2)
-#
-#        # Split label name to label number without "['" (begin) and "']" (end) (so 2 to end-2)
-#        else:
-#            [label_num[k],label_name[k]] = lines[k].split(':')
-#            label_name[k] = str(label_name[k].splitlines())[2:-2]
-#
-#    # Extract label title as the first line in file.txt
-#    label_title = label_name[0]
-#
-#    # Extract label name from the following lines
-#    label_name = label_name[1:]
-#
-#    # Extract label number from the following lines
-#    label_num = str(label_num[1:])
-#    label_num = [int(x.group()) for x in re.finditer(r'\d+',label_num)]
-#
-#    # Check corresponding between label name and tract file
-#    if label_num != range(0, len(fname_tract)):
-#        print '\nERROR: File txt and labels are not corresponding. Change file txt or labels .nii.gz. Exit program. \n'
-#        sys.exit(2)
-#
-#    return [label_title, label_name, label_num, fname_tract]
+    return list_label_id
 
 
 
 #=======================================================================================================================
-# extract metric within labels
+# Extract metric within labels
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method):
 
     # convert data to 1d
-    data1d = data.ravel()
+    #data1d = data.ravel()
 
     # if there is only one tract, add dimension for compatibility of matrix manipulation
-    if len(labels.shape) == 3:
-        labels = labels[np.newaxis, :, :, :]
+#    if len(labels.shape) == 3:
+#        labels = labels[np.newaxis, :, :, :]
 
     # convert labels to 2d
     # TODO: pythonize this
-    nb_labels = len(labels[:, 1, 1, 1])
-    labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
-    for i_label in range(0, nb_labels):
-        labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
+    nb_labels = len(labels) # number of labels
+    #labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
+    #for i_label in range(0, nb_labels):
+    #    labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
-        labels2d[labels2d < 0.5] = 0
-        labels2d[labels2d >= 0.5] = 1
+        #labels2d[labels2d < 0.5] = 0
+        #labels2d[labels2d >= 0.5] = 1
+        for i in range(0, nb_labels):
+            labels[i][labels[i] < 0.5] = 0
+            labels[i][labels[i] >= 0.5] = 1
 
     #  Select non-zero values in the union of all labels
-    labels2d_sum = np.sum(labels2d, axis=0)
-    ind_nonzero = [i for i, v in enumerate(labels2d_sum) if v > ALMOST_ZERO]
-    data1d = data1d[ind_nonzero]
-    labels2d = labels2d[:, ind_nonzero]
+    #labels2d_sum = np.sum(labels2d, axis=0)
+    labels_sum = np.sum(labels)
+    ind_nonzero = labels_sum > ALMOST_ZERO
+    data1d = data[ind_nonzero]
+    labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
+    for i in range(0, nb_labels):
+        labels2d[i] = labels[i][ind_nonzero]
+
+    # clear memory
+    del data, labels
 
     # Display number of non-zero values
-    sct.printv('\nNumber of non-null voxels: '+str(len(ind_nonzero)), 1)
+    sct.printv('\nNumber of non-null voxels: '+str(len(data1d)), 1)
 
     # initialization
-    metric_mean = np.empty([nb_labels, 1], dtype=object)
-    metric_std = np.empty([nb_labels, 1], dtype=object)
+    metric_mean = np.empty([nb_labels], dtype=object)
+    metric_std = np.empty([nb_labels], dtype=object)
 
     # Estimation with weighted average (also works for binary)
     if method == 'wa' or method == 'bin':
@@ -574,16 +545,15 @@ def extract_metric_within_tract(data, labels, method):
 
 
 #=======================================================================================================================
-# usage
+# Usage
 #=======================================================================================================================
-# TODO: read default path label and display it
-    # TODO
-    #"""
-    #for label in range(0,len(label_num)):
-    #    print '\t ' + str(label_num[label]) + '\t - ' + label_name[label]
-    #
-    #print """
 def usage():
+
+    # read the .txt files referencing the labels by default
+    default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
+    label_references = default_info_label.read()
+
+    # display help
     print """
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -596,11 +566,12 @@ DESCRIPTION
   - wa: weighted average (robust and accurate)
   - ml: maximum likelihood (best if >10 slices and low noise)
   - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. By default, the atlas of
-  the MNI-Poly-AMU template is used:
+  The atlas is located in a folder and all labels are defined by .txt file. The label used by
+  default is the template:
 
-  label_title:
-  Label - Tract
+Label ID, label name, corresponding file name
+
+"""+label_references+"""
 
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -t <path_label>
@@ -609,23 +580,21 @@ MANDATORY ARGUMENTS
   -i <volume>           file to extract metrics from
 
 OPTIONAL ARGUMENTS
-  -t <path_label>       path to the collection of label folders.
+  -f <path_label>       path to the folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
-  -f {atlas,template}   folder of label
-                        Default = """+param.folder_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
   -m <method>           ml (maximum likelihood), wa (weighted average), bin (binary)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
   -v <vert_level>       Vertebral levels to estimate the metric accross.
-  -z <slice>            Slices to estimate the metric from. Begin at 0. Example: -z 3:6.
+  -z <zmin:zmax>        Slices to estimate the metric from. Example: 3:6. First slice is 0 (not 1)
   -h                    help. Show this message
 
 EXAMPLE
   """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
 
-    #Exit Program
+    #Exit program
     sys.exit(2)
 
 
