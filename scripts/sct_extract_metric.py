@@ -23,12 +23,13 @@ import commands
 import nibabel as nib
 import sct_utils as sct
 import numpy as np
+import sct_utils as sct
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
-import sct_utils as sct
+
 
 # constants
 ALMOST_ZERO = 0.000001
@@ -41,7 +42,7 @@ class param:
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5,8'. For all slices, leave empty.
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'quantif_metrics.txt'
         self.file_info_label = 'info_label.txt'
@@ -70,11 +71,13 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'#fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/data/atlas' #'/testing/data/errsm_23/label/atlas'
+        #fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
+        #path_label = path_sct+'/testing/data/errsm_23/label/atlas'
+        path_label = path_sct+'/data/atlas'
         method = 'wa'
-        labels_of_interest = '2, 17'#'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '' #'2:4'
+        labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = '2:10' #'2:4'
         vertebral_levels = ''
         average_all_labels = 0
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
@@ -125,7 +128,7 @@ def main():
         print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
         sys.exit(2)
     else:
-        print 'OK: '+path_label
+        print '\nOK: '+path_label
 
     # Check input parameters
     check_method(method)
@@ -143,14 +146,8 @@ def main():
     print '  folder label ........... '+path_label
     print '  selected labels ........ '+str(label_id_user)
     print '  estimation method ...... '+method
-    if vertebral_levels !='':
-         print '  vertebral levels ....... '+vertebral_levels
-    else:
-         print '  no vertebral level selected.'
-    if slices_of_interest !='':
-         print '  slices of interest ..... '+slices_of_interest
-    else:
-         print '  no particular slices selected.'
+    print '  vertebral levels ....... '+vertebral_levels
+    print '  slices of interest ..... '+slices_of_interest
 
     # Load image
     sct.printv('\nLoad image...', verbose)
@@ -167,16 +164,17 @@ def main():
 
     # load label
     sct.printv('\nLoad labels...', verbose)
-    labels = np.empty([nb_labels_total, nx, ny, nz], dtype=object)  # labels(nb_labels_total, x, y, z)
+#    labels = np.empty([nb_labels_total, nx, ny, nz], dtype=float)  # labels(nb_labels_total, x, y, z)
+    labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
-        labels[i_label, :, :, :] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
+        labels[i_label] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
     sct.printv('  Done.', verbose)
 
-    # Get dimensions of atlas
-    # TODO: no need to do that if size consistency check is done before
+    # Get dimensions of labels
     sct.printv('\nGet dimensions of label...', verbose)
-    nx_atlas, ny_atlas, nz_atlas = labels[i_label, :, :, :].shape
-    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas), verbose)
+    nx_atlas, ny_atlas, nz_atlas = labels[0].shape
+    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_labels_total), verbose)
+    # TODO: no need to do that if size consistency check is done before
 
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels != '':
@@ -185,22 +183,30 @@ def main():
             usage()
         else:
             if path_label.endswith('atlas/'):
-                vertebral_labeling_path=path_label+'../template/MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest = get_slices_matching_with_vertebral_levels(data,vertebral_levels,vertebral_labeling_path)
+                vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+            slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels, vertebral_labeling_path)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
         data = remove_slices(data, slices_of_interest)
-        labels = remove_slices(labels, slices_of_interest)
+        for i_label in range(0, nb_labels_total):
+            labels[i_label] = remove_slices(labels[i_label], slices_of_interest)
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
-        if method == 'ml': # in case the maximum likelihood and the average across different labels are wanted
-            sum_labels_user = np.sum(labels[label_id_user, :, :, :], axis=0) # sum the labels selected by user
-            labels = np.delete(labels,label_id_user,axis=0) # remove the labels selected by user
-            labels = np.insert(labels,0,sum_labels_user,axis=0) # insert the previously computed sum in first position
+        sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
+        if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
+            # TODO: make the below code more clean (no use of tmp variable)
+            labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
+            labels = np.delete(labels, label_id_user)  # remove the labels selected by user
+            labels_tmp[0] = sum_labels_user
+            for i_label in range(1, len(labels_tmp)):
+                labels_tmp[i_label] = labels[i_label-1]
+            labels = labels_tmp
+            del labels_tmp
         else:
-            labels = np.sum(labels[label_id_user, :, :, :], axis=0)
+            labels = np.empty(1, dtype=object)
+            labels[0] = sum_labels_user
         # TODO: instead of 0, make it clear for the user that all labels are concatenated
         label_id_user = [0]
 
@@ -208,20 +214,22 @@ def main():
     # labels can be 3d or 4d
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
 
-    # only keep tracts of interest
+    # update label name if average
     if average_all_labels == 1:
-        if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
-            metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
-            metric_std = metric_std [0] # idem
-    else:
-            metric_mean = metric_mean[label_id_user]
-            metric_std = metric_std[label_id_user]
+        # TODO: display concatenated label names
+        label_name[0] = 'AVERAGED'
+
+    #    if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
+    #        metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
+    #        metric_std = metric_std [0] # idem
+    #else:
+    metric_mean = metric_mean[label_id_user]
+    metric_std = metric_std[label_id_user]
 
     # display metrics
     print '\033[1m\nEstimation results:\n'
-    for i in range(0,len(metric_mean)):
-        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i][0])+\
-              '  ['+str(metric_std[i][0])+']'+'\033[0m'
+    for i in range(0, metric_mean.size):
+        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i])+'\033[0m'
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
@@ -384,7 +392,7 @@ def remove_slices(data_to_crop, slices_of_interest):
 def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
 
     # Save metric in a .txt file
-    print '\nWrite results in ' + fname_output + '...'
+    print '\nWrite results in ' + fname_output + ' ...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
@@ -461,36 +469,45 @@ def check_labels(labels_of_interest, nb_labels):
 def extract_metric_within_tract(data, labels, method):
 
     # convert data to 1d
-    data1d = data.ravel()
+    #data1d = data.ravel()
 
     # if there is only one tract, add dimension for compatibility of matrix manipulation
-    if len(labels.shape) == 3:
-        labels = labels[np.newaxis, :, :, :]
+#    if len(labels.shape) == 3:
+#        labels = labels[np.newaxis, :, :, :]
 
     # convert labels to 2d
     # TODO: pythonize this
-    nb_labels = len(labels[:, 1, 1, 1])
-    labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
-    for i_label in range(0, nb_labels):
-        labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
+    nb_labels = len(labels) # number of labels
+    #labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
+    #for i_label in range(0, nb_labels):
+    #    labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
-        labels2d[labels2d < 0.5] = 0
-        labels2d[labels2d >= 0.5] = 1
+        #labels2d[labels2d < 0.5] = 0
+        #labels2d[labels2d >= 0.5] = 1
+        for i in range(0, nb_labels):
+            labels[i][labels[i] < 0.5] = 0
+            labels[i][labels[i] >= 0.5] = 1
 
     #  Select non-zero values in the union of all labels
-    labels2d_sum = np.sum(labels2d, axis=0)
-    ind_nonzero = [i for i, v in enumerate(labels2d_sum) if v > ALMOST_ZERO]
-    data1d = data1d[ind_nonzero]
-    labels2d = labels2d[:, ind_nonzero]
+    #labels2d_sum = np.sum(labels2d, axis=0)
+    labels_sum = np.sum(labels)
+    ind_nonzero = labels_sum > ALMOST_ZERO
+    data1d = data[ind_nonzero]
+    labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
+    for i in range(0, nb_labels):
+        labels2d[i] = labels[i][ind_nonzero]
+
+    # clear memory
+    del data, labels
 
     # Display number of non-zero values
-    sct.printv('\nNumber of non-null voxels: '+str(len(ind_nonzero)), 1)
+    sct.printv('\nNumber of non-null voxels: '+str(len(data1d)), 1)
 
     # initialization
-    metric_mean = np.empty([nb_labels, 1], dtype=object)
-    metric_std = np.empty([nb_labels, 1], dtype=object)
+    metric_mean = np.empty([nb_labels], dtype=object)
+    metric_std = np.empty([nb_labels], dtype=object)
 
     # Estimation with weighted average (also works for binary)
     if method == 'wa' or method == 'bin':
@@ -541,7 +558,8 @@ DESCRIPTION
   - wa: weighted average (robust and accurate)
   - ml: maximum likelihood (best if >10 slices and low noise)
   - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. The label used by default is the template:
+  The atlas is located in a folder and all labels are defined by .txt file. The label used by
+  default is the template:
 
 Label ID, label name, corresponding file name
 
@@ -562,7 +580,7 @@ OPTIONAL ARGUMENTS
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
   -v <vert_level>       Vertebral levels to estimate the metric accross.
-  -z <slice>            Slices to estimate the metric from. Begin at 0. Example: -z 3:6.
+  -z <zmin:zmax>        Slices to estimate the metric from. Example: 3:6. First slice is 0 (not 1)
   -h                    help. Show this message
 
 EXAMPLE
