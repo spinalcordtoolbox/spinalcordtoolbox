@@ -1,3 +1,5 @@
+# White matter atlas
+# ID, name, file
 0, left fasciculus gracilis, vol0000.nii.gz
 1, left fasciculus cuneatus, vol0001.nii.gz
 2, left lateral corticospinal tract, vol0002.nii.gz
@@ -13,7 +15,6 @@
 12, left tectospinal tract, vol0012.nii.gz
 13, left medial reticulospinal tract, vol0013.nii.gz
 14, left medial longitudinal fasciculus, vol0014.nii.gz
-
 15, right  asciculus gracilis, vol0015.nii.gz
 16, right fasciculus cuneatus, vol0016.nii.gz
 17, right lateral corticospinal tract, vol0017.nii.gz
