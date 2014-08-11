@@ -569,28 +569,28 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  This program extracts metrics (e.g., DTI or MTR) within labels. It requires a label file in the
-  same space coordinates as the input image. The current methods for computing the metrics are:
-  - wa: weighted average (robust and accurate)
-  - ml: maximum likelihood (best if >10 slices and low noise)
-  - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. Current label is:
+  This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
+  'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
+  The labels should be in the same space coordinates as the input image. Current label is:
 
 ==========
 """+label_references+"""
 ==========
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -t <path_label>
+  """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
 
 MANDATORY ARGUMENTS
   -i <data>             file to extract metrics from
 
 OPTIONAL ARGUMENTS
-  -f <path_label>       path to the folder including labels to extract the metric from.
+  -f <folder_label>     folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
-  -m {ml,wa,bin}        method to extract metrics. Default=wa
+  -m {ml,wa,bin}        method to extract metrics. Default = """+param.method+"""
+                          wa: weighted average (robust and accurate)
+                          bin: binary masks (poorly accurate)
+                          ml: maximum likelihood (best if >10 slices and low noise)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
@@ -599,7 +599,10 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas\n"""
+  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas
+
+  To see labels contained in folder, type (for example):
+  """+os.path.basename(__file__)+""" -f label/atlas\n"""
 
     #Exit program
     sys.exit(2)
