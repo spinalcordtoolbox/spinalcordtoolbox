@@ -36,7 +36,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.method = 'wa'
-        self.path_label = path_sct+'/data/template'  # default is toolbox
+        self.path_label = ''  # path_sct+'/data/template'
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
@@ -53,8 +53,8 @@ class param:
 #=======================================================================================================================
 def main():
     # Initialization to defaults parameters
-    fname_data = '' # data is empty by default
-    path_label = param.path_label
+    fname_data = ''  # data is empty by default
+    path_label = ''  # empty by default
     method = param.method # extraction mode by default
     labels_of_interest = param.labels_of_interest
     slices_of_interest = param.slices_of_interest
@@ -90,13 +90,13 @@ def main():
             average_all_labels = 1
         elif opt in '-f':
             path_label = os.path.abspath(arg)  # save path of labels folder
-        elif opt == '-h': # help option
+        elif opt == '-h':  # help option
             usage() # display usage
         elif opt in '-i':
             fname_data = arg
         elif opt in '-l':
             labels_of_interest = arg
-        elif opt in '-m': # method for metric extraction
+        elif opt in '-m':  # method for metric extraction
             method = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
@@ -110,22 +110,23 @@ def main():
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '':
-        param.path_label = path_label
+        #param.path_label = path_label
         usage()
 
     # Check existence of data file
     sct.printv('\nCheck data file existence...', verbose)
     sct.check_file_exist(fname_data)
+    sct.check_file_exist(path_label)
+
+    # # Check existence of path_label
+    # if not os.path.isdir(path_label):
+    #     print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
+    #     sys.exit(2)
+    # else:
+    #     print '\nOK: '+path_label
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
-
-    # Check existence of path_label
-    if not os.path.isdir(path_label):
-        print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
-        sys.exit(2)
-    else:
-        print '\nOK: '+path_label
 
     # Check input parameters
     check_method(method)
@@ -135,7 +136,7 @@ def main():
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    label_id_user = check_labels(labels_of_interest, nb_labels_total) # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
+    label_id_user = check_labels(labels_of_interest, nb_labels_total)  # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
     print '\nChecked parameters:'
@@ -399,35 +400,30 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
 
     # WRITE HEADER:
     # Write date and time
-    fid_metric.write('# Date: '+ time.strftime('%Y/%m/%d - %H:%M:%S')+'\n')
+    fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
     # Write metric data file path
-    fid_metric.write('# Metric data file: '+ os.path.abspath(fname_data)+'\n')
+    fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
     # Write method used for the metric estimation
-    if method == 'wa':
-        method = 'weighted average'
-    elif method == 'bin':
-        method = 'binary thresholding'
-    elif method == 'ml':
-        method = 'maximum likelihood estimation'
-    fid_metric.write('# Method used for metric estimation: '+ method +'\n')
+    fid_metric.write('\n'+'# Extraction method: '+method)
 
     # Write selected vertebral levels
+    fid_metric.write('\n'+'# Vertebral levels: ')
     if vertebral_levels != '':
-        fid_metric.write('%s\t%s to %s\n'% ('# Vertebral levels: ', vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
+        fid_metric.write('%s to %s' % (vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
     else:
-        fid_metric.write('# Vertebral levels: ALL\n')
+        fid_metric.write('ALL')
 
     # Write selected slices
+    fid_metric.write('\n'+'# Slices (z): ')
     if slices_of_interest != '':
-        fid_metric.write('%s\t%s to %s\n'% ('# Slices: ', slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+        fid_metric.write('%s to %s' % (slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
     else:
-        fid_metric.write('# Slices: ALL\n')
+        fid_metric.write('ALL')
 
     # label info
-    fid_metric.write('\n%s' % ('# ID, label name, mean, std'))
+    fid_metric.write('%s' % ('\n'+'# ID, label name, mean, std\n\n'))
 
     # WRITE RESULTS
-    fid_metric.write('\n')
 
     # Write metric for label chosen in file .txt
     for i in range(0, len(ind_labels)):
@@ -437,11 +433,12 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     fid_metric.close()
 
 
+
 #=======================================================================================================================
 # Check the consistency of the method asked by the user
 #=======================================================================================================================
 def check_method(method):
-    if (method != 'wa') & (method != 'ml') & (method != 'bin'):
+    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
@@ -490,6 +487,11 @@ def extract_metric_within_tract(data, labels, method):
             labels[i][labels[i] < 0.5] = 0
             labels[i][labels[i] >= 0.5] = 1
 
+    # if user asks for thresholded weighted-average, threshold atlas
+    if method == 'wath':
+        for i in range(0, nb_labels):
+            labels[i][labels[i] < 0.5] = 0
+
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
     ind_nonzero = labels_sum > ALMOST_ZERO
@@ -509,7 +511,7 @@ def extract_metric_within_tract(data, labels, method):
     metric_std = np.empty([nb_labels], dtype=object)
 
     # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin':
+    if method == 'wa' or method == 'bin' or method == 'wath':
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
@@ -541,10 +543,13 @@ def extract_metric_within_tract(data, labels, method):
 def usage():
 
     # read the .txt files referencing the labels
-    file_label = param.path_label+'/'+param.file_info_label
-    sct.check_file_exist(file_label, 0)
-    default_info_label = open(file_label, 'r')
-    label_references = default_info_label.read()
+    if param.path_label != '':
+        file_label = param.path_label+'/'+param.file_info_label
+        sct.check_file_exist(file_label, 0)
+        default_info_label = open(file_label, 'r')
+        label_references = default_info_label.read()
+    else:
+        label_references = ''
 
     # display help
     print """
@@ -555,38 +560,44 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
   This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
   'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
-  The labels should be in the same space coordinates as the input image. Current label is:
-
+  The labels should be in the same space coordinates as the input image."""
+    if label_references != '':
+        print """
+Current label is:
 ==========
 """+label_references+"""
-==========
-
+=========="""
+    print """
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
 
 MANDATORY ARGUMENTS
   -i <data>             file to extract metrics from
   -f <folder_label>     folder including labels to extract the metric from.
-                        Default = """+param.path_label+"""
 
 OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Default = all labels.
-  -m {ml,wa,bin}        method to extract metrics. Default = """+param.method+"""
-                          wa: weighted average (robust and accurate)
-                          bin: binary masks (poorly accurate)
-                          ml: maximum likelihood (best if >10 slices and low noise)
+  -m {ml,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
+                          ml: maximum likelihood (only use with well-defined regions and low noise)
+                          wa: weighted average
+                          wath: weighted average (only consider values >0.5)
+                          bin: binary masks
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
-  -v <vert_level>       Vertebral levels to estimate the metric accross.
+  -v <vert_level>       Vertebral levels to estimate the metric across.
   -z <zmin:zmax>        Slices to estimate the metric from. Example: 3:6. First slice is 0 (not 1)
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas
+  To see the list of template labels in the template space:
+    """+os.path.basename(__file__)+""" -f """+path_sct+"""/data/template
 
-  To see labels contained in folder, type (for example):
-  """+os.path.basename(__file__)+""" -f label/atlas\n"""
+  To see the list of white matter atlas labels in the template space:
+    """+os.path.basename(__file__)+""" -f """+path_sct+"""/data/atlas
+
+  To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
+    """+os.path.basename(__file__)+""" -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin\n"""
 
     #Exit program
     sys.exit(2)
