@@ -182,6 +182,8 @@ def main():
         else:
             if path_label.endswith('atlas/'):
                 vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+            elif path_label.endswith('template/'):
+                vertebral_labeling_path = path_label+'MNI-Poly-AMU_level.nii.gz'
             slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels, vertebral_labeling_path)
 
     # select slice of interest by cropping data and labels
@@ -286,14 +288,15 @@ def read_label_file(path_info_label):
     return [label_id, label_name, label_file]
 
 
-
 #=======================================================================================================================
-# get_slices_matching_with_vertebral_levels
+# Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vertebral_labeling_path):
-    """Return the slices of the input image corresponding to the vertebral levels given as argument."""
+
+    sct.printv('\nFind slices corresponding to vertebral levels:', param.verbose)
 
     # check existence of a vertebral labeling file
+    sct.printv('Check file existence...', param.verbose)
     sct.check_file_exist(vertebral_labeling_path)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
@@ -309,7 +312,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         sys.exit(2)
 
     # Read files vertebral_labeling.nii.gz
-    print '\nRead files '+vertebral_labeling_path+'...'
+    sct.printv('Load vertebral labeling...', param.verbose)
 
     # Load the vertebral labeling file and get the data in array format
     data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
@@ -318,6 +321,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     [mx, my, mz] = metric_data.shape
     # Extract vertebral labeling data size X, Y, Z
     [vx, vy, vz] = data_vert_labeling.shape
+
+    sct.printv('Check consistency of data size...', param.verbose)
 
     # Initialisation of check error flag
     exit_program = 0
@@ -345,7 +350,6 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         print '\nExit program.\n'
         sys.exit(2)
 
-
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
     X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
     # Record the bottom of slice of this level
@@ -363,6 +367,9 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     else:
         slice_min = min(Z_bottom_level)
         slice_max = max(Z_top_level)
+
+    # display info
+    sct.printv('  Vertebral levels correspond to slices: '+str(slice_min)+':'+str(slice_max), param.verbose)
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
     return str(slice_min)+':'+str(slice_max)
@@ -479,6 +486,8 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method):
 
+    sct.printv('\nExtract metrics:', param.verbose)
+
     nb_labels = len(labels) # number of labels
 
     # if user asks for binary regions, binarize atlas
@@ -504,7 +513,7 @@ def extract_metric_within_tract(data, labels, method):
     del data, labels
 
     # Display number of non-zero values
-    sct.printv('\nNumber of non-null voxels: '+str(len(data1d)), 1)
+    sct.printv('Number of non-null voxels: '+str(len(data1d)), 1)
 
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
@@ -585,8 +594,8 @@ OPTIONAL ARGUMENTS
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
-  -v <vert_level>       Vertebral levels to estimate the metric across.
-  -z <zmin:zmax>        Slices to estimate the metric from. Example: 3:6. First slice is 0 (not 1)
+  -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
+  -z <zmin:zmax>        Slices to estimate the metric from. Example: 5:23. First slice is 0 (not 1)
   -h                    help. Show this message
 
 EXAMPLE
