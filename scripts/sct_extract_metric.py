@@ -42,7 +42,7 @@ class param:
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'quantif_metrics.txt'
+        self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
 
@@ -109,7 +109,8 @@ def main():
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '':
+    if fname_data == '':
+        param.path_label = path_label
         usage()
 
     # Check existence of data file
@@ -249,6 +250,9 @@ def read_label_file(path_info_label):
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
 
+    # separate header from (every line starting with "#")
+    lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
+
     # read each line
     label_id = []
     label_name = []
@@ -265,7 +269,6 @@ def read_label_file(path_info_label):
     line[2]=line[2]+' '
     label_file.append(line[2].strip())
 
-
     # check if all files listed are present in folder. If not, WARNING.
     print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
     for fname in label_file:
@@ -275,11 +278,11 @@ def read_label_file(path_info_label):
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
 
-
     # Close file.txt
     f.close()
 
     return [label_id, label_name, label_file]
+
 
 
 #=======================================================================================================================
@@ -362,6 +365,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
     return str(slice_min)+':'+str(slice_max)
 
+
+
 #=======================================================================================================================
 # Crop data to only keep the slices asked by user
 #=======================================================================================================================
@@ -374,6 +379,7 @@ def remove_slices(data_to_crop, slices_of_interest):
     data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
 
     return data_cropped
+
 
 
 #=======================================================================================================================
@@ -434,6 +440,8 @@ def check_method(method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
+
+
 
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
@@ -543,8 +551,10 @@ def extract_metric_within_tract(data, labels, method):
 #=======================================================================================================================
 def usage():
 
-    # read the .txt files referencing the labels by default
-    default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
+    # read the .txt files referencing the labels
+    file_label = param.path_label+'/'+param.file_info_label
+    sct.check_file_exist(file_label, 0)
+    default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
 
     # display help
@@ -554,30 +564,28 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  This program exlabels metrics (e.g., DTI or MTR) within white matter labels. It requires an atlas,
-  in the same space coordinates as the input image. The current methods for computing the average
-  metrics are:
-  - wa: weighted average (robust and accurate)
-  - ml: maximum likelihood (best if >10 slices and low noise)
-  - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. The label used by
-  default is the template:
+  This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
+  'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
+  The labels should be in the same space coordinates as the input image. Current label is:
 
-Label ID, label name, corresponding file name
-
+==========
 """+label_references+"""
+==========
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -t <path_label>
+  """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
 
 MANDATORY ARGUMENTS
-  -i <volume>           file to extract metrics from
+  -i <data>             file to extract metrics from
 
 OPTIONAL ARGUMENTS
-  -f <path_label>       path to the folder including labels to extract the metric from.
+  -f <folder_label>     folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
-  -m <method>           ml (maximum likelihood), wa (weighted average), bin (binary)
+  -m {ml,wa,bin}        method to extract metrics. Default = """+param.method+"""
+                          wa: weighted average (robust and accurate)
+                          bin: binary masks (poorly accurate)
+                          ml: maximum likelihood (best if >10 slices and low noise)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
@@ -586,7 +594,10 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
+  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas
+
+  To see labels contained in folder, type (for example):
+  """+os.path.basename(__file__)+""" -f label/atlas\n"""
 
     #Exit program
     sys.exit(2)
