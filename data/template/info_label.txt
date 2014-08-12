@@ -1,3 +1,5 @@
+# Template labels
+# ID, name, file
 0, spinal cord, MNI-Poly-AMU_cord.nii.gz
 1, cerebrospinal fluid, MNI-Poly-AMU_CSF.nii.gz
 2, white matter, MNI-Poly-AMU_WM.nii.gz
