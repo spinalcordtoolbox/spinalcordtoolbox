@@ -35,7 +35,7 @@ addOptional(p,'crop','none',@(x) any(validatestring(x,crops)));
 addOptional(p,'eddy',1,@isnumeric);
 moco_methods={'b0','dwi','dwi_lowbvalue','none'};
 addOptional(p,'method','dwi',@(x) any(validatestring(x,moco_methods)));
-addOptional(p,'crop_margin',15,@isnumeric);
+addOptional(p,'crop_margin',20,@isnumeric);
 addOptional(p,'data','');
 addOptional(p,'bvec','');
 addOptional(p,'bval','');
@@ -43,7 +43,7 @@ addOptional(p,'smooth_moco',1,@isnumeric);
 addOptional(p,'apply_moco_on_croped',1,@isnumeric);
 interp={'nearestneighbour', 'spline', 'sinc'};
 addOptional(p,'interp','spline',@(x) any(validatestring(x,interp)));
-addOptional(p,'gaussian_mask',0,@isnumeric);
+addOptional(p,'gaussian_mask',20,@isnumeric);
 
 parse(p,varargin{:})
 

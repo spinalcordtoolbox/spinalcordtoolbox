@@ -42,7 +42,7 @@ class param:
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
-        self.fname_output = 'quantif_metrics.txt'
+        self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
 
@@ -72,7 +72,7 @@ def main():
         fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
         path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        labels_of_interest = '0,1,4,7'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '2:10' #'2:4'
         vertebral_levels = ''
         average_all_labels = 1
@@ -110,6 +110,7 @@ def main():
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '':
+        param.path_label = path_label
         usage()
 
     # Check existence of data file
@@ -192,10 +193,10 @@ def main():
     if average_all_labels == 1:
         sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
         if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
-            # TODO: make the below code more clean (no use of tmp variable)
+            # TODO: make the below code cleaner (no use of tmp variable)
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user
+            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp variable
             for i_label in range(1, len(labels_tmp)):
                 labels_tmp[i_label] = labels[i_label-1]
             labels = labels_tmp
@@ -203,22 +204,16 @@ def main():
         else:
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user
-        # TODO: instead of 0, make it clear for the user that all labels are concatenated
-        label_id_user = [0]
 
     # extract metrics within labels
-    # labels can be 3d or 4d
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
 
     # update label name if average
     if average_all_labels == 1:
-        # TODO: display concatenated label names
-        label_name[0] = 'AVERAGED'
+        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user )
+        # TODO: instead of 0, make it clear for the user that all labels are concatenated
+        label_id_user = [0]
 
-    #    if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
-    #        metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
-    #        metric_std = metric_std [0] # idem
-    #else:
     metric_mean = metric_mean[label_id_user]
     metric_std = metric_std[label_id_user]
 
@@ -228,7 +223,8 @@ def main():
         print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i])+'\033[0m'
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
+                 fname_data, method)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -255,6 +251,9 @@ def read_label_file(path_info_label):
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
 
+    # separate header from (every line starting with "#")
+    lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
+
     # read each line
     label_id = []
     label_name = []
@@ -263,14 +262,13 @@ def read_label_file(path_info_label):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
-        label_file.append(line[2][:-1].strip()) #replace(" ", "").replace("\r", ""))
+        label_file.append(line[2][:-1].strip())
     # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
     line[2]=line[2]+' '
     label_file.append(line[2].strip())
-
 
     # check if all files listed are present in folder. If not, WARNING.
     print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
@@ -281,11 +279,11 @@ def read_label_file(path_info_label):
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
 
-
     # Close file.txt
     f.close()
 
     return [label_id, label_name, label_file]
+
 
 
 #=======================================================================================================================
@@ -368,6 +366,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
     return str(slice_min)+':'+str(slice_max)
 
+
+
 #=======================================================================================================================
 # Crop data to only keep the slices asked by user
 #=======================================================================================================================
@@ -382,13 +382,12 @@ def remove_slices(data_to_crop, slices_of_interest):
     return data_cropped
 
 
+
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
-
-    # TODO: add file data
-    # TODO: add method
+def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
+                 fname_data, method):
 
     # CSV format, header lines start with "#"
 
@@ -399,7 +398,18 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     fid_metric = open(fname_output, 'w')
 
     # WRITE HEADER:
-    # TODO: add date and time
+    # Write date and time
+    fid_metric.write('# Date: '+ time.strftime('%Y/%m/%d - %H:%M:%S')+'\n')
+    # Write metric data file path
+    fid_metric.write('# Metric data file: '+ os.path.abspath(fname_data)+'\n')
+    # Write method used for the metric estimation
+    if method == 'wa':
+        method = 'weighted average'
+    elif method == 'bin':
+        method = 'binary thresholding'
+    elif method == 'ml':
+        method = 'maximum likelihood estimation'
+    fid_metric.write('# Method used for metric estimation: '+ method +'\n')
 
     # Write selected vertebral levels
     if vertebral_levels != '':
@@ -414,7 +424,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
         fid_metric.write('# Slices: ALL\n')
 
     # label info
-    fid_metric.write('%s\n' % ('# ID, label name, mean, std'))
+    fid_metric.write('\n%s' % ('# ID, label name, mean, std'))
 
     # WRITE RESULTS
     fid_metric.write('\n')
@@ -426,12 +436,6 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     # Close file .txt
     fid_metric.close()
 
-    # Display results
-    #print '\nEstimation results:\n'
-    #result_file = open(fname_output)
-    #terminal_display = result_file.read()
-    #print terminal_display
-
 
 #=======================================================================================================================
 # Check the consistency of the method asked by the user
@@ -440,6 +444,8 @@ def check_method(method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
+
+
 
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
@@ -476,30 +482,15 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method):
 
-    # convert data to 1d
-    #data1d = data.ravel()
-
-    # if there is only one tract, add dimension for compatibility of matrix manipulation
-#    if len(labels.shape) == 3:
-#        labels = labels[np.newaxis, :, :, :]
-
-    # convert labels to 2d
-    # TODO: pythonize this
     nb_labels = len(labels) # number of labels
-    #labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
-    #for i_label in range(0, nb_labels):
-    #    labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
-        #labels2d[labels2d < 0.5] = 0
-        #labels2d[labels2d >= 0.5] = 1
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
             labels[i][labels[i] >= 0.5] = 1
 
     #  Select non-zero values in the union of all labels
-    #labels2d_sum = np.sum(labels2d, axis=0)
     labels_sum = np.sum(labels)
     ind_nonzero = labels_sum > ALMOST_ZERO
     data1d = data[ind_nonzero]
@@ -549,8 +540,10 @@ def extract_metric_within_tract(data, labels, method):
 #=======================================================================================================================
 def usage():
 
-    # read the .txt files referencing the labels by default
-    default_info_label = open(param.path_label+'/'+param.file_info_label, 'r')
+    # read the .txt files referencing the labels
+    file_label = param.path_label+'/'+param.file_info_label
+    sct.check_file_exist(file_label, 0)
+    default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
 
     # display help
@@ -560,30 +553,28 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  This program exlabels metrics (e.g., DTI or MTR) within white matter labels. It requires an atlas,
-  in the same space coordinates as the input image. The current methods for computing the average
-  metrics are:
-  - wa: weighted average (robust and accurate)
-  - ml: maximum likelihood (best if >10 slices and low noise)
-  - bin: binary masks (poorly accurate)
-  The atlas is located in a folder and all labels are defined by .txt file. The label used by
-  default is the template:
+  This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
+  'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
+  The labels should be in the same space coordinates as the input image. Current label is:
 
-Label ID, label name, corresponding file name
-
+==========
 """+label_references+"""
+==========
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -t <path_label>
+  """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
 
 MANDATORY ARGUMENTS
-  -i <volume>           file to extract metrics from
+  -i <data>             file to extract metrics from
+  -f <folder_label>     folder including labels to extract the metric from.
+                        Default = """+param.path_label+"""
 
 OPTIONAL ARGUMENTS
-  -f <path_label>       path to the folder including labels to extract the metric from.
-                        Default = """+param.path_label+"""
   -l <label_id>         Label number to extract the metric from. Default = all labels.
-  -m <method>           ml (maximum likelihood), wa (weighted average), bin (binary)
+  -m {ml,wa,bin}        method to extract metrics. Default = """+param.method+"""
+                          wa: weighted average (robust and accurate)
+                          bin: binary masks (poorly accurate)
+                          ml: maximum likelihood (best if >10 slices and low noise)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
@@ -592,7 +583,10 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
+  """+os.path.basename(__file__)+""" -i t1.nii.gz -f label/atlas
+
+  To see labels contained in folder, type (for example):
+  """+os.path.basename(__file__)+""" -f label/atlas\n"""
 
     #Exit program
     sys.exit(2)

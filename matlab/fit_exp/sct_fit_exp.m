@@ -1,25 +1,23 @@
 function coeffs = sct_fit_exp(img,TE,verbose)
 % coeffvals = sct_fit_exp(img,TE,verbose)
-% coeffvals = [a Ti]
-% a*exp(-t/Ti)
- 
+% coeffvals = [I Ti]
+% I*exp(-t/Ti)
+
 dims=size(img);
 coeffvals=cell(dims(1));
-img_max=max(max(max(max(img))));
 
 
-parfor X=1:dims(1)
-    for Y=1:dims(2)
-        for Z=1:dims(3)
+for Z=1:dims(3)
+    img_max=max(max(max(max(img(:,:,Z,:)))));
+    parfor X=1:dims(1)
+        for Y=1:dims(2)
+            
             % Set up fittype and options.
             ft = fittype( 'exp1' );
             opts = fitoptions( ft );
             opts.Algorithm = 'Levenberg-Marquardt';
             opts.Display = 'Off';
-            opts.Lower = [-Inf -Inf];
             opts.Robust = 'Bisquare';
-            opts.StartPoint = [2834.39706890486 -5.790020537126];
-            opts.Upper = [Inf Inf];
             
             [xData, yData] = prepareCurveData( TE', squeeze(img(X,Y,Z,:)) );
             
@@ -27,6 +25,10 @@ parfor X=1:dims(1)
             [fitresult, gof] = fit( xData, yData, ft, opts );
             coeff_tmp = coeffvalues(fitresult);
             coeff_tmp(2) = -1/coeff_tmp(2);
+            if verbose
+                disp('      I       Ti  ')
+                disp(coeff_tmp)
+            end
             coeffvals{X}(Y,Z,:) = coeff_tmp;
             if verbose
                 % Plot fit with data.
@@ -35,7 +37,7 @@ parfor X=1:dims(1)
                 % Label axes
                 xlabel( 'TE' );
                 ylabel( 'I' );
-                ylim([0 img_max])
+                ylim([0 img_max]); xlim([0 max(TE)]);
                 grid on
                 filename = ['plots/X' num2str(X) 'Y' num2str(Y) 'Z' num2str(Z) '.png'];
                 iSaveplotX( h, filename )

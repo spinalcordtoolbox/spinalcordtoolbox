@@ -11,9 +11,21 @@ j_progress('loading matrix...')
 for imat=1:length(list), j_progress(imat/length(list)); M_tmp{imat}=load([path list{imat}]); X(imat)=M_tmp{imat}(1,4); Y(imat)=M_tmp{imat}(2,4); end
 j_progress('elapsed')
 
+% Plot subject movement
+h=figure; plot(X,'+')
+g=figure; plot(Y,'+')
+% Search for abrupt moves
+ind_ab=1;
+ind_ab=[ind_ab find(abs(diff(Y))>2) find(abs(diff(X))>2) length(X)]; ind_ab=sort(ind_ab); ind_ab(diff(ind_ab)<15)=[];
+
 % GENERATE SPLINE
-j_disp(log_spline,['Generate motion splines...'])
-X=spline(X,'X'); Y=spline(Y,'Y');
+for iab=2:length(ind_ab)
+    j_disp(log_spline,['Generate motion splines...'])
+    X(ind_ab(iab-1):ind_ab(iab))=spline(X(ind_ab(iab-1):ind_ab(iab))); Y(ind_ab(iab-1):ind_ab(iab))=spline(Y(ind_ab(iab-1):ind_ab(iab)));
+end
+figure(h), hold on; plot(X,'r+'); hold off; legend('raw moco', 'smooth moco', 'Location', 'NorthEast' ); grid on; ylabel( 'Displacement (mm)' ); xlabel('volume #');
+figure(g); hold on; plot(Y,'r+'); hold off; legend('raw moco', 'smooth moco', 'Location', 'NorthEast' ); grid on; ylabel( 'Displacement (mm)' ); xlabel('volume #');
+
 j_disp(log_spline,['...done!'])
 % SAVE MATRIX
 j_progress('\nSave Matrix...')
@@ -32,7 +44,7 @@ for imat=1:length(list),
 end
 
 
-function M_motion_t = spline(M_motion_t,fig_title)
+function M_motion_t = spline(M_motion_t)
 
 %% Fit: 'sct_moco_spline'.
 [xData, yData] = prepareCurveData( [], M_motion_t );
@@ -46,13 +58,6 @@ opts.SmoothingParam = 1e-06;
 [fitresult, gof] = fit( xData, yData, ft, opts );
 M_motion_t = feval(fitresult,1:length(M_motion_t));
 
-% Plot fit with data.
-figure( 'Name', 'smooth moco' );
-h = plot( fitresult, xData, yData );
-legend( h, 'raw moco', 'smooth moco', 'Location', 'NorthEast' );
-% Label axes
-ylabel( 'Displacement (mm)' ); xlabel('volume #')
-title(fig_title)
-grid on
+
 
 
