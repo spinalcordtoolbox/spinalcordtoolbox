@@ -60,21 +60,19 @@ def extract_fname(fname):
     return path_fname, file_fname, ext_fname
 
 
-
 #=======================================================================================================================
 # check_file_exist
 #=======================================================================================================================
-# Check existence of a file
+# Check existence of a file or path
 def check_file_exist(fname, verbose=1):
 
-    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz'):
+    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
         if verbose:
             print('  OK: '+fname)
         pass
     else:
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
-
 
 
 #=======================================================================================================================
