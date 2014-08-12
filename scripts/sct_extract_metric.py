@@ -109,7 +109,7 @@ def main():
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '':
+    if fname_data == '' or path_label == '':
         param.path_label = path_label
         usage()
 
@@ -577,10 +577,10 @@ USAGE
 
 MANDATORY ARGUMENTS
   -i <data>             file to extract metrics from
-
-OPTIONAL ARGUMENTS
   -f <folder_label>     folder including labels to extract the metric from.
                         Default = """+param.path_label+"""
+
+OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Default = all labels.
   -m {ml,wa,bin}        method to extract metrics. Default = """+param.method+"""
                           wa: weighted average (robust and accurate)
