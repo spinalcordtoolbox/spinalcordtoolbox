@@ -3,7 +3,7 @@
 # test sct_get_centerline.py
 
 # subject list
-SUBJECT_LIST="errsm_11" #"errsm_20 errsm_21 errsm_22 errsm_23 errsm_24"
+SUBJECT_LIST="errsm_23" 
 CONTRAST_LIST="t2" #"t1 t2"
 
 red='\e[1;31m'
@@ -30,7 +30,7 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_detect_spinalcord 
-      -i ../../data/${subject}/${contrast}/${subject}_${contrast}_cropped.nii.gz 
+      -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
       -o ${subject}_${contrast}_center.nii.gz 
       -t ${contrast}"
     echo "$cmd"; $cmd
