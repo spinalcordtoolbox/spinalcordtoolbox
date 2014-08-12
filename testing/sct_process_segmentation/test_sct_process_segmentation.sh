@@ -38,13 +38,12 @@ for subject in $SUBJECT_LIST; do
         printf "${red}Contrast: ${contrast}${NC}\n\n"
 
 	    cmd="sct_process_segmentation.py
-	        -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
-	        -p compute_CSA
-		-m counting_z_plane
-		-s 1
-		-r 0
-	        -b 1
-		-v 1"
+            -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
+            -p compute_csa
+            -s 1
+            -b 1
+            -r 0
+            -v 1"
 
         echo ==============================================================================================
         echo "$cmd"

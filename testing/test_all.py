@@ -87,4 +87,4 @@ status.append( test_function('sct_warp_template',' ......................... ') 
 
 print 'status: '+str(status)
 elapsed_time = time.time() - start_time
-print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
