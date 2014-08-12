@@ -193,10 +193,10 @@ def main():
     if average_all_labels == 1:
         sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
         if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
-            # TODO: make the below code more clean (no use of tmp variable)
+            # TODO: make the below code cleaner (no use of tmp variable)
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user
+            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp variable
             for i_label in range(1, len(labels_tmp)):
                 labels_tmp[i_label] = labels[i_label-1]
             labels = labels_tmp
@@ -223,7 +223,8 @@ def main():
         print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i])+'\033[0m'
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output)
+    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
+                 fname_data, method)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -261,7 +262,7 @@ def read_label_file(path_info_label):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
         label_name.append(line[1])
-        label_file.append(line[2][:-1].strip()) #replace(" ", "").replace("\r", ""))
+        label_file.append(line[2][:-1].strip())
     # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
@@ -385,10 +386,8 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output):
-
-    # TODO: add file data
-    # TODO: add method
+def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
+                 fname_data, method):
 
     # CSV format, header lines start with "#"
 
@@ -399,7 +398,18 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     fid_metric = open(fname_output, 'w')
 
     # WRITE HEADER:
-    # TODO: add date and time
+    # Write date and time
+    fid_metric.write('# Date: '+ time.strftime('%Y/%m/%d - %H:%M:%S')+'\n')
+    # Write metric data file path
+    fid_metric.write('# Metric data file: '+ os.path.abspath(fname_data)+'\n')
+    # Write method used for the metric estimation
+    if method == 'wa':
+        method = 'weighted average'
+    elif method == 'bin':
+        method = 'binary thresholding'
+    elif method == 'ml':
+        method = 'maximum likelihood estimation'
+    fid_metric.write('# Method used for metric estimation: '+ method +'\n')
 
     # Write selected vertebral levels
     if vertebral_levels != '':
@@ -425,12 +435,6 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
 
     # Close file .txt
     fid_metric.close()
-
-    # Display results
-    #print '\nEstimation results:\n'
-    #result_file = open(fname_output)
-    #terminal_display = result_file.read()
-    #print terminal_display
 
 
 #=======================================================================================================================
@@ -478,30 +482,15 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method):
 
-    # convert data to 1d
-    #data1d = data.ravel()
-
-    # if there is only one tract, add dimension for compatibility of matrix manipulation
-#    if len(labels.shape) == 3:
-#        labels = labels[np.newaxis, :, :, :]
-
-    # convert labels to 2d
-    # TODO: pythonize this
     nb_labels = len(labels) # number of labels
-    #labels2d = np.empty([nb_labels, len(data1d)], dtype=object)
-    #for i_label in range(0, nb_labels):
-    #    labels2d[i_label, :] = labels[i_label, :, :, :].ravel()
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
-        #labels2d[labels2d < 0.5] = 0
-        #labels2d[labels2d >= 0.5] = 1
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
             labels[i][labels[i] >= 0.5] = 1
 
     #  Select non-zero values in the union of all labels
-    #labels2d_sum = np.sum(labels2d, axis=0)
     labels_sum = np.sum(labels)
     ind_nonzero = labels_sum > ALMOST_ZERO
     data1d = data[ind_nonzero]
