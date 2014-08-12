@@ -72,10 +72,10 @@ def main():
         fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
         path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0,1,2,3'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        labels_of_interest = '0,1,4,7'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '2:10' #'2:4'
         vertebral_levels = ''
-        average_all_labels = 0
+        average_all_labels = 1
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
 
 
@@ -203,22 +203,16 @@ def main():
         else:
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user
-        # TODO: instead of 0, make it clear for the user that all labels are concatenated
-        label_id_user = [0]
 
     # extract metrics within labels
-    # labels can be 3d or 4d
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
 
     # update label name if average
     if average_all_labels == 1:
-        # TODO: display concatenated label names
-        label_name[0] = 'AVERAGED'
+        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user )
+        # TODO: instead of 0, make it clear for the user that all labels are concatenated
+        label_id_user = [0]
 
-    #    if method == 'ml': # in case the maximum likelihood and average across selected labels are wanted
-    #        metric_mean = metric_mean[0] # only output the value at the first position which corresponds to the averaged labels
-    #        metric_std = metric_std [0] # idem
-    #else:
     metric_mean = metric_mean[label_id_user]
     metric_std = metric_std[label_id_user]
 
@@ -414,7 +408,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
         fid_metric.write('# Slices: ALL\n')
 
     # label info
-    fid_metric.write('%s\n' % ('# ID, label name, mean, std'))
+    fid_metric.write('\n%s' % ('# ID, label name, mean, std'))
 
     # WRITE RESULTS
     fid_metric.write('\n')
