@@ -34,8 +34,8 @@ for subject in $SUBJECT_LIST; do
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_extract_metric.py
-        -i ../../data/${subject}/${contrast}/${file}
-        -f ../../sct_warp_template/results/label/atlas
+    	-i ../../data/${subject}/${contrast}/${file}
+    	-f ../../data/${subject}/${contrast}/label/atlas
         -l 2,17
         -m wa
 		-v 1:3

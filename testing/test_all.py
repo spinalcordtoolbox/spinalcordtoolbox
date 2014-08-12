@@ -9,6 +9,7 @@
 import os
 import getopt
 import sys
+import time
 from numpy import loadtxt
 import commands
 # get path of the toolbox
@@ -69,12 +70,14 @@ def test_function(folder_test,dot_lines):
 # START MAIN
 # ==========================================================================================
 
+start_time = time.time()
+print
 status = []
 status.append( test_function('sct_detect_spinalcord',' ..................... ') )
 status.append( test_function('sct_dmri_moco',' ............................. ') )
 status.append( test_function('sct_extract_metric',' ........................ ') )
 status.append( test_function('sct_get_centerline',' ........................ ') )
-status.append( test_function('sct_process_segmentation',' ................. ') )
+status.append( test_function('sct_process_segmentation',' .................. ') )
 status.append( test_function('sct_register_multimodal',' ................... ') )
 status.append( test_function('sct_register_to_template',' .................. ') )
 status.append( test_function('sct_segmentation_propagation',' .............. ') )
@@ -82,6 +85,6 @@ status.append( test_function('sct_smooth_spinalcord',' ..................... ') 
 status.append( test_function('sct_straighten_spinalcord',' ................. ') )
 status.append( test_function('sct_warp_template',' ......................... ') )
 
-print str(status)
-
-print "done!\n"
+print 'status: '+str(status)
+elapsed_time = time.time() - start_time
+print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
