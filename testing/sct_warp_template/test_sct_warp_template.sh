@@ -35,9 +35,9 @@ for subject in $SUBJECT_LIST; do
     printf "${red}Contrast: ${contrast}${NC}\n\n"
     cmd="sct_warp_template.py
         -d ../../data/${subject}/${contrast}/${file}
-        -w ../../data/${subject}/template/warp_template2${contrast}.nii.gz
+        -w ../../data/${subject}/${contrast}/warp_template2${contrast}.nii.gz
         -o label
-		-s 1"
+	-s 1"
     echo ==============================================================================================
     echo "$cmd"
     echo ==============================================================================================
