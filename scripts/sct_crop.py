@@ -185,7 +185,7 @@ def main():
 
     # to view results
     print '\nDone! To view results, type:'
-    print 'fslview '+fname_data+' '+path_out+file_out+ext_out+' &'
+    print 'fslview '+path_out+file_out+ext_out+' &'
     print
 
 
