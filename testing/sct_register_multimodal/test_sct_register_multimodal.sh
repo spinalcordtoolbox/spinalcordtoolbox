@@ -6,7 +6,7 @@
 # subject list
 SUBJECT_LIST="errsm_23"
 CONTRAST_LIST="mt"
-file="mtc1.nii.gz"
+file="mt1.nii.gz"
 
 
 # START BATCH HERE
