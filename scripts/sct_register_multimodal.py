@@ -44,7 +44,7 @@ class param:
         self.numberIterationsStep2 = "10" # number of iterations at step 2
         self.verbose             = 0 # verbose
         self.compute_dest2sr     = 0 # compute dest2src warping field
-        self.gradientStep = ['0.2', '0.5']  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
+        self.gradientStep_input = '0.2, 0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
 
 import sys
 import getopt
@@ -72,8 +72,7 @@ def main():
     fname_init_transfo = ''
     fname_init_transfo_inv = ''
     use_init_transfo = ''
-    gradientStep = param.gradientStep
-    gradientStep_input = ''
+    gradientStep_input = param.gradientStep_input
     compute_dest2src = param.compute_dest2sr
     start_time = time.time()
     print ''
@@ -95,7 +94,7 @@ def main():
         #fname_init_transfo_inv = path_sct+'/testing/data/errsm_23/template/warp_anat2template.nii.gz'
         numberIterations = '3x0'
         numberIterationsStep2 = "1"
-        gradientStep_input = '0.2'
+        gradientStep_input = '0.2, 0.5'
         compute_dest2src = 1
         verbose = 1
 
@@ -140,26 +139,27 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
-        print "ERROR: Input file missing. Exit program."
+        sct.printv("ERROR: Input file missing. Exit program.", 1, 'error')
         usage()
 
     # check segmentation data
     if (fname_src_seg != '' and fname_dest_seg == '') or (fname_src_seg == '' and fname_dest_seg != ''):
-        print "ERROR: You need to select a segmentation file for the source AND the destination image. Exit program."
+        sct.printv("ERROR: You need to select a segmentation file for the source AND the destination image. Exit program.", 1, 'error')
         usage()
     elif fname_src_seg != '' and fname_dest_seg != '':
         use_segmentation = 1
 
     # Parse gradient step
     print '\nParse gradient step...'
+    gradientStep = []
     gradientStep_input = gradientStep_input.replace(' ', '')  # remove spaces
     gradientStep_input = gradientStep_input.split(",")  # parse with comma
     for i in range(len(gradientStep_input)):
         try:
             float(gradientStep_input[i])
-            gradientStep[i] = gradientStep_input[i]
+            gradientStep.append(gradientStep_input[i])
         except:
-            print '  WARNING: Not a float. Use default value for gradientStep['+str(i)+']'
+            sct.printv('  WARNING: Not a float. Use default value for gradientStep['+str(i)+']', 1, 'warning')
 
     # print arguments
     print '\nInput parameters:'
