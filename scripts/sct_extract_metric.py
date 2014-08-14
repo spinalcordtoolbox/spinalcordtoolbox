@@ -118,13 +118,6 @@ def main():
     sct.check_file_exist(fname_data)
     sct.check_file_exist(path_label)
 
-    # # Check existence of path_label
-    # if not os.path.isdir(path_label):
-    #     print('\nERROR: ' + path_label + ' does not exist. Exit program.\n')
-    #     sys.exit(2)
-    # else:
-    #     print '\nOK: '+path_label
-
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
 
