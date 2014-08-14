@@ -112,18 +112,36 @@ def get_orientation(fname):
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-# Generate output file (put the extension for input file!!!)
 def generate_output_file(fname_in, path_out, file_out, ext_out):
     # import stuff
     import shutil  # for moving files
+    # get absolute fname
+    fname_in = os.path.abspath(fname_in)
+    fname_out = os.path.abspath(path_out+file_out+ext_out)
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
-    # if (i) output path is not local and (ii) output file already exists in nii or nii.gz format, delete it and move file
-    if not path_out == '' and not path_in == path_out:
+    # if input image does not exist, give error
+    if not os.path.isfile(fname_in):
+        printv('ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
+        sys.exit(2)
+    # if input and output fnames are the same, do nothing and exit function
+    if fname_in == fname_out:
+        warning('WARNING: File '+path_out+file_out+ext_out+' already exists. Do nothing.', 1, 'warning')
+        return path_out+file_out+ext_out
+    # if fname_out already exists in nii or nii.gz
+    if path_in != os.path.abspath(path_out):
+        # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
+            printv('WARNING: File '+path_out+file_out+'.nii'+' already exists. Delete it.', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii')
         if os.path.isfile(path_out+file_out+'.nii.gz'):
+            printv('WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Delete it.', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii.gz')
+    # if path_in the same as path_out, only delete fname_out with specific ext_out extension
+    else:
+        if os.path.isfile(path_out+file_out+ext_out):
+            printv('WARNING: File '+path_out+file_out+ext_out+' already exists. Delete it.', 1, 'warning')
+            os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
@@ -161,11 +179,26 @@ def check_if_installed(cmd, name_software):
 
 #=======================================================================================================================
 # printv: enables to print or not, depending on verbose status
+#   type: handles color: normal (default), warning (orange), error (red)
 #=======================================================================================================================
-def printv(string, verbose=1):
+def printv(string, verbose=1, type='normal'):
+    # define class color
+    class bcolors:
+        blue = '\033[94m'
+        green = '\033[92m'
+        yellow = '\033[93m'
+        red = '\033[91m'
+        normal = '\033[0m'
+    # select color based on type of message
+    if type == 'normal':
+        color = bcolors.normal
+    elif type == 'warning':
+        color = bcolors.yellow
+    elif type == 'error':
+        color = bcolors.red
+    # print message
     if verbose:
-        print(string)
-
+        print(color+string+bcolors.normal)
 
 
 #=======================================================================================================================
@@ -179,3 +212,17 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
+
+
+#=======================================================================================================================
+# delete_nifti: delete nifti file(s)
+#=======================================================================================================================
+def delete_nifti(fname_in):
+    # extract input file extension
+    path_in, file_in, ext_in = extract_fname(fname_in)
+    # delete nifti if exist
+    if os.path.isfile(path_in+file_in+'.nii'):
+        os.system('rm '+path_in+file_in+'.nii')
+    # delete nifti if exist
+    if os.path.isfile(path_in+file_in+'.nii.gz'):
+        os.system('rm '+path_in+file_in+'.nii.gz')
