@@ -122,25 +122,25 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     path_in, file_in, ext_in = extract_fname(fname_in)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
-        printv('ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
+        printv('  ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
-        warning('WARNING: File '+path_out+file_out+ext_out+' already exists. Do nothing.', 1, 'warning')
+        warning('  WARNING: File '+path_out+file_out+ext_out+' already exists. Do nothing.', 1, 'warning')
         return path_out+file_out+ext_out
     # if fname_out already exists in nii or nii.gz
     if path_in != os.path.abspath(path_out):
         # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
-            printv('WARNING: File '+path_out+file_out+'.nii'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Delete it.', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii')
         if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Delete it.', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii.gz')
     # if path_in the same as path_out, only delete fname_out with specific ext_out extension
     else:
         if os.path.isfile(path_out+file_out+ext_out):
-            printv('WARNING: File '+path_out+file_out+ext_out+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Delete it.', 1, 'warning')
             os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
@@ -151,7 +151,7 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
-    print '.. File created: '+path_out+file_out+ext_out
+    print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
