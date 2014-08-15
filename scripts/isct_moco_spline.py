@@ -19,17 +19,12 @@ import commands
 import getopt
 import scipy.signal
 import scipy.fftpack
+import numpy as np
 
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-
 def main():
 
     folder_mat = ''
@@ -43,14 +38,14 @@ def main():
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-i'):
+        elif opt in '-i':
             folder_mat = arg
-        elif opt in ('-g'):
+        elif opt in '-g':
             graph = arg
-        elif opt in ('-v'):
+        elif opt in '-v':
             verbose = int(arg)
 
-    if folder_mat=='':
+    if folder_mat == '':
         print 'All mandatory arguments are not provided!'
         usage()
 
@@ -60,12 +55,13 @@ def main():
     nz = len(glob.glob(folder_mat + 'mat.T0_Z*.txt'))
     nt = len(glob.glob(folder_mat + 'mat.T*_Z0.txt'))
 
-    sct_moco_spline(folder_mat,nt,nz,verbose,graph)
+    moco_spline(folder_mat, nt, nz, verbose, graph)
+
 
 #=======================================================================================================================
-# sct_moco_spline
+# moco_spline
 #=======================================================================================================================
-def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
+def moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     # append path that contains scripts, to be able to load modules
@@ -170,6 +166,7 @@ def sct_moco_spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     sct.printv('\n...Done. Patient motion has been smoothed',verbose)
     sct.printv('------------------------------------------------------------------------------\n',verbose)
 
+
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
@@ -180,7 +177,7 @@ def usage():
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
-        ' Spline regularization along T \n' \
+        ' Regularization of transformation matrices along T \n' \
         '\nUSAGE: \n' \
         '  '+os.path.basename(__file__)+' -i <folder_path> \n' \
         '\n'\

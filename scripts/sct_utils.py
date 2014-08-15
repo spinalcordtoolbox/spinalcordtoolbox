@@ -21,6 +21,14 @@ import commands
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
+# define class color
+class bcolors:
+    blue = '\033[94m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    red = '\033[91m'
+    normal = '\033[0m'
+
 
 #==============e=========================================================================================================
 # run
@@ -28,10 +36,10 @@ fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs 
 # Run UNIX command
 def run(cmd, verbose=1):
     if verbose:
-        print('>> ' + cmd)
+        print(bcolors.blue+'>> '+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
-        print('\nERROR!!! \n'+output+'\nExit program.\n')
+        printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
         sys.exit(2)
     else:
         return status, output
@@ -112,7 +120,7 @@ def get_orientation(fname):
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-def generate_output_file(fname_in, path_out, file_out, ext_out):
+def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
     # import stuff
     import shutil  # for moving files
     # get absolute fname
@@ -151,7 +159,8 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
-    print '  File created: '+path_out+file_out+ext_out
+    if verbose:
+        print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
@@ -182,16 +191,11 @@ def check_if_installed(cmd, name_software):
 #   type: handles color: normal (default), warning (orange), error (red)
 #=======================================================================================================================
 def printv(string, verbose=1, type='normal'):
-    # define class color
-    class bcolors:
-        blue = '\033[94m'
-        green = '\033[92m'
-        yellow = '\033[93m'
-        red = '\033[91m'
-        normal = '\033[0m'
     # select color based on type of message
     if type == 'normal':
         color = bcolors.normal
+    if type == 'info':
+        color = bcolors.green
     elif type == 'warning':
         color = bcolors.yellow
     elif type == 'error':
