@@ -40,11 +40,12 @@ class param:
         self.outSuffix           = "_reg"
         self.padding             = 3 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
 #        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
+        self.algo = 'SyN'
         self.numberIterations    = "15x3" # number of iterations
         self.numberIterationsStep2 = "10" # number of iterations at step 2
         self.verbose             = 0 # verbose
         self.compute_dest2sr     = 0 # compute dest2src warping field
-        self.gradientStep_input = '0.2, 0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
+        self.gradientStep_input = '0.2,0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
 
 import sys
 import getopt
@@ -74,6 +75,7 @@ def main():
     use_init_transfo = ''
     gradientStep_input = param.gradientStep_input
     compute_dest2src = param.compute_dest2sr
+    algo = param.algo
     start_time = time.time()
     print ''
 
@@ -139,7 +141,7 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
-        sct.printv("ERROR: Input file missing. Exit program.", 1, 'error')
+        sct.printv('ERROR: Input file missing. Exit program.', 1, 'error')
         usage()
 
     # check segmentation data
@@ -169,13 +171,12 @@ def main():
     print '  Segmentation dest ... '+fname_dest_seg
     print '  Init transfo ........ '+fname_init_transfo
     print '  Output name ......... '+fname_output
+    print '  Algorithm ........... '+algo
     print '  Iterations at step1 (seg) .... '+str(numberIterations)
     print '  Iterations at step2 (image) .. '+str(numberIterationsStep2)
     print '  Gradient step ....... '+str(gradientStep)
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
-    #print '.. gradient step:    '+str(gradientStepLength)
-    #print '.. metric type:      '+metricType
 
     # check existence of input files
     print '\nCheck if files exist...'
@@ -234,7 +235,7 @@ def main():
     # Find orientation of source data
     print('\nFind orientation of source data...')
     orientation = sct.get_orientation('src.nii')
-    sct.printv('.. '+orientation, verbose)
+    sct.printv('  '+orientation, verbose)
 
     # Find the dimension corresponding to z
     sct.printv('\nFind the dimension corresponding to the superior-inferior direction...', verbose)
@@ -244,9 +245,9 @@ def main():
     elif orientation.find('S') != '-1':
         dimension_si = orientation.find('S')
     else:
-        print "ERROR: Cannot find proper dimension. Exit program.\n"
+        sct.printv("ERROR: Cannot find proper dimension. Exit program.", 1, 'error')
         sys.exit(2)
-    sct.printv('.. '+str(dimension_si), verbose)
+    sct.printv('  '+str(dimension_si), verbose)
 
     # Adjust ANTs variable so that the deformation is restricted in the slice plane
     restrict_deformation = '1x1x1'
@@ -257,7 +258,7 @@ def main():
     elif dimension_si == 2:
         restrict_deformation = '1x1x0'
     else:
-        print "ERROR: Cannot adjust variable: restrict_deformation. Exit program.\n"
+        sct.printv("ERROR: Cannot adjust variable: restrict_deformation. Exit program.", 1, 'error')
         sys.exit(2)
 
     # if use initial transformation (!! needs to be inserted before the --transform field in antsRegistration)
@@ -304,7 +305,7 @@ def main():
         cmd = 'antsRegistration \
 --dimensionality 3 \
 '+use_init_transfo+' \
---transform SyN['+str(gradientStep[0])+',3,0] \
+--transform '+algo+'['+str(gradientStep[0])+',3,0] \
 --metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
 --convergence '+numberIterations+' \
 --shrink-factors 2x1 \
@@ -327,7 +328,7 @@ def main():
 
         cmd = 'antsRegistration \
 --dimensionality 3 \
---transform SyN['+str(gradientStep[1])+',3,0] \
+--transform '+algo+'['+str(gradientStep[1])+',3,0] \
 --metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] \
 --convergence '+numberIterations+' \
 --shrink-factors 4x1 \
@@ -344,7 +345,7 @@ def main():
         cmd = 'antsRegistration \
 --dimensionality 3 \
 --initial-moving-transform regSeg0Warp.nii.gz \
---transform SyN['+str(gradientStep[0])+',3,0] \
+--transform '+algo+'['+str(gradientStep[0])+',3,0] \
 --metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
 --convergence '+numberIterationsStep2+' \
 --shrink-factors 1 \
@@ -470,29 +471,21 @@ OPTIONAL ARGUMENTS
   -o <output>                  name of output file. Default=source_reg
   -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
   -y <N>                       number of iterations at step 2 (if using segmentation). Default="""+param.numberIterationsStep2+"""
-  -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
+  -g <val1,val2>               gradientStep for SyN transformation. The larger the more deformation.
                                If you use a segmentation, you can specify gradientStep for each
                                step as follow: val1,val2 (val1: image, val2: seg).
-                               Default="""+param.gradientStep[0]+""","""+param.gradientStep[1]+"""
+                               Default="""+param.gradientStep_input+"""
   -p <padding>                 size of padding (top & bottom), to enable deformation at edges.
                                Default="""+str(param.padding)+"""
   -r {0,1}                     remove temporary files. Default='+str(param.remove_temp_files)+'
   -v {0,1}                     verbose. Default="""+str(param.verbose)+"""
 
-EXAMPLE
-  Register mean DWI data to the T1 volume using segmentations:
-  """+os.path.basename(__file__)+"""
-        -i dwi_mean.nii.gz -d t1.nii.gz -s dwi_mean_seg.nii.gz -t t1_seg.nii.gz
+EXAMPLES
+  1. Register mean DWI data to the T1 volume using segmentations:
+    """+os.path.basename(__file__)+""" -i dwi_mean.nii.gz -d t1.nii.gz -s dwi_mean_seg.nii.gz -t t1_seg.nii.gz
 
-  Register another volume to the template using previously-estimated transformations:
-  """+os.path.basename(__file__)+"""
-        -i $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz
-        -d t1.nii.gz
-        -s $SCT_DIR/data/template/MNI-Poly-AMU_cord.nii.gz
-        -t segmentation_binary.nii.gz
-        -q ../t2/warp_template2anat.nii.gz
-        -x 1
-        -z ../t2/warp_anat2template.nii.gz \n"""
+  2. Register another volume to the template using previously-estimated transformations:
+    """+os.path.basename(__file__)+""" -i $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -d t1.nii.gz -s $SCT_DIR/data/template/MNI-Poly-AMU_cord.nii.gz -t segmentation_binary.nii.gz -q ../t2/warp_template2anat.nii.gz -x 1 -z ../t2/warp_anat2template.nii.gz \n"""
 
     # exit program
     sys.exit(2)
