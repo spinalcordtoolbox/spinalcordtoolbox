@@ -14,14 +14,9 @@
 # check if needed Python libraries are already installed or not
 import os
 import getopt
-import commands
 import sys
+import numpy as np
 
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
 
 #=======================================================================================================================
 # main
@@ -30,9 +25,9 @@ except ImportError:
 def main():
 
     mat_2_combine = ''
-    mat_final     = ''
+    mat_final = ''
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:f:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:f:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -44,17 +39,17 @@ def main():
             mat_final = arg
 
     # display usage if a mandatory argument is not provided
-    if mat_2_combine=='' or mat_final=='':
+    if mat_2_combine == '' or mat_final == '':
         print '\n\nAll mandatory arguments are not provided \n'
         usage()
 
-    sct_moco_combine_matrix(mat_2_combine,mat_final)
+    moco_combine_matrix(mat_2_combine, mat_final)
 
 
 #=======================================================================================================================
-# sct_moco_combine_matrix
+# moco_combine_matrix
 #=======================================================================================================================
-def sct_moco_combine_matrix(mat_2_combine,mat_final,verbose):
+def moco_combine_matrix(mat_2_combine,mat_final,verbose):
 
     if verbose:
         print '\n Combining Matrices...'
@@ -83,6 +78,7 @@ def sct_moco_combine_matrix(mat_2_combine,mat_final,verbose):
         print '\n...done. Matrices are combined...'
         print '------------------------------------------------------------------------------\n'
 
+
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
@@ -109,6 +105,7 @@ def usage():
     
     #Exit Program
     sys.exit(2)
+
 
 #=======================================================================================================================
 # Start program

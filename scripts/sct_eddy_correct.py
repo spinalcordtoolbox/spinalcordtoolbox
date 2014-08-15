@@ -17,18 +17,8 @@ import os
 import commands
 import getopt
 import time
-import matplotlib.pyplot as plt
-
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
+# import matplotlib.pyplot as plt
+import numpy as np
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -36,14 +26,10 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
-fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
+fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
 class eddy_class:
     def __init__(self):
-
-        #============================================
-        #Different Parameters
-        #============================================
         self.fname_data                = ''
         self.fname_bvecs               = ''
         self.slicewise                 = 1
@@ -109,7 +95,7 @@ def main():
     os.chdir(path_tmp)
 
     # run sct_eddy_correct
-    sct_eddy_correct(param)
+    eddy_correct(param)
 
     # come back to parent folder
     os.chdir('..')
@@ -124,12 +110,12 @@ def main():
     print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
 
 #=======================================================================================================================
-# Function sct_eddy_correct
+# Function eddy_correct
 #=======================================================================================================================
-def sct_eddy_correct(param):
+def eddy_correct(param):
 
     sct.printv('\n\n\n\n===================================================',param.verbose)
-    sct.printv('              Running: sct_eddy_correct',param.verbose)
+    sct.printv('              Running: eddy_correct', param.verbose)
     sct.printv('===================================================\n',param.verbose)
 
     fname_data    = param.fname_data
@@ -358,8 +344,9 @@ def sct_eddy_correct(param):
     sct.printv(('... File created: '+fname_data_final),verbose)
     
     sct.printv('\n===================================================',verbose)
-    sct.printv('              Completed: sct_eddy_correct',verbose)
+    sct.printv('              Completed: eddy_correct',verbose)
     sct.printv('===================================================\n\n\n',verbose)
+
 
 #=======================================================================================================================
 # usage
@@ -395,6 +382,7 @@ def usage():
     
     #Exit Program
     sys.exit(2)
+
 
 #=======================================================================================================================
 # Start program
