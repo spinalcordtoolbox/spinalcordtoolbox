@@ -1,142 +1,28 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Motion correction of MRI data. Module called by sct_dmri_moco()
+# List of functions for moco.
 #
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-06-14
+# Modified: 2014-08-14
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# check if needed Python libraries are already installed or not
-import sys
 import os
+import sys
 import commands
-import getopt
-import time
-import math
-import nibabel
 import numpy as np
 import sct_utils as sct
-
-
-class param_class:
-    def __init__(self):
-        self.fname_data = ''
-        self.fname_target = ''
-        self.fname_centerline = ''
-        self.output_path = ''
-        self.mat_final = ''
-        self.mat_moco = ''
-        self.todo = ''  # 'estimate' || 'apply' || 'estimate_and_apply'. NB: 'apply' requires input matrix. Default is 'estimate_and_apply'.
-        self.suffix = '_moco'
-        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'FLIRT'
-        self.cost_function_flirt = 'normcorr'  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
-        self.interp = 'trilinear'  #  Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline
-        self.delete_tmp_files = 1
-        self.merge_back = 1
-        self.verbose = 1
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-
-def main():
-    
-    start_time = time.time()
-    param = param_class()
-    
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:t:c:f:g:l:m:o:p:r:s:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-        elif opt in ('-i'):
-            param.fname_data = arg
-        elif opt in ('-t'):
-            param.fname_target = arg
-        elif opt in ('-c'):
-            param.cost_function_flirt = arg
-        elif opt in ('-f'):
-            param.mat_final = arg
-        elif opt in ('-g'):
-            param.mat_moco = arg
-        elif opt in ('-l'):
-            param.fname_centerline = arg
-        elif opt in ('-m'):
-            param.todo = arg
-        elif opt in ('-o'):
-            param.output_path = arg
-        elif opt in ('-p'):
-            param.interp = arg
-        elif opt in ('-r'):
-            param.delete_tmp_files = int(arg)
-        elif opt in ('-s'):
-            param.mask_size = float(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
-
-    # display usage if a mandatory argument is not provided
-    if param.fname_data == '':
-        print '\n\nAll mandatory arguments are not provided \n'
-        usage()
-    else:
-        if param.todo != 'apply':
-            if param.fname_target=='':
-                print '\n\nAll mandatory arguments are not provided \n'
-                usage()
-        else:
-            if param.mat_final=='':
-                print '\n\nFinal matrix folder is not provided \n'
-                usage()
-            param.fname_target = param.fname_data
-
-    if param.todo=='':  param.todo = 'estimate_and_apply'                         #Default Value
-    if param.cost_function_flirt=='':  param.cost_function_flirt = 'normcorr'     #Default Value
-    if param.output_path=='': param.output_path = os.getcwd() + '/'
-
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-    # append path that contains scripts, to be able to load modules
-    sys.path.append(path_sct + '/scripts')
-    import sct_utils as sct
-    
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp,param.verbose)
-    
-    # go to tmp folder
-    os.chdir(path_tmp)
-
-    sct_moco(param)
-
-    # come back to parent folder
-    os.chdir('..')
-
-    # Delete temporary files
-    if param.delete_tmp_files == 1:
-        print '\nDelete temporary files...'
-        sct.run('rm -rf '+ path_tmp,param.verbose)
-
-    # display elapsed time
-    elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
 
 
 #=======================================================================================================================
 # sct_moco Function
 #=======================================================================================================================
 def moco(param):
-
-    sct.printv('\n\nRunning: '+os.path.basename(__file__), param.verbose, 'info')
 
     # Initialization
     file_schedule = '/flirtsch/schedule_TxTy_2mmScale.sch'
@@ -172,13 +58,13 @@ def moco(param):
     sct.check_file_exist(fname_data,verbose)
     if todo != 'apply':
         sct.check_file_exist(fname_target, verbose)
-    
+
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     target_path_data, target_file_data, target_ext_data = sct.extract_fname(fname_target)
-    
+
     #Schedule file for FLIRT
-    schedule_file = file_schedule
+    schedule_file = path_sct+file_schedule
 
     if todo == 'estimate':
         if param.mat_moco == '':
@@ -196,23 +82,23 @@ def moco(param):
     # create folder for mat files
     if not os.path.exists(folder_mat):
         os.makedirs(folder_mat)
-    
+
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
-    
+
     # split along T dimension
     fname_data_splitT = file_data + '_T'
     sct.run(fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT, verbose)
-    
+
     #SLICE-by-SLICE MOTION CORRECTION
     sct.printv('\nMotion correction...', verbose)
     #split target data along Z
     fname_data_ref_splitZ = target_file_data + '_Z'
 
     sct.run(fsloutput + 'fslsplit ' + fname_target + ' ' + fname_data_ref_splitZ + ' -z', verbose)
-    
+
     #Generate Gaussian Mask
     fslmask = []
     if mask_size > 0:
@@ -221,7 +107,7 @@ def moco(param):
         data = nibabel.load((fname_data_ref_splitZ + '0000.nii'))
         hdr = data.get_header()
         hdr.set_data_dtype('uint8') # set imagetype to uint8
-        
+
         if param.fname_centerline=='':
             center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
             fname_mask = 'gaussian_mask_in'
@@ -273,17 +159,13 @@ def moco(param):
         iT = index[indice_index]
         sct.printv(('\nVolume '+str((iT+1))+'/'+str(nt)+':'), verbose)
         sct.printv('--------------------', verbose)
-        
-        fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4)) 
-        fname_data_splitT_moco_num.append(file_data + suffix + '_T' + str(iT).zfill(4))
-        
-        if slicewise:
-            # SLICE-WISE MOTION CORRECTION
-            sct.printv('Slicewise motion correction...', verbose)
 
+        fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4))
+        fname_data_splitT_moco_num.append(file_data + suffix + '_T' + str(iT).zfill(4))
+
+        if slicewise:
             # split data along Z
             sct.printv('Split data along Z...', verbose)
-
             fname_data_splitT_splitZ = fname_data_splitT_num[iT] + '_Z'
             cmd = fsloutput + 'fslsplit ' + fname_data_splitT_num[iT] + ' ' + fname_data_splitT_splitZ + ' -z'
             status, output = sct.run(cmd, verbose)
@@ -324,24 +206,23 @@ def moco(param):
                     for iZ in range(nz):
                         cmd = cmd + ' ' + fname_data_splitT_splitZ_moco_num[iT][iZ]
                     sct.run(cmd,verbose)
-                    sct.printv(('  File created: '+fname_data_splitT_moco_num[iT]), verbose)
-    
-    
+
+
     #Replace failed transformation matrix to the closest good one
-    
+
     fT, fZ = np.where(fail_mat==1)
     gT, gZ = np.where(fail_mat==0)
-    
+
     for iT in range(len(fT)):
         sct.printv(('\nReplace failed matrix T'+str(fT[iT])+' Z'+str(fZ[iT])+'...'),verbose)
-        
+
         # rename failed matrix
         cmd = 'mv ' + fname_mat[fT[iT]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]] + '_failed'
         status, output = sct.run(cmd,verbose)
-        
+
         good_Zindex = np.where(gZ == fZ[iT])
         good_index = gT[good_Zindex]
-        
+
         I = np.amin(abs(good_index-fT[iT]))
         cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
         status, output = sct.run(cmd,verbose)
@@ -355,74 +236,143 @@ def moco(param):
             for indice_index in range(len(index)):
                 cmd = cmd + ' ' + fname_data_splitT_moco_num[indice_index]
             sct.run(cmd, verbose)
-            sct.printv('  File created: '+fname_data_moco, verbose)
 
     if todo == 'estimate_and_apply':
         if param.mat_moco == '':
             sct.printv('\nDelete temporary files...', verbose)
             sct.run('rm -rf '+folder_mat, verbose)
 
-    sct.printv('\nFinished: '+os.path.basename(__file__), param.verbose, 'info')
+
+#=======================================================================================================================
+# spline
+#=======================================================================================================================
+def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    # append path that contains scripts, to be able to load modules
+    sys.path.append(path_sct + '/scripts')
+    import sct_utils as sct
+
+    sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
+    sct.printv('Spline Regularization along T: Smoothing Patient Motion...',verbose)
+
+    fname_mat = [[[] for i in range(nz)] for i in range(nt)]
+    for iT in range(nt):
+        for iZ in range(nz):
+            fname_mat[iT][iZ] = folder_mat + 'mat.T' + str(iT) + '_Z' + str(iZ) + '.txt'
+
+    #Copying the existing Matrices to another folder
+    old_mat = folder_mat + 'old/'
+    if not os.path.exists(old_mat): os.makedirs(old_mat)
+    cmd = 'cp ' + folder_mat + '*.txt ' + old_mat
+    status, output = sct.run(cmd, verbose)
+
+    sct.printv('\nloading matrices...',verbose)
+    X = [[[] for i in range(nt)] for i in range(nz)]
+    Y = [[[] for i in range(nt)] for i in range(nz)]
+    X_smooth = [[[] for i in range(nt)] for i in range(nz)]
+    Y_smooth = [[[] for i in range(nt)] for i in range(nz)]
+    for iZ in range(nz):
+        for iT in range(nt):
+            file =  open(fname_mat[iT][iZ])
+            Matrix = np.loadtxt(file)
+            file.close()
+
+            X[iZ][iT] = Matrix[0,3]
+            Y[iZ][iT] = Matrix[1,3]
+
+    # Generate motion splines
+    sct.printv('\nGenerate motion splines...',verbose)
+    T = np.arange(nt)
+    if graph:
+        import pylab as pl
+
+    for iZ in range(nz):
+
+#        frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(X[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        Wn = np.amax(frequency)/10
+#        N = 5              #Order of the filter
+#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
+#        X_smooth[iZ][:] = scipy.signal.filtfilt(b, a, X[iZ][:], axis=-1, padtype=None)
+
+        spline = scipy.interpolate.UnivariateSpline(T, X[iZ][:], w=None, bbox=[None, None], k=3, s=None)
+        X_smooth[iZ][:] = spline(T)
+
+        if graph:
+            pl.plot(T,X_smooth[iZ][:],label='spline_smoothing')
+            pl.plot(T,X[iZ][:],marker='*',linestyle='None',label='original_val')
+            if len(index_b0)!=0:
+                T_b0 = [T[i_b0] for i_b0 in index_b0]
+                X_b0 = [X[iZ][i_b0] for i_b0 in index_b0]
+                pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
+            pl.title('X')
+            pl.grid()
+            pl.legend()
+            pl.show()
+
+#        frequency = scipy.fftpack.fftfreq(len(Y[iZ][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(Y[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        Wn = np.amax(frequency)/10
+#        N = 5              #Order of the filter
+#        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
+#        Y_smooth[iZ][:] = scipy.signal.filtfilt(b, a, Y[iZ][:], axis=-1, padtype=None)
+
+        spline = scipy.interpolate.UnivariateSpline(T, Y[iZ][:], w=None, bbox=[None, None], k=3, s=None)
+        Y_smooth[iZ][:] = spline(T)
+
+        if graph:
+            pl.plot(T,Y_smooth[iZ][:],label='spline_smoothing')
+            pl.plot(T,Y[iZ][:],marker='*', linestyle='None',label='original_val')
+            if len(index_b0)!=0:
+                T_b0 = [T[i_b0] for i_b0 in index_b0]
+                Y_b0 = [Y[iZ][i_b0] for i_b0 in index_b0]
+                pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
+            pl.title('Y')
+            pl.grid()
+            pl.legend()
+            pl.show()
+
+    #Storing the final Matrices
+    sct.printv('\nStoring the final Matrices...',verbose)
+    for iZ in range(nz):
+        for iT in range(nt):
+            file =  open(fname_mat[iT][iZ])
+            Matrix = np.loadtxt(file)
+            file.close()
+
+            Matrix[0,3] = X_smooth[iZ][iT]
+            Matrix[1,3] = Y_smooth[iZ][iT]
+
+            file =  open(fname_mat[iT][iZ],'w')
+            np.savetxt(fname_mat[iT][iZ], Matrix, fmt="%s", delimiter='  ', newline='\n')
+            file.close()
+
+    sct.printv('\n...Done. Patient motion has been smoothed',verbose)
+    sct.printv('------------------------------------------------------------------------------\n',verbose)
 
 
 #=======================================================================================================================
-# usage
+# moco_combine_matrix
 #=======================================================================================================================
-def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        'Register a 4D volume (data) on a 3D volume (ref) slice by slice. \n' \
-        '\nUSAGE: \n' \
-        '  '+os.path.basename(__file__)+' -i <filename> -r <reference_file>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i           input_file \n' \
-        '  -t           reference file - if -m !=apply \n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -o           Specify Output path.\n' \
-        '  -l           Centerline file can be given to specify the centre of Gaussian Mask. \n' \
-        '  -m           method - estimate | apply | estimate_and_apply. NB: <apply> requires -f. Default is estimate_and_apply \n' \
-        '  -s           Gaussian Mask_size - Specify mask_size in millimeters. Default value of mask_size is 0.\n' \
-        '  -f           Input Matrix folder. Used if -m apply.\n' \
-        '  -g           Output Matrix Folder name. (Used if -m is not <apply>)\n' \
-        '  -c           Cost function FLIRT - mutualinfo | woods | corratio | normcorr | normmi | leastsquares. Default is <normcorr>..\n' \
-        '  -p           Interpolation - Default is trilinear. Additional options: nearestneighbour,sinc,spline.\n' \
-        '  -v {0,1}     Set verbose=1 for plotting graphs. Default value is 0 \n' \
-        '  -r {0,1}     Set value to 0 for not deleting temp files. Default value is 1 \n' \
-        '  -h           help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  '+os.path.basename(__file__)+' -i dwi_averaged_groups.nii -r dwi_mean.nii \n'
-    
-    #Exit Program
-    sys.exit(2)
+def combine_matrix(param):
 
-#=======================================================================================================================
-# 2D Gaussian Function
-#=======================================================================================================================
+    sct.printv('\nCombine matrices...', param.verbose)
+    m2c_fnames = [ fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine,fname)) ]
+    for fname in m2c_fnames:
+        if os.path.isfile(os.path.join(param.mat_final, fname)):
+            file =  open(os.path.join(param.mat_2_combine, fname))
+            Matrix_m2c = np.loadtxt(file)
+            file.close()
 
-def gauss2d(dims, sigma, center):
-    x = np.zeros((dims[0],dims[1]))
-    y = np.zeros((dims[0],dims[1]))
-    
-    for i in range(dims[0]):
-        x[i,:] = i+1
-    for i in range(dims[1]):
-        y[:,i] = i+1
-    
-    xc = center[0]
-    yc = center[1]
-    
-    return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
+            file =  open(os.path.join(param.mat_final, fname))
+            Matrix_f = np.loadtxt(file)
+            file.close()
+            Matrix_final = np.identity(4)
+            Matrix_final[0:3,0:3] = Matrix_f[0:3,0:3]*Matrix_m2c[0:3,0:3]
+            Matrix_final[0,3] = Matrix_f[0,3] + Matrix_m2c[0,3]
+            Matrix_final[1,3] = Matrix_f[1,3] + Matrix_m2c[1,3]
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # call main function
-    main()
+            file =  open(os.path.join(param.mat_final,fname),'w')
+            np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
+            file.close()
