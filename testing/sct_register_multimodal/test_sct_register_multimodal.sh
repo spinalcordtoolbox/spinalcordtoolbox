@@ -45,8 +45,8 @@ for subject in $SUBJECT_LIST; do
 	        -q ../../data/${subject}/template/warp_template2anat.nii.gz
 	        -x 0
 	        -o template2${file}
-	        -n 50x20
-	        -r 0
+		-n 10x3
+	        -r 1
 	        -v 1"
 
 		    # cmd="sct_register_multimodal.py
