@@ -140,15 +140,15 @@ def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
     if path_in != os.path.abspath(path_out):
         # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
-            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii')
         if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii.gz')
     # if path_in the same as path_out, only delete fname_out with specific ext_out extension
     else:
         if os.path.isfile(path_out+file_out+ext_out):
-            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)

@@ -57,6 +57,7 @@ class param:
         self.suffix = '_moco'
         self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'FLIRT'
+        self.file_schedule = '/flirtsch/schedule_TxTy_2mm.sch'
         self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
         self.spline_fitting = 0
@@ -266,7 +267,7 @@ def dmri_moco(param, fname_data_initial):
         
     if fname_bvals != '':
         # Open bvals file
-        sct.printv('\nOpen bvals file...',verbose)
+        sct.printv('\nOpen bvals file...', verbose)
         bvals = []
         with open(fname_bvals) as f:
             for line in f:
@@ -274,13 +275,13 @@ def dmri_moco(param, fname_data_initial):
                 bvals.append(bvals_new)
 
         # Identify b=0 and DWI images
-        sct.printv('\nIdentify b=0 and DWI images...',verbose)
+        sct.printv('\nIdentify b=0 and DWI images...', verbose)
         index_b0 = np.where(bvals > 429 and bvals < 4000)  # only valid for connectome scanner data (very high bvalues)
         index_dwi = np.where(bvals <= 429 or bvals >= 4000)
         n_b0 = len(index_b0)
         n_dwi = len(index_dwi)
-        sct.printv('  Index of b=0:'+str(index_b0),verbose)
-        sct.printv('  Index of DWI:'+str(index_dwi),verbose)
+        sct.printv('  Index of b=0:'+str(index_b0), verbose)
+        sct.printv('  Index of DWI:'+str(index_dwi), verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
@@ -290,16 +291,16 @@ def dmri_moco(param, fname_data_initial):
     sct.printv('\nMerge b=0...', verbose)
     fname_b0_merge = file_b0
     cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge
-    for iT in range(n_b0):
-        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[iT]).zfill(4)
+    for it in range(n_b0):
+        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
     status, output = sct.run(cmd,verbose)
     sct.printv(('  File created: ' + fname_b0_merge), verbose)
 
     # Average b=0 images
-    sct.printv('\nAverage b=0...',verbose)
-    fname_b0_mean = 'b0_mean' 
+    sct.printv('\nAverage b=0...', verbose)
+    fname_b0_mean = 'b0_mean'
     cmd = fsloutput + 'fslmaths ' + fname_b0_merge + ' -Tmean ' + fname_b0_mean
-    status, output = sct.run(cmd,verbose)
+    status, output = sct.run(cmd, verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(n_dwi/dwi_group_size))
@@ -327,8 +328,8 @@ def dmri_moco(param, fname_data_initial):
         sct.printv('Merge DW images...', verbose)
         fname_dwi_merge_i = file_dwi + '_' + str(iGroup)
         cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i
-        for iT in range(nb_dwi_i):
-            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[iT]).zfill(4)
+        for it in range(nb_dwi_i):
+            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
         sct.run(cmd, verbose)
 
         # Average DW Images
@@ -350,71 +351,68 @@ def dmri_moco(param, fname_data_initial):
     fname_dwi_mean = 'dwi_mean'  
     sct.run(fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge + ' -Tmean ' + fname_dwi_mean, verbose)
 
-    # Estimate moco on dwi groups
-    sct.printv('\nEstimating motion based on DW groups...', verbose)
-    param.fname_data = 'dwi_averaged_groups.nii'
-    param.fname_target = file_dwi + '_mean_' + str(0)
-    param.path_out = ''
-    param.todo = 'estimate_and_apply'
-    param.mat_moco = 'mat_dwigroups'
-    param.interp = 'trilinear'
-    moco.moco(param)
-
     # Estimate moco on b0 groups
-    param.fname_data = 'b0.nii'
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Estimating motion on b=0 images...', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
+    param.fname_data = 'b0'
     if index_dwi[0] != 0:
-        # If first DWI is not the first volume, then there is a least one b=0 image before. In that case
+        # If first DWI is not the first volume (most common), then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
-        param.fname_target = file_data + '_T' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
+        param.fname_target = file_data + '_T' + str(index_b0[index_dwi[0]-1]).zfill(4)
     else:
         # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
-        param.fname_target = file_data + '_T' + str(index_b0[0]).zfill(4) + '.nii'
+        param.fname_target = file_data + '_T' + str(index_b0[0]).zfill(4)
     param.path_out = ''
-    param.todo = 'estimate_and_apply'
+    param.todo = 'estimate'
     param.mat_moco = 'mat_b0groups'
     param.interp = 'trilinear'
     moco.moco(param)
 
-    # Copy registration matrix for every dwi based on dwi_averaged_groups
-    sct.printv('\nCopy registration matrix for every DWI based on dwi_averaged_groups matrix...', verbose)
-    mat_final = 'mat_final/'
-    if not os.path.exists(mat_final): os.makedirs(mat_final)
+    # Estimate moco on dwi groups
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Estimating motion on DW images...', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
+    param.fname_data = 'dwi_averaged_groups'
+    param.fname_target = file_dwi + '_mean_' + str(0)  # target is the first DW image (closest to the first b=0)
+    param.path_out = ''
+    param.todo = 'estimate'
+    param.mat_moco = 'mat_dwigroups'
+    param.interp = 'trilinear'
+    moco.moco(param)
 
+    # create final mat folder
+    mat_final = 'mat_final/'
+    if not os.path.exists(mat_final):
+        os.makedirs(mat_final)
+
+    # Copy b=0 registration matrices
+    sct.printv('\nCopy b=0 registration matrices...', verbose)
+    for it in range(n_b0):
+        for iz in range(nz):
+            sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+'.txt'+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+'.txt', verbose)
+
+    # Copy DWI registration matrices
+    sct.printv('\nCopy DWI registration matrices...', verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            for i_Z in range(nz):
-                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(i_Z)+'.txt', verbose)
+            for iz in range(nz):
+                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+'.txt', verbose)
 
-    index = np.argmin(np.abs(np.array(index_dwi) - index_b0[len(index_b0)-1]))
-    for b0 in range(len(index_b0)):
-        for i_Z in range(nz):
-            sct.run('cp '+mat_final+'mat.T'+ str(index_dwi[index]) +'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(index_b0[b0])+'_Z'+str(i_Z)+'.txt', verbose)
-
-    # Renaming Files
-    nz1 = len(glob.glob('mat_b0groups/mat.T0_Z*.txt'))
-    nt1 = len(glob.glob('mat_b0groups/mat.T*_Z0.txt'))
-    for iT in range(nt1):
-        if iT!=index_b0[iT]:
-            for iZ in range(nz1):
-                sct.run('mv ' + 'mat_b0groups/mat.T'+str(iT)+'_Z'+str(iZ)+'.txt' + ' ' + 'mat_b0groups/mat.T'+str(index_b0[iT])+'_Z'+str(iZ)+'.txt', verbose)
-
-    # combining Motion Matrices
-    param.mat_2_combine = 'mat_b0groups'
-    param.mat_final = mat_final
-    moco.combine_matrix(param)
-
+    # Spline Regularization along T
     if param.spline_fitting:
-        #Spline Regularization along T
         moco.spline(mat_final, nt, nz, verbose, np.array(index_b0), param.plot_graph)
 
+    # combine Eddy Matrices
     if param.run_eddy:
-        #combining eddy Matrices
         param.mat_2_combine = 'mat_eddy'
         param.mat_final = mat_final
         moco.combine_matrix(param)
 
     # Apply moco on all dmri data
-    sct.printv('\nApply moco on all dmri data...', verbose)
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Apply moco', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
     param.fname_data = fname_data_initial
     param.fname_target = 'b0'  # just need a 3D volume for reference asked by flirt. This will not be used
     param.path_out = ''
