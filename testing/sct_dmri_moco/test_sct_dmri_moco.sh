@@ -1,7 +1,5 @@
 #!/bin/bash
 #
-# This script tests sct_warp_atlas2metric.
-#
 
 # subject list
 SUBJECT_LIST="errsm_23" 
@@ -40,8 +38,8 @@ for subject in $SUBJECT_LIST; do
         -f 0
         -s 15
         -d 3
-        -r 0
-        -p sinc"
+        -r 1
+        -p spline"
     echo ==============================================================================================
     echo "$cmd"
     echo ==============================================================================================
