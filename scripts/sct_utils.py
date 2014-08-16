@@ -36,7 +36,7 @@ class bcolors:
 # Run UNIX command
 def run(cmd, verbose=1):
     if verbose:
-        print(bcolors.blue+'>> '+cmd+bcolors.normal)
+        print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
