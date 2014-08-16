@@ -57,7 +57,7 @@ class param:
         self.suffix = '_moco'
         self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'FLIRT'
-        self.file_schedule = '/flirtsch/schedule_TxTy_2mm.sch'
+        self.file_schedule = '/flirtsch/schedule_TxTy_2mm.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
         self.spline_fitting = 0
