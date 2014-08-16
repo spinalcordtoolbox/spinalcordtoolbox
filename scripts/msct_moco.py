@@ -38,7 +38,7 @@ def moco(param):
     todo = param.todo
     suffix = param.suffix
     mask_size = param.mask_size
-    program = param.program
+    #program = param.program
     cost_function_flirt = param.cost_function_flirt
     interp = param.interp
     merge_back = param.merge_back
@@ -102,13 +102,15 @@ def moco(param):
     #Generate Gaussian Mask
     fslmask = []
     if mask_size > 0:
+        import nibabel
         sigma = np.array([mask_size/px, mask_size/py])
         dims = np.array([nx, ny, nz, nt])
         data = nibabel.load((fname_data_ref_splitZ + '0000.nii'))
         hdr = data.get_header()
-        hdr.set_data_dtype('uint8') # set imagetype to uint8
+        hdr.set_data_dtype('uint8')  # set imagetype to uint8
 
-        if param.fname_centerline=='':
+        if param.fname_centerline == '':
+            import math
             center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
             fname_mask = 'gaussian_mask_in'
             M_mask = gauss2d(dims, sigma, center)
@@ -117,30 +119,30 @@ def moco(param):
             nibabel.save(img,(fname_mask+'.nii'))
             for iZ in range(nz):
                 fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
-            sct.printv(('\n.. File created: '+fname_mask),verbose)
+            # sct.printv(('\n.. File created: '+fname_mask),verbose)
         else:
             centerline = nibabel.load(param.fname_centerline)
             data_centerline = centerline.get_data()
-            cx,cy,cz = np.where(data_centerline>0)
+            cx, cy, cz = np.where(data_centerline > 0)
             arg = np.argsort(cz)
             cz = cz[arg]
             cx = cx[arg]
             cy = cy[arg]
             fname_mask = 'gaussian_mask_in'
             for iZ in range(nz):
-                center = np.array([cx[iZ],cy[iZ]])
+                center = np.array([cx[iZ], cy[iZ]])
                 M_mask = gauss2d(dims, sigma, center)
                 # Write NIFTI volumes
                 img = nibabel.Nifti1Image(M_mask, None, hdr)
                 nibabel.save(img,(fname_mask+str(iZ)+'.nii'))
                 fslmask.append(' -inweight ' + fname_mask+str(iZ) + ' -refweight ' + fname_mask+str(iZ))
-                sct.printv(('\n.. File created: '+(fname_mask+str(iZ))),verbose)
+                # sct.printv(('\n.. File created: '+(fname_mask+str(iZ))),verbose)
 
             #Merging all masks
             cmd = 'fslmerge -z ' + path_data + 'mask '
             for iZ in range(nz):
                 cmd = cmd + fname_mask+str(iZ)+' '
-            status, output = sct.run(cmd,verbose)
+            status, output = sct.run(cmd, verbose)
     else:
         for iZ in range(nz):
             fslmask.append('')
@@ -227,8 +229,8 @@ def moco(param):
         cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
         status, output = sct.run(cmd,verbose)
 
-    fname_data_moco = param.output_path + file_data + suffix + '.nii'
     # Merge data along T
+    fname_data_moco = file_data + suffix
     if todo != 'estimate':
         if merge_back == 1:
             sct.printv('\nMerge data back along T...', verbose)
@@ -376,3 +378,21 @@ def combine_matrix(param):
             file =  open(os.path.join(param.mat_final,fname),'w')
             np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
+
+
+#=======================================================================================================================
+# gauss2d: creates a 2D Gaussian Function
+#=======================================================================================================================
+def gauss2d(dims, sigma, center):
+    x = np.zeros((dims[0],dims[1]))
+    y = np.zeros((dims[0],dims[1]))
+
+    for i in range(dims[0]):
+        x[i,:] = i+1
+    for i in range(dims[1]):
+        y[:,i] = i+1
+
+    xc = center[0]
+    yc = center[1]
+
+    return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))

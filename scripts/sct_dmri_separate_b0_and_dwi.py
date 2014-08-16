@@ -95,9 +95,9 @@ def main():
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    # get output folder
-    if path_out == '':
-        path_out = path_data
+    # # get output folder
+    # if path_out == '':
+    #     path_out = ''
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
@@ -185,7 +185,7 @@ def main():
         sct.generate_output_file(path_tmp+'b0_mean.nii', path_out, 'b0_mean', ext_data, verbose)
         sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out, 'dwi_mean', ext_data, verbose)
 
-    # Delete temporary files
+    # Remove temporary files
     if remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf '+path_tmp, verbose)
@@ -221,8 +221,8 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -a {0,1}         averave b=0 and DWI data. Default="""+str(param.average)+"""
-  -o <output>      output folder
+  -a {0,1}         average b=0 and DWI data. Default="""+str(param.average)+"""
+  -o <output>      output folder. Default = local folder.
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
