@@ -24,9 +24,9 @@ import sct_utils as sct
 #=======================================================================================================================
 def moco(param):
 
-    # Initialization
-    file_schedule = '/flirtsch/schedule_TxTy_2mmScale.sch'
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
+    # default parameters
+    file_schedule = '/flirtsch/schedule_TxTy.sch'
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -44,6 +44,10 @@ def moco(param):
     merge_back = param.merge_back
     verbose = param.verbose
     slicewise = 1  # TODO: in the future, enables non-slicewise
+
+    # get file schedule
+    if param.file_schedule != '':
+        file_schedule = param.file_schedule
 
     # print arguments
     sct.printv('\nInput parameters:', param.verbose)
@@ -136,7 +140,6 @@ def moco(param):
                 img = nibabel.Nifti1Image(M_mask, None, hdr)
                 nibabel.save(img,(fname_mask+str(iZ)+'.nii'))
                 fslmask.append(' -inweight ' + fname_mask+str(iZ) + ' -refweight ' + fname_mask+str(iZ))
-                # sct.printv(('\n.. File created: '+(fname_mask+str(iZ))),verbose)
 
             #Merging all masks
             cmd = 'fslmerge -z ' + path_data + 'mask '
@@ -173,6 +176,7 @@ def moco(param):
             status, output = sct.run(cmd, verbose)
 
             fname_data_ref_splitZ_num = []
+            sct.printv('Loop across Z ('+todo+')...', verbose)
             for iZ in range(nz):
                 fname_data_splitT_splitZ_num[iT][iZ] = fname_data_splitT_splitZ + str(iZ).zfill(4)
                 fname_data_splitT_splitZ_moco_num[iT][iZ] = fname_data_splitT_splitZ_num[iT][iZ] + suffix
@@ -180,7 +184,7 @@ def moco(param):
                 fname_mat[iT][iZ] = folder_mat + 'mat.T' + str(iT) + '_Z' + str(iZ) + '.txt'
 
                 if todo == 'estimate':
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -out '+fname_data_splitT_splitZ_moco_num[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
+                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]
 
                 if todo == 'apply':
                     cmd = fsloutput + 'flirt -in ' + fname_data_splitT_splitZ_num[iT][iZ] + ' -ref ' + fname_data_ref_splitZ_num[iZ] + ' -applyxfm -init ' + fname_mat[iT][iZ] + ' -out ' + fname_data_splitT_splitZ_moco_num[iT][iZ] + ' -interp ' + interp
@@ -220,14 +224,14 @@ def moco(param):
 
         # rename failed matrix
         cmd = 'mv ' + fname_mat[fT[iT]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]] + '_failed'
-        status, output = sct.run(cmd,verbose)
+        status, output = sct.run(cmd, verbose)
 
         good_Zindex = np.where(gZ == fZ[iT])
         good_index = gT[good_Zindex]
 
         I = np.amin(abs(good_index-fT[iT]))
         cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
-        status, output = sct.run(cmd,verbose)
+        status, output = sct.run(cmd, verbose)
 
     # Merge data along T
     fname_data_moco = file_data + suffix
@@ -355,27 +359,34 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
 
 
 #=======================================================================================================================
-# moco_combine_matrix
+# combine_matrix
 #=======================================================================================================================
 def combine_matrix(param):
 
     sct.printv('\nCombine matrices...', param.verbose)
-    m2c_fnames = [ fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine,fname)) ]
+    # list all mat files in source mat folder
+    m2c_fnames = [ fname for fname in os.listdir(param.mat_2_combine) if os.path.isfile(os.path.join(param.mat_2_combine, fname)) ]
+    # loop across files
     for fname in m2c_fnames:
         if os.path.isfile(os.path.join(param.mat_final, fname)):
-            file =  open(os.path.join(param.mat_2_combine, fname))
+            # read source matrix
+            file = open(os.path.join(param.mat_2_combine, fname))
             Matrix_m2c = np.loadtxt(file)
             file.close()
-
-            file =  open(os.path.join(param.mat_final, fname))
+            # read destination matrix
+            file = open(os.path.join(param.mat_final, fname))
             Matrix_f = np.loadtxt(file)
             file.close()
+            # initialize final matrix
             Matrix_final = np.identity(4)
-            Matrix_final[0:3,0:3] = Matrix_f[0:3,0:3]*Matrix_m2c[0:3,0:3]
-            Matrix_final[0,3] = Matrix_f[0,3] + Matrix_m2c[0,3]
-            Matrix_final[1,3] = Matrix_f[1,3] + Matrix_m2c[1,3]
-
-            file =  open(os.path.join(param.mat_final,fname),'w')
+            # multiplies rotation matrix (3x3)
+            Matrix_final[0:3, 0:3] = Matrix_f[0:3, 0:3] * Matrix_m2c[0:3, 0:3]
+            # add translations matrix (3x1)
+            Matrix_final[0, 3] = Matrix_f[0, 3] + Matrix_m2c[0, 3]
+            Matrix_final[1, 3] = Matrix_f[1, 3] + Matrix_m2c[1, 3]
+            Matrix_final[2, 3] = Matrix_f[2, 3] + Matrix_m2c[2, 3]
+            # write final matrix (overwrite destination)
+            file = open(os.path.join(param.mat_final, fname), 'w')
             np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
