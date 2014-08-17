@@ -23,7 +23,6 @@ import sct_utils as sct
 
 # DEFAULT PARAMETERS
 class param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 0  # verbose
@@ -104,7 +103,7 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     # N.B. Here we take the inverse of the warp list, because WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list), verbose)
+    sct.run('WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
