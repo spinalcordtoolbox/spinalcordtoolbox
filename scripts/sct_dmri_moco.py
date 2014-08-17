@@ -82,7 +82,7 @@ def main():
 
     # initialization
     start_time = time.time()
-    path_out = ''
+    path_out = '.'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')

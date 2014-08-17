@@ -84,6 +84,13 @@ def moco(param):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
+    # pad data (for ANTs)
+    # TODO: check if need to pad also for the estimate_and_apply
+    if program == 'ants' and todo == 'estimate':
+        sct.printv('\nPad data (for ANTs)...', verbose)
+        sct.run('c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
+        fname_target = fname_target+'_pad'
+
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
     fname_data_splitT = fname_data + '_T'
@@ -164,6 +171,12 @@ def moco(param):
         file_data_splitT_moco_num.append(fname_data + suffix + '_T' + str(it).zfill(4))
         sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
 
+        # pad data (for ANTs)
+        # TODO: check if need to pad also for the estimate_and_apply
+        if program == 'ants' and todo == 'estimate':
+            sct.run('c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
+            file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
+
         # Slice-by-slice moco
         if slicewise:
             # split data along Z
@@ -220,15 +233,15 @@ def moco(param):
             # use ANTs
             elif program == 'ants':
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
-                # TODO: figure out oritnation
+                # TODO: figure out orientation
                 if todo == 'estimate' or todo == 'estimate_and_apply':
                     cmd = 'antsRegistration' \
                           ' --dimensionality 3' \
-                          ' --transform BSplineSyN[0.5, 3, 0]' \
+                          ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
                           ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
-                          ' --convergence 10' \
-                          ' --shrink-factors 2' \
-                          ' --smoothing-sigmas 1mm' \
+                          ' --convergence 10x5' \
+                          ' --shrink-factors 2x1' \
+                          ' --smoothing-sigmas 1x1mm' \
                           ' --Restrict-Deformation '+restrict_deformation+'' \
                           ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
                           ' --interpolation BSpline[3]'
