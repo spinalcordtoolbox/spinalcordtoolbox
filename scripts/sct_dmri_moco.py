@@ -23,7 +23,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
+# TODO: make sure slicewise not used with ants, eddy not used with ants
+# TODO: make sure images are axial
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 # TODO (no priority): for sinc interp, use ANTs or c3d instead of flirt
 
@@ -39,8 +40,6 @@ from sct_eddy_correct import eddy_correct
 import sct_utils as sct
 import msct_moco as moco
 
-path_out = ''
-
 class param:
     def __init__(self):
         self.debug = 0
@@ -49,22 +48,22 @@ class param:
         self.fname_bvals = ''
         self.fname_target = ''
         self.fname_centerline = ''
-        self.path_out = ''
+        # self.path_out = ''
         self.mat_final = ''
-        self.mat_moco = ''
         self.todo = ''
         self.dwi_group_size = 3  # number of images averaged for 'dwi' method.
-        self.suffix = '_moco'
-        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'FLIRT'
-        self.file_schedule = '/flirtsch/schedule_TxTy_2mm.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
-        self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
-        self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
         self.spline_fitting = 0
-        self.delete_tmp_files = 1
-        self.merge_back = 1
+        self.remove_tmp_files = 1
         self.verbose = 1
         self.plot_graph = 0
+        # param for msct_moco
+        self.slicewise = 0
+        self.suffix = '_moco'
+        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
+        self.program = 'ants'  # flirt, ants
+        self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
+        self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
         #Eddy Current Distortion Parameters:
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -83,6 +82,7 @@ def main():
 
     # initialization
     start_time = time.time()
+    path_out = ''
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -95,7 +95,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:a:b:c:d:e:f:g:l:o:p:r:s:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:o:p:r:s:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -120,11 +120,11 @@ def main():
         elif opt in ('-l'):
             param.fname_centerline = arg
         elif opt in ('-o'):
-            param.path_out = arg
+            path_out = arg
         elif opt in ('-p'):
             param.interp = arg
         elif opt in ('-r'):
-            param.delete_tmp_files = int(arg)
+            param.remove_tmp_files = int(arg)
         elif opt in ('-s'):
             param.mask_size = float(arg)
         elif opt in ('-v'):
@@ -138,8 +138,8 @@ def main():
     if param.cost_function_flirt == '':
         param.cost_function_flirt = 'normcorr'
 
-    if param.path_out == '':
-        path_out = ''
+    # if param.path_out == '':
+    #     path_out = ''
     #     param.path_out = os.getcwd() + '/'
     # global path_out
     # path_out = param.path_out
@@ -169,35 +169,40 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    fname_data_initial = param.fname_data
+    # fname_data_initial = param.fname_data
     
-    #Copying input data to the tmp folder
+    # Copying input data to the tmp folder
+    sct.printv('Copying input data to the tmp folder...', param.verbose)
     os.mkdir('outputs')
     sct.run('cp '+param.fname_data+' dmri'+ext_data, param.verbose)
     sct.run('cp '+param.fname_bvecs+' bvecs.txt', param.verbose)
+    # convert dmri to nii format
+    sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
     # EDDY CURRENT CORRECTION
-    if param.run_eddy:
-        param.path_out = ''
-        param.slicewise = 1
-        eddy_correct(param)
-        param.fname_data = file_data + '_eddy.nii'
+    # TODO: MAKE SURE path_out IS CORRECT WITH EDDY BEFORE ACTIVATING EDDY
+    # if param.run_eddy:
+    #     param.path_out = ''
+    #     param.slicewise = 1
+    #     eddy_correct(param)
+    #     param.fname_data = file_data + '_eddy.nii'
 
-    # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
-    # the param.fname_data will be the output of sct_eddy_correct.
-    dmri_moco(param, fname_data_initial)
+    # run moco
+    dmri_moco(param)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
+    path_out = sct.slash_at_the_end(path_out, 1)
+    sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
     sct.generate_output_file(path_tmp+'dmri'+param.suffix+'.nii', path_out, file_data+param.suffix, ext_data, param.verbose)
     sct.generate_output_file(path_tmp+'b0_mean.nii', path_out, 'b0'+param.suffix+'_mean', ext_data, param.verbose)
     sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out, 'dwi'+param.suffix+'_mean', ext_data, param.verbose)
 
     # Delete temporary files
-    if param.delete_tmp_files == 1:
+    if param.remove_tmp_files == 1:
         sct.printv('\nDelete temporary files...', param.verbose)
         sct.run('rm -rf '+path_tmp, param.verbose)
 
@@ -213,17 +218,19 @@ def main():
 #=======================================================================================================================
 # dmri_moco: motion correction specific to dmri data
 #=======================================================================================================================
-def dmri_moco(param, fname_data_initial):
+def dmri_moco(param):
     
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     
-    fname_data     = param.fname_data
-    fname_bvecs    = param.fname_bvecs
-    fname_bvals    = param.fname_bvals
+    fname_data = param.fname_data
+    fname_bvecs = param.fname_bvecs
+    fname_bvals = param.fname_bvals
+    slicewise = param.slicewise
     dwi_group_size = param.dwi_group_size
-    interp         = param.interp
-    verbose        = param.verbose
-    
+    interp = param.interp
+    verbose = param.verbose
+    mat_final = 'mat_final/'
+
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     
@@ -382,22 +389,33 @@ def dmri_moco(param, fname_data_initial):
     moco.moco(param)
 
     # create final mat folder
-    mat_final = 'mat_final/'
     if not os.path.exists(mat_final):
         os.makedirs(mat_final)
 
     # Copy b=0 registration matrices
     sct.printv('\nCopy b=0 registration matrices...', verbose)
+    # first, use the right extension
+    if param.program == 'fsl':
+        ext_mat = '.txt'  # affine matrix
+    elif param.program == 'ants':
+        ext_mat = '0Warp.nii.gz'  # warping field
+
     for it in range(n_b0):
-        for iz in range(nz):
-            sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+'.txt'+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+'.txt', verbose)
+        if slicewise:
+            for iz in range(nz):
+                sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, verbose)
+        else:
+            sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, verbose)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            for iz in range(nz):
-                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+'.txt', verbose)
+            if slicewise:
+                for iz in range(nz):
+                    sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, verbose)
+            else:
+                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, verbose)
 
     # Spline Regularization along T
     if param.spline_fitting:
@@ -413,10 +431,10 @@ def dmri_moco(param, fname_data_initial):
     sct.printv('\n-------------------------------------------------------------------------------', verbose)
     sct.printv('  Apply moco', verbose)
     sct.printv('-------------------------------------------------------------------------------', verbose)
-    param.fname_data = fname_data_initial
-    param.fname_target = 'b0'  # just need a 3D volume for reference asked by flirt. This will not be used
+    param.fname_data = 'dmri'
+    param.fname_target = file_dwi+'_mean_'+str(0)  # reference for reslicing into proper coordinate system
     param.path_out = ''
-    param.mat_final = mat_final
+    param.mat_moco = mat_final
     param.todo = 'apply'
     param.interp = interp
     moco.moco(param)
@@ -461,7 +479,7 @@ OPTIONAL ARGUMENTS
   -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.delete_tmp_files)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE
