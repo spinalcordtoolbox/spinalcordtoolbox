@@ -134,7 +134,7 @@ def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
-        warning('  WARNING: File '+path_out+file_out+ext_out+' already exists. Do nothing.', 1, 'warning')
+        printv('  WARNING: File '+path_out+file_out+ext_out+' same as output. Do nothing.', 1, 'warning')
         return path_out+file_out+ext_out
     # if fname_out already exists in nii or nii.gz
     if path_in != os.path.abspath(path_out):
@@ -230,3 +230,11 @@ def delete_nifti(fname_in):
     # delete nifti if exist
     if os.path.isfile(path_in+file_in+'.nii.gz'):
         os.system('rm '+path_in+file_in+'.nii.gz')
+
+
+#=======================================================================================================================
+# create_folder:  create folder, and check if exists before creating it
+#=======================================================================================================================
+def create_folder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
