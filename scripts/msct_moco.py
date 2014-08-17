@@ -12,6 +12,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: with ants, pad at top and bottom
+# TODO: make mask work with slicewise=0
+# TODO: do not output inverse warp for ants
+# TODO: ants: explore optin  --float  for faster computation
+
 import os
 import sys
 import commands
@@ -24,92 +29,79 @@ import sct_utils as sct
 #=======================================================================================================================
 def moco(param):
 
-    # default parameters
-    file_schedule = '/flirtsch/schedule_TxTy.sch'
+    # retrieve parameters
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
+    fname_data = param.fname_data
+    fname_target = param.fname_target
+    folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
+    # mat_final = param.mat_final
+    todo = param.todo
+    suffix = param.suffix
+    mask_size = param.mask_size
+    program = param.program
+    cost_function_flirt = param.cost_function_flirt
+    file_schedule = param.file_schedule
+    interp = param.interp
+    verbose = param.verbose
+    slicewise = param.slicewise
+    # ANTs parameters
+    restrict_deformation = '1x1x0'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    #Different parameters
-    fname_data = param.fname_data
-    fname_target = param.fname_target
-    mat_final = param.mat_final
-    todo = param.todo
-    suffix = param.suffix
-    mask_size = param.mask_size
-    #program = param.program
-    cost_function_flirt = param.cost_function_flirt
-    interp = param.interp
-    merge_back = param.merge_back
-    verbose = param.verbose
-    slicewise = 1  # TODO: in the future, enables non-slicewise
-
-    # get file schedule
-    if param.file_schedule != '':
-        file_schedule = param.file_schedule
-
     # print arguments
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............'+param.fname_data, param.verbose)
-    sct.printv('  Reference file ........'+param.fname_target, param.verbose)
+    sct.printv('  Input file ............'+fname_data, param.verbose)
+    sct.printv('  Reference file ........'+fname_target, param.verbose)
     sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
+    sct.printv('  Program ...............'+program, param.verbose)
+    sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
     sct.printv('  Schedule file .........'+file_schedule, param.verbose)
-    sct.printv('  Method: ...............'+param.todo, param.verbose)
+    sct.printv('  Method ................'+todo, param.verbose)
+    sct.printv('  Mask size .............'+str(mask_size), param.verbose)
+    sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
     # check existence of input files
     sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data,verbose)
-    if todo != 'apply':
-        sct.check_file_exist(fname_target, verbose)
-
-    # Extract path, file and extension
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    target_path_data, target_file_data, target_ext_data = sct.extract_fname(fname_target)
+    sct.check_file_exist(fname_data, verbose)
+    sct.check_file_exist(fname_target, verbose)
 
     #Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
-    if todo == 'estimate':
-        if param.mat_moco == '':
-            folder_mat = 'mat_moco/'
-        else:
-            folder_mat = param.mat_moco + '/'
-    elif todo == 'estimate_and_apply':
-        if param.mat_moco == '':
-            folder_mat = 'mat_tmp/'
-        else:
-            folder_mat = param.mat_moco + '/'
-    else:
-        folder_mat = mat_final
-
     # create folder for mat files
-    if not os.path.exists(folder_mat):
-        os.makedirs(folder_mat)
+    sct.create_folder(folder_mat)
+
+    # get the right extension depending on program
+    if param.program == 'fsl':
+        ext_mat = '.txt'  # affine matrix
+    elif param.program == 'ants':
+        ext_mat = '0Warp.nii.gz'  # warping field
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
-    # split along T dimension
-    fname_data_splitT = file_data + '_T'
+    # Split data along T dimension
+    sct.printv('\nSplit data along T dimension...', verbose)
+    fname_data_splitT = fname_data + '_T'
     sct.run(fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT, verbose)
 
-    #SLICE-by-SLICE MOTION CORRECTION
-    sct.printv('\nMotion correction...', verbose)
-    #split target data along Z
-    fname_data_ref_splitZ = target_file_data + '_Z'
+    # split target data along Z
+    if slicewise:
+        file_data_ref_splitZ = fname_target + '_Z'
+        sct.run(fsloutput + 'fslsplit ' + fname_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
 
-    sct.run(fsloutput + 'fslsplit ' + fname_target + ' ' + fname_data_ref_splitZ + ' -z', verbose)
-
-    #Generate Gaussian Mask
+    # Generate Gaussian Mask
     fslmask = []
-    if mask_size > 0:
+    # TODO: make case that works for slicewise=0
+    if mask_size > 0 and slicewise:
         import nibabel
         sigma = np.array([mask_size/px, mask_size/py])
         dims = np.array([nx, ny, nz, nt])
-        data = nibabel.load((fname_data_ref_splitZ + '0000.nii'))
+        data = nibabel.load((file_data_ref_splitZ + '0000.nii'))
         hdr = data.get_header()
         hdr.set_data_dtype('uint8')  # set imagetype to uint8
 
@@ -121,7 +113,7 @@ def moco(param):
             # Write NIFTI volumes
             img = nibabel.Nifti1Image(M_mask, None, hdr)
             nibabel.save(img,(fname_mask+'.nii'))
-            for iZ in range(nz):
+            for iz in range(nz):
                 fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
             # sct.printv(('\n.. File created: '+fname_mask),verbose)
         else:
@@ -133,120 +125,168 @@ def moco(param):
             cx = cx[arg]
             cy = cy[arg]
             fname_mask = 'gaussian_mask_in'
-            for iZ in range(nz):
-                center = np.array([cx[iZ], cy[iZ]])
+            for iz in range(nz):
+                center = np.array([cx[iz], cy[iz]])
                 M_mask = gauss2d(dims, sigma, center)
                 # Write NIFTI volumes
                 img = nibabel.Nifti1Image(M_mask, None, hdr)
-                nibabel.save(img,(fname_mask+str(iZ)+'.nii'))
-                fslmask.append(' -inweight ' + fname_mask+str(iZ) + ' -refweight ' + fname_mask+str(iZ))
+                nibabel.save(img,(fname_mask+str(iz)+'.nii'))
+                fslmask.append(' -inweight ' + fname_mask+str(iz) + ' -refweight ' + fname_mask+str(iz))
 
             #Merging all masks
-            cmd = 'fslmerge -z ' + path_data + 'mask '
-            for iZ in range(nz):
-                cmd = cmd + fname_mask+str(iZ)+' '
+            cmd = 'fslmerge -z mask '
+            for iz in range(nz):
+                cmd = cmd + fname_mask+str(iz)+' '
             status, output = sct.run(cmd, verbose)
     else:
-        for iZ in range(nz):
+        for iz in range(nz):
             fslmask.append('')
     index = np.arange(nt)
 
-    # MOTION CORRECTION
-    nb_fails = 0
-    fail_mat = np.zeros((nt,nz))
-    fname_data_splitT_num = []
-    fname_data_splitT_moco_num = []
-    fname_data_splitT_splitZ_num = [[[] for i in range(nz)] for i in range(nt)]
-    fname_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
-    fname_mat = [[[] for i in range(nz)] for i in range(nt)]
+    # Motion correction: initialization
+    file_data_splitT_num = []
+    file_data_splitT_moco_num = []
+    if slicewise:
+        fail_mat = np.zeros((nt, nz))
+        file_data_splitT_splitZ_num = [[[] for i in range(nz)] for i in range(nt)]
+        file_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
+        file_mat = [[[] for i in range(nz)] for i in range(nt)]
+    else:
+        fail_mat = np.zeros((nt))
+        file_mat = [[] for i in range(nt)]
 
+    # Motion correction: Loop across T
     for indice_index in range(nt):
-        iT = index[indice_index]
-        sct.printv(('\nVolume '+str((iT+1))+'/'+str(nt)+':'), verbose)
-        sct.printv('--------------------', verbose)
 
-        fname_data_splitT_num.append(fname_data_splitT + str(iT).zfill(4))
-        fname_data_splitT_moco_num.append(file_data + suffix + '_T' + str(iT).zfill(4))
+        # create indices and display stuff
+        it = index[indice_index]
+        file_data_splitT_num.append(fname_data_splitT + str(it).zfill(4))
+        file_data_splitT_moco_num.append(fname_data + suffix + '_T' + str(it).zfill(4))
+        sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
 
+        # Slice-by-slice moco
         if slicewise:
             # split data along Z
             sct.printv('Split data along Z...', verbose)
-            fname_data_splitT_splitZ = fname_data_splitT_num[iT] + '_Z'
-            cmd = fsloutput + 'fslsplit ' + fname_data_splitT_num[iT] + ' ' + fname_data_splitT_splitZ + ' -z'
+            fname_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
+            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + fname_data_splitT_splitZ + ' -z'
             status, output = sct.run(cmd, verbose)
+            file_data_ref_splitZ_num = []
 
-            fname_data_ref_splitZ_num = []
+            # loop across Z
             sct.printv('Loop across Z ('+todo+')...', verbose)
-            for iZ in range(nz):
-                fname_data_splitT_splitZ_num[iT][iZ] = fname_data_splitT_splitZ + str(iZ).zfill(4)
-                fname_data_splitT_splitZ_moco_num[iT][iZ] = fname_data_splitT_splitZ_num[iT][iZ] + suffix
-                fname_data_ref_splitZ_num.append(fname_data_ref_splitZ + str(iZ).zfill(4))
-                fname_mat[iT][iZ] = folder_mat + 'mat.T' + str(iT) + '_Z' + str(iZ) + '.txt'
+            for iz in range(nz):
+                file_data_splitT_splitZ_num[it][iz] = fname_data_splitT_splitZ + str(iz).zfill(4)
+                file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
+                file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
+                file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
 
+                # run moco
+                # TODO: simplifies this as in volume-based
                 if todo == 'estimate':
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+fname_data_ref_splitZ_num[iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]
-
+                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+file_data_splitT_splitZ_num[it][iz]+' -ref '+file_data_ref_splitZ_num[iz]+' -omat '+file_mat[it][iz]+' -cost '+cost_function_flirt+fslmask[iz]
                 if todo == 'apply':
-                    cmd = fsloutput + 'flirt -in ' + fname_data_splitT_splitZ_num[iT][iZ] + ' -ref ' + fname_data_ref_splitZ_num[iZ] + ' -applyxfm -init ' + fname_mat[iT][iZ] + ' -out ' + fname_data_splitT_splitZ_moco_num[iT][iZ] + ' -interp ' + interp
-
+                    cmd = fsloutput + 'flirt -in ' + file_data_splitT_splitZ_num[it][iz] + ' -ref ' + file_data_ref_splitZ_num[iz] + ' -applyxfm -init ' + file_mat[it][iz] + ' -out ' + file_data_splitT_splitZ_moco_num[it][iz] + ' -interp ' + interp
                 if todo == 'estimate_and_apply':
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+ ' -in '+fname_data_splitT_splitZ_num[iT][iZ]+' -ref '+ fname_data_ref_splitZ_num[iZ] +' -out '+fname_data_splitT_splitZ_moco_num[iT][iZ]+' -omat '+fname_mat[iT][iZ]+' -cost '+cost_function_flirt+fslmask[iZ]+' -interp '+interp
-
+                    cmd = fsloutput+'flirt -schedule '+schedule_file+ ' -in '+file_data_splitT_splitZ_num[it][iz]+' -ref '+ file_data_ref_splitZ_num[iz] +' -out '+file_data_splitT_splitZ_moco_num[it][iz]+' -omat '+file_mat[it][iz]+' -cost '+cost_function_flirt+fslmask[iz]+' -interp '+interp
                 sct.run(cmd, verbose)
 
                 #Check transformation absurdity
-                file = open(fname_mat[iT][iZ])
-                M_transform = np.loadtxt(file)
-                file.close()
-
-                if abs(M_transform[0, 3]) > 10 or abs(M_transform[1, 3]) > 10 or abs(M_transform[2, 3]) > 10 or abs(M_transform[3, 3]) > 10:
-                    nb_fails = nb_fails + 1
-                    fail_mat[iT, iZ] = 1
-                    sct.printv('  WARNING: This tranformation matrix is absurd, try others parameters (Gaussian mask, cost_function, group size, ...)', verbose, 'warning')
+                fail_mat[it, iz] = check_transformation_absurdity(file_mat[it][iz], param)
 
             # Merge data along Z
             if todo != 'estimate':
-                if merge_back == 1:
-                    sct.printv('Concatenate along Z...', verbose)
-                    cmd = fsloutput + 'fslmerge -z ' + fname_data_splitT_moco_num[iT]
-                    for iZ in range(nz):
-                        cmd = cmd + ' ' + fname_data_splitT_splitZ_moco_num[iT][iZ]
-                    sct.run(cmd,verbose)
+                sct.printv('Concatenate along Z...', verbose)
+                cmd = fsloutput + 'fslmerge -z ' + file_data_splitT_moco_num[it]
+                for iz in range(nz):
+                    cmd = cmd + ' ' + file_data_splitT_splitZ_moco_num[it][iz]
+                sct.run(cmd, verbose)
 
+        # volume-based moco
+        else:
+            # use FSL
+            if program == 'fsl':
+                file_mat[it] = folder_mat + 'mat.T' + str(it) + '.txt'
+                cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_data_splitT_num[it] + ' -ref ' + fname_target
+                if todo == 'estimate' or todo == 'estimate_and_apply':
+                    cmd = cmd + ' -omat '+file_mat[it] + ' -cost ' + cost_function_flirt
+                if todo == 'apply' or todo == 'estimate_and_apply':
+                    cmd = cmd + ' -out ' + file_data_splitT_moco_num[it] + ' -interp ' + interp
+                    if todo == 'apply':
+                        cmd = cmd + ' -applyxfm -init ' + file_mat[it]
+                sct.run(cmd, verbose)
+                #Check transformation absurdity
+                fail_mat[it] = check_transformation_absurdity(file_mat[it], param)
+            # use ANTs
+            elif program == 'ants':
+                file_mat[it] = folder_mat + 'mat.T' + str(it)
+                # TODO: figure out oritnation
+                if todo == 'estimate' or todo == 'estimate_and_apply':
+                    cmd = 'antsRegistration' \
+                          ' --dimensionality 3' \
+                          ' --transform BSplineSyN[0.5, 3, 0]' \
+                          ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
+                          ' --convergence 10' \
+                          ' --shrink-factors 2' \
+                          ' --smoothing-sigmas 1mm' \
+                          ' --Restrict-Deformation '+restrict_deformation+'' \
+                          ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
+                          ' --interpolation BSpline[3]'
+                if todo == 'apply':
+                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
+                sct.run(cmd, verbose)
 
-    #Replace failed transformation matrix to the closest good one
+    # Replace failed transformation matrix to the closest good one
+    # TODO: do it also for the volume-based (not urgent...)
+    if slicewise:
+        fT, fZ = np.where(fail_mat == 1)
+        gT, gZ = np.where(fail_mat == 0)
+        for it in range(len(fT)):
+            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'),verbose)
 
-    fT, fZ = np.where(fail_mat==1)
-    gT, gZ = np.where(fail_mat==0)
+            # rename failed matrix
+            cmd = 'mv ' + file_mat[fT[it]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]] + '_failed'
+            status, output = sct.run(cmd, verbose)
 
-    for iT in range(len(fT)):
-        sct.printv(('\nReplace failed matrix T'+str(fT[iT])+' Z'+str(fZ[iT])+'...'),verbose)
+            good_Zindex = np.where(gZ == fZ[it])
+            good_index = gT[good_Zindex]
 
-        # rename failed matrix
-        cmd = 'mv ' + fname_mat[fT[iT]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]] + '_failed'
-        status, output = sct.run(cmd, verbose)
-
-        good_Zindex = np.where(gZ == fZ[iT])
-        good_index = gT[good_Zindex]
-
-        I = np.amin(abs(good_index-fT[iT]))
-        cmd = 'cp ' + fname_mat[good_index[I]][fZ[iT]] + ' ' + fname_mat[fT[iT]][fZ[iT]]
-        status, output = sct.run(cmd, verbose)
+            I = np.amin(abs(good_index-fT[it]))
+            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]]
+            status, output = sct.run(cmd, verbose)
 
     # Merge data along T
-    fname_data_moco = file_data + suffix
+    fname_data_moco = fname_data+suffix
     if todo != 'estimate':
-        if merge_back == 1:
-            sct.printv('\nMerge data back along T...', verbose)
-            cmd = fsloutput + 'fslmerge -t ' + fname_data_moco
-            for indice_index in range(len(index)):
-                cmd = cmd + ' ' + fname_data_splitT_moco_num[indice_index]
-            sct.run(cmd, verbose)
+        sct.printv('\nMerge data back along T...', verbose)
+        cmd = fsloutput + 'fslmerge -t ' + fname_data_moco
+        for indice_index in range(len(index)):
+            cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+        sct.run(cmd, verbose)
 
-    if todo == 'estimate_and_apply':
-        if param.mat_moco == '':
-            sct.printv('\nDelete temporary files...', verbose)
-            sct.run('rm -rf '+folder_mat, verbose)
+    # if todo == 'estimate_and_apply':
+    #     if param.mat_moco == '':
+    #         sct.printv('\nDelete temporary files...', verbose)
+    #         sct.run('rm -rf '+folder_mat, verbose)
+
+
+#=======================================================================================================================
+# check_transformation_absurdity:  find outliers
+#=======================================================================================================================
+def check_transformation_absurdity(file_mat, param):
+
+    # init param
+    failed_transfo = 0
+
+    file = open(file_mat)
+    M_transform = np.loadtxt(file)
+    file.close()
+
+    if abs(M_transform[0, 3]) > 10 or abs(M_transform[1, 3]) > 10 or abs(M_transform[2, 3]) > 10 or abs(M_transform[3, 3]) > 10:
+        failed_transfo = 1
+        sct.printv('  WARNING: This tranformation matrix is absurd, try others parameters (Gaussian mask, cost_function, group size, ...)', param.verbose, 'warning')
+
+    return failed_transfo
 
 
 #=======================================================================================================================
@@ -262,10 +302,10 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
     sct.printv('Spline Regularization along T: Smoothing Patient Motion...',verbose)
 
-    fname_mat = [[[] for i in range(nz)] for i in range(nt)]
-    for iT in range(nt):
-        for iZ in range(nz):
-            fname_mat[iT][iZ] = folder_mat + 'mat.T' + str(iT) + '_Z' + str(iZ) + '.txt'
+    file_mat = [[[] for i in range(nz)] for i in range(nt)]
+    for it in range(nt):
+        for iz in range(nz):
+            file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
 
     #Copying the existing Matrices to another folder
     old_mat = folder_mat + 'old/'
@@ -278,14 +318,14 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     Y = [[[] for i in range(nt)] for i in range(nz)]
     X_smooth = [[[] for i in range(nt)] for i in range(nz)]
     Y_smooth = [[[] for i in range(nt)] for i in range(nz)]
-    for iZ in range(nz):
-        for iT in range(nt):
-            file =  open(fname_mat[iT][iZ])
+    for iz in range(nz):
+        for it in range(nt):
+            file =  open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
-            X[iZ][iT] = Matrix[0,3]
-            Y[iZ][iT] = Matrix[1,3]
+            X[iz][it] = Matrix[0,3]
+            Y[iz][it] = Matrix[1,3]
 
     # Generate motion splines
     sct.printv('\nGenerate motion splines...',verbose)
@@ -293,46 +333,46 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
     if graph:
         import pylab as pl
 
-    for iZ in range(nz):
+    for iz in range(nz):
 
-#        frequency = scipy.fftpack.fftfreq(len(X[iZ][:]), d=1)
-#        spectrum = np.abs(scipy.fftpack.fft(X[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        frequency = scipy.fftpack.fftfreq(len(X[iz][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(X[iz][:], n=None, axis=-1, overwrite_x=False))
 #        Wn = np.amax(frequency)/10
 #        N = 5              #Order of the filter
 #        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-#        X_smooth[iZ][:] = scipy.signal.filtfilt(b, a, X[iZ][:], axis=-1, padtype=None)
+#        X_smooth[iz][:] = scipy.signal.filtfilt(b, a, X[iz][:], axis=-1, padtype=None)
 
-        spline = scipy.interpolate.UnivariateSpline(T, X[iZ][:], w=None, bbox=[None, None], k=3, s=None)
-        X_smooth[iZ][:] = spline(T)
+        spline = scipy.interpolate.UnivariateSpline(T, X[iz][:], w=None, bbox=[None, None], k=3, s=None)
+        X_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,X_smooth[iZ][:],label='spline_smoothing')
-            pl.plot(T,X[iZ][:],marker='*',linestyle='None',label='original_val')
+            pl.plot(T,X_smooth[iz][:],label='spline_smoothing')
+            pl.plot(T,X[iz][:],marker='*',linestyle='None',label='original_val')
             if len(index_b0)!=0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
-                X_b0 = [X[iZ][i_b0] for i_b0 in index_b0]
+                X_b0 = [X[iz][i_b0] for i_b0 in index_b0]
                 pl.plot(T_b0,X_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('X')
             pl.grid()
             pl.legend()
             pl.show()
 
-#        frequency = scipy.fftpack.fftfreq(len(Y[iZ][:]), d=1)
-#        spectrum = np.abs(scipy.fftpack.fft(Y[iZ][:], n=None, axis=-1, overwrite_x=False))
+#        frequency = scipy.fftpack.fftfreq(len(Y[iz][:]), d=1)
+#        spectrum = np.abs(scipy.fftpack.fft(Y[iz][:], n=None, axis=-1, overwrite_x=False))
 #        Wn = np.amax(frequency)/10
 #        N = 5              #Order of the filter
 #        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
-#        Y_smooth[iZ][:] = scipy.signal.filtfilt(b, a, Y[iZ][:], axis=-1, padtype=None)
+#        Y_smooth[iz][:] = scipy.signal.filtfilt(b, a, Y[iz][:], axis=-1, padtype=None)
 
-        spline = scipy.interpolate.UnivariateSpline(T, Y[iZ][:], w=None, bbox=[None, None], k=3, s=None)
-        Y_smooth[iZ][:] = spline(T)
+        spline = scipy.interpolate.UnivariateSpline(T, Y[iz][:], w=None, bbox=[None, None], k=3, s=None)
+        Y_smooth[iz][:] = spline(T)
 
         if graph:
-            pl.plot(T,Y_smooth[iZ][:],label='spline_smoothing')
-            pl.plot(T,Y[iZ][:],marker='*', linestyle='None',label='original_val')
+            pl.plot(T,Y_smooth[iz][:],label='spline_smoothing')
+            pl.plot(T,Y[iz][:],marker='*', linestyle='None',label='original_val')
             if len(index_b0)!=0:
                 T_b0 = [T[i_b0] for i_b0 in index_b0]
-                Y_b0 = [Y[iZ][i_b0] for i_b0 in index_b0]
+                Y_b0 = [Y[iz][i_b0] for i_b0 in index_b0]
                 pl.plot(T_b0,Y_b0,marker='D',linestyle='None',color='k',label='b=0')
             pl.title('Y')
             pl.grid()
@@ -341,17 +381,17 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
 
     #Storing the final Matrices
     sct.printv('\nStoring the final Matrices...',verbose)
-    for iZ in range(nz):
-        for iT in range(nt):
-            file =  open(fname_mat[iT][iZ])
+    for iz in range(nz):
+        for it in range(nt):
+            file =  open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
-            Matrix[0,3] = X_smooth[iZ][iT]
-            Matrix[1,3] = Y_smooth[iZ][iT]
+            Matrix[0,3] = X_smooth[iz][it]
+            Matrix[1,3] = Y_smooth[iz][it]
 
-            file =  open(fname_mat[iT][iZ],'w')
-            np.savetxt(fname_mat[iT][iZ], Matrix, fmt="%s", delimiter='  ', newline='\n')
+            file =  open(file_mat[it][iz],'w')
+            np.savetxt(file_mat[it][iz], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
     sct.printv('\n...Done. Patient motion has been smoothed',verbose)
@@ -362,6 +402,11 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
 # combine_matrix
 #=======================================================================================================================
 def combine_matrix(param):
+
+    # required fields
+    # param.mat_2_combine
+    # param.mat_final
+    # param.verbose
 
     sct.printv('\nCombine matrices...', param.verbose)
     # list all mat files in source mat folder
