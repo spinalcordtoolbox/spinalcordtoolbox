@@ -21,10 +21,7 @@
 %
 % Other dependencies: FSL, c3d, ANTs
 
-
 dbstop if error
-
-
 
 %------------------------------- Inputs -----------------------------------
 % file_template: the template slice we want to show tracts on
@@ -38,16 +35,22 @@ dbstop if error
 %   template close to the atlas slice
 % label_values: vector containing the list of label values in the atlas,
 %   which should be integers in range [0,255]
-addpath(genpath('~/code/'));
-% USER PARAMETER
-% put the path to the template. Put "/" at the end
-path_template = '/home/django/cnaaman/code/spinalcordtoolbox/data/template/';
+%addpath(genpath('~/code/'));
+
+% get path of FSL
+[status, path_fsl] = unix('echo $FSLDIR');
+% get FSL matlab functions
+path_fsl_matlab = strcat(path_fsl, '/etc/matlab');
+% add to path
+addpath(path_fsl_matlab);
+% get path of the toolbox
+[status, path_sct] = unix('echo $SCT_DIR');
+% define path of template
+path_template = strcat(path_sct, '/data/template/');
 % name of the WM template. Default is 'MNI-Poly-AMU_WM'
 file_template = 'MNI-Poly-AMU_WM';
-
-% path to the image file that contains the drawing of the WM atlas, e.g., Grays anatomy. Put "/" at the end
-
-path_atlas_data = '/home/django/cnaaman/code/spinalcordtoolbox/dev/atlas/raw_data/';
+% path to the image file that contains the drawing of the WM atlas from Grays anatomy.
+path_atlas_data = strcat(path_sct, '/dev/atlas/raw_data/');
 % file name of the full atlas
 file_atlas = 'atlas_grays_cerv_sym_correc_r3con';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
@@ -66,7 +69,6 @@ label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 16
 z_disks_mid = [483 476 466 455 440 423 406 387 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
 % same as before-- except that C4 mid-vertebral is not listed. 
 z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 229 208 186 166 143 122 98 79 53 35 13 0];
-
 
 
 %--------------------------------------------------------------------------
@@ -150,6 +152,7 @@ if(status), error(result); end
 [sliceref,~,scales] = read_avw(templateci_slice_ref);
 sliceref = m_normalize(sliceref);
 save_avw(sliceref,templateci_sr_nohd,'d',scales);
+
 
 % Binarization of the reference slice for the registration of the atlas
 cmd = ['c3d ' templateci_slice_ref ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_slice_ref_thresh ext];
