@@ -207,8 +207,7 @@ def main():
 
     # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
     # the param.fname_data will be the output of sct_eddy_correct.
-    sct_dmri_moco(param,fname_data_initial)
-
+    dmri_moco(param, fname_data_initial)
 
     # come back to parent folder
     os.chdir('..')
@@ -216,7 +215,7 @@ def main():
     # Delete temporary files
     if param.delete_tmp_files == 1:
         sct.printv('\nDelete temporary files...',param.verbose)
-        sct.run('rm -rf '+ path_tmp, param.verbose)
+        sct.run('rm -rf '+path_tmp, param.verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -226,13 +225,13 @@ def main():
     print '\nTo view results, type:'
     print 'fslview ' + ' ' + param.output_path + file_data + param.suffix + ' &\n\n'
 
-#=======================================================================================================================
-# Function sct_dmri_moco - Preparing Data For MOCO
-#=======================================================================================================================
 
-def sct_dmri_moco(param,fname_data_initial):
+#=======================================================================================================================
+# Function moco - Preparing Data For MOCO
+#=======================================================================================================================
+def dmri_moco(param, fname_data_initial):
     
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     
     fname_data     = param.fname_data
     fname_bvecs    = param.fname_bvecs
@@ -252,7 +251,7 @@ def sct_dmri_moco(param,fname_data_initial):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
 
-    if fname_bvals=='':
+    if fname_bvals == '':
         # Open bvecs file
         sct.printv('\nOpen bvecs file...',verbose)
         bvecs = []
@@ -282,7 +281,7 @@ def sct_dmri_moco(param,fname_data_initial):
         sct.printv('.. Index of b=0:'+str(index_b0),verbose)
         sct.printv('.. Index of DWI:'+str(index_dwi),verbose)
         
-    if fname_bvals!='':
+    if fname_bvals != '':
         # Open bvals file
         sct.printv('\nOpen bvals file...',verbose)
         bvals = []
@@ -328,7 +327,7 @@ def sct_dmri_moco(param,fname_data_initial):
         group_indexes.append(index_dwi[(iGroup*dwi_group_size):((iGroup+1)*dwi_group_size)])
     
     # add the remaining images to the last DWI group
-    nb_remaining = n_dwi%dwi_group_size # number of remaining images
+    nb_remaining = n_dwi%dwi_group_size  # number of remaining images
     if nb_remaining>0:
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
@@ -360,7 +359,7 @@ def sct_dmri_moco(param,fname_data_initial):
     cmd = fsloutput + 'fslmerge -t ' + fname_dwi_groups_means_merge
     for iGroup in range(nb_groups):
         cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
-    status, output = sct.run(cmd,verbose)
+    status, output = sct.run(cmd, verbose)
 
     # Average DW Images
     sct.printv('\nAveraging all DW images...',verbose)
@@ -395,7 +394,7 @@ def sct_dmri_moco(param,fname_data_initial):
     param.interp      = 'trilinear'
     sct_moco(param)    
 
-    #Copy registration matrix for every dwi based on dwi_averaged_groups
+    # Copy registration matrix for every dwi based on dwi_averaged_groups
     sct.printv('\n\n------------------------------------------------------------------------------',verbose)
     sct.printv('Copy registration matrix for every dwi based on dwi_averaged_groups matrix...',verbose)
     sct.printv('------------------------------------------------------------------------------\n',verbose)
@@ -414,7 +413,7 @@ def sct_dmri_moco(param,fname_data_initial):
             cmd = 'cp '+mat_final+'mat.T'+ str(index_dwi[index]) +'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(index_b0[b0])+'_Z'+str(i_Z)+'.txt'
             status, output = sct.run(cmd,verbose)
 
-    #Renaming Files
+    # Renaming Files
     nz1 = len(glob.glob('mat_b0groups/mat.T0_Z*.txt'))
     nt1 = len(glob.glob('mat_b0groups/mat.T*_Z0.txt'))
     for iT in range(nt1):
@@ -423,18 +422,18 @@ def sct_dmri_moco(param,fname_data_initial):
                 cmd = 'mv ' + 'mat_b0groups/mat.T'+str(iT)+'_Z'+str(iZ)+'.txt' + ' ' + 'mat_b0groups/mat.T'+str(index_b0[iT])+'_Z'+str(iZ)+'.txt'
                 status, output = sct.run(cmd,verbose)
 
-    #combining Motion Matrices
+    # combining Motion Matrices
     sct_moco_combine_matrix('mat_b0groups',mat_final,verbose)
 
     if param.spline_fitting:
         #Spline Regularization along T
-        sct_moco_spline(mat_final,nt,nz,verbose,np.array(index_b0),param.plot_graph)
+        sct_moco_spline(mat_final, nt, nz, verbose, np.array(index_b0), param.plot_graph)
 
     if param.run_eddy:
         #combining eddy Matrices
-        sct_moco_combine_matrix('mat_eddy',mat_final)
+        sct_moco_combine_matrix('mat_eddy', mat_final)
 
-    #Apply moco on all dmri data
+    # Apply moco on all dmri data
     sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
     sct.printv('Apply moco on all dmri data...',verbose)
     sct.printv('------------------------------------------------------------------------------\n',verbose)
@@ -445,10 +444,6 @@ def sct_dmri_moco(param,fname_data_initial):
     param.todo         = 'apply'
     param.interp       = interp
     sct_moco(param)
-
-#    #generating output file
-#    if ext_data == '.nii.gz':
-#        os.system('fslchfiletype NIFTI_GZ '+ param.output_path + file_data + param.suffix + '.nii')
 
     #===================================================================
     #Generating b=0 mean and DWI mean after motion correction
@@ -508,6 +503,8 @@ def sct_dmri_moco(param,fname_data_initial):
     fname_dwi_mean_final = param.output_path + 'dwi_mean'
     cmd = fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge_final + ' -Tmean ' + fname_dwi_mean_final
     status, output = sct.run(cmd,verbose)
+
+
 #=======================================================================================================================
 # usage
 #=======================================================================================================================

@@ -35,6 +35,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.verbose = 1
+        self.remove_temp_files = 1
 
 class LineBuilder:
     def __init__(self, line):
@@ -78,15 +79,17 @@ def main():
     remove_temp_files = 1
     verbose = param.verbose
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-
+    remove_temp_files = param.remove_temp_files
+    
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
-
+        remove_temp_files = 0
+        
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -94,7 +97,12 @@ def main():
             usage()
         elif opt in ('-i'):
             fname_data = arg
-
+        elif opt in ('-r'):
+            remove_temp_files = int(arg)
+        elif opt in ('-v'):
+            verbose = int(arg)
+            
+            
     # display usage if a mandatory argument is not provided
     if fname_data == '':
         usage()
@@ -185,7 +193,7 @@ def main():
 
     # to view results
     print '\nDone! To view results, type:'
-    print 'fslview '+fname_data+' '+path_out+file_out+ext_out+' &'
+    print 'fslview '+path_out+file_out+ext_out+' &'
     print
 
 
@@ -211,7 +219,8 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -h                    help. Show this message
-
+  -v {0,1}              verbose. Default = """+str(param.verbose)+"""
+  -r {0,1}              remove temporary files. Default="""+str(param.remove_temp_files)+"""
 EXAMPLE
   """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
 
