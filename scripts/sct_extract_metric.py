@@ -36,9 +36,9 @@ class param:
     def __init__(self):
         self.debug = 0
         self.method = 'wa'
-        self.path_label = ''  # path_sct+'/data/template'
+        self.path_label = ''
         self.verbose = 1
-        self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
+        self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave
         # empty.
