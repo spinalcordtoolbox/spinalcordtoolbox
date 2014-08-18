@@ -40,7 +40,8 @@ class param:
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin,zmax. example: '5:8'. For all slices, leave empty.
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave
+        # empty.
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
@@ -61,7 +62,6 @@ def main():
     vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    file_info_label = param.file_info_label
     vertebral_labeling_path = param.vertebral_labeling_file
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
@@ -100,7 +100,8 @@ def main():
             method = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral
+        # levels
              vertebral_levels = arg
         elif opt in '-z': # slices numbers option
             slices_of_interest = arg # save labels numbers
@@ -129,7 +130,8 @@ def main():
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    label_id_user = check_labels(labels_of_interest, nb_labels_total)  # If 'labels_of_interest' is empty, then 'label_id_user' contains the index of all labels in the file info_label.txt
+    label_id_user = check_labels(labels_of_interest, nb_labels_total)  # If 'labels_of_interest' is empty, then
+    # 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
     print '\nChecked parameters:'
@@ -154,7 +156,7 @@ def main():
     sct.printv('\nLoad labels...', verbose)
     labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
-        labels[i_label] = nib.load(path_label+label_file[i_label]).get_data() # labels[i_label, :, :, :] = nib.load(path_label+label_file[label_id[i_label]]).get_data()
+        labels[i_label] = nib.load(path_label+label_file[i_label]).get_data()
     sct.printv('  Done.', verbose)
 
     # Get dimensions of labels
@@ -177,7 +179,8 @@ def main():
                 vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
             elif path_label.endswith('template/'):
                 vertebral_labeling_path = path_label+'MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels, vertebral_labeling_path)
+            slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
+                                                                           vertebral_labeling_path)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
@@ -192,23 +195,26 @@ def main():
             # TODO: make the below code cleaner (no use of tmp variable)
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp variable
+            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp
+            # variable
             for i_label in range(1, len(labels_tmp)):
-                labels_tmp[i_label] = labels[i_label-1]
-            labels = labels_tmp
-            del labels_tmp
-        else:
+                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected
+                # labels
+            labels = labels_tmp  # replace the initial labels value by the updated ones (with the summed labels)
+            del labels_tmp  # delete the temporary labels
+        else:  # in other cases than the maximum likelihood, we don't need to keep the other labels than those that were
+        # selected
             labels = np.empty(1, dtype=object)
-            labels[0] = sum_labels_user
+            labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
     # extract metrics within labels
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
 
     # update label name if average
     if average_all_labels == 1:
-        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user )
-        # TODO: instead of 0, make it clear for the user that all labels are concatenated
-        label_id_user = [0]
+        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the
+        # labels selected by the user if the average tag was asked
+        label_id_user = [0]  # update "label_id_user" to select the "averaged" label (which is in first position)
 
     metric_mean = metric_mean[label_id_user]
     metric_std = metric_std[label_id_user]
@@ -216,7 +222,8 @@ def main():
     # display metrics
     print '\033[1m\nEstimation results:\n'
     for i in range(0, metric_mean.size):
-        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i])+'\033[0m'
+        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
+              +' +/- '+str(metric_std[i])+'\033[0m'
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
@@ -259,7 +266,8 @@ def read_label_file(path_info_label):
         label_id.append(int(line[0]))
         label_name.append(line[1])
         label_file.append(line[2][:-1].strip())
-    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code lines enable to avoid this error:
+    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code l
+    # ines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
@@ -269,11 +277,13 @@ def read_label_file(path_info_label):
     # check if all files listed are present in folder. If not, WARNING.
     print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
     for fname in label_file:
-        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or os.path.isfile(path_info_label+fname + '.nii.gz'):
+        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
+                os.path.isfile(path_info_label+fname + '.nii.gz'):
             print('  OK: '+path_info_label+fname)
             pass
         else:
-            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '+param.file_info_label+'.\n')
+            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
+                  +param.file_info_label+'.\n')
 
     # Close file.txt
     f.close()
@@ -334,7 +344,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         exit_program = 1
 
     # Check if the vertebral levels selected are not available in the input image
-    if vert_levels_list[0] < int(np.ndarray.min(data_vert_labeling)) or vert_levels_list[1] > int(np.ndarray.max(data_vert_labeling)):
+    if vert_levels_list[0] < int(np.ndarray.min(data_vert_labeling)) or \
+                    vert_levels_list[1] > int(np.ndarray.max(data_vert_labeling)):
         print '\tERROR: The vertebral levels you selected are not available in the input image.'
         exit_program = 1
 
@@ -353,7 +364,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # Record the top slice of this level
     slice_max_top = max(Z_top_level)
 
-    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral level
+    # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral
+    # levels
     if slice_min_bottom > slice_max_top:
         slice_min = min(Z_top_level)
         slice_max = max(Z_bottom_level)
@@ -364,7 +376,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # display info
     sct.printv('  Vertebral levels correspond to slices: '+str(slice_min)+':'+str(slice_max), param.verbose)
 
-    # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1 to the top slice
+    # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
+    # to the top slice
     return str(slice_min)+':'+str(slice_max)
 
 
@@ -457,7 +470,8 @@ def check_labels(labels_of_interest, nb_labels):
         # Check if label chosen is in format : 0,1,2,..
         for char in labels_of_interest:
             if not char in '0123456789, ':
-                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
+                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program' \
+                                                          '.\n'
                 sys.exit(2)
 
         # Remove redundant values of label chosen and convert in integer
@@ -524,7 +538,8 @@ def extract_metric_within_tract(data, labels, method):
                 # estimate the weighted average
                 metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
                 # estimate the biased weighted standard deviation
-                metric_std[i_label] = np.sqrt( sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) / sum(labels2d[i_label, :]) )
+                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) /
+                                               sum(labels2d[i_label, :]))
 
     # Estimation with maximum likelihood
     if method == 'ml':
