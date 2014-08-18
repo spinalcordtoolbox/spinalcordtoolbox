@@ -214,7 +214,7 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    nb_iterations = '50x15'
+    #nb_iterations = '50x15'
     # TODO: nb iteration for step 2
     sct.run('sct_register_multimodal.py -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
     # status, output = sct.run('sct_register_straight_spinalcord_to_template.py -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
