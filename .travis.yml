@@ -42,5 +42,5 @@ install:
 
 script:
   - python ../scripts/sct_check_dependences.py
-  #- travis_wait python test_all.py
-  #- cat sct_register_to_template.log
+  - travis_wait python test_all.py
+  - cat sct_register_to_template.log

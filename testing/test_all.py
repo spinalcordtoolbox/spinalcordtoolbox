@@ -7,6 +7,7 @@
 
 
 import os
+import shutil
 import getopt
 import sys
 import time
@@ -62,6 +63,7 @@ def test_function(folder_test,dot_lines):
         print_ok()
     else:
         print_fail()
+    shutil.rmtree('./results')
     os.chdir('../')
     write_to_log_file(fname_log,output)
     return status
