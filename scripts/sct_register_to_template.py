@@ -30,9 +30,9 @@ class param:
         self.speed = 'fast'  # speed of registration. slow | normal | fast
         self.verbose = 1  # verbose
         self.folder_template = '/data/template'
-        self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
-        self.file_template_label = 'landmarks_center.nii.gz'
-        self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        self.file_template = 'MNI-Poly-AMU_T2_DS.nii.gz'
+        self.file_template_label = 'landmarks_center_DS.nii.gz'
+        self.file_template_seg = 'MNI-Poly-AMU_cord_DS.nii.gz'
         self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
