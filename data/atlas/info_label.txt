@@ -15,7 +15,7 @@
 12, left tectospinal tract, vol0012.nii.gz
 13, left medial reticulospinal tract, vol0013.nii.gz
 14, left medial longitudinal fasciculus, vol0014.nii.gz
-15, right  asciculus gracilis, vol0015.nii.gz
+15, right fasciculus gracilis, vol0015.nii.gz
 16, right fasciculus cuneatus, vol0016.nii.gz
 17, right lateral corticospinal tract, vol0017.nii.gz
 18, right ventral spinocerebellar tract, vol0018.nii.gz
