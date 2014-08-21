@@ -220,6 +220,7 @@ cmd =['ants 2 -o ' prefix_ants_ref ' ',...
 disp(cmd)
 [status,result] = unix(cmd);
 if(status),error(result);end
+% to try: antsRegistration --dimensionality 2 -o WMtracts_outputs/Affine -m CC[WMtracts_outputs/MNI-Poly-AMU_WM_c6v_int12_slice_ref_thresh.nii.gz,WMtracts_outputs/mask_grays_cerv_sym_correc_r3con.nii.gz,1,2] -t Affine[0.5] --convergence 10x10 -s 0x0 -f 2x1
 
 % estimate diffeomorphic transformation
 cmd =['antsRegistration --dimensionality 2 --initial-moving-transform ' affine_atlas ' ',...
