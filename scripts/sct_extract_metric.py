@@ -593,7 +593,9 @@ MANDATORY ARGUMENTS
   -f <folder_label>     folder including labels to extract the metric from.
 
 OPTIONAL ARGUMENTS
-  -l <label_id>         Label number to extract the metric from. Default = all labels.
+  -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
+                        cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
+                        Default = all labels.
   -m {ml,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                           wa: weighted average
