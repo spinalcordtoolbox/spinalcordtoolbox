@@ -38,10 +38,11 @@ install:
 
   - export SCT_DIR PATH
   - . ~/.bashrc
-  - cd testing
+  - cd testing/sct_register_to_template
 
 script:
-  - python ../scripts/sct_check_dependences.py
+  - python ../../scripts/sct_check_dependences.py
   #- travis_wait 
-  - python test_all.py
+  #- python test_all.py
+  -python test_sct_register_to_template.py
   - cat sct_register_to_template.log
