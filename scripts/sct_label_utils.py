@@ -21,6 +21,7 @@ import sys
 import sct_utils as sct
 import nibabel
 import numpy as np
+import math
 
 # DEFAULT PARAMETERS
 class param:
@@ -49,8 +50,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_label = path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
-        fname_label_output = 'landmarks_rpi_output.nii.gz'
+        fname_label = '/home/django/aroux/code/spinalcordtoolbox/scripts/tmp.140825110700/template_label.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
+        fname_label_output = 'template_label_cross_debug.nii.gz'  #'landmarks_rpi_output.nii.gz'
+        fname_ref = '/home/django/aroux/code/spinalcordtoolbox/scripts/tmp.140822165144/template_label_cross.nii.gz'
         type_process = 'cross'
         cross_radius = 5
         dilate = True
@@ -129,7 +131,7 @@ def main():
         output_level = 1
 
     if (output_level == 0):
-        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32. 
+        hdr.set_data_dtype('float32')  # set imagetype to uint8, previous: int32. !!! SOMETIMES uint8 or int32 DOES NOT GIVE PROPER NIFTI FILE (e.g., CORRUPTED NIFTI)
         print '\nWrite NIFTI volumes...'
         data.astype('int')
         img = nibabel.Nifti1Image(data, None, hdr)
@@ -147,7 +149,7 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
 
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i in range(0,a):
-        value = data[X[i]][Y[i]][Z[i]]
+        value = int(data[X[i]][Y[i]][Z[i]])
         data[X[i]][Y[i]][Z[i]] = 0 # remove point on the center of the spinal cord
         if fname_ref == '':
             data[X[i]][Y[i]+dy][Z[i]] = value*10+1 # add point at distance from center of spinal cord
@@ -237,7 +239,10 @@ def remove_label(data, fname_ref):
         isInRef = False
         for j in range(0,nbLabel_ref):
             value_ref = data_ref[X_ref[j]][Y_ref[j]][Z_ref[j]]
-            if value_ref == value:
+            # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
+            #if value_ref == value:
+            if abs(value - value_ref) < 0.1:
+                data[X[i]][Y[i]][Z[i]] = value_ref
                 isInRef = True
         if isInRef == False:
             data[X[i]][Y[i]][Z[i]] = 0
