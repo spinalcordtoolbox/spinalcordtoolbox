@@ -24,7 +24,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
