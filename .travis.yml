@@ -43,6 +43,6 @@ install:
 script:
   - python ../../scripts/sct_check_dependences.py
   #- travis_wait 
-  #- python test_all.py
-  - . ./test_sct_register_to_template.sh
-  - cat sct_register_to_template.log
+  - python test_all.py
+  #- . ./test_sct_register_to_template.sh
+  #- cat sct_register_to_template.log
