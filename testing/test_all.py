@@ -83,7 +83,7 @@ status.append( test_function('sct_process_segmentation',' .................. ') 
 status.append( test_function('sct_register_multimodal',' ................... ') )
 #status.append( test_function('sct_register_to_template',' .................. ') )
 status.append( test_function('sct_segmentation_propagation',' .............. ') )
-status.append( test_function('sct_smooth_spinalcord',' ..................... ') )
+#status.append( test_function('sct_smooth_spinalcord',' ..................... ') )
 status.append( test_function('sct_straighten_spinalcord',' ................. ') )
 status.append( test_function('sct_warp_template',' ......................... ') )
 
