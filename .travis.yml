@@ -34,4 +34,4 @@ install:
 
 script:
   - python ../scripts/sct_check_dependences.py
-  - python test_all.py
+  - travis_wait python test_all.py
