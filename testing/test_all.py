@@ -77,6 +77,7 @@ print
 status = []
 status.append( test_function('sct_detect_spinalcord',' ..................... ') )
 status.append( test_function('sct_dmri_moco',' ............................. ') )
+status.append( test_function('sct_dmri_separate_b0_and_dwi',' .............. ') )
 status.append( test_function('sct_extract_metric',' ........................ ') )
 status.append( test_function('sct_get_centerline',' ........................ ') )
 status.append( test_function('sct_process_segmentation',' .................. ') )
