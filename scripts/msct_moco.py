@@ -267,6 +267,7 @@ def moco(param):
                           ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
                           ' --interpolation '+interp
                 if todo == 'apply':
+                    # TODO: consider interpolation!
                     cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
                 sct.run(cmd, verbose)
 
@@ -428,7 +429,7 @@ def spline(folder_mat,nt,nz,verbose,index_b0 = [],graph=0):
             np.savetxt(file_mat[it][iz], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
-    sct.printv('\n...Done. Patient motion has been smoothed',verbose)
+    sct.printv('\n...Done. Patient motion has been smoothed', verbose)
     sct.printv('------------------------------------------------------------------------------\n',verbose)
 
 
@@ -492,6 +493,7 @@ def gauss2d(dims, sigma, center):
 # get_interpolation: get correct interpolation field depending on program used
 #=======================================================================================================================
 def get_interpolation(program, interp):
+    interp_program = ''
     if program == 'flirt':
         if interp == 'nn':
             interp_program = 'nearestneighbour'
@@ -506,5 +508,8 @@ def get_interpolation(program, interp):
             interp_program = 'Linear'
         elif interp == 'spline':
             interp_program = 'BSpline[3]'
-
+    # check if not assigned
+    if interp_program == '':
+        sct.printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
+        interp_program = 'Linear'
     return interp_program
