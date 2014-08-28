@@ -42,7 +42,7 @@ import msct_moco as moco
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
@@ -60,7 +60,7 @@ class param:
         self.slicewise = 0
         self.suffix = '_moco'
         self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'ants'  # flirt, ants
+        self.program = 'ants_affine'  # flirt, ants, ants_affine
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
@@ -95,14 +95,12 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:o:p:r:s:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-i'):
-            param.fname_data = arg
         elif opt in ('-a'):
             param.fname_bvals = arg
         elif opt in ('-b'):
@@ -117,8 +115,12 @@ def main():
             param.spline_fitting = int(arg)
         elif opt in ('-g'):
             param.plot_graph = int(arg)
+        elif opt in ('-i'):
+            param.fname_data = arg
         elif opt in ('-l'):
             param.fname_centerline = arg
+        elif opt in ('-m'):
+            param.program = arg
         elif opt in ('-o'):
             path_out = arg
         elif opt in ('-p'):
@@ -389,16 +391,18 @@ def dmri_moco(param):
     moco.moco(param)
 
     # create final mat folder
-    if not os.path.exists(mat_final):
-        os.makedirs(mat_final)
+    sct.create_folder(mat_final)
 
     # Copy b=0 registration matrices
     sct.printv('\nCopy b=0 registration matrices...', verbose)
     # first, use the right extension
-    if param.program == 'fsl':
+    # TODO: output param in moco so that we don't need to do the following twice
+    if param.program == 'flirt':
         ext_mat = '.txt'  # affine matrix
     elif param.program == 'ants':
         ext_mat = '0Warp.nii.gz'  # warping field
+    elif param.program == 'ants_affine':
+        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
     for it in range(n_b0):
         if slicewise:
@@ -476,6 +480,7 @@ OPTIONAL ARGUMENTS
   -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
+  -m {flirt,ants,ants_affine}  Method for registration. Default="""+str(param.program)+"""
   -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
