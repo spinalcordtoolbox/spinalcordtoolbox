@@ -35,5 +35,5 @@ install:
 script:
   - python ../scripts/sct_check_dependences.py
   - python test_all.py
-  - travis_wait python test_smooth_spinalcord.py
-  - travis_wait python test_register_to_template.py
+  #- travis_wait python test_smooth_spinalcord.py
+  #- travis_wait python test_register_to_template.py
