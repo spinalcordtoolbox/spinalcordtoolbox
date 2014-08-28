@@ -38,13 +38,35 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_register_to_template.py 
-        -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
+
+    #create down sampled files
+
+    echo ==============================================================================================
+    echo Down sampling files
+    echo ==============================================================================================
+    c3d ../../../data/template/MNI-Poly-AMU_T2.nii.gz -resample 50%  -o ../../data/MNI-Poly-AMU_T2.nii.gz
+    c3d ../../data/MNI-Poly-AMU_T2.nii.gz -resample 50%  -o ../../data/MNI-Poly-AMU_T2.nii.gz
+    c3d ../../../data/template/landmarks_center.nii.gz -resample 50% -o ../../data/landmarks_center.nii.gz
+    c3d ../../data/landmarks_center.nii.gz -resample 50% -o ../../data/landmarks_center.nii.gz
+    c3d ../../../data/template/MNI-Poly-AMU_cord.nii.gz -resample 50% -o ../../data/MNI-Poly-AMU_cord.nii.gz
+    c3d ../../data/MNI-Poly-AMU_cord.nii.gz -resample 50% -o ../../data/MNI-Poly-AMU_cord.nii.gz
+
+    echo ==============================================================================================
+    echo Multiply voxels intensity
+    echo ==============================================================================================
+    fslmaths ../../data/MNI-Poly-AMU_T2.nii.gz -mul 16 ../../data/MNI-Poly-AMU_T2.nii.gz
+    fslmaths ../../data/landmarks_center.nii.gz -mul 16 ../../data/landmarks_center.nii.gz
+    fslmaths ../../data/MNI-Poly-AMU_cord.nii.gz -mul 16 ../../data/MNI-Poly-AMU_cord.nii.gz
+
+
+    cmd="sct_register_to_template.py
+        -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
         -l ../../data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
         -m ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
         -r 0
 	-s superfast
-	-o 1"
+	-o 1
+	-t 1"
     echo ==============================================================================================
     echo "$cmd"
     echo ==============================================================================================
@@ -70,6 +92,15 @@ for subject in $SUBJECT_LIST; do
     echo "$cmd"
     echo ==============================================================================================
     $cmd
+
+    #cmd="rm ../../data/MNI-Poly-AMU_T2.nii.gz &&
+    #    rm ../../data/landmarks_center.nii.gz &&
+    #    rm ../../data/MNI-Poly-AMU_cord.nii.gz"
+    echo ==============================================================================================
+    echo "$cmd"
+    echo ==============================================================================================
+    #$cmd
+
   done
 done
 
