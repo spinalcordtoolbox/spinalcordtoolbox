@@ -41,7 +41,6 @@ def moco(param):
     program = param.program  # flirt, ants
     cost_function_flirt = param.cost_function_flirt
     file_schedule = param.file_schedule
-    interp = param.interp
     verbose = param.verbose
     slicewise = param.slicewise
     # ANTs parameters
@@ -67,20 +66,22 @@ def moco(param):
     sct.check_file_exist(fname_data, verbose)
     sct.check_file_exist(fname_target, verbose)
 
-    #Schedule file for FLIRT
+    # Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
     # create folder for mat files
     sct.create_folder(folder_mat)
 
-    # get the right parameters depending on program
-    # TODO: add interpolaiton method
+    # get the right matrix extension depending on method
     if param.program == 'flirt':
         ext_mat = '.txt'  # affine matrix
     elif param.program == 'ants':
         ext_mat = '0Warp.nii.gz'  # warping field
     elif param.program == 'ants_affine':
         ext_mat = '0GenericAffine.mat'  # ITK affine matrix
+
+    # get the right interpolation field depending on method
+    interp = get_interpolation(param.program, param.interp)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
@@ -234,20 +235,27 @@ def moco(param):
                 #Check transformation absurdity
                 fail_mat[it] = check_transformation_absurdity(file_mat[it], param)
             # use ANTs
-            elif program == 'ants' or program == 'ants_affine':
+            elif program == 'ants':
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
                 # TODO: figure out orientation
                 if todo == 'estimate' or todo == 'estimate_and_apply':
-                    # cmd = 'antsRegistration' \
-                    #       ' --dimensionality 3' \
-                    #       ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
-                    #       ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
-                    #       ' --convergence 10x5' \
-                    #       ' --shrink-factors 2x1' \
-                    #       ' --smoothing-sigmas 1x1mm' \
-                    #       ' --Restrict-Deformation '+restrict_deformation+'' \
-                    #       ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
-                    #       ' --interpolation BSpline[3]'
+                    cmd = 'antsRegistration' \
+                          ' --dimensionality 3' \
+                          ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
+                          ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
+                          ' --convergence 10x5' \
+                          ' --shrink-factors 2x1' \
+                          ' --smoothing-sigmas 1x1mm' \
+                          ' --Restrict-Deformation '+restrict_deformation+'' \
+                          ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
+                          ' --interpolation '+interp
+                if todo == 'apply':
+                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
+                sct.run(cmd, verbose)
+            elif program == 'ants_affine':
+                file_mat[it] = folder_mat + 'mat.T' + str(it)
+                # TODO: figure out orientation
+                if todo == 'estimate' or todo == 'estimate_and_apply':
                     cmd = 'antsRegistration' \
                           ' --dimensionality 3' \
                           ' --transform Affine[0.5]' \
@@ -257,7 +265,7 @@ def moco(param):
                           ' --smoothing-sigmas 2x1mm' \
                           ' --Restrict-Deformation '+restrict_deformation+'' \
                           ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
-                          ' --interpolation BSpline[3]'
+                          ' --interpolation '+interp
                 if todo == 'apply':
                     cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
                 sct.run(cmd, verbose)
@@ -478,3 +486,25 @@ def gauss2d(dims, sigma, center):
     yc = center[1]
 
     return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
+
+
+#=======================================================================================================================
+# get_interpolation: get correct interpolation field depending on program used
+#=======================================================================================================================
+def get_interpolation(program, interp):
+    if program == 'flirt':
+        if interp == 'nn':
+            interp_program = 'nearestneighbour'
+        elif interp == 'trilinear':
+            interp_program = 'trilinear'
+        elif interp == 'spline':
+            interp_program = 'spline'
+    elif program == 'ants' or program == 'ants_affine':
+        if interp == 'nn':
+            interp_program = 'NearestNeighbor'
+        elif interp == 'trilinear':
+            interp_program = 'Linear'
+        elif interp == 'spline':
+            interp_program = 'BSpline[3]'
+
+    return interp_program
