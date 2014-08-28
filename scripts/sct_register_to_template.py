@@ -24,15 +24,17 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
         self.verbose = 1  # verbose
+        self.test = 1
         self.folder_template = '/data/template'
-        self.file_template = 'MNI-Poly-AMU_T2_DS.nii.gz'
-        self.file_template_label = 'landmarks_center_DS.nii.gz'
-        self.file_template_seg = 'MNI-Poly-AMU_cord_DS.nii.gz'
+        self.folder_template_DS = '/testing/data'
+        self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
+        self.file_template_label = 'landmarks_center.nii.gz'
+        self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
@@ -57,6 +59,7 @@ def main():
     file_template_seg = param.file_template_seg
     output_type = param.output_type
     speed = param.speed
+    test = param.test
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     smoothing_sigma = param.smoothing_sigma
@@ -69,10 +72,7 @@ def main():
     # # get path of the template
     # path_template = path_sct+folder_template
 
-    # get fname of the template + template objects
-    fname_template = path_sct+folder_template+'/'+file_template
-    fname_template_label = path_sct+folder_template+'/'+file_template_label
-    fname_template_seg = path_sct+folder_template+'/'+file_template_seg
+
 
     # Parameters for debug mode
     if param.debug:
@@ -84,7 +84,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:l:m:o:r:s:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:l:m:o:r:s:t:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -102,6 +102,17 @@ def main():
             remove_temp_files = int(arg)
         elif opt in ("-s"):
             speed = arg
+        elif opt in ("-t"):
+            test = arg
+
+    if test:
+        folder_template = param.folder_template_DS
+
+    # get fname of the template + template objects
+    fname_template = path_sct+folder_template+'/'+file_template
+    fname_template_label = path_sct+folder_template+'/'+file_template_label
+    fname_template_seg = path_sct+folder_template+'/'+file_template_seg
+
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':
@@ -282,7 +293,8 @@ def usage():
         'OPTIONAL ARGUMENTS\n' \
         '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+str(param.output_type)+'\n' \
         '  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default='+param.speed+'\n' \
-        '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n'
+        '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
+        '  -t {0, 1}                    use down sampled template files (for testing)'
 
 
     # exit program
