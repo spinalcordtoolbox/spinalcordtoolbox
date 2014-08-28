@@ -46,11 +46,23 @@ for subject in $SUBJECT_LIST; do
 	# display the standard deviation of the Gaussian kernel used to smooth the image
 	echo
 	printf "${blue}Standard deviation of the Gaussian kernel (in terms of voxels): $sigma${NC}\n"	
-	
+
+	# create down sampled files
+    c3d ../../data/${subject}/${contrast}/${contrast}.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+    c3d ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+    c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
+    c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
+
+	echo ==============================================================================================
+    echo Multiply voxels intensity
+    echo ==============================================================================================
+    fslmaths ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz -mul 16 ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+    fslmaths ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz -mul 16 ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
+
     # Run sct_smooth_spinalcord.py
     cmd="sct_smooth_spinalcord.py
-      -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
-      -c ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz
+      -i ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+      -c ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
 	  -s ${sigma}"
     echo "$cmd"
     $cmd
