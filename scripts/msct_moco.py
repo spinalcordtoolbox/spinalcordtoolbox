@@ -38,7 +38,7 @@ def moco(param):
     todo = param.todo
     suffix = param.suffix
     mask_size = param.mask_size
-    program = param.program
+    program = param.program  # flirt, ants
     cost_function_flirt = param.cost_function_flirt
     file_schedule = param.file_schedule
     interp = param.interp
@@ -73,11 +73,14 @@ def moco(param):
     # create folder for mat files
     sct.create_folder(folder_mat)
 
-    # get the right extension depending on program
-    if param.program == 'fsl':
+    # get the right parameters depending on program
+    # TODO: add interpolaiton method
+    if param.program == 'flirt':
         ext_mat = '.txt'  # affine matrix
     elif param.program == 'ants':
         ext_mat = '0Warp.nii.gz'  # warping field
+    elif param.program == 'ants_affine':
+        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
@@ -147,7 +150,7 @@ def moco(param):
             status, output = sct.run(cmd, verbose)
     else:
         for iz in range(nz):
-            fslmask.append('')
+            fslmask.append('')  # TODO: adapt if volume-based moco
     index = np.arange(nt)
 
     # Motion correction: initialization
@@ -218,7 +221,7 @@ def moco(param):
         # volume-based moco
         else:
             # use FSL
-            if program == 'fsl':
+            if program == 'flirt':
                 file_mat[it] = folder_mat + 'mat.T' + str(it) + '.txt'
                 cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_data_splitT_num[it] + ' -ref ' + fname_target
                 if todo == 'estimate' or todo == 'estimate_and_apply':
@@ -231,17 +234,27 @@ def moco(param):
                 #Check transformation absurdity
                 fail_mat[it] = check_transformation_absurdity(file_mat[it], param)
             # use ANTs
-            elif program == 'ants':
+            elif program == 'ants' or program == 'ants_affine':
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
                 # TODO: figure out orientation
                 if todo == 'estimate' or todo == 'estimate_and_apply':
+                    # cmd = 'antsRegistration' \
+                    #       ' --dimensionality 3' \
+                    #       ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
+                    #       ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
+                    #       ' --convergence 10x5' \
+                    #       ' --shrink-factors 2x1' \
+                    #       ' --smoothing-sigmas 1x1mm' \
+                    #       ' --Restrict-Deformation '+restrict_deformation+'' \
+                    #       ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
+                    #       ' --interpolation BSpline[3]'
                     cmd = 'antsRegistration' \
                           ' --dimensionality 3' \
-                          ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
+                          ' --transform Affine[0.5]' \
                           ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
                           ' --convergence 10x5' \
                           ' --shrink-factors 2x1' \
-                          ' --smoothing-sigmas 1x1mm' \
+                          ' --smoothing-sigmas 2x1mm' \
                           ' --Restrict-Deformation '+restrict_deformation+'' \
                           ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
                           ' --interpolation BSpline[3]'
