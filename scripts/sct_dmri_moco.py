@@ -42,7 +42,7 @@ import msct_moco as moco
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
@@ -63,7 +63,7 @@ class param:
         self.program = 'ants_affine'  # flirt, ants, ants_affine
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
-        self.interp = 'trilinear'  # Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
+        self.interp = 'spline'  # nn, trilinear, spline
         #Eddy Current Distortion Parameters:
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -480,8 +480,12 @@ OPTIONAL ARGUMENTS
   -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
-  -m {flirt,ants,ants_affine}  Method for registration. Default="""+str(param.program)+"""
-  -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.
+  -m {method}      Method for registration:
+                     flirt: FSL flirt with Tx and Ty transformations.
+                     ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
+                     ants_affine: affine transformation constrained in axial plane.
+                     Default="""+str(param.program)+"""
+  -p {nn,trilinear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
