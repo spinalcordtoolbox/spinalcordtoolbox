@@ -142,6 +142,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
+  -p {nn,trilinear,spline}  interpolation method. Default="""+str(param.interp)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
   -h                    help. Show this message
 
