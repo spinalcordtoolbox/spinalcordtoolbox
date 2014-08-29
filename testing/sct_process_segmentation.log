@@ -1,0 +1,272 @@
+
+[1;32mSubject: errsm_23[0m
+[1;31mContrast: t2[0m
+
+==============================================================================================
+sct_process_segmentation.py
+            -i /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz
+            -p compute_csa
+            -s 1
+            -b 1
+            -r 0
+            -v 1
+==============================================================================================
+  OK: /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz
+
+Check parameters:
+.. segmentation file:             /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz
+>> mkdir tmp.140827123415
+>> cp /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz tmp.140827123415
+
+Orient segmentation image to RPI orientation...
+>> sct_orientation -i t2_segmentation_PropSeg.nii.gz -o tmp.segmentation_rpi.nii.gz -orientation RPI
+
+Get data dimensions...
+.. 52 x 384 x 225 x 1
+
+Open segmentation volume...
+
+Fitting centerline using B-spline approximation...
+>> mkdir JPG_Results
+
+Computing CSA...
+Cross-Section Area : 26.494509995 mm^2
+Cross-Section Area : 27.8628639383 mm^2
+Cross-Section Area : 28.9941750869 mm^2
+Cross-Section Area : 28.9745094994 mm^2
+Cross-Section Area : 29.9434137627 mm^2
+Cross-Section Area : 28.8778258155 mm^2
+Cross-Section Area : 29.7985292433 mm^2
+Cross-Section Area : 29.7541201089 mm^2
+Cross-Section Area : 30.75853305 mm^2
+Cross-Section Area : 31.8218540641 mm^2
+Cross-Section Area : 32.8829105178 mm^2
+Cross-Section Area : 31.921865941 mm^2
+Cross-Section Area : 30.9394615901 mm^2
+Cross-Section Area : 30.9391502285 mm^2
+Cross-Section Area : 30.9206875936 mm^2
+Cross-Section Area : 31.8862614867 mm^2
+Cross-Section Area : 30.8603107937 mm^2
+Cross-Section Area : 31.8313928748 mm^2
+Cross-Section Area : 30.8211058174 mm^2
+Cross-Section Area : 31.8102952572 mm^2
+Cross-Section Area : 31.8094548053 mm^2
+Cross-Section Area : 30.8116925518 mm^2
+Cross-Section Area : 30.8049196121 mm^2
+Cross-Section Area : 31.7881132801 mm^2
+Cross-Section Area : 31.773358332 mm^2
+Cross-Section Area : 31.7583835748 mm^2
+Cross-Section Area : 32.7384336932 mm^2
+Cross-Section Area : 33.7210882697 mm^2
+Cross-Section Area : 32.7242805378 mm^2
+Cross-Section Area : 32.7229970631 mm^2
+Cross-Section Area : 30.7392439808 mm^2
+Cross-Section Area : 31.7280626304 mm^2
+Cross-Section Area : 31.7225913602 mm^2
+Cross-Section Area : 32.7046593181 mm^2
+Cross-Section Area : 33.682654346 mm^2
+Cross-Section Area : 34.6609100691 mm^2
+Cross-Section Area : 32.6758989265 mm^2
+Cross-Section Area : 33.6706943361 mm^2
+Cross-Section Area : 31.7015560493 mm^2
+Cross-Section Area : 32.7089449348 mm^2
+Cross-Section Area : 32.7184015985 mm^2
+Cross-Section Area : 32.7117853386 mm^2
+Cross-Section Area : 34.6717520549 mm^2
+Cross-Section Area : 34.6309522492 mm^2
+Cross-Section Area : 33.5835819178 mm^2
+Cross-Section Area : 32.5332658884 mm^2
+Cross-Section Area : 32.4844026731 mm^2
+Cross-Section Area : 33.4410412986 mm^2
+Cross-Section Area : 35.4053746881 mm^2
+Cross-Section Area : 37.396790917 mm^2
+Cross-Section Area : 36.4450208036 mm^2
+Cross-Section Area : 34.501766651 mm^2
+Cross-Section Area : 33.5382352168 mm^2
+Cross-Section Area : 35.5282786323 mm^2
+Cross-Section Area : 37.5132324157 mm^2
+Cross-Section Area : 38.4982043874 mm^2
+Cross-Section Area : 37.4889345695 mm^2
+Cross-Section Area : 36.4608141939 mm^2
+Cross-Section Area : 36.3984068967 mm^2
+Cross-Section Area : 40.2447073559 mm^2
+Cross-Section Area : 38.2001457555 mm^2
+Cross-Section Area : 39.1231840557 mm^2
+Cross-Section Area : 36.1666128735 mm^2
+Cross-Section Area : 38.1247273791 mm^2
+Cross-Section Area : 38.14295315 mm^2
+Cross-Section Area : 40.116229353 mm^2
+Cross-Section Area : 39.1533801594 mm^2
+Cross-Section Area : 38.1998227773 mm^2
+Cross-Section Area : 39.2202325215 mm^2
+Cross-Section Area : 41.2354151296 mm^2
+Cross-Section Area : 42.2654622067 mm^2
+Cross-Section Area : 42.3003873668 mm^2
+Cross-Section Area : 42.3265398099 mm^2
+Cross-Section Area : 41.3626777744 mm^2
+Cross-Section Area : 42.3629322088 mm^2
+Cross-Section Area : 41.3813560951 mm^2
+Cross-Section Area : 43.3426779979 mm^2
+Cross-Section Area : 42.3372703869 mm^2
+Cross-Section Area : 41.3206388438 mm^2
+Cross-Section Area : 45.209028848 mm^2
+Cross-Section Area : 41.2328943245 mm^2
+Cross-Section Area : 42.1812741773 mm^2
+Cross-Section Area : 44.1257952755 mm^2
+Cross-Section Area : 46.0871457033 mm^2
+Cross-Section Area : 46.104711243 mm^2
+Cross-Section Area : 46.137732882 mm^2
+Cross-Section Area : 45.2035220842 mm^2
+Cross-Section Area : 44.2795736517 mm^2
+Cross-Section Area : 46.3224342414 mm^2
+Cross-Section Area : 48.3853890949 mm^2
+Cross-Section Area : 48.4577458548 mm^2
+Cross-Section Area : 47.5024163941 mm^2
+Cross-Section Area : 46.5115137778 mm^2
+Cross-Section Area : 46.473916945 mm^2
+Cross-Section Area : 46.4009795694 mm^2
+Cross-Section Area : 47.3056045058 mm^2
+Cross-Section Area : 50.2022124865 mm^2
+Cross-Section Area : 49.1957053669 mm^2
+Cross-Section Area : 47.2423089545 mm^2
+Cross-Section Area : 47.2861514224 mm^2
+Cross-Section Area : 48.3247027841 mm^2
+Cross-Section Area : 48.3745170027 mm^2
+Cross-Section Area : 48.4158664873 mm^2
+Cross-Section Area : 47.4549321411 mm^2
+Cross-Section Area : 45.4779742992 mm^2
+Cross-Section Area : 45.4490069887 mm^2
+Cross-Section Area : 44.4339351368 mm^2
+Cross-Section Area : 43.4361977592 mm^2
+Cross-Section Area : 48.3793340337 mm^2
+Cross-Section Area : 48.3891097195 mm^2
+Cross-Section Area : 47.3932999478 mm^2
+Cross-Section Area : 48.3655971976 mm^2
+Cross-Section Area : 47.371003399 mm^2
+Cross-Section Area : 48.3656097387 mm^2
+Cross-Section Area : 47.4025710771 mm^2
+Cross-Section Area : 49.4118968545 mm^2
+Cross-Section Area : 46.4817301669 mm^2
+Cross-Section Area : 46.5158459214 mm^2
+Cross-Section Area : 46.5507475422 mm^2
+Cross-Section Area : 46.5874017033 mm^2
+Cross-Section Area : 46.6199176374 mm^2
+Cross-Section Area : 47.6398084738 mm^2
+Cross-Section Area : 48.6551969053 mm^2
+Cross-Section Area : 48.6662075573 mm^2
+Cross-Section Area : 50.644717396 mm^2
+Cross-Section Area : 51.6155329486 mm^2
+Cross-Section Area : 52.5937942078 mm^2
+Cross-Section Area : 54.5813469788 mm^2
+Cross-Section Area : 54.607341345 mm^2
+Cross-Section Area : 54.6537203615 mm^2
+Cross-Section Area : 52.7124601001 mm^2
+Cross-Section Area : 51.7506711102 mm^2
+Cross-Section Area : 49.7785605039 mm^2
+Cross-Section Area : 50.7814019556 mm^2
+Cross-Section Area : 53.765283116 mm^2
+Cross-Section Area : 56.7581336666 mm^2
+Cross-Section Area : 60.7825877218 mm^2
+Cross-Section Area : 62.8429342098 mm^2
+Cross-Section Area : 64.9134111165 mm^2
+Cross-Section Area : 64.9630951754 mm^2
+Cross-Section Area : 66.9598257873 mm^2
+Cross-Section Area : 66.9458118087 mm^2
+Cross-Section Area : 67.9498343645 mm^2
+Cross-Section Area : 68.9741981917 mm^2
+Cross-Section Area : 68.9871830825 mm^2
+Cross-Section Area : 65.9562421423 mm^2
+Cross-Section Area : 66.9208991654 mm^2
+Cross-Section Area : 66.9250400465 mm^2
+Cross-Section Area : 66.9660650511 mm^2
+Cross-Section Area : 67.9991614613 mm^2
+Cross-Section Area : 67.9891348368 mm^2
+Cross-Section Area : 67.9752984049 mm^2
+Cross-Section Area : 67.9717647634 mm^2
+Cross-Section Area : 69.9346688649 mm^2
+Cross-Section Area : 68.7653953001 mm^2
+Cross-Section Area : 67.4239591354 mm^2
+Cross-Section Area : 68.1382892647 mm^2
+Cross-Section Area : 74.99731071 mm^2
+Cross-Section Area : 77.2010647878 mm^2
+Cross-Section Area : 77.5921648827 mm^2
+Cross-Section Area : 75.8468816403 mm^2
+Cross-Section Area : 71.9416363942 mm^2
+Cross-Section Area : 71.9614294291 mm^2
+Cross-Section Area : 72.9433955403 mm^2
+Cross-Section Area : 74.8720645072 mm^2
+Cross-Section Area : 71.7382127529 mm^2
+Cross-Section Area : 70.5577932336 mm^2
+Cross-Section Area : 70.3511884573 mm^2
+Cross-Section Area : 74.0892153908 mm^2
+Cross-Section Area : 73.872991971 mm^2
+Cross-Section Area : 74.6970617305 mm^2
+Cross-Section Area : 70.6952883093 mm^2
+Cross-Section Area : 73.6622875707 mm^2
+Cross-Section Area : 77.7168157736 mm^2
+Cross-Section Area : 78.9078268541 mm^2
+Cross-Section Area : 78.1164591163 mm^2
+Cross-Section Area : 77.2353498323 mm^2
+Cross-Section Area : 75.2787780066 mm^2
+Cross-Section Area : 74.2372012954 mm^2
+Cross-Section Area : 78.049616536 mm^2
+Cross-Section Area : 79.8234876561 mm^2
+Cross-Section Area : 80.6322893611 mm^2
+Cross-Section Area : 76.5737327109 mm^2
+Cross-Section Area : 74.5384399395 mm^2
+Cross-Section Area : 76.4753870291 mm^2
+Cross-Section Area : 76.499027114 mm^2
+Cross-Section Area : 75.586808158 mm^2
+Cross-Section Area : 72.7505118764 mm^2
+Cross-Section Area : 71.9179765 mm^2
+Cross-Section Area : 73.0876017297 mm^2
+Cross-Section Area : 73.2524483787 mm^2
+Cross-Section Area : 73.3573620369 mm^2
+Cross-Section Area : 72.4212191104 mm^2
+Cross-Section Area : 71.4252443837 mm^2
+Cross-Section Area : 70.3556868986 mm^2
+Cross-Section Area : 73.2519308641 mm^2
+Cross-Section Area : 70.2959347571 mm^2
+Cross-Section Area : 72.3705678683 mm^2
+Cross-Section Area : 69.4712047854 mm^2
+Cross-Section Area : 69.5180072218 mm^2
+Cross-Section Area : 70.5424757356 mm^2
+Cross-Section Area : 68.5758421233 mm^2
+Cross-Section Area : 66.6020119463 mm^2
+Cross-Section Area : 64.6235800646 mm^2
+Cross-Section Area : 65.6244862559 mm^2
+Cross-Section Area : 69.6064363527 mm^2
+Cross-Section Area : 69.60952601 mm^2
+Cross-Section Area : 69.6114169535 mm^2
+Cross-Section Area : 67.6233216925 mm^2
+Cross-Section Area : 67.6233295019 mm^2
+Cross-Section Area : 69.6116162618 mm^2
+Cross-Section Area : 73.5882437648 mm^2
+Cross-Section Area : 76.569901586 mm^2
+Cross-Section Area : 78.5566131009 mm^2
+Cross-Section Area : 75.5710183334 mm^2
+Cross-Section Area : 76.562737399 mm^2
+Cross-Section Area : 77.5542686122 mm^2
+Cross-Section Area : 72.5800062376 mm^2
+Cross-Section Area : 70.5885382279 mm^2
+Cross-Section Area : 70.5853739875 mm^2
+Cross-Section Area : 75.5528322686 mm^2
+Cross-Section Area : 75.5495868691 mm^2
+Cross-Section Area : 76.5402330328 mm^2
+Cross-Section Area : 75.5427033709 mm^2
+Cross-Section Area : 74.5459863146 mm^2
+
+Smoothing results with spline...
+
+Generating output text file...
+.. File created: csa.txt
+>> sct_orientation -i /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz -get
+
+Write NIFTI volumes...
+.. File created:tmp.140827123415/t2_segmentation_PropSeg_CSA_slices_rpi.nii.gz
+
+Orient  image to input orientation: 
+>> sct_orientation -i tmp.140827123415/t2_segmentation_PropSeg_CSA_slices_rpi.nii.gz -o csa_volume.nii.gz -orientation AIL
+
+Finished! Elapsed time: 4s
+

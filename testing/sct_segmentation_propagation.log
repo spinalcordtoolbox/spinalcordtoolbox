@@ -1,0 +1,700 @@
+
+[1;32mSubject: errsm_23[0m
+[1;31mContrast: t2[0m
+
+==============================================================================================
+sct_segmentation_propagation
+            -i ../../data/errsm_23/t2/t2.nii.gz
+            -t t2
+            -mesh
+            -cross
+            -centerline-binary
+            -verbose
+==============================================================================================
+Initialization - spinal cord detection on axial slices
+Initialization
+Slice num -8
+Stretching factor 1
+Stretching factor 1.25
+Stretching factor 1.5
+Stretching factor 1.75
+Stretching factor 2
+Slice num -4
+Stretching factor 1
+Stretching factor 1.25
+Stretching factor 1.5
+Stretching factor 1.75
+Stretching factor 2
+Slice num 0
+Stretching factor 1
+Stretching factor 1.25
+Stretching factor 1.5
+Stretching factor 1.75
+Stretching factor 2
+Slice num 4
+Stretching factor 1
+Stretching factor 1.25
+Stretching factor 1.5
+Stretching factor 1.75
+Stretching factor 2
+Slice num 8
+Stretching factor 1
+Stretching factor 1.25
+Stretching factor 1.5
+Stretching factor 1.75
+Stretching factor 2
+Stretching factor of circle found = 1.25
+Initialization - Spinal Cord Detection:
+Point = ( -4.00963, 37.0616, -42.4361 )
+Normal 1 = ( 0, 0.0995041, -0.995037 )
+Normal 2 = ( 0, -0.0995041, 0.995037 )
+Radius = 4.40742
+
+
+Initial deformation : 90 points and 150 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 91 iterations, 1033 evaluations. Cost function reported error10107/2108.88 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.595808
+Most promising points mean distance [mm] = -0.00533333
+Most promising points absolute mean distance [mm] = 0.101333
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 5 iterations, 73 evaluations. Cost function reported error602614/602493 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.6052
+Distance from last mesh [mm] = 0.0506867
+Most promising points mean distance [mm] = 0.0146667
+Most promising points absolute mean distance [mm] = 0.0946667
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 5 iterations, 74 evaluations. Cost function reported error617190/617183 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.607102
+Distance from last mesh [mm] = 0.0116576
+
+Propagation step 1/200
+Propagation length [mm] : 7.95445 / 800
+Contrast = 579.877
+Iteration Position = ( -4.46426, 37.6954, -50.3979 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 1 iterations, 56 evaluations. Cost function reported error898.079/713.477 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0633409
+Number of bad orientation = 0 / 1
+Contrast : 489.959 / 50
+Distance of segmentation [mm] = 13.9201
+
+Propagation step 2/200
+Propagation length [mm] : 13.9201 / 800
+Contrast = 577.494
+Iteration Position = ( -4.39814, 38.6977, -56.2778 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 37 iterations, 400 evaluations. Cost function reported error1721.14/943.764 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.165259
+Number of bad orientation = 0 / 2
+Contrast : 534.124 / 50
+Distance of segmentation [mm] = 19.8864
+
+Propagation step 3/200
+Propagation length [mm] : 19.8864 / 800
+Contrast = 580.174
+Iteration Position = ( -3.8654, 39.6126, -62.1468 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 479 iterations, 5782 evaluations. Cost function reported error1199.14/792.784 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.123261
+Number of bad orientation = 0 / 3
+Contrast : 579.182 / 50
+Distance of segmentation [mm] = 25.8562
+
+Propagation step 4/200
+Propagation length [mm] : 25.8562 / 800
+Contrast = 575.409
+Iteration Position = ( -3.56921, 40.5504, -68.0337 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 3 iterations, 65 evaluations. Cost function reported error847.761/749.13 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0563241
+Number of bad orientation = 0 / 4
+Contrast : 577.693 / 50
+Distance of segmentation [mm] = 31.8263
+
+Propagation step 5/200
+Propagation length [mm] : 31.8263 / 800
+Contrast = 521.591
+Iteration Position = ( -3.5316, 41.6957, -73.8912 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 3 iterations, 66 evaluations. Cost function reported error735.929/542.414 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0711585
+Number of bad orientation = 0 / 5
+Contrast : 559.058 / 50
+Distance of segmentation [mm] = 37.7973
+
+Propagation step 6/200
+Propagation length [mm] : 37.7973 / 800
+Contrast = 492.406
+Iteration Position = ( -3.50312, 42.726, -79.7716 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 173 iterations, 2067 evaluations. Cost function reported error943.389/532.49 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.119256
+Number of bad orientation = 0 / 6
+Contrast : 529.802 / 50
+Distance of segmentation [mm] = 43.7684
+
+Propagation step 7/200
+Propagation length [mm] : 43.7684 / 800
+Contrast = 462.157
+Iteration Position = ( -3.37821, 43.8411, -85.6346 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 75 iterations, 882 evaluations. Cost function reported error932.491/544.174 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.133934
+Number of bad orientation = 0 / 7
+Contrast : 492.051 / 50
+Distance of segmentation [mm] = 49.7374
+
+Propagation step 8/200
+Propagation length [mm] : 49.7374 / 800
+Contrast = 431.057
+Iteration Position = ( -3.30948, 44.9857, -91.4892 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 158 iterations, 1576 evaluations. Cost function reported error1442.84/611.723 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.204381
+Number of bad orientation = 0 / 8
+Contrast : 461.873 / 50
+Distance of segmentation [mm] = 55.7082
+
+Propagation step 9/200
+Propagation length [mm] : 55.7082 / 800
+Contrast = 379.962
+Iteration Position = ( -3.01353, 46.2518, -97.3152 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 41 iterations, 250 evaluations. Cost function reported error1590.2/536.769 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.265181
+Number of bad orientation = 0 / 9
+Contrast : 424.392 / 50
+Distance of segmentation [mm] = 61.693
+
+Propagation step 10/200
+Propagation length [mm] : 61.693 / 800
+Contrast = 353.797
+Iteration Position = ( -2.98045, 47.1404, -103.227 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 41 iterations, 341 evaluations. Cost function reported error410.094/299.515 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0958375
+Number of bad orientation = 0 / 10
+Contrast : 388.272 / 50
+Distance of segmentation [mm] = 67.6757
+
+Propagation step 11/200
+Propagation length [mm] : 67.6757 / 800
+Contrast = 341.544
+Iteration Position = ( -3.07241, 48.2225, -109.101 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 289 iterations, 2776 evaluations. Cost function reported error766.077/347.759 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.281306
+Number of bad orientation = 0 / 11
+Contrast : 358.434 / 50
+Distance of segmentation [mm] = 73.649
+
+Propagation step 12/200
+Propagation length [mm] : 73.649 / 800
+Contrast = 269.389
+Iteration Position = ( -2.82621, 48.9315, -115.017 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 98 iterations, 1198 evaluations. Cost function reported error324.565/257.084 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0780494
+Number of bad orientation = 0 / 12
+Contrast : 321.577 / 50
+Distance of segmentation [mm] = 79.619
+
+Propagation step 13/200
+Propagation length [mm] : 79.619 / 800
+Contrast = 218.719
+Iteration Position = ( -2.88982, 49.9856, -120.885 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 46 iterations, 414 evaluations. Cost function reported error455.491/318.392 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.105645
+Number of bad orientation = 0 / 13
+Contrast : 276.551 / 50
+Distance of segmentation [mm] = 85.5996
+
+Propagation step 14/200
+Propagation length [mm] : 85.5996 / 800
+Contrast = 224.633
+Iteration Position = ( -3.11978, 50.6169, -126.812 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 135 iterations, 1635 evaluations. Cost function reported error255.668/226.252 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0471517
+Number of bad orientation = 0 / 14
+Contrast : 237.581 / 50
+Distance of segmentation [mm] = 91.5799
+
+Propagation step 15/200
+Propagation length [mm] : 91.5799 / 800
+Contrast = 175.324
+Iteration Position = ( -2.96389, 51.4684, -132.715 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 70 iterations, 549 evaluations. Cost function reported error215.611/164.114 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0970722
+Number of bad orientation = 0 / 15
+Contrast : 206.226 / 50
+Distance of segmentation [mm] = 97.5547
+
+Propagation step 16/200
+Propagation length [mm] : 97.5547 / 800
+Contrast = 136.524
+Iteration Position = ( -3.09608, 51.8782, -138.66 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 53 iterations, 316 evaluations. Cost function reported error171.159/136.56 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0776867
+Number of bad orientation = 0 / 16
+Contrast : 178.827 / 50
+Distance of segmentation [mm] = 103.526
+
+Propagation step 17/200
+Propagation length [mm] : 103.526 / 800
+Contrast = 117.805
+Iteration Position = ( -3.31217, 52.5424, -144.579 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 19 iterations, 103 evaluations. Cost function reported error138.271/90.8583 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.116338
+Number of bad orientation = 0 / 17
+Contrast : 143.218 / 50
+Distance of segmentation [mm] = 109.506
+
+Propagation step 18/200
+Propagation length [mm] : 109.506 / 800
+Contrast = 91.1296
+Iteration Position = ( -3.65644, 52.8575, -150.523 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 25 iterations, 109 evaluations. Cost function reported error67.6547/45.5443 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.0783925
+Number of bad orientation = 0 / 18
+Contrast : 115.153 / 50
+Distance of segmentation [mm] = 115.5
+
+Propagation step 19/200
+Propagation length [mm] : 115.5 / 800
+Contrast = 55.0947
+Iteration Position = ( -4.00067, 53.2452, -156.479 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 0 iterations, 1 evaluations. Cost function reported error0/0 . Final step size = 0
+
+Distance from initial mesh [mm] = 0
+Stop because out of image
+Number of bad orientation = 0 / 19
+Contrast : 88.0096 / 50
+Distance of segmentation [mm] = 121.495
+
+
+Initial deformation : 90 points and 150 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 70 iterations, 216 evaluations. Cost function reported error29921/2586.49 . Final step size = 0
+
+Distance from initial mesh [mm] = 1.20153
+Most promising points mean distance [mm] = -0.0333333
+Most promising points absolute mean distance [mm] = 0.148
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 351 iterations, 4524 evaluations. Cost function reported error443268/442264 . Final step size = 0
+
+Distance from initial mesh [mm] = 1.36575
+Distance from last mesh [mm] = 0.289243
+Most promising points mean distance [mm] = -0.00266667
+Most promising points absolute mean distance [mm] = 0.112
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 6 iterations, 78 evaluations. Cost function reported error525370/525207 . Final step size = 0
+
+Distance from initial mesh [mm] = 1.3698
+Distance from last mesh [mm] = 0.054916
+Most promising points mean distance [mm] = 0.00933333
+Most promising points absolute mean distance [mm] = 0.1
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 25 iterations, 235 evaluations. Cost function reported error580746/580688 . Final step size = 0
+
+Distance from initial mesh [mm] = 1.38554
+Distance from last mesh [mm] = 0.0515657
+Most promising points mean distance [mm] = 0.00133333
+Most promising points absolute mean distance [mm] = 0.102667
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 5 iterations, 101 evaluations. Cost function reported error659161/659126 . Final step size = 0
+
+Distance from initial mesh [mm] = 1.38862
+Distance from last mesh [mm] = 0.0211063
+
+Propagation step 1/200
+Propagation length [mm] : 7.97729 / 800
+Contrast = 587.832
+Iteration Position = ( -5.07484, 35.5469, -34.6595 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 191 iterations, 2402 evaluations. Cost function reported error1627.15/894.94 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.156075
+Number of bad orientation = 0 / 1
+Contrast : 581.734 / 50
+Distance of segmentation [mm] = 13.9475
+
+Propagation step 2/200
+Propagation length [mm] : 13.9475 / 800
+Contrast = 556.009
+Iteration Position = ( -5.20873, 34.8331, -28.7344 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 33 iterations, 352 evaluations. Cost function reported error4956.17/1614.4 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.495583
+Most promising points mean distance [mm] = 0.0444444
+Most promising points absolute mean distance [mm] = 0.133333
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 155 iterations, 928 evaluations. Cost function reported error11288.1/11118.9 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.558129
+Distance from last mesh [mm] = 0.188551
+Number of bad orientation = 0 / 2
+Contrast : 574.573 / 50
+Distance of segmentation [mm] = 19.8234
+
+Propagation step 3/200
+Propagation length [mm] : 19.8234 / 800
+Contrast = 578.643
+Iteration Position = ( -5.08775, 34.1763, -22.8972 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 123 iterations, 1338 evaluations. Cost function reported error2004.76/1101.51 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.205086
+Number of bad orientation = 0 / 3
+Contrast : 574.162 / 50
+Distance of segmentation [mm] = 25.6672
+
+Propagation step 4/200
+Propagation length [mm] : 25.6672 / 800
+Contrast = 543.544
+Iteration Position = ( -4.95718, 33.8844, -17.0647 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 286 iterations, 2846 evaluations. Cost function reported error8451.57/1899.38 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.703359
+Most promising points mean distance [mm] = 0.0422222
+Most promising points absolute mean distance [mm] = 0.144444
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 42 iterations, 468 evaluations. Cost function reported error60673.1/60531.3 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.77177
+Distance from last mesh [mm] = 0.135138
+Number of bad orientation = 0 / 4
+Contrast : 559.399 / 50
+Distance of segmentation [mm] = 31.4546
+
+Propagation step 5/200
+Propagation length [mm] : 31.4546 / 800
+Contrast = 504.786
+Iteration Position = ( -4.84363, 33.8058, -11.2844 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 39 iterations, 362 evaluations. Cost function reported error1348.6/955.492 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.137805
+Number of bad orientation = 0 / 5
+Contrast : 542.324 / 50
+Distance of segmentation [mm] = 37.2351
+
+Propagation step 6/200
+Propagation length [mm] : 37.2351 / 800
+Contrast = 511.083
+Iteration Position = ( -4.69009, 33.5754, -5.51237 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 56 iterations, 515 evaluations. Cost function reported error3471.92/1962.94 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.271074
+Number of bad orientation = 0 / 6
+Contrast : 519.804 / 50
+Distance of segmentation [mm] = 43.0005
+
+Propagation step 7/200
+Propagation length [mm] : 43.0005 / 800
+Contrast = 416.167
+Iteration Position = ( -4.37773, 33.3237, 0.232808 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 112 iterations, 1329 evaluations. Cost function reported error5067.72/1930.56 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.55036
+Most promising points mean distance [mm] = 0.0266667
+Most promising points absolute mean distance [mm] = 0.142222
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 27 iterations, 64 evaluations. Cost function reported error91427.8/91195.7 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.619144
+Distance from last mesh [mm] = 0.231234
+Number of bad orientation = 0 / 7
+Contrast : 477.345 / 50
+Distance of segmentation [mm] = 48.7821
+
+Propagation step 8/200
+Propagation length [mm] : 48.7821 / 800
+Contrast = 454.924
+Iteration Position = ( -4.3486, 32.6993, 5.95944 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 193 iterations, 1684 evaluations. Cost function reported error3991.4/1876.45 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.545224
+Most promising points mean distance [mm] = -0.0155556
+Most promising points absolute mean distance [mm] = 0.228889
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 7 iterations, 26 evaluations. Cost function reported error71697.6/71386.3 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.608327
+Distance from last mesh [mm] = 0.307898
+Number of bad orientation = 0 / 8
+Contrast : 460.725 / 50
+Distance of segmentation [mm] = 54.3534
+
+Propagation step 9/200
+Propagation length [mm] : 54.3534 / 800
+Contrast = 441.438
+Iteration Position = ( -4.30168, 32.5354, 11.519 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 359 iterations, 4242 evaluations. Cost function reported error1233.67/798.554 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.173186
+Number of bad orientation = 0 / 9
+Contrast : 437.51 / 50
+Distance of segmentation [mm] = 59.9114
+
+Propagation step 10/200
+Propagation length [mm] : 59.9114 / 800
+Contrast = 389.364
+Iteration Position = ( -4.69956, 31.4635, 16.9484 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 28 iterations, 286 evaluations. Cost function reported error2582.04/1724.82 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.190898
+Number of bad orientation = 0 / 10
+Contrast : 428.575 / 50
+Distance of segmentation [mm] = 65.4681
+
+Propagation step 11/200
+Propagation length [mm] : 65.4681 / 800
+Contrast = 383.195
+Iteration Position = ( -3.9952, 30.5298, 22.3729 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 92 iterations, 902 evaluations. Cost function reported error2325.7/1127.82 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.247125
+Number of bad orientation = 0 / 11
+Contrast : 404.666 / 50
+Distance of segmentation [mm] = 71.0419
+
+Propagation step 12/200
+Propagation length [mm] : 71.0419 / 800
+Contrast = 408.041
+Iteration Position = ( -4.1076, 29.7219, 27.8677 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 132 iterations, 1359 evaluations. Cost function reported error2042.51/1191.96 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.197698
+Number of bad orientation = 0 / 12
+Contrast : 393.533 / 50
+Distance of segmentation [mm] = 76.602
+
+Propagation step 13/200
+Propagation length [mm] : 76.602 / 800
+Contrast = 423.399
+Iteration Position = ( -4.22677, 28.5623, 33.2966 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 10 iterations, 86 evaluations. Cost function reported error3457.52/1397.92 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.445235
+Most promising points mean distance [mm] = -0.0377778
+Most promising points absolute mean distance [mm] = 0.171111
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 18 iterations, 134 evaluations. Cost function reported error14611.1/14538.9 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.479568
+Distance from last mesh [mm] = 0.0788251
+Number of bad orientation = 0 / 13
+Contrast : 404.878 / 50
+Distance of segmentation [mm] = 82.1461
+
+Propagation step 14/200
+Propagation length [mm] : 82.1461 / 800
+Contrast = 421.825
+Iteration Position = ( -3.98048, 27.8996, 38.7944 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 18 iterations, 47 evaluations. Cost function reported error3080.72/1339.65 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.364573
+Number of bad orientation = 0 / 14
+Contrast : 417.755 / 50
+Distance of segmentation [mm] = 87.7321
+
+Propagation step 15/200
+Propagation length [mm] : 87.7321 / 800
+Contrast = 415.954
+Iteration Position = ( -3.9167, 27.2242, 44.3305 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 283 iterations, 2860 evaluations. Cost function reported error5170.14/1626.72 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.491147
+Most promising points mean distance [mm] = -0.0844444
+Most promising points absolute mean distance [mm] = 0.151111
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 55 iterations, 522 evaluations. Cost function reported error39655.8/39472.3 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.512483
+Distance from last mesh [mm] = 0.0952525
+Number of bad orientation = 0 / 15
+Contrast : 420.393 / 50
+Distance of segmentation [mm] = 93.2749
+
+Propagation step 16/200
+Propagation length [mm] : 93.2749 / 800
+Contrast = 403.021
+Iteration Position = ( -3.90433, 26.5771, 49.8136 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 15 iterations, 101 evaluations. Cost function reported error8783.32/2019.46 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.673988
+Most promising points mean distance [mm] = -0.0466667
+Most promising points absolute mean distance [mm] = 0.18
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 3 iterations, 71 evaluations. Cost function reported error100174/100134 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.68096
+Distance from last mesh [mm] = 0.0364552
+Number of bad orientation = 0 / 16
+Contrast : 413.6 / 50
+Distance of segmentation [mm] = 98.7789
+
+Propagation step 17/200
+Propagation length [mm] : 98.7789 / 800
+Contrast = 401.744
+Iteration Position = ( -3.8473, 26.315, 55.2982 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 176 iterations, 2022 evaluations. Cost function reported error10971.2/2417.78 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.79543
+Most promising points mean distance [mm] = -0.0555556
+Most promising points absolute mean distance [mm] = 0.188889
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 35 iterations, 328 evaluations. Cost function reported error152329/152060 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.828837
+Distance from last mesh [mm] = 0.170674
+Number of bad orientation = 0 / 17
+Contrast : 406.906 / 50
+Distance of segmentation [mm] = 104.318
+
+Propagation step 18/200
+Propagation length [mm] : 104.318 / 800
+Contrast = 453.308
+Iteration Position = ( -3.91794, 25.5622, 60.7232 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 38 iterations, 149 evaluations. Cost function reported error9131.35/2271.76 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.73675
+Most promising points mean distance [mm] = -0.0622222
+Most promising points absolute mean distance [mm] = 0.182222
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 16 iterations, 100 evaluations. Cost function reported error8180.7/7879.37 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.789334
+Distance from last mesh [mm] = 0.124965
+Number of bad orientation = 0 / 18
+Contrast : 419.358 / 50
+Distance of segmentation [mm] = 109.848
+
+Propagation step 19/200
+Propagation length [mm] : 109.848 / 800
+Contrast = 494.618
+Iteration Position = ( -3.69016, 24.8964, 66.1826 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 399 iterations, 4739 evaluations. Cost function reported error1484.83/759.671 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.157999
+Number of bad orientation = 0 / 19
+Contrast : 449.89 / 50
+Distance of segmentation [mm] = 115.393
+
+Propagation step 20/200
+Propagation length [mm] : 115.393 / 800
+Contrast = 510.7
+Iteration Position = ( -3.57064, 24.1846, 71.6398 )
+Mesh deformation : 60 points and 90 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 0 iterations, 1 evaluations. Cost function reported error0/0 . Final step size = 0
+
+Distance from initial mesh [mm] = 0
+Stop because out of image
+Number of bad orientation = 0 / 20
+Contrast : 486.209 / 50
+Distance of segmentation [mm] = 120.938
+
+Global deformation after subdivision... 7530 points and 15000 triangles
+Report from vnl optimizer for deformation : 
+vnl_conjugate_gradient: 2 iterations, 64 evaluations. Cost function reported error4.59549e+06/4.53163e+06 . Final step size = 0
+
+Distance from initial mesh [mm] = 0.186237
+Distance of segmentation [mm] = 241.562
+Using info image
+Total propagation length = 235.375 mm
+==============================================================================================
+sct_dice_coefficient
+            ../../data/errsm_23/t2/t2_manual_segmentation.nii.gz
+            segmentation_binary.nii.gz
+            -bmax
+==============================================================================================
+WARNING: please check bounding box
+Origin: 	221	1	23
+Size: 		35	224	14
+
+3D Dice coefficient = 0.914549
+

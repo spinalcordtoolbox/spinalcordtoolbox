@@ -21,7 +21,6 @@ import sys
 import sct_utils as sct
 import nibabel
 import numpy as np
-import math
 
 # DEFAULT PARAMETERS
 class param:
@@ -50,9 +49,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_label = '/home/django/aroux/code/spinalcordtoolbox/scripts/tmp.140825110700/template_label.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
-        fname_label_output = 'template_label_cross_debug.nii.gz'  #'landmarks_rpi_output.nii.gz'
-        fname_ref = '/home/django/aroux/code/spinalcordtoolbox/scripts/tmp.140822165144/template_label_cross.nii.gz'
+        fname_label = path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
+        fname_label_output = 'landmarks_rpi_output.nii.gz'
         type_process = 'cross'
         cross_radius = 5
         dilate = True
@@ -131,7 +129,7 @@ def main():
         output_level = 1
 
     if (output_level == 0):
-        hdr.set_data_dtype('float32')  # set imagetype to uint8, previous: int32. !!! SOMETIMES uint8 or int32 DOES NOT GIVE PROPER NIFTI FILE (e.g., CORRUPTED NIFTI)
+        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32.
         print '\nWrite NIFTI volumes...'
         data.astype('int')
         img = nibabel.Nifti1Image(data, None, hdr)
