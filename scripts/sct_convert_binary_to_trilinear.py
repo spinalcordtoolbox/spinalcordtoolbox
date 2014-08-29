@@ -19,8 +19,6 @@ import os
 import commands
 import getopt
 import time
-import math
-from sct_moco import sct_moco
 
 
 # get path of the toolbox
@@ -65,7 +63,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -158,8 +156,8 @@ def usage():
         '\n'\
         'DESCRIPTION\n' \
         '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n' \
-        '  re-interpolating the image, this function oversample the binary mask, then smooth along centerline\n' \
-        '  (to remove step-effects), then downsample back to native resolution.\n' \
+        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n' \
+        '  (to remove step-effects), then downsamples back to native resolution.\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+' -i <bin_seg>\n' \
