@@ -81,7 +81,7 @@ def moco(param):
         ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
     # get the right interpolation field depending on method
-    interp = get_interpolation(param.program, param.interp)
+    interp = sct.get_interpolation(param.program, param.interp)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
@@ -487,29 +487,3 @@ def gauss2d(dims, sigma, center):
     yc = center[1]
 
     return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
-
-
-#=======================================================================================================================
-# get_interpolation: get correct interpolation field depending on program used
-#=======================================================================================================================
-def get_interpolation(program, interp):
-    interp_program = ''
-    if program == 'flirt':
-        if interp == 'nn':
-            interp_program = 'nearestneighbour'
-        elif interp == 'trilinear':
-            interp_program = 'trilinear'
-        elif interp == 'spline':
-            interp_program = 'spline'
-    elif program == 'ants' or program == 'ants_affine':
-        if interp == 'nn':
-            interp_program = 'NearestNeighbor'
-        elif interp == 'trilinear':
-            interp_program = 'Linear'
-        elif interp == 'spline':
-            interp_program = 'BSpline[3]'
-    # check if not assigned
-    if interp_program == '':
-        sct.printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
-        interp_program = 'Linear'
-    return interp_program
