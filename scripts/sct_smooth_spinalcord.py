@@ -128,8 +128,8 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.run('c3d '+fname_anat+' -o '+path_tmp+'/anat.nii')
-    sct.run('c3d '+fname_centerline+' -o '+path_tmp+'/centerline.nii')
+    sct.run('sct_c3d '+fname_anat+' -o '+path_tmp+'/anat.nii')
+    sct.run('sct_c3d '+fname_centerline+' -o '+path_tmp+'/centerline.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -147,7 +147,7 @@ def main():
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii')
+    sct.run('sct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii')
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord (assuming a 3D image)...'

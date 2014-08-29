@@ -151,9 +151,9 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    status, output = sct.run('c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    status, output = sct.run('c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    status, output = sct.run('c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -174,8 +174,8 @@ def main():
 
     # Smoothing along centerline to improve accuracy and remove step effects
     print('\nSmoothing along centerline to improve accuracy and remove step effects...')
-    sct.run('c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
-    sct.run('c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
+    sct.run('sct_c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
+    sct.run('sct_c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
@@ -197,7 +197,7 @@ def main():
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
-    sct.run('c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+    sct.run('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     print '\nEstimate affine transfo: straight anat --> template (landmark-based)...'
@@ -210,7 +210,7 @@ def main():
 
     # now threshold at 0.5 (for partial volume interpolation)
     # do not do that anymore-- better to estimate transformation using trilinear interp image to avoid step effect. See issue #31 on github.
-    # sct.run('c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
+    # sct.run('sct_c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
