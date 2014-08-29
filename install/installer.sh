@@ -74,8 +74,13 @@ fi
 echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
-echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
+# echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
+
+# create soft link to each script in SCT_DIR/script
+cmd="./create_script_links.sh"
+echo ">> $cmd"; $cmd
+
 unamestr=`uname`
 #if [[ ! "$unamestr" == 'Linux' ]]; then
 #  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
