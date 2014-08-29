@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Apply transformations. This function is a wrapper for WarpImageMultiTransform
+# Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
