@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Apply transformations. This function is a wrapper for WarpImageMultiTransform
+# Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -23,10 +23,10 @@ import sct_utils as sct
 
 # DEFAULT PARAMETERS
 class param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 0  # verbose
+        self.interp = 'spline'  # nn, trilinear, spline
 
 
 # main
@@ -54,7 +54,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -66,6 +66,8 @@ def main():
             fname_dest = arg
         elif opt in ('-o'):
             fname_src_reg = arg
+        elif opt in ('-p'):
+            param.interp = arg
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-w'):
@@ -74,6 +76,9 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
         usage()
+
+    # get the right interpolation field depending on method
+    interp = sct.get_interpolation('WarpImageMultiTransform', param.interp)
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
@@ -102,9 +107,9 @@ def main():
 
     # Apply transformation
     sct.printv('\nApply transformation...', verbose)
-    # N.B. Here we take the inverse of the warp list, because WarpImageMultiTransform concatenates in the reverse order
+    # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list), verbose)
+    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -125,7 +130,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Apply transformations. This function is a wrapper for WarpImageMultiTransform (ANTs).
+  Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform (ANTs).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest> -w <warp_list>
@@ -137,6 +142,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
+  -p {nn,trilinear,spline}  interpolation method. Default="""+str(param.interp)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
   -h                    help. Show this message
 

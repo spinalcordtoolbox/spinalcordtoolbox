@@ -4,7 +4,7 @@
 #
 
 # subject list
-SUBJECT_LIST="errsm_03 "
+SUBJECT_LIST="errsm_03_sub"  # errsm_03 paris_16 paris_17 toronto_E19849"
 CONTRAST_LIST="dmri"
 file1="dmri.nii.gz"
 file2="bvecs.txt"
@@ -41,7 +41,7 @@ for subject in $SUBJECT_LIST; do
         -b $SCT_DATA_DIR/${subject}/${contrast}/${file2}
         -v 1
         -s 15
-        -f 1
+        -f 0
         -d 3
         -r 0
 	-e 0
