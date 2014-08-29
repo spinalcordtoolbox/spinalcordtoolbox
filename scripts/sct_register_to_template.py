@@ -151,9 +151,9 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    status, output = sct.run('c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    status, output = sct.run('c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    status, output = sct.run('c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -170,12 +170,12 @@ def main():
 
     # Apply straightening to segmentation
     print('\nApply straightening to segmentation...')
-    sct.run('WarpImageMultiTransform 3 segmentation_rpi.nii.gz segmentation_rpi_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz')
+    sct.run('sct_WarpImageMultiTransform 3 segmentation_rpi.nii.gz segmentation_rpi_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz')
 
     # Smoothing along centerline to improve accuracy and remove step effects
     print('\nSmoothing along centerline to improve accuracy and remove step effects...')
-    sct.run('c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
-    sct.run('c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
+    sct.run('sct_c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
+    sct.run('sct_c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
@@ -193,24 +193,24 @@ def main():
 
     # Push the input labels in the template space
     print('\nPush the input labels to the straight space...')
-    status, output = sct.run('WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz --use-NN')
+    status, output = sct.run('sct_WarpImageMultiTransform 3 landmarks_rpi_cross3x3.nii.gz landmarks_rpi_cross3x3_straight.nii.gz -R data_rpi_straight.nii warp_curve2straight.nii.gz --use-NN')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
-    sct.run('c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+    sct.run('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     print '\nEstimate affine transfo: straight anat --> template (landmark-based)...'
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
+    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
 
     # Apply affine transformation: straight --> template
     print '\nApply affine transformation: straight --> template...'
-    sct.run('WarpImageMultiTransform 3 data_rpi_straight.nii data_rpi_straight2templateAffine.nii straight2templateAffine.txt -R '+fname_template)
-    sct.run('WarpImageMultiTransform 3 segmentation_rpi_straight.nii.gz segmentation_rpi_straight2templateAffine.nii.gz straight2templateAffine.txt -R '+fname_template)
+    sct.run('sct_WarpImageMultiTransform 3 data_rpi_straight.nii data_rpi_straight2templateAffine.nii straight2templateAffine.txt -R '+fname_template)
+    sct.run('sct_WarpImageMultiTransform 3 segmentation_rpi_straight.nii.gz segmentation_rpi_straight2templateAffine.nii.gz straight2templateAffine.txt -R '+fname_template)
 
     # now threshold at 0.5 (for partial volume interpolation)
     # do not do that anymore-- better to estimate transformation using trilinear interp image to avoid step effect. See issue #31 on github.
-    # sct.run('c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
+    # sct.run('sct_c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
@@ -221,17 +221,17 @@ def main():
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate warping fields: template2anat & anat2template...')
-    cmd = 'ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii warp_straight2curve.nii.gz -i straight2templateAffine.txt warp_dest2src.nii.gz'
+    cmd = 'sct_ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii warp_straight2curve.nii.gz -i straight2templateAffine.txt warp_dest2src.nii.gz'
     print '>> '+cmd
     commands.getstatusoutput(cmd)
-    cmd = 'ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
+    cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
     print '>> '+cmd
     commands.getstatusoutput(cmd)
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('WarpImageMultiTransform 3 '+fname_template+' template2anat.nii.gz -R data.nii warp_template2anat.nii.gz')
-        sct.run('WarpImageMultiTransform 3 data.nii.gz anat2template.nii.gz -R '+fname_template+' warp_anat2template.nii.gz')
+        sct.run('sct_WarpImageMultiTransform 3 '+fname_template+' template2anat.nii.gz -R data.nii warp_template2anat.nii.gz')
+        sct.run('sct_WarpImageMultiTransform 3 data.nii.gz anat2template.nii.gz -R '+fname_template+' warp_anat2template.nii.gz')
 
     # come back to parent folder
     os.chdir('..')

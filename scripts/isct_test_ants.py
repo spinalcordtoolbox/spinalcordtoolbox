@@ -2,7 +2,7 @@
 #########################################################################################
 #
 # This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline transform,
-# notably when using ANTSUseLandmarkImagesToGetBSplineDisplacementField.
+# notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -79,25 +79,25 @@ def main():
 
     # Estimate rigid transformation
     printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
+    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
 
     # Apply rigid transformation
     printv('\nApply rigid transformation to curved landmarks...', verbose)
-    sct.run('WarpImageMultiTransform 3 data_src.nii.gz data_src_rigid.nii.gz -R data_dest.nii.gz curve2straight_rigid.txt --use-NN', verbose)
+    sct.run('sct_WarpImageMultiTransform 3 data_src.nii.gz data_src_rigid.nii.gz -R data_dest.nii.gz curve2straight_rigid.txt --use-NN', verbose)
 
     # Estimate b-spline transformation curve --> straight
     printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
+    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
 
     # Concatenate rigid and non-linear transformations...
     printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    cmd = 'ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
+    cmd = 'sct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
     printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)
 
     # Apply deformation to input image
     printv('\nApply transformation to input image...', verbose)
-    sct.run('WarpImageMultiTransform 3 data_src.nii.gz data_src_warp.nii.gz -R data_dest.nii.gz warp_curve2straight.nii.gz --use-NN', verbose)
+    sct.run('sct_WarpImageMultiTransform 3 data_src.nii.gz data_src_warp.nii.gz -R data_dest.nii.gz warp_curve2straight.nii.gz --use-NN', verbose)
 
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
@@ -146,7 +146,7 @@ def usage():
         '\n'\
         'DESCRIPTION\n' \
         '  This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline ' \
-        '  transform notably when using ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
+        '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+'\n' \
