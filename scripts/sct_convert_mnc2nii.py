@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Concatenate transformations. This function is a wrapper for ComposeMultiTransform
+# Concatenate transformations. This function is a wrapper for sct_ComposeMultiTransform
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>

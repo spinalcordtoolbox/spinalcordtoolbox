@@ -19,7 +19,7 @@
 %   each region
 % - m_linear_interp.m
 %
-% Other dependencies: FSL, c3d, ANTs
+% Other dependencies: FSL, sct_c3d, ANTs
 
 dbstop if error
 
@@ -113,38 +113,38 @@ suffix_ants = '_reg';
 %--- Preliminary operations: cropping and interpolation of the template ---
 
 % Thresholding the template
-cmd = ['c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
+cmd = ['sct_c3d ' path_template file_template ext ' -threshold -inf 0.001 0 1 -o ' template_mask ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
-cmd = ['c3d ' path_template file_template ext ' ' template_mask ext ' -multiply -o ' template_mask ext];
+cmd = ['sct_c3d ' path_template file_template ext ' ' template_mask ext ' -multiply -o ' template_mask ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Cropping the template
-cmd = ['c3d ' template_mask ext ' -trim 6vox -o ' template_cropped ext];
+cmd = ['sct_c3d ' template_mask ext ' -trim 6vox -o ' template_cropped ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Interpolation of the template
-cmd = ['c3d ' template_cropped ext ' -interpolation Linear -resample ',...
+cmd = ['sct_c3d ' template_cropped ext ' -interpolation Linear -resample ',...
     num2str(perc_up) 'x' num2str(perc_up) 'x100% -o ' template_cropped_interp ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Gaussian interpolation for registration computation
-% cmd = ['c3d ' template_cropped ext ' -interpolation Gaussian 1vox -resample ',...
+% cmd = ['sct_c3d ' template_cropped ext ' -interpolation Gaussian 1vox -resample ',...
 %     num2str(perc_up) 'x' num2str(perc_up) 'x100% -o ' template_cig ext];
 % disp(cmd)
 % [status,result] = unix(cmd);
 % if(status), error(result); end
 
 % Get a version of ref slice without geometrical information
-cmd = ['c3d ' template_cropped_interp ext ' -slice z ' num2str(z_slice_ref) ' -o ' templateci_slice_ref ext];
+cmd = ['sct_c3d ' template_cropped_interp ext ' -slice z ' num2str(z_slice_ref) ' -o ' templateci_slice_ref ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
@@ -155,13 +155,13 @@ save_avw(sliceref,templateci_sr_nohd,'d',scales);
 
 
 % Binarization of the reference slice for the registration of the atlas
-cmd = ['c3d ' templateci_slice_ref ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_slice_ref_thresh ext];
+cmd = ['sct_c3d ' templateci_slice_ref ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_slice_ref_thresh ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
 % Binarization of the template for slice coregistration
-cmd = ['c3d ' template_cropped_interp ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_thresh ext];
+cmd = ['sct_c3d ' template_cropped_interp ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_thresh ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
@@ -220,10 +220,10 @@ cmd =['ants 2 -o ' prefix_ants_ref ' ',...
 disp(cmd)
 [status,result] = unix(cmd);
 if(status),error(result);end
-% to try: antsRegistration --dimensionality 2 -o WMtracts_outputs/Affine -m CC[WMtracts_outputs/MNI-Poly-AMU_WM_c6v_int12_slice_ref_thresh.nii.gz,WMtracts_outputs/mask_grays_cerv_sym_correc_r3con.nii.gz,1,2] -t Affine[0.5] --convergence 10x10 -s 0x0 -f 2x1
+% to try: sct_antsRegistration --dimensionality 2 -o WMtracts_outputs/Affine -m CC[WMtracts_outputs/MNI-Poly-AMU_WM_c6v_int12_slice_ref_thresh.nii.gz,WMtracts_outputs/mask_grays_cerv_sym_correc_r3con.nii.gz,1,2] -t Affine[0.5] --convergence 10x10 -s 0x0 -f 2x1
 
 % estimate diffeomorphic transformation
-cmd =['antsRegistration --dimensionality 2 --initial-moving-transform ' affine_atlas ' ',...
+cmd =['sct_antsRegistration --dimensionality 2 --initial-moving-transform ' affine_atlas ' ',...
     '--transform SyN[0.2,6,0] --metric CC[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] ',... 
     '--convergence 200x20 --shrink-factors 4x1 --smoothing-sigmas 0x0mm ',...
     '--output [' prefix_ants_ref ',grays_syn.nii.gz] --collapse-output-transforms 1'];
@@ -248,7 +248,7 @@ if(status),error(result);end
 movefile([prefix_ants_ref '1Warp.nii.gz'],[Warp_tmp ext]);
 
 % Constraint the warping field to preserve symmetry
-cmd = ['c3d -mcs ' Warp_tmp ext ' -oo ' Warp_tmp 'x' ext ' ' Warp_tmp 'y' ext];
+cmd = ['sct_c3d -mcs ' Warp_tmp ext ' -oo ' Warp_tmp 'x' ext ' ' Warp_tmp 'y' ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status),error(result);end
@@ -261,12 +261,12 @@ warpy = (warpy + warpy(end:-1:1,:)) / 2;
 save_avw(warpx,[Warp_tmp 'xa' ext],'d',scales);
 save_avw(warpy,[Warp_tmp 'ys' ext],'d',scales);
 
-cmd = ['c3d ' Warp_tmp 'x' ext ' ' Warp_tmp 'xa' ext ' -copy-transform -o ' Warp_tmp 'xa' ext];
+cmd = ['sct_c3d ' Warp_tmp 'x' ext ' ' Warp_tmp 'xa' ext ' -copy-transform -o ' Warp_tmp 'xa' ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status),error(result);end
 
-cmd = ['c3d ' Warp_tmp 'y' ext ' ' Warp_tmp 'ys' ext ' -copy-transform -o ' Warp_tmp 'ys' ext];
+cmd = ['sct_c3d ' Warp_tmp 'y' ext ' ' Warp_tmp 'ys' ext ' -copy-transform -o ' Warp_tmp 'ys' ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status),error(result);end
@@ -302,12 +302,12 @@ for label = 1:length(label_values)/2
     [status,result] = unix(cmd);
     if(status),error(result);end
     
-    cmd = ['c3d ' templateci_slice_ref ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
+    cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
     
-    cmd = ['c3d ' templateci_slice_ref ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
+    cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
@@ -361,7 +361,7 @@ end
 
 
 templatecit_slice_ref = [templateci_thresh '_slice_ref'];
-cmd = ['c3d ' templateci_thresh ext ' -slice z ' num2str(z_slice_ref) ' -o ' templatecit_slice_ref ext];
+cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(z_slice_ref) ' -o ' templatecit_slice_ref ext];
 disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
@@ -391,13 +391,13 @@ for iz = 1:nb_slices-1
     warp_temp = [prefix_ants '0Warp'];
     
     % extract slice corresponding to z=zslice
-    cmd = ['c3d ' templateci_thresh ext ' -slice z ' num2str(zslice) ' -o ' templatecit_slice ext];
+    cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(zslice) ' -o ' templatecit_slice ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status), error(result); end
 
     % extract slice corresponding to z=zslice+1 (for neighrest-slice registration)
-    cmd = ['c3d ' templateci_thresh ext ' -slice z ' num2str(zslicenext) ' -o ' templatecit_slicenext ext];
+    cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(zslicenext) ' -o ' templatecit_slicenext ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status), error(result); end
@@ -405,14 +405,14 @@ for iz = 1:nb_slices-1
     % registration of slice i+1 on i
     % forward warping field is: reg_zslice_0Warp.nii.gz
     % backward warping field is: reg_zslice_0InverseWarp.nii.gz
-%     cmd =['antsRegistration --dimensionality 2 ',...
+%     cmd =['sct_antsRegistration --dimensionality 2 ',...
 %         '--transform SyN[0.2,3,0] --metric CC[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
 %         '--convergence 200x20 --shrink-factors 2x1 --smoothing-sigmas 7x7vox ',...
 %         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];
-    % WARNING!!! (2014-08-04) the binary version of antsRegistration from
+    % WARNING!!! (2014-08-04) the binary version of sct_antsRegistration from
     % ANTs website crashes when using option --transform BSplineSyN. Use
     % the version from github instead.
-    cmd =['antsRegistration --dimensionality 2 ',...
+    cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
         '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
@@ -464,7 +464,7 @@ for iz = 1:nb_slices
     
     % register refslice to zslice using concatenated warping field as
     % initial transformation
-    cmd =['antsRegistration --dimensionality 2 ',...
+    cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--initial-moving-transform ', warp_slice, ' ',...
         '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
         '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
@@ -489,7 +489,7 @@ for iz = 1:nb_slices
     warp_slice = [ prefix_ants, 'concat_sym_', num2str(zslice), ext];
 
     % Constraint the warping field to preserve symmetry
-    cmd = ['c3d -mcs ' warp_temp ext ' -oo ' warp_temp 'x' ext ' ' warp_temp 'y' ext];
+    cmd = ['sct_c3d -mcs ' warp_temp ext ' -oo ' warp_temp 'x' ext ' ' warp_temp 'y' ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
@@ -503,17 +503,17 @@ for iz = 1:nb_slices
     save_avw(warpx,[warp_temp 'xa' ext],'d',scales);
     save_avw(warpy,[warp_temp 'ys' ext],'d',scales);
     
-    cmd = ['c3d ' warp_temp 'x' ext ' ' warp_temp 'xa' ext ' -copy-transform -o ' warp_temp 'xa' ext];
+    cmd = ['sct_c3d ' warp_temp 'x' ext ' ' warp_temp 'xa' ext ' -copy-transform -o ' warp_temp 'xa' ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
     
-    cmd = ['c3d ' warp_temp 'y' ext ' ' warp_temp 'ys' ext ' -copy-transform -o ' warp_temp 'ys' ext];
+    cmd = ['sct_c3d ' warp_temp 'y' ext ' ' warp_temp 'ys' ext ' -copy-transform -o ' warp_temp 'ys' ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
     
-    cmd = ['c3d ' warp_temp 'xa' ext ' ' warp_temp 'ys' ext ' -omc 2 ' warp_slice];
+    cmd = ['sct_c3d ' warp_temp 'xa' ext ' ' warp_temp 'ys' ext ' -omc 2 ' warp_slice];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status),error(result);end
@@ -561,12 +561,12 @@ for iz = 1:nb_slices
         
         % copy header from template to registered atlas
         % NB: changed templateci_slice to templatecit_slice (2014-08-04)
-        cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
+        cmd = ['sct_c3d ' templatecit_slice ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
         disp(cmd)
         [status,result] = unix(cmd);
         if(status),error(result);end
         
-        cmd = ['c3d ' templatecit_slice ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
+        cmd = ['sct_c3d ' templatecit_slice ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
         disp(cmd)
         [status,result] = unix(cmd);
         if(status),error(result);end
@@ -664,13 +664,13 @@ for label = 1:length(label_values)
     % Save ML version and copy geometry
     filetractML = [path_results prefix_out '_' num2str(label)];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
-    cmd = ['c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
+    cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status), error(result); end
     
 	 % Reslice into native template space
-	cmd = ['c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
+	cmd = ['sct_c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
     disp(cmd)
     [status,result] = unix(cmd);
     if(status), error(result); end
