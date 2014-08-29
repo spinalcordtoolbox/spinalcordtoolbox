@@ -29,7 +29,7 @@ class param:
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
         self.verbose = 1  # verbose
-        self.test = 1
+        self.test = 0
         self.folder_template = '/data/template'
         self.folder_template_DS = '/testing/data'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
