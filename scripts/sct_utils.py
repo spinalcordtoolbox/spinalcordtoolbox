@@ -238,3 +238,41 @@ def delete_nifti(fname_in):
 def create_folder(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
+
+
+#=======================================================================================================================
+# get_interpolation: get correct interpolation field depending on program used. Supported programs: ants, flirt, WarpImageMultiTransform
+#=======================================================================================================================
+def get_interpolation(program, interp):
+    # TODO: check if field and program exists
+    interp_program = ''
+    # FLIRT
+    if program == 'flirt':
+        if interp == 'nn':
+            interp_program = 'nearestneighbour'
+        elif interp == 'trilinear':
+            interp_program = 'trilinear'
+        elif interp == 'spline':
+            interp_program = 'spline'
+    # ANTs
+    elif program == 'ants' or program == 'ants_affine':
+        if interp == 'nn':
+            interp_program = 'NearestNeighbor'
+        elif interp == 'trilinear':
+            interp_program = 'Linear'
+        elif interp == 'spline':
+            interp_program = 'BSpline[3]'
+    # WarpImageMultiTransform
+    elif program == 'WarpImageMultiTransform':
+        if interp == 'nn':
+            interp_program = ' --use-NN'
+        elif interp == 'trilinear':
+            interp_program = ' '
+        elif interp == 'spline':
+            interp_program = ' --use-BSpline'
+    # check if not assigned
+    if interp_program == '':
+        sct.printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
+        interp_program = 'Linear'
+    # return
+    return interp_program
