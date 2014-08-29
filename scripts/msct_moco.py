@@ -12,7 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: with ants, pad at top and bottom
+# TODO: unpad after applying transfo
 # TODO: make mask work with slicewise=0
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
@@ -34,17 +34,15 @@ def moco(param):
     fname_data = param.fname_data
     fname_target = param.fname_target
     folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
-    # mat_final = param.mat_final
     todo = param.todo
     suffix = param.suffix
     mask_size = param.mask_size
     program = param.program  # flirt, ants
-    cost_function_flirt = param.cost_function_flirt
     file_schedule = param.file_schedule
     verbose = param.verbose
     slicewise = param.slicewise
     # ANTs parameters
-    restrict_deformation = '1x1x0'
+    restrict_deformation = '1x1x0'  # TODO: find it automatically
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -72,14 +70,6 @@ def moco(param):
     # create folder for mat files
     sct.create_folder(folder_mat)
 
-    # get the right matrix extension depending on method
-    if param.program == 'flirt':
-        ext_mat = '.txt'  # affine matrix
-    elif param.program == 'ants':
-        ext_mat = '0Warp.nii.gz'  # warping field
-    elif param.program == 'ants_affine':
-        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
-
     # get the right interpolation field depending on method
     interp = sct.get_interpolation(param.program, param.interp)
 
@@ -89,8 +79,7 @@ def moco(param):
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # pad data (for ANTs)
-    # TODO: check if need to pad also for the estimate_and_apply
-    if program == 'ants' and todo == 'estimate':
+    if program == 'ants' and todo == 'estimate' and slicewise == 0:
         sct.printv('\nPad data (for ANTs)...', verbose)
         sct.run('sct_c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
         fname_target = fname_target+'_pad'
@@ -177,7 +166,7 @@ def moco(param):
 
         # pad data (for ANTs)
         # TODO: check if need to pad also for the estimate_and_apply
-        if program == 'ants' and todo == 'estimate':
+        if program == 'ants' and todo == 'estimate' and slicewise == 0:
             sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
             file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
@@ -196,20 +185,9 @@ def moco(param):
                 file_data_splitT_splitZ_num[it][iz] = fname_data_splitT_splitZ + str(iz).zfill(4)
                 file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
                 file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
-                file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz) + '.txt'
-
-                # run moco
-                # TODO: simplifies this as in volume-based
-                if todo == 'estimate':
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+' -in '+file_data_splitT_splitZ_num[it][iz]+' -ref '+file_data_ref_splitZ_num[iz]+' -omat '+file_mat[it][iz]+' -cost '+cost_function_flirt+fslmask[iz]
-                if todo == 'apply':
-                    cmd = fsloutput + 'flirt -in ' + file_data_splitT_splitZ_num[it][iz] + ' -ref ' + file_data_ref_splitZ_num[iz] + ' -applyxfm -init ' + file_mat[it][iz] + ' -out ' + file_data_splitT_splitZ_moco_num[it][iz] + ' -interp ' + interp
-                if todo == 'estimate_and_apply':
-                    cmd = fsloutput+'flirt -schedule '+schedule_file+ ' -in '+file_data_splitT_splitZ_num[it][iz]+' -ref '+ file_data_ref_splitZ_num[iz] +' -out '+file_data_splitT_splitZ_moco_num[it][iz]+' -omat '+file_mat[it][iz]+' -cost '+cost_function_flirt+fslmask[iz]+' -interp '+interp
-                sct.run(cmd, verbose)
-
-                #Check transformation absurdity
-                fail_mat[it, iz] = check_transformation_absurdity(file_mat[it][iz], param)
+                file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
+                # run 2D registration
+                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], interp, 2, restrict_deformation, verbose)
 
             # Merge data along Z
             if todo != 'estimate':
@@ -221,55 +199,9 @@ def moco(param):
 
         # volume-based moco
         else:
-            # use FSL
-            if program == 'flirt':
-                file_mat[it] = folder_mat + 'mat.T' + str(it) + '.txt'
-                cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_data_splitT_num[it] + ' -ref ' + fname_target
-                if todo == 'estimate' or todo == 'estimate_and_apply':
-                    cmd = cmd + ' -omat '+file_mat[it] + ' -cost ' + cost_function_flirt
-                if todo == 'apply' or todo == 'estimate_and_apply':
-                    cmd = cmd + ' -out ' + file_data_splitT_moco_num[it] + ' -interp ' + interp
-                    if todo == 'apply':
-                        cmd = cmd + ' -applyxfm -init ' + file_mat[it]
-                sct.run(cmd, verbose)
-                #Check transformation absurdity
-                fail_mat[it] = check_transformation_absurdity(file_mat[it], param)
-            # use ANTs
-            elif program == 'ants':
-                file_mat[it] = folder_mat + 'mat.T' + str(it)
-                # TODO: figure out orientation
-                if todo == 'estimate' or todo == 'estimate_and_apply':
-                    cmd = 'sct_antsRegistration' \
-                          ' --dimensionality 3' \
-                          ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
-                          ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
-                          ' --convergence 10x5' \
-                          ' --shrink-factors 2x1' \
-                          ' --smoothing-sigmas 1x1mm' \
-                          ' --Restrict-Deformation '+restrict_deformation+'' \
-                          ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
-                          ' --interpolation '+interp
-                if todo == 'apply':
-                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'+' -p '+param.interp
-                sct.run(cmd, verbose)
-            elif program == 'ants_affine':
-                file_mat[it] = folder_mat + 'mat.T' + str(it)
-                # TODO: figure out orientation
-                if todo == 'estimate' or todo == 'estimate_and_apply':
-                    cmd = 'sct_antsRegistration' \
-                          ' --dimensionality 3' \
-                          ' --transform Affine[0.5]' \
-                          ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
-                          ' --convergence 10x5' \
-                          ' --shrink-factors 2x1' \
-                          ' --smoothing-sigmas 2x1mm' \
-                          ' --Restrict-Deformation '+restrict_deformation+'' \
-                          ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
-                          ' --interpolation '+interp
-                if todo == 'apply':
-                    # TODO: consider interpolation!
-                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'+' -p '+param.interp
-                sct.run(cmd, verbose)
+            file_mat[it] = folder_mat + 'mat.T' + str(it)
+            # run 3D registration
+            fail_mat[it] = register(program, todo, file_data_splitT_num[it], fname_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
 
     # Replace failed transformation matrix to the closest good one
     # TODO: do it also for the volume-based (not urgent...)
@@ -299,16 +231,72 @@ def moco(param):
             cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
         sct.run(cmd, verbose)
 
-    # if todo == 'estimate_and_apply':
-    #     if param.mat_moco == '':
-    #         sct.printv('\nDelete temporary files...', verbose)
-    #         sct.run('rm -rf '+folder_mat, verbose)
+
+#=======================================================================================================================
+# register:  registration of two volumes (or two images)
+#=======================================================================================================================
+def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_out, interp, dim, restrict_deformation, verbose):
+
+    # initialization
+    fail_mat = 0  # by default, failed matrix is 0 (i.e., no failure)
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
+
+    # use flirt
+    if program == 'flirt':
+        interp_fsl = sct.get_interpolation('flirt', interp)
+        cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_src + ' -ref ' + file_dest
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = cmd + ' -omat ' + file_mat + '.txt -cost normcorr'
+        if todo == 'apply' or todo == 'estimate_and_apply':
+            cmd = cmd + ' -out ' + file_out + ' -interp ' + interp_fsl
+            if todo == 'apply':
+                cmd = cmd + ' -applyxfm -init ' + file_mat + '.txt'
+        sct.run(cmd, verbose)
+        #Check transformation absurdity
+        fail_mat = check_transformation_absurdity(file_mat+'.txt')
+
+    # use ants
+    elif program == 'ants':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsRegistration' \
+                  ' --dimensionality '+str(dim)+' ' \
+                  ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
+                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
+                  ' --convergence 10x5' \
+                  ' --shrink-factors 2x1' \
+                  ' --smoothing-sigmas 1x1mm' \
+                  ' --Restrict-Deformation '+restrict_deformation+'' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  ' --interpolation '+interp
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo.py -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp
+        sct.run(cmd, verbose)
+
+    # use ants_affine
+    elif program == 'ants_affine':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsRegistration' \
+                  ' --dimensionality '+str(dim)+' ' \
+                  ' --transform Affine[0.5]' \
+                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
+                  ' --convergence 10x5' \
+                  ' --shrink-factors 2x1' \
+                  ' --smoothing-sigmas 2x1mm' \
+                  ' --Restrict-Deformation '+restrict_deformation+'' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  ' --interpolation '+interp
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo.py -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp
+        sct.run(cmd, verbose)
+
+    # return status of failure
+    return fail_mat
 
 
 #=======================================================================================================================
 # check_transformation_absurdity:  find outliers
 #=======================================================================================================================
-def check_transformation_absurdity(file_mat, param):
+def check_transformation_absurdity(file_mat):
 
     # init param
     failed_transfo = 0
@@ -319,7 +307,7 @@ def check_transformation_absurdity(file_mat, param):
 
     if abs(M_transform[0, 3]) > 10 or abs(M_transform[1, 3]) > 10 or abs(M_transform[2, 3]) > 10 or abs(M_transform[3, 3]) > 10:
         failed_transfo = 1
-        sct.printv('  WARNING: This tranformation matrix is absurd, try others parameters (Gaussian mask, cost_function, group size, ...)', param.verbose, 'warning')
+        sct.printv('  WARNING: This tranformation matrix is absurd, try others parameters (Gaussian mask, group size, ...)', 1, 'warning')
 
     return failed_transfo
 
