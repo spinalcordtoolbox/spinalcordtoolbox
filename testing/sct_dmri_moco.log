@@ -1,0 +1,3142 @@
+
+[1;32mSubject: errsm_23[0m
+[1;31mContrast: dmri[0m
+
+==============================================================================================
+sct_dmri_moco.py
+        -i ../../data/errsm_23/dmri/dmri.nii.gz
+        -b ../../data/errsm_23/dmri/bvecs.txt
+        -v 1
+        -f 0
+        -s 15
+        -d 3
+        -r 0
+        -p sinc
+==============================================================================================
+
+
+
+
+===================================================
+          Running: sct_dmri_moco
+===================================================
+
+
+
+
+Input File: ../../data/errsm_23/dmri/dmri.nii.gz
+Bvecs File: ../../data/errsm_23/dmri/bvecs.txt
+  OK: ../../data/errsm_23/dmri/dmri.nii.gz
+  OK: ../../data/errsm_23/dmri/bvecs.txt
+>> mkdir /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/tmp.140828181727
+>> cp /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz dmri.nii.gz
+>> cp /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/bvecs.txt bvecs.txt
+[0m
+Get dimensions data...[0m
+[0m.. 96 x 96 x 9 x 34[0m
+[0m
+Open bvecs file...[0m
+[0m.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.[0m
+[0mTranspose bvecs...[0m
+[0m
+Identify b=0 and DWI images...[0m
+[0m.. Index of b=0:[0, 1, 2, 3, 4][0m
+[0m.. Index of DWI:[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33][0m
+[0m
+Split along T dimension...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz dmri_T
+[0m
+Merge b=0...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t b0 dmri_T0000 dmri_T0001 dmri_T0002 dmri_T0003 dmri_T0004
+[0m.. File created: b0[0m
+[0m
+Average b=0...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths b0 -Tmean b0_mean
+[0m
+Group 1 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_0 dmri_T0005 dmri_T0006 dmri_T0007
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_0 -Tmean dwi_mean_0
+[0m
+Group 2 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_1 dmri_T0008 dmri_T0009 dmri_T0010
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_1 -Tmean dwi_mean_1
+[0m
+Group 3 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_2 dmri_T0011 dmri_T0012 dmri_T0013
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_2 -Tmean dwi_mean_2
+[0m
+Group 4 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_3 dmri_T0014 dmri_T0015 dmri_T0016
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_3 -Tmean dwi_mean_3
+[0m
+Group 5 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_4 dmri_T0017 dmri_T0018 dmri_T0019
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_4 -Tmean dwi_mean_4
+[0m
+Group 6 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_5 dmri_T0020 dmri_T0021 dmri_T0022
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_5 -Tmean dwi_mean_5
+[0m
+Group 7 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_6 dmri_T0023 dmri_T0024 dmri_T0025
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_6 -Tmean dwi_mean_6
+[0m
+Group 8 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_7 dmri_T0026 dmri_T0027 dmri_T0028
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_7 -Tmean dwi_mean_7
+[0m
+Group 9 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_8 dmri_T0029 dmri_T0030 dmri_T0031
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_8 -Tmean dwi_mean_8
+[0m
+Group 10 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_9 dmri_T0032 dmri_T0033
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_9 -Tmean dwi_mean_9
+[0m
+Merging DW files...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_averaged_groups dwi_mean_0 dwi_mean_1 dwi_mean_2 dwi_mean_3 dwi_mean_4 dwi_mean_5 dwi_mean_6 dwi_mean_7 dwi_mean_8 dwi_mean_9
+[0m
+Averaging all DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_averaged_groups -Tmean dwi_mean
+[0m
+
+------------------------------------------------------------------------------[0m
+[0mEstimating motion based on DW groups...[0m
+[0m------------------------------------------------------------------------------
+[0m
+[0m
+
+
+
+===================================================[0m
+[0m                Running: sct_moco[0m
+[0m===================================================
+[0m
+[0mInput File:dwi_averaged_groups.nii[0m
+[0mReference File:dwi_mean_0[0m
+[0mMethod:estimate_and_apply[0m
+  OK: dwi_averaged_groups.nii
+  OK: dwi_mean_0
+[0m
+.. Schedule file: /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch[0m
+[0m
+Get dimensions data...[0m
+[0m.. 96 x 96 x 9 x 10[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups.nii dwi_averaged_groups_T
+[0m
+   Motion correction...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_mean_0 dwi_mean_0_Z -z
+[0m
+.. File created: gaussian_mask_in[0m
+[0mLoop on iT...[0m
+[0m
+Volume 1/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0000 dwi_averaged_groups_T0000_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0000_Z0000_moco -omat mat_dwigroups/mat.T0_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0000_Z0001_moco -omat mat_dwigroups/mat.T0_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0000_Z0002_moco -omat mat_dwigroups/mat.T0_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0000_Z0003_moco -omat mat_dwigroups/mat.T0_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0000_Z0004_moco -omat mat_dwigroups/mat.T0_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0000_Z0005_moco -omat mat_dwigroups/mat.T0_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0000_Z0006_moco -omat mat_dwigroups/mat.T0_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0000_Z0007_moco -omat mat_dwigroups/mat.T0_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0000_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0000_Z0008_moco -omat mat_dwigroups/mat.T0_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0000 dwi_averaged_groups_T0000_Z0000_moco dwi_averaged_groups_T0000_Z0001_moco dwi_averaged_groups_T0000_Z0002_moco dwi_averaged_groups_T0000_Z0003_moco dwi_averaged_groups_T0000_Z0004_moco dwi_averaged_groups_T0000_Z0005_moco dwi_averaged_groups_T0000_Z0006_moco dwi_averaged_groups_T0000_Z0007_moco dwi_averaged_groups_T0000_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0000[0m
+[0m
+Volume 2/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0001 dwi_averaged_groups_T0001_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0001_Z0000_moco -omat mat_dwigroups/mat.T1_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0001_Z0001_moco -omat mat_dwigroups/mat.T1_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0001_Z0002_moco -omat mat_dwigroups/mat.T1_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0001_Z0003_moco -omat mat_dwigroups/mat.T1_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0001_Z0004_moco -omat mat_dwigroups/mat.T1_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0001_Z0005_moco -omat mat_dwigroups/mat.T1_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0001_Z0006_moco -omat mat_dwigroups/mat.T1_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0001_Z0007_moco -omat mat_dwigroups/mat.T1_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0001_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0001_Z0008_moco -omat mat_dwigroups/mat.T1_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0001 dwi_averaged_groups_T0001_Z0000_moco dwi_averaged_groups_T0001_Z0001_moco dwi_averaged_groups_T0001_Z0002_moco dwi_averaged_groups_T0001_Z0003_moco dwi_averaged_groups_T0001_Z0004_moco dwi_averaged_groups_T0001_Z0005_moco dwi_averaged_groups_T0001_Z0006_moco dwi_averaged_groups_T0001_Z0007_moco dwi_averaged_groups_T0001_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0001[0m
+[0m
+Volume 3/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0002 dwi_averaged_groups_T0002_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0002_Z0000_moco -omat mat_dwigroups/mat.T2_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0002_Z0001_moco -omat mat_dwigroups/mat.T2_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0002_Z0002_moco -omat mat_dwigroups/mat.T2_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0002_Z0003_moco -omat mat_dwigroups/mat.T2_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0002_Z0004_moco -omat mat_dwigroups/mat.T2_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0002_Z0005_moco -omat mat_dwigroups/mat.T2_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0002_Z0006_moco -omat mat_dwigroups/mat.T2_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0002_Z0007_moco -omat mat_dwigroups/mat.T2_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0002_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0002_Z0008_moco -omat mat_dwigroups/mat.T2_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0002 dwi_averaged_groups_T0002_Z0000_moco dwi_averaged_groups_T0002_Z0001_moco dwi_averaged_groups_T0002_Z0002_moco dwi_averaged_groups_T0002_Z0003_moco dwi_averaged_groups_T0002_Z0004_moco dwi_averaged_groups_T0002_Z0005_moco dwi_averaged_groups_T0002_Z0006_moco dwi_averaged_groups_T0002_Z0007_moco dwi_averaged_groups_T0002_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0002[0m
+[0m
+Volume 4/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0003 dwi_averaged_groups_T0003_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0003_Z0000_moco -omat mat_dwigroups/mat.T3_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0003_Z0001_moco -omat mat_dwigroups/mat.T3_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0003_Z0002_moco -omat mat_dwigroups/mat.T3_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0003_Z0003_moco -omat mat_dwigroups/mat.T3_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0003_Z0004_moco -omat mat_dwigroups/mat.T3_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0003_Z0005_moco -omat mat_dwigroups/mat.T3_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0003_Z0006_moco -omat mat_dwigroups/mat.T3_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0003_Z0007_moco -omat mat_dwigroups/mat.T3_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0003_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0003_Z0008_moco -omat mat_dwigroups/mat.T3_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0003 dwi_averaged_groups_T0003_Z0000_moco dwi_averaged_groups_T0003_Z0001_moco dwi_averaged_groups_T0003_Z0002_moco dwi_averaged_groups_T0003_Z0003_moco dwi_averaged_groups_T0003_Z0004_moco dwi_averaged_groups_T0003_Z0005_moco dwi_averaged_groups_T0003_Z0006_moco dwi_averaged_groups_T0003_Z0007_moco dwi_averaged_groups_T0003_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0003[0m
+[0m
+Volume 5/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0004 dwi_averaged_groups_T0004_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0004_Z0000_moco -omat mat_dwigroups/mat.T4_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0004_Z0001_moco -omat mat_dwigroups/mat.T4_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0004_Z0002_moco -omat mat_dwigroups/mat.T4_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0004_Z0003_moco -omat mat_dwigroups/mat.T4_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0004_Z0004_moco -omat mat_dwigroups/mat.T4_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0004_Z0005_moco -omat mat_dwigroups/mat.T4_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0004_Z0006_moco -omat mat_dwigroups/mat.T4_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0004_Z0007_moco -omat mat_dwigroups/mat.T4_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0004_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0004_Z0008_moco -omat mat_dwigroups/mat.T4_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0004 dwi_averaged_groups_T0004_Z0000_moco dwi_averaged_groups_T0004_Z0001_moco dwi_averaged_groups_T0004_Z0002_moco dwi_averaged_groups_T0004_Z0003_moco dwi_averaged_groups_T0004_Z0004_moco dwi_averaged_groups_T0004_Z0005_moco dwi_averaged_groups_T0004_Z0006_moco dwi_averaged_groups_T0004_Z0007_moco dwi_averaged_groups_T0004_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0004[0m
+[0m
+Volume 6/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0005 dwi_averaged_groups_T0005_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0005_Z0000_moco -omat mat_dwigroups/mat.T5_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0005_Z0001_moco -omat mat_dwigroups/mat.T5_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0005_Z0002_moco -omat mat_dwigroups/mat.T5_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0005_Z0003_moco -omat mat_dwigroups/mat.T5_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0005_Z0004_moco -omat mat_dwigroups/mat.T5_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0005_Z0005_moco -omat mat_dwigroups/mat.T5_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0005_Z0006_moco -omat mat_dwigroups/mat.T5_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0005_Z0007_moco -omat mat_dwigroups/mat.T5_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0005_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0005_Z0008_moco -omat mat_dwigroups/mat.T5_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0005 dwi_averaged_groups_T0005_Z0000_moco dwi_averaged_groups_T0005_Z0001_moco dwi_averaged_groups_T0005_Z0002_moco dwi_averaged_groups_T0005_Z0003_moco dwi_averaged_groups_T0005_Z0004_moco dwi_averaged_groups_T0005_Z0005_moco dwi_averaged_groups_T0005_Z0006_moco dwi_averaged_groups_T0005_Z0007_moco dwi_averaged_groups_T0005_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0005[0m
+[0m
+Volume 7/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0006 dwi_averaged_groups_T0006_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0006_Z0000_moco -omat mat_dwigroups/mat.T6_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0006_Z0001_moco -omat mat_dwigroups/mat.T6_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0006_Z0002_moco -omat mat_dwigroups/mat.T6_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0006_Z0003_moco -omat mat_dwigroups/mat.T6_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0006_Z0004_moco -omat mat_dwigroups/mat.T6_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0006_Z0005_moco -omat mat_dwigroups/mat.T6_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0006_Z0006_moco -omat mat_dwigroups/mat.T6_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0006_Z0007_moco -omat mat_dwigroups/mat.T6_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0006_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0006_Z0008_moco -omat mat_dwigroups/mat.T6_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0006 dwi_averaged_groups_T0006_Z0000_moco dwi_averaged_groups_T0006_Z0001_moco dwi_averaged_groups_T0006_Z0002_moco dwi_averaged_groups_T0006_Z0003_moco dwi_averaged_groups_T0006_Z0004_moco dwi_averaged_groups_T0006_Z0005_moco dwi_averaged_groups_T0006_Z0006_moco dwi_averaged_groups_T0006_Z0007_moco dwi_averaged_groups_T0006_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0006[0m
+[0m
+Volume 8/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0007 dwi_averaged_groups_T0007_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0007_Z0000_moco -omat mat_dwigroups/mat.T7_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0007_Z0001_moco -omat mat_dwigroups/mat.T7_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0007_Z0002_moco -omat mat_dwigroups/mat.T7_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0007_Z0003_moco -omat mat_dwigroups/mat.T7_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0007_Z0004_moco -omat mat_dwigroups/mat.T7_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0007_Z0005_moco -omat mat_dwigroups/mat.T7_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0007_Z0006_moco -omat mat_dwigroups/mat.T7_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0007_Z0007_moco -omat mat_dwigroups/mat.T7_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0007_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0007_Z0008_moco -omat mat_dwigroups/mat.T7_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0007 dwi_averaged_groups_T0007_Z0000_moco dwi_averaged_groups_T0007_Z0001_moco dwi_averaged_groups_T0007_Z0002_moco dwi_averaged_groups_T0007_Z0003_moco dwi_averaged_groups_T0007_Z0004_moco dwi_averaged_groups_T0007_Z0005_moco dwi_averaged_groups_T0007_Z0006_moco dwi_averaged_groups_T0007_Z0007_moco dwi_averaged_groups_T0007_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0007[0m
+[0m
+Volume 9/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0008 dwi_averaged_groups_T0008_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0008_Z0000_moco -omat mat_dwigroups/mat.T8_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0008_Z0001_moco -omat mat_dwigroups/mat.T8_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0008_Z0002_moco -omat mat_dwigroups/mat.T8_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0008_Z0003_moco -omat mat_dwigroups/mat.T8_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0008_Z0004_moco -omat mat_dwigroups/mat.T8_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0008_Z0005_moco -omat mat_dwigroups/mat.T8_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0008_Z0006_moco -omat mat_dwigroups/mat.T8_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0008_Z0007_moco -omat mat_dwigroups/mat.T8_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0008_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0008_Z0008_moco -omat mat_dwigroups/mat.T8_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0008 dwi_averaged_groups_T0008_Z0000_moco dwi_averaged_groups_T0008_Z0001_moco dwi_averaged_groups_T0008_Z0002_moco dwi_averaged_groups_T0008_Z0003_moco dwi_averaged_groups_T0008_Z0004_moco dwi_averaged_groups_T0008_Z0005_moco dwi_averaged_groups_T0008_Z0006_moco dwi_averaged_groups_T0008_Z0007_moco dwi_averaged_groups_T0008_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0008[0m
+[0m
+Volume 10/10:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dwi_averaged_groups_T0009 dwi_averaged_groups_T0009_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0000 -ref dwi_mean_0_Z0000 -out dwi_averaged_groups_T0009_Z0000_moco -omat mat_dwigroups/mat.T9_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0001 -ref dwi_mean_0_Z0001 -out dwi_averaged_groups_T0009_Z0001_moco -omat mat_dwigroups/mat.T9_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0002 -ref dwi_mean_0_Z0002 -out dwi_averaged_groups_T0009_Z0002_moco -omat mat_dwigroups/mat.T9_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0003 -ref dwi_mean_0_Z0003 -out dwi_averaged_groups_T0009_Z0003_moco -omat mat_dwigroups/mat.T9_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0004 -ref dwi_mean_0_Z0004 -out dwi_averaged_groups_T0009_Z0004_moco -omat mat_dwigroups/mat.T9_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0005 -ref dwi_mean_0_Z0005 -out dwi_averaged_groups_T0009_Z0005_moco -omat mat_dwigroups/mat.T9_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0006 -ref dwi_mean_0_Z0006 -out dwi_averaged_groups_T0009_Z0006_moco -omat mat_dwigroups/mat.T9_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0007 -ref dwi_mean_0_Z0007 -out dwi_averaged_groups_T0009_Z0007_moco -omat mat_dwigroups/mat.T9_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in dwi_averaged_groups_T0009_Z0008 -ref dwi_mean_0_Z0008 -out dwi_averaged_groups_T0009_Z0008_moco -omat mat_dwigroups/mat.T9_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dwi_averaged_groups_moco_T0009 dwi_averaged_groups_T0009_Z0000_moco dwi_averaged_groups_T0009_Z0001_moco dwi_averaged_groups_T0009_Z0002_moco dwi_averaged_groups_T0009_Z0003_moco dwi_averaged_groups_T0009_Z0004_moco dwi_averaged_groups_T0009_Z0005_moco dwi_averaged_groups_T0009_Z0006_moco dwi_averaged_groups_T0009_Z0007_moco dwi_averaged_groups_T0009_Z0008_moco
+[0m.. File created: dwi_averaged_groups_moco_T0009[0m
+[0m
+
+Merge data back along T...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_averaged_groups_moco.nii dwi_averaged_groups_moco_T0000 dwi_averaged_groups_moco_T0001 dwi_averaged_groups_moco_T0002 dwi_averaged_groups_moco_T0003 dwi_averaged_groups_moco_T0004 dwi_averaged_groups_moco_T0005 dwi_averaged_groups_moco_T0006 dwi_averaged_groups_moco_T0007 dwi_averaged_groups_moco_T0008 dwi_averaged_groups_moco_T0009
+[0m.. File created: dwi_averaged_groups_moco.nii[0m
+[0m
+
+===================================================[0m
+[0m                Completed: sct_moco[0m
+[0m===================================================
+
+
+[0m
+[0m
+
+
+
+===================================================[0m
+[0m                Running: sct_moco[0m
+[0m===================================================
+[0m
+[0mInput File:b0.nii[0m
+[0mReference File:dmri_T0004.nii[0m
+[0mMethod:estimate_and_apply[0m
+  OK: b0.nii
+  OK: dmri_T0004.nii
+[0m
+.. Schedule file: /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch[0m
+[0m
+Get dimensions data...[0m
+[0m.. 96 x 96 x 9 x 5[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0.nii b0_T
+[0m
+   Motion correction...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0004.nii dmri_T0004_Z -z
+[0m
+.. File created: gaussian_mask_in[0m
+[0mLoop on iT...[0m
+[0m
+Volume 1/5:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0_T0000 b0_T0000_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0000 -ref dmri_T0004_Z0000 -out b0_T0000_Z0000_moco -omat mat_b0groups/mat.T0_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0001 -ref dmri_T0004_Z0001 -out b0_T0000_Z0001_moco -omat mat_b0groups/mat.T0_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0002 -ref dmri_T0004_Z0002 -out b0_T0000_Z0002_moco -omat mat_b0groups/mat.T0_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0003 -ref dmri_T0004_Z0003 -out b0_T0000_Z0003_moco -omat mat_b0groups/mat.T0_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0004 -ref dmri_T0004_Z0004 -out b0_T0000_Z0004_moco -omat mat_b0groups/mat.T0_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0005 -ref dmri_T0004_Z0005 -out b0_T0000_Z0005_moco -omat mat_b0groups/mat.T0_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0006 -ref dmri_T0004_Z0006 -out b0_T0000_Z0006_moco -omat mat_b0groups/mat.T0_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0007 -ref dmri_T0004_Z0007 -out b0_T0000_Z0007_moco -omat mat_b0groups/mat.T0_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0000_Z0008 -ref dmri_T0004_Z0008 -out b0_T0000_Z0008_moco -omat mat_b0groups/mat.T0_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z b0_moco_T0000 b0_T0000_Z0000_moco b0_T0000_Z0001_moco b0_T0000_Z0002_moco b0_T0000_Z0003_moco b0_T0000_Z0004_moco b0_T0000_Z0005_moco b0_T0000_Z0006_moco b0_T0000_Z0007_moco b0_T0000_Z0008_moco
+[0m.. File created: b0_moco_T0000[0m
+[0m
+Volume 2/5:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0_T0001 b0_T0001_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0000 -ref dmri_T0004_Z0000 -out b0_T0001_Z0000_moco -omat mat_b0groups/mat.T1_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0001 -ref dmri_T0004_Z0001 -out b0_T0001_Z0001_moco -omat mat_b0groups/mat.T1_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0002 -ref dmri_T0004_Z0002 -out b0_T0001_Z0002_moco -omat mat_b0groups/mat.T1_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0003 -ref dmri_T0004_Z0003 -out b0_T0001_Z0003_moco -omat mat_b0groups/mat.T1_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0004 -ref dmri_T0004_Z0004 -out b0_T0001_Z0004_moco -omat mat_b0groups/mat.T1_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0005 -ref dmri_T0004_Z0005 -out b0_T0001_Z0005_moco -omat mat_b0groups/mat.T1_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0006 -ref dmri_T0004_Z0006 -out b0_T0001_Z0006_moco -omat mat_b0groups/mat.T1_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0007 -ref dmri_T0004_Z0007 -out b0_T0001_Z0007_moco -omat mat_b0groups/mat.T1_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0001_Z0008 -ref dmri_T0004_Z0008 -out b0_T0001_Z0008_moco -omat mat_b0groups/mat.T1_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z b0_moco_T0001 b0_T0001_Z0000_moco b0_T0001_Z0001_moco b0_T0001_Z0002_moco b0_T0001_Z0003_moco b0_T0001_Z0004_moco b0_T0001_Z0005_moco b0_T0001_Z0006_moco b0_T0001_Z0007_moco b0_T0001_Z0008_moco
+[0m.. File created: b0_moco_T0001[0m
+[0m
+Volume 3/5:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0_T0002 b0_T0002_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0000 -ref dmri_T0004_Z0000 -out b0_T0002_Z0000_moco -omat mat_b0groups/mat.T2_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0001 -ref dmri_T0004_Z0001 -out b0_T0002_Z0001_moco -omat mat_b0groups/mat.T2_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0002 -ref dmri_T0004_Z0002 -out b0_T0002_Z0002_moco -omat mat_b0groups/mat.T2_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0003 -ref dmri_T0004_Z0003 -out b0_T0002_Z0003_moco -omat mat_b0groups/mat.T2_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0004 -ref dmri_T0004_Z0004 -out b0_T0002_Z0004_moco -omat mat_b0groups/mat.T2_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0005 -ref dmri_T0004_Z0005 -out b0_T0002_Z0005_moco -omat mat_b0groups/mat.T2_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0006 -ref dmri_T0004_Z0006 -out b0_T0002_Z0006_moco -omat mat_b0groups/mat.T2_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0007 -ref dmri_T0004_Z0007 -out b0_T0002_Z0007_moco -omat mat_b0groups/mat.T2_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0002_Z0008 -ref dmri_T0004_Z0008 -out b0_T0002_Z0008_moco -omat mat_b0groups/mat.T2_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z b0_moco_T0002 b0_T0002_Z0000_moco b0_T0002_Z0001_moco b0_T0002_Z0002_moco b0_T0002_Z0003_moco b0_T0002_Z0004_moco b0_T0002_Z0005_moco b0_T0002_Z0006_moco b0_T0002_Z0007_moco b0_T0002_Z0008_moco
+[0m.. File created: b0_moco_T0002[0m
+[0m
+Volume 4/5:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0_T0003 b0_T0003_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0000 -ref dmri_T0004_Z0000 -out b0_T0003_Z0000_moco -omat mat_b0groups/mat.T3_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0001 -ref dmri_T0004_Z0001 -out b0_T0003_Z0001_moco -omat mat_b0groups/mat.T3_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0002 -ref dmri_T0004_Z0002 -out b0_T0003_Z0002_moco -omat mat_b0groups/mat.T3_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0003 -ref dmri_T0004_Z0003 -out b0_T0003_Z0003_moco -omat mat_b0groups/mat.T3_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0004 -ref dmri_T0004_Z0004 -out b0_T0003_Z0004_moco -omat mat_b0groups/mat.T3_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0005 -ref dmri_T0004_Z0005 -out b0_T0003_Z0005_moco -omat mat_b0groups/mat.T3_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0006 -ref dmri_T0004_Z0006 -out b0_T0003_Z0006_moco -omat mat_b0groups/mat.T3_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0007 -ref dmri_T0004_Z0007 -out b0_T0003_Z0007_moco -omat mat_b0groups/mat.T3_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0003_Z0008 -ref dmri_T0004_Z0008 -out b0_T0003_Z0008_moco -omat mat_b0groups/mat.T3_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z b0_moco_T0003 b0_T0003_Z0000_moco b0_T0003_Z0001_moco b0_T0003_Z0002_moco b0_T0003_Z0003_moco b0_T0003_Z0004_moco b0_T0003_Z0005_moco b0_T0003_Z0006_moco b0_T0003_Z0007_moco b0_T0003_Z0008_moco
+[0m.. File created: b0_moco_T0003[0m
+[0m
+Volume 5/5:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit b0_T0004 b0_T0004_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0000 -ref dmri_T0004_Z0000 -out b0_T0004_Z0000_moco -omat mat_b0groups/mat.T4_Z0.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0001 -ref dmri_T0004_Z0001 -out b0_T0004_Z0001_moco -omat mat_b0groups/mat.T4_Z1.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0002 -ref dmri_T0004_Z0002 -out b0_T0004_Z0002_moco -omat mat_b0groups/mat.T4_Z2.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0003 -ref dmri_T0004_Z0003 -out b0_T0004_Z0003_moco -omat mat_b0groups/mat.T4_Z3.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0004 -ref dmri_T0004_Z0004 -out b0_T0004_Z0004_moco -omat mat_b0groups/mat.T4_Z4.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0005 -ref dmri_T0004_Z0005 -out b0_T0004_Z0005_moco -omat mat_b0groups/mat.T4_Z5.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0006 -ref dmri_T0004_Z0006 -out b0_T0004_Z0006_moco -omat mat_b0groups/mat.T4_Z6.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0007 -ref dmri_T0004_Z0007 -out b0_T0004_Z0007_moco -omat mat_b0groups/mat.T4_Z7.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -schedule /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch -in b0_T0004_Z0008 -ref dmri_T0004_Z0008 -out b0_T0004_Z0008_moco -omat mat_b0groups/mat.T4_Z8.txt -cost normcorr -inweight gaussian_mask_in -refweight gaussian_mask_in -interp trilinear
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z b0_moco_T0004 b0_T0004_Z0000_moco b0_T0004_Z0001_moco b0_T0004_Z0002_moco b0_T0004_Z0003_moco b0_T0004_Z0004_moco b0_T0004_Z0005_moco b0_T0004_Z0006_moco b0_T0004_Z0007_moco b0_T0004_Z0008_moco
+[0m.. File created: b0_moco_T0004[0m
+[0m
+
+Merge data back along T...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t b0_moco.nii b0_moco_T0000 b0_moco_T0001 b0_moco_T0002 b0_moco_T0003 b0_moco_T0004
+[0m.. File created: b0_moco.nii[0m
+[0m
+
+===================================================[0m
+[0m                Completed: sct_moco[0m
+[0m===================================================
+
+
+[0m
+[0m
+
+------------------------------------------------------------------------------[0m
+[0mCopy registration matrix for every dwi based on dwi_averaged_groups matrix...[0m
+[0m------------------------------------------------------------------------------
+[0m
+>> cp mat_dwigroups/mat.T0_Z0.txt mat_final/mat.T5_Z0.txt
+>> cp mat_dwigroups/mat.T0_Z1.txt mat_final/mat.T5_Z1.txt
+>> cp mat_dwigroups/mat.T0_Z2.txt mat_final/mat.T5_Z2.txt
+>> cp mat_dwigroups/mat.T0_Z3.txt mat_final/mat.T5_Z3.txt
+>> cp mat_dwigroups/mat.T0_Z4.txt mat_final/mat.T5_Z4.txt
+>> cp mat_dwigroups/mat.T0_Z5.txt mat_final/mat.T5_Z5.txt
+>> cp mat_dwigroups/mat.T0_Z6.txt mat_final/mat.T5_Z6.txt
+>> cp mat_dwigroups/mat.T0_Z7.txt mat_final/mat.T5_Z7.txt
+>> cp mat_dwigroups/mat.T0_Z8.txt mat_final/mat.T5_Z8.txt
+>> cp mat_dwigroups/mat.T0_Z0.txt mat_final/mat.T6_Z0.txt
+>> cp mat_dwigroups/mat.T0_Z1.txt mat_final/mat.T6_Z1.txt
+>> cp mat_dwigroups/mat.T0_Z2.txt mat_final/mat.T6_Z2.txt
+>> cp mat_dwigroups/mat.T0_Z3.txt mat_final/mat.T6_Z3.txt
+>> cp mat_dwigroups/mat.T0_Z4.txt mat_final/mat.T6_Z4.txt
+>> cp mat_dwigroups/mat.T0_Z5.txt mat_final/mat.T6_Z5.txt
+>> cp mat_dwigroups/mat.T0_Z6.txt mat_final/mat.T6_Z6.txt
+>> cp mat_dwigroups/mat.T0_Z7.txt mat_final/mat.T6_Z7.txt
+>> cp mat_dwigroups/mat.T0_Z8.txt mat_final/mat.T6_Z8.txt
+>> cp mat_dwigroups/mat.T0_Z0.txt mat_final/mat.T7_Z0.txt
+>> cp mat_dwigroups/mat.T0_Z1.txt mat_final/mat.T7_Z1.txt
+>> cp mat_dwigroups/mat.T0_Z2.txt mat_final/mat.T7_Z2.txt
+>> cp mat_dwigroups/mat.T0_Z3.txt mat_final/mat.T7_Z3.txt
+>> cp mat_dwigroups/mat.T0_Z4.txt mat_final/mat.T7_Z4.txt
+>> cp mat_dwigroups/mat.T0_Z5.txt mat_final/mat.T7_Z5.txt
+>> cp mat_dwigroups/mat.T0_Z6.txt mat_final/mat.T7_Z6.txt
+>> cp mat_dwigroups/mat.T0_Z7.txt mat_final/mat.T7_Z7.txt
+>> cp mat_dwigroups/mat.T0_Z8.txt mat_final/mat.T7_Z8.txt
+>> cp mat_dwigroups/mat.T1_Z0.txt mat_final/mat.T8_Z0.txt
+>> cp mat_dwigroups/mat.T1_Z1.txt mat_final/mat.T8_Z1.txt
+>> cp mat_dwigroups/mat.T1_Z2.txt mat_final/mat.T8_Z2.txt
+>> cp mat_dwigroups/mat.T1_Z3.txt mat_final/mat.T8_Z3.txt
+>> cp mat_dwigroups/mat.T1_Z4.txt mat_final/mat.T8_Z4.txt
+>> cp mat_dwigroups/mat.T1_Z5.txt mat_final/mat.T8_Z5.txt
+>> cp mat_dwigroups/mat.T1_Z6.txt mat_final/mat.T8_Z6.txt
+>> cp mat_dwigroups/mat.T1_Z7.txt mat_final/mat.T8_Z7.txt
+>> cp mat_dwigroups/mat.T1_Z8.txt mat_final/mat.T8_Z8.txt
+>> cp mat_dwigroups/mat.T1_Z0.txt mat_final/mat.T9_Z0.txt
+>> cp mat_dwigroups/mat.T1_Z1.txt mat_final/mat.T9_Z1.txt
+>> cp mat_dwigroups/mat.T1_Z2.txt mat_final/mat.T9_Z2.txt
+>> cp mat_dwigroups/mat.T1_Z3.txt mat_final/mat.T9_Z3.txt
+>> cp mat_dwigroups/mat.T1_Z4.txt mat_final/mat.T9_Z4.txt
+>> cp mat_dwigroups/mat.T1_Z5.txt mat_final/mat.T9_Z5.txt
+>> cp mat_dwigroups/mat.T1_Z6.txt mat_final/mat.T9_Z6.txt
+>> cp mat_dwigroups/mat.T1_Z7.txt mat_final/mat.T9_Z7.txt
+>> cp mat_dwigroups/mat.T1_Z8.txt mat_final/mat.T9_Z8.txt
+>> cp mat_dwigroups/mat.T1_Z0.txt mat_final/mat.T10_Z0.txt
+>> cp mat_dwigroups/mat.T1_Z1.txt mat_final/mat.T10_Z1.txt
+>> cp mat_dwigroups/mat.T1_Z2.txt mat_final/mat.T10_Z2.txt
+>> cp mat_dwigroups/mat.T1_Z3.txt mat_final/mat.T10_Z3.txt
+>> cp mat_dwigroups/mat.T1_Z4.txt mat_final/mat.T10_Z4.txt
+>> cp mat_dwigroups/mat.T1_Z5.txt mat_final/mat.T10_Z5.txt
+>> cp mat_dwigroups/mat.T1_Z6.txt mat_final/mat.T10_Z6.txt
+>> cp mat_dwigroups/mat.T1_Z7.txt mat_final/mat.T10_Z7.txt
+>> cp mat_dwigroups/mat.T1_Z8.txt mat_final/mat.T10_Z8.txt
+>> cp mat_dwigroups/mat.T2_Z0.txt mat_final/mat.T11_Z0.txt
+>> cp mat_dwigroups/mat.T2_Z1.txt mat_final/mat.T11_Z1.txt
+>> cp mat_dwigroups/mat.T2_Z2.txt mat_final/mat.T11_Z2.txt
+>> cp mat_dwigroups/mat.T2_Z3.txt mat_final/mat.T11_Z3.txt
+>> cp mat_dwigroups/mat.T2_Z4.txt mat_final/mat.T11_Z4.txt
+>> cp mat_dwigroups/mat.T2_Z5.txt mat_final/mat.T11_Z5.txt
+>> cp mat_dwigroups/mat.T2_Z6.txt mat_final/mat.T11_Z6.txt
+>> cp mat_dwigroups/mat.T2_Z7.txt mat_final/mat.T11_Z7.txt
+>> cp mat_dwigroups/mat.T2_Z8.txt mat_final/mat.T11_Z8.txt
+>> cp mat_dwigroups/mat.T2_Z0.txt mat_final/mat.T12_Z0.txt
+>> cp mat_dwigroups/mat.T2_Z1.txt mat_final/mat.T12_Z1.txt
+>> cp mat_dwigroups/mat.T2_Z2.txt mat_final/mat.T12_Z2.txt
+>> cp mat_dwigroups/mat.T2_Z3.txt mat_final/mat.T12_Z3.txt
+>> cp mat_dwigroups/mat.T2_Z4.txt mat_final/mat.T12_Z4.txt
+>> cp mat_dwigroups/mat.T2_Z5.txt mat_final/mat.T12_Z5.txt
+>> cp mat_dwigroups/mat.T2_Z6.txt mat_final/mat.T12_Z6.txt
+>> cp mat_dwigroups/mat.T2_Z7.txt mat_final/mat.T12_Z7.txt
+>> cp mat_dwigroups/mat.T2_Z8.txt mat_final/mat.T12_Z8.txt
+>> cp mat_dwigroups/mat.T2_Z0.txt mat_final/mat.T13_Z0.txt
+>> cp mat_dwigroups/mat.T2_Z1.txt mat_final/mat.T13_Z1.txt
+>> cp mat_dwigroups/mat.T2_Z2.txt mat_final/mat.T13_Z2.txt
+>> cp mat_dwigroups/mat.T2_Z3.txt mat_final/mat.T13_Z3.txt
+>> cp mat_dwigroups/mat.T2_Z4.txt mat_final/mat.T13_Z4.txt
+>> cp mat_dwigroups/mat.T2_Z5.txt mat_final/mat.T13_Z5.txt
+>> cp mat_dwigroups/mat.T2_Z6.txt mat_final/mat.T13_Z6.txt
+>> cp mat_dwigroups/mat.T2_Z7.txt mat_final/mat.T13_Z7.txt
+>> cp mat_dwigroups/mat.T2_Z8.txt mat_final/mat.T13_Z8.txt
+>> cp mat_dwigroups/mat.T3_Z0.txt mat_final/mat.T14_Z0.txt
+>> cp mat_dwigroups/mat.T3_Z1.txt mat_final/mat.T14_Z1.txt
+>> cp mat_dwigroups/mat.T3_Z2.txt mat_final/mat.T14_Z2.txt
+>> cp mat_dwigroups/mat.T3_Z3.txt mat_final/mat.T14_Z3.txt
+>> cp mat_dwigroups/mat.T3_Z4.txt mat_final/mat.T14_Z4.txt
+>> cp mat_dwigroups/mat.T3_Z5.txt mat_final/mat.T14_Z5.txt
+>> cp mat_dwigroups/mat.T3_Z6.txt mat_final/mat.T14_Z6.txt
+>> cp mat_dwigroups/mat.T3_Z7.txt mat_final/mat.T14_Z7.txt
+>> cp mat_dwigroups/mat.T3_Z8.txt mat_final/mat.T14_Z8.txt
+>> cp mat_dwigroups/mat.T3_Z0.txt mat_final/mat.T15_Z0.txt
+>> cp mat_dwigroups/mat.T3_Z1.txt mat_final/mat.T15_Z1.txt
+>> cp mat_dwigroups/mat.T3_Z2.txt mat_final/mat.T15_Z2.txt
+>> cp mat_dwigroups/mat.T3_Z3.txt mat_final/mat.T15_Z3.txt
+>> cp mat_dwigroups/mat.T3_Z4.txt mat_final/mat.T15_Z4.txt
+>> cp mat_dwigroups/mat.T3_Z5.txt mat_final/mat.T15_Z5.txt
+>> cp mat_dwigroups/mat.T3_Z6.txt mat_final/mat.T15_Z6.txt
+>> cp mat_dwigroups/mat.T3_Z7.txt mat_final/mat.T15_Z7.txt
+>> cp mat_dwigroups/mat.T3_Z8.txt mat_final/mat.T15_Z8.txt
+>> cp mat_dwigroups/mat.T3_Z0.txt mat_final/mat.T16_Z0.txt
+>> cp mat_dwigroups/mat.T3_Z1.txt mat_final/mat.T16_Z1.txt
+>> cp mat_dwigroups/mat.T3_Z2.txt mat_final/mat.T16_Z2.txt
+>> cp mat_dwigroups/mat.T3_Z3.txt mat_final/mat.T16_Z3.txt
+>> cp mat_dwigroups/mat.T3_Z4.txt mat_final/mat.T16_Z4.txt
+>> cp mat_dwigroups/mat.T3_Z5.txt mat_final/mat.T16_Z5.txt
+>> cp mat_dwigroups/mat.T3_Z6.txt mat_final/mat.T16_Z6.txt
+>> cp mat_dwigroups/mat.T3_Z7.txt mat_final/mat.T16_Z7.txt
+>> cp mat_dwigroups/mat.T3_Z8.txt mat_final/mat.T16_Z8.txt
+>> cp mat_dwigroups/mat.T4_Z0.txt mat_final/mat.T17_Z0.txt
+>> cp mat_dwigroups/mat.T4_Z1.txt mat_final/mat.T17_Z1.txt
+>> cp mat_dwigroups/mat.T4_Z2.txt mat_final/mat.T17_Z2.txt
+>> cp mat_dwigroups/mat.T4_Z3.txt mat_final/mat.T17_Z3.txt
+>> cp mat_dwigroups/mat.T4_Z4.txt mat_final/mat.T17_Z4.txt
+>> cp mat_dwigroups/mat.T4_Z5.txt mat_final/mat.T17_Z5.txt
+>> cp mat_dwigroups/mat.T4_Z6.txt mat_final/mat.T17_Z6.txt
+>> cp mat_dwigroups/mat.T4_Z7.txt mat_final/mat.T17_Z7.txt
+>> cp mat_dwigroups/mat.T4_Z8.txt mat_final/mat.T17_Z8.txt
+>> cp mat_dwigroups/mat.T4_Z0.txt mat_final/mat.T18_Z0.txt
+>> cp mat_dwigroups/mat.T4_Z1.txt mat_final/mat.T18_Z1.txt
+>> cp mat_dwigroups/mat.T4_Z2.txt mat_final/mat.T18_Z2.txt
+>> cp mat_dwigroups/mat.T4_Z3.txt mat_final/mat.T18_Z3.txt
+>> cp mat_dwigroups/mat.T4_Z4.txt mat_final/mat.T18_Z4.txt
+>> cp mat_dwigroups/mat.T4_Z5.txt mat_final/mat.T18_Z5.txt
+>> cp mat_dwigroups/mat.T4_Z6.txt mat_final/mat.T18_Z6.txt
+>> cp mat_dwigroups/mat.T4_Z7.txt mat_final/mat.T18_Z7.txt
+>> cp mat_dwigroups/mat.T4_Z8.txt mat_final/mat.T18_Z8.txt
+>> cp mat_dwigroups/mat.T4_Z0.txt mat_final/mat.T19_Z0.txt
+>> cp mat_dwigroups/mat.T4_Z1.txt mat_final/mat.T19_Z1.txt
+>> cp mat_dwigroups/mat.T4_Z2.txt mat_final/mat.T19_Z2.txt
+>> cp mat_dwigroups/mat.T4_Z3.txt mat_final/mat.T19_Z3.txt
+>> cp mat_dwigroups/mat.T4_Z4.txt mat_final/mat.T19_Z4.txt
+>> cp mat_dwigroups/mat.T4_Z5.txt mat_final/mat.T19_Z5.txt
+>> cp mat_dwigroups/mat.T4_Z6.txt mat_final/mat.T19_Z6.txt
+>> cp mat_dwigroups/mat.T4_Z7.txt mat_final/mat.T19_Z7.txt
+>> cp mat_dwigroups/mat.T4_Z8.txt mat_final/mat.T19_Z8.txt
+>> cp mat_dwigroups/mat.T5_Z0.txt mat_final/mat.T20_Z0.txt
+>> cp mat_dwigroups/mat.T5_Z1.txt mat_final/mat.T20_Z1.txt
+>> cp mat_dwigroups/mat.T5_Z2.txt mat_final/mat.T20_Z2.txt
+>> cp mat_dwigroups/mat.T5_Z3.txt mat_final/mat.T20_Z3.txt
+>> cp mat_dwigroups/mat.T5_Z4.txt mat_final/mat.T20_Z4.txt
+>> cp mat_dwigroups/mat.T5_Z5.txt mat_final/mat.T20_Z5.txt
+>> cp mat_dwigroups/mat.T5_Z6.txt mat_final/mat.T20_Z6.txt
+>> cp mat_dwigroups/mat.T5_Z7.txt mat_final/mat.T20_Z7.txt
+>> cp mat_dwigroups/mat.T5_Z8.txt mat_final/mat.T20_Z8.txt
+>> cp mat_dwigroups/mat.T5_Z0.txt mat_final/mat.T21_Z0.txt
+>> cp mat_dwigroups/mat.T5_Z1.txt mat_final/mat.T21_Z1.txt
+>> cp mat_dwigroups/mat.T5_Z2.txt mat_final/mat.T21_Z2.txt
+>> cp mat_dwigroups/mat.T5_Z3.txt mat_final/mat.T21_Z3.txt
+>> cp mat_dwigroups/mat.T5_Z4.txt mat_final/mat.T21_Z4.txt
+>> cp mat_dwigroups/mat.T5_Z5.txt mat_final/mat.T21_Z5.txt
+>> cp mat_dwigroups/mat.T5_Z6.txt mat_final/mat.T21_Z6.txt
+>> cp mat_dwigroups/mat.T5_Z7.txt mat_final/mat.T21_Z7.txt
+>> cp mat_dwigroups/mat.T5_Z8.txt mat_final/mat.T21_Z8.txt
+>> cp mat_dwigroups/mat.T5_Z0.txt mat_final/mat.T22_Z0.txt
+>> cp mat_dwigroups/mat.T5_Z1.txt mat_final/mat.T22_Z1.txt
+>> cp mat_dwigroups/mat.T5_Z2.txt mat_final/mat.T22_Z2.txt
+>> cp mat_dwigroups/mat.T5_Z3.txt mat_final/mat.T22_Z3.txt
+>> cp mat_dwigroups/mat.T5_Z4.txt mat_final/mat.T22_Z4.txt
+>> cp mat_dwigroups/mat.T5_Z5.txt mat_final/mat.T22_Z5.txt
+>> cp mat_dwigroups/mat.T5_Z6.txt mat_final/mat.T22_Z6.txt
+>> cp mat_dwigroups/mat.T5_Z7.txt mat_final/mat.T22_Z7.txt
+>> cp mat_dwigroups/mat.T5_Z8.txt mat_final/mat.T22_Z8.txt
+>> cp mat_dwigroups/mat.T6_Z0.txt mat_final/mat.T23_Z0.txt
+>> cp mat_dwigroups/mat.T6_Z1.txt mat_final/mat.T23_Z1.txt
+>> cp mat_dwigroups/mat.T6_Z2.txt mat_final/mat.T23_Z2.txt
+>> cp mat_dwigroups/mat.T6_Z3.txt mat_final/mat.T23_Z3.txt
+>> cp mat_dwigroups/mat.T6_Z4.txt mat_final/mat.T23_Z4.txt
+>> cp mat_dwigroups/mat.T6_Z5.txt mat_final/mat.T23_Z5.txt
+>> cp mat_dwigroups/mat.T6_Z6.txt mat_final/mat.T23_Z6.txt
+>> cp mat_dwigroups/mat.T6_Z7.txt mat_final/mat.T23_Z7.txt
+>> cp mat_dwigroups/mat.T6_Z8.txt mat_final/mat.T23_Z8.txt
+>> cp mat_dwigroups/mat.T6_Z0.txt mat_final/mat.T24_Z0.txt
+>> cp mat_dwigroups/mat.T6_Z1.txt mat_final/mat.T24_Z1.txt
+>> cp mat_dwigroups/mat.T6_Z2.txt mat_final/mat.T24_Z2.txt
+>> cp mat_dwigroups/mat.T6_Z3.txt mat_final/mat.T24_Z3.txt
+>> cp mat_dwigroups/mat.T6_Z4.txt mat_final/mat.T24_Z4.txt
+>> cp mat_dwigroups/mat.T6_Z5.txt mat_final/mat.T24_Z5.txt
+>> cp mat_dwigroups/mat.T6_Z6.txt mat_final/mat.T24_Z6.txt
+>> cp mat_dwigroups/mat.T6_Z7.txt mat_final/mat.T24_Z7.txt
+>> cp mat_dwigroups/mat.T6_Z8.txt mat_final/mat.T24_Z8.txt
+>> cp mat_dwigroups/mat.T6_Z0.txt mat_final/mat.T25_Z0.txt
+>> cp mat_dwigroups/mat.T6_Z1.txt mat_final/mat.T25_Z1.txt
+>> cp mat_dwigroups/mat.T6_Z2.txt mat_final/mat.T25_Z2.txt
+>> cp mat_dwigroups/mat.T6_Z3.txt mat_final/mat.T25_Z3.txt
+>> cp mat_dwigroups/mat.T6_Z4.txt mat_final/mat.T25_Z4.txt
+>> cp mat_dwigroups/mat.T6_Z5.txt mat_final/mat.T25_Z5.txt
+>> cp mat_dwigroups/mat.T6_Z6.txt mat_final/mat.T25_Z6.txt
+>> cp mat_dwigroups/mat.T6_Z7.txt mat_final/mat.T25_Z7.txt
+>> cp mat_dwigroups/mat.T6_Z8.txt mat_final/mat.T25_Z8.txt
+>> cp mat_dwigroups/mat.T7_Z0.txt mat_final/mat.T26_Z0.txt
+>> cp mat_dwigroups/mat.T7_Z1.txt mat_final/mat.T26_Z1.txt
+>> cp mat_dwigroups/mat.T7_Z2.txt mat_final/mat.T26_Z2.txt
+>> cp mat_dwigroups/mat.T7_Z3.txt mat_final/mat.T26_Z3.txt
+>> cp mat_dwigroups/mat.T7_Z4.txt mat_final/mat.T26_Z4.txt
+>> cp mat_dwigroups/mat.T7_Z5.txt mat_final/mat.T26_Z5.txt
+>> cp mat_dwigroups/mat.T7_Z6.txt mat_final/mat.T26_Z6.txt
+>> cp mat_dwigroups/mat.T7_Z7.txt mat_final/mat.T26_Z7.txt
+>> cp mat_dwigroups/mat.T7_Z8.txt mat_final/mat.T26_Z8.txt
+>> cp mat_dwigroups/mat.T7_Z0.txt mat_final/mat.T27_Z0.txt
+>> cp mat_dwigroups/mat.T7_Z1.txt mat_final/mat.T27_Z1.txt
+>> cp mat_dwigroups/mat.T7_Z2.txt mat_final/mat.T27_Z2.txt
+>> cp mat_dwigroups/mat.T7_Z3.txt mat_final/mat.T27_Z3.txt
+>> cp mat_dwigroups/mat.T7_Z4.txt mat_final/mat.T27_Z4.txt
+>> cp mat_dwigroups/mat.T7_Z5.txt mat_final/mat.T27_Z5.txt
+>> cp mat_dwigroups/mat.T7_Z6.txt mat_final/mat.T27_Z6.txt
+>> cp mat_dwigroups/mat.T7_Z7.txt mat_final/mat.T27_Z7.txt
+>> cp mat_dwigroups/mat.T7_Z8.txt mat_final/mat.T27_Z8.txt
+>> cp mat_dwigroups/mat.T7_Z0.txt mat_final/mat.T28_Z0.txt
+>> cp mat_dwigroups/mat.T7_Z1.txt mat_final/mat.T28_Z1.txt
+>> cp mat_dwigroups/mat.T7_Z2.txt mat_final/mat.T28_Z2.txt
+>> cp mat_dwigroups/mat.T7_Z3.txt mat_final/mat.T28_Z3.txt
+>> cp mat_dwigroups/mat.T7_Z4.txt mat_final/mat.T28_Z4.txt
+>> cp mat_dwigroups/mat.T7_Z5.txt mat_final/mat.T28_Z5.txt
+>> cp mat_dwigroups/mat.T7_Z6.txt mat_final/mat.T28_Z6.txt
+>> cp mat_dwigroups/mat.T7_Z7.txt mat_final/mat.T28_Z7.txt
+>> cp mat_dwigroups/mat.T7_Z8.txt mat_final/mat.T28_Z8.txt
+>> cp mat_dwigroups/mat.T8_Z0.txt mat_final/mat.T29_Z0.txt
+>> cp mat_dwigroups/mat.T8_Z1.txt mat_final/mat.T29_Z1.txt
+>> cp mat_dwigroups/mat.T8_Z2.txt mat_final/mat.T29_Z2.txt
+>> cp mat_dwigroups/mat.T8_Z3.txt mat_final/mat.T29_Z3.txt
+>> cp mat_dwigroups/mat.T8_Z4.txt mat_final/mat.T29_Z4.txt
+>> cp mat_dwigroups/mat.T8_Z5.txt mat_final/mat.T29_Z5.txt
+>> cp mat_dwigroups/mat.T8_Z6.txt mat_final/mat.T29_Z6.txt
+>> cp mat_dwigroups/mat.T8_Z7.txt mat_final/mat.T29_Z7.txt
+>> cp mat_dwigroups/mat.T8_Z8.txt mat_final/mat.T29_Z8.txt
+>> cp mat_dwigroups/mat.T8_Z0.txt mat_final/mat.T30_Z0.txt
+>> cp mat_dwigroups/mat.T8_Z1.txt mat_final/mat.T30_Z1.txt
+>> cp mat_dwigroups/mat.T8_Z2.txt mat_final/mat.T30_Z2.txt
+>> cp mat_dwigroups/mat.T8_Z3.txt mat_final/mat.T30_Z3.txt
+>> cp mat_dwigroups/mat.T8_Z4.txt mat_final/mat.T30_Z4.txt
+>> cp mat_dwigroups/mat.T8_Z5.txt mat_final/mat.T30_Z5.txt
+>> cp mat_dwigroups/mat.T8_Z6.txt mat_final/mat.T30_Z6.txt
+>> cp mat_dwigroups/mat.T8_Z7.txt mat_final/mat.T30_Z7.txt
+>> cp mat_dwigroups/mat.T8_Z8.txt mat_final/mat.T30_Z8.txt
+>> cp mat_dwigroups/mat.T8_Z0.txt mat_final/mat.T31_Z0.txt
+>> cp mat_dwigroups/mat.T8_Z1.txt mat_final/mat.T31_Z1.txt
+>> cp mat_dwigroups/mat.T8_Z2.txt mat_final/mat.T31_Z2.txt
+>> cp mat_dwigroups/mat.T8_Z3.txt mat_final/mat.T31_Z3.txt
+>> cp mat_dwigroups/mat.T8_Z4.txt mat_final/mat.T31_Z4.txt
+>> cp mat_dwigroups/mat.T8_Z5.txt mat_final/mat.T31_Z5.txt
+>> cp mat_dwigroups/mat.T8_Z6.txt mat_final/mat.T31_Z6.txt
+>> cp mat_dwigroups/mat.T8_Z7.txt mat_final/mat.T31_Z7.txt
+>> cp mat_dwigroups/mat.T8_Z8.txt mat_final/mat.T31_Z8.txt
+>> cp mat_dwigroups/mat.T9_Z0.txt mat_final/mat.T32_Z0.txt
+>> cp mat_dwigroups/mat.T9_Z1.txt mat_final/mat.T32_Z1.txt
+>> cp mat_dwigroups/mat.T9_Z2.txt mat_final/mat.T32_Z2.txt
+>> cp mat_dwigroups/mat.T9_Z3.txt mat_final/mat.T32_Z3.txt
+>> cp mat_dwigroups/mat.T9_Z4.txt mat_final/mat.T32_Z4.txt
+>> cp mat_dwigroups/mat.T9_Z5.txt mat_final/mat.T32_Z5.txt
+>> cp mat_dwigroups/mat.T9_Z6.txt mat_final/mat.T32_Z6.txt
+>> cp mat_dwigroups/mat.T9_Z7.txt mat_final/mat.T32_Z7.txt
+>> cp mat_dwigroups/mat.T9_Z8.txt mat_final/mat.T32_Z8.txt
+>> cp mat_dwigroups/mat.T9_Z0.txt mat_final/mat.T33_Z0.txt
+>> cp mat_dwigroups/mat.T9_Z1.txt mat_final/mat.T33_Z1.txt
+>> cp mat_dwigroups/mat.T9_Z2.txt mat_final/mat.T33_Z2.txt
+>> cp mat_dwigroups/mat.T9_Z3.txt mat_final/mat.T33_Z3.txt
+>> cp mat_dwigroups/mat.T9_Z4.txt mat_final/mat.T33_Z4.txt
+>> cp mat_dwigroups/mat.T9_Z5.txt mat_final/mat.T33_Z5.txt
+>> cp mat_dwigroups/mat.T9_Z6.txt mat_final/mat.T33_Z6.txt
+>> cp mat_dwigroups/mat.T9_Z7.txt mat_final/mat.T33_Z7.txt
+>> cp mat_dwigroups/mat.T9_Z8.txt mat_final/mat.T33_Z8.txt
+>> cp mat_final/mat.T5_Z0.txt mat_final/mat.T0_Z0.txt
+>> cp mat_final/mat.T5_Z1.txt mat_final/mat.T0_Z1.txt
+>> cp mat_final/mat.T5_Z2.txt mat_final/mat.T0_Z2.txt
+>> cp mat_final/mat.T5_Z3.txt mat_final/mat.T0_Z3.txt
+>> cp mat_final/mat.T5_Z4.txt mat_final/mat.T0_Z4.txt
+>> cp mat_final/mat.T5_Z5.txt mat_final/mat.T0_Z5.txt
+>> cp mat_final/mat.T5_Z6.txt mat_final/mat.T0_Z6.txt
+>> cp mat_final/mat.T5_Z7.txt mat_final/mat.T0_Z7.txt
+>> cp mat_final/mat.T5_Z8.txt mat_final/mat.T0_Z8.txt
+>> cp mat_final/mat.T5_Z0.txt mat_final/mat.T1_Z0.txt
+>> cp mat_final/mat.T5_Z1.txt mat_final/mat.T1_Z1.txt
+>> cp mat_final/mat.T5_Z2.txt mat_final/mat.T1_Z2.txt
+>> cp mat_final/mat.T5_Z3.txt mat_final/mat.T1_Z3.txt
+>> cp mat_final/mat.T5_Z4.txt mat_final/mat.T1_Z4.txt
+>> cp mat_final/mat.T5_Z5.txt mat_final/mat.T1_Z5.txt
+>> cp mat_final/mat.T5_Z6.txt mat_final/mat.T1_Z6.txt
+>> cp mat_final/mat.T5_Z7.txt mat_final/mat.T1_Z7.txt
+>> cp mat_final/mat.T5_Z8.txt mat_final/mat.T1_Z8.txt
+>> cp mat_final/mat.T5_Z0.txt mat_final/mat.T2_Z0.txt
+>> cp mat_final/mat.T5_Z1.txt mat_final/mat.T2_Z1.txt
+>> cp mat_final/mat.T5_Z2.txt mat_final/mat.T2_Z2.txt
+>> cp mat_final/mat.T5_Z3.txt mat_final/mat.T2_Z3.txt
+>> cp mat_final/mat.T5_Z4.txt mat_final/mat.T2_Z4.txt
+>> cp mat_final/mat.T5_Z5.txt mat_final/mat.T2_Z5.txt
+>> cp mat_final/mat.T5_Z6.txt mat_final/mat.T2_Z6.txt
+>> cp mat_final/mat.T5_Z7.txt mat_final/mat.T2_Z7.txt
+>> cp mat_final/mat.T5_Z8.txt mat_final/mat.T2_Z8.txt
+>> cp mat_final/mat.T5_Z0.txt mat_final/mat.T3_Z0.txt
+>> cp mat_final/mat.T5_Z1.txt mat_final/mat.T3_Z1.txt
+>> cp mat_final/mat.T5_Z2.txt mat_final/mat.T3_Z2.txt
+>> cp mat_final/mat.T5_Z3.txt mat_final/mat.T3_Z3.txt
+>> cp mat_final/mat.T5_Z4.txt mat_final/mat.T3_Z4.txt
+>> cp mat_final/mat.T5_Z5.txt mat_final/mat.T3_Z5.txt
+>> cp mat_final/mat.T5_Z6.txt mat_final/mat.T3_Z6.txt
+>> cp mat_final/mat.T5_Z7.txt mat_final/mat.T3_Z7.txt
+>> cp mat_final/mat.T5_Z8.txt mat_final/mat.T3_Z8.txt
+>> cp mat_final/mat.T5_Z0.txt mat_final/mat.T4_Z0.txt
+>> cp mat_final/mat.T5_Z1.txt mat_final/mat.T4_Z1.txt
+>> cp mat_final/mat.T5_Z2.txt mat_final/mat.T4_Z2.txt
+>> cp mat_final/mat.T5_Z3.txt mat_final/mat.T4_Z3.txt
+>> cp mat_final/mat.T5_Z4.txt mat_final/mat.T4_Z4.txt
+>> cp mat_final/mat.T5_Z5.txt mat_final/mat.T4_Z5.txt
+>> cp mat_final/mat.T5_Z6.txt mat_final/mat.T4_Z6.txt
+>> cp mat_final/mat.T5_Z7.txt mat_final/mat.T4_Z7.txt
+>> cp mat_final/mat.T5_Z8.txt mat_final/mat.T4_Z8.txt
+
+ Combining Matrices...
+------------------------------------------------------------------------------
+
+
+...done. Matrices are combined...
+------------------------------------------------------------------------------
+
+[0m
+
+
+------------------------------------------------------------------------------[0m
+[0mApply moco on all dmri data...[0m
+[0m------------------------------------------------------------------------------
+[0m
+[0m
+
+
+
+===================================================[0m
+[0m                Running: sct_moco[0m
+[0m===================================================
+[0m
+[0mInput File:/home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz[0m
+[0mReference File:/home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz[0m
+[0mMethod:apply[0m
+  OK: /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz
+[0m
+.. Schedule file: /home/django/aroux/code/spinalcordtoolbox/flirtsch/schedule_TxTy_2mmScale.sch[0m
+[0m
+Get dimensions data...[0m
+[0m.. 96 x 96 x 9 x 34[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz dmri_T
+[0m
+   Motion correction...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit /home/django/aroux/code/spinalcordtoolbox/testing/data/errsm_23/dmri/dmri.nii.gz dmri_Z -z
+[0m
+.. File created: gaussian_mask_in[0m
+[0mLoop on iT...[0m
+[0m
+Volume 1/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0000 dmri_T0000_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T0_Z0.txt -out dmri_T0000_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T0_Z1.txt -out dmri_T0000_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T0_Z2.txt -out dmri_T0000_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T0_Z3.txt -out dmri_T0000_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T0_Z4.txt -out dmri_T0000_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T0_Z5.txt -out dmri_T0000_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T0_Z6.txt -out dmri_T0000_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T0_Z7.txt -out dmri_T0000_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0000_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T0_Z8.txt -out dmri_T0000_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0000 dmri_T0000_Z0000_moco dmri_T0000_Z0001_moco dmri_T0000_Z0002_moco dmri_T0000_Z0003_moco dmri_T0000_Z0004_moco dmri_T0000_Z0005_moco dmri_T0000_Z0006_moco dmri_T0000_Z0007_moco dmri_T0000_Z0008_moco
+[0m.. File created: dmri_moco_T0000[0m
+[0m
+Volume 2/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0001 dmri_T0001_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T1_Z0.txt -out dmri_T0001_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T1_Z1.txt -out dmri_T0001_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T1_Z2.txt -out dmri_T0001_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T1_Z3.txt -out dmri_T0001_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T1_Z4.txt -out dmri_T0001_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T1_Z5.txt -out dmri_T0001_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T1_Z6.txt -out dmri_T0001_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T1_Z7.txt -out dmri_T0001_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0001_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T1_Z8.txt -out dmri_T0001_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0001 dmri_T0001_Z0000_moco dmri_T0001_Z0001_moco dmri_T0001_Z0002_moco dmri_T0001_Z0003_moco dmri_T0001_Z0004_moco dmri_T0001_Z0005_moco dmri_T0001_Z0006_moco dmri_T0001_Z0007_moco dmri_T0001_Z0008_moco
+[0m.. File created: dmri_moco_T0001[0m
+[0m
+Volume 3/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0002 dmri_T0002_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T2_Z0.txt -out dmri_T0002_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T2_Z1.txt -out dmri_T0002_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T2_Z2.txt -out dmri_T0002_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T2_Z3.txt -out dmri_T0002_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T2_Z4.txt -out dmri_T0002_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T2_Z5.txt -out dmri_T0002_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T2_Z6.txt -out dmri_T0002_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T2_Z7.txt -out dmri_T0002_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0002_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T2_Z8.txt -out dmri_T0002_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0002 dmri_T0002_Z0000_moco dmri_T0002_Z0001_moco dmri_T0002_Z0002_moco dmri_T0002_Z0003_moco dmri_T0002_Z0004_moco dmri_T0002_Z0005_moco dmri_T0002_Z0006_moco dmri_T0002_Z0007_moco dmri_T0002_Z0008_moco
+[0m.. File created: dmri_moco_T0002[0m
+[0m
+Volume 4/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0003 dmri_T0003_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T3_Z0.txt -out dmri_T0003_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T3_Z1.txt -out dmri_T0003_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T3_Z2.txt -out dmri_T0003_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T3_Z3.txt -out dmri_T0003_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T3_Z4.txt -out dmri_T0003_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T3_Z5.txt -out dmri_T0003_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T3_Z6.txt -out dmri_T0003_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T3_Z7.txt -out dmri_T0003_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0003_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T3_Z8.txt -out dmri_T0003_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0003 dmri_T0003_Z0000_moco dmri_T0003_Z0001_moco dmri_T0003_Z0002_moco dmri_T0003_Z0003_moco dmri_T0003_Z0004_moco dmri_T0003_Z0005_moco dmri_T0003_Z0006_moco dmri_T0003_Z0007_moco dmri_T0003_Z0008_moco
+[0m.. File created: dmri_moco_T0003[0m
+[0m
+Volume 5/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0004 dmri_T0004_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T4_Z0.txt -out dmri_T0004_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T4_Z1.txt -out dmri_T0004_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T4_Z2.txt -out dmri_T0004_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T4_Z3.txt -out dmri_T0004_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T4_Z4.txt -out dmri_T0004_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T4_Z5.txt -out dmri_T0004_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T4_Z6.txt -out dmri_T0004_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T4_Z7.txt -out dmri_T0004_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0004_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T4_Z8.txt -out dmri_T0004_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0004 dmri_T0004_Z0000_moco dmri_T0004_Z0001_moco dmri_T0004_Z0002_moco dmri_T0004_Z0003_moco dmri_T0004_Z0004_moco dmri_T0004_Z0005_moco dmri_T0004_Z0006_moco dmri_T0004_Z0007_moco dmri_T0004_Z0008_moco
+[0m.. File created: dmri_moco_T0004[0m
+[0m
+Volume 6/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0005 dmri_T0005_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T5_Z0.txt -out dmri_T0005_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T5_Z1.txt -out dmri_T0005_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T5_Z2.txt -out dmri_T0005_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T5_Z3.txt -out dmri_T0005_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T5_Z4.txt -out dmri_T0005_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T5_Z5.txt -out dmri_T0005_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T5_Z6.txt -out dmri_T0005_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T5_Z7.txt -out dmri_T0005_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0005_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T5_Z8.txt -out dmri_T0005_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0005 dmri_T0005_Z0000_moco dmri_T0005_Z0001_moco dmri_T0005_Z0002_moco dmri_T0005_Z0003_moco dmri_T0005_Z0004_moco dmri_T0005_Z0005_moco dmri_T0005_Z0006_moco dmri_T0005_Z0007_moco dmri_T0005_Z0008_moco
+[0m.. File created: dmri_moco_T0005[0m
+[0m
+Volume 7/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0006 dmri_T0006_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T6_Z0.txt -out dmri_T0006_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T6_Z1.txt -out dmri_T0006_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T6_Z2.txt -out dmri_T0006_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T6_Z3.txt -out dmri_T0006_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T6_Z4.txt -out dmri_T0006_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T6_Z5.txt -out dmri_T0006_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T6_Z6.txt -out dmri_T0006_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T6_Z7.txt -out dmri_T0006_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0006_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T6_Z8.txt -out dmri_T0006_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0006 dmri_T0006_Z0000_moco dmri_T0006_Z0001_moco dmri_T0006_Z0002_moco dmri_T0006_Z0003_moco dmri_T0006_Z0004_moco dmri_T0006_Z0005_moco dmri_T0006_Z0006_moco dmri_T0006_Z0007_moco dmri_T0006_Z0008_moco
+[0m.. File created: dmri_moco_T0006[0m
+[0m
+Volume 8/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0007 dmri_T0007_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T7_Z0.txt -out dmri_T0007_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T7_Z1.txt -out dmri_T0007_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T7_Z2.txt -out dmri_T0007_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T7_Z3.txt -out dmri_T0007_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T7_Z4.txt -out dmri_T0007_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T7_Z5.txt -out dmri_T0007_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T7_Z6.txt -out dmri_T0007_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T7_Z7.txt -out dmri_T0007_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0007_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T7_Z8.txt -out dmri_T0007_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0007 dmri_T0007_Z0000_moco dmri_T0007_Z0001_moco dmri_T0007_Z0002_moco dmri_T0007_Z0003_moco dmri_T0007_Z0004_moco dmri_T0007_Z0005_moco dmri_T0007_Z0006_moco dmri_T0007_Z0007_moco dmri_T0007_Z0008_moco
+[0m.. File created: dmri_moco_T0007[0m
+[0m
+Volume 9/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0008 dmri_T0008_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T8_Z0.txt -out dmri_T0008_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T8_Z1.txt -out dmri_T0008_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T8_Z2.txt -out dmri_T0008_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T8_Z3.txt -out dmri_T0008_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T8_Z4.txt -out dmri_T0008_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T8_Z5.txt -out dmri_T0008_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T8_Z6.txt -out dmri_T0008_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T8_Z7.txt -out dmri_T0008_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0008_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T8_Z8.txt -out dmri_T0008_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0008 dmri_T0008_Z0000_moco dmri_T0008_Z0001_moco dmri_T0008_Z0002_moco dmri_T0008_Z0003_moco dmri_T0008_Z0004_moco dmri_T0008_Z0005_moco dmri_T0008_Z0006_moco dmri_T0008_Z0007_moco dmri_T0008_Z0008_moco
+[0m.. File created: dmri_moco_T0008[0m
+[0m
+Volume 10/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0009 dmri_T0009_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T9_Z0.txt -out dmri_T0009_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T9_Z1.txt -out dmri_T0009_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T9_Z2.txt -out dmri_T0009_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T9_Z3.txt -out dmri_T0009_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T9_Z4.txt -out dmri_T0009_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T9_Z5.txt -out dmri_T0009_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T9_Z6.txt -out dmri_T0009_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T9_Z7.txt -out dmri_T0009_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0009_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T9_Z8.txt -out dmri_T0009_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0009 dmri_T0009_Z0000_moco dmri_T0009_Z0001_moco dmri_T0009_Z0002_moco dmri_T0009_Z0003_moco dmri_T0009_Z0004_moco dmri_T0009_Z0005_moco dmri_T0009_Z0006_moco dmri_T0009_Z0007_moco dmri_T0009_Z0008_moco
+[0m.. File created: dmri_moco_T0009[0m
+[0m
+Volume 11/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0010 dmri_T0010_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T10_Z0.txt -out dmri_T0010_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T10_Z1.txt -out dmri_T0010_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T10_Z2.txt -out dmri_T0010_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T10_Z3.txt -out dmri_T0010_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T10_Z4.txt -out dmri_T0010_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T10_Z5.txt -out dmri_T0010_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T10_Z6.txt -out dmri_T0010_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T10_Z7.txt -out dmri_T0010_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0010_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T10_Z8.txt -out dmri_T0010_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0010 dmri_T0010_Z0000_moco dmri_T0010_Z0001_moco dmri_T0010_Z0002_moco dmri_T0010_Z0003_moco dmri_T0010_Z0004_moco dmri_T0010_Z0005_moco dmri_T0010_Z0006_moco dmri_T0010_Z0007_moco dmri_T0010_Z0008_moco
+[0m.. File created: dmri_moco_T0010[0m
+[0m
+Volume 12/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0011 dmri_T0011_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T11_Z0.txt -out dmri_T0011_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T11_Z1.txt -out dmri_T0011_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T11_Z2.txt -out dmri_T0011_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T11_Z3.txt -out dmri_T0011_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T11_Z4.txt -out dmri_T0011_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T11_Z5.txt -out dmri_T0011_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T11_Z6.txt -out dmri_T0011_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T11_Z7.txt -out dmri_T0011_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0011_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T11_Z8.txt -out dmri_T0011_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0011 dmri_T0011_Z0000_moco dmri_T0011_Z0001_moco dmri_T0011_Z0002_moco dmri_T0011_Z0003_moco dmri_T0011_Z0004_moco dmri_T0011_Z0005_moco dmri_T0011_Z0006_moco dmri_T0011_Z0007_moco dmri_T0011_Z0008_moco
+[0m.. File created: dmri_moco_T0011[0m
+[0m
+Volume 13/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0012 dmri_T0012_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T12_Z0.txt -out dmri_T0012_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T12_Z1.txt -out dmri_T0012_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T12_Z2.txt -out dmri_T0012_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T12_Z3.txt -out dmri_T0012_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T12_Z4.txt -out dmri_T0012_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T12_Z5.txt -out dmri_T0012_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T12_Z6.txt -out dmri_T0012_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T12_Z7.txt -out dmri_T0012_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0012_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T12_Z8.txt -out dmri_T0012_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0012 dmri_T0012_Z0000_moco dmri_T0012_Z0001_moco dmri_T0012_Z0002_moco dmri_T0012_Z0003_moco dmri_T0012_Z0004_moco dmri_T0012_Z0005_moco dmri_T0012_Z0006_moco dmri_T0012_Z0007_moco dmri_T0012_Z0008_moco
+[0m.. File created: dmri_moco_T0012[0m
+[0m
+Volume 14/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0013 dmri_T0013_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T13_Z0.txt -out dmri_T0013_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T13_Z1.txt -out dmri_T0013_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T13_Z2.txt -out dmri_T0013_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T13_Z3.txt -out dmri_T0013_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T13_Z4.txt -out dmri_T0013_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T13_Z5.txt -out dmri_T0013_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T13_Z6.txt -out dmri_T0013_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T13_Z7.txt -out dmri_T0013_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0013_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T13_Z8.txt -out dmri_T0013_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0013 dmri_T0013_Z0000_moco dmri_T0013_Z0001_moco dmri_T0013_Z0002_moco dmri_T0013_Z0003_moco dmri_T0013_Z0004_moco dmri_T0013_Z0005_moco dmri_T0013_Z0006_moco dmri_T0013_Z0007_moco dmri_T0013_Z0008_moco
+[0m.. File created: dmri_moco_T0013[0m
+[0m
+Volume 15/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0014 dmri_T0014_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T14_Z0.txt -out dmri_T0014_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T14_Z1.txt -out dmri_T0014_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T14_Z2.txt -out dmri_T0014_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T14_Z3.txt -out dmri_T0014_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T14_Z4.txt -out dmri_T0014_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T14_Z5.txt -out dmri_T0014_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T14_Z6.txt -out dmri_T0014_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T14_Z7.txt -out dmri_T0014_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0014_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T14_Z8.txt -out dmri_T0014_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0014 dmri_T0014_Z0000_moco dmri_T0014_Z0001_moco dmri_T0014_Z0002_moco dmri_T0014_Z0003_moco dmri_T0014_Z0004_moco dmri_T0014_Z0005_moco dmri_T0014_Z0006_moco dmri_T0014_Z0007_moco dmri_T0014_Z0008_moco
+[0m.. File created: dmri_moco_T0014[0m
+[0m
+Volume 16/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0015 dmri_T0015_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T15_Z0.txt -out dmri_T0015_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T15_Z1.txt -out dmri_T0015_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T15_Z2.txt -out dmri_T0015_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T15_Z3.txt -out dmri_T0015_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T15_Z4.txt -out dmri_T0015_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T15_Z5.txt -out dmri_T0015_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T15_Z6.txt -out dmri_T0015_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T15_Z7.txt -out dmri_T0015_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0015_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T15_Z8.txt -out dmri_T0015_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0015 dmri_T0015_Z0000_moco dmri_T0015_Z0001_moco dmri_T0015_Z0002_moco dmri_T0015_Z0003_moco dmri_T0015_Z0004_moco dmri_T0015_Z0005_moco dmri_T0015_Z0006_moco dmri_T0015_Z0007_moco dmri_T0015_Z0008_moco
+[0m.. File created: dmri_moco_T0015[0m
+[0m
+Volume 17/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0016 dmri_T0016_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T16_Z0.txt -out dmri_T0016_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T16_Z1.txt -out dmri_T0016_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T16_Z2.txt -out dmri_T0016_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T16_Z3.txt -out dmri_T0016_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T16_Z4.txt -out dmri_T0016_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T16_Z5.txt -out dmri_T0016_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T16_Z6.txt -out dmri_T0016_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T16_Z7.txt -out dmri_T0016_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0016_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T16_Z8.txt -out dmri_T0016_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0016 dmri_T0016_Z0000_moco dmri_T0016_Z0001_moco dmri_T0016_Z0002_moco dmri_T0016_Z0003_moco dmri_T0016_Z0004_moco dmri_T0016_Z0005_moco dmri_T0016_Z0006_moco dmri_T0016_Z0007_moco dmri_T0016_Z0008_moco
+[0m.. File created: dmri_moco_T0016[0m
+[0m
+Volume 18/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0017 dmri_T0017_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T17_Z0.txt -out dmri_T0017_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T17_Z1.txt -out dmri_T0017_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T17_Z2.txt -out dmri_T0017_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T17_Z3.txt -out dmri_T0017_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T17_Z4.txt -out dmri_T0017_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T17_Z5.txt -out dmri_T0017_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T17_Z6.txt -out dmri_T0017_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T17_Z7.txt -out dmri_T0017_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0017_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T17_Z8.txt -out dmri_T0017_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0017 dmri_T0017_Z0000_moco dmri_T0017_Z0001_moco dmri_T0017_Z0002_moco dmri_T0017_Z0003_moco dmri_T0017_Z0004_moco dmri_T0017_Z0005_moco dmri_T0017_Z0006_moco dmri_T0017_Z0007_moco dmri_T0017_Z0008_moco
+[0m.. File created: dmri_moco_T0017[0m
+[0m
+Volume 19/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0018 dmri_T0018_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T18_Z0.txt -out dmri_T0018_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T18_Z1.txt -out dmri_T0018_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T18_Z2.txt -out dmri_T0018_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T18_Z3.txt -out dmri_T0018_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T18_Z4.txt -out dmri_T0018_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T18_Z5.txt -out dmri_T0018_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T18_Z6.txt -out dmri_T0018_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T18_Z7.txt -out dmri_T0018_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0018_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T18_Z8.txt -out dmri_T0018_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0018 dmri_T0018_Z0000_moco dmri_T0018_Z0001_moco dmri_T0018_Z0002_moco dmri_T0018_Z0003_moco dmri_T0018_Z0004_moco dmri_T0018_Z0005_moco dmri_T0018_Z0006_moco dmri_T0018_Z0007_moco dmri_T0018_Z0008_moco
+[0m.. File created: dmri_moco_T0018[0m
+[0m
+Volume 20/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0019 dmri_T0019_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T19_Z0.txt -out dmri_T0019_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T19_Z1.txt -out dmri_T0019_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T19_Z2.txt -out dmri_T0019_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T19_Z3.txt -out dmri_T0019_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T19_Z4.txt -out dmri_T0019_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T19_Z5.txt -out dmri_T0019_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T19_Z6.txt -out dmri_T0019_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T19_Z7.txt -out dmri_T0019_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0019_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T19_Z8.txt -out dmri_T0019_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0019 dmri_T0019_Z0000_moco dmri_T0019_Z0001_moco dmri_T0019_Z0002_moco dmri_T0019_Z0003_moco dmri_T0019_Z0004_moco dmri_T0019_Z0005_moco dmri_T0019_Z0006_moco dmri_T0019_Z0007_moco dmri_T0019_Z0008_moco
+[0m.. File created: dmri_moco_T0019[0m
+[0m
+Volume 21/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0020 dmri_T0020_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T20_Z0.txt -out dmri_T0020_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T20_Z1.txt -out dmri_T0020_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T20_Z2.txt -out dmri_T0020_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T20_Z3.txt -out dmri_T0020_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T20_Z4.txt -out dmri_T0020_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T20_Z5.txt -out dmri_T0020_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T20_Z6.txt -out dmri_T0020_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T20_Z7.txt -out dmri_T0020_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0020_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T20_Z8.txt -out dmri_T0020_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0020 dmri_T0020_Z0000_moco dmri_T0020_Z0001_moco dmri_T0020_Z0002_moco dmri_T0020_Z0003_moco dmri_T0020_Z0004_moco dmri_T0020_Z0005_moco dmri_T0020_Z0006_moco dmri_T0020_Z0007_moco dmri_T0020_Z0008_moco
+[0m.. File created: dmri_moco_T0020[0m
+[0m
+Volume 22/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0021 dmri_T0021_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T21_Z0.txt -out dmri_T0021_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T21_Z1.txt -out dmri_T0021_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T21_Z2.txt -out dmri_T0021_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T21_Z3.txt -out dmri_T0021_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T21_Z4.txt -out dmri_T0021_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T21_Z5.txt -out dmri_T0021_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T21_Z6.txt -out dmri_T0021_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T21_Z7.txt -out dmri_T0021_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0021_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T21_Z8.txt -out dmri_T0021_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0021 dmri_T0021_Z0000_moco dmri_T0021_Z0001_moco dmri_T0021_Z0002_moco dmri_T0021_Z0003_moco dmri_T0021_Z0004_moco dmri_T0021_Z0005_moco dmri_T0021_Z0006_moco dmri_T0021_Z0007_moco dmri_T0021_Z0008_moco
+[0m.. File created: dmri_moco_T0021[0m
+[0m
+Volume 23/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0022 dmri_T0022_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T22_Z0.txt -out dmri_T0022_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T22_Z1.txt -out dmri_T0022_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T22_Z2.txt -out dmri_T0022_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T22_Z3.txt -out dmri_T0022_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T22_Z4.txt -out dmri_T0022_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T22_Z5.txt -out dmri_T0022_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T22_Z6.txt -out dmri_T0022_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T22_Z7.txt -out dmri_T0022_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0022_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T22_Z8.txt -out dmri_T0022_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0022 dmri_T0022_Z0000_moco dmri_T0022_Z0001_moco dmri_T0022_Z0002_moco dmri_T0022_Z0003_moco dmri_T0022_Z0004_moco dmri_T0022_Z0005_moco dmri_T0022_Z0006_moco dmri_T0022_Z0007_moco dmri_T0022_Z0008_moco
+[0m.. File created: dmri_moco_T0022[0m
+[0m
+Volume 24/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0023 dmri_T0023_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T23_Z0.txt -out dmri_T0023_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T23_Z1.txt -out dmri_T0023_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T23_Z2.txt -out dmri_T0023_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T23_Z3.txt -out dmri_T0023_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T23_Z4.txt -out dmri_T0023_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T23_Z5.txt -out dmri_T0023_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T23_Z6.txt -out dmri_T0023_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T23_Z7.txt -out dmri_T0023_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0023_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T23_Z8.txt -out dmri_T0023_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0023 dmri_T0023_Z0000_moco dmri_T0023_Z0001_moco dmri_T0023_Z0002_moco dmri_T0023_Z0003_moco dmri_T0023_Z0004_moco dmri_T0023_Z0005_moco dmri_T0023_Z0006_moco dmri_T0023_Z0007_moco dmri_T0023_Z0008_moco
+[0m.. File created: dmri_moco_T0023[0m
+[0m
+Volume 25/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0024 dmri_T0024_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T24_Z0.txt -out dmri_T0024_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T24_Z1.txt -out dmri_T0024_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T24_Z2.txt -out dmri_T0024_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T24_Z3.txt -out dmri_T0024_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T24_Z4.txt -out dmri_T0024_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T24_Z5.txt -out dmri_T0024_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T24_Z6.txt -out dmri_T0024_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T24_Z7.txt -out dmri_T0024_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0024_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T24_Z8.txt -out dmri_T0024_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0024 dmri_T0024_Z0000_moco dmri_T0024_Z0001_moco dmri_T0024_Z0002_moco dmri_T0024_Z0003_moco dmri_T0024_Z0004_moco dmri_T0024_Z0005_moco dmri_T0024_Z0006_moco dmri_T0024_Z0007_moco dmri_T0024_Z0008_moco
+[0m.. File created: dmri_moco_T0024[0m
+[0m
+Volume 26/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0025 dmri_T0025_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T25_Z0.txt -out dmri_T0025_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T25_Z1.txt -out dmri_T0025_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T25_Z2.txt -out dmri_T0025_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T25_Z3.txt -out dmri_T0025_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T25_Z4.txt -out dmri_T0025_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T25_Z5.txt -out dmri_T0025_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T25_Z6.txt -out dmri_T0025_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T25_Z7.txt -out dmri_T0025_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0025_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T25_Z8.txt -out dmri_T0025_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0025 dmri_T0025_Z0000_moco dmri_T0025_Z0001_moco dmri_T0025_Z0002_moco dmri_T0025_Z0003_moco dmri_T0025_Z0004_moco dmri_T0025_Z0005_moco dmri_T0025_Z0006_moco dmri_T0025_Z0007_moco dmri_T0025_Z0008_moco
+[0m.. File created: dmri_moco_T0025[0m
+[0m
+Volume 27/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0026 dmri_T0026_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T26_Z0.txt -out dmri_T0026_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T26_Z1.txt -out dmri_T0026_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T26_Z2.txt -out dmri_T0026_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T26_Z3.txt -out dmri_T0026_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T26_Z4.txt -out dmri_T0026_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T26_Z5.txt -out dmri_T0026_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T26_Z6.txt -out dmri_T0026_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T26_Z7.txt -out dmri_T0026_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0026_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T26_Z8.txt -out dmri_T0026_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0026 dmri_T0026_Z0000_moco dmri_T0026_Z0001_moco dmri_T0026_Z0002_moco dmri_T0026_Z0003_moco dmri_T0026_Z0004_moco dmri_T0026_Z0005_moco dmri_T0026_Z0006_moco dmri_T0026_Z0007_moco dmri_T0026_Z0008_moco
+[0m.. File created: dmri_moco_T0026[0m
+[0m
+Volume 28/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0027 dmri_T0027_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T27_Z0.txt -out dmri_T0027_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T27_Z1.txt -out dmri_T0027_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T27_Z2.txt -out dmri_T0027_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T27_Z3.txt -out dmri_T0027_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T27_Z4.txt -out dmri_T0027_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T27_Z5.txt -out dmri_T0027_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T27_Z6.txt -out dmri_T0027_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T27_Z7.txt -out dmri_T0027_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0027_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T27_Z8.txt -out dmri_T0027_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0027 dmri_T0027_Z0000_moco dmri_T0027_Z0001_moco dmri_T0027_Z0002_moco dmri_T0027_Z0003_moco dmri_T0027_Z0004_moco dmri_T0027_Z0005_moco dmri_T0027_Z0006_moco dmri_T0027_Z0007_moco dmri_T0027_Z0008_moco
+[0m.. File created: dmri_moco_T0027[0m
+[0m
+Volume 29/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0028 dmri_T0028_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T28_Z0.txt -out dmri_T0028_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T28_Z1.txt -out dmri_T0028_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T28_Z2.txt -out dmri_T0028_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T28_Z3.txt -out dmri_T0028_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T28_Z4.txt -out dmri_T0028_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T28_Z5.txt -out dmri_T0028_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T28_Z6.txt -out dmri_T0028_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T28_Z7.txt -out dmri_T0028_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0028_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T28_Z8.txt -out dmri_T0028_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0028 dmri_T0028_Z0000_moco dmri_T0028_Z0001_moco dmri_T0028_Z0002_moco dmri_T0028_Z0003_moco dmri_T0028_Z0004_moco dmri_T0028_Z0005_moco dmri_T0028_Z0006_moco dmri_T0028_Z0007_moco dmri_T0028_Z0008_moco
+[0m.. File created: dmri_moco_T0028[0m
+[0m
+Volume 30/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0029 dmri_T0029_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T29_Z0.txt -out dmri_T0029_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T29_Z1.txt -out dmri_T0029_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T29_Z2.txt -out dmri_T0029_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T29_Z3.txt -out dmri_T0029_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T29_Z4.txt -out dmri_T0029_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T29_Z5.txt -out dmri_T0029_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T29_Z6.txt -out dmri_T0029_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T29_Z7.txt -out dmri_T0029_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0029_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T29_Z8.txt -out dmri_T0029_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0029 dmri_T0029_Z0000_moco dmri_T0029_Z0001_moco dmri_T0029_Z0002_moco dmri_T0029_Z0003_moco dmri_T0029_Z0004_moco dmri_T0029_Z0005_moco dmri_T0029_Z0006_moco dmri_T0029_Z0007_moco dmri_T0029_Z0008_moco
+[0m.. File created: dmri_moco_T0029[0m
+[0m
+Volume 31/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0030 dmri_T0030_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T30_Z0.txt -out dmri_T0030_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T30_Z1.txt -out dmri_T0030_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T30_Z2.txt -out dmri_T0030_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T30_Z3.txt -out dmri_T0030_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T30_Z4.txt -out dmri_T0030_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T30_Z5.txt -out dmri_T0030_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T30_Z6.txt -out dmri_T0030_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T30_Z7.txt -out dmri_T0030_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0030_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T30_Z8.txt -out dmri_T0030_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0030 dmri_T0030_Z0000_moco dmri_T0030_Z0001_moco dmri_T0030_Z0002_moco dmri_T0030_Z0003_moco dmri_T0030_Z0004_moco dmri_T0030_Z0005_moco dmri_T0030_Z0006_moco dmri_T0030_Z0007_moco dmri_T0030_Z0008_moco
+[0m.. File created: dmri_moco_T0030[0m
+[0m
+Volume 32/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0031 dmri_T0031_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T31_Z0.txt -out dmri_T0031_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T31_Z1.txt -out dmri_T0031_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T31_Z2.txt -out dmri_T0031_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T31_Z3.txt -out dmri_T0031_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T31_Z4.txt -out dmri_T0031_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T31_Z5.txt -out dmri_T0031_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T31_Z6.txt -out dmri_T0031_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T31_Z7.txt -out dmri_T0031_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0031_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T31_Z8.txt -out dmri_T0031_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0031 dmri_T0031_Z0000_moco dmri_T0031_Z0001_moco dmri_T0031_Z0002_moco dmri_T0031_Z0003_moco dmri_T0031_Z0004_moco dmri_T0031_Z0005_moco dmri_T0031_Z0006_moco dmri_T0031_Z0007_moco dmri_T0031_Z0008_moco
+[0m.. File created: dmri_moco_T0031[0m
+[0m
+Volume 33/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0032 dmri_T0032_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T32_Z0.txt -out dmri_T0032_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T32_Z1.txt -out dmri_T0032_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T32_Z2.txt -out dmri_T0032_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T32_Z3.txt -out dmri_T0032_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T32_Z4.txt -out dmri_T0032_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T32_Z5.txt -out dmri_T0032_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T32_Z6.txt -out dmri_T0032_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T32_Z7.txt -out dmri_T0032_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0032_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T32_Z8.txt -out dmri_T0032_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0032 dmri_T0032_Z0000_moco dmri_T0032_Z0001_moco dmri_T0032_Z0002_moco dmri_T0032_Z0003_moco dmri_T0032_Z0004_moco dmri_T0032_Z0005_moco dmri_T0032_Z0006_moco dmri_T0032_Z0007_moco dmri_T0032_Z0008_moco
+[0m.. File created: dmri_moco_T0032[0m
+[0m
+Volume 34/34:[0m
+[0m--------------------[0m
+[0mSlicewise motion correction...[0m
+[0mSplit data along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit dmri_T0033 dmri_T0033_Z -z
+[0mLoop on Z...[0m
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0000 -ref dmri_Z0000 -applyxfm -init mat_final/mat.T33_Z0.txt -out dmri_T0033_Z0000_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0001 -ref dmri_Z0001 -applyxfm -init mat_final/mat.T33_Z1.txt -out dmri_T0033_Z0001_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0002 -ref dmri_Z0002 -applyxfm -init mat_final/mat.T33_Z2.txt -out dmri_T0033_Z0002_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0003 -ref dmri_Z0003 -applyxfm -init mat_final/mat.T33_Z3.txt -out dmri_T0033_Z0003_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0004 -ref dmri_Z0004 -applyxfm -init mat_final/mat.T33_Z4.txt -out dmri_T0033_Z0004_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0005 -ref dmri_Z0005 -applyxfm -init mat_final/mat.T33_Z5.txt -out dmri_T0033_Z0005_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0006 -ref dmri_Z0006 -applyxfm -init mat_final/mat.T33_Z6.txt -out dmri_T0033_Z0006_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0007 -ref dmri_Z0007 -applyxfm -init mat_final/mat.T33_Z7.txt -out dmri_T0033_Z0007_moco -interp sinc
+[0m
+Process with FLIRT...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; flirt -in dmri_T0033_Z0008 -ref dmri_Z0008 -applyxfm -init mat_final/mat.T33_Z8.txt -out dmri_T0033_Z0008_moco -interp sinc
+[0m
+
+Concatenate along Z...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -z dmri_moco_T0033 dmri_T0033_Z0000_moco dmri_T0033_Z0001_moco dmri_T0033_Z0002_moco dmri_T0033_Z0003_moco dmri_T0033_Z0004_moco dmri_T0033_Z0005_moco dmri_T0033_Z0006_moco dmri_T0033_Z0007_moco dmri_T0033_Z0008_moco
+[0m.. File created: dmri_moco_T0033[0m
+[0m
+
+Merge data back along T...
+[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/dmri_moco.nii dmri_moco_T0000 dmri_moco_T0001 dmri_moco_T0002 dmri_moco_T0003 dmri_moco_T0004 dmri_moco_T0005 dmri_moco_T0006 dmri_moco_T0007 dmri_moco_T0008 dmri_moco_T0009 dmri_moco_T0010 dmri_moco_T0011 dmri_moco_T0012 dmri_moco_T0013 dmri_moco_T0014 dmri_moco_T0015 dmri_moco_T0016 dmri_moco_T0017 dmri_moco_T0018 dmri_moco_T0019 dmri_moco_T0020 dmri_moco_T0021 dmri_moco_T0022 dmri_moco_T0023 dmri_moco_T0024 dmri_moco_T0025 dmri_moco_T0026 dmri_moco_T0027 dmri_moco_T0028 dmri_moco_T0029 dmri_moco_T0030 dmri_moco_T0031 dmri_moco_T0032 dmri_moco_T0033
+[0m.. File created: /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/dmri_moco.nii[0m
+[0m
+
+===================================================[0m
+[0m                Completed: sct_moco[0m
+[0m===================================================
+
+
+[0m
+[0m
+Split along T dimension...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslsplit /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/dmri_moco dmri_moco_T
+[0m
+Merge b=0...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t b0_final dmri_moco_T0000 dmri_moco_T0001 dmri_moco_T0002 dmri_moco_T0003 dmri_moco_T0004
+[0m.. File created: b0_final[0m
+[0m
+Average b=0...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths b0_final -Tmean /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/b0_mean
+[0m
+Group 1 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_0 dmri_moco_T0005 dmri_moco_T0006 dmri_moco_T0007
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_0 -Tmean dwi_mean_final0
+[0m
+Group 2 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_1 dmri_moco_T0008 dmri_moco_T0009 dmri_moco_T0010
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_1 -Tmean dwi_mean_final1
+[0m
+Group 3 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_2 dmri_moco_T0011 dmri_moco_T0012 dmri_moco_T0013
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_2 -Tmean dwi_mean_final2
+[0m
+Group 4 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_3 dmri_moco_T0014 dmri_moco_T0015 dmri_moco_T0016
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_3 -Tmean dwi_mean_final3
+[0m
+Group 5 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_4 dmri_moco_T0017 dmri_moco_T0018 dmri_moco_T0019
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_4 -Tmean dwi_mean_final4
+[0m
+Group 6 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_5 dmri_moco_T0020 dmri_moco_T0021 dmri_moco_T0022
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_5 -Tmean dwi_mean_final5
+[0m
+Group 7 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_6 dmri_moco_T0023 dmri_moco_T0024 dmri_moco_T0025
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_6 -Tmean dwi_mean_final6
+[0m
+Group 8 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_7 dmri_moco_T0026 dmri_moco_T0027 dmri_moco_T0028
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_7 -Tmean dwi_mean_final7
+[0m
+Group 9 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_8 dmri_moco_T0029 dmri_moco_T0030 dmri_moco_T0031
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_8 -Tmean dwi_mean_final8
+[0m
+Group 10 of DW images[0m
+[0m
+Merge DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_9 dmri_moco_T0032 dmri_moco_T0033
+[0m
+Average DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_9 -Tmean dwi_mean_final9
+[0m
+Merging DW files...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmerge -t dwi_averaged_groups_final dwi_mean_final0 dwi_mean_final1 dwi_mean_final2 dwi_mean_final3 dwi_mean_final4 dwi_mean_final5 dwi_mean_final6 dwi_mean_final7 dwi_mean_final8 dwi_mean_final9
+[0m
+Averaging all DW images...[0m
+>> export FSLOUTPUTTYPE=NIFTI; fslmaths dwi_averaged_groups_final -Tmean /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/dwi_mean
+
+Finished! Elapsed time: 80s
+
+To view results, type:
+fslview  /home/django/aroux/code/spinalcordtoolbox/testing/sct_dmri_moco/results/dmri_moco &
+
+
