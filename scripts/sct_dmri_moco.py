@@ -42,7 +42,7 @@ import msct_moco as moco
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
@@ -62,7 +62,7 @@ class param:
         self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'ants_affine'  # flirt, ants, ants_affine
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
-        self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'spline'  # nn, trilinear, spline
         #Eddy Current Distortion Parameters:
         self.run_eddy = 0
@@ -89,13 +89,17 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        param.fname_data = path_sct+'/testing/data/errsm_23/dmri/dmri.nii.gz'
-        param.fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
+        # get path of the testing data
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_DATA_DIR')
+        param.fname_data = path_sct_data+'/errsm_03_sub/dmri/dmri.nii.gz'
+        param.fname_bvecs = path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
         param.verbose = 1
+        param.slicewise = 0
+        param.program = 'ants_affine'
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:v:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -131,14 +135,16 @@ def main():
             param.mask_size = float(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
+        elif opt in ('-z'):
+            param.slicewise = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
 
-    if param.cost_function_flirt == '':
-        param.cost_function_flirt = 'normcorr'
+    # if param.cost_function_flirt == '':
+    #     param.cost_function_flirt = 'normcorr'
 
     # if param.path_out == '':
     #     path_out = ''
@@ -467,10 +473,9 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -o <path_out>    Output path.
-  -a <bvals>       bvals file. Used to detect low-bvals images : more robust
+  -z {0,1}         slice-by-slice motion correction. Default="""+str(param.slicewise)+"""
   -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
-  -e {0,1}         Eddy Correction using opposite gradient directions. Default=0
+  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
                    in time
   -s <int>         Size of Gaussian mask for more robust motion correction (in mm). 
@@ -485,6 +490,8 @@ OPTIONAL ARGUMENTS
                      ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
                      ants_affine: affine transformation constrained in axial plane.
                      Default="""+str(param.program)+"""
+  -a <bvals>       bvals file. Used to detect low-bvals images : more robust
+  -o <path_out>    Output path.
   -p {nn,trilinear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
