@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Apply transformations. This function is a wrapper for WarpImageMultiTransform
+# Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -101,9 +101,9 @@ def main():
 
     # Apply transformation
     sct.printv('\nApply transformation...', verbose)
-    # N.B. Here we take the inverse of the warp list, because WarpImageMultiTransform concatenates in the reverse order
+    # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest, verbose)
+    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -124,7 +124,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Apply transformations. This function is a wrapper for WarpImageMultiTransform (ANTs).
+  Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform (ANTs).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest> -w <warp_list>
