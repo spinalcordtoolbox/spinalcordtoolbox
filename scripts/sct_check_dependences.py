@@ -221,8 +221,8 @@ def main():
 
     # check ANTs
     print_line('Check which ANTs is running .................., ')
-    # (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    cmd = 'which antsRegistration'
+    # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    cmd = 'which sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
@@ -237,7 +237,7 @@ def main():
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS .............. ')
-    cmd = 'antsRegistration'
+    cmd = 'sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
         print_ok()
@@ -301,7 +301,7 @@ def main():
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
-    # (status, output) = commands.getstatusoutput('find /usr -name "antsRegistration" -type f -print -quit 2>/dev/null')
+    # (status, output) = commands.getstatusoutput('find /usr -name "sct_antsRegistration" -type f -print -quit 2>/dev/null')
     # if output:
     #     print_ok()
     #     path_ants = os.path.dirname(output)
@@ -315,7 +315,7 @@ def main():
     # # check if ANTS is declared
     # if ants_is_installed:
     #     print_line('Check if ANTs is declared ..................... ')
-    #     (status, output) = commands.getstatusoutput('which antsRegistration')
+    #     (status, output) = commands.getstatusoutput('which sct_antsRegistration')
     #     if output:
     #         print_ok()
     #     else:
