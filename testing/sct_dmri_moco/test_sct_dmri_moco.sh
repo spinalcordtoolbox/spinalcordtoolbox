@@ -35,6 +35,7 @@ for subject in $SUBJECT_LIST; do
         -i ../../data/${subject}/${contrast}/${file1}
         -b ../../data/${subject}/${contrast}/${file2}
         -v 1
+        -z 0
         -f 0
         -s 15
         -d 3
