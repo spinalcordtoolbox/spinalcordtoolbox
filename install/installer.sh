@@ -78,7 +78,7 @@ echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 
 # create soft link to each script in SCT_DIR/script
-cmd="./create_script_links.sh"
+cmd="./create_links.sh"
 echo ">> $cmd"; $cmd
 
 unamestr=`uname`

@@ -2,8 +2,6 @@
 #
 # Script to create links in installer
 #
-
-SCT_DIR=".."
 CURRENT_DIR=$PWD
 
 # create soft link to each script in SCT_DIR/script
@@ -14,7 +12,7 @@ for script in *.py
 do
   echo ${script}
   scriptname=${script%$suffix_py}
-  cmd="ln -s ${script} ${scriptname}"
+  cmd="ln -s ${script} $SCT_DIR/bin/${scriptname}"
   echo ">> $cmd"
   $cmd
 done
