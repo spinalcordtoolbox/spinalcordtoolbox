@@ -43,7 +43,7 @@ except ImportError:
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('WarpImageMultiTransform -h','ANTS')
+sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 #=======================================================================================================================
 # main

@@ -11,7 +11,7 @@
 # none
 #
 # EXTERNAL SOFTWARE
-# - itksnap/c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
+# - itksnap/sct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
 # - ants <http://stnava.github.io/ANTs/>
 #
 #
@@ -221,13 +221,13 @@ def main():
     print('\nCopy files...')
     file_src_tmp = 'src'
     file_dest_tmp = 'dest'
-    status, output = sct.run('c3d '+fname_src+' -o '+path_tmp+'/'+file_src_tmp+'.nii')
-    status, output = sct.run('c3d '+fname_dest+' -o '+path_tmp+'/'+file_dest_tmp+'.nii')
+    status, output = sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/'+file_src_tmp+'.nii')
+    status, output = sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/'+file_dest_tmp+'.nii')
     if use_segmentation:
         file_src_seg_tmp = 'src_seg'
         file_dest_seg_tmp = 'dest_seg'
-        status, output = sct.run('c3d '+fname_src_seg+' -o '+path_tmp+'/'+file_src_seg_tmp+'.nii')
-        status, output = sct.run('c3d '+fname_dest_seg+' -o '+path_tmp+'/'+file_dest_seg_tmp+'.nii')
+        status, output = sct.run('sct_c3d '+fname_src_seg+' -o '+path_tmp+'/'+file_src_seg_tmp+'.nii')
+        status, output = sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/'+file_dest_seg_tmp+'.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -261,18 +261,18 @@ def main():
         sct.printv("ERROR: Cannot adjust variable: restrict_deformation. Exit program.", 1, 'error')
         sys.exit(2)
 
-    # if use initial transformation (!! needs to be inserted before the --transform field in antsRegistration)
+    # if use initial transformation (!! needs to be inserted before the --transform field in sct_antsRegistration)
     if fname_init_transfo != '':
         file_src_reg_tmp = file_src_tmp+'_reg'
         # apply initial transformation to moving image, and then estimate transformation between this output and
         # destination image. This approach was chosen instead of inputting the transfo into ANTs, because if the transfo
         # does not bring the image to the same space as the destination image, then warping fields cannot be concatenated at the end.
         print('\nApply initial transformation to moving image...')
-        sct.run('WarpImageMultiTransform 3 '+file_src_tmp+'.nii '+file_src_reg_tmp+'.nii -R '+file_dest_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+        sct.run('sct_WarpImageMultiTransform 3 '+file_src_tmp+'.nii '+file_src_reg_tmp+'.nii -R '+file_dest_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
         file_src_tmp = file_src_reg_tmp
         if use_segmentation:
             file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
-            sct.run('WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+            sct.run('sct_WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
             file_src_seg_tmp = file_src_seg_reg_tmp
 
     # Pad the target and source image (because ants doesn't deform the extremities)
@@ -302,7 +302,7 @@ def main():
         # Estimate transformation using ANTS
         print('\nEstimate transformation using ANTS (might take a couple of minutes)...')
 
-        cmd = 'antsRegistration \
+        cmd = 'sct_antsRegistration \
 --dimensionality 3 \
 '+use_init_transfo+' \
 --transform '+algo+'['+str(gradientStep[0])+',3,0] \
@@ -326,7 +326,7 @@ def main():
         # Estimate transformation using ANTS
         print('\nStep #1: Estimate transformation using spinal cord segmentations...')
 
-        cmd = 'antsRegistration \
+        cmd = 'sct_antsRegistration \
 --dimensionality 3 \
 --transform '+algo+'['+str(gradientStep[1])+',3,0] \
 --metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] \
@@ -342,7 +342,7 @@ def main():
 
         print('\nStep #2: Improve local deformation using images (start from previous transformation)...')
 
-        cmd = 'antsRegistration \
+        cmd = 'sct_antsRegistration \
 --dimensionality 3 \
 --initial-moving-transform regSeg0Warp.nii.gz \
 --transform '+algo+'['+str(gradientStep[0])+',3,0] \
@@ -366,46 +366,46 @@ def main():
     if fname_init_transfo != '':
         if use_segmentation == 0:
             # src --> dest
-            cmd1 = 'ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz '+fname_init_transfo
+            cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz '+fname_init_transfo
             # dest --> src
             if compute_dest2src:
-                cmd2 = 'ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' reg0InverseWarp.nii.gz'
+                cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' reg0InverseWarp.nii.gz'
 
         elif use_segmentation == 1:
             # src --> dest
-            cmd1 = 'ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz '+fname_init_transfo
+            cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz '+fname_init_transfo
             # dest --> src
             if compute_dest2src:
-                cmd2 = 'ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
+                cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
 
     # if user does not have initial transfo:
     else:
         if use_segmentation == 0:
             # src --> dest
-            cmd1 = 'ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz'
+            cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz'
             # dest --> src
             if compute_dest2src:
-                cmd2 = 'ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii reg0InverseWarp.nii.gz'
+                cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii reg0InverseWarp.nii.gz'
 
         elif use_segmentation == 1:
             # src --> dest
-            cmd1 = 'ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz'
+            cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz'
             # dest --> src
             if compute_dest2src:
-                cmd2 = 'ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
+                cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
 
     print('>> ' + cmd1)
-    commands.getstatusoutput(cmd1)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
+    commands.getstatusoutput(cmd1)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
     if compute_dest2src:
         print('>> ' + cmd2)
-        commands.getstatusoutput(cmd2)  # here cannot use sct.run() because of wrong output status in ComposeMultiTransform
+        commands.getstatusoutput(cmd2)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
 
     # Apply warping field to src data
     print('\nApply transfo source --> dest...')
-    status, output = sct.run('WarpImageMultiTransform 3 src.nii src_reg.nii -R dest.nii warp_src2dest.nii.gz --use-BSpline')
+    status, output = sct.run('sct_WarpImageMultiTransform 3 src.nii src_reg.nii -R dest.nii warp_src2dest.nii.gz --use-BSpline')
     if compute_dest2src:
         print('\nApply transfo dest --> source...')
-        status, output = sct.run('WarpImageMultiTransform 3 dest.nii dest_reg.nii -R src.nii warp_dest2src.nii.gz --use-BSpline')
+        status, output = sct.run('sct_WarpImageMultiTransform 3 dest.nii dest_reg.nii -R src.nii warp_dest2src.nii.gz --use-BSpline')
 
     # come back to parent folder
     os.chdir('..')
@@ -451,7 +451,7 @@ DESCRIPTION
   maximum robustness. To do so, you can use sct_segmentation_propagation.
   The program outputs a warping field that can be used to register other images to the destination
   image. To apply the warping field to another image, type this:
-    WarpImageMultiTransform 3 another_image another_image_reg -R dest_image warp_src2dest.
+    sct_WarpImageMultiTransform 3 another_image another_image_reg -R dest_image warp_src2dest.
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest>
@@ -495,7 +495,7 @@ EXAMPLES
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in,file_out,padding):
-    cmd = 'c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out
+    cmd = 'sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out
     print(">> "+cmd)
     os.system(cmd)
     return
@@ -506,7 +506,7 @@ def pad_image(fname_in,file_out,padding):
 # ==========================================================================================
 def remove_padding(file_ref,file_in,file_out):
     # remove padding by reslicing padded data into unpadded space
-    cmd = 'c3d '+file_ref+' '+file_in+' -reslice-identity -o '+file_out
+    cmd = 'sct_c3d '+file_ref+' '+file_in+' -reslice-identity -o '+file_out
     print(">> "+cmd)    
     os.system(cmd)
     return
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     #===========
     #if convertDeformation:
     #    print('\nConvert deformation field...')
-    #    cmd = 'c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+    #    cmd = 'sct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
     #    print(">> "+cmd)
     #    os.system(cmd)
     #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
