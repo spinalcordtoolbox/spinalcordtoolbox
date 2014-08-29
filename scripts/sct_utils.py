@@ -21,6 +21,14 @@ import commands
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
+# define class color
+class bcolors:
+    blue = '\033[94m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    red = '\033[91m'
+    normal = '\033[0m'
+
 
 #==============e=========================================================================================================
 # run
@@ -28,10 +36,10 @@ fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs 
 # Run UNIX command
 def run(cmd, verbose=1):
     if verbose:
-        print('>> ' + cmd)
+        print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
-        print('\nERROR!!! \n'+output+'\nExit program.\n')
+        printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
         sys.exit(2)
     else:
         return status, output
@@ -112,7 +120,7 @@ def get_orientation(fname):
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-def generate_output_file(fname_in, path_out, file_out, ext_out):
+def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
     # import stuff
     import shutil  # for moving files
     # get absolute fname
@@ -126,21 +134,21 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
-        warning('  WARNING: File '+path_out+file_out+ext_out+' already exists. Do nothing.', 1, 'warning')
+        printv('  WARNING: File '+path_out+file_out+ext_out+' same as output. Do nothing.', 1, 'warning')
         return path_out+file_out+ext_out
     # if fname_out already exists in nii or nii.gz
     if path_in != os.path.abspath(path_out):
         # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
-            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii')
         if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+'.nii.gz')
     # if path_in the same as path_out, only delete fname_out with specific ext_out extension
     else:
         if os.path.isfile(path_out+file_out+ext_out):
-            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Delete it.', 1, 'warning')
+            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
             os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
@@ -151,7 +159,8 @@ def generate_output_file(fname_in, path_out, file_out, ext_out):
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
-    print '  File created: '+path_out+file_out+ext_out
+    if verbose:
+        print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
@@ -182,16 +191,11 @@ def check_if_installed(cmd, name_software):
 #   type: handles color: normal (default), warning (orange), error (red)
 #=======================================================================================================================
 def printv(string, verbose=1, type='normal'):
-    # define class color
-    class bcolors:
-        blue = '\033[94m'
-        green = '\033[92m'
-        yellow = '\033[93m'
-        red = '\033[91m'
-        normal = '\033[0m'
     # select color based on type of message
     if type == 'normal':
         color = bcolors.normal
+    if type == 'info':
+        color = bcolors.green
     elif type == 'warning':
         color = bcolors.yellow
     elif type == 'error':
@@ -226,3 +230,11 @@ def delete_nifti(fname_in):
     # delete nifti if exist
     if os.path.isfile(path_in+file_in+'.nii.gz'):
         os.system('rm '+path_in+file_in+'.nii.gz')
+
+
+#=======================================================================================================================
+# create_folder:  create folder, and check if exists before creating it
+#=======================================================================================================================
+def create_folder(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
