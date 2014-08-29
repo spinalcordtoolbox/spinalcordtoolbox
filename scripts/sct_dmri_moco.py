@@ -42,7 +42,7 @@ import msct_moco as moco
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
