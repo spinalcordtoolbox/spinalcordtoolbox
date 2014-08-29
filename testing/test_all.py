@@ -18,7 +18,8 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
-
+from os import listdir
+from os.path import isfile, join
 
 # define nice colors
 class bcolors:
@@ -49,10 +50,12 @@ def print_warning():
 def print_fail():
     print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
 
+
 def write_to_log_file(fname_log,string):
     f = open(fname_log, 'w')
     f.write(string+'\n')
     f.close()
+
 
 def test_function(folder_test,dot_lines):
     fname_log = folder_test + ".log" 
@@ -68,12 +71,31 @@ def test_function(folder_test,dot_lines):
     write_to_log_file(fname_log,output)
     return status
 
+
+def test_debug():
+    print_line ('Test if debug mode is on ........................... ')
+    debug = []
+    files = [f for f in listdir('../scripts') if isfile(join('../scripts',f))]
+    for file in files:
+        #print (file)
+        file_fname, ext_fname = os.path.splitext(file)
+        if ext_fname == '.py':
+            status, output = commands.getstatusoutput('python ../scripts/test_debug_off.py -i '+file_fname)
+            if status != 0:
+                debug.append(output)
+    if debug == []:
+        print_ok()
+    else:
+        print_fail()
+        for string in debug: print string
+
     
 # START MAIN
 # ==========================================================================================
 
 start_time = time.time()
 print
+test_debug()
 status = []
 status.append( test_function('sct_detect_spinalcord',' ..................... ') )
 status.append( test_function('sct_dmri_moco',' ............................. ') )
@@ -87,6 +109,8 @@ status.append( test_function('sct_segmentation_propagation',' .............. ') 
 status.append( test_function('sct_smooth_spinalcord',' ..................... ') )
 status.append( test_function('sct_straighten_spinalcord',' ................. ') )
 status.append( test_function('sct_warp_template',' ......................... ') )
+
+
 
 print 'status: '+str(status)
 elapsed_time = time.time() - start_time
