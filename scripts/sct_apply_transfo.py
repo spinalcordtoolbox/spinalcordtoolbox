@@ -26,6 +26,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.verbose = 0  # verbose
+        self.interp = 'spline'  # nn, trilinear, spline
 
 
 # main
@@ -53,7 +54,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -65,6 +66,8 @@ def main():
             fname_dest = arg
         elif opt in ('-o'):
             fname_src_reg = arg
+        elif opt in ('-p'):
+            param.interp = arg
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-w'):
@@ -73,6 +76,9 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
         usage()
+
+    # get the right interpolation field depending on method
+    interp = sct.get_interpolation('WarpImageMultiTransform', param.interp)
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
@@ -103,7 +109,7 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest, verbose)
+    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
