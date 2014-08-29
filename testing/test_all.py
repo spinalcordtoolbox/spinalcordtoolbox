@@ -73,6 +73,7 @@ def test_function(folder_test,dot_lines):
 start_time = time.time()
 print
 status = []
+status.append( test_function('sct_convert_binary_to_trilinear',' ........... ') )
 status.append( test_function('sct_detect_spinalcord',' ..................... ') )
 status.append( test_function('sct_dmri_moco',' ............................. ') )
 status.append( test_function('sct_dmri_separate_b0_and_dwi',' .............. ') )
