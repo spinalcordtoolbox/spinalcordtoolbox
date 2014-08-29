@@ -196,7 +196,7 @@ def main():
         os.system(cmd)
         
         # Resample in 2mm to match template voxel size 
-        cmd = 'c3d '+output_path+file_output+ext_input+' -resample-mm 2.0x2.0x2.0mm '+output_path+file_output+'_2mm'+ext_input
+        cmd = 'sct_c3d '+output_path+file_output+ext_input+' -resample-mm 2.0x2.0x2.0mm '+output_path+file_output+'_2mm'+ext_input
         print(">> "+cmd)
         os.system(cmd)
         file_output=file_output+'_2mm'
@@ -254,7 +254,7 @@ def main():
         file_output = file_output+'_inv'
         
         # reslice in initial space
-        cmd = 'c3d '+output_path+file_input+ext_input+' '+output_path+file_output+ext_input+' -reslice-identity -o '+output_path+file_input+'_brain'+ext_input
+        cmd = 'sct_c3d '+output_path+file_input+ext_input+' '+output_path+file_output+ext_input+' -reslice-identity -o '+output_path+file_input+'_brain'+ext_input
         print(">> "+cmd)
         os.system(cmd)
 

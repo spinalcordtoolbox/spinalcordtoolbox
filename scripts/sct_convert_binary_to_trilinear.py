@@ -19,8 +19,6 @@ import os
 import commands
 import getopt
 import time
-import math
-from sct_moco import sct_moco
 
 
 # get path of the toolbox
@@ -65,7 +63,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -104,7 +102,7 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.run('c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -116,7 +114,7 @@ def main():
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('c3d data.nii -interpolation Linear -resample '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+'vox -o data_up.nii', verbose)
+    sct.run('sct_c3d data.nii -interpolation Linear -resample '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+'vox -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
@@ -124,7 +122,7 @@ def main():
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('c3d data_up_smooth.nii -interpolation Linear -resample '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox -o data_up_smooth_down.nii', verbose)
+    sct.run('sct_c3d data_up_smooth.nii -interpolation Linear -resample '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -158,8 +156,8 @@ def usage():
         '\n'\
         'DESCRIPTION\n' \
         '  Convert binary spinal cord segmentation to trilinear-interpolated segmentation. Instead of simply\n' \
-        '  re-interpolating the image, this function oversample the binary mask, then smooth along centerline\n' \
-        '  (to remove step-effects), then downsample back to native resolution.\n' \
+        '  re-interpolating the image, this function oversamples the binary mask, smoothes along centerline\n' \
+        '  (to remove step-effects), then downsamples back to native resolution.\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+' -i <bin_seg>\n' \
