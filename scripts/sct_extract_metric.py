@@ -63,6 +63,7 @@ def main():
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
     vertebral_labeling_path = param.vertebral_labeling_file
+    fname_normalizing_label = ''  # optional then default is empty
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -73,15 +74,16 @@ def main():
         path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '0,1,4,7'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '2:10' #'2:4'
+        slices_of_interest = '200:210' #'2:4'
         vertebral_levels = ''
-        average_all_labels = 1
+        average_all_labels = 0
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_normalizing_label = path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
 
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:o:v:z:') # define flags
+        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
@@ -98,6 +100,8 @@ def main():
             labels_of_interest = arg
         elif opt in '-m':  # method for metric extraction
             method = arg
+        elif opt in '-n':  # filename of the label by which the user wants to normalize
+            fname_normalizing_label = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
         elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral
@@ -157,6 +161,10 @@ def main():
     labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
     for i_label in range(0, nb_labels_total):
         labels[i_label] = nib.load(path_label+label_file[i_label]).get_data()
+    if fname_normalizing_label:  # if the "normalization" option is wanted,
+        normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
+        # compatibility with the rest of the code (dimensions: (1, x, y, z))
+        normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
     sct.printv('  Done.', verbose)
 
     # Get dimensions of labels
@@ -187,6 +195,8 @@ def main():
         data = remove_slices(data, slices_of_interest)
         for i_label in range(0, nb_labels_total):
             labels[i_label] = remove_slices(labels[i_label], slices_of_interest)
+        if fname_normalizing_label:  # if the "normalization" option was selected,
+            normalizing_label[0] = remove_slices(normalizing_label[0], slices_of_interest)
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
@@ -207,8 +217,20 @@ def main():
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
+    if fname_normalizing_label:  # if the "normalization" option is wanted,
+        #metric_normalizing_label = np.empty([data.shape[-1]], dtype=float)
+        for z in range(0, data.shape[-1]):
+            normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
+            # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
+            normalizing_label_slice[0] = normalizing_label[0][..., z]
+            metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
+                                                                   verbose=0)
+            # estimate the metric mean in the normalizing label for the slice z
+            if metric_normalizing_label[0][0] != 0:
+                data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
+
     # extract metrics within labels
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method)  # mean and std are lists.
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose=param.verbose)  # mean and std are lists.
 
     # update label name if average
     if average_all_labels == 1:
@@ -491,9 +513,9 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method):
+def extract_metric_within_tract(data, labels, method, verbose):
 
-    sct.printv('\nExtract metrics:', param.verbose)
+    sct.printv('\nExtract metrics:', verbose=verbose)
 
     nb_labels = len(labels) # number of labels
 
@@ -520,7 +542,7 @@ def extract_metric_within_tract(data, labels, method):
     del data, labels
 
     # Display number of non-zero values
-    sct.printv('Number of non-null voxels: '+str(len(data1d)), 1)
+    sct.printv('Number of non-null voxels: '+str(len(data1d)), verbose=verbose)
 
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
