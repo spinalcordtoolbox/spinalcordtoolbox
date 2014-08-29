@@ -272,7 +272,7 @@ def get_interpolation(program, interp):
             interp_program = ' --use-BSpline'
     # check if not assigned
     if interp_program == '':
-        sct.printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
-        interp_program = 'Linear'
+        printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
+        interp_program = ' Linear'
     # return
     return interp_program
