@@ -3,8 +3,8 @@
 # 2014-08-17
 
 # pad volumes
-c3d straight.nii.gz -pad 0x0x3vox 0x0x3vox -o straight_pad.nii.gz
-c3d curved.nii.gz -pad 0x0x3vox 0x0x3vox -o curved_pad.nii.gz
+sct_c3d straight.nii.gz -pad 0x0x3vox 0x0x3vox -o straight_pad.nii.gz
+sct_c3d curved.nii.gz -pad 0x0x3vox 0x0x3vox -o curved_pad.nii.gz
 
 # 1
 # dest + curved
@@ -22,8 +22,8 @@ antsRegistration --dimensionality 3 --transform BSplineSyN[0.25, 1x1x10, 0x0x0, 
 antsRegistration --dimensionality 3 --transform BSplineSyN[0.25, 1x1x3, 0x0x0, 3] --metric MI[straight_pad.nii.gz, curved_pad.nii.gz, 1, 32] --convergence 10 --shrink-factors 1 --smoothing-sigmas 1mm --Restric-Deformation 1x1x0 --output [reg, curved_pad_reg.nii.gz] --interpolation NearestNeighbor
 
 # 6 - did not help - much slower
-c3d straight.nii.gz -pad 0x0x10vox 0x0x10vox 0 -o straight_pad.nii.gz
-c3d curved.nii.gz -pad 0x0x10vox 0x0x10vox 0 -o curved_pad.nii.gz
+sct_c3d straight.nii.gz -pad 0x0x10vox 0x0x10vox 0 -o straight_pad.nii.gz
+sct_c3d curved.nii.gz -pad 0x0x10vox 0x0x10vox 0 -o curved_pad.nii.gz
 antsRegistration --dimensionality 3 --transform BSplineSyN[0.25, 1x1x3, 0x0x0, 3] --metric MI[straight_pad.nii.gz, curved_pad.nii.gz, 1, 32] --convergence 10 --shrink-factors 1 --smoothing-sigmas 1mm --Restric-Deformation 1x1x0 --output [reg, curved_pad_reg.nii.gz] --interpolation NearestNeighbor
 
 # 7 - trying increasing updateFieldVarianceInVoxelSpace along z- almost no change - increasing further
@@ -45,8 +45,8 @@ antsRegistration --dimensionality 3 --transform GaussianDisplacementField[0.15, 
 antsRegistration --dimensionality 3 --transform GaussianDisplacementField[0.15, 1, 0] --metric MI[straight_pad.nii.gz, curved_pad.nii.gz, 1, 32] --convergence 10 --shrink-factors 1 --smoothing-sigmas 1mm --Restric-Deformation 1x1x0 --output [reg, curved_pad_reg.nii.gz] --interpolation NearestNeighbor
 
 # 13 - go back to #4
-c3d straight.nii.gz -pad 0x0x3vox 0x0x3vox 0 -o straight_pad.nii.gz
-c3d curved.nii.gz -pad 0x0x3vox 0x0x3vox 0 -o curved_pad.nii.gz
+sct_c3d straight.nii.gz -pad 0x0x3vox 0x0x3vox 0 -o straight_pad.nii.gz
+sct_c3d curved.nii.gz -pad 0x0x3vox 0x0x3vox 0 -o curved_pad.nii.gz
 antsRegistration --dimensionality 3 --transform BSplineSyN[0.25, 1x1x10, 0x0x0, 3] --metric MI[straight_pad.nii.gz, curved_pad.nii.gz, 1, 32] --convergence 10 --shrink-factors 1 --smoothing-sigmas 1mm --Restric-Deformation 1x1x0 --output [reg, curved_pad_reg.nii.gz] --interpolation NearestNeighbor
 
 # 14 - act on 3rd param - no much diff
