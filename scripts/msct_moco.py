@@ -239,7 +239,7 @@ def moco(param):
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
                 # TODO: figure out orientation
                 if todo == 'estimate' or todo == 'estimate_and_apply':
-                    cmd = 'antsRegistration' \
+                    cmd = 'sct_antsRegistration' \
                           ' --dimensionality 3' \
                           ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
                           ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \
@@ -256,7 +256,7 @@ def moco(param):
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
                 # TODO: figure out orientation
                 if todo == 'estimate' or todo == 'estimate_and_apply':
-                    cmd = 'antsRegistration' \
+                    cmd = 'sct_antsRegistration' \
                           ' --dimensionality 3' \
                           ' --transform Affine[0.5]' \
                           ' --metric MI['+fname_target+'.nii, '+file_data_splitT_num[it]+'.nii, 1, 32]' \

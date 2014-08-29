@@ -151,7 +151,7 @@ def main():
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord (assuming a 3D image)...'
-    sct.run('WarpImageMultiTransform 3 anat_rpi_straight_smooth.nii anat_rpi_straight_smooth_curved.nii -R anat.nii --use-BSpline warp_straight2curve.nii.gz')
+    sct.run('sct_WarpImageMultiTransform 3 anat_rpi_straight_smooth.nii anat_rpi_straight_smooth_curved.nii -R anat.nii --use-BSpline warp_straight2curve.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
