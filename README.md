@@ -1,6 +1,9 @@
 
 # Spinal Cord Toolbox
 
+[![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
+
+
 Comprehensive and open-source library of analysis tools for MRI of the spinal cord.
 
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
