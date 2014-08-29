@@ -56,7 +56,7 @@ for subject in $SUBJECT_LIST; do
     $cmd
 	
 	# Isotropic smoothing of the same image with same standard deviation (for the Gaussian) for comparison purposes
-	cmd="c3d
+	cmd="sct_c3d
 		../../data/${subject}/${contrast}/${contrast}.nii.gz
 		-smooth ${sigma}x${sigma}x${sigma}vox
 		-o ${contrast}_isotropic_smoothed.nii.gz"
@@ -64,7 +64,7 @@ for subject in $SUBJECT_LIST; do
 	$cmd
 
 	# Smoothing along Z (corresponding to X, given the orientation of the image)
-	cmd="c3d
+	cmd="sct_c3d
 		../../data/${subject}/${contrast}/${contrast}.nii.gz
 		-smooth ${sigma}x0x0vox
 		-o ${contrast}_z_smoothed.nii.gz"
