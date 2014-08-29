@@ -1,12 +1,13 @@
 
 # CHANGES TO RELEASE
 
-1.0.4
+XXX
 
 - NEW: sct_crop: function to quickly crop an image.
 - NEW: sct_extract_metric.py (replaces the old sct_estimate_MAP_tracts.py). New functionalities added (maximum likelihood estimation and tract grouping). More flexible with label files.
 - NEW: sct_convert_mnc2nii.py
 - OPT: new version of the white matter atlas: more accurate, deformation accounting for internal structure (use BSplineSyN instead of SyN).
+- OPT: sct_dmri_moco now using ANTs for more robustness and better spline interpolation.
 
 1.0.3 (2014-07-30)
 
