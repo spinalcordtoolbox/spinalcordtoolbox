@@ -92,7 +92,7 @@ def moco(param):
     # TODO: check if need to pad also for the estimate_and_apply
     if program == 'ants' and todo == 'estimate':
         sct.printv('\nPad data (for ANTs)...', verbose)
-        sct.run('c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
+        sct.run('sct_c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
         fname_target = fname_target+'_pad'
 
     # Split data along T dimension
@@ -178,7 +178,7 @@ def moco(param):
         # pad data (for ANTs)
         # TODO: check if need to pad also for the estimate_and_apply
         if program == 'ants' and todo == 'estimate':
-            sct.run('c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
+            sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
             file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
         # Slice-by-slice moco

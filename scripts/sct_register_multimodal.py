@@ -11,7 +11,7 @@
 # none
 #
 # EXTERNAL SOFTWARE
-# - itksnap/c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
+# - itksnap/sct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
 # - ants <http://stnava.github.io/ANTs/>
 #
 #
@@ -221,13 +221,13 @@ def main():
     print('\nCopy files...')
     file_src_tmp = 'src'
     file_dest_tmp = 'dest'
-    status, output = sct.run('c3d '+fname_src+' -o '+path_tmp+'/'+file_src_tmp+'.nii')
-    status, output = sct.run('c3d '+fname_dest+' -o '+path_tmp+'/'+file_dest_tmp+'.nii')
+    status, output = sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/'+file_src_tmp+'.nii')
+    status, output = sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/'+file_dest_tmp+'.nii')
     if use_segmentation:
         file_src_seg_tmp = 'src_seg'
         file_dest_seg_tmp = 'dest_seg'
-        status, output = sct.run('c3d '+fname_src_seg+' -o '+path_tmp+'/'+file_src_seg_tmp+'.nii')
-        status, output = sct.run('c3d '+fname_dest_seg+' -o '+path_tmp+'/'+file_dest_seg_tmp+'.nii')
+        status, output = sct.run('sct_c3d '+fname_src_seg+' -o '+path_tmp+'/'+file_src_seg_tmp+'.nii')
+        status, output = sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/'+file_dest_seg_tmp+'.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -495,7 +495,7 @@ EXAMPLES
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in,file_out,padding):
-    cmd = 'c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out
+    cmd = 'sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out
     print(">> "+cmd)
     os.system(cmd)
     return
@@ -506,7 +506,7 @@ def pad_image(fname_in,file_out,padding):
 # ==========================================================================================
 def remove_padding(file_ref,file_in,file_out):
     # remove padding by reslicing padded data into unpadded space
-    cmd = 'c3d '+file_ref+' '+file_in+' -reslice-identity -o '+file_out
+    cmd = 'sct_c3d '+file_ref+' '+file_in+' -reslice-identity -o '+file_out
     print(">> "+cmd)    
     os.system(cmd)
     return
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     #===========
     #if convertDeformation:
     #    print('\nConvert deformation field...')
-    #    cmd = 'c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+    #    cmd = 'sct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
     #    print(">> "+cmd)
     #    os.system(cmd)
     #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'

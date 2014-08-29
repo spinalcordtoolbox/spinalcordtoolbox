@@ -125,7 +125,7 @@ def main():
     sct.run('mkdir '+path_tmp)
 
     # copy files into tmp folder
-    sct.run('c3d '+fname_data+' -o '+path_tmp+file_tmp)
+    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+file_tmp)
 
     # go to tmp folder
     os.chdir(path_tmp)
