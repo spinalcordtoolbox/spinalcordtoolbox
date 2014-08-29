@@ -1,7 +1,7 @@
 
 # CHANGES TO RELEASE
 
-1.0.4
+XXX
 
 - NEW: sct_crop: function to quickly crop an image.
 - NEW: sct_extract_metric.py (replaces the old sct_estimate_MAP_tracts.py). New functionalities added (maximum likelihood estimation and tract grouping). More flexible with label files.
