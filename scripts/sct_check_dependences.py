@@ -226,7 +226,7 @@ def main():
     status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
-        path_ants = output[:-16]
+        path_ants = output[:-20]
         print '  '+path_ants
     else:
         print_warning()
@@ -248,12 +248,12 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d
-    print_line('Check which sct_c3d is running .................... ')
+    print_line('Check which sct_c3d is running ................ ')
     # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
     status, output = commands.getstatusoutput('which sct_c3d')
     if output:
         print_ok()
-        path_sct_c3d = output[:-3]
+        path_sct_c3d = output[:-7]
         print '  '+path_sct_c3d
     else:
         print_warning()
@@ -262,7 +262,7 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d compatibility with OS
-    print_line('Check sct_c3d compatibility with OS ............... ')
+    print_line('Check sct_c3d compatibility with OS ........... ')
     (status, output) = commands.getstatusoutput('sct_c3d -h')
     if status in [0, 256]:
         print_ok()
