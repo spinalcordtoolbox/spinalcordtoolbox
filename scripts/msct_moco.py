@@ -250,7 +250,7 @@ def moco(param):
                           ' --output ['+file_mat[it]+','+file_data_splitT_moco_num[it]+'.nii]' \
                           ' --interpolation '+interp
                 if todo == 'apply':
-                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
+                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'+' -p '+param.interp
                 sct.run(cmd, verbose)
             elif program == 'ants_affine':
                 file_mat[it] = folder_mat + 'mat.T' + str(it)
@@ -268,7 +268,7 @@ def moco(param):
                           ' --interpolation '+interp
                 if todo == 'apply':
                     # TODO: consider interpolation!
-                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'
+                    cmd = 'sct_apply_transfo.py -i '+file_data_splitT_num[it]+'.nii -d '+fname_target+'.nii -w '+file_mat[it]+ext_mat+' -o '+file_data_splitT_moco_num[it]+'.nii'+' -p '+param.interp
                 sct.run(cmd, verbose)
 
     # Replace failed transformation matrix to the closest good one
