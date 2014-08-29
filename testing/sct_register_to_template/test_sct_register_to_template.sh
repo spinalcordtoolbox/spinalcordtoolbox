@@ -50,7 +50,7 @@ for subject in $SUBJECT_LIST; do
     echo ==============================================================================================
     $cmd
 
-    cmd="WarpImageMultiTransform
+    cmd="sct_WarpImageMultiTransform
         3
         ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
         templatecord2anat.nii.gz
