@@ -8,6 +8,7 @@ sct_utils.pyc
 ._*
 .nfs*
 *.pyc
+*.log
 
 # Can also ignore all directories and files in a directory.
 tmp/**/*
@@ -18,15 +19,4 @@ testing/sct_register_to_template/results
 testing/sct_segmentation_propagation/results
 testing/sct_smooth_spinalcord/results
 testing/sct_straighten_spinalcord/results
-testing/sct_detect_spinalcord.log
-testing/sct_dmri_moco.log
-testing/sct_extract_metric.log
-testing/sct_get_centerline.log
-testing/sct_process_segmentation.log
-testing/sct_register_multimodal.log
-testing/sct_register_to_template.log
-testing/sct_segmentation_propagation.log
-testing/sct_smooth_spinalcord.log
-testing/sct_straighten_spinalcord.log
-testing/sct_warp_template.log
 testing/sct_dmri_separate_b0_and_dwi/results
