@@ -30,13 +30,13 @@ def usage():
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,debian}.\n' \
+        '  -s <OS name>      name of the OS {osx,linux}.\n’ \
         '\n'\
         'EXAMPLE:\n' \
-        '  create_package.py -s debian\n'
+        '  create_package.py -s linux\n’
     sys.exit(2)
 
-listOS = ['osx', 'debian']
+listOS = ['osx', ‘linux’]
 OSname = ''
 # Check input param
 try:
@@ -78,10 +78,10 @@ if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r osx/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
     sct.run('cp -r osx/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
-elif OSname == 'debian':
-    sct.run('cp -r ../bin/debian/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r debian/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r debian/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
+elif OSname == ‘linux’:
+    sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r linux/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r linux/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
 
 # copy colormap
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
