@@ -252,29 +252,12 @@ cmd =['sct_antsRegistration --dimensionality 2 --initial-moving-transform ' affi
     '--output [' prefix_ants_ref ',grays_syn.nii.gz] --collapse-output-transforms 1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
 
-
-
-% OLD STUFF BELOW
-% ====
-% Registration transform computation
-% cmd = ['ants 2 -o ' prefix_ants_ref ' ',...
-%     '-m PSE[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',' templateci_slice_ref_thresh ext ',' mask_nohd ext ',0.5,100,11,0,10,1000] ',...
-%     '-m MSQ[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',0.5,0] ',...
-%     '-t SyN[0.2] -r Gauss[3,0.] -i 1000x500x300 ',...
-%     '--rigid-affine true --affine-metric-type MI --number-of-affine-iterations 1000x1000x1000'];
-% disp(cmd)
-% [status,result] = unix(cmd);
-% if(status), error(result); end
-% ====
-
 % Rename warping field
 movefile([prefix_ants_ref '1Warp.nii.gz'],[Warp_tmp ext]);
 
 % Constraint the warping field to preserve symmetry
 cmd = ['sct_c3d -mcs ' Warp_tmp ext ' -oo ' Warp_tmp 'x' ext ' ' Warp_tmp 'y' ext];
-disp(cmd)
-[status,result] = unix(cmd);
-if(status),error(result);end
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 [warpx,dims,scales] = read_avw([Warp_tmp 'x' ext]);
 warpy = read_avw([Warp_tmp 'y' ext]);
@@ -285,26 +268,18 @@ save_avw(warpx,[Warp_tmp 'xa' ext],'d',scales);
 save_avw(warpy,[Warp_tmp 'ys' ext],'d',scales);
 
 cmd = ['sct_c3d ' Warp_tmp 'x' ext ' ' Warp_tmp 'xa' ext ' -copy-transform -o ' Warp_tmp 'xa' ext];
-disp(cmd)
-[status,result] = unix(cmd);
-if(status),error(result);end
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 cmd = ['sct_c3d ' Warp_tmp 'y' ext ' ' Warp_tmp 'ys' ext ' -copy-transform -o ' Warp_tmp 'ys' ext];
-disp(cmd)
-[status,result] = unix(cmd);
-if(status),error(result);end
-
-disp(cmd)
-[status,result] = unix(cmd);
-if(status),error(result);end
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the mask
 cmd = ['sct_WarpImageMultiTransform 2 ' mask_nohd ext ' ' mask_nohd suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the initial atlas
 cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_nifti suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
-disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the tract files and copying geometry and saving
 for label = 1:length(label_values)/2
@@ -373,9 +348,7 @@ end
 
 templatecit_slice_ref = [templateci_thresh '_slice_ref'];
 cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(z_slice_ref) ' -o ' templatecit_slice_ref ext];
-disp(cmd)
-[status,result] = unix(cmd);
-if(status), error(result); end
+disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 [mstatus,msg] = copyfile([templateci_slice_ref ext],[template_cropped_interp '_slice' z_slice_ref ext]);
 if(~mstatus), error(msg); end
@@ -403,15 +376,11 @@ for iz = 1:nb_slices-1
     
     % extract slice corresponding to z=zslice
     cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(zslice) ' -o ' templatecit_slice ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status), error(result); end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
     % extract slice corresponding to z=zslice+1 (for neighrest-slice registration)
     cmd = ['sct_c3d ' templateci_thresh ext ' -slice z ' num2str(zslicenext) ' -o ' templatecit_slicenext ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status), error(result); end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
     % registration of slice i+1 on i
     % forward warping field is: reg_zslice_0Warp.nii.gz
@@ -427,9 +396,7 @@ for iz = 1:nb_slices-1
         '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
         '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 end
 
 disp('*** Concatenate warping fields for each slice ***')
@@ -443,7 +410,7 @@ for iz = 1:nb_slices
     izref = find(z_disks_mid == z_slice_ref);
 
     % output concatenated field is: reg_concat_zslice
-    cmd = ['ComposeMultiTransform 2 ', prefix_ants, 'concat_', num2str(zslice), ext, ' -R ', templatecit_slice, ext];
+    cmd = ['sct_ComposeMultiTransform 2 ', prefix_ants, 'concat_', num2str(zslice), ext, ' -R ', templatecit_slice, ext];
     
     if zslice > z_slice_ref
         % if zslice is superior to ref slice, then concatenate forward warping
@@ -501,9 +468,7 @@ for iz = 1:nb_slices
 
     % Constraint the warping field to preserve symmetry
     cmd = ['sct_c3d -mcs ' warp_temp ext ' -oo ' warp_temp 'x' ext ' ' warp_temp 'y' ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
     % read warping field
     [warpx,dims,scales] = read_avw([warp_temp 'x' ext]);
@@ -515,23 +480,17 @@ for iz = 1:nb_slices
     save_avw(warpy,[warp_temp 'ys' ext],'d',scales);
     
     cmd = ['sct_c3d ' warp_temp 'x' ext ' ' warp_temp 'xa' ext ' -copy-transform -o ' warp_temp 'xa' ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
     cmd = ['sct_c3d ' warp_temp 'y' ext ' ' warp_temp 'ys' ext ' -copy-transform -o ' warp_temp 'ys' ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
     cmd = ['sct_c3d ' warp_temp 'xa' ext ' ' warp_temp 'ys' ext ' -omc 2 ' warp_slice];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
 end
 
 
-disp('*** Applies warping fields to each intermediate slice ***')
+disp('*** Applies warping fields for registration to each intermediate slice ***')
 nb_slices = length(z_disks_mid_noC4)
 for iz = 1:nb_slices
     
@@ -544,43 +503,54 @@ for iz = 1:nb_slices
     warp_slice = [ prefix_ants, 'concat_sym_', num2str(zslice), ext];
     
     % Apply transform to reference slice as a control
-    cmd = ['WarpImageMultiTransform 2 ' templatecit_slice_ref ext ' ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' ' warp_slice ' -R ' templatecit_slice ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+    cmd = ['sct_WarpImageMultiTransform 2 ' templatecit_slice_ref ext ' ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply transform to the initial atlas as a control
-    cmd = ['WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status),error(result);end
+%     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
+    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+    cmd = ['sct_c3d ' templatecit_slice_ref ' ' atlas_slice ext ' -copy-transform -o ' atlas_slice ext];  % copy geom-- added: 2014-08-30
+    disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_slice ext ' ' atlas_slice suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply tranform to the tract files and constraint to be symmetric
     for label = 1:length(label_values)/2
         tract_atlas_g = [path_out 'tract_atlas_' num2str(label)];
         tract_atlas_d = [path_out 'tract_atlas_' num2str(label+length(label_values)/2)];
         
-        cmd = ['WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
-        disp(cmd)
-        [status,result] = unix(cmd);
-        if(status),error(result);end
+        % JULIEN: Instead of concatenating all warping fields, do it in two
+        % steps, because I noticed issues in geometry information.
+%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
+%         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+%         
+%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
+%         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+
+        % LEFT
+        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+        cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext ext];  % copy geom-- added: 2014-08-30
+        disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g suffix_ants ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         
-        cmd = ['WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
-        disp(cmd)
-        [status,result] = unix(cmd);
-        if(status),error(result);end
-        
+        % RIGHT
+        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+        cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext ext];  % copy geom-- added: 2014-08-30
+        disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
+        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d suffix_ants ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+
         % copy header from template to registered atlas
         % NB: changed templateci_slice to templatecit_slice (2014-08-04)
         cmd = ['sct_c3d ' templatecit_slice ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
-        disp(cmd)
-        [status,result] = unix(cmd);
-        if(status),error(result);end
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         
         cmd = ['sct_c3d ' templatecit_slice ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
-        disp(cmd)
-        [status,result] = unix(cmd);
-        if(status),error(result);end
+        disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         
         tract_reg_g = [path_out 'tract_atlas_' num2str(label) suffix_ants];
         temp_g = read_avw(tract_reg_g);
@@ -676,17 +646,11 @@ for label = 1:length(label_values)
     filetractML = [path_results prefix_out '_' num2str(label)];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
     cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status), error(result); end
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
 	 % Reslice into native template space
 	cmd = ['sct_c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
-    disp(cmd)
-    [status,result] = unix(cmd);
-    if(status), error(result); end
-	 
-	 
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)	 
 end
 
 
