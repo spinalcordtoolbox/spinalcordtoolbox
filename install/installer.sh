@@ -105,6 +105,12 @@ fi
 # launch .bash_profile. This line doesn't always work. Best way is to open a new terminal.
 . ~/.bashrc
 
+# install required software
+echo
+echo « Install required software... »
+cmd="python ${SCT_DIR}/install/requirements/requirements.sh
+echo ">> $cmd"; $cmd
+
 # check if other dependent software are installed
 echo
 echo "Check if other dependent software are installed..."
