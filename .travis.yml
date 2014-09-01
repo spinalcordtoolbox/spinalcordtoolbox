@@ -31,10 +31,12 @@ install:
   - PATH=${PATH}:${SCT_DIR}/install/debian/c3d
   - export SCT_DIR PATH
   - . ~/.bashrc
-  - cd testing
 
 # SCT: create links
   - ./install/create_links.sh
+
+# Go to testing folder
+  - cd testing
 
 script:
   - python ../scripts/sct_check_dependences.py
