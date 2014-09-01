@@ -66,32 +66,22 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.schedule_file = 'schedule_TxTy.sch'
-        self.gap = 1 # default gap between co-registered slices.
+        self.schedule_file = 'flirtsch/schedule_TxTy.sch'
+        self.gap = 4  # default gap between co-registered slices.
         self.gaussian_kernel = 4 # gaussian kernel for creating gaussian mask from center point.
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
-        self.remove_temp_files = 1 # remove temporary files
+        self.remove_tmp_files = 1 # remove temporary files
 
 # check if needed Python libraries are already installed or not
 import os
+import commands
 import getopt
 import sys
 import time
 import sct_utils as sct
+import nibabel
+import numpy
 from sct_utils import fsloutput
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
-
-# check if dependant software are installed
-sct.check_if_installed('flirt -help','FSL')
 
 
 #=======================================================================================================================
@@ -103,18 +93,19 @@ def main():
     fname_anat = ''
     fname_point = ''
     slice_gap = param.gap
-    remove_temp_files = param.remove_temp_files
+    remove_tmp_files = param.remove_tmp_files
     gaussian_kernel = param.gaussian_kernel
     start_time = time.time()
 
-    # extract path of the script
-    path_script = os.path.dirname(__file__)+'/'
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    path_sct = sct.slash_at_the_end(path_sct, 1)
 
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_script+'../dev/testing/data/errsm_22/t2/errsm_22_t2_cropped.nii.gz'
-        fname_point = path_script+'../dev/testing/data/errsm_22/t2/center_cropped.nii.gz'
+        fname_anat = path_sct+'testing/data/errsm_23/t2/t2_crop.nii.gz'
+        fname_point = path_sct+'testing/data/errsm_23/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
         import matplotlib.pyplot as plt
 
@@ -134,7 +125,7 @@ def main():
         elif opt in ('-g'):
             slice_gap = int(arg)
         elif opt in ('-r'):
-            remove_temp_files = int(arg)
+            remove_tmp_files = int(arg)
         elif opt in ('-k'):
             gaussian_kernel = int(arg)
 
@@ -153,7 +144,7 @@ def main():
     # extract path of schedule file
     # TODO: include schedule file in sct
     # TODO: check existence of schedule file
-    file_schedule = path_script[0:-8]+'flirtsch/' + param.schedule_file
+    file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
     status, output = sct.run('sct_orientation -i ' + fname_anat + ' -get')
@@ -162,7 +153,7 @@ def main():
     # Display arguments
     print '\nCheck input arguments...'
     print '  Anatomical image:     '+fname_anat
-    print '  .... orientation:     '+input_image_orientation
+    print '  Orientation:          '+input_image_orientation
     print '  Point in spinal cord: '+fname_point
     print '  Slice gap:            '+str(slice_gap)
     print '  Gaussian kernel:      '+str(gaussian_kernel)
@@ -427,21 +418,23 @@ def main():
     sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.mask_orient_fit.nii ')
     sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.point_orient_fit.nii ')
 
+    # Reorient outputs into the initial orientation of the input image
+    print '\nReorient the centerline into the initial orientation of the input image...'
+    sct.run('sct_orientation -i tmp.point_orient_fit.nii -o tmp.point_orient_fit.nii -orientation '+input_image_orientation)
+    sct.run('sct_orientation -i tmp.mask_orient_fit.nii -o tmp.mask_orient_fit.nii -orientation '+input_image_orientation)
+
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
     #sct.generate_output_file('tmp.centerline_polycoeffs_x.txt','./','centerline_polycoeffs_x','.txt')
     #sct.generate_output_file('tmp.centerline_polycoeffs_y.txt','./','centerline_polycoeffs_y','.txt')
     #sct.generate_output_file('tmp.centerline_coordinates.txt','./','centerline_coordinates','.txt')
-    sct.generate_output_file('tmp.anat_orient.nii','./',file_anat+'_rpi',ext_anat)
+    #sct.generate_output_file('tmp.anat_orient.nii','./',file_anat+'_rpi',ext_anat)
     sct.generate_output_file('tmp.anat_orient_fit.nii','./',file_anat+'_rpi_align',ext_anat)
     sct.generate_output_file('tmp.mask_orient_fit.nii','./',file_anat+'_mask',ext_anat)
     fname_output_centerline = sct.generate_output_file('tmp.point_orient_fit.nii','./',file_anat+'_centerline',ext_anat)
-    # Reorient the centerline into the initial orientation of the input image
-    print '\nReorient the centerline into the initial orientation of the input image...'
-    sct.run('sct_orientation -i '+fname_output_centerline+' -o ' +fname_output_centerline+' -orientation '+input_image_orientation)
 
     # Delete temporary files
-    if remove_temp_files == 1:
+    if remove_tmp_files == 1:
         print '\nDelete temporary files...'
         sct.run('rm tmp.*')
 
@@ -457,29 +450,34 @@ def main():
 # usage
 #=======================================================================================================================
 def usage():
-    print '\n' \
-        'sct_get_centerline\n' \
-        '--------------------------------------------------------------------------------------------------------------\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  This program estimates the spinal cord centerline from an anatomical image and from another image pointing\n' \
-        '  anywhere in the spinal cord. It works by registering adjacent slices together (2DOF transformation). The\n' \
-        '  transformation is constrained by a gaussian mask. After registering all slices, the centerline is approximated\n' \
-        '  by a polynomial function to smooth it.\n' \
-        '\n'\
-        'USAGE\n' \
-        '  sct_get_centerline -i <anat> -p <point>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <anat>         anatomic nifti file. Image to extract centerline from.\n' \
-        '  -p <point>        binary nifti file. Point in the spinal cord (e.g., created using fslview).\n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -g <gap>          gap between slices used for registration. Higher is faster but less robust. Default='+str(param.gap)+'.\n' \
-        '  -k <kernel>       kernel size for gaussian mask. Higher is more robust but less accurate. Default='+str(param.gaussian_kernel)+'. \n' \
-        '  -r <0,1>          remove temporary files. Default='+str(param.remove_temp_files)+'. \n' \
-        '  -h                help. Show this message.\n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  This program estimates the spinal cord centerline from an anatomical image and from another image
+  pointing anywhere in the spinal cord. It works by registering adjacent slices together (2DOF
+  transformation). The transformation is constrained by a gaussian mask. After registering all
+  slices, the centerline is approximated by a polynomial function to smooth it.
+  N.B. The centerline is usually not well estimated with this method. For better results, use
+  sct_propseg.
+
+USAGE
+  """+os.path.basename(__file__)+""" -i <anat> -p <point>
+
+MANDATORY ARGUMENTS
+  -i <anat>        anatomic nifti file. Image to extract centerline from.
+  -p <point>       binary nifti file. Point in the spinal cord (e.g., created using fslview)
+
+OPTIONAL ARGUMENTS
+  -g <gap>         gap between slices for registration. Higher is faster but less robust. Default="""+str(param.gap)+"""
+  -k <kernel>      kernel size for gaussian mask. Higher is more robust but less accurate. Default="""+str(param.gaussian_kernel)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -h               help. Show this message.
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i t2.nii.gz -p point_in_cord.nii.gz\n"""
     sys.exit(2)
 
 
