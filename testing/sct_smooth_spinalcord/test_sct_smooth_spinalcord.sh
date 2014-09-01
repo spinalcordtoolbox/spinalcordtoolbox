@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test sct_smooth_spinalcord.py
+# test sct_smooth_spinalcord
 
 red='\e[1;31m'
 green='\e[1;32m'
@@ -48,10 +48,10 @@ for subject in $SUBJECT_LIST; do
 	printf "${blue}Standard deviation of the Gaussian kernel (in terms of voxels): $sigma${NC}\n"	
 
 	# create down sampled files
-    c3d ../../data/${subject}/${contrast}/${contrast}.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
-    c3d ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
-    c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
-    c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
+    sct_c3d ../../data/${subject}/${contrast}/${contrast}.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+    sct_c3d ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
+    sct_c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
+    sct_c3d ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz -resample 50%  -o ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
 
 	echo ==============================================================================================
     echo Multiply voxels intensity
@@ -59,8 +59,8 @@ for subject in $SUBJECT_LIST; do
     fslmaths ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz -mul 16 ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
     fslmaths ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz -mul 16 ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
 
-    # Run sct_smooth_spinalcord.py
-    cmd="sct_smooth_spinalcord.py
+    # Run sct_smooth_spinalcord
+    cmd="sct_smooth_spinalcord
       -i ../../data/${subject}/${contrast}/${contrast}_DS.nii.gz
       -c ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg_DS.nii.gz
 	  -s ${sigma}"
@@ -85,4 +85,3 @@ for subject in $SUBJECT_LIST; do
 
   done
 done
-

@@ -469,7 +469,7 @@ def usage():
         '  by a polynomial function to smooth it.\n' \
         '\n'\
         'USAGE\n' \
-        '  sct_get_centerline.py -i <anat> -p <point>\n' \
+        '  sct_get_centerline -i <anat> -p <point>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i <anat>         anatomic nifti file. Image to extract centerline from.\n' \

@@ -29,7 +29,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_convert_binary_to_trilinear.py
+    cmd="sct_convert_binary_to_trilinear
         -i ../../data/${subject}/${contrast}/${file}
         -s 5"
     echo ==============================================================================================

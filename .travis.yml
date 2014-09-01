@@ -10,7 +10,7 @@ install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
-  - ./requirements/requirements.sh
+  - ./install/requirements/requirements.sh
 
 # FSL
   - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
@@ -22,13 +22,17 @@ install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 
+# SCT: create links
+  - ./install/create_links.sh
+
+# SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
-  - PATH=${PATH}:${SCT_DIR}/scripts
+  #- PATH=${PATH}:${SCT_DIR}/scripts
+  - PATH=${PATH}:${SCT_DIR}/bin
   - PATH=${PATH}:${SCT_DIR}/bin/debian
   - PATH=${PATH}:${SCT_DIR}/install/debian/ants
   - PATH=${PATH}:${SCT_DIR}/install/debian/c3d
   - export SCT_DIR PATH
-
   - . ~/.bashrc
   - cd testing
 

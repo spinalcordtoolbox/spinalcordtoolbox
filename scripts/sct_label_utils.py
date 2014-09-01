@@ -436,7 +436,7 @@ def display_voxel(data):
 #=======================================================================================================================
 def usage():
     print 'USAGE: \n' \
-        '  sct_label_utils.py -i <inputdata> -o <outputdata> -c <crossradius>\n' \
+        '  sct_label_utils -i <inputdata> -o <outputdata> -c <crossradius>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i           input volume.\n' \
@@ -449,7 +449,7 @@ def usage():
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_label_utils.py -i t2.nii.gz -c 5\n'
+        '  sct_label_utils -i t2.nii.gz -c 5\n'
     sys.exit(2)
     
     

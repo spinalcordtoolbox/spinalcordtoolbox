@@ -283,7 +283,7 @@ def main():
 
     # Check ANTs integrity
     print_line('Check integrity of ANTs output ................ ')
-    (status, output) = commands.getstatusoutput('isct_test_ants.py -v 0')
+    (status, output) = commands.getstatusoutput('isct_test_ants -v 0')
     if status in [0]:
         print_ok()
     else:
