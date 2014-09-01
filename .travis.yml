@@ -26,9 +26,9 @@ install:
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
   #- PATH=${PATH}:${SCT_DIR}/scripts
   - PATH=${PATH}:${SCT_DIR}/bin
-  - PATH=${PATH}:${SCT_DIR}/bin/debian
-  - PATH=${PATH}:${SCT_DIR}/install/debian/ants
-  - PATH=${PATH}:${SCT_DIR}/install/debian/c3d
+  - PATH=${PATH}:${SCT_DIR}/bin/linux
+  - PATH=${PATH}:${SCT_DIR}/install/linux/ants
+  - PATH=${PATH}:${SCT_DIR}/install/linux/c3d
   - export SCT_DIR PATH
   - . ~/.bashrc
 
