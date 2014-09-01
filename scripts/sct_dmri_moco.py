@@ -450,7 +450,7 @@ def dmri_moco(param):
     moco.moco(param)
 
     # generate b0_moco_mean and dwi_moco_mean
-    sct.run('sct_dmri_separate_b0_and_dwi.py -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1', verbose)
+    sct.run('sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1', verbose)
 
 
 #=======================================================================================================================

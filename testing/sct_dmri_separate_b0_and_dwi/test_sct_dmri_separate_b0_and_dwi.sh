@@ -33,7 +33,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_dmri_separate_b0_and_dwi.py
+    cmd="sct_dmri_separate_b0_and_dwi
         -i ../../data/${subject}/${contrast}/${file1}
         -b ../../data/${subject}/${contrast}/${file2}
         -a 1
