@@ -1,50 +1,13 @@
 #!/usr/bin/env python
-
-## @package sct_straighten_spinalcord
 #
-# - from spinal cord centerline (as nifti format), estimate deformation field with ANTS.
-#
-#
-# Description about how the function works:
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
 # cord was straightened.
 #
-#
-# USAGE
-# ---------------------------------------------------------------------------------------
-# sct_straighten_spinalcord.py -i <data> -c <centerline>
-#
-# MANDATORY ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   -i       input volume.
-#   -c       centerline (generated with sct_get_centerline).
-#
-# OPTIONAL ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#
-#   -f       'polynomial' or 'splines' fitting default is 'splines'
-#
-# EXAMPLES
-# ---------------------------------------------------------------------------------------
-#   sct_straighten_spinalcord.py -i t2.nii.gz -c centerline.nii.gz
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# - nibabel: <http://nipy.sourceforge.net/nibabel/>
-# - numpy: <http://www.numpy.org>
-# - sympy : <http://sympy.org/fr/index.html>
-# EXTERNAL SOFTWARE
-# - FSL: <http://fsl.fmrib.ox.ac.uk/fsl/>
-# - ANTS
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
-# Modified: 2014-07-05 by jcohen
+# Modified: 2014-09-01
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -637,7 +600,7 @@ def usage():
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_straighten_spinalcord.py -i t2.nii.gz -c centerline.nii.gz\n'
+        '  sct_straighten_spinalcord -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
 
 

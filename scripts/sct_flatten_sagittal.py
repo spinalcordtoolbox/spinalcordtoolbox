@@ -263,7 +263,7 @@ def usage():
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_flatten_sagittal.py -i t2.nii.gz -c centerline.nii.gz\n'
+        '  sct_flatten_sagittal -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
 
 def b_spline_centerline(x_centerline,y_centerline,z_centerline):

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test sct_get_centerline.py
+# test sct_get_centerline
 
 # subject list
 SUBJECT_LIST="errsm_23" #"errsm_20 errsm_21 errsm_22 errsm_23 errsm_24"
@@ -29,7 +29,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_get_centerline.py 
+    cmd="sct_get_centerline
       -i ../../data/${subject}/${contrast}/${contrast}.nii.gz 
       -p ../../data/${subject}/${contrast}/${contrast}_centerline_init.nii.gz 
       -g 1 

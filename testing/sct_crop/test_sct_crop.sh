@@ -32,7 +32,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_crop.py
+    cmd="sct_crop
         -i ../../data/${subject}/${contrast}/${file}
         "
     echo ==============================================================================================

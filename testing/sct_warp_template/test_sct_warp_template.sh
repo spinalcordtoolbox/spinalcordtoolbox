@@ -33,7 +33,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_warp_template.py
+    cmd="sct_warp_template
         -d ../../data/${subject}/${contrast}/${file}
         -w ../../data/${subject}/${contrast}/warp_template2${contrast}.nii.gz
         -o label

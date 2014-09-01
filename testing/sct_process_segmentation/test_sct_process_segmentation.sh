@@ -37,7 +37,7 @@ for subject in $SUBJECT_LIST; do
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
 
-	    cmd="sct_process_segmentation.py
+	    cmd="sct_process_segmentation
             -i ${SCT_DIR}/testing/data/${subject}/${contrast}/${file}
             -p compute_csa
             -s 1
