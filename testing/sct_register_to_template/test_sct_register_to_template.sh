@@ -59,7 +59,7 @@ for subject in $SUBJECT_LIST; do
     fslmaths ../../data/MNI-Poly-AMU_cord.nii.gz -mul 16 ../../data/MNI-Poly-AMU_cord.nii.gz
 
 
-    cmd="sct_register_to_template.py
+    cmd="sct_register_to_template
         -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
         -l ../../data/${subject}/${contrast}/${contrast}_landmarks_C2_T2_center.nii.gz
         -m ../../data/${subject}/${contrast}/${contrast}_segmentation_PropSeg.nii.gz

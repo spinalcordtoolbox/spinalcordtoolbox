@@ -37,7 +37,7 @@ for subject in $SUBJECT_LIST; do
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
 
-	    cmd="sct_register_multimodal.py
+	    cmd="sct_register_multimodal
 	        -i ${SCT_DIR}/data/template/MNI-Poly-AMU_T2.nii.gz
 	        -d ../../data/${subject}/${contrast}/${file}
 	        -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz

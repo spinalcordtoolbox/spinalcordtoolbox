@@ -31,7 +31,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_dmri_moco.py
+    cmd="sct_dmri_moco
         -i ../../data/${subject}/${contrast}/${file1}
         -b ../../data/${subject}/${contrast}/${file2}
         -v 1

@@ -177,7 +177,7 @@ def main():
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    status, output = sct.run('sct_straighten_spinalcord.py -i data_rpi.nii -c segmentation_rpi.nii.gz -r '+str(remove_temp_files))
+    status, output = sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r '+str(remove_temp_files))
 
     # Apply straightening to segmentation
     print('\nApply straightening to segmentation...')
@@ -192,15 +192,15 @@ def main():
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
     print('\nRemove unused label on template. Keep only label present in the input label image...')
-    status, output = sct.run('sct_label_utils.py -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
+    status, output = sct.run('sct_label_utils -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
 
     # Create a cross for the template labels - 5 mm
     print('\nCreate a 5 mm cross for the template labels...')
-    status, output = sct.run('sct_label_utils.py -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
+    status, output = sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
 
     # Create a cross for the input labels and dilate for straightening preparation - 5 mm
     print('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...')
-    status, output = sct.run('sct_label_utils.py -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
+    status, output = sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
     # Push the input labels in the template space
     print('\nPush the input labels to the straight space...')
@@ -227,8 +227,8 @@ def main():
     print('\nRegister straight spinal cord to template...')
     #nb_iterations = '50x15'
     # TODO: nb iteration for step 2
-    sct.run('sct_register_multimodal.py -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
-    # status, output = sct.run('sct_register_straight_spinalcord_to_template.py -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
+    # status, output = sct.run('sct_register_straight_spinalcord_to_template -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate warping fields: template2anat & anat2template...')

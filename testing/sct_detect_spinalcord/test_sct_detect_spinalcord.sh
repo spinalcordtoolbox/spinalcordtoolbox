@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test sct_get_centerline.py
+# test sct_get_centerline
 
 # subject list
 SUBJECT_LIST="errsm_23" 
