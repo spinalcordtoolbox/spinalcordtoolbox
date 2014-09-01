@@ -22,9 +22,6 @@ install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 
-# SCT: create links
-  - ./install/create_links.sh
-
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
   #- PATH=${PATH}:${SCT_DIR}/scripts
@@ -35,6 +32,9 @@ install:
   - export SCT_DIR PATH
   - . ~/.bashrc
   - cd testing
+
+# SCT: create links
+  - ./install/create_links.sh
 
 script:
   - python ../scripts/sct_check_dependences.py
