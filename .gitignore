@@ -23,3 +23,4 @@ testing/sct_smooth_spinalcord/results
 testing/sct_straighten_spinalcord/results
 testing/sct_dmri_separate_b0_and_dwi/results
 testing/sct_warp_template/results
+spinalcordtoolbox_v*
