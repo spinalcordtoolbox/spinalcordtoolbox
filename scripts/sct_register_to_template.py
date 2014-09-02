@@ -5,8 +5,8 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2014-06-03
+# Author: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
+# Modified: 2014-08-29
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
