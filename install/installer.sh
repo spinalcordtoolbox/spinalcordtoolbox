@@ -81,7 +81,7 @@ echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 cmd="./create_links.sh"
 echo ">> $cmd"; $cmd
 
-unamestr=`uname`
+unamestr='uname'
 #if [[ ! "$unamestr" == 'Linux' ]]; then
 #  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
 #fi
@@ -118,9 +118,9 @@ cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
 # go to testing folder
-path_toolbox_temp=`pwd`
+path_toolbox_temp='pwd'
 cd ../sct_testing/
-path_testing=`pwd` 
+path_testing='pwd' 
 
 # display stuff
 echo
