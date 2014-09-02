@@ -111,8 +111,8 @@ status.append( test_function('sct_smooth_spinalcord',' ..................... ') 
 status.append( test_function('sct_straighten_spinalcord',' ................. ') )
 status.append( test_function('sct_warp_template',' ......................... ') )
 
-
-
 print 'status: '+str(status)
 elapsed_time = time.time() - start_time
 print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+
+sys.exit(sum(status))
