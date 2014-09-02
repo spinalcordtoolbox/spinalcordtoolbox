@@ -249,7 +249,7 @@ def main():
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
-                 fname_data, method)
+                 fname_data, method, fname_normalizing_label)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -423,7 +423,7 @@ def remove_slices(data_to_crop, slices_of_interest):
 # Save in txt file
 #=======================================================================================================================
 def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
-                 fname_data, method):
+                 fname_data, method, fname_normalizing_label):
 
     # CSV format, header lines start with "#"
 
@@ -438,6 +438,9 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     fid_metric.write('# Date - Time: '+ time.strftime('%Y/%m/%d - %H:%M:%S'))
     # Write metric data file path
     fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
+    # If it's the case, write the label used to normalize the metric estimation:
+    if fname_normalizing_label:
+        fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' + fname_normalizing_label)
     # Write method used for the metric estimation
     fid_metric.write('\n'+'# Extraction method: '+method)
 
