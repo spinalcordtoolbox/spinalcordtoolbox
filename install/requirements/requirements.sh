@@ -1,4 +1,5 @@
 #!/bin/bash
+# 
 #Installer for following requirements:
 #
 #	using conda:
@@ -10,11 +11,12 @@
 #
 #	using pip:
 #		nibadel
-
 echo "-------------------------------"
 echo "INSTALLER FOR SOME REQUIREMENTS"
 echo "-------------------------------"
 echo "* CONDA *"
-conda install --yes --file ./install/requirements/requirementsConda.txt
+CURRENT_PATH=$PWD
+
+conda install --yes --file requirementsConda.txt
 echo "* PIP *"
-pip install -r ./install/requirements/requirementsPip.txt
+pip install -r requirementsPip.txt

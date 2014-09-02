@@ -77,6 +77,8 @@ echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 # echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 
+echo ${SCT_DIR}
+
 # create soft link to each script in SCT_DIR/script
 cmd="./create_links.sh"
 echo ">> $cmd"; $cmd
@@ -107,9 +109,11 @@ fi
 
 # install required software
 echo
-echo « Install required software... »
-cmd="python ${SCT_DIR}/install/requirements/requirements.sh
+echo " Install required software... "
+cd requirements
+cmd="./requirements.sh"
 echo ">> $cmd"; $cmd
+cd ..
 
 # check if other dependent software are installed
 echo
@@ -123,10 +127,10 @@ cd ../sct_testing/
 path_testing='pwd' 
 
 # display stuff
-echo
-echo "========================================================================================"
-echo
-echo "Done! If you had error(s), please start a new Terminal and run the following command:"
+echo ""
+echo "" "========================================================================================"
+echo ""
+echo "Done! If you had errors, please start a new Terminal and run the following command:"
 echo "> sct_check_dependences.py"
 echo
 echo "If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/"
@@ -141,8 +145,5 @@ echo "> cd $path_testing"
 echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 echo
 echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
-echo 
-echo "Enjoy :-)"
-echo 
-echo "========================================================================================"
-echo
+
+
