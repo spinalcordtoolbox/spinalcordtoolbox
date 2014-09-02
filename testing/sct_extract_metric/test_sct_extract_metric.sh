@@ -37,6 +37,7 @@ for subject in $SUBJECT_LIST; do
     	-i ../../data/${subject}/${contrast}/${file}
     	-f ../../data/${subject}/${contrast}/label/atlas
         -l 2,17
+		-n ../../data/${subject}/${contrast}/label/template/MNI-Poly-AMU_CSF.nii.gz
         -m wa
 		-v 1:3
         -o quantif_${contrast}.txt"

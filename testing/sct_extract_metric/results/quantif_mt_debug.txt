@@ -1,8 +1,0 @@
-# Vertebral levels: ALL
-# Slices: 	2 to 10
-# ID, label name, mean, std
-
-0,  left fasciculus gracilis, 1221.582281, 141.070357
-1,  left fasciculus cuneatus, 1207.371720, 138.843240
-2,  left lateral corticospinal tract, 1234.805090, 66.922375
-3,  left ventral spinocerebellar tract, 1361.499044, 84.644802
