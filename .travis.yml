@@ -27,13 +27,8 @@ install:
   #- PATH=${PATH}:${SCT_DIR}/scripts
   - PATH=${PATH}:${SCT_DIR}/bin
   - PATH=${PATH}:${SCT_DIR}/bin/linux
-  - PATH=${PATH}:${SCT_DIR}/install/linux/ants
-  - PATH=${PATH}:${SCT_DIR}/install/linux/c3d
   - export SCT_DIR PATH
   - . ~/.bashrc
-
-# SCT: create links
-  - ./install/create_links.sh
 
 # Go to testing folder
   - cd testing
@@ -43,3 +38,5 @@ script:
   - python test_all.py
   #- travis_wait python test_smooth_spinalcord.py
   #- travis_wait python test_register_to_template.py
+  - ./install/create_package.sh
+  - ./spinalcordtoolbox_v*/installer.sh
