@@ -30,6 +30,9 @@ install:
   - export SCT_DIR PATH
   - . ~/.bashrc
 
+# SCT: create links
+  - ./install/create_links.sh
+
 # Go to testing folder
   - cd testing
 
