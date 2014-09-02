@@ -15,7 +15,7 @@ echo "-------------------------------"
 echo "INSTALLER FOR SOME REQUIREMENTS"
 echo "-------------------------------"
 echo "* CONDA *"
-conda install --yes --file ./install/requirements/requirementsConda.txt
+conda install --yes --file requirementsConda.txt
 echo "* PIP *"
-pip install -r ./install/requirements/requirementsPip.txt
+pip install -r requirementsPip.txt
 
