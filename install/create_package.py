@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Create package with appropriate version number.
 #
@@ -30,13 +31,13 @@ def usage():
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,linux}.\n’ \
+        '  -s <OS name>      name of the OS {osx,linux}.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  create_package.py -s linux\n’
+        '  create_package.py -s linux\n'
     sys.exit(2)
 
-listOS = ['osx', ‘linux’]
+listOS = ['osx', 'linux']
 OSname = ''
 # Check input param
 try:
@@ -76,12 +77,10 @@ sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r osx/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r osx/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
-elif OSname == ‘linux’:
+    sct.run('cp -r osx/* '+folder_sct+'spinalcordtoolbox/bin/')
+elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r linux/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r linux/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
+    sct.run('cp -r linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
 # copy colormap
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
