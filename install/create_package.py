@@ -77,10 +77,8 @@ sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r osx/* '+folder_sct+'spinalcordtoolbox/bin/')
 elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
 # copy colormap
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
