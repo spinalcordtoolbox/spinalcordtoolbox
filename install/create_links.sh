@@ -3,8 +3,8 @@
 # Script to create links in installer
 #
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-04-18
+# Author: Benjamin De Leener
+# Modified: 2014-09-03
 
 
 #==========================================================================#
