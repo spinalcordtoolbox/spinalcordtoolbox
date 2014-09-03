@@ -1,0 +1,49 @@
+language: python
+python:
+  - 2.7
+
+install:
+
+# Setup anaconda
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  - cd install/requirements/
+  - ./requirements.sh
+  - cd ../..
+
+# FSL
+  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+  - travis_retry sudo apt-get install -qq --no-install-recommends fsl
+  - travis_retry sudo apt-get install -qq fsl-atlases
+  - source /etc/fsl/fsl.sh
+
+# The next couple lines fix a crash with multiprocessing on Travis
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+
+# SCT: set PATH
+  - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
+  #- PATH=${PATH}:${SCT_DIR}/scripts
+  - PATH=${PATH}:${SCT_DIR}/bin
+  - PATH=${PATH}:${SCT_DIR}/bin/linux
+  - export SCT_DIR PATH
+  - . ~/.bashrc
+
+# SCT: create links
+  - ./install/create_links.sh
+
+# Go to testing folder
+  - cd testing
+
+script:
+  - python ../scripts/sct_check_dependences.py
+  - python test_all.py
+  #- travis_wait python test_smooth_spinalcord.py
+  #- travis_wait python test_register_to_template.py
+  - cd ../install
+  - python create_package.py -s linux
+  - cd ../spinalcordtoolbox_v*
+  - ./installer.sh

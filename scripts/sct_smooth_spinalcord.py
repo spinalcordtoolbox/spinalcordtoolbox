@@ -1,53 +1,15 @@
 #!/usr/bin/env python
-
-## @package sct_smooth_spinal_cord_straightening.py
 #
-# - spinal cord MRI volume 3D (as nifti format)
-# - centerline of the spinal cord (given by sct_get_centerline.py)
-# - sct_straighten_spinalcord.py from the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-#
-#
-# Description about how the function works:
 # This program straightens the spinal cord of an anatomic image, apply a smoothing in the z dimension and apply
 # the inverse warping field to get back the curved spinal cord but smoothed.
 #
-#
-# USAGE
 # ---------------------------------------------------------------------------------------
-# sct_smooth_spinal_cord_straightening.py -i <input_image> -c <centerline>
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Simon Levy
+# Modified: 2014-09-01
 #
-# MANDATORY ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   -i       input 3D image to smooth.
-#   -c       centerline (generated with sct_get_centerline).
-#
-#
-# OPTIONAL ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   -r       if 1, remove temporary files (straightening output, smoothing output,
-#            warping fields, outputs from orientation changes), default=1.
-#
-#
-# EXAMPLES
-# ---------------------------------------------------------------------------------------
-#   sct_smooth_spinal_cord_straightening.py -i t2.nii.gz -c centerline.nii.gz
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-#
-#
-# EXTERNAL SOFTWARE
-#
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymt.ca>
-# Author: Simon LEVY
-# Modified: 2014-07-05
-#
-# License: see the LICENSE.TXT
-#=======================================================================================================================
+# About the license: see the file LICENSE.TXT
+#########################################################################################
 
 
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
@@ -128,8 +90,8 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.run('c3d '+fname_anat+' -o '+path_tmp+'/anat.nii')
-    sct.run('c3d '+fname_centerline+' -o '+path_tmp+'/centerline.nii')
+    sct.run('sct_c3d '+fname_anat+' -o '+path_tmp+'/anat.nii')
+    sct.run('sct_c3d '+fname_centerline+' -o '+path_tmp+'/centerline.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -143,15 +105,15 @@ def main():
 
     # Straighten the spinal cord
     print '\nStraighten the spinal cord...'
-    sct.run('sct_straighten_spinalcord.py -i anat_rpi.nii -c centerline_rpi.nii -w spline -v '+str(verbose))
+    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -w spline -v '+str(verbose))
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii')
+    sct.run('sct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii')
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord (assuming a 3D image)...'
-    sct.run('WarpImageMultiTransform 3 anat_rpi_straight_smooth.nii anat_rpi_straight_smooth_curved.nii -R anat.nii --use-BSpline warp_straight2curve.nii.gz')
+    sct.run('sct_WarpImageMultiTransform 3 anat_rpi_straight_smooth.nii anat_rpi_straight_smooth_curved.nii -R anat.nii --use-BSpline warp_straight2curve.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
@@ -191,11 +153,11 @@ def usage():
         '  de-straightened as originally.\n' \
         '\n' \
         'USAGE\n' \
-        '  sct_smooth_spinalcord.py -i <image> -c <centerline/segmentation>\n' \
+        '  sct_smooth_spinalcord -i <image> -c <centerline/segmentation>\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <image>        input image to smooth.\n' \
-        '  -c <centerline>   spinal cord centerline (given by the function sct_get_centerline.py) or segmentation.\n' \
+        '  -c <centerline>   spinal cord centerline (given by the function sct_get_centerline) or segmentation.\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=3.' \

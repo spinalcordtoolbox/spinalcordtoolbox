@@ -31,7 +31,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
 
-    cmd="sct_label_utils.py
+    cmd="sct_label_utils
         -i ../../data/${subject}/t2/landmarks_rpi.nii.gz
         -t cross
         -o landmarks_rpi_cross3x3.nii.gz

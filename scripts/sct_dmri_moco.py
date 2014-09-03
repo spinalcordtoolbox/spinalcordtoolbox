@@ -18,14 +18,15 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-07-02
+# Modified: 2014-08-15
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: find clever approach for b=0 moco (if target is corrupted, then reg will fail)
+# TODO: make sure slicewise not used with ants, eddy not used with ants
+# TODO: make sure images are axial
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
-# TODO (no priority): for sinc interp, use ANTs or c3d instead of flirt
+# TODO (no priority): for sinc interp, use ANTs or sct_c3d instead of flirt
 
 import sys
 import os
@@ -34,70 +35,45 @@ import getopt
 import time
 import glob
 import math
-from sct_eddy_correct import sct_eddy_correct
-from isct_moco import sct_moco
-from isct_moco_spline import sct_moco_spline
-from isct_moco_combine_matrix import sct_moco_combine_matrix
-
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
-
-output_path = ''
-
-# get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+import numpy as np
+from sct_eddy_correct import eddy_correct
 import sct_utils as sct
+import msct_moco as moco
 
 class param:
     def __init__(self):
-    
-        #============================================
-        #Different Parameters
-        #============================================
-        self.debug                     = 0
-        self.fname_data                = ''
-        self.fname_bvecs               = ''
-        self.fname_bvals               = ''
-        self.fname_target              = ''
-        self.fname_centerline          = ''
-        self.output_path               = ''
-        self.mat_final                 = ''
-        self.mat_moco                  = ''
-        self.todo                      = ''              
-        self.dwi_group_size            = 3              # number of images averaged for 'dwi' method.
-        self.suffix                    = '_moco'
-        self.mask_size                 = 0               # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program                   = 'FLIRT'
-        self.cost_function_flirt       = ''              # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
-        self.interp                    = 'trilinear'     #  Default is 'trilinear'. Additional options: trilinear,nearestneighbour,sinc,spline.
-        self.spline_fitting            = 0
-        self.delete_tmp_files          = 1
-        self.merge_back                = 1
-        self.verbose                   = 0
-        self.plot_graph                = 0
+        self.debug = 0
+        self.fname_data = ''
+        self.fname_bvecs = ''
+        self.fname_bvals = ''
+        self.fname_target = ''
+        self.fname_centerline = ''
+        # self.path_out = ''
+        self.mat_final = ''
+        self.todo = ''
+        self.dwi_group_size = 3  # number of images averaged for 'dwi' method.
+        self.spline_fitting = 0
+        self.remove_tmp_files = 1
+        self.verbose = 1
+        self.plot_graph = 0
+        # param for msct_moco
+        self.slicewise = 0
+        self.suffix = '_moco'
+        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
+        self.program = 'ants_affine'  # flirt, ants, ants_affine
+        self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
+        # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        self.interp = 'spline'  # nn, trilinear, spline
+        #Eddy Current Distortion Parameters:
+        self.run_eddy = 0
+        self.mat_eddy = ''
+        self.min_norm = 0.001
+        self.swapXY = 0
 
-        #============================================
-        #Eddy Current Distortion Parameters
-        #============================================
-        self.run_eddy                  = 0
-        self.mat_eddy                  = ''
-        self.min_norm                  = 0.001
-        self.swapXY                    = 0
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-
 def main():
 
     print '\n\n\n\n==================================================='
@@ -106,23 +82,29 @@ def main():
 
     # initialization
     start_time = time.time()
+    path_out = '.'
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
-        param.fname_data = path_sct+'/testing/data/errsm_23/dmri/dmri.nii.gz'
-        param.fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
-
+        # get path of the testing data
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_DATA_DIR')
+        param.fname_data = path_sct_data+'/errsm_03_sub/dmri/dmri.nii.gz'
+        param.fname_bvecs = path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
+        param.verbose = 1
+        param.slicewise = 0
+        param.program = 'ants_affine'
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:a:b:c:d:e:f:g:l:o:p:r:s:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:v:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-i'):
-            param.fname_data = arg
         elif opt in ('-a'):
             param.fname_bvals = arg
         elif opt in ('-b'):
@@ -137,84 +119,99 @@ def main():
             param.spline_fitting = int(arg)
         elif opt in ('-g'):
             param.plot_graph = int(arg)
+        elif opt in ('-i'):
+            param.fname_data = arg
         elif opt in ('-l'):
             param.fname_centerline = arg
+        elif opt in ('-m'):
+            param.program = arg
         elif opt in ('-o'):
-            param.output_path = arg
+            path_out = arg
         elif opt in ('-p'):
             param.interp = arg
         elif opt in ('-r'):
-            param.delete_tmp_files = int(arg)
+            param.remove_tmp_files = int(arg)
         elif opt in ('-s'):
             param.mask_size = float(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
+        elif opt in ('-z'):
+            param.slicewise = int(arg)
 
     # display usage if a mandatory argument is not provided
-    if param.fname_data == '':
-        print '\n\n\033[91mAll mandatory arguments are not provided\033[0m \n'
-        usage()
-    elif param.fname_bvecs == '' and param.fname_bvals == '':
-        print '\n\n\033[91mAll mandatory arguments are not provided\033[0m \n'
+    if param.fname_data == '' or param.fname_bvecs == '':
+        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
 
-    if param.cost_function_flirt=='':  param.cost_function_flirt = 'normcorr'
-    if param.output_path=='': param.output_path = os.getcwd() + '/'
-    global output_path
-    output_path = param.output_path
+    # if param.cost_function_flirt == '':
+    #     param.cost_function_flirt = 'normcorr'
 
-    print 'Input File:',param.fname_data
-    print 'Bvecs File:',param.fname_bvecs
-    if param.fname_bvals!='':
-        print 'Bvals File:', param.fname_bvals
+    # if param.path_out == '':
+    #     path_out = ''
+    #     param.path_out = os.getcwd() + '/'
+    # global path_out
+    # path_out = param.path_out
+
+    sct.printv('\nInput parameters:', param.verbose)
+    sct.printv('  input file ............'+param.fname_data, param.verbose)
+    sct.printv('  bvecs file ............'+param.fname_bvecs, param.verbose)
+    sct.printv('  bvals file ............'+param.fname_bvals, param.verbose)
 
     # check existence of input files
-    sct.check_file_exist(param.fname_data,param.verbose)
-    sct.check_file_exist(param.fname_bvecs,param.verbose)
+    sct.check_file_exist(param.fname_data, param.verbose)
+    sct.check_file_exist(param.fname_bvecs, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
     param.fname_bvecs = os.path.abspath(param.fname_bvecs)
-    if param.fname_bvals!='':
+    if param.fname_bvals != '':
         param.fname_bvals = os.path.abspath(param.fname_bvals)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # create temporary folder
-    path_tmp = output_path+'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+ path_tmp, param.verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
-    fname_data_initial = param.fname_data
+    # fname_data_initial = param.fname_data
     
-    #Copying input data to the tmp folder
+    # Copying input data to the tmp folder
+    sct.printv('Copying input data to the tmp folder...', param.verbose)
     os.mkdir('outputs')
-    cmd = 'cp ' + param.fname_data + ' dmri' + ext_data
-    status, output = sct.run(cmd, param.verbose)
-    cmd = 'cp ' + param.fname_bvecs + ' bvecs.txt'
-    status, output = sct.run(cmd, param.verbose)
-    
+    sct.run('cp '+param.fname_data+' dmri'+ext_data, param.verbose)
+    sct.run('cp '+param.fname_bvecs+' bvecs.txt', param.verbose)
+    # convert dmri to nii format
+    sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
-    # EDDY CORRECTION -- for debugging, it is possible to run code by commenting the next lines
-    if param.run_eddy:
-        param.output_path = ''
-        param.slicewise = 1
-        sct_eddy_correct(param)
-        param.fname_data = file_data + '_eddy.nii'
+    # EDDY CURRENT CORRECTION
+    # TODO: MAKE SURE path_out IS CORRECT WITH EDDY BEFORE ACTIVATING EDDY
+    # if param.run_eddy:
+    #     param.path_out = ''
+    #     param.slicewise = 1
+    #     eddy_correct(param)
+    #     param.fname_data = file_data + '_eddy.nii'
 
-    # here, the variable "fname_data_initial" is also input, because it will be processed in the final step, where as
-    # the param.fname_data will be the output of sct_eddy_correct.
-    dmri_moco(param, fname_data_initial)
+    # run moco
+    dmri_moco(param)
 
     # come back to parent folder
     os.chdir('..')
 
+    # Generate output files
+    path_out = sct.slash_at_the_end(path_out, 1)
+    sct.create_folder(path_out)
+    sct.printv('\nGenerate output files...', param.verbose)
+    sct.generate_output_file(path_tmp+'dmri'+param.suffix+'.nii', path_out, file_data+param.suffix, ext_data, param.verbose)
+    sct.generate_output_file(path_tmp+'b0_mean.nii', path_out, 'b0'+param.suffix+'_mean', ext_data, param.verbose)
+    sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out, 'dwi'+param.suffix+'_mean', ext_data, param.verbose)
+
     # Delete temporary files
-    if param.delete_tmp_files == 1:
-        sct.printv('\nDelete temporary files...',param.verbose)
+    if param.remove_tmp_files == 1:
+        sct.printv('\nDelete temporary files...', param.verbose)
         sct.run('rm -rf '+path_tmp, param.verbose)
 
     # display elapsed time
@@ -223,37 +220,39 @@ def main():
 
     #To view results
     print '\nTo view results, type:'
-    print 'fslview ' + ' ' + param.output_path + file_data + param.suffix + ' &\n\n'
+    print 'fslview '+param.path_out+file_data+param.suffix+' '+file_data+' &\n'
 
 
 #=======================================================================================================================
-# Function moco - Preparing Data For MOCO
+# dmri_moco: motion correction specific to dmri data
 #=======================================================================================================================
-def dmri_moco(param, fname_data_initial):
+def dmri_moco(param):
     
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     
-    fname_data     = param.fname_data
-    fname_bvecs    = param.fname_bvecs
-    fname_bvals    = param.fname_bvals
+    fname_data = param.fname_data
+    fname_bvecs = param.fname_bvecs
+    fname_bvals = param.fname_bvals
+    slicewise = param.slicewise
     dwi_group_size = param.dwi_group_size
-    interp         = param.interp
-    verbose        = param.verbose
-    
+    interp = param.interp
+    verbose = param.verbose
+    mat_final = 'mat_final/'
+
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
     
-    file_b0        = 'b0'
-    file_dwi       = 'dwi'
+    file_b0 = 'b0'
+    file_dwi = 'dwi'
     
     # Get size of data
-    sct.printv('\nGet dimensions data...',verbose)
+    sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
-    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
+    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     if fname_bvals == '':
         # Open bvecs file
-        sct.printv('\nOpen bvecs file...',verbose)
+        sct.printv('\nOpen bvecs file...', verbose)
         bvecs = []
         with open(fname_bvecs) as f:
             for line in f:
@@ -262,13 +261,13 @@ def dmri_moco(param, fname_data_initial):
     
         # Check if bvecs file is nx3
         if not len(bvecs[0][:]) == 3:
-            sct.printv('.. WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.',verbose)
-            sct.printv('Transpose bvecs...',verbose)
+            sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
+            sct.printv('  Transpose bvecs...', verbose)
             # transpose bvecs
             bvecs = zip(*bvecs)
 
         # Identify b=0 and DWI images
-        sct.printv('\nIdentify b=0 and DWI images...',verbose)
+        sct.printv('\nIdentify b=0 and DWI images...', verbose)
         index_b0 = []
         index_dwi = []
         for it in xrange(0,nt):
@@ -278,12 +277,12 @@ def dmri_moco(param, fname_data_initial):
                 index_dwi.append(it)
         n_b0 = len(index_b0)
         n_dwi = len(index_dwi)
-        sct.printv('.. Index of b=0:'+str(index_b0),verbose)
-        sct.printv('.. Index of DWI:'+str(index_dwi),verbose)
+        sct.printv('  Index of b=0:'+str(index_b0), verbose)
+        sct.printv('  Index of DWI:'+str(index_dwi), verbose)
         
     if fname_bvals != '':
         # Open bvals file
-        sct.printv('\nOpen bvals file...',verbose)
+        sct.printv('\nOpen bvals file...', verbose)
         bvals = []
         with open(fname_bvals) as f:
             for line in f:
@@ -291,32 +290,32 @@ def dmri_moco(param, fname_data_initial):
                 bvals.append(bvals_new)
 
         # Identify b=0 and DWI images
-        sct.printv('\nIdentify b=0 and DWI images...',verbose)
-        index_b0 = np.where(bvals>429 and bvals<4000)
-        index_dwi = np.where(bvals<=429 or bvals>=4000)
+        sct.printv('\nIdentify b=0 and DWI images...', verbose)
+        index_b0 = np.where(bvals > 429 and bvals < 4000)  # only valid for connectome scanner data (very high bvalues)
+        index_dwi = np.where(bvals <= 429 or bvals >= 4000)
         n_b0 = len(index_b0)
         n_dwi = len(index_dwi)
-        sct.printv('.. Index of b=0:'+str(index_b0),verbose)
-        sct.printv('.. Index of DWI:'+str(index_dwi),verbose)
+        sct.printv('  Index of b=0:'+str(index_b0), verbose)
+        sct.printv('  Index of DWI:'+str(index_dwi), verbose)
 
     # Split into T dimension
-    sct.printv('\nSplit along T dimension...',verbose)
-    status, output = sct.run(fsloutput+'fslsplit '+fname_data + ' ' + file_data + '_T',verbose)
+    sct.printv('\nSplit along T dimension...', verbose)
+    status, output = sct.run(fsloutput+'fslsplit '+fname_data + ' ' + file_data + '_T', verbose)
 
     # Merge b=0 images
-    sct.printv('\nMerge b=0...',verbose)
+    sct.printv('\nMerge b=0...', verbose)
     fname_b0_merge = file_b0
     cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge
-    for iT in range(n_b0):
-        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[iT]).zfill(4)
+    for it in range(n_b0):
+        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
     status, output = sct.run(cmd,verbose)
-    sct.printv(('.. File created: ' + fname_b0_merge),verbose)
+    sct.printv(('  File created: ' + fname_b0_merge), verbose)
 
     # Average b=0 images
-    sct.printv('\nAverage b=0...',verbose)
-    fname_b0_mean = 'b0_mean' 
+    sct.printv('\nAverage b=0...', verbose)
+    fname_b0_mean = 'b0_mean'
     cmd = fsloutput + 'fslmaths ' + fname_b0_merge + ' -Tmean ' + fname_b0_mean
-    status, output = sct.run(cmd,verbose)
+    status, output = sct.run(cmd, verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(n_dwi/dwi_group_size))
@@ -328,181 +327,130 @@ def dmri_moco(param, fname_data_initial):
     
     # add the remaining images to the last DWI group
     nb_remaining = n_dwi%dwi_group_size  # number of remaining images
-    if nb_remaining>0:
+    if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
 
-    # Size of DWI groups                        
+    # DWI groups
     for iGroup in range(nb_groups):
-        sct.printv(('\nGroup ' + str((iGroup+1)) + ' of DW images'),verbose)
-    
+        sct.printv('\nDWI group: ' +str((iGroup+1))+'/'+str(nb_groups), verbose)
+
+        # get index
         index_dwi_i = group_indexes[iGroup]
         nb_dwi_i = len(index_dwi_i)
-        
+
         # Merge DW Images
-        sct.printv('\nMerge DW images...',verbose)       
+        sct.printv('Merge DW images...', verbose)
         fname_dwi_merge_i = file_dwi + '_' + str(iGroup)
         cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i
-        for iT in range(nb_dwi_i):
-            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[iT]).zfill(4)
-        status, output = sct.run(cmd,verbose)
+        for it in range(nb_dwi_i):
+            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
+        sct.run(cmd, verbose)
 
         # Average DW Images
-        sct.printv('\nAverage DW images...',verbose)
+        sct.printv('Average DW images...', verbose)
         fname_dwi_mean = file_dwi + '_mean_' + str(iGroup)
         cmd = fsloutput + 'fslmaths ' + fname_dwi_merge_i + ' -Tmean ' + fname_dwi_mean
-        status, output = sct.run(cmd,verbose)
+        sct.run(cmd, verbose)
 
     # Merge DWI groups means
-    sct.printv('\nMerging DW files...',verbose)
+    sct.printv('\nMerging DW files...', verbose)
     fname_dwi_groups_means_merge = 'dwi_averaged_groups' 
     cmd = fsloutput + 'fslmerge -t ' + fname_dwi_groups_means_merge
     for iGroup in range(nb_groups):
         cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
-    status, output = sct.run(cmd, verbose)
+    sct.run(cmd, verbose)
 
     # Average DW Images
-    sct.printv('\nAveraging all DW images...',verbose)
+    sct.printv('\nAveraging all DW images...', verbose)
     fname_dwi_mean = 'dwi_mean'  
-    cmd = fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge + ' -Tmean ' + fname_dwi_mean
-    status, output = sct.run(cmd,verbose)
-
-    # Estimate moco on dwi groups
-    sct.printv('\n\n------------------------------------------------------------------------------',verbose)
-    sct.printv('Estimating motion based on DW groups...',verbose)
-    sct.printv('------------------------------------------------------------------------------\n',verbose)
-    param.fname_data   = 'dwi_averaged_groups.nii'
-    param.fname_target = file_dwi + '_mean_' + str(0)
-    param.output_path  = ''
-    param.todo         = 'estimate_and_apply'
-    param.mat_moco     = 'mat_dwigroups'
-    param.interp       = 'trilinear'
-    sct_moco(param)
+    sct.run(fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge + ' -Tmean ' + fname_dwi_mean, verbose)
 
     # Estimate moco on b0 groups
-    param.fname_data = 'b0.nii'
-    if index_dwi[0]!=0:
-        # If first DWI is not the first volume, then there is a least one b=0 image before. In that case
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Estimating motion on b=0 images...', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
+    param.fname_data = 'b0'
+    if index_dwi[0] != 0:
+        # If first DWI is not the first volume (most common), then there is a least one b=0 image before. In that case
         # select it as the target image for registration of all b=0
-        param.fname_target = file_data + '_T' + str(index_b0[index_dwi[0]-1]).zfill(4) + '.nii'
+        param.fname_target = file_data + '_T' + str(index_b0[index_dwi[0]-1]).zfill(4)
     else:
         # If first DWI is the first volume, then the target b=0 is the first b=0 from the index_b0.
-        param.fname_target = file_data + '_T' + str(index_b0[0]).zfill(4) + '.nii'
-    param.output_path = ''
-    param.todo        = 'estimate_and_apply'
-    param.mat_moco    = 'mat_b0groups'
-    param.interp      = 'trilinear'
-    sct_moco(param)    
+        param.fname_target = file_data + '_T' + str(index_b0[0]).zfill(4)
+    param.path_out = ''
+    param.todo = 'estimate'
+    param.mat_moco = 'mat_b0groups'
+    param.interp = 'trilinear'
+    moco.moco(param)
 
-    # Copy registration matrix for every dwi based on dwi_averaged_groups
-    sct.printv('\n\n------------------------------------------------------------------------------',verbose)
-    sct.printv('Copy registration matrix for every dwi based on dwi_averaged_groups matrix...',verbose)
-    sct.printv('------------------------------------------------------------------------------\n',verbose)
-    mat_final = 'mat_final/'
-    if not os.path.exists(mat_final): os.makedirs(mat_final)
+    # Estimate moco on dwi groups
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Estimating motion on DW images...', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
+    param.fname_data = 'dwi_averaged_groups'
+    param.fname_target = file_dwi + '_mean_' + str(0)  # target is the first DW image (closest to the first b=0)
+    param.path_out = ''
+    param.todo = 'estimate'
+    param.mat_moco = 'mat_dwigroups'
+    param.interp = 'trilinear'
+    moco.moco(param)
 
+    # create final mat folder
+    sct.create_folder(mat_final)
+
+    # Copy b=0 registration matrices
+    sct.printv('\nCopy b=0 registration matrices...', verbose)
+    # first, use the right extension
+    # TODO: output param in moco so that we don't need to do the following twice
+    if param.program == 'flirt':
+        ext_mat = '.txt'  # affine matrix
+    elif param.program == 'ants':
+        ext_mat = '0Warp.nii.gz'  # warping field
+    elif param.program == 'ants_affine':
+        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
+
+    for it in range(n_b0):
+        if slicewise:
+            for iz in range(nz):
+                sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, verbose)
+        else:
+            sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, verbose)
+
+    # Copy DWI registration matrices
+    sct.printv('\nCopy DWI registration matrices...', verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            for i_Z in range(nz):
-                cmd = 'cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(i_Z)+'.txt'
-                status, output = sct.run(cmd,verbose)
+            if slicewise:
+                for iz in range(nz):
+                    sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, verbose)
+            else:
+                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, verbose)
 
-    index = np.argmin(np.abs(np.array(index_dwi) - index_b0[len(index_b0)-1]))
-    for b0 in range(len(index_b0)):
-        for i_Z in range(nz):
-            cmd = 'cp '+mat_final+'mat.T'+ str(index_dwi[index]) +'_Z'+str(i_Z)+'.txt'+' '+mat_final+'mat.T'+str(index_b0[b0])+'_Z'+str(i_Z)+'.txt'
-            status, output = sct.run(cmd,verbose)
-
-    # Renaming Files
-    nz1 = len(glob.glob('mat_b0groups/mat.T0_Z*.txt'))
-    nt1 = len(glob.glob('mat_b0groups/mat.T*_Z0.txt'))
-    for iT in range(nt1):
-        if iT!=index_b0[iT]:
-            for iZ in range(nz1):
-                cmd = 'mv ' + 'mat_b0groups/mat.T'+str(iT)+'_Z'+str(iZ)+'.txt' + ' ' + 'mat_b0groups/mat.T'+str(index_b0[iT])+'_Z'+str(iZ)+'.txt'
-                status, output = sct.run(cmd,verbose)
-
-    # combining Motion Matrices
-    sct_moco_combine_matrix('mat_b0groups',mat_final,verbose)
-
+    # Spline Regularization along T
     if param.spline_fitting:
-        #Spline Regularization along T
-        sct_moco_spline(mat_final, nt, nz, verbose, np.array(index_b0), param.plot_graph)
+        moco.spline(mat_final, nt, nz, verbose, np.array(index_b0), param.plot_graph)
 
+    # combine Eddy Matrices
     if param.run_eddy:
-        #combining eddy Matrices
-        sct_moco_combine_matrix('mat_eddy', mat_final)
+        param.mat_2_combine = 'mat_eddy'
+        param.mat_final = mat_final
+        moco.combine_matrix(param)
 
     # Apply moco on all dmri data
-    sct.printv('\n\n\n------------------------------------------------------------------------------',verbose)
-    sct.printv('Apply moco on all dmri data...',verbose)
-    sct.printv('------------------------------------------------------------------------------\n',verbose)
-    param.fname_data   = fname_data_initial
-    param.fname_target = fname_data_initial
-    param.output_path  = output_path
-    param.mat_final    = mat_final
-    param.todo         = 'apply'
-    param.interp       = interp
-    sct_moco(param)
+    sct.printv('\n-------------------------------------------------------------------------------', verbose)
+    sct.printv('  Apply moco', verbose)
+    sct.printv('-------------------------------------------------------------------------------', verbose)
+    param.fname_data = 'dmri'
+    param.fname_target = file_dwi+'_mean_'+str(0)  # reference for reslicing into proper coordinate system
+    param.path_out = ''
+    param.mat_moco = mat_final
+    param.todo = 'apply'
+    param.interp = interp
+    moco.moco(param)
 
-    #===================================================================
-    #Generating b=0 mean and DWI mean after motion correction
-    #===================================================================
-    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
-    fname_final = param.output_path + file_data + param.suffix
-    # Split into T dimension
-    sct.printv('\nSplit along T dimension...',verbose)
-    status, output = sct.run((fsloutput+'fslsplit '+fname_final + ' ' + file_data + '_moco_T'),verbose)
-
-    # Merge b=0 images
-    sct.printv('\nMerge b=0...',verbose)
-    fname_b0_merge_final = file_b0 + '_final'
-    cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge_final
-    for iT in range(n_b0):
-        cmd = cmd + ' ' + file_data + '_moco_T' + str(index_b0[iT]).zfill(4)
-    status, output = sct.run(cmd,verbose)
-    sct.printv(('.. File created: ' + fname_b0_merge_final),verbose)
-
-    # Average b=0 images
-    sct.printv('\nAverage b=0...',verbose)
-    fname_b0_mean_final = param.output_path + 'b0_mean'
-    cmd = fsloutput + 'fslmaths ' + fname_b0_merge_final + ' -Tmean ' + fname_b0_mean_final
-    status, output = sct.run(cmd,verbose)
-
-    # Size of DWI groups
-    for iGroup in range(nb_groups):
-        sct.printv(('\nGroup ' + str((iGroup+1)) + ' of DW images'),verbose)
-    
-        index_dwi_i = group_indexes[iGroup]
-        nb_dwi_i = len(index_dwi_i)
-    
-        # Merge DW Images
-        sct.printv('\nMerge DW images...',verbose)
-        fname_dwi_merge_i_final = file_dwi + '_' + str(iGroup)
-        cmd = fsloutput + 'fslmerge -t ' + fname_dwi_merge_i_final
-        for iT in range(nb_dwi_i):
-            cmd = cmd +' ' + file_data + '_moco_T' + str(index_dwi_i[iT]).zfill(4)
-        status, output = sct.run(cmd,verbose)
-    
-        # Average DW Images
-        sct.printv('\nAverage DW images...',verbose)
-        fname_dwi_mean_final = file_dwi + '_mean_final' + str(iGroup)
-        cmd = fsloutput + 'fslmaths ' + fname_dwi_merge_i_final + ' -Tmean ' + fname_dwi_mean_final
-        status, output = sct.run(cmd,verbose)
-
-    # Merge DWI groups means
-    sct.printv('\nMerging DW files...',verbose)
-    fname_dwi_groups_means_merge_final = 'dwi_averaged_groups_final'
-    cmd = fsloutput + 'fslmerge -t ' + fname_dwi_groups_means_merge_final
-    for iGroup in range(nb_groups):
-        cmd = cmd + ' ' + file_dwi + '_mean_final' + str(iGroup)
-    status, output = sct.run(cmd,verbose)
-
-    # Average DW Images
-    sct.printv('\nAveraging all DW images...',verbose)
-    fname_dwi_mean_final = param.output_path + 'dwi_mean'
-    cmd = fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge_final + ' -Tmean ' + fname_dwi_mean_final
-    status, output = sct.run(cmd,verbose)
+    # generate b0_moco_mean and dwi_moco_mean
+    sct.run('sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1', verbose)
 
 
 #=======================================================================================================================
@@ -525,10 +473,9 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -o <path_out>    Output path.
-  -a <bvals>       bvals file. Used to detect low-bvals images : more robust
+  -z {0,1}         slice-by-slice motion correction. Default="""+str(param.slicewise)+"""
   -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
-  -e {0,1}         Eddy Correction using opposite gradient directions. Default=0
+  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
                    in time
   -s <int>         Size of Gaussian mask for more robust motion correction (in mm). 
@@ -538,10 +485,17 @@ OPTIONAL ARGUMENTS
   -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
-  -p {nearestneighbour,trilinear,sinc,spline}  Final Interpolation. Default=trilinear.
+  -m {method}      Method for registration:
+                     flirt: FSL flirt with Tx and Ty transformations.
+                     ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
+                     ants_affine: affine transformation constrained in axial plane.
+                     Default="""+str(param.program)+"""
+  -a <bvals>       bvals file. Used to detect low-bvals images : more robust
+  -o <path_out>    Output path.
+  -p {nn,trilinear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.delete_tmp_files)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE

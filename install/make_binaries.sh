@@ -14,7 +14,7 @@ PROGRAM_LIST="sct_change_nifti_pixel_type sct_crop_image sct_detect_spinalcord s
 PATH_BIN_SCT=osx
 unamestr=`uname`
 if [[ "$unamestr" == 'Linux' ]]; then
-  PATH_BIN_SCT=debian
+  PATH_BIN_SCT=linux
 fi
 
 # loop across programs

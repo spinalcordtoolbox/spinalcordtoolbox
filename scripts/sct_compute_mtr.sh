@@ -80,7 +80,7 @@ if [[ -z $file_mt1 ]]; then
 fi
 
 # register MTC0 on MTC1
-cmd="sct_register_multimodal.py -i ${file_mt0} -d ${file_mt1}"
+cmd="sct_register_multimodal -i ${file_mt0} -d ${file_mt1}"
 echo ">> $cmd"; $cmd
 
 # retrieve file name

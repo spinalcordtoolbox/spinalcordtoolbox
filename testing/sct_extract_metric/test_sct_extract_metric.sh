@@ -33,7 +33,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_extract_metric.py
+    cmd="sct_extract_metric
     	-i ../../data/${subject}/${contrast}/${file}
     	-f ../../data/${subject}/${contrast}/label/atlas
         -l 2,17
