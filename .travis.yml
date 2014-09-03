@@ -43,7 +43,8 @@ script:
   #- python test_all.py
   #- travis_wait python test_smooth_spinalcord.py
   #- travis_wait python test_register_to_template.py
-  - python ../install/create_package.py -s linux
+  - cd ../install
+  - python create_package.py -s linux
   - cd ..
   - ls
   - cd /^spinalcordtoolbox_v$/
