@@ -33,7 +33,7 @@ for subject in $SUBJECT_LIST; do
         echo
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
-        cmd="sct_segmentation_propagation
+        cmd="sct_propseg
             -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
             -t ${contrast}
             -mesh
