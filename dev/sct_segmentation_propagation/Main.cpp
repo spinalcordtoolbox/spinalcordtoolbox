@@ -1,5 +1,5 @@
 /*! \file Main.cpp
- * \mainpage sct_segmentation_propagation
+ * \mainpage sct_propseg
  *
  * \section description Description
  * Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
@@ -13,11 +13,11 @@
  * If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.
  *
  * \section usage Usage
- * \code sct_segmentation_propagation -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options] \endcode
+ * \code sct_propseg -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options] \endcode
  * 
  * \section input Input parameters
  *
- * General options: 
+ * MANDATORY ARGUMENTS:
  *		* -i <inputfilename>            (no default)
  *      * -i-dicom <inputfolderpath>    (replace -i, read DICOM series, output still in NIFTI)
  *		* -o <outputfolderpath>         (default is current folder)
@@ -143,10 +143,10 @@ vector<CVector3> extractCenterline(string filename);
 
 void help()
 {
-    cout << "sct_segmentation_propagation - Version 1.0.0 (2014-06-22)" << endl;
-    cout << "Author : Benjamin De Leener - NeuroPoly - Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>" << endl << endl;
+    cout << "sct_propseg - Version 1.0.0 (2014-09-04)" << endl;
+    cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \nPart of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox> \nAuthor : Benjamin De Leener" << endl << endl;
     
-    cout << "Description:" << endl;
+    cout << "DESCRIPTION" << endl;
 	cout << "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path." << endl;
 	cout << "Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display." << endl;
 	cout << "Parameters of the spinal cord detection are :" << endl << " - the position (in inferior-superior direction) of the initialization" << endl << " - the number of axial slices" << endl << " - the gap (in pixel) between two axial slices" << endl << " - the approximate radius of the spinal cord" << endl << endl;
@@ -157,50 +157,54 @@ void help()
     cout << "Several tips on segmentation correction can be found on the \"Correction Tips\" page of the documentation while advices on parameters adjustments can be found on the \"Parameters\" page." << endl;
     cout << "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again." << endl;
 	
-    cout << "Usage: \t sct_segmentation_propagation -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options]" << endl << endl;
+    cout << "USAGE" << endl;
+    cout << "\tsct_propseg -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options]" << endl << endl;
     cout << endl << "WARNING: be sure your image has the correct type !!" << endl << endl;
     
-    cout << "General options: " << endl;
-    cout << "\t-i <inputfilename> \t (no default)" << endl;
+    cout << "MANDATORY ARGUMENTS" << endl;
+    cout << "\t-i <inputfilename> \t no default" << endl;
     //cout << "\t-i-dicom <inputfolderpath> \t (replace -i, read DICOM series, output still in NIFTI)" << endl;
-    cout << "\t-o <outputfolderpath> \t (default is current folder)" << endl;
-    cout << "\t-t <imagetype> {t1,t2} \t (string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default)" << endl;
-	cout << "\t-down <down_slice> \t (int, down limit of the propagation, default is 0)" << endl;
-    cout << "\t-up <up_slice> \t\t (int, up limit of the propagation, default is higher slice of the image)" << endl;
-	cout << "\t-verbose \t\t (display on)" << endl;
-    cout << "\t-help" << endl;
+    cout << "\t-o <outputfolderpath> \t default is current folder" << endl;
+    cout << "\t-t {t1,t2} \t string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default" << endl;
     cout << endl;
 	
 	// Output files
-	cout << "Output options:" << endl;
-	cout << "\t-detect-display \t (output of spinal cord detection as a PNG image)" << endl;
-	cout << "\t-mesh \t (output: mesh of the spinal cord segmentation)" << endl;
-	cout << "\t-centerline-binary \t (output: centerline as a binary image)" << endl;
-	cout << "\t-centerline-coord \t (output: centerline as world coordinates)" << endl;
-	cout << "\t-cross \t (output: cross-sectional areas)" << endl;
-    cout << "\t-init-tube \t (output: initial tubular meshes)" << endl;
-    cout << "\t-low-resolution-mesh \t (output: low-resolution mesh)" << endl;
-    cout << "\t-CSF \t (output: CSF segmentation)" << endl;
+	cout << "OPTIONAL ARGUMENTS" << endl;
+    cout << "General options" << endl;
+    cout << "\t-down <down_slice> \t int, down limit of the propagation, default is 0" << endl;
+    cout << "\t-up <up_slice> \t\t int, up limit of the propagation, default is higher slice of the image" << endl;
+    cout << "\t-verbose \t\t display on" << endl;
+    cout << "\t-help" << endl;
+    
+    cout >> "Output options" << endl;
+    cout << "\t-mesh \t output: mesh of the spinal cord segmentation" << endl;
+    cout << "\t-centerline-binary \t output: centerline as a binary image" << endl;
+    cout << "\t-CSF \t output: CSF segmentation" << endl;
+	cout << "\t-centerline-coord \t output: centerline as world coordinates" << endl;
+	cout << "\t-cross \t output: cross-sectional areas" << endl;
+    cout << "\t-init-tube \t output: initial tubular meshes" << endl;
+    cout << "\t-low-resolution-mesh \t output: low-resolution mesh" << endl;
+    cout << "\t-detect-display \t output of spinal cord detection as a PNG image" << endl;
 	cout << endl;
 	
     // Initialization
 	cout << "Initialization - Spinal cord detection module options:" << endl;
-    cout << "\t-init <init_position> \t (axial slice where the propagation starts, default is middle axial slice)" << endl;
-	cout << "\t-detect-n <numberslice> \t (int, number of axial slices computed in the detection process, default is 4)" << endl;
-	cout << "\t-detect-gap <gap> \t (int, gap between two axial slices in the detection process, default is 4)" << endl;
-	cout << "\t-detect-radius <radius> \t (double, approximate radius of the spinal cord, default is 4 mm)" << endl;
-    cout << "\t-init-mask <filename> \t (string, mask containing three center of the spinal cord, used to initiate the propagation)" << endl;
-	cout << "\t-init-validation \t (enable validation on spinal cord detection)" << endl;
+    cout << "\t-init <init_position> \t int, axial slice where the propagation starts, default is middle axial slice" << endl;
+    cout << "\t-init-mask <filename> \t string, mask containing three center of the spinal cord, used to initiate the propagation" << endl;
+	cout << "\t-detect-n <numberslice> \t int, number of axial slices computed in the detection process, default is 4" << endl;
+	cout << "\t-detect-gap <gap> \t int, gap in Z direction for the detection process, default is 4" << endl;
+	cout << "\t-detect-radius <radius> \t double, approximate radius of the spinal cord, default is 4 mm" << endl;
+	cout << "\t-init-validation \t enable validation on spinal cord detection based on discriminant analysis" << endl;
     cout << endl;
     
     // Propagation
 	cout << "Propagation module options:" << endl;
-	cout << "\t-init-centerline <filename> \t (filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation)" << endl;
-    cout << "\t-nbiter <number> \t (int, stop condition: number of iteration for the propagation for both direction, default is 200)" << endl;
-    cout << "\t-max-area <number> \t (double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2)" << endl;
-    cout << "\t-max-deformation <number> \t (double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm)" << endl;
-    cout << "\t-min-contrast <number> \t (double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50)" << endl;
-	cout << "\t-d <number> \t (double, trade-off between distance of most promising point and feature strength, default depend on the contrast)" << endl;
+	cout << "\t-init-centerline <filename> \t filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation" << endl;
+    cout << "\t-nbiter <number> \t int, stop condition: number of iteration for the propagation for both direction, default is 200" << endl;
+    cout << "\t-max-area <number> \t double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2" << endl;
+    cout << "\t-max-deformation <number> \t double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm" << endl;
+    cout << "\t-min-contrast <number> \t double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50" << endl;
+	cout << "\t-d <number> \t double, trade-off between distance of most promising point and feature strength, default depend on the contrast" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -364,7 +368,19 @@ int main(int argc, char *argv[])
         pos = inputFilename.find(nii);
         suffix = nii;
     }
+    
+    // Extract the input file name
+    unsigned found_slash = inputFilename.find_last_of("/\\");
+    string inputFilename_nameonly = inputFilename.substr(found_slash+1);
+    unsigned found_point = inputFilename.find_last_of(".");
+    inputFilename_nameonly = inputFilename_nameonly.substr(0,found_point);
+    std::cout << " path: " << str.substr(0,found) << '\n';
+    std::cout << " file: " << str.substr(found+1) << '\n';
+    
+    // Check if output folder ends with /
     if (outputPath!="" && outputPath.compare(outputPath.length()-1,1,"/")) outputPath += "/"; // add "/" if missing
+    
+    // Set output filenames
     outputFilenameBinary = outputPath+"segmentation_binary"+suffix;
     outputFilenameMesh = outputPath+"segmentation_mesh.vtk";
     outputFilenameBinaryCSF = outputPath+"segmentation_CSF_binary"+suffix;
