@@ -39,6 +39,7 @@ import numpy as np
 from sct_eddy_correct import eddy_correct
 import sct_utils as sct
 import msct_moco as moco
+from sct_dmri_separate_b0_and_dwi import identify_b0
 
 class param:
     def __init__(self):
@@ -162,6 +163,8 @@ def main():
     # check existence of input files
     sct.check_file_exist(param.fname_data, param.verbose)
     sct.check_file_exist(param.fname_bvecs, param.verbose)
+    if not param.fname_bvals == '':
+        sct.check_file_exist(param.fname_bvals, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
@@ -307,6 +310,7 @@ def dmri_moco(param):
     n_dwi = len(index_dwi)
     sct.printv('  Index of b=0:'+str(index_b0), verbose)
     sct.printv('  Index of DWI:'+str(index_dwi), verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, bval_min, verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
@@ -316,7 +320,7 @@ def dmri_moco(param):
     sct.printv('\nMerge b=0...', verbose)
     fname_b0_merge = file_b0
     cmd = fsloutput + 'fslmerge -t ' + fname_b0_merge
-    for it in range(n_b0):
+    for it in range(nb_b0):
         cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
     status, output = sct.run(cmd,verbose)
     sct.printv(('  File created: ' + fname_b0_merge), verbose)
@@ -328,7 +332,7 @@ def dmri_moco(param):
     status, output = sct.run(cmd, verbose)
 
     # Number of DWI groups
-    nb_groups = int(math.floor(n_dwi/dwi_group_size))
+    nb_groups = int(math.floor(nb_dwi/dwi_group_size))
     
     # Generate groups indexes
     group_indexes = []
@@ -336,7 +340,7 @@ def dmri_moco(param):
         group_indexes.append(index_dwi[(iGroup*dwi_group_size):((iGroup+1)*dwi_group_size)])
     
     # add the remaining images to the last DWI group
-    nb_remaining = n_dwi%dwi_group_size  # number of remaining images
+    nb_remaining = nb_dwi%dwi_group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
@@ -420,7 +424,7 @@ def dmri_moco(param):
     elif param.program == 'ants_affine':
         ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
-    for it in range(n_b0):
+    for it in range(nb_b0):
         if slicewise:
             for iz in range(nz):
                 sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, verbose)
@@ -460,7 +464,10 @@ def dmri_moco(param):
     moco.moco(param)
 
     # generate b0_moco_mean and dwi_moco_mean
-    sct.run('sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1', verbose)
+    cmd = 'sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1'
+    if not param.fname_bvals == '':
+        cmd = cmd+' -m '+param.fname_bvals
+    sct.run(cmd, verbose)
 
 
 #=======================================================================================================================
