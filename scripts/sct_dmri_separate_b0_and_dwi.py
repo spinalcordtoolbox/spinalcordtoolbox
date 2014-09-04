@@ -27,7 +27,7 @@ class param:
         self.average = 0
         self.remove_tmp_files = 1
         self.verbose = 1
-
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
 # MAIN
 # ==========================================================================================
@@ -37,6 +37,7 @@ def main():
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     fname_data = ''
     fname_bvecs = ''
+    fname_bvals = ''
     path_out = ''
     average = param.average
     verbose = param.verbose
@@ -55,7 +56,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:o:r:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -67,6 +68,8 @@ def main():
             fname_bvecs = arg
         elif opt in ("-i"):
             fname_data = arg
+        elif opt in ('-m'):
+            fname_bvals = arg
         elif opt in ("-o"):
             path_out = arg
         elif opt in ("-r"):
@@ -81,6 +84,8 @@ def main():
     # check existence of input files
     sct.check_file_exist(fname_data, verbose)
     sct.check_file_exist(fname_bvecs, verbose)
+    if not fname_bvals == '':
+        sct.check_file_exist(fname_bvals, verbose)
 
     # print arguments
     sct.printv('\nInput parameters:', verbose)
@@ -117,34 +122,8 @@ def main():
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('dmri'+ext_data)
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
-    # Open bvecs file
-    sct.printv('\nOpen bvecs file...', verbose)
-    bvecs = []
-    with open('bvecs') as f:
-        for line in f:
-            bvecs_new = map(float, line.split())
-            bvecs.append(bvecs_new)
-
-    # Check if bvecs file is nx3
-    if not len(bvecs[0][:]) == 3:
-        sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
-        sct.printv('  Transpose bvecs...', verbose)
-        # transpose bvecs
-        bvecs = zip(*bvecs)
-
     # Identify b=0 and DWI images
-    sct.printv('\nIdentify b=0 and DWI images...', verbose)
-    index_b0 = []
-    index_dwi = []
-    for it in xrange(0, nt):
-        if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
-            index_b0.append(it)
-        else:
-            index_dwi.append(it)
-    nb_b0 = len(index_b0)
-    nb_dwi = len(index_dwi)
-    sct.printv('  Number of b=0: '+str(nb_b0)+' '+str(index_b0), verbose)
-    sct.printv('  Number of DWI: '+str(nb_dwi)+' '+str(index_dwi), verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
@@ -202,6 +181,79 @@ def main():
         sct.printv('fslview b0 dwi &\n', verbose)
 
 
+# ==========================================================================================
+# identify b=0 and DW images
+# ==========================================================================================
+def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
+
+    # Identify b=0 and DWI images
+    sct.printv('\nIdentify b=0 and DWI images...', verbose)
+    index_b0 = []
+    index_dwi = []
+
+    # if bval is not provided
+    if fname_bvals == '':
+        # Open bvecs file
+        #sct.printv('\nOpen bvecs file...', verbose)
+        bvecs = []
+        with open(fname_bvecs) as f:
+            for line in f:
+                bvecs_new = map(float, line.split())
+                bvecs.append(bvecs_new)
+
+        # Check if bvecs file is nx3
+        if not len(bvecs[0][:]) == 3:
+            sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
+            sct.printv('  Transpose bvecs...', verbose)
+            # transpose bvecs
+            bvecs = zip(*bvecs)
+
+        # get number of lines
+        nt = len(bvecs)
+
+        # identify b=0 and dwi
+        for it in xrange(0, nt):
+            if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
+                index_b0.append(it)
+            else:
+                index_dwi.append(it)
+
+    # if bval is provided
+    else:
+
+        # Open bvals file
+        #sct.printv('\nOpen bvals file...', verbose)
+        bvals = []
+        with open(fname_bvals) as f:
+            for line in f:
+                bvals = map(float, line.split())
+
+        # get number of lines
+        nt = len(bvals)
+
+        # Identify b=0 and DWI images
+        sct.printv('\nIdentify b=0 and DWI images...', verbose)
+        for it in xrange(0, nt):
+            if bvals[it] < bval_min:
+                index_b0.append(it)
+            else:
+                index_dwi.append(it)
+
+    # check if no b=0 images were detected
+    if index_b0 == []:
+        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -a. Exit program.', 1, 'error')
+        sys.exit(2)
+
+    # display stuff
+    nb_b0 = len(index_b0)
+    nb_dwi = len(index_dwi)
+    sct.printv('  Number of b=0: '+str(nb_b0)+' '+str(index_b0), verbose)
+    sct.printv('  Number of DWI: '+str(nb_dwi)+' '+str(index_dwi), verbose)
+
+    # return
+    return index_b0, index_dwi, nb_b0, nb_dwi
+
+
 # Print usage
 # ==========================================================================================
 def usage():
@@ -222,6 +274,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -a {0,1}         average b=0 and DWI data. Default="""+str(param.average)+"""
+  -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <output>      output folder. Default = local folder.
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
