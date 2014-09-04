@@ -79,10 +79,6 @@ echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 
 echo ${SCT_DIR}
 
-# create soft link to each script in SCT_DIR/script
-cmd="./create_links.sh"
-echo ">> $cmd"; $cmd
-
 unamestr='uname'
 #if [[ ! "$unamestr" == 'Linux' ]]; then
 #  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
