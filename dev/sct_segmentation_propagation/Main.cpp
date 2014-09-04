@@ -176,7 +176,7 @@ void help()
     cout << "\t-verbose \t\t display on" << endl;
     cout << "\t-help" << endl;
     
-    cout >> "Output options" << endl;
+    cout << "Output options" << endl;
     cout << "\t-mesh \t output: mesh of the spinal cord segmentation" << endl;
     cout << "\t-centerline-binary \t output: centerline as a binary image" << endl;
     cout << "\t-CSF \t output: CSF segmentation" << endl;
@@ -374,21 +374,19 @@ int main(int argc, char *argv[])
     string inputFilename_nameonly = inputFilename.substr(found_slash+1);
     unsigned found_point = inputFilename.find_last_of(".");
     inputFilename_nameonly = inputFilename_nameonly.substr(0,found_point);
-    std::cout << " path: " << str.substr(0,found) << '\n';
-    std::cout << " file: " << str.substr(found+1) << '\n';
     
     // Check if output folder ends with /
     if (outputPath!="" && outputPath.compare(outputPath.length()-1,1,"/")) outputPath += "/"; // add "/" if missing
     
     // Set output filenames
-    outputFilenameBinary = outputPath+"segmentation_binary"+suffix;
-    outputFilenameMesh = outputPath+"segmentation_mesh.vtk";
-    outputFilenameBinaryCSF = outputPath+"segmentation_CSF_binary"+suffix;
-    outputFilenameMeshCSF = outputPath+"segmentation_CSF_mesh.vtk";
-    outputFilenameAreas = outputPath+"cross_sectional_areas.txt";
-    outputFilenameAreasCSF = outputPath+"cross_sectional_areas_CSF.txt";
-    outputFilenameCenterline = outputPath+"segmentation_centerline.txt";
-    outputFilenameCenterlineBinary = outputPath+"segmentation_centerline_binary"+suffix;
+    outputFilenameBinary = outputPath+inputFilename_nameonly+"_seg"+suffix;
+    outputFilenameMesh = outputPath+inputFilename_nameonly+"_mesh.vtk";
+    outputFilenameBinaryCSF = outputPath+inputFilename_nameonly+"_CSF_seg"+suffix;
+    outputFilenameMeshCSF = outputPath+inputFilename_nameonly+"_CSF_mesh.vtk";
+    outputFilenameAreas = outputPath+inputFilename_nameonly+"cross_sectional_areas.txt";
+    outputFilenameAreasCSF = outputPath+inputFilename_nameonly+"cross_sectional_areas_CSF.txt";
+    outputFilenameCenterline = outputPath+inputFilename_nameonly+"_centerline.txt";
+    outputFilenameCenterlineBinary = outputPath+inputFilename_nameonly+"_centerline"+suffix;
     // if output path doesn't exist, we create it
     if (outputPath!="") itk::FileTools::CreateDirectory(outputPath.c_str());
     
