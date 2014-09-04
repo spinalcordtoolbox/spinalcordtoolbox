@@ -80,18 +80,8 @@ if OSname == 'osx':
 elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
-# copy colormap
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
-sct.run('cp -rf ../data/colormap '+folder_sct+'spinalcordtoolbox/data/')
-
-# copy atlas
-sct.run('cp -rf ../data/atlas '+folder_sct+'spinalcordtoolbox/data/')
-
-# copy spinal_level
-sct.run('cp -rf ../data/spinal_levels '+folder_sct+'spinalcordtoolbox/data/')
-
-# copy template
-sct.run('cp -rf ../data/template '+folder_sct+'spinalcordtoolbox/data/')
+# copy data
+sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 
 # testing
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
