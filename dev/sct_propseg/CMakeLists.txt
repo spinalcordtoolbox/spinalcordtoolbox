@@ -1,4 +1,4 @@
-project(sct_segmentation_propagation)
+project(sct_propseg)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
@@ -43,7 +43,7 @@ aux_source_directory(. SRC_LIST)
 aux_source_directory(./util SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(sct_segmentation_propagation
+TARGET_LINK_LIBRARIES(sct_propseg
 ITKIONIFTI
 ITKIOImageBase
 ITKCommon
