@@ -47,7 +47,7 @@ for subject in $SUBJECT_LIST; do
 				mkdir $method
 				cd $method
 			
-			    cmd="sct_process_segmentation.py
+			    cmd="sct_process_segmentation
 	                -i ${SCT_DATA_DIR}/${subject}/${contrast}/$file
 	                -p compute_CSA
 	                -m $method

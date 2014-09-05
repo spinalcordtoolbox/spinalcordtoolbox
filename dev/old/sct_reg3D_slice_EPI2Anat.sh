@@ -10,7 +10,7 @@ This script registers an nifti image into another one (typically the anatomical 
 DEPENDENCIES:
 - FSL
 - ANTs
-- c3d
+- sct_c3d
 
 MANDATORY INPUTS:
    -i	   Path of the input anatomical file
@@ -180,7 +180,7 @@ ImageDimension=3
 MaxIteration=10x10x10
 MetricType='MI'
 
-#c3d
+#sct_c3d
 INTERP=nearestneighbor
 
 #Initialization of the suffixes
@@ -206,8 +206,8 @@ FILE_SRC=${PATH_ANAT}${FILE_ANAT}
 
 # resample anat_space into mtON
 echo "Putting source image into space of destination image..."
-echo ">> c3d ${FILE_DEST}.${EXT_REG} ${FILE_SRC}.${EXT_ANAT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${FILE_ANAT}_resampled.${EXT}"
-c3d ${FILE_DEST}.${EXT_REG} ${FILE_SRC}.${EXT_ANAT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${FILE_ANAT}_resampled.${EXT}
+echo ">> sct_c3d ${FILE_DEST}.${EXT_REG} ${FILE_SRC}.${EXT_ANAT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${FILE_ANAT}_resampled.${EXT}"
+sct_c3d ${FILE_DEST}.${EXT_REG} ${FILE_SRC}.${EXT_ANAT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${FILE_ANAT}_resampled.${EXT}
 SUFFIX_ANAT=${SUFFIX_ANAT}_resampled
 
 FILE_DEST=${PATH_OUTPUT}/${FILE_ANAT}${SUFFIX_ANAT}
@@ -223,7 +223,7 @@ if [[ "$MASKING" -eq 1 ]]
 then
 	echo ">> Masking ${PATH_ANAT}${FILE_ANAT}${SUFFIX_ANAT}.${EXT_ANAT} ..."
 
-	cmd="c3d ${FILE_DEST}.${EXT_ANAT} ${PATH_SURFACE}${SURFACE}.${EXT_SURF} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${SURFACE}_resliced.${EXT_SURF}"
+	cmd="sct_c3d ${FILE_DEST}.${EXT_ANAT} ${PATH_SURFACE}${SURFACE}.${EXT_SURF} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/${SURFACE}_resliced.${EXT_SURF}"
 	echo $cmd
 	eval $cmd
 
@@ -280,7 +280,7 @@ echo $cmd
 eval $cmd
 
 
-# cmd="antsRegistration -d $ImageDimension -r [${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT} ,1] -m ${MetricType}[${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT},1,4] --use-histogram-matching 1 -o ${PATH_OUTPUT}/ -t Affine -c [10000x10000x10000,1.e-8,20] -s 4x2x1vox -f 3x2x1"
+# cmd="sct_antsRegistration -d $ImageDimension -r [${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT} ,1] -m ${MetricType}[${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT},1,4] --use-histogram-matching 1 -o ${PATH_OUTPUT}/ -t Affine -c [10000x10000x10000,1.e-8,20] -s 4x2x1vox -f 3x2x1"
 # echo $cmd
 # eval $cmd
 # 
@@ -297,8 +297,8 @@ eval $cmd
 
 
 
-echo "c3d ${PATH_ANAT}${FILE_ANAT}.${EXT_ANAT} ${PATH_OUTPUT}/resliced.${EXT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/final.${EXT}"
-c3d ${PATH_ANAT}${FILE_ANAT}.${EXT_ANAT} ${PATH_OUTPUT}/${FILE_TO_REGISTER}_reg.${EXT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/final.${EXT}
+echo "sct_c3d ${PATH_ANAT}${FILE_ANAT}.${EXT_ANAT} ${PATH_OUTPUT}/resliced.${EXT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/final.${EXT}"
+sct_c3d ${PATH_ANAT}${FILE_ANAT}.${EXT_ANAT} ${PATH_OUTPUT}/${FILE_TO_REGISTER}_reg.${EXT} -interpolation ${INTERP} -reslice-identity -o ${PATH_OUTPUT}/final.${EXT}
 
 
 #---------------------

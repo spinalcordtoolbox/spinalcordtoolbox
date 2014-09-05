@@ -6,7 +6,7 @@
 # subject list
 SUBJECT_LIST="errsm_23"
 CONTRAST_LIST="mt"
-file="mtc1.nii.gz"
+file="mt1.nii.gz"
 
 
 # START BATCH HERE
@@ -37,7 +37,7 @@ for subject in $SUBJECT_LIST; do
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
 
-	    cmd="sct_register_multimodal.py
+	    cmd="sct_register_multimodal
 	        -i ${SCT_DIR}/data/template/MNI-Poly-AMU_T2.nii.gz
 	        -d ../../data/${subject}/${contrast}/${file}
 	        -s ${SCT_DIR}/data/template/MNI-Poly-AMU_cord.nii.gz
@@ -45,8 +45,8 @@ for subject in $SUBJECT_LIST; do
 	        -q ../../data/${subject}/template/warp_template2anat.nii.gz
 	        -x 0
 	        -o template2${file}
-	        -n 50x20
-	        -r 0
+		-n 10x3
+	        -r 1
 	        -v 1"
 
 		    # cmd="sct_register_multimodal.py
