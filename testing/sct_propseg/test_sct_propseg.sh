@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test sct_segmentation_propagation
+# test sct_propseg
 # This program launch the testing of automatic spinal cord segmentation on five subjects (in data folder)
 # Results can be validated using FSLVIEW or MITKWorkbench
 #
@@ -33,7 +33,7 @@ for subject in $SUBJECT_LIST; do
         echo
         printf "${green}Subject: $subject${NC}\n"
         printf "${red}Contrast: ${contrast}${NC}\n\n"
-        cmd="sct_segmentation_propagation
+        cmd="sct_propseg
             -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
             -t ${contrast}
             -mesh
@@ -47,7 +47,7 @@ for subject in $SUBJECT_LIST; do
 
         cmd="sct_dice_coefficient
             ../../data/${subject}/${contrast}/${contrast}_manual_segmentation.nii.gz
-            segmentation_binary.nii.gz
+            ${contrast}_seg.nii.gz
             -bmax"
         echo ==============================================================================================
         echo "$cmd"
