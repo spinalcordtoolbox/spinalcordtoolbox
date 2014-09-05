@@ -7,62 +7,73 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
-# Modified: 2014-05-22
+# Modified: 2014-08-14
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 
-
-# DEFAULT PARAMETERS
-class param:
-    ## The constructor
-    def __init__(self):
-        self.debug              = 0
-        self.verbose            = 0 # verbose
-
-import re
 import sys
 import getopt
 import os
 import math
 import time
+import commands
 import sct_utils as sct
 
-
+class param:
+    def __init__(self):
+        self.debug = 0
+        self.average = 0
+        self.remove_tmp_files = 1
+        self.verbose = 1
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
 
 # MAIN
 # ==========================================================================================
 def main():
 
     # Initialization
-    path_script = os.path.dirname(__file__)
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
-    # THIS DOES NOT WORK IN MY LAPTOP: path_sct = os.environ['SCT_DIR'] # path to spinal cord toolbox
-    path_sct = path_script[:-8] # TODO: make it cleaner!
     fname_data = ''
     fname_bvecs = ''
+    fname_bvals = ''
+    path_out = ''
+    average = param.average
     verbose = param.verbose
+    remove_tmp_files = param.remove_tmp_files
     start_time = time.time()
+
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
-        fname_data = os.path.expanduser("~")+'/code/spinalcordtoolbox_dev/testing/data/errsm_22/dmri/dmri.nii.gz'
-        fname_bvecs = os.path.expanduser("~")+'/code/spinalcordtoolbox_dev/testing/data/errsm_22/dmri/bvecs.txt'
+        fname_data = path_sct+'/testing/data/errsm_23/dmri/dmri.nii.gz'
+        fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
+        average = 1
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hb:i:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
+        elif opt in ("-a"):
+            average = int(arg)
         elif opt in ("-b"):
             fname_bvecs = arg
         elif opt in ("-i"):
             fname_data = arg
+        elif opt in ('-m'):
+            fname_bvals = arg
+        elif opt in ("-o"):
+            path_out = arg
+        elif opt in ("-r"):
+            remove_temp_file = int(arg)
         elif opt in ('-v'):
             verbose = int(arg)
 
@@ -71,131 +82,208 @@ def main():
         usage()
 
     # check existence of input files
-    sct.check_file_exist(fname_data)
-    sct.check_file_exist(fname_bvecs)
+    sct.check_file_exist(fname_data, verbose)
+    sct.check_file_exist(fname_bvecs, verbose)
+    if not fname_bvals == '':
+        sct.check_file_exist(fname_bvals, verbose)
 
     # print arguments
-    print '\nCheck parameters:'
-    print '.. DWI data:             '+fname_data
-    print '.. bvecs file:           '+fname_bvecs
+    sct.printv('\nInput parameters:', verbose)
+    sct.printv('  input file ............'+fname_data, verbose)
+    sct.printv('  bvecs file ............'+fname_bvecs, verbose)
+    sct.printv('  average ...............'+str(average), verbose)
+
+    # Get full path
+    fname_data = os.path.abspath(fname_data)
+    fname_bvecs = os.path.abspath(fname_bvecs)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
+    # # get output folder
+    # if path_out == '':
+    #     path_out = ''
+
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, verbose)
 
     # copy files into tmp folder
-    sct.run('cp '+fname_data+' '+path_tmp)
-    sct.run('cp '+fname_bvecs+' '+path_tmp)
+    sct.printv('\nCopy files into temporary folder...', verbose)
+    sct.run('cp '+fname_data+' '+path_tmp+'dmri'+ext_data, verbose)
+    sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get size of data
-    print '\nGet dimensions data...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
-    print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
+    sct.printv('\nGet dimensions data...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('dmri'+ext_data)
+    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
-    # Open bvecs file
-    bvecs = []
-    with open(fname_bvecs) as f:
-        for line in f:
-            bvecs_new = map(float, line.split())
-            bvecs.append(bvecs_new)
-
-    # Check if bvecs file is nx3
-    if not len(bvecs[0][:]) == 3:
-        print 'WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs'
-        # transpose bvecs
-        bvecs = zip(*bvecs)
-
-    # Identify b=0 and DW images
-    print '\nIdentify b=0 and DW images...'
-    index_b0 = []
-    index_dwi = []
-    for it in xrange(0,nt):
-        if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
-            index_b0.append(it)
-        else:
-            index_dwi.append(it)
-    nb_b0 = len(index_b0)
-    nb_dwi = len(index_dwi)
-    print '.. Number of b=0: '+str(nb_b0)+' '+str(index_b0)
-    print '.. Number of DWI: '+str(nb_dwi)+' '+str(index_dwi)
-
-    #TODO: check if number of bvecs and nt match
+    # Identify b=0 and DWI images
+    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, param.bval_min, verbose)
 
     # Split into T dimension
-    print '\nSplit along T dimension...'
-    sct.run(fsloutput+' fslsplit '+fname_data+' data_splitT')
-
-    # retrieve output names
-    status, output = sct.run('ls data_splitT*.*')
-    file_data_split = output.split()
-    # Remove .nii extension
-    file_data_split = [file_data_split[i].replace('.nii','') for i in xrange (0,len(file_data_split))]
+    sct.printv('\nSplit along T dimension...', verbose)
+    sct.run(fsloutput+' fslsplit dmri dmri_T', verbose)
 
     # Merge b=0 images
-    print '\nMerge b=0...'
-    cmd = fsloutput+'fslmerge -t b0'
-    for it in xrange(0,nb_b0):
-        cmd += ' '+file_data_split[index_b0[it]]
-    sct.run(cmd)
+    sct.printv('\nMerge b=0...', verbose)
+    cmd = fsloutput + 'fslmerge -t b0'
+    for iT in range(nb_b0):
+        cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
+    sct.run(cmd, verbose)
 
-    # Merge DWI images
-    print '\nMerge DWI...'
-    cmd = fsloutput+'fslmerge -t dwi'
-    for it in xrange(0,nb_dwi):
-        cmd += ' '+file_data_split[index_dwi[it]]
-    sct.run(cmd)
+    # Average b=0 images
+    if average:
+        sct.printv('\nAverage b=0...', verbose)
+        sct.run(fsloutput + 'fslmaths b0 -Tmean b0_mean', verbose)
+
+    # Merge DWI
+    sct.printv('\nMerge DWI...', verbose)
+    cmd = fsloutput + 'fslmerge -t dwi'
+    for iT in range(nb_dwi):
+        cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
+    sct.run(cmd, verbose)
+
+    # Average DWI images
+    if average:
+        sct.printv('\nAverage DWI...', verbose)
+        sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
-    print('\nGenerate output files...')
-    sct.generate_output_file(path_tmp+'/b0.nii',path_data,'b0',ext_data)
-    sct.generate_output_file(path_tmp+'/dwi.nii',path_data,'dwi',ext_data)
+    sct.printv('\nGenerate output files...', verbose)
+    sct.generate_output_file(path_tmp+'b0.nii', path_out, 'b0', ext_data, verbose)
+    sct.generate_output_file(path_tmp+'dwi.nii', path_out, 'dwi', ext_data, verbose)
+    if average:
+        sct.generate_output_file(path_tmp+'b0_mean.nii', path_out, 'b0_mean', ext_data, verbose)
+        sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out, 'dwi_mean', ext_data, verbose)
 
     # Remove temporary files
-    print('\nRemove temporary files...')
-    sct.run('rm -rf '+path_tmp)
+    if remove_tmp_files == 1:
+        sct.printv('\nRemove temporary files...', verbose)
+        sct.run('rm -rf '+path_tmp, verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
 
     # to view results
-    print '\nTo view results, type:'
-    print 'fslview b0 dwi &\n'
+    sct.printv('\nTo view results, type: ', verbose)
+    if average:
+        sct.printv('fslview b0 b0_mean dwi dwi_mean &\n', verbose)
+    else:
+        sct.printv('fslview b0 dwi &\n', verbose)
 
-    # End of Main
+
+# ==========================================================================================
+# identify b=0 and DW images
+# ==========================================================================================
+def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
+
+    # Identify b=0 and DWI images
+    sct.printv('\nIdentify b=0 and DWI images...', verbose)
+    index_b0 = []
+    index_dwi = []
+
+    # if bval is not provided
+    if fname_bvals == '':
+        # Open bvecs file
+        #sct.printv('\nOpen bvecs file...', verbose)
+        bvecs = []
+        with open(fname_bvecs) as f:
+            for line in f:
+                bvecs_new = map(float, line.split())
+                bvecs.append(bvecs_new)
+
+        # Check if bvecs file is nx3
+        if not len(bvecs[0][:]) == 3:
+            sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
+            sct.printv('  Transpose bvecs...', verbose)
+            # transpose bvecs
+            bvecs = zip(*bvecs)
+
+        # get number of lines
+        nt = len(bvecs)
+
+        # identify b=0 and dwi
+        for it in xrange(0, nt):
+            if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
+                index_b0.append(it)
+            else:
+                index_dwi.append(it)
+
+    # if bval is provided
+    else:
+
+        # Open bvals file
+        #sct.printv('\nOpen bvals file...', verbose)
+        bvals = []
+        with open(fname_bvals) as f:
+            for line in f:
+                bvals = map(float, line.split())
+
+        # get number of lines
+        nt = len(bvals)
+
+        # Identify b=0 and DWI images
+        sct.printv('\nIdentify b=0 and DWI images...', verbose)
+        for it in xrange(0, nt):
+            if bvals[it] < bval_min:
+                index_b0.append(it)
+            else:
+                index_dwi.append(it)
+
+    # check if no b=0 images were detected
+    if index_b0 == []:
+        sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -a. Exit program.', 1, 'error')
+        sys.exit(2)
+
+    # display stuff
+    nb_b0 = len(index_b0)
+    nb_dwi = len(index_dwi)
+    sct.printv('  Number of b=0: '+str(nb_b0)+' '+str(index_b0), verbose)
+    sct.printv('  Number of DWI: '+str(nb_dwi)+' '+str(index_dwi), verbose)
+
+    # return
+    return index_b0, index_dwi, nb_b0, nb_dwi
 
 
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Separate b=0 and DW images from diffusion dataset.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <dmri> -b <bvecs>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <dmri>                  diffusion data\n' \
-        '  -b <bvecs>                 bvecs file\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -v <0,1>                   verbose. Default='+str(param.verbose)+'.\n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
-    # exit program
+DESCRIPTION
+  Separate b=0 and DW images from diffusion dataset.
+
+USAGE
+  """+os.path.basename(__file__)+""" -i <dmri> -b <bvecs>
+
+MANDATORY ARGUMENTS
+  -i <dmri>        diffusion data
+  -b <bvecs>       bvecs file
+
+OPTIONAL ARGUMENTS
+  -a {0,1}         average b=0 and DWI data. Default="""+str(param.average)+"""
+  -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
+  -o <output>      output folder. Default = local folder.
+  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -h               help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i dmri.nii.gz -b bvecs.txt -a 1\n"""
+
+    #Exit Program
     sys.exit(2)
 
 
