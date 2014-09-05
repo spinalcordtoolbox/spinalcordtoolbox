@@ -116,4 +116,9 @@ print 'status: '+str(status)
 elapsed_time = time.time() - start_time
 print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
-sys.exit(sum(status))
+e = 0
+if sum(status) != 0:
+    e = 1
+
+
+sys.exit(e)

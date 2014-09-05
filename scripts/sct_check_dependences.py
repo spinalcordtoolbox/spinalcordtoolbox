@@ -51,6 +51,7 @@ def main():
     # ants_is_installed = 1
     # sct_c3d_is_installed = 1
     install_software = 0
+    e = 0
     restart_terminal = 0
     create_log_file = param.create_log_file
     file_log = 'sct_check_dependencies.log'
@@ -182,6 +183,8 @@ def main():
     else:
         print_fail()
         print '  FSL is not working!'
+        e = 1
+
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
@@ -231,6 +234,7 @@ def main():
     else:
         print_warning()
         print '  ANTs is not declared.'
+        e = 1
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
@@ -243,6 +247,7 @@ def main():
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
@@ -258,6 +263,7 @@ def main():
     else:
         print_warning()
         print '  sct_c3d is not installed or not declared.'
+        install_software = 1
     if complete_test:
         print (status, output), '\n'
 
@@ -268,6 +274,7 @@ def main():
         print_ok()
     else:
         print_fail()
+        install_software = 1
     if complete_test:
         print (status, output), '\n'
 
@@ -278,6 +285,7 @@ def main():
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print (status, output), '\n'
 
@@ -288,6 +296,7 @@ def main():
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print (status, output), '\n'
 
@@ -298,6 +307,8 @@ def main():
         sys.stdout = orig_stdout
         handle_log.close()
         print "File generated: "+file_log+'\n'
+
+    sys.exit(e + install_software)
 
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
