@@ -86,7 +86,7 @@ if isfield(param,'fname_log'), fname_log = param.fname_log; else fname_log = 'lo
 if isfield(param,'fsloutput'), fsloutput = param.fsloutput; else fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '; end
 if isfield(param,'merge_back'), merge_back = param.merge_back; else merge_back = 1; end
 if isfield(param,'slicewise'), slicewise = param.slicewise; else slicewise = 0; end
-if isfield(param,'gaussian_mask'), mask = param.gaussian_mask; else mask = 0; end
+if isfield(param,'gaussian_mask'), mask = param.gaussian_mask; mask=mask(:); else mask = 0; end
 if isfield(param,'centerline'), centerline = param.centerline; else centerline = repmat(ceil(dims/2)',dims(3),1); end
 
 nb_fails = 0;

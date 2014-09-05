@@ -1,23 +1,25 @@
 function sct_batch_process_dwi(varargin)
-% process diffusion mri data
+% process diffusion mri data - eddy currents and motion correction
 %
-% if users does not provide data, calls a GUI to select data.
-%
-% INPUT
-% % TODO
+% 
+% INPUT : 
+% sct_batch_process_dwi() --> if users does not provide data, it calls a GUI to select data.
+% sct_batch_process_dwi(...,'PropertyName',PropertyValue,...)
+% OPTIONS :
 %     method : 'b0','dwi'*,'dwi_lowbvalue'
-%     crop : 'manual'*, 'box', 'none', 'centerline', 'autobox'
+%     crop : 'manual', 'box', 'none'*, 'centerline', 'autobox'
 %     eddy : 0 | 1*
-%     interp : 'nearestneighbour', 'spline'*, 'sinc'
+%     interp : 'nearestneighbour'*, 'spline', 'sinc'
 %     gaussian_mask : <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-    
+%     data : './../'file.nii'
+%     bvec : './../'file.bvec'
+
+
+% FOR DEVELOPPERS:
 % % JULIEN:  NOTES
-%	test slice-wise moco for dmri
 %	check disco.
 %	if we use the box option, make it by default centered, with a width of 31 voxels
-% have only ONE log file at the end
-% remove intermediate files in the dmri folder
-
+%
 % NOTES FOR YOU:
 % DMRI: don't output FLOAT32 data otherwise processing is too long
 % estimate DTI parameters and register it to the anat.
@@ -42,11 +44,12 @@ addOptional(p,'bval','');
 addOptional(p,'smooth_moco',1,@isnumeric);
 addOptional(p,'apply_moco_on_croped',1,@isnumeric);
 interp={'nearestneighbour', 'spline', 'sinc'};
-addOptional(p,'interp','spline',@(x) any(validatestring(x,interp)));
+addOptional(p,'interp','nearestneighbour',@(x) any(validatestring(x,interp)));
 addOptional(p,'gaussian_mask',20,@isnumeric);
 
 parse(p,varargin{:})
 
+% Get data via user interface if not specified
 if isempty(p.Results.data)
     [sct.dmri.file,sct.dmri.path] = uigetfile('*.nii;*.nii.gz','Select 4D diffusion data') ;
     if sct.dmri.file==0, return; end
@@ -59,8 +62,14 @@ if isempty(p.Results.bvec)
 else
     [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(p.Results.bvec);  sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
 end
+if isempty(p.Results.bval) && strcmp(p.Results.method,'dwi_lowbvalue')
+    [sct.dmri.file_bvals,sct.dmri.path_bvals] = uigetfile('*','Select bvals file') ;
+    sct.dmri.file_bvals = [sct.dmri.path_bvals,sct.dmri.file_bvals];
+else
+    sct.dmri.file_bvals = p.Results.bval;
+end
 
-sct.dmri.file_bvals = p.Results.bval;
+
 
 % Add scripts to path
 batch_path= mfilename('fullpath');
@@ -155,7 +164,7 @@ sct.dmri.moco_intra.method              = p.Results.method; % 'b0','dwi','dwi_lo
 sct.dmri.moco_intra.smooth_motion       = p.Results.smooth_moco; % Apply a spline in time to estimated motion correction
 sct.dmri.schemefile                     = '';
 sct.dmri.moco_intra.gaussian_mask       = p.Results.gaussian_mask; % Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-sct.dmri.moco_intra.dwi_group_size      = 10; % number of images averaged for 'dwi' method.
+sct.dmri.moco_intra.dwi_group_size      = 5; % number of images averaged for 'dwi' method.
 sct.dmri.moco_intra.program             = 'FLIRT';% 'FLIRT' or 'SPM' (slicewise not available with SPM.... put slicewise = 0)
 sct.dmri.moco_intra.ref                 = '1'; % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
 sct.dmri.moco_intra.slicewise		    = 1; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
