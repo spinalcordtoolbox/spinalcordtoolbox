@@ -1113,7 +1113,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         param.index = sct.dmri.index_b0; % correct b0 only
         param.fname_log = sct.log;
         param.suffix = sct.dmri.suffix_moco;
-        param.centerline=centerline;
+        if any(strcmp(who,'centerline')), param.centerline=centerline; end
         
         j_mri_moco_v8(param);
         save([sct.output_path 'workspace.mat'])
@@ -1265,7 +1265,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         param.index = sct.dmri.index_b0; % correct volumes of b0 group
         param.fname_log = sct.log;
         param.suffix = sct.dmri.suffix_moco;
-        param.centerline=centerline;
+        if any(strcmp(who,'centerline')), param.centerline=centerline; end
         
         j_mri_moco_v8(param);
         
@@ -1533,9 +1533,10 @@ end
 j_disp(sct.log,['\nDelete temporary files...'])
 cmd = ['rm -rf ' sct.output_path 'tmp*moco*'];
 j_disp(sct.log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+cmd = ['rm -rf ' sct.output_path 'tmp*splitZ*'];
+j_disp(sct.log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
 cmd = ['rm -rf ' sct.output_path 'tmp*'];
 j_disp(sct.log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-
 
 
 
