@@ -1,50 +1,13 @@
 #!/usr/bin/env python
-
-## @package sct_straighten_spinalcord
 #
-# - from spinal cord centerline (as nifti format), estimate deformation field with ANTS.
-#
-#
-# Description about how the function works:
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
 # cord was straightened.
 #
-#
-# USAGE
-# ---------------------------------------------------------------------------------------
-# sct_straighten_spinalcord.py -i <data> -c <centerline>
-#
-# MANDATORY ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   -i       input volume.
-#   -c       centerline (generated with sct_get_centerline).
-#
-# OPTIONAL ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#
-#   -f       'polynomial' or 'splines' fitting default is 'splines'
-#
-# EXAMPLES
-# ---------------------------------------------------------------------------------------
-#   sct_straighten_spinalcord.py -i t2.nii.gz -c centerline.nii.gz
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# - nibabel: <http://nipy.sourceforge.net/nibabel/>
-# - numpy: <http://www.numpy.org>
-# - sympy : <http://sympy.org/fr/index.html>
-# EXTERNAL SOFTWARE
-# - FSL: <http://fsl.fmrib.ox.ac.uk/fsl/>
-# - ANTS
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
-# Modified: 2014-07-05 by jcohen
+# Modified: 2014-09-01
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
@@ -87,11 +50,12 @@ from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
+from math import isnan
 
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('WarpImageMultiTransform -h','ANTS')
+sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 
 
@@ -122,8 +86,8 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
         # fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
-        fname_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
+        fname_anat = '/home/django/jtouati/data/cover_z_slices/errsm13_t2.nii.gz'
+        fname_centerline = '/home/django/jtouati/data/cover_z_slices/segmentation_centerline_binary.nii.gz'
         remove_temp_files = 0
         centerline_fitting = 'splines'
         import matplotlib.pyplot as plt
@@ -235,9 +199,9 @@ def main():
     # We only take the maximum value of the image to aproximate the centerline.
     # 2. The centerline/segmentation image contains many pixels per slice with values {0,1}.
     # We take all the points and approximate the centerline on all these points.
-    
-    x_seg_start, y_seg_start = (data[:,:,0]>0).nonzero()
-    x_seg_end, y_seg_end = (data[:,:,-1]>0).nonzero()
+    #
+    # x_seg_start, y_seg_start = (data[:,:,0]>0).nonzero()
+    # x_seg_end, y_seg_end = (data[:,:,-1]>0).nonzero()
 # REMOVED: 2014-07-18
     # check if centerline covers all the image
 #    if len(x_seg_start)==0 or len(x_seg_end)==0:
@@ -245,13 +209,14 @@ def main():
 #              'To solve the problem, you need to crop the input image (you can use \'sct_crop_image\') and generate one' \
 #              'more time the spinal cord centerline/segmentation from this cropped image.\n'
 #        usage()
-    
+      #
     # X, Y, Z = ((data<1)*(data>0)).nonzero() # X is empty if binary image
     # if (len(X) > 0): # Scenario 1
     #     for iz in range(0, nz, 1):
     #         x_centerline[iz], y_centerline[iz] = numpy.unravel_index(data[:,:,iz].argmax(), data[:,:,iz].shape)
     # else: # Scenario 2
     #     for iz in range(0, nz, 1):
+    #         print (data[:,:,iz]>0).nonzero()
     #         x_seg, y_seg = (data[:,:,iz]>0).nonzero()
     #         x_centerline[iz] = numpy.mean(x_seg)
     #         y_centerline[iz] = numpy.mean(y_seg)
@@ -263,6 +228,28 @@ def main():
     for iz in range(0, nz, 1):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(numpy.array(data[:,:,iz]))
 
+    #print len(x_centerline),len(y_centerline)
+    #print len((numpy.array(x_centerline)>=0).nonzero()[0]),len((numpy.array(y_centerline)>=0).nonzero()[0])
+    
+    x_seg_start, y_seg_start = (data[:,:,0]>0).nonzero()
+    x_seg_end, y_seg_end = (data[:,:,-1]>0).nonzero()
+
+    #check if centerline covers all the image
+    if len(x_seg_start)==0 or len(x_seg_end)==0:
+        sct.printv('\nWARNING : the centerline/segmentation you gave does not cover all "z" slices of the input image. Results should be improved if you crop the input image (you can use \'sct_crop_image\') and generate a new spinalcord centerline/segmentation from this cropped image.\n', 1, 'warning')
+        # print '\nWARNING : the centerline/segmentation you gave does not cover all "z" slices of the input image.\n' \
+        #       'Results should be improved if you crop the input image (you can use \'sct_crop_image\') and generate\n'\
+        #       'a new spinalcord centerline/segmentation from this cropped image.\n'
+        #print len((numpy.array(x_centerline)>=0).nonzero()[0]),len((numpy.array(y_centerline)>=0).nonzero()[0])
+        min_centerline = min((numpy.array(x_centerline)>=0).nonzero()[0])
+        max_centerline = max((numpy.array(x_centerline)>=0).nonzero()[0])
+        z_centerline = z_centerline[(min_centerline):(max_centerline+1)]
+        #print len(z_centerline)
+        nz = len(z_centerline)
+        x_centerline = [ x for x in x_centerline if not isnan(x) ]
+        y_centerline = [ y for y in y_centerline if not isnan(y) ]
+        #print len(x_centerline),len(y_centerline)
+
     # clear variable
     del data
 
@@ -272,7 +259,11 @@ def main():
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
+        #numpy.interp([i for i in xrange(0,min_centerline+1)],
+        #y_centerline_fit
 
+    #print z_centerline
+    
     if verbose == 2:
         # plot centerline
         ax = plt.subplot(1,2,1)
@@ -294,12 +285,11 @@ def main():
     #==========================================================================================
     print '\nGet coordinates of landmarks along curved centerline...'
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy.
-    
     # find derivative of polynomial
     step_z = round(nz/gapz)
     #iz_curved = [i for i in range (0, nz, gapz)]
-    iz_curved = [i*step_z for i in range (0, gapz)]
-    iz_curved.append(nz-1)     
+    iz_curved = [(min(z_centerline) + i*step_z) for i in range (0, gapz)]
+    iz_curved.append(max(z_centerline))
     #print iz_curved, len(iz_curved)
     n_iz_curved = len(iz_curved)
     #print n_iz_curved
@@ -330,20 +320,20 @@ def main():
         for index in range(0, n_iz_curved, 1):
             # calculate d (ax+by+cz+d=0)
             # print iz_curved[index]
-            a=x_centerline_deriv[iz_curved[index]]
-            b=y_centerline_deriv[iz_curved[index]]
-            c=z_centerline_deriv[iz_curved[index]]
-            x=x_centerline_fit[iz_curved[index]]
-            y=y_centerline_fit[iz_curved[index]]
+            a=x_centerline_deriv[iz_curved[index]-min(z_centerline)]
+            b=y_centerline_deriv[iz_curved[index]-min(z_centerline)]
+            c=z_centerline_deriv[iz_curved[index]-min(z_centerline)]
+            x=x_centerline_fit[iz_curved[index]-min(z_centerline)]
+            y=y_centerline_fit[iz_curved[index]-min(z_centerline)]
             z=iz_curved[index]
             d=-(a*x+b*y+c*z)
             #print a,b,c,d,x,y,z
             # set coordinates for landmark at the center of the cross
-            landmark_curved[index][0][0], landmark_curved[index][0][1], landmark_curved[index][0][2] = x_centerline_fit[iz_curved[index]], y_centerline_fit[iz_curved[index]], iz_curved[index]
+            landmark_curved[index][0][0], landmark_curved[index][0][1], landmark_curved[index][0][2] = x_centerline_fit[iz_curved[index]-min(z_centerline)], y_centerline_fit[iz_curved[index]-min(z_centerline)], iz_curved[index]
             
             # set y coordinate to y_centerline_fit[iz] for elements 1 and 2 of the cross
             for i in range(1,3):
-                landmark_curved[index][i][1] = y_centerline_fit[iz_curved[index]]
+                landmark_curved[index][i][1] = y_centerline_fit[iz_curved[index]-min(z_centerline)]
             
             # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan and the distance landmark/curve to be gapxy
             x_n=Symbol('x_n')
@@ -353,7 +343,7 @@ def main():
             
             # set x coordinate to x_centerline_fit[iz] for elements 3 and 4 of the cross
             for i in range(3,5):
-                landmark_curved[index][i][0] = x_centerline_fit[iz_curved[index]]
+                landmark_curved[index][i][0] = x_centerline_fit[iz_curved[index]-min(z_centerline)]
             
             # set coordinates for landmarks +y and -y. Here, x coordinate is 0 (already initialized).
             y_n=Symbol('y_n')
@@ -381,12 +371,12 @@ def main():
     landmark_straight = [ [ [ 0 for i in range(0,3)] for i in range (0,5) ] for i in iz_curved ] # same structure as landmark_curved
     
     # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the curved centerline (approximation curve --> line)
-    iz_straight = [0 for i in range (0,gapz+1)]
+    iz_straight = [(min(z_centerline) + 0) for i in range (0,gapz+1)]
     #print iz_straight,len(iz_straight)
     for index in range(1, n_iz_curved, 1):
         # compute vector between two consecutive points on the curved centerline
-        vector_centerline = [x_centerline_fit[iz_curved[index]] - x_centerline_fit[iz_curved[index-1]], \
-                             y_centerline_fit[iz_curved[index]] - y_centerline_fit[iz_curved[index-1]], \
+        vector_centerline = [x_centerline_fit[iz_curved[index]-min(z_centerline)] - x_centerline_fit[iz_curved[index-1]-min(z_centerline)], \
+                             y_centerline_fit[iz_curved[index]-min(z_centerline)] - y_centerline_fit[iz_curved[index-1]-min(z_centerline)], \
                              iz_curved[index] - iz_curved[index-1]]
         # compute norm of this vector
         norm_vector_centerline = numpy.linalg.norm(vector_centerline, ord=2)
@@ -428,7 +418,7 @@ def main():
     # Pad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV
     # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
     print '\nPad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV...'
-    sct.run('c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+    sct.run('sct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
     
     # TODO: don't pad input volume: no need for that! instead, try to increase size of hdr when saving landmarks.
     
@@ -479,39 +469,39 @@ def main():
     
     # Estimate rigid transformation
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
+    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
-    sct.run('WarpImageMultiTransform 3 tmp.landmarks_curved.nii.gz tmp.landmarks_curved_rigid.nii.gz -R tmp.landmarks_straight.nii.gz tmp.curve2straight_rigid.txt --use-NN')
+    sct.run('sct_WarpImageMultiTransform 3 tmp.landmarks_curved.nii.gz tmp.landmarks_curved_rigid.nii.gz -R tmp.landmarks_straight.nii.gz tmp.curve2straight_rigid.txt --use-NN')
     
     # Estimate b-spline transformation curve --> straight
     print '\nEstimate b-spline transformation: curve --> straight...'
-    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
+    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
-    #sct.run('ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
+    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
+    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     print '\nEstimate b-spline transformation: straight --> curve...'
-    sct.run('ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0')
+    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0')
     
     # Concatenate rigid and non-linear transformations...
     print '\nConcatenate rigid and non-linear transformations...'
-    #sct.run('ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
+    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # TODO: use sct.run() when output from the following command will be different from 0 (currently there seem to be a bug)
-    cmd = 'ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
     
     #print '\nPad input image...'
-    #sct.run('c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
+    #sct.run('sct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
     
     # Unpad landmarks...
     # THIS WAS REMOVED ON 2014-06-03 because the output data was cropped at the edge, which caused landmarks to sometimes disappear
@@ -520,8 +510,8 @@ def main():
     
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    sct.run('WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
-    # sct.run('WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
+    sct.run('sct_WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
+    # sct.run('sct_WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
     
     # come back to parent folder
     os.chdir('..')
@@ -637,7 +627,7 @@ def usage():
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_straighten_spinalcord.py -i t2.nii.gz -c centerline.nii.gz\n'
+        '  sct_straighten_spinalcord -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
 
 
