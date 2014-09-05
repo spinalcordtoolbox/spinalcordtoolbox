@@ -74,9 +74,12 @@ fi
 echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
-echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
+# echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
-unamestr=`uname`
+
+echo ${SCT_DIR}
+
+unamestr='uname'
 #if [[ ! "$unamestr" == 'Linux' ]]; then
 #  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
 #fi
@@ -100,6 +103,14 @@ fi
 # launch .bash_profile. This line doesn't always work. Best way is to open a new terminal.
 . ~/.bashrc
 
+# install required software
+echo
+echo " Install required software... "
+cd requirements
+cmd="./requirements.sh"
+echo ">> $cmd"; $cmd
+cd ..
+
 # check if other dependent software are installed
 echo
 echo "Check if other dependent software are installed..."
@@ -107,15 +118,15 @@ cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
 # go to testing folder
-path_toolbox_temp=`pwd`
+path_toolbox_temp='pwd'
 cd ../sct_testing/
-path_testing=`pwd` 
+path_testing='pwd' 
 
 # display stuff
-echo
-echo "========================================================================================"
-echo
-echo "Done! If you had error(s), please start a new Terminal and run the following command:"
+echo ""
+echo "" "========================================================================================"
+echo ""
+echo "Done! If you had errors, please start a new Terminal and run the following command:"
 echo "> sct_check_dependences.py"
 echo
 echo "If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/"
@@ -130,8 +141,5 @@ echo "> cd $path_testing"
 echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 echo
 echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
-echo 
-echo "Enjoy :-)"
-echo 
-echo "========================================================================================"
-echo
+
+
