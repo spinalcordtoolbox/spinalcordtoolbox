@@ -106,7 +106,7 @@ status.append( test_function('sct_get_centerline',' ........................ ') 
 status.append( test_function('sct_process_segmentation',' .................. ') )
 status.append( test_function('sct_register_multimodal',' ................... ') )
 status.append( test_function('sct_register_to_template',' .................. ') )
-status.append( test_function('sct_segmentation_propagation',' .............. ') )
+status.append( test_function('sct_propseg',' ............................... ') )
 status.append( test_function('sct_smooth_spinalcord',' ..................... ') )
 status.append( test_function('sct_straighten_spinalcord',' ................. ') )
 status.append( test_function('sct_warp_template',' ......................... ') )
@@ -116,4 +116,9 @@ print 'status: '+str(status)
 elapsed_time = time.time() - start_time
 print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
-sys.exit(sum(status))
+e = 0
+if sum(status) != 0:
+    e = 1
+
+
+sys.exit(e)

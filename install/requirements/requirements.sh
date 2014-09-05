@@ -14,9 +14,12 @@
 echo "-------------------------------"
 echo "INSTALLER FOR SOME REQUIREMENTS"
 echo "-------------------------------"
-echo "* CONDA *"
-CURRENT_PATH=$PWD
-
-conda install --yes --file requirementsConda.txt
-echo "* PIP *"
-pip install -r requirementsPip.txt
+if which conda >/dev/null; then
+    echo "* CONDA *"
+    conda install --yes --file requirementsConda.txt
+    echo "* PIP *"
+    pip install -r requirementsPip.txt
+else
+    echo "Conda is not installed"
+    echo "Cannot install requirements "
+fi
