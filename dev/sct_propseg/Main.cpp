@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
     // Extract the input file name
     unsigned found_slash = inputFilename.find_last_of("/\\");
     string inputFilename_nameonly = inputFilename.substr(found_slash+1);
-    unsigned found_point = inputFilename.find_last_of(".");
+    unsigned found_point = inputFilename_nameonly.find_first_of(".");
     inputFilename_nameonly = inputFilename_nameonly.substr(0,found_point);
     
     // Check if output folder ends with /
@@ -383,8 +383,8 @@ int main(int argc, char *argv[])
     outputFilenameMesh = outputPath+inputFilename_nameonly+"_mesh.vtk";
     outputFilenameBinaryCSF = outputPath+inputFilename_nameonly+"_CSF_seg"+suffix;
     outputFilenameMeshCSF = outputPath+inputFilename_nameonly+"_CSF_mesh.vtk";
-    outputFilenameAreas = outputPath+inputFilename_nameonly+"cross_sectional_areas.txt";
-    outputFilenameAreasCSF = outputPath+inputFilename_nameonly+"cross_sectional_areas_CSF.txt";
+    outputFilenameAreas = outputPath+inputFilename_nameonly+"_cross_sectional_areas.txt";
+    outputFilenameAreasCSF = outputPath+inputFilename_nameonly+"_cross_sectional_areas_CSF.txt";
     outputFilenameCenterline = outputPath+inputFilename_nameonly+"_centerline.txt";
     outputFilenameCenterlineBinary = outputPath+inputFilename_nameonly+"_centerline"+suffix;
     // if output path doesn't exist, we create it
