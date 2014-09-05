@@ -86,10 +86,10 @@ sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 # testing
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
 
-# testing - sct_segmentation_propagation
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation')
-sct.run('cp ../testing/sct_segmentation_propagation/test_sct_segmentation_propagation.sh '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation/')
-sct.run('cp -r ../testing/sct_segmentation_propagation/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation/')
+# testing - sct_propseg
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_propseg')
+sct.run('cp ../testing/sct_propseg/test_sct_propseg.sh '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
+sct.run('cp -r ../testing/sct_propseg/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
 
 # testing - sct_register_to_template
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_register_to_template')
