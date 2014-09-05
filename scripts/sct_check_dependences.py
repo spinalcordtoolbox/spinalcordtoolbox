@@ -280,7 +280,7 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ........... ')
-    (status, output) = commands.getstatusoutput('sct_segmentation_propagation')
+    (status, output) = commands.getstatusoutput('sct_propseg')
     if status in [0, 256]:
         print_ok()
     else:
