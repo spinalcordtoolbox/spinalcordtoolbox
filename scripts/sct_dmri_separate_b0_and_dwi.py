@@ -186,7 +186,7 @@ def usage():
         '  Separate b=0 and DW images from diffusion dataset.\n' \
         '\n' \
         'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <dmri> -w <bvecs>\n' \
+        '  '+os.path.basename(__file__)+' -i <dmri> -b <bvecs>\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <dmri>                  diffusion data\n' \
