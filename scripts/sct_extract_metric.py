@@ -34,7 +34,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
         self.path_label = ''
         self.verbose = 1
@@ -46,6 +46,18 @@ class param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
+
+class color:
+    purple = '\033[95m'
+    cyan = '\033[96m'
+    darkcyan = '\033[36m'
+    blue = '\033[94m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    red = '\033[91m'
+    bold = '\033[1m'
+    underline = '\033[4m'
+    end = '\033[0m'
 
 
 
@@ -70,15 +82,15 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
+        fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_32/mt/mtr.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_32/mt/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0,1,4,7'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '200:210' #'2:4'
-        vertebral_levels = ''
-        average_all_labels = 0
-        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
+        labels_of_interest = '0,1,2,11'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = ''  #'200:210' #'2:4'
+        vertebral_levels = '4:5'
+        average_all_labels = 1
+        fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_32/metric_extraction/left_averaged_estimations/atlas/mtr'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_normalizing_label = ''  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
 
 
     # Check input parameters
@@ -341,6 +353,42 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
 
     # Load the vertebral labeling file and get the data in array format
     data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
+    # Extract the vertebral levels available in the metric image
+    vertebral_levels_available = np.array(list(set(data_vert_labeling[data_vert_labeling > 0])))
+
+    # Check if the vertebral levels selected are available
+    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+    if vert_levels_list[0] < min_vert_level_available:
+        vert_levels_list[0] = min_vert_level_available
+        print color.yellow + 'WARNING: the bottom vertebral level you selected is lower to the lowest ' \
+                                          'level available \n--> Selected the lowest vertebral level available: '+\
+              str(int(vert_levels_list[0])) + color.end
+
+    if vert_levels_list[0] > max_vert_level_available:
+        vert_levels_list[1] = max_vert_level_available
+        print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
+                                          'level available --> Selected the highest vertebral level available: ' + \
+              str(int(vert_levels_list[1])) + color.end
+
+    if vert_levels_list[0] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
+        distance_min_among_negative_value = min(abs(distance[distance < 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
+        # of the initial list corresponding to this minimal distance
+        print color.yellow + 'WARNING: the bottom vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest inferior level available: '+str(int(vert_levels_list[0]))
+
+    if vert_levels_list[1] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
+        distance_min_among_positive_value = min(abs(distance[distance > 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
+        # of the initial list corresponding to this minimal distance
+        print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest superior level available: ' + str(int(vert_levels_list[1]))
+
 
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
@@ -363,12 +411,6 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     # Check if sizes along Z are the same
     if mz != vz:
         print '\tERROR: Size of vertebral_labeling.nii.gz along Z is not the same as the metric data.'
-        exit_program = 1
-
-    # Check if the vertebral levels selected are not available in the input image
-    if vert_levels_list[0] < int(np.ndarray.min(data_vert_labeling)) or \
-                    vert_levels_list[1] > int(np.ndarray.max(data_vert_labeling)):
-        print '\tERROR: The vertebral levels you selected are not available in the input image.'
         exit_program = 1
 
     # Exit program if an error was detected
