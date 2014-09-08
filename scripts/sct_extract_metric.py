@@ -34,7 +34,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.method = 'wa'
         self.path_label = ''
         self.verbose = 1
