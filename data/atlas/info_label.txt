@@ -15,7 +15,7 @@
 12, left tectospinal tract, WMtract__12.nii.gz
 13, left medial reticulospinal tract, WMtract__13.nii.gz
 14, left medial longitudinal fasciculus, WMtract__14.nii.gz
-15, right  asciculus gracilis, WMtract__15.nii.gz
+15, right fasciculus gracilis, WMtract__15.nii.gz
 16, right fasciculus cuneatus, WMtract__16.nii.gz
 17, right lateral corticospinal tract, WMtract__17.nii.gz
 18, right ventral spinocerebellar tract, WMtract__18.nii.gz
