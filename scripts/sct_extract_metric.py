@@ -34,7 +34,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
         self.path_label = ''
         self.verbose = 1
@@ -199,7 +199,7 @@ def main():
                 vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
             elif path_label.endswith('template/'):
                 vertebral_labeling_path = path_label+'MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
+            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
                                                                            vertebral_labeling_path)
 
     # select slice of interest by cropping data and labels
@@ -260,8 +260,8 @@ def main():
               +' +/- '+str(metric_std[i])+'\033[0m'
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
-                 fname_data, method, fname_normalizing_label)
+    save_metrics(label_id_user, label_name, slices_of_interest, actual_vert_levels, warning_vert_levels, metric_mean,
+                 metric_std, fname_output, fname_data, method, fname_normalizing_label)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -357,16 +357,24 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     vertebral_levels_available = np.array(list(set(data_vert_labeling[data_vert_labeling > 0])))
 
     # Check if the vertebral levels selected are available
+    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
     min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
     max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
     if vert_levels_list[0] < min_vert_level_available:
         vert_levels_list[0] = min_vert_level_available
+        warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
+                       'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
+                       # warning to write it later in the .txt output file
         print color.yellow + 'WARNING: the bottom vertebral level you selected is lower to the lowest ' \
                                           'level available \n--> Selected the lowest vertebral level available: '+\
               str(int(vert_levels_list[0])) + color.end
 
     if vert_levels_list[0] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
+        warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
+                       'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
+        # warning to write it later in the .txt output file
+
         print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
                                           'level available --> Selected the highest vertebral level available: ' + \
               str(int(vert_levels_list[1])) + color.end
@@ -377,8 +385,11 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         # relative distances
         vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
         # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
+                       'inferior level available: ' + str(int(vert_levels_list[0])))
         print color.yellow + 'WARNING: the bottom vertebral level you selected is not available \n--> Selected the ' \
-                             'nearest inferior level available: '+str(int(vert_levels_list[0]))
+                             'nearest inferior level available: '+str(int(vert_levels_list[0]))  # record the
+        # warning to write it later in the .txt output file
 
     if vert_levels_list[1] not in vertebral_levels_available:
         distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
@@ -386,6 +397,9 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         # relative distances
         vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
         # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
+                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
+
         print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
                              'nearest superior level available: ' + str(int(vert_levels_list[1]))
 
@@ -442,7 +456,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
     # to the top slice
-    return str(slice_min)+':'+str(slice_max)
+    return str(slice_min)+':'+str(slice_max), vert_levels_list, warning
 
 
 
@@ -464,8 +478,8 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, metric_mean, metric_std, fname_output,
-                 fname_data, method, fname_normalizing_label):
+def save_metrics(ind_labels, label_name, slices_of_interest, actual_vert, warning_vert_levels, metric_mean, metric_std,
+                 fname_output, fname_data, method, fname_normalizing_label):
 
     # CSV format, header lines start with "#"
 
@@ -482,16 +496,19 @@ def save_metrics(ind_labels, label_name, slices_of_interest, vertebral_levels, m
     fid_metric.write('\n'+'# Metric file: '+ os.path.abspath(fname_data))
     # If it's the case, write the label used to normalize the metric estimation:
     if fname_normalizing_label:
-        fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' + fname_normalizing_label)
+        fid_metric.write('\n' + '# Label used to normalize the metric estimation slice-by-slice: ' +
+                         fname_normalizing_label)
     # Write method used for the metric estimation
     fid_metric.write('\n'+'# Extraction method: '+method)
 
     # Write selected vertebral levels
-    fid_metric.write('\n'+'# Vertebral levels: ')
-    if vertebral_levels != '':
-        fid_metric.write('%s to %s' % (vertebral_levels.split(':')[0], vertebral_levels.split(':')[1]))
+    if actual_vert:
+        if warning_vert_levels:
+            for i in range(0, len(warning_vert_levels)):
+                fid_metric.write('\n# '+str(warning_vert_levels[i]))
+        fid_metric.write('\n# Vertebral levels: '+'%s to %s' % (int(actual_vert[0]), int(actual_vert[1])))
     else:
-        fid_metric.write('ALL')
+        fid_metric.write('\n# Vertebral levels: ALL')
 
     # Write selected slices
     fid_metric.write('\n'+'# Slices (z): ')
