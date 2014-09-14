@@ -926,8 +926,8 @@ switch sct.dmri.moco_intra.method
 end
 
 
-sct.dmri.index_b0 = index_b0;
-j_disp(sct.log,['.. Index of b=0 images: ',num2str(index_b0)])
+sct.dmri.index_b0 = index_b0; index_b0=index_b0(:);
+j_disp(sct.log,['.. Index of b=0 images: ',num2str(index_b0')])
 nb_b0 = length(index_b0);
 sct.dmri.nb_b0 = nb_b0;
 
@@ -1118,7 +1118,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         j_disp(sct.log,['\nFind registration matrix to the closest DWI data...'])
         for i_file = 1:sct.dmri.nt
             % find which mat file to use
-            [min_closest_b0 i_b0] = min(abs(i_file-index_b0));
+            [min_closest_b0 i_b0] = min(abs(index_b0'-i_file));
             % copy mat file
             if sct.dmri.moco_intra.slicewise
                 for iZ=1:sct.dmri.nz

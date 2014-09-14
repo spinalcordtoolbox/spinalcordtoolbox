@@ -35,7 +35,7 @@ addOptional(p,'crop','none',@(x) any(validatestring(x,crops)));
 addOptional(p,'eddy',1,@isnumeric);
 moco_methods={'b0','dwi','dwi_lowbvalue','none'};
 addOptional(p,'method','dwi',@(x) any(validatestring(x,moco_methods)));
-addOptional(p,'crop_margin',15,@isnumeric);
+addOptional(p,'crop_margin',25,@isnumeric);
 addOptional(p,'data','');
 addOptional(p,'bvec','');
 addOptional(p,'bval','');
