@@ -20,9 +20,9 @@
 function dims = j_mri_getDimensions(result)
 
 
-[a b]=strread(result,'%s %d');
+[a b]= textscan(result,'%s %d', 'HeaderLines',8);
 
-dims(1) = b(1);
-dims(2) = b(2);
-dims(3) = b(3);
-dims(4) = b(4);
+dims(1) = double(a{1,2}(1));
+dims(2) = double(a{1,2}(2));
+dims(3) = double(a{1,2}(3));
+dims(4) = double(a{1,2}(4));
