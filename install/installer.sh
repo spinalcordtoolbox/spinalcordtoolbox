@@ -129,7 +129,7 @@ echo ""
 echo "" "========================================================================================"
 echo ""
 echo "Done! If you had errors, please start a new Terminal and run the following command:"
-echo "> sct_check_dependences.py"
+echo "> sct_check_dependences"
 echo
 echo "If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/"
 echo "or contact the developers."
