@@ -2,6 +2,7 @@ project(sct_hausdorff_distance)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
 set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.5)
+set(CMAKE_INCLUDE_PATH ${VTK_DIR}/include/vtk-6.1)
 
 option(BUILD_SHARED_LIBS OFF)
 
@@ -31,6 +32,9 @@ set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
 
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
+
+FIND_PACKAGE(VTK REQUIRED)
+INCLUDE(${VTK_USE_FILE})
 
 aux_source_directory(. SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
