@@ -70,7 +70,7 @@ class param:
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
-        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
+        self.bval_min = 430  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
 
 
 #=======================================================================================================================
@@ -177,7 +177,9 @@ def main():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # create temporary folder
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    if path_out == '.':
+        path_out = path_data
+    path_tmp = sct.slash_at_the_end(path_out+'tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # go to tmp folder
@@ -313,6 +315,11 @@ def dmri_moco(param):
     # sct.printv('  Index of DWI:'+str(index_dwi), verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, bval_min, verbose)
 
+
+
+    #=======================================================================================================================
+    # Prepare NIFTI (mean/groups...)
+    #=======================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
     status, output = sct.run(fsloutput+'fslsplit '+fname_data + ' ' + file_data + '_T', verbose)
@@ -381,6 +388,14 @@ def dmri_moco(param):
     fname_dwi_mean = 'dwi_mean'  
     sct.run(fsloutput + 'fslmaths ' + fname_dwi_groups_means_merge + ' -Tmean ' + fname_dwi_mean, verbose)
 
+
+
+
+
+    #=======================================================================================================================
+    #START MOCO
+    #=======================================================================================================================
+
     # Estimate moco on b0 groups
     sct.printv('\n-------------------------------------------------------------------------------', verbose)
     sct.printv('  Estimating motion on b=0 images...', verbose)
@@ -396,8 +411,8 @@ def dmri_moco(param):
     param.path_out = ''
     param.todo = 'estimate'
     param.mat_moco = 'mat_b0groups'
-    param.interp = 'trilinear'
     moco.moco(param)
+
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', verbose)
@@ -408,7 +423,6 @@ def dmri_moco(param):
     param.path_out = ''
     param.todo = 'estimate'
     param.mat_moco = 'mat_dwigroups'
-    param.interp = 'trilinear'
     moco.moco(param)
 
     # create final mat folder
@@ -461,7 +475,6 @@ def dmri_moco(param):
     param.path_out = ''
     param.mat_moco = mat_final
     param.todo = 'apply'
-    param.interp = interp
     moco.moco(param)
 
     # generate b0_moco_mean and dwi_moco_mean
