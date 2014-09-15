@@ -476,7 +476,7 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
     print('\nGenerating output text file...')
     file_results = open(param.fname_csa,'w')
     for i in range(min_z_index, max_z_index+1):
-        file_results.write(str(int(i*z_scale)) + ',' + str(csa[i-min_z_index])+'\n')
+        file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
     file_results.close()
     print '.. File created: '+param.fname_csa
 

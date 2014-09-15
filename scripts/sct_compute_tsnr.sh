@@ -18,7 +18,7 @@ fslmaths fmri_moco_mean -div fmri_moco_std fmri_tsnr
 
 # register tsnr to anatomic
 echo Register tSNR to anatomic...
-c3d  anat.nii.gz fmri_tsnr.nii.gz -reslice-identity -o fmri_tsnr_reslice.nii.gz
+sct_c3d  anat.nii.gz fmri_tsnr.nii.gz -reslice-identity -o fmri_tsnr_reslice.nii.gz
 
 # Remove temp files
 echo Remove temporary files...

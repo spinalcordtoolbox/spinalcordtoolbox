@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Create package with appropriate version number.
 #
@@ -30,13 +31,13 @@ def usage():
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,debian}.\n' \
+        '  -s <OS name>      name of the OS {osx,linux}.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  create_package.py -s debian\n'
+        '  create_package.py -s linux\n'
     sys.exit(2)
 
-listOS = ['osx', 'debian']
+listOS = ['osx', 'linux']
 OSname = ''
 # Check input param
 try:
@@ -67,6 +68,7 @@ sct.run('mkdir '+folder_sct)
 # copy folders
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox')
 sct.run('cp installer.sh '+folder_sct)
+sct.run('cp -r requirements '+folder_sct)
 sct.run('cp ../README.md '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
@@ -75,46 +77,19 @@ sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r osx/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r osx/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
-elif OSname == 'debian':
-    sct.run('cp -r ../bin/debian/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r debian/ants/* '+folder_sct+'spinalcordtoolbox/bin/')
-    sct.run('cp -r debian/c3d/* '+folder_sct+'spinalcordtoolbox/bin/')
+elif OSname == 'linux':
+    sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
-# copy colormap
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/')
-sct.run('cp -rf ../data/colormap '+folder_sct+'spinalcordtoolbox/data/')
-
-# copy atlas
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/atlas')
-sct.run('ls ../data/atlas/vol*.* | while read F; do cp $F '+folder_sct+'spinalcordtoolbox/data/atlas/; done')
-sct.run('cp ../data/atlas/list.txt '+folder_sct+'spinalcordtoolbox/data/atlas/')
-
-# copy spinal_level
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/spinal_level')
-sct.run('cp -rf ../data/spinal_level '+folder_sct+'spinalcordtoolbox/data/')
-
-# copy template
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/data/template')
-sct.run('cp ../data/template/MNI-Poly-AMU_T2.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/landmarks_center.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/mask_gaussian_templatespace_sigma20.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_cord.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_CSF.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_GM.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_level.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_seg.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/MNI-Poly-AMU_WM.nii.gz '+folder_sct+'spinalcordtoolbox/data/template/')
-sct.run('cp ../data/template/version.txt '+folder_sct+'spinalcordtoolbox/data/template/')
+# copy data
+sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 
 # testing
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
 
-# testing - sct_segmentation_propagation
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation')
-sct.run('cp ../testing/sct_segmentation_propagation/test_sct_segmentation_propagation.sh '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation/')
-sct.run('cp -r ../testing/sct_segmentation_propagation/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_segmentation_propagation/')
+# testing - sct_propseg
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_propseg')
+sct.run('cp ../testing/sct_propseg/test_sct_propseg.sh '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
+sct.run('cp -r ../testing/sct_propseg/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
 
 # testing - sct_register_to_template
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_register_to_template')
@@ -126,14 +101,14 @@ sct.run('cp ../testing/sct_register_multimodal/test_sct_register_multimodal.sh '
 sct.run('cp -r ../testing/sct_register_multimodal/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal/')
 sct.run('cp -r ../testing/sct_register_multimodal/check_integrity '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal/')
 
-# testing - sct_warp_atlas2metric
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_warp_atlas2metric')
-sct.run('cp ../testing/sct_warp_atlas2metric/test_sct_warp_atlas2metric.sh '+folder_sct+'spinalcordtoolbox/testing/sct_warp_atlas2metric/')
-sct.run('cp -r ../testing/sct_warp_atlas2metric/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_warp_atlas2metric/')
+# testing - sct_warp_template
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template')
+sct.run('cp ../testing/sct_warp_template/test_sct_warp_template.sh '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template/')
+sct.run('cp -r ../testing/sct_warp_template/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template/')
 
-# testing - sct_estimate_MAP_tracts
-sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_estimate_MAP_tracts')
-sct.run('cp ../testing/sct_estimate_MAP_tracts/test_sct_estimate_MAP_tracts.sh '+folder_sct+'spinalcordtoolbox/testing/sct_estimate_MAP_tracts/')
+# testing - sct_extract_metric
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_extract_metric')
+sct.run('cp ../testing/sct_extract_metric/test_sct_extract_metric.sh '+folder_sct+'spinalcordtoolbox/testing/sct_extract_metric/')
 
 # testing - data
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/data')

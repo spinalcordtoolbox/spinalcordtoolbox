@@ -129,7 +129,7 @@ def main():
         output_level = 1
 
     if (output_level == 0):
-        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32. 
+        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32.
         print '\nWrite NIFTI volumes...'
         data.astype('int')
         img = nibabel.Nifti1Image(data, None, hdr)
@@ -147,7 +147,7 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
 
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i in range(0,a):
-        value = data[X[i]][Y[i]][Z[i]]
+        value = int(data[X[i]][Y[i]][Z[i]])
         data[X[i]][Y[i]][Z[i]] = 0 # remove point on the center of the spinal cord
         if fname_ref == '':
             data[X[i]][Y[i]+dy][Z[i]] = value*10+1 # add point at distance from center of spinal cord
@@ -237,7 +237,10 @@ def remove_label(data, fname_ref):
         isInRef = False
         for j in range(0,nbLabel_ref):
             value_ref = data_ref[X_ref[j]][Y_ref[j]][Z_ref[j]]
-            if value_ref == value:
+            # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
+            #if value_ref == value:
+            if abs(value - value_ref) < 0.1:
+                data[X[i]][Y[i]][Z[i]] = value_ref
                 isInRef = True
         if isInRef == False:
             data[X[i]][Y[i]][Z[i]] = 0
@@ -433,7 +436,7 @@ def display_voxel(data):
 #=======================================================================================================================
 def usage():
     print 'USAGE: \n' \
-        '  sct_label_utils.py -i <inputdata> -o <outputdata> -c <crossradius>\n' \
+        '  sct_label_utils -i <inputdata> -o <outputdata> -c <crossradius>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i           input volume.\n' \
@@ -446,7 +449,7 @@ def usage():
         '  -h           help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_label_utils.py -i t2.nii.gz -c 5\n'
+        '  sct_label_utils -i t2.nii.gz -c 5\n'
     sys.exit(2)
     
     

@@ -4,38 +4,10 @@
 # Method: bias field correction (N4) followed by SIENAx or RBM
 # RBM (reverse MNI brain masking) is adapted from Keihaninejad (2010)
 #
-# USAGE
 # ---------------------------------------------------------------------------------------
-#   sct_icv.py -i <inputvol> [options]
-#
-#
-# INPUT
-# ---------------------------------------------------------------------------------------
-# -i inputvol          volume. Can be nii or nii.gz
-# -c contrast          (t1|t2) contrast (default=t1)
-# -o output-dir        set output directory (create directory if not exists)
-# -d method            (sienax|RBM) method to estimate ICV (default=sienax)
-# -v verbose           (0|1)
-#
-# OUTPUT
-# ---------------------------------------------------------------------------------------
-# text file (icv.txt) with the value of raw intracranial volume in cubic millimeters
-# if sienax: additional SIENAx report in separate folder
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-#
-# EXTERNAL SOFTWARE
-# - ANTS (N4BiasFieldCorrection) <http://stnava.github.io/ANTs/>
-# - if sienax: FSL (SIENAx) <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA>
-# - if rbm: FSL (bet) <http://fsl.fmrib.ox.ac.uk/fsl/fsl-4.1.9/bet2/index.html>
-# - if rbm: FSL (flirt) <http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT>
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
-# Author: William Thong
-# Modified: 2013-12-16 11:30
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: William Thong
+# Modified: 2014-09-01
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -196,7 +168,7 @@ def main():
         os.system(cmd)
         
         # Resample in 2mm to match template voxel size 
-        cmd = 'c3d '+output_path+file_output+ext_input+' -resample-mm 2.0x2.0x2.0mm '+output_path+file_output+'_2mm'+ext_input
+        cmd = 'sct_c3d '+output_path+file_output+ext_input+' -resample-mm 2.0x2.0x2.0mm '+output_path+file_output+'_2mm'+ext_input
         print(">> "+cmd)
         os.system(cmd)
         file_output=file_output+'_2mm'
@@ -254,7 +226,7 @@ def main():
         file_output = file_output+'_inv'
         
         # reslice in initial space
-        cmd = 'c3d '+output_path+file_input+ext_input+' '+output_path+file_output+ext_input+' -reslice-identity -o '+output_path+file_input+'_brain'+ext_input
+        cmd = 'sct_c3d '+output_path+file_input+ext_input+' '+output_path+file_output+ext_input+' -reslice-identity -o '+output_path+file_input+'_brain'+ext_input
         print(">> "+cmd)
         os.system(cmd)
 

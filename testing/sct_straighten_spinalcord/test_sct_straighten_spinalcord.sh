@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# test sct_straighten_spinalcord.py
+# testing file
 
 # subject list
 SUBJECT_LIST="errsm_23" # errsm_21 errsm_22 errsm_23 errsm_24"
@@ -29,7 +29,7 @@ for subject in $SUBJECT_LIST; do
     echo
     printf "${green}Subject: $subject${NC}\n"
     printf "${red}Contrast: ${contrast}${NC}\n\n"
-    cmd="sct_straighten_spinalcord.py 
+    cmd="sct_straighten_spinalcord
       -i ../../data/${subject}/${contrast}/${contrast}.nii.gz
       -c ../../data/${subject}/${contrast}/${contrast}_centerline.nii.gz 
       -f polynomial
