@@ -278,7 +278,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
             cmd = 'sct_antsRegistration' \
                   ' --dimensionality '+str(dim)+' ' \
                   ' --transform Affine[0.5]' \
-                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
+                  ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
                   ' --convergence 10x5' \
                   ' --shrink-factors 2x1' \
                   ' --smoothing-sigmas 2x1mm' \
