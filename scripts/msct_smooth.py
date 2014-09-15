@@ -120,12 +120,13 @@ def b_spline_nurbs(x,y,z,degree = 3,point_number = 3000):
     P = nurbs.getCourbe3D()
     x_fit=P[0]
     y_fit=P[1]
+    z_fit=P[2]
     Q = nurbs.getCourbe3D_deriv()
     x_deriv=Q[0]
     y_deriv=Q[1]
     z_deriv=Q[2]
   
-    return x_fit, y_fit,x_deriv,y_deriv,z_deriv
+    return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
 
 
 
