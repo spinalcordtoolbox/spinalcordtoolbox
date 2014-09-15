@@ -200,7 +200,8 @@ else
 	j_disp(fname_log,'No indexation found. Create one that includes all the volumes.')
 	param.index = (1:nt);
 end
-j_disp(fname_log,['.. Index of volumes to correct: ',num2str(param.index)])
+param.index=param.index(:);
+j_disp(fname_log,['.. Index of volumes to correct: ',num2str(param.index')])
 
 
 
