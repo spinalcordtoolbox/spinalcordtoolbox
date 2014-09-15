@@ -49,8 +49,9 @@ def main():
     # initialization
     fsl_is_working = 1
     # ants_is_installed = 1
-    # c3d_is_installed = 1
+    # sct_c3d_is_installed = 1
     install_software = 0
+    e = 0
     restart_terminal = 0
     create_log_file = param.create_log_file
     file_log = 'sct_check_dependencies.log'
@@ -182,6 +183,8 @@ def main():
     else:
         print_fail()
         print '  FSL is not working!'
+        e = 1
+
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
@@ -221,73 +224,79 @@ def main():
 
     # check ANTs
     print_line('Check which ANTs is running .................., ')
-    # (status, output) = commands.getstatusoutput('command -v antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    cmd = 'which antsRegistration'
+    # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    cmd = 'which sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
-        path_ants = output[:-16]
+        path_ants = output[:-20]
         print '  '+path_ants
     else:
         print_warning()
         print '  ANTs is not declared.'
+        e = 1
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS .............. ')
-    cmd = 'antsRegistration'
+    cmd = 'sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
 
-    # check c3d
-    print_line('Check which c3d is running .................... ')
-    # (status, output) = commands.getstatusoutput('command -v c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    status, output = commands.getstatusoutput('which c3d')
+    # check sct_c3d
+    print_line('Check which sct_c3d is running ................ ')
+    # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
+    status, output = commands.getstatusoutput('which sct_c3d')
     if output:
         print_ok()
-        path_c3d = output[:-3]
-        print '  '+path_c3d
+        path_sct_c3d = output[:-7]
+        print '  '+path_sct_c3d
     else:
         print_warning()
-        print '  c3d is not installed or not declared.'
+        print '  sct_c3d is not installed or not declared.'
+        install_software = 1
     if complete_test:
         print (status, output), '\n'
 
-    # check c3d compatibility with OS
-    print_line('Check c3d compatibility with OS ............... ')
-    (status, output) = commands.getstatusoutput('c3d -h')
+    # check sct_c3d compatibility with OS
+    print_line('Check sct_c3d compatibility with OS ........... ')
+    (status, output) = commands.getstatusoutput('sct_c3d -h')
     if status in [0, 256]:
         print_ok()
     else:
         print_fail()
+        install_software = 1
     if complete_test:
         print (status, output), '\n'
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ........... ')
-    (status, output) = commands.getstatusoutput('sct_segmentation_propagation')
+    (status, output) = commands.getstatusoutput('sct_propseg')
     if status in [0, 256]:
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print (status, output), '\n'
 
     # Check ANTs integrity
     print_line('Check integrity of ANTs output ................ ')
-    (status, output) = commands.getstatusoutput('isct_test_ants.py -v 0')
+    (status, output) = commands.getstatusoutput('isct_test_ants -v 0')
     if status in [0]:
         print_ok()
     else:
         print_fail()
+        e = 1
     if complete_test:
         print (status, output), '\n'
 
@@ -299,9 +308,11 @@ def main():
         handle_log.close()
         print "File generated: "+file_log+'\n'
 
+    sys.exit(e + install_software)
+
     # # check if ANTS is installed
     # print_line('Check if ANTs is installed .................... ')
-    # (status, output) = commands.getstatusoutput('find /usr -name "antsRegistration" -type f -print -quit 2>/dev/null')
+    # (status, output) = commands.getstatusoutput('find /usr -name "sct_antsRegistration" -type f -print -quit 2>/dev/null')
     # if output:
     #     print_ok()
     #     path_ants = os.path.dirname(output)
@@ -315,7 +326,7 @@ def main():
     # # check if ANTS is declared
     # if ants_is_installed:
     #     print_line('Check if ANTs is declared ..................... ')
-    #     (status, output) = commands.getstatusoutput('which antsRegistration')
+    #     (status, output) = commands.getstatusoutput('which sct_antsRegistration')
     #     if output:
     #         print_ok()
     #     else:
@@ -325,39 +336,39 @@ def main():
     #             'PATH=${PATH}:'+path_ants)
     #         restart_terminal = 1
 
-    # # check if C3D is installed
-    # print_line('Check if c3d is installed ..................... ')
+    # # check if sct_c3d is installed
+    # print_line('Check if sct_c3d is installed ..................... ')
     # output = ''
     # if os_running == 'osx':
-    #     # in OSX, c3d is typically installed under /Applications
-    #     (status, output) = commands.getstatusoutput('find /Applications -name "c3d" -type f -print -quit 2>/dev/null')
+    #     # in OSX, sct_c3d is typically installed under /Applications
+    #     (status, output) = commands.getstatusoutput('find /Applications -name "sct_c3d" -type f -print -quit 2>/dev/null')
     # if not output:
     #     # check the typical /usr folder
-    #     (status, output) = commands.getstatusoutput('find /usr -name "c3d" -type f -print -quit 2>/dev/null')
+    #     (status, output) = commands.getstatusoutput('find /usr -name "sct_c3d" -type f -print -quit 2>/dev/null')
     # if not output:
     #     # if still not found, check everywhere (takes a while)
-    #     (status, output) = commands.getstatusoutput('find / -name "c3d" -type f -print -quit 2>/dev/null')
+    #     (status, output) = commands.getstatusoutput('find / -name "sct_c3d" -type f -print -quit 2>/dev/null')
     # if output:
     #     print_ok()
-    #     path_c3d = os.path.dirname(output)
-    #     print '  '+path_c3d
+    #     path_sct_c3d = os.path.dirname(output)
+    #     print '  '+path_sct_c3d
     # else:
     #     print_fail()
-    #     print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.C3D'
-    #     c3d_is_installed = 0
+    #     print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.sct_c3d'
+    #     sct_c3d_is_installed = 0
     #     install_software = 1
     # 
-    # # check if C3D is declared
-    # if c3d_is_installed:
-    #     print_line('Check if c3d is declared ...................... ')
-    #     (status, output) = commands.getstatusoutput('which c3d')
+    # # check if sct_c3d is declared
+    # if sct_c3d_is_installed:
+    #     print_line('Check if sct_c3d is declared ...................... ')
+    #     (status, output) = commands.getstatusoutput('which sct_c3d')
     #     if output:
     #         print_ok()
     #     else:
     #         print_warning()
-    #         print '  c3d is not declared! Modifying .bash_profile ...'
-    #         add_bash_profile('#C3D (added on '+time.strftime("%Y-%m-%d")+')\n' \
-    #             'PATH=${PATH}:'+path_c3d)
+    #         print '  sct_c3d is not declared! Modifying .bash_profile ...'
+    #         add_bash_profile('#sct_c3d (added on '+time.strftime("%Y-%m-%d")+')\n' \
+    #             'PATH=${PATH}:'+path_sct_c3d)
     #         restart_terminal = 1
     # 
     #    if install_software:

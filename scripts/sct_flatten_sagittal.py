@@ -43,7 +43,7 @@ except ImportError:
 
 # check if dependant software are installed
 sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('WarpImageMultiTransform -h','ANTS')
+sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 #=======================================================================================================================
 # main
@@ -263,7 +263,7 @@ def usage():
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  sct_flatten_sagittal.py -i t2.nii.gz -c centerline.nii.gz\n'
+        '  sct_flatten_sagittal -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
 
 def b_spline_centerline(x_centerline,y_centerline,z_centerline):

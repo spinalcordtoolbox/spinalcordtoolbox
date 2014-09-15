@@ -24,7 +24,7 @@ function scs_slider_3dmatrix(varargin)
 %% The core of the function starts here %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    nifti_img = varargin{1};
+    nifti_img = squeeze(varargin{1});
 	% Set default title
     if nargin==2, title = varargin{2}; elseif nargin==1, title = '3D matrix visualization'; end
     
@@ -44,7 +44,7 @@ function scs_slider_3dmatrix(varargin)
     %Display of the initial image
     img_buffer=nifti_img(:,:,current_slice);
     imagesc(img_buffer)
-    colormap gray, axis image;
+    colormap gray, axis image; colorbar;
     
     % Add a text uicontrol to label the slider.
     uicontrol('Style','text','units','normalized','Position', [0.7 0.30 2/30 0.03],'String',round(current_slice))
@@ -60,7 +60,7 @@ function sliderZ_callback(hObj,event, nifti_img)
     % Image display
     img_buffer=nifti_img(:,:,round(current_slice));
     imagesc(img_buffer)
-    colormap gray, axis image;
+    colormap gray, axis image; colorbar;
     
     % Slider label
     uicontrol('Style','text','units','normalized','Position', [0.7 0.30 2/30 0.03],'String',round(current_slice))
