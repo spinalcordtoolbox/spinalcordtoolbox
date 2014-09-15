@@ -3,33 +3,6 @@
 # Average data within mask. Compute a weighted average if mask is non-binary (values distributed between 0 and 1).
 #
 #
-# USAGE
-# ---------------------------------------------------------------------------------------
-#   sct_average_data_within_mask.py -i <inputvol> -m <mask> [options]
-#
-#
-# INPUT
-# ---------------------------------------------------------------------------------------
-# -i inputvol          volume. Can be nii or nii.gz
-# -m mask              mask with values between 0 and 1. Can be nii or nii.gz
-# -t numbvol           number of volume if mask is 4D.
-# -z slice             number of z-slice to compute average on (other slices will not be considered).
-#
-#
-# OUTPUT
-# ---------------------------------------------------------------------------------------
-# meanvalue         average of values in inputvol within mask.
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# - nibabel <http://nipy.sourceforge.net/nibabel/>
-#
-# EXTERNAL SOFTWARE
-# none
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
 # Author: Julien Cohen-Adad

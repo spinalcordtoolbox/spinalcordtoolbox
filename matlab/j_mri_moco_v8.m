@@ -25,6 +25,7 @@ function param = j_mri_moco_v8(param)
 %   flirt_options		string		Additional FLIRT options. E.g., '-interp sinc'. Default is ''.
 %   merge_back			binary		0 || 1*. Merge data back after moco?
 %   gaussian_mask       float       <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
+%   centerline          matrix      
 %
 %
 % HIGHLY FACULTATIVE
@@ -85,7 +86,8 @@ if isfield(param,'fname_log'), fname_log = param.fname_log; else fname_log = 'lo
 if isfield(param,'fsloutput'), fsloutput = param.fsloutput; else fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '; end
 if isfield(param,'merge_back'), merge_back = param.merge_back; else merge_back = 1; end
 if isfield(param,'slicewise'), slicewise = param.slicewise; else slicewise = 0; end
-if isfield(param,'gaussian_mask'), mask = param.gaussian_mask; else mask = 0; end
+if isfield(param,'gaussian_mask'), mask = param.gaussian_mask; mask=mask(:); else mask = 0; end
+if isfield(param,'centerline'), centerline = param.centerline; else centerline = repmat(ceil(dims/2)',dims(3),1); end
 
 nb_fails = 0;
 
@@ -225,16 +227,19 @@ if mask
     j_disp(fname_log,'Yes! Create mask...')
     fname_mask = [output_path 'tmp_moco.gaussian_mask_in'];
     %fname_mask_ref = [output_path 'tmp_moco.gaussian_mask_ref'];
-    center=ceil(dims/2);
     sigma=mask./scales(1:2);
-    if slicewise
-        M_mask=gauss2d(dims, sigma, center);
-        save_avw_v2(M_mask,fname_mask,'f',scales, [fname_data_ref_splitZ '0000'],1);
-    else
-        M_mask=gauss2d(dims, sigma, center);
-        save_avw_v2(repmat(M_mask,dims(1:3)),fname_mask,'f',scales, fname_data,1);
+    for iZ=1:dims(3)
+            M_mask(:,:,iZ)=gauss2d(dims, sigma, centerline(iZ,:));
     end
-    fslmask = [' -inweight ' fname_mask ' -refweight ' fname_mask];
+    if slicewise
+        for iZ=1:dims(3)
+            save_avw_v2(M_mask(:,:,iZ),[fname_mask '_' numZ{iZ}],'f',scales, [fname_data_ref_splitZ '0000'],1);
+            fslmask{iZ} = [' -inweight ' fname_mask '_' numZ{iZ} ' -refweight ' fname_mask '_' numZ{iZ}];
+        end
+    else
+        save_avw_v2(M_mask,fname_mask,'f',scales, fname_data,1);
+        fslmask = [' -inweight ' fname_mask ' -refweight ' fname_mask];
+    end
     j_disp(fname_log,['.. File created: ',fname_mask])
     
     disp('mask_preview :')
@@ -281,7 +286,7 @@ for indice_index = 1:length(param.index)
 			j_disp(fname_log,['Loop on Z...'])
 			for iZ = 1:nz
 				% motion correction
-				% TODO: add more options!
+				% TODO: add more options!x
 				fname_data_splitT_splitZ_num{iT,iZ} = [fname_data_splitT_splitZ,numZ{iZ}];
 				fname_data_splitT_splitZ_moco_num{iT,iZ} = [fname_data_splitT_splitZ_num{iT,iZ},suffix];
 				fname_data_ref_splitZ_num{iZ} = [fname_data_ref_splitZ,numZ{iZ}];
@@ -293,7 +298,7 @@ for indice_index = 1:length(param.index)
                        switch (program)
                             case 'FLIRT'     				
                                 j_disp(fname_log,['Process with FLIRT'])
-                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -omat ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -cost ',cost_function_flirt,fslmask,' ',flirt_options];
+                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -omat ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -cost ',cost_function_flirt,fslmask{iZ},' ',flirt_options];
                             
                             case 'SPM'
                                  j_disp(fname_log,['Process with SPM'])
@@ -353,7 +358,7 @@ for indice_index = 1:length(param.index)
                         
                         case 'FLIRT'                
                         j_disp(fname_log,['Process with FLIRT'])
-                        cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -omat ',fname_mat{iT,iZ},' -cost ', cost_function_flirt,fslmask,' ',flirt_options];
+                        cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -omat ',fname_mat{iT,iZ},' -cost ', cost_function_flirt,fslmask{iZ},' ',flirt_options];
                         case 'SPM'
                         j_disp(fname_log,['Process with SPM'])
                         % put ".nii" extension on files name
