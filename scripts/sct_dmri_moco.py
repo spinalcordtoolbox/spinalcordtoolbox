@@ -261,58 +261,6 @@ def dmri_moco(param):
 
     # Identify b=0 and DWI images
     sct.printv('\nIdentify b=0 and DWI images...', verbose)
-    # index_b0 = []
-    # index_dwi = []
-    # # if bval is not provided
-    # if fname_bvals == '':
-    #     # Open bvecs file
-    #     sct.printv('\nOpen bvecs file...', verbose)
-    #     bvecs = []
-    #     with open(fname_bvecs) as f:
-    #         for line in f:
-    #             bvecs_new = map(float, line.split())
-    #             bvecs.append(bvecs_new)
-    #
-    #     # Check if bvecs file is nx3
-    #     if not len(bvecs[0][:]) == 3:
-    #         sct.printv('  WARNING: bvecs file is 3xn instead of nx3. Consider using sct_dmri_transpose_bvecs.', verbose, 'warning')
-    #         sct.printv('  Transpose bvecs...', verbose)
-    #         # transpose bvecs
-    #         bvecs = zip(*bvecs)
-    #
-    #     for it in xrange(0,nt):
-    #         if math.sqrt(math.fsum([i**2 for i in bvecs[it]])) < 0.01:
-    #             index_b0.append(it)
-    #         else:
-    #             index_dwi.append(it)
-    # # if bval is provided
-    # else:
-    #     # Open bvals file
-    #     sct.printv('\nOpen bvals file...', verbose)
-    #     bvals = []
-    #     with open(fname_bvals) as f:
-    #         for line in f:
-    #             #bvals_new = map(float, line.split())
-    #             #bvals.append(bvals_new)
-    #             bvals = map(float, line.split())
-    #
-    #     # Identify b=0 and DWI images
-    #     sct.printv('\nIdentify b=0 and DWI images...', verbose)
-    #     for it in xrange(0, nt):
-    #         if bvals[it] < bval_min:
-    #             index_b0.append(it)
-    #         else:
-    #             index_dwi.append(it)
-    #
-    # # check if no b=0 images were detected
-    # if index_b0 == []:
-    #     sct.printv('ERROR: no b=0 images detected. Maybe you are using non-null low bvals? in that case use flag -a. Exit program.', 1, 'error')
-    #     sys.exit(2)
-    #
-    # n_b0 = len(index_b0)
-    # n_dwi = len(index_dwi)
-    # sct.printv('  Index of b=0:'+str(index_b0), verbose)
-    # sct.printv('  Index of DWI:'+str(index_dwi), verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(fname_bvecs, fname_bvals, bval_min, verbose)
 
 
