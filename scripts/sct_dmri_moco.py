@@ -70,7 +70,7 @@ class param:
         self.mat_eddy = ''
         self.min_norm = 0.001
         self.swapXY = 0
-        self.bval_min = 430  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
+        self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
 
 
 #=======================================================================================================================
