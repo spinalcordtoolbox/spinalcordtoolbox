@@ -82,15 +82,15 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_32/mt/mtr.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_32/mt/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
+        fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/t2_crop.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0,1,2,11'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''  #'200:210' #'2:4'
         vertebral_levels = '4:5'
         average_all_labels = 1
-        fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_32/metric_extraction/left_averaged_estimations/atlas/mtr'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = ''  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
+        fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_normalizing_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
 
 
     # Check input parameters
@@ -161,6 +161,7 @@ def main():
     # Load image
     sct.printv('\nLoad image...', verbose)
     data = nib.load(fname_data).get_data()
+    data = np.float64(data)
     sct.printv('  Done.', verbose)
 
     # Get dimensions of data
