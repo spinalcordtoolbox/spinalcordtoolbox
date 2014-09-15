@@ -19,6 +19,7 @@ import os
 import math
 import time
 import commands
+import numpy
 import sct_utils as sct
 
 class param:
@@ -225,8 +226,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
         #sct.printv('\nOpen bvals file...', verbose)
         bvals = []
         with open(fname_bvals) as f:
-            for line in f:
-                bvals = map(float, line.split())
+            bvals=numpy.array(map(float,f.readlines()))
 
         # get number of lines
         nt = len(bvals)
