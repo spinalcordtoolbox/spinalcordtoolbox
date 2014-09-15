@@ -70,12 +70,14 @@ if grep -q "SPINALCORDTOOLBOX" ~/.bashrc; then
   awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp
 fi
 
-# edit .bashrc. Add bin and libraries
+# edit .bashrc. Add bin
 echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 # echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
+# add PYTHONPATH variable to allow import of modules
+echo 'export PYTHONPATH=$SCT_DIR/scripts' >> ~/.bashrc
 
 echo ${SCT_DIR}
 
@@ -100,7 +102,7 @@ if [ -e "$HOME/.bash_profile" ]; then
   fi
 fi
 
-# launch .bash_profile. This line doesn't always work. Best way is to open a new terminal.
+# launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
 . ~/.bashrc
 
 # install required software
