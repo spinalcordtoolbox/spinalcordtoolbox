@@ -9,6 +9,8 @@ XXX
 - OPT: new version of the white matter atlas: more accurate, deformation accounting for internal structure (use BSplineSyN instead of SyN).
 - OPT: sct_dmri_moco now using ANTs for more robustness and better spline interpolation.
 - OPT: removed all .py extensions for callable functions (created links)
+- INST: added pillow (fixed issue #117)
+- REF: sct_straighten_spinalcord (fixed issues #56, #116)
 
 1.0.3 (2014-07-30)
 
