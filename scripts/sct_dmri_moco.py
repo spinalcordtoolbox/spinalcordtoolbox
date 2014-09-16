@@ -440,7 +440,10 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of DWI data. Uses slice-by-slice and group-wise registration.
+  Motion correction of DWI data. Uses slice-by-slice and group-wise registration. Outputs are:
+  - motion-corrected data (with suffix _moco)
+  - mean b=0 data (b0_mean)
+  - mean dwi data (dwi_mean)
 
 USAGE
   """+os.path.basename(__file__)+""" -i <dmri> -b <bvecs>
