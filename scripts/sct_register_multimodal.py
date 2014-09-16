@@ -470,7 +470,7 @@ OPTIONAL ARGUMENTS
                                N.B. Only use this flag with -q and -x
   -o <output>                  name of output file. Default=source_reg
   -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
-  -y <N>                       number of iterations at step 2 (if using segmentation). Default="""+param.numberIterationsStep2+"""
+  -y <N>                       number of iterations at step 2 (if using segmentation). Set 0 to register based on segmentation only. Default="""+param.numberIterationsStep2+"""
   -g <val1,val2>               gradientStep for SyN transformation. The larger the more deformation.
                                If you use a segmentation, you can specify gradientStep for each
                                step as follow: val1,val2 (val1: image, val2: seg).
