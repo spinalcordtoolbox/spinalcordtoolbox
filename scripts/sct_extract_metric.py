@@ -76,6 +76,7 @@ def main():
     fname_output = param.fname_output
     vertebral_labeling_path = param.vertebral_labeling_file
     fname_normalizing_label = ''  # optional then default is empty
+    normalization_method = 'sbs'  # default is slice-by-slice
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -83,7 +84,7 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/t2_crop.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
+        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''  #'200:210' #'2:4'
@@ -91,11 +92,12 @@ def main():
         average_all_labels = 1
         fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
+        normalization_method = 'whole'
 
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:z:') # define flags
+        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
@@ -119,6 +121,10 @@ def main():
         elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral
         # levels
              vertebral_levels = arg
+        elif opt in '-w':
+            normalization_method = arg  # method used for the normalization by the metric estimation into the
+            # normalizing label (see flag -n) : 'sbs' for slice-by-slice or 'whole' for normalization after estimation
+            # in the whole labels
         elif opt in '-z': # slices numbers option
             slices_of_interest = arg # save labels numbers
 
@@ -230,20 +236,36 @@ def main():
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
+
     if fname_normalizing_label:  # if the "normalization" option is wanted,
-        #metric_normalizing_label = np.empty([data.shape[-1]], dtype=float)
-        for z in range(0, data.shape[-1]):
-            normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
-            # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
-            normalizing_label_slice[0] = normalizing_label[0][..., z]
-            metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
-                                                                   verbose=0)
-            # estimate the metric mean in the normalizing label for the slice z
-            if metric_normalizing_label[0][0] != 0:
-                data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
+
+        if normalization_method == 'sbs':  # case: the user wants to normalize slice-by-slice
+            for z in range(0, data.shape[-1]):
+                normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
+                # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
+                normalizing_label_slice[0] = normalizing_label[0][..., z]
+                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
+                                                                       verbose=0)
+                # estimate the metric mean in the normalizing label for the slice z
+                if metric_normalizing_label[0][0] != 0:
+                    data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
+
+        elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
+            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method,
+                                                                  verbose=param.verbose)  # mean and std are lists
+
+        else:
+            print color.red + '\nERROR: The normalization method you selected is incorrect:' + color.bold + \
+                  str(normalization_method) + color.end
+            usage()
 
     # extract metrics within labels
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose=param.verbose)  # mean and std are lists.
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose=param.verbose)  # mean and std
+    # are lists
+
+    if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
+        metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std,
+                                                                                            metric_std_norm_label)
 
     # update label name if average
     if average_all_labels == 1:
