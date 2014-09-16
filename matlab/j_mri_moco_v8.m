@@ -247,7 +247,7 @@ if mask
     S(:,2:3:end)=[];
     disp(S);
 else
-    fslmask = '';
+    fslmask=cell(1,dims(3)); fslmask(1:dims(3))={''};
 end
 
 
