@@ -177,9 +177,7 @@ def main():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
 
     # create temporary folder
-    if path_out == '.':
-        path_out = path_data
-    path_tmp = sct.slash_at_the_end(path_out+'tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # go to tmp folder
