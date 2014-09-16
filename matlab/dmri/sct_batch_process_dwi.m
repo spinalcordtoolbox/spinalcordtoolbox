@@ -163,7 +163,7 @@ sct.dmri.moco_intra.cost_function_flirt	= 'normcorr'; % 'mutualinfo' | 'woods' |
 sct.dmri.moco_intra.cost_function_spm   = 'nmi'; % JULIEN: add other options
 sct.dmri.moco_intra.flirt_options       = ['-interp ' p.Results.interp]; % additional FLIRT options. Example: '-dof 6 -interp sinc'. N.B. If gradient non-linearities, it makes sense to use dof=12, otherwise dof=6.
 sct.dmri.moco_intra.correct_bvecs       = 0; % correct b-matrix along with motion correction.
-sct.dmri.moco_intra.dof                 = which('schedule_TxTy_2mmScale.sch'); % 'TxTyTzSxSySzKxKyKz' | 'TxSxKxKy' | 'TxSx' | 'TxSxKx'*    Degree of freedom for coregistration of gradient inversed polarity. Tx = Translation along X, Sx = scaling along X, Kx = shearing along X. N.B. data will be temporarily X-Y swapped because FLIRT can only compute shearing parameter along X, not Y
+sct.dmri.moco_intra.dof                 = which('schedule_TxTy_2mm.sch'); % 'TxTyTzSxSySzKxKyKz' | 'TxSxKxKy' | 'TxSx' | 'TxSxKx'*    Degree of freedom for coregistration of gradient inversed polarity. Tx = Translation along X, Sx = scaling along X, Kx = shearing along X. N.B. data will be temporarily X-Y swapped because FLIRT can only compute shearing parameter along X, not Y
 sct.dmri.suffix_moco                    = '_moco';
 
 % Clean DWI dataset
