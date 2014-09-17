@@ -1,4 +1,4 @@
-function sct_batch_process_dwi(varargin)
+function sct_dmri_moco(varargin)
 % process diffusion mri data
 %
 % if users does not provide data, calls a GUI to select data.
@@ -51,13 +51,13 @@ if isempty(p.Results.data)
     [sct.dmri.file,sct.dmri.path] = uigetfile('*.nii;*.nii.gz','Select 4D diffusion data') ;
     if sct.dmri.file==0, return; end
 else
-    [sct.dmri.path, sct.dmri.file, ext] = fileparts(p.Results.data); sct.dmri.path=[sct.dmri.path, filesep]; sct.dmri.file=[sct.dmri.file,ext];
+    [sct.dmri.path, sct.dmri.file, ext] = fileparts(p.Results.data); if ~isempty(sct.dmri.path), sct.dmri.path=[sct.dmri.path, filesep]; end; sct.dmri.file=[sct.dmri.file,ext];
 end
 if isempty(p.Results.bvec)
     [sct.dmri.file_bvecs,sct.dmri.path_bvecs] = uigetfile('*','Select bvecs file') ;
     if sct.dmri.file_bvecs==0, return; end
 else
-    [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(p.Results.bvec);  sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
+    [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(p.Results.bvec);  if ~isempty(sct.dmri.path_bvecs), sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; end; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
 end
 
 sct.dmri.file_bvals = p.Results.bval;
@@ -78,6 +78,7 @@ end
 
 sct.output_path         = [sct.dmri.path 'dwi_process_data/'];
 % TODO: if ~exist('./dwi_process_data','dir')
+mkdir('dwi_process_data')
 mkdir(sct.output_path);
 
 % Misc
