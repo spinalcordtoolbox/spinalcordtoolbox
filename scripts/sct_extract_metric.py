@@ -76,7 +76,7 @@ def main():
     fname_output = param.fname_output
     vertebral_labeling_path = param.vertebral_labeling_file
     fname_normalizing_label = ''  # optional then default is empty
-    normalization_method = 'sbs'  # default is slice-by-slice
+    normalization_method = ''  # optional then default is empty
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -140,12 +140,14 @@ def main():
     sct.printv('\nCheck data file existence...', verbose)
     sct.check_file_exist(fname_data)
     sct.check_file_exist(path_label)
+    if fname_normalizing_label:
+        sct.check_file_exist(fname_normalizing_label)
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
 
     # Check input parameters
-    check_method(method)
+    check_method(method, fname_normalizing_label, normalization_method)
 
     # Extract label info
     label_id, label_name, label_file = read_label_file(path_label)
@@ -254,10 +256,6 @@ def main():
             metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method,
                                                                   verbose=param.verbose)  # mean and std are lists
 
-        else:
-            print color.red + '\nERROR: The normalization method you selected is incorrect:' + color.bold + \
-                  str(normalization_method) + color.end
-            usage()
 
     # extract metrics within labels
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose=param.verbose)  # mean and std
@@ -277,10 +275,10 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print '\033[1m\nEstimation results:\n'
+    print color.bold + '\nEstimation results:\n'
     for i in range(0, metric_mean.size):
-        print '\033[1m'+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
-              +' +/- '+str(metric_std[i])+'\033[0m'
+        print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
+              +' +/- '+str(metric_std[i])+color.bold
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, actual_vert_levels, warning_vert_levels, metric_mean,
@@ -555,12 +553,23 @@ def save_metrics(ind_labels, label_name, slices_of_interest, actual_vert, warnin
 
 
 #=======================================================================================================================
-# Check the consistency of the method asked by the user
+# Check the consistency of the methods asked by the user
 #=======================================================================================================================
-def check_method(method):
+def check_method(method, fname_normalizing_label, normalization_method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
+
+    if normalization_method and not fname_normalizing_label:
+        print color.red + '\nERROR: You selected a normalization method (' + color.bold + str(normalization_method) \
+              + color.end + color.red + ') but you didn\'t selected any label to be used for the normalization.' \
+              + color.end
+        usage()
+
+    if fname_normalizing_label and normalization_method != 'sbs' and normalization_method != 'whole':
+        print color.red + '\nERROR: The normalization method you selected is incorrect:' + color.bold + \
+              str(normalization_method) + color.end
+        usage()
 
 
 
