@@ -35,7 +35,7 @@ ALMOST_ZERO = 0.000001
 class param:
     def __init__(self):
         self.debug = 0
-        self.method = 'wa'
+        self.method = 'wath'
         self.path_label = ''  # path_sct+'/data/template'
         self.verbose = 1
         self.labels_of_interest = ''  # list. example: '1,3,4'. . For all labels, leave empty.
