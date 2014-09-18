@@ -77,7 +77,7 @@ echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 # echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
-echo 'export PYTHONPATH=$SCT_DIR/scripts' >> ~/.bashrc
+echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
 
 echo ${SCT_DIR}
 
