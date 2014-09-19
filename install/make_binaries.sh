@@ -9,7 +9,7 @@ SCT_DIR_LOCAL=${PWD%/*}
 echo ${SCT_DIR_LOCAL}
 
 # program list
-PROGRAM_LIST="sct_change_nifti_pixel_type sct_crop_image sct_detect_spinalcord sct_dice_coefficient sct_hausdorff_distance sct_modif_header sct_orientation sct_propseg"
+PROGRAM_LIST="sct_propseg sct_change_nifti_pixel_type sct_crop_image sct_detect_spinalcord sct_dice_coefficient sct_hausdorff_distance sct_modif_header sct_orientation" #
 
 PATH_BIN_SCT=osx
 unamestr=`uname`
@@ -22,6 +22,10 @@ for program in $PROGRAM_LIST; do
   
   echo
   cmd="cd ${SCT_DIR_LOCAL}/dev/${program}/"
+  echo ">> $cmd"; $cmd
+
+  echo
+  cmd="rm ._*"
   echo ">> $cmd"; $cmd
 
   echo
