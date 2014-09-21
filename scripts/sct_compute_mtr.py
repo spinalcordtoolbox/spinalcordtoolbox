@@ -23,7 +23,7 @@ import time
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.register = 1
         self.verbose = 1
         self.file_out = 'mtr'
@@ -56,22 +56,22 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:x')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-i'):
-            param.fname_mt0 = arg
-        elif opt in ('-j'):
-            param.fname_mt1 = arg
-        elif opt in ('-r'):
-            param.remove_tmp_files = int(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
-        elif opt in ('-x'):
-            param.register = int(arg)
+        elif opt in '-i':
+            fname_mt0 = arg
+        elif opt in '-j':
+            fname_mt1 = arg
+        elif opt in '-r':
+            remove_tmp_files = int(arg)
+        elif opt in '-v':
+            verbose = int(arg)
+        elif opt in '-x':
+            register = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_mt0 == '' or fname_mt1 == '':
@@ -85,6 +85,7 @@ def main():
     sct.printv('  register ..............'+str(register), verbose)
 
     # check existence of input files
+    sct.printv('\nCheck file existence...', verbose)
     sct.check_file_exist(fname_mt0, verbose)
     sct.check_file_exist(fname_mt1, verbose)
 
@@ -93,6 +94,7 @@ def main():
     path_out, file_out, ext_out = '', file_out, ext_mt0
 
     # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
@@ -131,8 +133,8 @@ def main():
         sct.run('rm -rf '+path_tmp)
 
     # to view results
-    print '\nDone! To view results, type:'
-    print 'fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &'
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &', verbose, 'code')
     print
 
 
