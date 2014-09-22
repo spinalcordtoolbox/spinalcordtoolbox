@@ -209,11 +209,11 @@ def main():
             usage()
         else:
             if path_label.endswith('atlas/'):
-                vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+                fname_vertebral_labeling = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
             elif path_label.endswith('template/'):
-                vertebral_labeling_path = path_label+'MNI-Poly-AMU_level.nii.gz'
+                fname_vertebral_labeling = path_label+'MNI-Poly-AMU_level.nii.gz'
             slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
-                                                                           vertebral_labeling_path)
+                                                                           fname_vertebral_labeling)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
@@ -353,13 +353,13 @@ def read_label_file(path_info_label):
 #=======================================================================================================================
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vertebral_labeling_path):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fname_vertebral_labeling):
 
     sct.printv('\nFind slices corresponding to vertebral levels:', param.verbose)
 
     # check existence of a vertebral labeling file
     sct.printv('Check file existence...', param.verbose)
-    sct.check_file_exist(vertebral_labeling_path)
+    sct.check_file_exist(fname_vertebral_labeling)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -377,7 +377,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
     sct.printv('Load vertebral labeling...', param.verbose)
 
     # Load the vertebral labeling file and get the data in array format
-    data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
+    data_vert_labeling = nib.load(fname_vertebral_labeling).get_data()
     # Extract the vertebral levels available in the metric image
     vertebral_levels_available = np.array(list(set(data_vert_labeling[data_vert_labeling > 0])))
 
