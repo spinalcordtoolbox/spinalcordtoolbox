@@ -77,6 +77,10 @@ def main():
     vertebral_labeling_path = param.vertebral_labeling_file
     fname_normalizing_label = ''  # optional then default is empty
     normalization_method = ''  # optional then default is empty
+    actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly
+    # to the vertebral levels available in the metric data
+    warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond
+    # exactly to the vertebral levels available in the metric data
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -84,15 +88,15 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/t2_crop.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
+        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
-        labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = ''  #'200:210' #'2:4'
+        labels_of_interest = '' #'0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = ''#'102:133' #'117:127' #'2:4'
         vertebral_levels = '4:5'
         average_all_labels = 1
         fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
-        normalization_method = 'whole'
+        fname_normalizing_label = ''#'/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
+        normalization_method = '' #'whole'
 
 
     # Check input parameters
@@ -281,8 +285,8 @@ def main():
               +' +/- '+str(metric_std[i])+color.bold
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, actual_vert_levels, warning_vert_levels, metric_mean,
-                 metric_std, fname_output, fname_data, method, fname_normalizing_label)
+    save_metrics(label_id_user, label_name, slices_of_interest, metric_mean,
+                 metric_std, fname_output, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
@@ -499,8 +503,8 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, actual_vert, warning_vert_levels, metric_mean, metric_std,
-                 fname_output, fname_data, method, fname_normalizing_label):
+def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std,
+                 fname_output, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
 
     # CSV format, header lines start with "#"
 
@@ -626,11 +630,13 @@ def extract_metric_within_tract(data, labels, method, verbose):
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
-    ind_nonzero = labels_sum > ALMOST_ZERO
-    data1d = data[ind_nonzero]
+    ind_positive_labels = labels_sum > ALMOST_ZERO
+    ind_positive_data = data > 0
+    ind_positive = ind_positive_labels & ind_positive_data
+    data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
     for i in range(0, nb_labels):
-        labels2d[i] = labels[i][ind_nonzero]
+        labels2d[i] = labels[i][ind_positive]
 
     # clear memory
     del data, labels
