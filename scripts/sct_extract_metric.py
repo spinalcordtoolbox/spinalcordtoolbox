@@ -39,7 +39,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
@@ -94,9 +94,8 @@ def main():
         vertebral_levels = '4:5'
         average_all_labels = 0
         fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
-        normalization_method = 'whole'
-
+        fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
+        normalization_method = ''  #'whole'
 
     # Check input parameters
     try:
