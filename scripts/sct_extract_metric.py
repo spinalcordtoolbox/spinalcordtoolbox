@@ -34,7 +34,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wa'
         self.path_label = ''
         self.verbose = 1
@@ -93,7 +93,7 @@ def main():
         labels_of_interest = '' #'0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''#'102:133' #'117:127' #'2:4'
         vertebral_levels = '4:5'
-        average_all_labels = 1
+        average_all_labels = 0
         fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = ''#'/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = '' #'whole'
@@ -203,8 +203,8 @@ def main():
         sys.exit(2)
 
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
-    if vertebral_levels != '':
-        if slices_of_interest != '':
+    if vertebral_levels:
+        if slices_of_interest:
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
             usage()
         else:
