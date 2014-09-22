@@ -39,7 +39,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
@@ -63,7 +63,6 @@ class color:
     bold = '\033[1m'
     underline = '\033[4m'
     end = '\033[0m'
-
 
 
 #=======================================================================================================================
@@ -103,7 +102,6 @@ def main():
         fname_normalizing_label = ''#'/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = '' #'whole'
 
-
     # Check input parameters
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
@@ -127,14 +125,14 @@ def main():
             fname_normalizing_label = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral
-        # levels
+        elif opt in '-v':
+            # vertebral levels option, if the user wants to average the metric across specific vertebral levels
              vertebral_levels = arg
         elif opt in '-w':
-            normalization_method = arg  # method used for the normalization by the metric estimation into the
-            # normalizing label (see flag -n) : 'sbs' for slice-by-slice or 'whole' for normalization after estimation
-            # in the whole labels
-        elif opt in '-z': # slices numbers option
+            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs'
+            # for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+            normalization_method = arg
+        elif opt in '-z':  # slices numbers option
             slices_of_interest = arg # save labels numbers
 
 
@@ -217,8 +215,7 @@ def main():
                 fname_vertebral_labeling = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
             elif path_label.endswith('template/'):
                 fname_vertebral_labeling = path_label+'MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
-                                                                           fname_vertebral_labeling)
+            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, fname_vertebral_labeling)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
@@ -247,7 +244,6 @@ def main():
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
-
     if fname_normalizing_label:  # if the "normalization" option is wanted
         sct.printv('\nExtract normalization values...', verbose)
         if normalization_method == 'sbs':  # case: the user wants to normalize slice-by-slice
@@ -270,7 +266,8 @@ def main():
     sct.printv('\nExtract metric within labels...', verbose)
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
 
-    if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
+    if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations
+    # in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std,
                                                                                             metric_std_norm_label)
 
@@ -290,15 +287,14 @@ def main():
               +' +/- '+str(metric_std[i])+color.bold
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, metric_mean,
-                 metric_std, fname_output, fname_data, method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
+    save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
+                 method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
     # Print elapsed time
     print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
 
     # end of main.
     print
-
 
 
 #=======================================================================================================================
@@ -330,8 +326,8 @@ def read_label_file(path_info_label):
         label_id.append(int(line[0]))
         label_name.append(line[1])
         label_file.append(line[2][:-1].strip())
-    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code l
-    # ines enable to avoid this error:
+    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code
+    # lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
@@ -363,8 +359,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
     sct.printv('\nFind slices corresponding to vertebral levels...', param.verbose)
 
     # check existence of a vertebral labeling file
-    sct.printv('Check file existence...', param.verbose)
-    sct.check_file_exist(fname_vertebral_labeling, param.verbose)
+    sct.printv('Check file existence...', 0)
+    sct.check_file_exist(fname_vertebral_labeling, 0)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -428,11 +424,11 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
         vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
         # of the initial list corresponding to this minimal distance
         warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
-                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
+                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in
+                       # the .txt output file
 
         print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
                              'nearest superior level available: ' + str(int(vert_levels_list[1]))
-
 
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
@@ -492,7 +488,6 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
     return str(slice_min)+':'+str(slice_max), vert_levels_list, warning
 
 
-
 #=======================================================================================================================
 # Crop data to only keep the slices asked by user
 #=======================================================================================================================
@@ -505,7 +500,6 @@ def remove_slices(data_to_crop, slices_of_interest):
     data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
 
     return data_cropped
-
 
 
 #=======================================================================================================================
@@ -584,7 +578,6 @@ def check_method(method, fname_normalizing_label, normalization_method):
         usage()
 
 
-
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
@@ -612,7 +605,6 @@ def check_labels(labels_of_interest, nb_labels):
                 sys.exit(2)
 
     return list_label_id
-
 
 
 #=======================================================================================================================
@@ -678,7 +670,6 @@ def extract_metric_within_tract(data, labels, method, verbose):
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std
-
 
 
 #=======================================================================================================================
