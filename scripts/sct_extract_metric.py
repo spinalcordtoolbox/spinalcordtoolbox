@@ -15,6 +15,7 @@
 
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
+# TODO: remove hardcode MNI-Poly-AMU_level.nii.gz add condition in line
 
 # Import common Python libraries
 import os
@@ -29,6 +30,7 @@ import sct_utils as sct
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
+# TODO: do we really need that???
 sys.path.append(path_sct + '/scripts')
 
 
@@ -37,14 +39,13 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
         self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave
-        # empty.
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
@@ -76,7 +77,7 @@ def main():
     vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    vertebral_labeling_path = param.vertebral_labeling_file
+    fname_vertebral_labeling = param.vertebral_labeling_file
     fname_normalizing_label = ''  # optional then default is empty
     normalization_method = ''  # optional then default is empty
     start_time = time.time()  # save start time for duration
@@ -85,15 +86,15 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/t2_crop.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
-        method = 'wa'
+        fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = path_sct+'/testing/data/errsm_23/mt/label/atlas'
+        method = 'wath'
         labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''  #'200:210' #'2:4'
         vertebral_levels = '4:5'
-        average_all_labels = 1
-        fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
+        average_all_labels = 0
+        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_normalizing_label = path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = 'whole'
 
 
@@ -177,7 +178,7 @@ def main():
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
     nx, ny, nz = data.shape
-    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('  '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
     # load label
     sct.printv('\nLoad labels...', verbose)
@@ -206,12 +207,12 @@ def main():
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
             usage()
         else:
-            if path_label.endswith('atlas/'):
-                vertebral_labeling_path = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
-            elif path_label.endswith('template/'):
-                vertebral_labeling_path = path_label+'MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels,
-                                                                           vertebral_labeling_path)
+            if path_label.endswith('template/'):
+                fname_vertebral_labeling = path_label+'MNI-Poly-AMU_level.nii.gz'
+            else:
+                # folder label is atlas or spinal_levels
+                fname_vertebral_labeling = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
+            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, fname_vertebral_labeling)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest != '':
@@ -240,32 +241,28 @@ def main():
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
-
-    if fname_normalizing_label:  # if the "normalization" option is wanted,
-
+    if fname_normalizing_label:  # if the "normalization" option is wanted
+        sct.printv('\nExtract normalization values...', verbose)
         if normalization_method == 'sbs':  # case: the user wants to normalize slice-by-slice
             for z in range(0, data.shape[-1]):
                 normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
                 # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
                 normalizing_label_slice[0] = normalizing_label[0][..., z]
-                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
-                                                                       verbose=0)
+                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
-            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method,
-                                                                  verbose=param.verbose)  # mean and std are lists
+            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
 
 
     # extract metrics within labels
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose=param.verbose)  # mean and std
-    # are lists
+    sct.printv('\nExtract metric within labels...', verbose)
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
-        metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std,
-                                                                                            metric_std_norm_label)
+        metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
 
     # update label name if average
     if average_all_labels == 1:
@@ -291,7 +288,6 @@ def main():
 
     # end of main.
     print
-
 
 
 #=======================================================================================================================
@@ -351,13 +347,13 @@ def read_label_file(path_info_label):
 #=======================================================================================================================
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vertebral_labeling_path):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fname_vertebral_labeling):
 
-    sct.printv('\nFind slices corresponding to vertebral levels:', param.verbose)
+    sct.printv('\nFind slices corresponding to vertebral levels...', param.verbose)
 
     # check existence of a vertebral labeling file
-    sct.printv('Check file existence...', param.verbose)
-    sct.check_file_exist(vertebral_labeling_path)
+    sct.printv('Check file existence...', 0)
+    sct.check_file_exist(fname_vertebral_labeling, 0)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -372,10 +368,10 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         sys.exit(2)
 
     # Read files vertebral_labeling.nii.gz
-    sct.printv('Load vertebral labeling...', param.verbose)
+    sct.printv('  Load vertebral labeling...', param.verbose)
 
     # Load the vertebral labeling file and get the data in array format
-    data_vert_labeling = nib.load(vertebral_labeling_path).get_data()
+    data_vert_labeling = nib.load(fname_vertebral_labeling).get_data()
     # Extract the vertebral levels available in the metric image
     vertebral_levels_available = np.array(list(set(data_vert_labeling[data_vert_labeling > 0])))
 
@@ -426,13 +422,12 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
                              'nearest superior level available: ' + str(int(vert_levels_list[1]))
 
-
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
     # Extract vertebral labeling data size X, Y, Z
     [vx, vy, vz] = data_vert_labeling.shape
 
-    sct.printv('Check consistency of data size...', param.verbose)
+    sct.printv('  Check consistency of data size...', param.verbose)
 
     # Initialisation of check error flag
     exit_program = 0
@@ -451,17 +446,20 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         exit_program = 1
 
     # Exit program if an error was detected
-    if exit_program == 1 :
+    if exit_program == 1:
         print '\nExit program.\n'
         sys.exit(2)
+    else:
+        print '    OK!'
 
+    sct.printv('  Find slices corresponding to vertebral levels...', param.verbose)
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
-    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling==vert_levels_list[0]).nonzero()
+    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling == vert_levels_list[0]).nonzero()
     # Record the bottom of slice of this level
     slice_min_bottom = min(Z_bottom_level)
 
     # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
-    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling==vert_levels_list[1]).nonzero()
+    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling == vert_levels_list[1]).nonzero()
     # Record the top slice of this level
     slice_max_top = max(Z_top_level)
 
@@ -475,12 +473,11 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels,vert
         slice_max = max(Z_top_level)
 
     # display info
-    sct.printv('  Vertebral levels correspond to slices: '+str(slice_min)+':'+str(slice_max), param.verbose)
+    sct.printv('    '+str(slice_min)+':'+str(slice_max), param.verbose)
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
     # to the top slice
     return str(slice_min)+':'+str(slice_max), vert_levels_list, warning
-
 
 
 #=======================================================================================================================
@@ -495,7 +492,6 @@ def remove_slices(data_to_crop, slices_of_interest):
     data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
 
     return data_cropped
-
 
 
 #=======================================================================================================================
@@ -574,7 +570,6 @@ def check_method(method, fname_normalizing_label, normalization_method):
         usage()
 
 
-
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
@@ -588,8 +583,7 @@ def check_labels(labels_of_interest, nb_labels):
         # Check if label chosen is in format : 0,1,2,..
         for char in labels_of_interest:
             if not char in '0123456789, ':
-                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program' \
-                                                          '.\n'
+                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
                 sys.exit(2)
 
         # Remove redundant values of label chosen and convert in integer
@@ -605,13 +599,10 @@ def check_labels(labels_of_interest, nb_labels):
     return list_label_id
 
 
-
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method, verbose):
-
-    sct.printv('\nExtract metrics:', verbose=verbose)
 
     nb_labels = len(labels) # number of labels
 
@@ -638,7 +629,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
     del data, labels
 
     # Display number of non-zero values
-    sct.printv('Number of non-null voxels: '+str(len(data1d)), verbose=verbose)
+    sct.printv('  Number of non-null voxels: '+str(len(data1d)), verbose=verbose)
 
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
@@ -669,7 +660,6 @@ def extract_metric_within_tract(data, labels, method, verbose):
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std
-
 
 
 #=======================================================================================================================
