@@ -120,14 +120,13 @@ def main():
             fname_normalizing_label = arg
         elif opt in '-o': # output option
             fname_output = arg  # fname of output file
-        elif opt in '-v': # vertebral levels option, if the user wants to average the metric across specific vertebral
-        # levels
+        elif opt in '-v':
+            # vertebral levels option, if the user wants to average the metric across specific vertebral levels
              vertebral_levels = arg
         elif opt in '-w':
-            normalization_method = arg  # method used for the normalization by the metric estimation into the
-            # normalizing label (see flag -n) : 'sbs' for slice-by-slice or 'whole' for normalization after estimation
-            # in the whole labels
-        elif opt in '-z': # slices numbers option
+            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+            normalization_method = arg
+        elif opt in '-z':  # slices numbers option
             slices_of_interest = arg # save labels numbers
 
 
@@ -135,7 +134,7 @@ def main():
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '':
-        #param.path_label = path_label
+        param.path_label = path_label
         usage()
 
     # Check existence of data file
@@ -684,14 +683,8 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
   This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
   'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
-  The labels should be in the same space coordinates as the input image."""
-    if label_references != '':
-        print """
-Current label is:
-==========
-"""+label_references+"""
-=========="""
-    print """
+  The labels should be in the same space coordinates as the input image.
+
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
 
@@ -716,14 +709,23 @@ OPTIONAL ARGUMENTS
   -h                    help. Show this message
 
 EXAMPLE
-  To see the list of template labels in the template space:
-    """+os.path.basename(__file__)+""" -f """+path_sct+"""/data/template
+  To list template labels:
+    """+os.path.basename(__file__)+""" -f $SCT_DIR/data/template
 
-  To see the list of white matter atlas labels in the template space:
-    """+os.path.basename(__file__)+""" -f """+path_sct+"""/data/atlas
+  To list white matter atlas labels:
+    """+os.path.basename(__file__)+""" -f $SCT_DIR/data/atlas
 
   To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
-    """+os.path.basename(__file__)+""" -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin\n"""
+    """+os.path.basename(__file__)+""" -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
+
+    # display list of labels
+    if label_references != '':
+        print """
+List of labels in: """+file_label+""":
+==========
+"""+label_references+"""
+=========="""
+    print
 
     #Exit program
     sys.exit(2)
