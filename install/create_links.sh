@@ -74,4 +74,21 @@ do
   $cmd
 done
 
+suffix_sh='.sh'
+for script in *.sh
+do
+  echo ${script}
+  cd ${SCT_DIR}/bin
+  scriptname=${script%$suffix_sh}
+  cmd=
+  if [ "$is_admin" = true ] ; then
+    cmd="sudo ln -s ../scripts/${script} ${scriptname}"
+  else
+    cmd="ln -s ../scripts/${script} ${scriptname}"
+  fi
+  echo ">> $cmd"
+  $cmd
+done
+
+
 cd ${CURRENT_DIR}

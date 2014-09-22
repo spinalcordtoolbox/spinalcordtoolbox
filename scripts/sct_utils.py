@@ -200,6 +200,8 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.yellow
     elif type == 'error':
         color = bcolors.red
+    elif type == 'code':
+        color = bcolors.blue
     # print message
     if verbose:
         print(color+string+bcolors.normal)

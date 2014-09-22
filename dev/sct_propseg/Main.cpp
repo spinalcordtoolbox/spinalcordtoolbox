@@ -141,9 +141,29 @@ typedef itk::ImageSeriesReader< ImageType > DICOMReaderType;
 bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &normal1, CVector3 &normal2);
 vector<CVector3> extractCenterline(string filename);
 
+// Small procedure to manage length of string
+string StrPad(string original, size_t charCount, string prefix="")
+{
+	if (original.size() < charCount)
+    	original.resize(charCount,' ');
+	else {
+		string tempString = "";
+		int nbString = (original.size()/charCount)+1;
+		for (int i=0; i<nbString; i++) {
+			string subString = original.substr(i*charCount,charCount);
+			if (i != nbString-1)
+				subString += "\n";
+			if (i != 0) subString = prefix+subString;
+			tempString += subString;
+		}
+		original = tempString;
+	}
+    return original;
+}
+
 void help()
 {
-    cout << "sct_propseg - Version 1.0.0 (2014-09-04)" << endl;
+    cout << "sct_propseg - Version 1.0.1 (2014-09-19)" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \nPart of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox> \nAuthor : Benjamin De Leener" << endl << endl;
     
     cout << "DESCRIPTION" << endl;
@@ -158,53 +178,51 @@ void help()
     cout << "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again." << endl;
 	
     cout << "USAGE" << endl;
-    cout << "\tsct_propseg -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options]" << endl << endl;
+    cout << "  sct_propseg -i <inputfilename> -o <outputfolderpath> -t <imagetype> [options]" << endl << endl;
     cout << endl << "WARNING: be sure your image has the correct type !!" << endl << endl;
     
     cout << "MANDATORY ARGUMENTS" << endl;
-    cout << "\t-i <inputfilename> \t no default" << endl;
+    cout << StrPad("  -i <inputfilename>",30) << StrPad("no default",70,StrPad("",30)) << endl;
     //cout << "\t-i-dicom <inputfolderpath> \t (replace -i, read DICOM series, output still in NIFTI)" << endl;
-    cout << "\t-o <outputfolderpath> \t default is current folder" << endl;
-    cout << "\t-t {t1,t2} \t string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default" << endl;
+    cout << StrPad("  -o <outputfolderpath>",30) << StrPad("default is current folder",70,StrPad("",30)) << endl;
+    cout << StrPad("  -t {t1,t2}",30) << StrPad("string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default",70,StrPad("",30)) << endl;
     cout << endl;
 	
 	// Output files
 	cout << "OPTIONAL ARGUMENTS" << endl;
     cout << "General options" << endl;
-    cout << "\t-down <down_slice> \t int, down limit of the propagation, default is 0" << endl;
-    cout << "\t-up <up_slice> \t\t int, up limit of the propagation, default is higher slice of the image" << endl;
-    cout << "\t-verbose \t\t display on" << endl;
-    cout << "\t-help" << endl;
+    cout << StrPad("  -down <down_slice>",30) << StrPad("int, down limit of the propagation, default is 0",70,StrPad("",30)) << endl;
+    cout << StrPad("  -up <up_slice>",30) << StrPad("int, up limit of the propagation, default is the higher slice of the image",70,StrPad("",30)) << endl;
+    cout << StrPad("  -verbose",30) << StrPad("display on",70,StrPad("",30)) << endl;
+    cout << StrPad("  -help",30) << endl;
+	cout << endl;
     
     cout << "Output options" << endl;
-    cout << "\t-mesh \t output: mesh of the spinal cord segmentation" << endl;
-    cout << "\t-centerline-binary \t output: centerline as a binary image" << endl;
-    cout << "\t-CSF \t output: CSF segmentation" << endl;
-	cout << "\t-centerline-coord \t output: centerline as world coordinates" << endl;
-	cout << "\t-cross \t output: cross-sectional areas" << endl;
-    cout << "\t-init-tube \t output: initial tubular meshes" << endl;
-    cout << "\t-low-resolution-mesh \t output: low-resolution mesh" << endl;
-    cout << "\t-detect-display \t output of spinal cord detection as a PNG image" << endl;
+    cout << StrPad("  -mesh",30) << StrPad("output: mesh of the spinal cord segmentation",70,StrPad("",30)) << endl;
+    cout << StrPad("  -centerline-binary",30) << StrPad("output: centerline as a binary image",70,StrPad("",30)) << endl;
+    cout << StrPad("  -CSF",30) << StrPad("output: CSF segmentation",70,StrPad("",30)) << endl;
+	cout << StrPad("  -centerline-coord",30) << StrPad("output: centerline as world coordinates",70,StrPad("",30)) << endl;
+	cout << StrPad("  -cross",30) << StrPad("output: cross-sectional areas",70,StrPad("",30)) << endl;
+    cout << StrPad("  -init-tube",30) << StrPad("output: initial tubular meshes",70,StrPad("",30)) << endl;
+    cout << StrPad("  -low-resolution-mesh",30) << StrPad("output: low-resolution mesh",70,StrPad("",30)) << endl;
+    cout << StrPad("  -detect-display",30) << StrPad("output of spinal cord detection as a PNG image",70,StrPad("",30)) << endl;
 	cout << endl;
 	
-    // Initialization
-	cout << "Initialization - Spinal cord detection module options:" << endl;
-    cout << "\t-init <init_position> \t int, axial slice where the propagation starts, default is middle axial slice" << endl;
-    cout << "\t-init-mask <filename> \t string, mask containing three center of the spinal cord, used to initiate the propagation" << endl;
-	cout << "\t-detect-n <numberslice> \t int, number of axial slices computed in the detection process, default is 4" << endl;
-	cout << "\t-detect-gap <gap> \t int, gap in Z direction for the detection process, default is 4" << endl;
-	cout << "\t-detect-radius <radius> \t double, approximate radius of the spinal cord, default is 4 mm" << endl;
-	cout << "\t-init-validation \t enable validation on spinal cord detection based on discriminant analysis" << endl;
-    cout << endl;
-    
-    // Propagation
-	cout << "Propagation module options:" << endl;
-	cout << "\t-init-centerline <filename> \t filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation" << endl;
-    cout << "\t-nbiter <number> \t int, stop condition: number of iteration for the propagation for both direction, default is 200" << endl;
-    cout << "\t-max-area <number> \t double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2" << endl;
-    cout << "\t-max-deformation <number> \t double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm" << endl;
-    cout << "\t-min-contrast <number> \t double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50" << endl;
-	cout << "\t-d <number> \t double, trade-off between distance of most promising point and feature strength, default depend on the contrast" << endl;
+	cout << "Options helping the segmentation" << endl;
+	cout << StrPad("  -init-centerline <filename>",30) << StrPad("filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",70,StrPad("",30)) << endl;
+    cout << StrPad("  -init <init_position>",30) << StrPad("int, axial slice where the propagation starts, default is middle axial slice",70,StrPad("",30)) << endl;
+    cout << StrPad("  -init-mask <filename>",30) << StrPad("string, mask containing three center of the spinal cord, used to initiate the propagation",70,StrPad("",30)) << endl;
+	cout << StrPad("  -detect-radius <radius>",30) << StrPad("double, approximate radius of the spinal cord, default is 4 mm",70,StrPad("",30)) << endl;
+	cout << endl;
+	cout << StrPad("  -detect-n <numberslice>",30) << StrPad("int, number of axial slices computed in the detection process, default is 4",70,StrPad("",30)) << endl;
+	cout << StrPad("  -detect-gap <gap>",30) << StrPad("int, gap in Z direction for the detection process, default is 4",70,StrPad("",30)) << endl;
+	cout << StrPad("  -init-validation",30) << StrPad("enable validation on spinal cord detection based on discriminant analysis",70,StrPad("",30)) << endl;
+    cout << StrPad("  -nbiter <number>",30) << StrPad("int, stop condition: number of iteration for the propagation for both direction, default is 200",70,StrPad("",30)) << endl;
+    cout << StrPad("  -max-area <number>",30) << StrPad("double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2",70,StrPad("",30)) << endl;
+    cout << StrPad("  -max-deformation <number>",30) << StrPad("double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm",70,StrPad("",30)) << endl;
+    cout << StrPad("  -min-contrast <number>",30) << StrPad("double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50",70,StrPad("",30)) << endl;
+	cout << StrPad("  -d <number>",30) << StrPad("double, trade-off between distance of most promising point and feature strength, default depend on the contrast",70,StrPad("",30)) << endl;
+	cout << endl;
 }
 
 int main(int argc, char *argv[])

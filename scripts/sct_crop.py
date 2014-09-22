@@ -76,7 +76,7 @@ def main():
     fname_data = ''
     suffix_out = '_crop'
     file_tmp = 'data.nii'
-    remove_temp_files = 1
+    remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     remove_temp_files = param.remove_temp_files
