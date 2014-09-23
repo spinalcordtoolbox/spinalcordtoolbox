@@ -76,17 +76,23 @@ mkdir mt
 cd mt
 dcm2nii -o . /Volumes/data_shared/montreal_criugm/errsm_30/19-gre_t1_MTC1/errsm_30-0001.dcm
 mv *.nii.gz mt1.nii.gz
-# === open fslview and create file init.nii.gz otherwise segmentation will not work ===
-sct_segmentation_propagation -i mt1.nii.gz -t t2 -init-mask init.nii.gz
-# register to template (template registered to t2). N.B. only uses segmentation (more accurate)
-sct_register_multimodal.py -i ../t2/template2anat.nii.gz -d mt1.nii.gz -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/templateseg2anat.nii.gz -t segmentation_binary.nii.gz
+dcm2nii -o . /Volumes/data_shared/montreal_criugm/errsm_30/20-gre_t1_MTC0/errsm_30-0001.dcm
+mv 2*.nii.gz mt0.nii.gz
+# compute MTR
+sct_compute_mtr -i mt0.nii.gz -j mt1.nii.gz
+# create "mt1-mask.nii.gz" on mt1 (will be used for segmentation). Three points in middle of the cord.
+fslview mt1 &
+# segment mt1
+sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1-mask.nii.gz -detect-radius 5 -max-deformation 5
+# register to template (template registered to t2).
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1.nii.gz -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t mt1_seg.nii.gz
 # concatenate transfo
-sct_concat_transfo.py -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
-sct_concat_transfo.py -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_mt2template.nii.gz
-# warp template+atlas
-sct_warp_template.py -d mt1.nii.gz -w warp_template2mt.nii.gz
-# warp mt to template
-sct_apply_transfo.py -i mt1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_mt2template.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
+sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_mt2template.nii.gz
+# warp template and atlas
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
+# extract MTR within the whole white matter
+sct_extract_metric -i mtr.nii.gz -f label/atlas/ -a
 
 
 # fmri
@@ -100,7 +106,7 @@ fslmaths fmri.nii.gz -Tmean fmri_mean
 # create "fmri_mean-mask.nii.gz" on fmri_mean (will be used for segmentation). Three points in middle of the cord.
 fslview fmri_mean &
 # segment mean volume
-sct_propseg -i fmri_mean.nii.gz -t t2 -init-mask fmri_mean-mask.nii.gz -detect-radius 6 -max-deformation 5
+sct_propseg -i fmri_mean.nii.gz -t t2 -init-mask fmri_mean-mask.nii.gz -detect-radius 5
 # register to template (template registered to t2). Only uses segmentation (more accurate)
 sct_register_multimodal -i ../t2/template2anat.nii.gz -d fmri_mean.nii.gz -x 1 -v 1 -n 15x3 -y 0 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_mean_seg.nii.gz
 # concatenate transfo
