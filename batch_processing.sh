@@ -15,9 +15,7 @@ sct_crop_image -i t2_seg.nii.gz -o t2_seg.nii.gz -start 6 -end 200 -dim 1
 # make landmarks at C3 (3) and T4 (11)
 # register to template
 sct_register_to_template -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -o 1 -s normal -r 1
-# warp cord segmentation from template
-WarpImageMultiTransform 3 $SCT_DIR/data/template/MNI-Poly-AMU_cord.nii.gz templateseg2anat.nii.gz -R t2.nii.gz warp_template2anat.nii.gz
-# warp template+atlas
+# warp template and atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 
 
