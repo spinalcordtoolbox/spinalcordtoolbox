@@ -58,7 +58,7 @@ mv *.bvec bvecs.txt
 # moco
 sct_dmri_moco -i dmri.nii.gz -b bvecs.txt -d 3
 # create "init-mask.nii.gz" on mean_dwi_moco (will be used for segmentation). Three points in middle of the cord.
-fslview dwi_moco_mean
+fslview dwi_moco_mean &
 # segment mean_dwi
 sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init-mask init-mask.nii.gz
 # register to template (template registered to t2).
@@ -68,30 +68,6 @@ sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d dw
 sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_dmri2template.nii.gz
 # warp template and atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
-
-
-# fmri
-# ----------
-mkdir fmri
-cd fmri
-dcm2nii -o . /Volumes/data_shared/montreal_criugm/errsm_30/46-rp_ep2d_bold_phcorr__test_1x1x3/errsm_30-0001.dcm
-mv *.nii.gz fmri.nii.gz
-# mean volume
-fslmaths fmri.nii.gz -Tmean fmri_mean
-# create initialization points for segmentation (otherwise does not work)
-# === open fslview and create file fmri_init.nii.gz ===
-# segment mean volume
-sct_segmentation_propagation -i fmri_mean.nii.gz -t t2 -init-mask fmri_init.nii.gz -verbose
-# === edit segmentation manually because not working well ===
-# register to template (template registered to t2). N.B. only uses segmentation (more accurate)
-sct_register_multimodal.py -i ../t2/template2anat.nii.gz -d fmri_mean.nii.gz -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/templateseg2anat.nii.gz -t segmentation_binary.nii.gz
-# concatenate transfo
-sct_concat_transfo.py -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_mean.nii.gz -o warp_template2fmri.nii.gz
-sct_concat_transfo.py -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
-# warp template+atlas
-sct_warp_template.py -d fmri_mean.nii.gz -w warp_template2fmri.nii.gz
-# warp fmri to template
-sct_apply_transfo.py -i fmri_mean.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_fmri2template.nii.gz
 
 
 # mt
@@ -112,3 +88,23 @@ sct_warp_template.py -d mt1.nii.gz -w warp_template2mt.nii.gz
 # warp mt to template
 sct_apply_transfo.py -i mt1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_mt2template.nii.gz
 
+
+# fmri
+# ----------
+mkdir fmri
+cd fmri
+dcm2nii -o . /Volumes/data_shared/montreal_criugm/errsm_30/46-rp_ep2d_bold_phcorr__test_1x1x3/errsm_30-0001.dcm
+mv *.nii.gz fmri.nii.gz
+# mean volume
+fslmaths fmri.nii.gz -Tmean fmri_mean
+# create "fmri_mean-mask.nii.gz" on fmri_mean (will be used for segmentation). Three points in middle of the cord.
+fslview fmri_mean &
+# segment mean volume
+sct_propseg -i fmri_mean.nii.gz -t t2 -init-mask fmri_mean-mask.nii.gz -detect-radius 6 -max-deformation 5
+# register to template (template registered to t2). Only uses segmentation (more accurate)
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d fmri_mean.nii.gz -x 1 -v 1 -n 15x3 -y 0 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_mean_seg.nii.gz
+# concatenate transfo
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_mean.nii.gz -o warp_template2fmri.nii.gz
+sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
+# warp template and atlas
+sct_warp_template -d fmri_mean.nii.gz -w warp_template2fmri.nii.gz
