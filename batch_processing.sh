@@ -1,6 +1,7 @@
 #!/etc/bash
 # example batch to process multi-parametric data of the spinal cord
 
+
 # t2
 # ----------
 mkdir t2
@@ -28,25 +29,19 @@ rm c*.nii.gz
 rm o*.nii.gz
 mv *.nii.gz t1.nii.gz
 # segmentation (for registration to template)
-sct_segmentation_propagation -t t1 -i t1.nii.gz -o .
-# crop T1
-# --- use fslview to identify start and end points ---
-sct_crop_image -i t1.nii.gz -o t1_crop.nii.gz -start 10 -end 210
-# move segmentation into cropped space
-c3d t1_crop.nii.gz segmentation_binary.nii.gz -reslice-identity -o segmentation_binary_crop.nii.gz
-# adjust segmentation
-# --- manually edit using fslview --- took 2 minutes
-# smooth spinal cord
-sct_smooth_spinalcord.py -i t1_crop.nii.gz -c segmentation_binary_crop.nii.gz
+sct_propseg -i t1.nii.gz -t t1
+# check results and crop image (identify min and max slices)
+fslview t1 t1_seg &
+sct_crop_image -i t1.nii.gz -o t1.nii.gz -start 10 -end 210
+sct_crop_image -i t1_seg.nii.gz -o t1_seg.nii.gz -start 10 -end 210
 # register to template (template registered to t2). N.B. only uses segmentation (more accurate)
-sct_register_multimodal.py -i ../t2/template2anat.nii.gz -d t1_crop_smooth.nii.gz -x 1 -v 1 -n 15x3 -y 0 -g 0.2,0.5 -s ../t2/templateseg2anat.nii.gz -t segmentation_binary_crop.nii.gz
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d t1.nii.gz -x 1 -v 1 -n 15x3 -y 0 -g 0.2,0.5 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t t1_seg.nii.gz
 # concatenate transfo
-sct_concat_transfo.py -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d t1_crop.nii.gz -o warp_template2t1.nii.gz
-sct_concat_transfo.py -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
-# warp template+atlas
-sct_warp_template.py -d t1_crop.nii.gz -w warp_template2t1.nii.gz
-# warp t1 to template
-sct_apply_transfo.py -i t1_crop.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
+sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
+# warp template and atlas
+sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz
+
 
 # dmri
 # ----------
@@ -70,6 +65,7 @@ sct_warp_template.py -d dwi_mean.nii -w warp_template2dmri.nii.gz
 # warp dwi to template
 sct_apply_transfo.py -i dwi_mean.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_dmri2template.nii.gz
 
+
 # fmri
 # ----------
 mkdir fmri
@@ -92,6 +88,7 @@ sct_concat_transfo.py -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d
 sct_warp_template.py -d fmri_mean.nii.gz -w warp_template2fmri.nii.gz
 # warp fmri to template
 sct_apply_transfo.py -i fmri_mean.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_fmri2template.nii.gz
+
 
 # mt
 # ----------
