@@ -11,9 +11,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
+import os, fnmatch
 import sys
 import commands
+import time
+import nibabel as nib
 
 # TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -84,6 +86,32 @@ def check_file_exist(fname, verbose=1):
 
 
 #=======================================================================================================================
+# find_exact_fname
+#=======================================================================================================================
+def find_exact_fname(fname, directory):
+    """Find all exact matches with a specific file name in a directory tree - fname and directory must be strings"""
+
+    all_path = []
+    for root, dirs, files in os.walk(directory):
+        if fname in files:
+            all_path.append(os.path.join(root, fname))
+    return all_path
+
+#=======================================================================================================================
+# find_pattern
+#=======================================================================================================================
+def find_pattern(pattern, directory):
+    """Find all matches with a pattern (e.g., '*.txt') in a directory tree - pattern and directory must be strings"""
+
+    all_path = []
+    for root, dirs, files in os.walk(directory):
+        for fname in files:
+            if fnmatch.fnmatch(fname, pattern):
+                all_path.append(os.path.join(root, fname))
+    return all_path
+
+
+#=======================================================================================================================
 # get_dimension
 #=======================================================================================================================
 # Get dimensions of a nifti file using FSL
@@ -114,6 +142,33 @@ def get_orientation(fname):
     status, output = commands.getstatusoutput('sct_orientation -get -i '+fname)
     orientation = output.replace('Input image orientation : ','')
     return orientation
+
+#=======================================================================================================================
+# change_orientation
+#=======================================================================================================================
+def change_orientation(fname, orientation, output_path=None, rm_tmp_dir=1):
+    """Change orientation of a NIFTI file and load it - orientation must be in capital letter (e.g., RPI or AIL)"""
+
+    # if no output folder was specified, create a temporary folder
+    if not output_path:
+        print('\nCreate temporary folder ...')
+        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        status, output = commands.getstatusoutput('mkdir ' + path_tmp)
+    else:
+        path_tmp = output_path
+
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    # generate a new file changing the orientation as wished
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+path_tmp+'/'+file_fname+ext_fname
+                                              +' -orientation '+orientation)
+    # load the new nifti file with the new orientation
+    img = nib.load(path_tmp+'/'+file_fname+ext_fname)
+
+    # remove temporary folder if it was just created for this function
+    if not output_path and rm_tmp_dir == 1:
+        status, output = commands.getstatusoutput('rm -rf '+path_tmp)
+
+    return img
 
 
 
@@ -240,7 +295,7 @@ def delete_nifti(fname_in):
 def create_folder(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
-        os.system('rm '+path_in+file_in+'.nii.gz')
+        os.system('rm '+path_in+file_in+'.nii.gz')  # TODO: ask Julien if it's normal that there are two methods of the same name
 
 
 #=======================================================================================================================
