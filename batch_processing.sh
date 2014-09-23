@@ -7,18 +7,18 @@ mkdir t2
 cd t2
 dcm2nii -o . /Volumes/data_shared/montreal_criugm/errsm_30/02-tse_spc_1mm_p2_FOV384__top/errsm_30-0001.dcm
 mv *.nii.gz t2.nii.gz
-sct_segmentation_propagation -t t2 -i t2.nii.gz -o . -centerline-binary -mesh
+sct_propseg -t t2 -i t2.nii.gz -o . -centerline-binary -mesh
 # check results and crop image (identify min and max slices)
-fslview t2 segmentation_binary.nii.gz &
+fslview t2 t2_seg &
 sct_crop_image -i t2.nii.gz -o t2.nii.gz -start 6 -end 224 -dim 1
 sct_crop_image -i segmentation_binary.nii.gz -o segmentation_binary.nii.gz -start 6 -end 224 -dim 1
 # make landmarks at C3 (3) and T4 (11)
 # register to template
-sct_register_to_template.py -i t2.nii.gz -l labels.nii.gz -m segmentation_binary.nii.gz -o 1 -s normal -r 1
+sct_register_to_template -i t2.nii.gz -l labels.nii.gz -m segmentation_binary.nii.gz -o 1 -s normal -r 1
 # warp cord segmentation from template
 WarpImageMultiTransform 3 $SCT_DIR/data/template/MNI-Poly-AMU_cord.nii.gz templateseg2anat.nii.gz -R t2.nii.gz warp_template2anat.nii.gz
 # warp template+atlas
-sct_warp_template.py -d t2.nii.gz -w warp_template2anat.nii.gz
+sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 
 
 #  t1
