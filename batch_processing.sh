@@ -1,5 +1,9 @@
-#!/etc/bash
+# !/etc/bash
 # example batch to process multi-parametric data of the spinal cord
+# specific to errsm_30
+
+# set default FSL output to be nii.gz
+export FSLOUTPUTTYPE=NIFTI_GZ
 
 
 # t2
@@ -52,18 +56,18 @@ mv *.nii.gz dmri.nii.gz
 mv *.bval bvals.txt
 mv *.bvec bvecs.txt
 # moco
-sct_dmri_moco.py -i dmri.nii.gz -b bvecs.txt -d 3 -s 30 -p spline -f 1
+sct_dmri_moco -i dmri.nii.gz -b bvecs.txt -d 3
+# create "init-mask.nii.gz" on mean_dwi_moco (will be used for segmentation). Three points in middle of the cord.
+fslview dwi_moco_mean
 # segment mean_dwi
-sct_segmentation_propagation -i dwi_mean.nii -t t1
-# register to template (template registered to t2). N.B. only uses segmentation (more accurate)
-sct_register_multimodal.py -i ../t2/template2anat.nii.gz -d dwi_mean.nii -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/templateseg2anat.nii.gz -t segmentation_binary.nii
+sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init-mask init-mask.nii.gz
+# register to template (template registered to t2).
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d dwi_moco_mean.nii.gz -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t dwi_moco_mean_seg.nii.gz
 # concatenate transfo
-sct_concat_transfo.py -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d dwi_mean.nii -o warp_template2dmri.nii.gz
-sct_concat_transfo.py -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_dmri2template.nii.gz
-# warp template+atlas
-sct_warp_template.py -d dwi_mean.nii -w warp_template2dmri.nii.gz
-# warp dwi to template
-sct_apply_transfo.py -i dwi_mean.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_dmri2template.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
+sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_dmri2template.nii.gz
+# warp template and atlas
+sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 
 
 # fmri
