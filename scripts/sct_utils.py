@@ -14,13 +14,6 @@
 import os, fnmatch
 import sys
 import commands
-import time
-import nibabel as nib
-
-# TODO (urgent): remove nibabel and time
-# TODO (urgent): merge find_exact_fname and the other, and rename as: find_file_within_folder. Description is: find file (or part of file, e.g. my_file*.txt) within folder tree recursively.
-
-
 
 # TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -89,30 +82,18 @@ def check_file_exist(fname, verbose=1):
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
 
-
-#=======================================================================================================================
-# find_exact_fname
-#=======================================================================================================================
-def find_exact_fname(fname, directory):
-    """Find all exact matches with a specific file name in a directory tree - fname and directory must be strings"""
-
-    all_path = []
-    for root, dirs, files in os.walk(directory):
-        if fname in files:
-            all_path.append(os.path.join(root, fname))
-    return all_path
-
 #=======================================================================================================================
 # find_pattern
 #=======================================================================================================================
-def find_pattern(pattern, directory):
-    """Find all matches with a pattern (e.g., '*.txt') in a directory tree - pattern and directory must be strings"""
+def find_file_within_folder(fname, directory):
+    """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
+    strings"""
 
     all_path = []
     for root, dirs, files in os.walk(directory):
-        for fname in files:
-            if fnmatch.fnmatch(fname, pattern):
-                all_path.append(os.path.join(root, fname))
+        for file in files:
+            if fnmatch.fnmatch(file, fname):
+                all_path.append(os.path.join(root, file))
     return all_path
 
 
@@ -151,30 +132,19 @@ def get_orientation(fname):
 #=======================================================================================================================
 # change_orientation
 #=======================================================================================================================
-def change_orientation(fname, orientation, output_path=None, rm_tmp_dir=1):
-    """Change orientation of a NIFTI file and load it - orientation must be in capital letter (e.g., RPI or AIL)"""
-
-    # if no output folder was specified, create a temporary folder
-    if not output_path:
-        print('\nCreate temporary folder ...')
-        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-        status, output = commands.getstatusoutput('mkdir ' + path_tmp)
-    else:
-        path_tmp = output_path
+def change_orientation(fname, orientation, out_folder, out_file_fname=''):
+    """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
+     letter (e.g., RPI or AIL)"""
 
     path_fname, file_fname, ext_fname = extract_fname(fname)
+    # if no output file name was specified, take the input file name concatenated with the new orientation
+    if not out_file_fname:
+        out_file_fname = file_fname+orientation
     # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+path_tmp+'/'+file_fname+ext_fname
-                                              +' -orientation '+orientation)
-    # load the new nifti file with the new orientation
-    img = nib.load(path_tmp+'/'+file_fname+ext_fname)
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+out_folder+'/'+
+                                              out_file_fname+ext_fname+' -orientation '+orientation)
 
-    # remove temporary folder if it was just created for this function
-    if not output_path and rm_tmp_dir == 1:
-        status, output = commands.getstatusoutput('rm -rf '+path_tmp)
-
-    return img
-
+    return out_folder+'/'+out_file_fname+ext_fname
 
 
 #=======================================================================================================================

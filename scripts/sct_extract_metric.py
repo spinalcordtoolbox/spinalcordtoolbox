@@ -16,6 +16,7 @@
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
 # TODO: vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
+# TODO: remove method 'change_orientation' if not used (= if we leave it in sct_utils.py)
 
 # Import common Python libraries
 import os
@@ -36,7 +37,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
@@ -154,7 +155,7 @@ def main():
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
             usage()
         else:
-            fname_vertebral_labeling_list = sct.find_exact_fname(param.fname_vertebral_labeling, path_label + '..')
+            fname_vertebral_labeling_list = sct.find_file_within_folder(param.fname_vertebral_labeling, path_label + '..')
             if len(fname_vertebral_labeling_list) > 1:
                 print color.red + 'ERROR: More than one file named \'' + param.fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
@@ -198,20 +199,20 @@ def main():
         path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
         status, output = sct.run('mkdir ' + path_tmp)
         sct.printv('\nChange image orientation and load it...', verbose)
-        data = sct.change_orientation(fname_data, 'RPI', path_tmp).get_data()
+        data = nib.load(sct.change_orientation(fname_data, 'RPI', path_tmp)).get_data()
         sct.printv('  Done.', verbose)
 
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            labels[i_label] = sct.change_orientation(path_label + label_file[i_label], 'RPI', path_tmp).get_data()
+            labels[i_label] = nib.load(sct.change_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = sct.change_orientation(fname_normalizing_label, 'RPI', path_tmp).get_data()
+            normalizing_label[0] = nib.load(sct.change_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = sct.change_orientation(fname_vertebral_labeling, 'RPI', path_tmp).get_data()
+            data_vertebral_labeling = nib.load(sct.change_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
         sct.printv('  Done.', verbose)
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
@@ -538,6 +539,34 @@ def remove_slices(data_to_crop, slices_of_interest):
     data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
 
     return data_cropped
+
+
+#=======================================================================================================================
+# change_orientation
+#=======================================================================================================================
+def change_orientation(fname, orientation, output_path=None, rm_tmp_dir=1):
+    """Change orientation of a NIFTI file and load it - orientation must be in capital letter (e.g., RPI or AIL)"""
+
+    # if no output folder was specified, create a temporary folder
+    if not output_path:
+        print('\nCreate temporary folder ...')
+        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        status, output = commands.getstatusoutput('mkdir ' + path_tmp)
+    else:
+        path_tmp = output_path
+
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    # generate a new file changing the orientation as wished
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+path_tmp+'/'+file_fname+ext_fname
+                                              +' -orientation '+orientation)
+    # load the new nifti file with the new orientation
+    img = nib.load(path_tmp+'/'+file_fname+ext_fname)
+
+    # remove temporary folder if it was just created for this function
+    if not output_path and rm_tmp_dir == 1:
+        status, output = commands.getstatusoutput('rm -rf '+path_tmp)
+
+    return img
 
 
 #=======================================================================================================================
