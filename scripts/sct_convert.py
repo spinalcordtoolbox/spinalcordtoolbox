@@ -63,6 +63,12 @@ def main():
     if fname_data == '':
         usage()
     
+    cmd = 'which mnc2nii'
+    status, output = commands.getstatusoutput(cmd)
+    if not output:
+        print 'ERROR: minc-toolkit not installed...'
+        sys.exit(2)
+
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
     sct.check_file_exist(fname_data)
