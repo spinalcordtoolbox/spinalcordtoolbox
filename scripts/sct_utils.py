@@ -17,6 +17,11 @@ import commands
 import time
 import nibabel as nib
 
+# TODO (urgent): remove nibabel and time
+# TODO (urgent): merge find_exact_fname and the other, and rename as: find_file_within_folder. Description is: find file (or part of file, e.g. my_file*.txt) within folder tree recursively.
+
+
+
 # TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
