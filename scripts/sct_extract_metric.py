@@ -24,7 +24,7 @@ import sys
 import time
 import commands
 import nibabel as nib
-import numpy as np
+# import numpy as np
 import sct_utils as sct
 from nibabel.parrec import *
 
@@ -36,7 +36,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
@@ -92,7 +92,7 @@ def main():
         path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
         method = 'wa'
         labels_of_interest = '' #'0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = ''#'102:134' #'117:127' #'2:4'
+        slices_of_interest = '' #'102:134' #'117:127' #'2:4'
         vertebral_levels = '4:5'
         average_all_labels = 1
         fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
@@ -212,7 +212,7 @@ def main():
             normalizing_label[0] = sct.change_orientation(fname_normalizing_label, 'RPI', path_tmp).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = sct.change_orientation(fname_vertebral_labeling, 'RPI', path_tmp).get_data()
-            sct.printv('  Done.', verbose)
+        sct.printv('  Done.', verbose)
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder used to change the NIFTI files orientation into RPI...', verbose)
@@ -234,6 +234,8 @@ def main():
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
             normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
+        if vertebral_levels:  # if vertebral levels were selected,
+            data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
         sct.printv('  Done.', verbose)
 
 
@@ -327,7 +329,7 @@ def main():
     print color.bold + '\nEstimation results:\n'
     for i in range(0, metric_mean.size):
         print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
-              +' +/- '+str(metric_std[i])+color.bold
+              +' +/- '+str(metric_std[i])+color.end
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
