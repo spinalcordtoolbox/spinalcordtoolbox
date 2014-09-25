@@ -547,34 +547,6 @@ def remove_slices(data_to_crop, slices_of_interest):
 
 
 #=======================================================================================================================
-# change_orientation
-#=======================================================================================================================
-def change_orientation(fname, orientation, output_path=None, rm_tmp_dir=1):
-    """Change orientation of a NIFTI file and load it - orientation must be in capital letter (e.g., RPI or AIL)"""
-
-    # if no output folder was specified, create a temporary folder
-    if not output_path:
-        print('\nCreate temporary folder ...')
-        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-        status, output = commands.getstatusoutput('mkdir ' + path_tmp)
-    else:
-        path_tmp = output_path
-
-    path_fname, file_fname, ext_fname = sct.extract_fname(fname)
-    # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+path_tmp+'/'+file_fname+ext_fname
-                                              +' -orientation '+orientation)
-    # load the new nifti file with the new orientation
-    img = nib.load(path_tmp+'/'+file_fname+ext_fname)
-
-    # remove temporary folder if it was just created for this function
-    if not output_path and rm_tmp_dir == 1:
-        status, output = commands.getstatusoutput('rm -rf '+path_tmp)
-
-    return img
-
-
-#=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
 def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std,
