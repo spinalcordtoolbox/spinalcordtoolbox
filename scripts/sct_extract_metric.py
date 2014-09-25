@@ -560,7 +560,7 @@ def change_orientation(fname, orientation, output_path=None, rm_tmp_dir=1):
     else:
         path_tmp = output_path
 
-    path_fname, file_fname, ext_fname = extract_fname(fname)
+    path_fname, file_fname, ext_fname = sct.extract_fname(fname)
     # generate a new file changing the orientation as wished
     status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+path_tmp+'/'+file_fname+ext_fname
                                               +' -orientation '+orientation)
