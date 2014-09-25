@@ -125,7 +125,7 @@ def main():
             fname_normalizing_label = arg
         elif opt in '-o':  # output option
             fname_output = arg  # fname of output file
-        elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin'
+        elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin' (see flag -m)
             threshold = float(arg)
         elif opt in '-v':
             # vertebral levels option, if the user wants to average the metric across specific vertebral levels
