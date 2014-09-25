@@ -49,6 +49,7 @@ class param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
+        self.threshold = 0.5  # threshold for the estimation methods 'wath' and 'bin'
 
 class color:
     purple = '\033[95m'
@@ -83,6 +84,7 @@ def main():
     # to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond
     # exactly to the vertebral levels available in the metric data
+    threshold = param.threshold  # default defined in class "param"
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
 
@@ -102,7 +104,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:t:v:w:z:') # define flags
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
@@ -121,8 +123,10 @@ def main():
             method = arg
         elif opt in '-n':  # filename of the label by which the user wants to normalize
             fname_normalizing_label = arg
-        elif opt in '-o': # output option
+        elif opt in '-o':  # output option
             fname_output = arg  # fname of output file
+        elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin'
+            threshold = float(arg)
         elif opt in '-v':
             # vertebral levels option, if the user wants to average the metric across specific vertebral levels
              vertebral_levels = arg
@@ -298,19 +302,20 @@ def main():
                 # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
                 normalizing_label_slice[0] = normalizing_label[0][..., z]
                 metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
-                                                                       verbose=0)
+                                                                       threshold, verbose=0)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
             metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method,
-                                                                  verbose=param.verbose)  # mean and std are lists
+                                                                                        threshold, verbose=param.verbose)
+                                                                                          # mean and std are lists
 
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, threshold, verbose)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations
     # in the whole labels
@@ -677,20 +682,20 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose):
+def extract_metric_within_tract(data, labels, method, threshold, verbose):
 
     nb_labels = len(labels) # number of labels
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
         for i in range(0, nb_labels):
-            labels[i][labels[i] < 0.5] = 0
-            labels[i][labels[i] >= 0.5] = 1
+            labels[i][labels[i] < threshold] = 0
+            labels[i][labels[i] >= threshold] = 1
 
     # if user asks for thresholded weighted-average, threshold atlas
     if method == 'wath':
         for i in range(0, nb_labels):
-            labels[i][labels[i] < 0.5] = 0
+            labels[i][labels[i] < threshold] = 0
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
