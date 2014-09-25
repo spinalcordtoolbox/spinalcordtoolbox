@@ -82,6 +82,21 @@ def check_file_exist(fname, verbose=1):
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
 
+#=======================================================================================================================
+# find_file_within_folder
+#=======================================================================================================================
+def find_file_within_folder(fname, directory):
+    """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
+    strings"""
+    import fnmatch
+
+    all_path = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if fnmatch.fnmatch(file, fname):
+                all_path.append(os.path.join(root, file))
+    return all_path
+
 
 #=======================================================================================================================
 # get_dimension
@@ -115,6 +130,23 @@ def get_orientation(fname):
     orientation = output.replace('Input image orientation : ','')
     return orientation
 
+
+#=======================================================================================================================
+# set_orientation
+#=======================================================================================================================
+def set_orientation(fname_data, orientation, path_out=''):
+    """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
+     letter (e.g., RPI or AIL)"""
+
+    path_data, file_data, ext_data = extract_fname(fname_data)
+    if not path_out:
+        path_out = path_data
+    # set output file
+    fname_out = slash_at_the_end(path_out, 1) + file_data + '_' + orientation + ext_data
+    # generate a new file changing the orientation as wished
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -orientation '+orientation)
+
+    return fname_out
 
 
 #=======================================================================================================================
@@ -231,15 +263,6 @@ def delete_nifti(fname_in):
         os.system('rm '+path_in+file_in+'.nii')
     # delete nifti if exist
     if os.path.isfile(path_in+file_in+'.nii.gz'):
-        os.system('rm '+path_in+file_in+'.nii.gz')
-
-
-#=======================================================================================================================
-# create_folder:  create folder, and check if exists before creating it
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
         os.system('rm '+path_in+file_in+'.nii.gz')
 
 
