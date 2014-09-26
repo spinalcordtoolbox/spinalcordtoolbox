@@ -98,7 +98,7 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final.nii.gz', path_out, file_out, ext_out)
+    sct.generate_output_file('warp_final.nii.gz', path_out+file_out+ext_out)
 
     print ''
 

@@ -249,11 +249,11 @@ def main():
 
    # Generate output files
     print('\nGenerate output files...')
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz','','warp_template2anat','.nii.gz')
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz','','warp_anat2template','.nii.gz')
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz')
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz')
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz','','template2anat',ext_data)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz','','anat2template',ext_data)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:

@@ -504,9 +504,9 @@ def main():
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz','','warp_curve2straight','.nii.gz')  # warping field
-    sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz','','warp_straight2curve','.nii.gz')  # warping field
-    sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz','',file_anat+'_straight',ext_anat)  # straightened anatomic
+    sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz', 'warp_curve2straight.nii.gz')  # warping field
+    sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz', 'warp_straight2curve.nii.gz')  # warping field
+    sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat)  # straightened anatomic
 
     # Remove temporary files
     if remove_temp_files == 1:
