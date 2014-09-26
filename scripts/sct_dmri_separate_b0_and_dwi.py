@@ -226,7 +226,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
         #sct.printv('\nOpen bvals file...', verbose)
         bvals = []
         with open(fname_bvals) as f:
-            bvals=numpy.array(map(float,f.readlines()))
+            bvals = numpy.array(map(float, f.readlines()))
 
         # get number of lines
         nt = len(bvals)
