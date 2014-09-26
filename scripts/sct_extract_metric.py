@@ -85,6 +85,7 @@ def main():
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
+    flag_h = 0
 
     # Parameters for debug mode
     if param.debug:
@@ -112,7 +113,7 @@ def main():
         elif opt in '-f':
             path_label = os.path.abspath(arg)  # save path of labels folder
         elif opt == '-h':  # help option
-            usage() # display usage
+            flag_h = 1
         elif opt in '-i':
             fname_data = arg
         elif opt in '-l':
@@ -136,7 +137,7 @@ def main():
     #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '':
+    if fname_data == '' or path_label == '' or flag_h:
         param.path_label = path_label
         usage()
 
