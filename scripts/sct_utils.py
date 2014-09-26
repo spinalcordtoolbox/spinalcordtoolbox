@@ -77,12 +77,14 @@ def extract_fname(fname):
 # Check existence of a file or path
 def check_file_exist(fname, verbose=1):
 
-    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
+    #    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
+    # WARNING: dangerous change with potential dependencies (2014-09-26)
+    if os.path.isfile(fname) or os.path.isdir(fname):
         if verbose:
-            print('  OK: '+fname)
+            printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
+        printv('  ERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
         sys.exit(2)
 
 
