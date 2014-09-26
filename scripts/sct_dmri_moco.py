@@ -43,7 +43,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
