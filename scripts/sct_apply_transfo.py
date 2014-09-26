@@ -26,6 +26,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.verbose = 0  # verbose
+        self.dim = 3
         self.interp = 'spline'  # nn, trilinear, spline
 
 
@@ -39,6 +40,7 @@ def main():
     fname_dest = ''  # destination image (fix)
     fname_src_reg = ''
     verbose = 1
+    dim = param.dim
 
     # Parameters for debug mode
     if param.debug:
@@ -54,7 +56,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -72,6 +74,8 @@ def main():
             verbose = int(arg)
         elif opt in ('-w'):
             fname_warp_list = arg
+        elif opt in ('-x'):
+            dim = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
@@ -109,7 +113,7 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
+    sct.run('sct_WarpImageMultiTransform ' + dim + ' '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -144,6 +148,7 @@ OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
   -p {nn,trilinear,spline}  interpolation method. Default="""+str(param.interp)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -x {2,3}              dimension of the data. Default="""+str(param.dim)+"""
   -h                    help. Show this message
 
 EXAMPLE

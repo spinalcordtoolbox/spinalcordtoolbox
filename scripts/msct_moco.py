@@ -269,7 +269,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --output ['+file_mat+','+file_out+'.nii]' \
                   ' --interpolation '+interp
         if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
     # use ants_affine
@@ -286,7 +286,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --output ['+file_mat+','+file_out+'.nii]' \
                   ' --interpolation '+interp
         if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
     # return status of failure
