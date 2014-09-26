@@ -28,7 +28,10 @@ class bcolors:
     yellow = '\033[93m'
     red = '\033[91m'
     normal = '\033[0m'
-
+    purple = '\033[95m'
+    cyan = '\033[96m'
+    bold = '\033[1m'
+    underline = '\033[4m'
 
 #==============e=========================================================================================================
 # run
@@ -81,6 +84,7 @@ def check_file_exist(fname, verbose=1):
     else:
         print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
         sys.exit(2)
+
 
 #=======================================================================================================================
 # find_file_within_folder
@@ -138,6 +142,8 @@ def set_orientation(fname_data, orientation, path_out=''):
     """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
      letter (e.g., RPI or AIL)"""
 
+    # get absolute path
+    fname_data = os.path.abspath(fname_data)
     path_data, file_data, ext_data = extract_fname(fname_data)
     if not path_out:
         path_out = path_data
@@ -234,6 +240,9 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.red
     elif type == 'code':
         color = bcolors.blue
+    elif type == 'bold':
+        color = bcolors.bold
+
     # print message
     if verbose:
         print(color+string+bcolors.normal)
@@ -267,7 +276,7 @@ def delete_nifti(fname_in):
 
 
 #=======================================================================================================================
-# create_folder:  create folder, and check if exists before creating it
+# create_folder:  create folder (check if exists before creating it)
 #=======================================================================================================================
 def create_folder(folder):
     if not os.path.exists(folder):
