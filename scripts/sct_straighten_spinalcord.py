@@ -33,6 +33,7 @@ class param:
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1 # remove temporary files
         self.verbose = 1
+        self.nurbs_ctl_points = 0
 
 # check if needed Python libraries are already installed or not
 import os
@@ -73,6 +74,7 @@ def main():
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
+    nurbs_ctl_points = param.nurbs_ctl_points
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -95,7 +97,7 @@ def main():
     
     # Check input param
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:w:f:v:')
+        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:w:f:v:n:')
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -114,6 +116,8 @@ def main():
             centerline_fitting = str(arg)
         elif opt in ('-v'):
             verbose = int(arg)
+        elif opt in ('-n'):
+            nurbs_ctl_points = int(round(int(arg)))
 
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
@@ -233,7 +237,12 @@ def main():
 
     # Fit the centerline points with the kind of curve given as argument of the script and return the new fitted coordinates
     if centerline_fitting == 'splines':
-        x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
+        if nurbs_ctl_points == 0:
+            x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
+        else:
+            print 'In sct_straighten_spinnalcord: nrbs_ctl_points = ',nurbs_ctl_points
+            x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, nurbs_ctl_points)
+
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)

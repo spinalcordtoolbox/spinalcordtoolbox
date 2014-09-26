@@ -17,7 +17,7 @@ try:
 except ImportError:
     print '--- numpy not installed! ---'
     sys.exit(2)
-from sct_nurbs import NURBS
+#from sct_nurbs import NURBS
 
 
 #=======================================================================================================================
@@ -109,14 +109,22 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================   
 
-def b_spline_nurbs(x,y,z,degree = 3,point_number = 3000):
-    
-    from sct_nurbs import NURBS
+def b_spline_nurbs(x,y,z, control_points = 0, degree = 3,point_number = 3000):
+
+
+    from sct_nurbs_v2 import NURBS
+    #from sct_nurbs import NURBS
           
     print '\nFitting centerline using B-spline approximation...'
     data = [[x[n],y[n],z[n]] for n in range(len(x))]
-    nurbs = NURBS(degree,point_number,data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-  
+    if control_points == 0:
+        nurbs = NURBS(degree,point_number,data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    else:
+        print 'In b_spline_nurbs we get control_point = ', control_points
+        nurbs = NURBS(degree, point_number, data, False, control_points)
+
+
+
     P = nurbs.getCourbe3D()
     x_fit=P[0]
     y_fit=P[1]
