@@ -183,9 +183,12 @@ def main():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
-    # sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    # sct.run('sct_c3d '+param.fname_data+' -o '+path_tmp+'dmri.nii')
-    # sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
+    # NB: cannot use c3d here because c3d cannot convert 4D data.
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    sct.run('cp '+param.fname_data+' '+path_tmp+'dmri'+ext_data, param.verbose)
+    sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
+    # convert dmri to nii format
+    sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -254,19 +257,19 @@ def dmri_moco(param):
     
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(param.fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
-    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0(param.fname_bvecs, param.fname_bvals, param.bval_min, param.verbose)
+    index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
     #=======================================================================================================================
     # Prepare NIFTI (mean/groups...)
     #=======================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run(fsloutput+'fslsplit '+param.fname_data + ' ' + file_data + '_T', param.verbose)
+    status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', param.verbose)
