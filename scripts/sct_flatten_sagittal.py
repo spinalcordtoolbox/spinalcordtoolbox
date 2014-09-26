@@ -225,7 +225,7 @@ def main():
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii','./',file_anat+'_flatten',ext_anat)
+    sct.generate_output_file('tmp.anat_orient_fit_reorient.nii', file_anat+'_flatten'+ext_anat)
 
     # Delete temporary files
     if remove_temp_files == 1:

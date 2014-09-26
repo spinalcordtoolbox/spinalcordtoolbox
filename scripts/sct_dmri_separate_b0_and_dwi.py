@@ -159,11 +159,11 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'b0.nii', path_out, 'b0', ext_data, verbose)
-    sct.generate_output_file(path_tmp+'dwi.nii', path_out, 'dwi', ext_data, verbose)
+    sct.generate_output_file(path_tmp+'b0.nii', path_out+'b0'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+'dwi.nii', path_out+'dwi'+ext_data, verbose)
     if average:
-        sct.generate_output_file(path_tmp+'b0_mean.nii', path_out, 'b0_mean', ext_data, verbose)
-        sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out, 'dwi_mean', ext_data, verbose)
+        sct.generate_output_file(path_tmp+'b0_mean.nii', path_out+'b0_mean'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out+'dwi_mean'+ext_data, verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
