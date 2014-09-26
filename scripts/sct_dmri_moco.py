@@ -227,7 +227,7 @@ def main():
 
     #To view results
     print '\nTo view results, type:'
-    print 'fslview '+param.path_out+file_data+param.suffix+' '+file_data+' &\n'
+    print 'fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n'
 
 
 #=======================================================================================================================
