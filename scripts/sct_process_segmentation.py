@@ -14,7 +14,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# N.B. To avoid confusion for the user, I removed from the menu the other options for computing CSA (jcohenadad 2014-07-20)
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
@@ -22,21 +21,19 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug              = 0
-        self.verbose            = 0 # verbose
-        self.step               = 1 # step of discretized plane in mm default is min(x_scale,y_scale)
-        self.remove_temp_files  = 1
-        self.volume_output      = 0
-        self.spline_smoothing   = 1
-        self.smoothing_param    = 700
-        self.figure_fit         = 0
+        self.debug = 0
+        self.verbose = 1  # verbose
+        self.step = 1 # step of discretized plane in mm default is min(x_scale,y_scale)
+        self.remove_temp_files = 1
+        self.volume_output = 0
+        self.spline_smoothing = 1
+        self.smoothing_param = 700
+        self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
         self.name_method = 'counting_z_plane'  # for compute_CSA
         
         
-import re
-import math
 import sys
 import getopt
 import os
@@ -46,9 +43,6 @@ import time
 import sct_utils as sct
 from sct_nurbs import NURBS
 import scipy
-#from numpy.linalg import eig, inv
-#import Image
-#from scipy.interpolate import splev, splrep
 import nibabel
 
 # MAIN
@@ -78,7 +72,8 @@ def main():
     
     # Parameters for debug mode
     if param.debug:
-        fname_segmentation = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
+        fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
+        name_process = 'compute_csa'
         verbose = 1
         remove_temp_files = 0
         from matplotlib.pyplot import imshow, gray, show
@@ -86,7 +81,7 @@ def main():
         
     # Check input parameters
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:p:m:b:r:s:f:o:v:')
+         opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -124,7 +119,7 @@ def main():
         usage()
     
     # display usage if no method provided
-    if name_process=='compute_csa' and method_CSA == '':
+    if name_process == 'compute_csa' and method_CSA == '':
         usage() 
         
     # check existence of input files
@@ -137,9 +132,8 @@ def main():
     if name_process == 'extract_centerline':
         extract_centerline(fname_segmentation,remove_temp_files)
 
-    if name_process == 'compute_csa' :
-        compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output)
-    
+    if name_process == 'compute_csa':
+        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -148,11 +142,12 @@ def main():
     # End of Main
 
 
-# EXTRACT_CENTERLINE
+# extract_centerline
 # ==========================================================================================
+def extract_centerline(fname_segmentation, remove_temp_files):
 
-def extract_centerline(fname_segmentation,remove_temp_files):
     # Extract path, file and extension
+    fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
     # create temporary folder
@@ -197,15 +192,14 @@ def extract_centerline(fname_segmentation,remove_temp_files):
         x_centerline[iz-min_z_index] = np.mean(x_seg)
         y_centerline[iz-min_z_index] = np.mean(y_seg)
     for k in range(len(X)):
-	    data[X[k],Y[k],Z[k]] = 0
+        data[X[k],Y[k],Z[k]] = 0
     # Fit the centerline points with splines and return the new fitted coordinates
     x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
-	    data[round(x_centerline_fit[iz-min_z_index]),round(y_centerline_fit[iz-min_z_index]),iz] = 1
-	
+        data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1
     # Write the centerline image in RPI orientation
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     print '\nWrite NIFTI volumes...'
@@ -224,61 +218,54 @@ def extract_centerline(fname_segmentation,remove_temp_files):
     sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -orientation ' + orientation)
 
    # Remove temporary files
-    if remove_temp_files == 1 :
+    if remove_temp_files:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
-
-    # to view results
-    print '\nTo view results, type:'
-    print 'fslview '+file_data+'_centerline &\n'
-
-    # End of extract_centerline
-
 
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp_files,spline_smoothing,step,smoothing_param,figure_fit,name_output):
+def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output):
 
     # Extract path, file and extension
-    path_data_seg, file_data_seg, ext_data_seg = sct.extract_fname(fname_segmentation)
-    
+    fname_segmentation = os.path.abspath(fname_segmentation)
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
-    
-    # copy files into tmp folder
-    sct.run('cp '+fname_segmentation+' '+path_tmp)
-    
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, verbose)
+
+    # Copying input data to tmp folder and convert to nii
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    sct.run('sct_c3d '+fname_segmentation+' -o '+path_tmp+'segmentation.nii')
+
     # go to tmp folder
     os.chdir(path_tmp)
         
     # Change orientation of the input segmentation into RPI
-    print '\nOrient segmentation image to RPI orientation...'
-    fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data_seg
-    sct.run('sct_orientation -i ' + file_data_seg + ext_data_seg + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
+    sct.printv('\nChange orientation of the input segmentation into RPI...', verbose)
+    fname_segmentation_orient = sct.set_orientation('segmentation.nii', 'RPI')
 
     # Get size of data
-    print '\nGet data dimensions...'
+    sct.printv('\nGet data dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    print '.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
-    print '\nOpen segmentation volume...'
+    # Open segmentation volume
+    sct.printv('\nOpen segmentation volume...', verbose)
     file_seg = nibabel.load(fname_segmentation_orient)
     data_seg = file_seg.get_data()
     hdr_seg = file_seg.get_header()
     
     # Get mm scales of the volume
-    x_scale=hdr_seg['pixdim'][1]
-    y_scale=hdr_seg['pixdim'][2]
-    z_scale=hdr_seg['pixdim'][3]
-     
-    
+    x_scale = hdr_seg['pixdim'][1]
+    y_scale = hdr_seg['pixdim'][2]
+    z_scale = hdr_seg['pixdim'][3]
+
     # Extract min and max index in Z direction
-    X, Y, Z = (data_seg>0).nonzero()
-    coords_seg = np.array([str([X[i],Y[i],Z[i]]) for i in xrange(0,len(Z))]) #don't know why but finding strings in array of array of strings is WAY faster than doing the same with integers        
-    #coords_seg = [[X[i],Y[i],Z[i]] for i in range(0,len(Z))] #don't know why but finding strings in array of array of strings is WAY faster than doing the same with integers        
-    
+    X, Y, Z = (data_seg > 0).nonzero()
+    coords_seg = np.array([str([X[i], Y[i], Z[i]]) for i in xrange(0,len(Z))])  # don't know why but finding strings in array of array of strings is WAY faster than doing the same with integers
     min_z_index, max_z_index = min(Z), max(Z)
     Xp,Yp = (data_seg[:,:,0]>=0).nonzero() # X and Y range
    
@@ -292,9 +279,6 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
         x_centerline[iz-min_z_index] = np.mean(x_seg)
         y_centerline[iz-min_z_index] = np.mean(y_seg)
 
-
- #    ### First Method  : counting voxel in orthogonal plane + fitting ellipse in orthogonal plane
-
     # Fit the centerline points with spline and return the new fitted coordinates
     x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
@@ -306,221 +290,220 @@ def compute_csa(fname_segmentation,name_method,volume_output,verbose,remove_temp
  #    plt.show()
 
     # Defining cartesian basis vectors 
-    x=np.array([1,0,0])
-    y=np.array([0,1,0])
-    z=np.array([0,0,1])
+    x = np.array([1,0,0])
+    y = np.array([0,1,0])
+    z = np.array([0,0,1])
     
     # Creating folder in which JPG files will be stored
-    sct.run('mkdir JPG_Results')
+    sct.printv('\nCreating folder in which JPG files will be stored...', verbose)
+    sct.create_folder('JPG_Results')
 
-    # Computing CSA
-    print('\nComputing CSA...')
-    
+    # Compute CSA
+    sct.printv('\nCompute CSA...', verbose)
+
     # Empty arrays in which CSA for each z slice will be stored
     csa = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_ortho_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_ortho_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_z_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_z_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    
+    sct.printv('\nCross-Section Area:', verbose, 'bold')
+
     for iz in xrange(0, len(z_centerline)):
 
-            # Equation of the the plane which is orthogonal to the spline at z=iz
-            a = x_centerline_deriv[iz]
-            b = y_centerline_deriv[iz]
-            c = z_centerline_deriv[iz]
-            
-            #vector normal to the plane
-            normal = normalize(np.array([a,b,c]))
-            
-            # angle between normal vector and z
-            angle = np.arccos(np.dot(normal,z))
-            
-            if name_method == 'counting_ortho_plane' or name_method == 'ellipse_ortho_plane':
-                
-                x_center = x_centerline_fit[iz]
-                y_center = y_centerline_fit[iz]
-                z_center = z_centerline[iz]
-            
-                # use of x in order to get orientation of each plane, basis_1 is in the plane ax+by+cz+d=0
-                basis_1 = normalize(np.cross(normal,x))
-                basis_2 = normalize(np.cross(normal,basis_1))
-            
-                # maximum dimension of the tilted plane. Try multiply numerator by sqrt(2) ?
-                max_diameter = (max([(max(X)-min(X))*x_scale,(max(Y)-min(Y))*y_scale]))/(np.cos(angle)) 
-                
-                # Forcing the step to be the min of x and y scale (default value is 1 mm)
-                step = min([x_scale,y_scale])
-                
-                # discretized plane which will be filled with 0/1
-                plane_seg = np.zeros((int(max_diameter/step),int(max_diameter/step)))
-            
-                # how the plane will be skimmed through
-                plane_grid = np.linspace(-int(max_diameter/2),int(max_diameter/2),int(max_diameter/step)) 
-                
-                # we go through the plane
-                for i_b1 in plane_grid :
-                    
-                    for i_b2 in plane_grid : 
-                        
-                        point = np.array([x_center*x_scale,y_center*y_scale,z_center*z_scale]) + i_b1*basis_1 +i_b2*basis_2
-                        
-                        # to which voxel belongs each point of the plane
-                        coord_voxel = str([ int(point[0]/x_scale), int(point[1]/y_scale), int(point[2]/z_scale)])
-                        #coord_voxel = [ int(point[0]/x_scale), int(point[1]/y_scale), int(point[2]/z_scale)]
-                        
-                        if (coord_voxel in coords_seg) is True :  # if this voxel is 1
-                        
-                            plane_seg[int((plane_grid==i_b1).nonzero()[0])][int((plane_grid==i_b2).nonzero()[0])] = 1
-                            
-                            # number of voxels that are in the intersection of each plane and the nonzeros values of segmentation, times the area of one cell of the discretized plane
-                            if name_method == 'counting_ortho_plane':
-                                csa[iz] = len((plane_seg>0).nonzero()[0])*step*step
-          
-                if verbose ==1 and name_method == 'counting_ortho_plane' :
-                    
-                    print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-            
-                if name_method == 'ellipse_ortho_plane' : 
-                    
-                    # import scipy stuff
-                    from scipy.misc import imsave
-                    
-                    os.chdir('JPG_Results')
-                    imsave('plane_ortho_' + str(iz) + '.jpg', plane_seg)
-                    
-                    # Tresholded gradient image
-                    mag = edge_detection('plane_ortho_' + str(iz) + '.jpg')
-                    
-                    #Coordinates of the contour
-                    x_contour,y_contour = (mag>0).nonzero()
-                    
-                    x_contour = x_contour*step
-                    y_contour = y_contour*step
-                    
-                    #Fitting an ellipse
-                    fit = Ellipse_fit(x_contour,y_contour)
-                    
-                    # Semi-minor axis, semi-major axis
-                    a_ellipse, b_ellipse = ellipse_dim(fit)
-                    
-                    #Section = pi*a*b
-                    csa[iz] = a_ellipse*b_ellipse*np.pi
-                    
-                    if verbose == 1 and name_method == 'ellipse_ortho_plane':
-                        print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-                    os.chdir('..')
-                    
-            if name_method == 'counting_z_plane' or name_method == 'ellipse_z_plane':
-                 
-                 # getting the segmentation for each z plane
-                 x_seg, y_seg = (data_seg[:,:,iz+min_z_index]>0).nonzero()
-                 seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
-                 
-                 plane = np.zeros((max(Xp),max(Yp)))
-                 
-                 for i in seg:
-                     # filling the plane with 0 and 1 regarding to the segmentation
-                     plane[i[0] - 1][i[1] - 1] = 1
-                     
-                 if name_method == 'counting_z_plane' :
-                     csa[iz] = len((plane>0).nonzero()[0])*x_scale*y_scale*np.cos(angle)
-                
-                 if verbose == 1 and name_method == 'counting_z_plane':
-                     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-                
-                 if name_method == 'ellipse_z_plane':
-                     
-                     # import scipy stuff
-                     from scipy.misc import imsave
-                                          
-                     os.chdir('JPG_Results')
-                     imsave('plane_z_' + str(iz) + '.jpg', plane)     
-                     
-                     # Tresholded gradient image
-                     mag = edge_detection('plane_z_' + str(iz) + '.jpg')
-                     
-                     x_contour,y_contour = (mag>0).nonzero()
-                     
-                     x_contour = x_contour*x_scale
-                     y_contour = y_contour*y_scale
-                     
-                     # Fitting an ellipse
-                     fit = Ellipse_fit(x_contour,y_contour)
-                     a_ellipse, b_ellipse = ellipse_dim(fit)
-                     csa[iz] = a_ellipse*b_ellipse*np.pi*np.cos(angle)
-                     
-                     if verbose == 1 and name_method == 'ellipse_z_plane':
-                         print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-                    
-                     os.chdir('..')
+        # Equation of the the plane which is orthogonal to the spline at z=iz
+        a = x_centerline_deriv[iz]
+        b = y_centerline_deriv[iz]
+        c = z_centerline_deriv[iz]
 
+        #vector normal to the plane
+        normal = normalize(np.array([a,b,c]))
 
-    # come back to parent folder
-    os.chdir('..')
+        # angle between normal vector and z
+        angle = np.arccos(np.dot(normal,z))
 
-    if spline_smoothing == 1 :
-        print('\nSmoothing results with spline...')
+        if name_method == 'counting_ortho_plane' or name_method == 'ellipse_ortho_plane':
+
+            x_center = x_centerline_fit[iz]
+            y_center = y_centerline_fit[iz]
+            z_center = z_centerline[iz]
+
+            # use of x in order to get orientation of each plane, basis_1 is in the plane ax+by+cz+d=0
+            basis_1 = normalize(np.cross(normal,x))
+            basis_2 = normalize(np.cross(normal,basis_1))
+
+            # maximum dimension of the tilted plane. Try multiply numerator by sqrt(2) ?
+            max_diameter = (max([(max(X)-min(X))*x_scale,(max(Y)-min(Y))*y_scale]))/(np.cos(angle))
+
+            # Forcing the step to be the min of x and y scale (default value is 1 mm)
+            step = min([x_scale,y_scale])
+
+            # discretized plane which will be filled with 0/1
+            plane_seg = np.zeros((int(max_diameter/step),int(max_diameter/step)))
+
+            # how the plane will be skimmed through
+            plane_grid = np.linspace(-int(max_diameter/2),int(max_diameter/2),int(max_diameter/step))
+
+            # we go through the plane
+            for i_b1 in plane_grid :
+
+                for i_b2 in plane_grid :
+
+                    point = np.array([x_center*x_scale,y_center*y_scale,z_center*z_scale]) + i_b1*basis_1 +i_b2*basis_2
+
+                    # to which voxel belongs each point of the plane
+                    coord_voxel = str([ int(point[0]/x_scale), int(point[1]/y_scale), int(point[2]/z_scale)])
+
+                    if (coord_voxel in coords_seg) is True :  # if this voxel is 1
+                        plane_seg[int((plane_grid==i_b1).nonzero()[0])][int((plane_grid==i_b2).nonzero()[0])] = 1
+
+                        # number of voxels that are in the intersection of each plane and the nonzeros values of segmentation, times the area of one cell of the discretized plane
+                        if name_method == 'counting_ortho_plane':
+                            csa[iz] = len((plane_seg>0).nonzero()[0])*step*step
+
+            # if verbose ==1 and name_method == 'counting_ortho_plane' :
+
+                # print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
+
+            if name_method == 'ellipse_ortho_plane':
+
+                # import scipy stuff
+                from scipy.misc import imsave
+
+                os.chdir('JPG_Results')
+                imsave('plane_ortho_' + str(iz) + '.jpg', plane_seg)
+
+                # Tresholded gradient image
+                mag = edge_detection('plane_ortho_' + str(iz) + '.jpg')
+
+                #Coordinates of the contour
+                x_contour,y_contour = (mag>0).nonzero()
+
+                x_contour = x_contour*step
+                y_contour = y_contour*step
+
+                #Fitting an ellipse
+                fit = Ellipse_fit(x_contour,y_contour)
+
+                # Semi-minor axis, semi-major axis
+                a_ellipse, b_ellipse = ellipse_dim(fit)
+
+                #Section = pi*a*b
+                csa[iz] = a_ellipse*b_ellipse*np.pi
+
+                # if verbose == 1 and name_method == 'ellipse_ortho_plane':
+                #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
+                # os.chdir('..')
+
+        if name_method == 'counting_z_plane' or name_method == 'ellipse_z_plane':
+
+            # getting the segmentation for each z plane
+            x_seg, y_seg = (data_seg[:,:,iz+min_z_index]>0).nonzero()
+            seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
+
+            plane = np.zeros((max(Xp),max(Yp)))
+
+            for i in seg:
+                # filling the plane with 0 and 1 regarding to the segmentation
+                plane[i[0] - 1][i[1] - 1] = 1
+
+            if name_method == 'counting_z_plane' :
+                csa[iz] = len((plane>0).nonzero()[0])*x_scale*y_scale*np.cos(angle)
+
+            # if verbose == 1 and name_method == 'counting_z_plane':
+            #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
+
+            if name_method == 'ellipse_z_plane':
+
+                # import scipy stuff
+                from scipy.misc import imsave
+
+                os.chdir('JPG_Results')
+                imsave('plane_z_' + str(iz) + '.jpg', plane)
+
+                # Tresholded gradient image
+                mag = edge_detection('plane_z_' + str(iz) + '.jpg')
+
+                x_contour,y_contour = (mag>0).nonzero()
+
+                x_contour = x_contour*x_scale
+                y_contour = y_contour*y_scale
+
+                # Fitting an ellipse
+                fit = Ellipse_fit(x_contour,y_contour)
+                a_ellipse, b_ellipse = ellipse_dim(fit)
+                csa[iz] = a_ellipse*b_ellipse*np.pi*np.cos(angle)
+
+                 # if verbose == 1 and name_method == 'ellipse_z_plane':
+                 #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
+
+        # Display results
+        sct.printv('z='+str(iz)+': '+str(csa[iz])+' mm^2', verbose, 'bold')
+
+    if spline_smoothing == 1:
+        sct.printv('\nSmoothing results with spline...', verbose)
         tck = scipy.interpolate.splrep((z_centerline*z_scale), csa, s=smoothing_param)
         csa_smooth = scipy.interpolate.splev((z_centerline*z_scale), tck)
         if figure_fit == 1:
             import matplotlib.pyplot as plt
             plt.figure()
-            plt.plot((z_centerline*z_scale),csa)
-            plt.plot((z_centerline*z_scale),csa_smooth)
+            plt.plot((z_centerline*z_scale), csa)
+            plt.plot((z_centerline*z_scale), csa_smooth)
             plt.legend(['CSA values', 'Smoothed values'],2)
             plt.savefig('Spline_fit.png')
         csa = csa_smooth  # update variable
 
     # Create output text file
-    print('\nGenerating output text file...')
-    file_results = open(param.fname_csa,'w')
+    sct.printv('\nWrite text file...', verbose)
+    file_results = open('csa.txt', 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
     file_results.close()
-    print '.. File created: '+param.fname_csa
 
     # output volume of csa values
-    if volume_output == 1:
-        # Extract orientation of the input segmentation
-        status,sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
-        orientation = sct_orientation_output[-3:]
+    if volume_output:
+        sct.printv('\nCreate volume of CSA values...', verbose)
+        # get orientation of the input data
+        orientation = sct.get_orientation('segmentation.nii')
+        # status, sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
+        # orientation = sct_orientation_output[-3:]
         # loop across slices
         for iz in range(min_z_index,max_z_index+1):
             # retrieve seg pixels
-            x_seg, y_seg = (data_seg[:,:,iz]>0).nonzero()
-            seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
+            x_seg, y_seg = (data_seg[:, :, iz] > 0).nonzero()
+            seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
             # loop across pixels in segmentation
             for i in seg :
                 # replace value with csa value
                 data_seg[i[0], i[1], iz] = csa[iz-min_z_index]
         # create header
-        hdr_seg.set_data_dtype('uint8') # set imagetype to uint8
+        hdr_seg.set_data_dtype('uint8')  # set imagetype to uint8
         # save volume
-        print '\nWrite NIFTI volumes...'
+        # print '\nWrite NIFTI volumes...'
         data_seg = data_seg.astype(np.float32, copy =False)
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
-        file_name = path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg
-        nibabel.save(img,file_name)
-        print '.. File created:' + file_name
+        nibabel.save(img, 'csa_RPI.nii')
         # Change orientation of the output centerline into input orientation
-        print '\nOrient  image to input orientation: '
-        sct.run('sct_orientation -i '+path_tmp+'/'+file_data_seg+'_CSA_slices_rpi'+ext_data_seg + ' -o ' + name_output + ' -orientation ' + orientation)
+        fname_csa_volume = sct.set_orientation('csa_RPI.nii', orientation)
 
-    del data_seg
+    # come back to parent folder
+    os.chdir('..')
+
+    # Generate output files
+    sct.printv('\nGenerate output files...', verbose)
+    sct.generate_output_file(path_tmp+'csa.txt', path_data, param.fname_csa, '')
+    if volume_output:
+        sct.generate_output_file(fname_csa_volume, path_data, name_output, ext_data)
 
     # Remove temporary files
-    if remove_temp_files == 1 : 
+    if remove_temp_files == 1:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
-   
-    # End of compute_csa
 
 
 #=======================================================================================================================
-# B-Spline fitting
+# b_spline_centerline
 #=======================================================================================================================
-
 def b_spline_centerline(x_centerline,y_centerline,z_centerline):
                           
     print '\nFitting centerline using B-spline approximation...'
@@ -536,15 +519,16 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
     z_centerline_deriv=Q[2]
                           
     return x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv
-                          
+
+
 #=======================================================================================================================
 # Normalization
 #=======================================================================================================================
-
 def normalize(vect):
     norm=np.linalg.norm(vect)
     return vect/norm
-    
+
+
 #=======================================================================================================================
 # Ellipse fitting for a set of data
 #=======================================================================================================================
@@ -562,10 +546,10 @@ def Ellipse_fit(x,y):
     a = V[:,n]
     return a
 
+
 #=======================================================================================================================
 # Getting a and b parameter for fitted ellipse
 #=======================================================================================================================
-
 def ellipse_dim(a):
     b,c,d,f,g,a = a[1]/2, a[2], a[3]/2, a[4]/2, a[5], a[0]
     up = 2*(a*f*f+c*d*d+g*b*b-2*b*d*f-a*c*g)
@@ -618,8 +602,8 @@ def edge_detection(f):
                 mag[i][j] = 0
    
     return mag
-    
-    
+
+
 # Print usage
 # ==========================================================================================
 def usage():
@@ -656,6 +640,7 @@ EXAMPLE
 
     # exit program
     sys.exit(2)
+
 
 # START PROGRAM
 # =========================================================================================
