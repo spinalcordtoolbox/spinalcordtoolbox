@@ -149,9 +149,9 @@ def main():
 
     # check existence of input files
     print('\nCheck existence of input files...')
-    sct.check_file_exist(fname_data,verbose)
-    sct.check_file_exist(fname_landmarks,verbose)
-    sct.check_file_exist(fname_seg,verbose)
+    sct.check_file_exist(fname_data, verbose)
+    sct.check_file_exist(fname_landmarks, verbose)
+    sct.check_file_exist(fname_seg, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
