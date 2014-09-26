@@ -187,11 +187,12 @@ def main():
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'dmri'+ext_data, param.verbose)
     sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
-    # convert dmri to nii format
-    sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    # convert dmri to nii format
+    sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
     # EDDY CURRENT CORRECTION
     # TODO: MAKE SURE path_out IS CORRECT WITH EDDY BEFORE ACTIVATING EDDY
