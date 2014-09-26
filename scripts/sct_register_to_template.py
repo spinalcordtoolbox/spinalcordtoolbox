@@ -266,8 +266,8 @@ def main():
 
     # to view results
     print '\nTo view results, type:'
-    print 'fslview template2anat '+fname_data+' &'
-    print 'fslview anat2template '+fname_template+' &\n'
+    print 'fslview template2anat -b 0,3000 '+fname_data+' &'
+    print 'fslview anat2template '+fname_template+' -b 0,3000 &\n'
 
 
 
