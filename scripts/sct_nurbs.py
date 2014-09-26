@@ -104,7 +104,7 @@ class NURBS():
             P_x = [x[0] for x in liste]
             P_y = [x[1] for x in liste]
             P_z = [x[2] for x in liste]
-            
+
             self.nbControle = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
                                           #   increase nbeControle if "short data"
             self.pointsControle = self.reconstructGlobalApproximation(P_x,P_y,P_z,self.degre,self.nbControle)
