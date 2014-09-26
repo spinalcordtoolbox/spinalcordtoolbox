@@ -15,10 +15,11 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # spinal cord segmentation
-# tips: here we use "-max-deformation 3" otherwise the segmentation does not cover the whole spinal cord
-sct_propseg -i t2.nii.gz -t t2 -centerline-binary -mesh -max-deformation 3
+# tips: we use "-max-deformation 3" otherwise the segmentation does not cover the whole spinal cord
+# tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
+sct_propseg -i t2.nii.gz -t t2 -centerline-binary -mesh -max-deformation 4 -init 130
 # you can check results with "fslview". You can also use MITKWORKBENCH to view the mesh.
-fslview t2 t2_seg &
+fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
 # At this point you should make labels. Here we can use the file labels.nii.gz, which contains labels at C3 (value=3) and T4 (value=11).
 # register to template
 sct_register_to_template -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -o 1 -s normal -r 1
@@ -41,7 +42,7 @@ sct_crop t1.nii.gz
 # segmentation (used for registration to template)
 sct_propseg -i t1.nii.gz -t t1
 # check results
-fslview t1 t1_seg.nii.gz &
+fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
 # --> t1_seg_modif.nii.gz
 # register to template (template registered to t2). N.B. only uses segmentation (more accurate)
