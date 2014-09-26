@@ -160,14 +160,15 @@ def set_orientation(fname_data, orientation, path_out=''):
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
+def generate_output_file(fname_in, fname_out, verbose=1):
     # import stuff
     import shutil  # for moving files
     # get absolute fname
     fname_in = os.path.abspath(fname_in)
-    fname_out = os.path.abspath(path_out+file_out+ext_out)
+    fname_out = os.path.abspath(fname_out)
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
+    path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
         printv('  ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
