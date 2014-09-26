@@ -133,16 +133,13 @@ def main():
         elif opt in '-z':  # slices numbers option
             slices_of_interest = arg # save labels numbers
 
-
-    #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
-
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '' or flag_h:
         param.path_label = path_label
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck data file existence...', verbose)
+    sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_data)
     sct.check_file_exist(path_label)
     if fname_normalizing_label:
@@ -165,7 +162,7 @@ def main():
                 print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             else:
-                fname_vertebral_labeling = fname_vertebral_labeling_list[0]
+                fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
     # Check input parameters
     check_method(method, fname_normalizing_label, normalization_method)
@@ -199,7 +196,6 @@ def main():
         # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
         data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
-        sct.printv('  Done.', verbose)
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
@@ -211,7 +207,6 @@ def main():
             normalizing_label[0] = nib.load(sct.set_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(sct.set_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
-        sct.printv('  Done.', verbose)
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
@@ -220,7 +215,6 @@ def main():
         # Load image
         sct.printv('\nLoad image...', verbose)
         data = nib.load(fname_data).get_data()
-        sct.printv('  Done.', verbose)
 
         # Load labels
         sct.printv('\nLoad labels...', verbose)
@@ -233,7 +227,6 @@ def main():
             normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
-        sct.printv('  Done.', verbose)
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -318,7 +311,7 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print color.bold + '\nEstimation results:\n'
+    print color.bold + '\nEstimation results:'
     for i in range(0, metric_mean.size):
         print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
               +' +/- '+str(metric_std[i])+color.end
@@ -328,10 +321,7 @@ def main():
                  method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
     # Print elapsed time
-    print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
-
-    # end of main.
-    print
+    print '\nElapsed time : ' + str(int(round(time.time() - start_time))) + 's\n'
 
 
 #=======================================================================================================================
@@ -372,7 +362,7 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
+    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
@@ -539,7 +529,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
     # CSV format, header lines start with "#"
 
     # Save metric in a .txt file
-    print '\nWrite results in ' + fname_output + ' ...'
+    print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')

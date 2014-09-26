@@ -85,7 +85,7 @@ def main():
     sct.printv('  register ..............'+str(register), verbose)
 
     # check existence of input files
-    sct.printv('\nCheck file existence...', verbose)
+    sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_mt0, verbose)
     sct.check_file_exist(fname_mt1, verbose)
 
