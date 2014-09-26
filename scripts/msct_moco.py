@@ -31,8 +31,8 @@ def moco(param):
 
     # retrieve parameters
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
-    fname_data = param.fname_data
-    fname_target = param.fname_target
+    file_data = param.file_data
+    file_target = param.file_target
     folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
@@ -49,8 +49,8 @@ def moco(param):
 
     # print arguments
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............'+fname_data, param.verbose)
-    sct.printv('  Reference file ........'+fname_target, param.verbose)
+    sct.printv('  Input file ............'+file_data, param.verbose)
+    sct.printv('  Reference file ........'+file_target, param.verbose)
     sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
     sct.printv('  Program ...............'+program, param.verbose)
     sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
@@ -59,11 +59,11 @@ def moco(param):
     sct.printv('  Mask size .............'+str(mask_size), param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
-    # check existence of input files
-    sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_target, verbose)
-
+    # # check existence of input files
+    # sct.printv('\nCheck file existence...', verbose)
+    # sct.check_file_exist(file_data, verbose)
+    # sct.check_file_exist(file_target, verbose)
+    #
     # Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
@@ -75,24 +75,24 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # pad data (for ANTs)
     if program == 'ants' and todo == 'estimate' and slicewise == 0:
         sct.printv('\nPad data (for ANTs)...', verbose)
-        sct.run('sct_c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
-        fname_target = fname_target+'_pad'
+        sct.run('sct_c3d '+file_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_target+'_pad.nii')
+        file_target = file_target+'_pad'
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
-    fname_data_splitT = fname_data + '_T'
-    sct.run(fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT, verbose)
+    file_data_splitT = file_data + '_T'
+    sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # split target data along Z
     if slicewise:
-        file_data_ref_splitZ = fname_target + '_Z'
-        sct.run(fsloutput + 'fslsplit ' + fname_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
+        file_data_ref_splitZ = file_target + '_Z'
+        sct.run(fsloutput + 'fslsplit ' + file_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
 
     # Generate Gaussian Mask
     fslmask = []
@@ -160,8 +160,8 @@ def moco(param):
 
         # create indices and display stuff
         it = index[indice_index]
-        file_data_splitT_num.append(fname_data_splitT + str(it).zfill(4))
-        file_data_splitT_moco_num.append(fname_data + suffix + '_T' + str(it).zfill(4))
+        file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
+        file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
         sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
 
         # pad data (for ANTs)
@@ -174,15 +174,15 @@ def moco(param):
         if slicewise:
             # split data along Z
             sct.printv('Split data along Z...', verbose)
-            fname_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
-            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + fname_data_splitT_splitZ + ' -z'
+            file_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
+            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + file_data_splitT_splitZ + ' -z'
             status, output = sct.run(cmd, verbose)
             file_data_ref_splitZ_num = []
 
             # loop across Z
             sct.printv('Loop across Z ('+todo+')...', verbose)
             for iz in range(nz):
-                file_data_splitT_splitZ_num[it][iz] = fname_data_splitT_splitZ + str(iz).zfill(4)
+                file_data_splitT_splitZ_num[it][iz] = file_data_splitT_splitZ + str(iz).zfill(4)
                 file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
                 file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
                 file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
@@ -201,7 +201,7 @@ def moco(param):
         else:
             file_mat[it] = folder_mat + 'mat.T' + str(it)
             # run 3D registration
-            fail_mat[it] = register(program, todo, file_data_splitT_num[it], fname_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
+            fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
 
     # Replace failed transformation matrix to the closest good one
     # TODO: do it also for the volume-based (not urgent...)
@@ -223,10 +223,10 @@ def moco(param):
             status, output = sct.run(cmd, verbose)
 
     # Merge data along T
-    fname_data_moco = fname_data+suffix
+    file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        cmd = fsloutput + 'fslmerge -t ' + fname_data_moco
+        cmd = fsloutput + 'fslmerge -t ' + file_data_moco
         for indice_index in range(len(index)):
             cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
         sct.run(cmd, verbose)
