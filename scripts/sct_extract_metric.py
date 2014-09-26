@@ -90,14 +90,14 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/data/errsm_23/mt/label/atlas'
-        method = 'wath'
-        labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/csa_volume.nii.gz'  # path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'  # path_sct+'/testing/data/errsm_23/mt/label/atlas'
+        method = 'wa'
+        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''  #'200:210' #'2:4'
-        vertebral_levels = '4:5'
+        vertebral_levels = '2:4'
         average_all_labels = 0
-        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_output = ''  # path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
 
@@ -200,7 +200,6 @@ def main():
         sct.printv('\nChange image orientation and load it...', verbose)
         data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
         sct.printv('  Done.', verbose)
-
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
