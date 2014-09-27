@@ -12,8 +12,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: params for ANTS: CC/MI, shrink fact, nb_it
+# TODO: use mask
 # TODO: unpad after applying transfo
-# TODO: make mask work with slicewise=0
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
@@ -275,6 +276,23 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --interpolation '+interp
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
+        sct.run(cmd, verbose)
+
+    # use ants_rigid
+    elif program == 'ants_rigid':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsRegistration' \
+                  ' --dimensionality '+str(dim)+' ' \
+                  ' --transform Translation[0.5]' \
+                  ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 4]' \
+                  ' --convergence 10x5' \
+                  ' --shrink-factors 8x4' \
+                  ' --smoothing-sigmas 1x1mm' \
+                  ' --Restrict-Deformation '+restrict_deformation+'' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  ' --interpolation '+interp
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
     # use ants_affine
