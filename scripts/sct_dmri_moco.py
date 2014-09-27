@@ -97,9 +97,9 @@ def main():
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
         param.fname_bvals = ''  # path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
         param.verbose = 1
-        param.slicewise = 0
+        param.slicewise = 1
         param.run_eddy = 0
-        param.program = 'ants_affine'
+        param.program = 'flirt'  # ants_affine,
 
     # Check input parameters
     try:
