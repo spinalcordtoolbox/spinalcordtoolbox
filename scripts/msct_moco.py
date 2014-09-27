@@ -204,22 +204,27 @@ def moco(param):
             fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
 
     # Replace failed transformation matrix to the closest good one
-    # TODO: do it also for the volume-based (not urgent...)
-    if slicewise:
+    # NB: this applies only for flirt, hence the ".txt" string added.
+    if slicewise and program == 'flirt':
         fT, fZ = np.where(fail_mat == 1)
         gT, gZ = np.where(fail_mat == 0)
         for it in range(len(fT)):
-            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'),verbose)
+            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'), verbose)
 
             # rename failed matrix
-            cmd = 'mv ' + file_mat[fT[it]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]] + '_failed'
+            cmd = 'mv ' + file_mat[fT[it]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]] + '_failed.txt'
             status, output = sct.run(cmd, verbose)
-
+            # find good Z indices across T corresponding to the current failed Zindex
             good_Zindex = np.where(gZ == fZ[it])
+            # find the corresponding T indices
             good_index = gT[good_Zindex]
-
-            I = np.amin(abs(good_index-fT[it]))
-            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]]
+            # find the T index that is closest to the current T
+            if len(good_index) == 1:
+                # this case was added, otherwise if good_index has single value [0], then I equals 1, hence it crashes.
+                I = 0
+            else:
+                I = np.amin(abs(good_index-fT[it]))
+            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]]+'.txt'
             status, output = sct.run(cmd, verbose)
 
     # Merge data along T
