@@ -20,6 +20,7 @@ sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 from os import listdir
 from os.path import isfile, join
+import importlib
 
 
 # define nice colors
@@ -79,11 +80,11 @@ def main():
             print 'The function you want to avoid does not figure in the functions to test list'
 
     status = []
-    [status.append(test_function(f, download)) for f in functions if function_to_test == f]
+    [status.append(test_function(f)) for f in functions if function_to_test == f]
 
     if not status:
         for f in functions:
-            status.append(test_function(f, download))
+            status.append(test_function(f))
 
     print 'status: '+str(status)
 
@@ -143,24 +144,37 @@ def print_fail():
     print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
 
 
-def write_to_log_file(fname_log, string):
-    f = open(fname_log, 'w')
+def write_to_log_file(fname_log, string, mode = 'w'):
+    f = open(fname_log, mode)
     f.write(string+'\n')
     f.close()
 
 
-def test_function(script_tested, d):
-    if script_tested == 'test_debug':
+def test_function(script_name):
+    if script_name == 'test_debug':
         sys.exit(test_debug())
+    else:
+        script_name = "test_"+script_name
 
     if param.download:
+        print 'Downloading testing data...'
         sct.run('git clone https://github.com/neuropoly/sct_testing_data.git')
-        os.chdir('sct_testing_data')
+        #os.chdir('sct_testing_data')
+        path_data = './sct_testing_data/data'
+        param.download = 0
+    else:
+        path_data = './sct_testing_data/data'
 
-    import script_tested
 
-    script_tested.test()
+    print_line('Checking '+script_name)
 
+    script_tested = importlib.import_module(script_name)
+    print script_tested
+    status = script_tested.test(path_data)
+    if status == 0:
+        print_ok()
+    else:
+        print_fail()
 
 
 def old_test_function(folder_test):
