@@ -15,52 +15,49 @@
 
 import os
 import sys
-
-CONTRAST_LIST = ['t2']
-
+import sct_utils as sct
+import test_all
+import time
+import shutil
 
 class bcolors:
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
-
+    red = '\033[91m'
 
 class Param:
     def __init__(self):
-        self.contrasts = []
+        self.contrasts = ['t2']
         self.subjects = []
-        self.files = []
+        self.files = ['t2_seg.nii.gz']
 
-def test():
+
+def test(data_file_path):
     # initialize parameters
+    status = 0
     param = Param()
-    results_dir = '/resutls'
-
-    param.contrasts.append(CONTRAST_LIST)
-    param.files.append('t2_segmentation_PropSeg.nii.gz')
+    results_dir = 'results'
 
     if os.path.isdir(results_dir):
-        os.remove(results_dir)
+        shutil.rmtree(results_dir)
 
     os.makedirs(results_dir)
     os.chdir(results_dir)
 
-    log_file = open()
+    begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
+    fname_log = "sct_convert_binary_to_trilinear.log"
 
+    test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
+    for contrast in param.contrasts:
+        test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
+        for f in param.files:
+            cmd = "sct_convert_binary_to_trilinear -i ../"+data_file_path+'/'+contrast+'/'+f+" -s 5"
+            s, output = sct.run(cmd)
+            test_all.write_to_log_file(fname_log, output, 'a')
+            status += s
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return status
 
 
 if __name__ == "__main__":
@@ -70,9 +67,7 @@ if __name__ == "__main__":
 
 
 
-
-#!/bin/bash
-#
+'''
 
 # subject list
 SUBJECT_LIST="errsm_23"
@@ -82,11 +77,6 @@ file="t2_segmentation_PropSeg.nii.gz"
 red='\e[1;31m'
 green='\e[1;32m'
 NC='\e[0m'
-
-# if results folder exists, delete it
-if [ -e "results" ]; then
-  rm -rf results
-fi
 
 # create results folder and go inside it
 mkdir results
@@ -112,3 +102,4 @@ for subject in $SUBJECT_LIST; do
   done
 done
 
+'''
