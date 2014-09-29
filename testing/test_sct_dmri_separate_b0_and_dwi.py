@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_convert_binary_to_trilinear script
+# Test function for sct_dmri_separate_b0_and_dwi script
 #
 #   replace the shell test script in sct 1.0
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
-# modified: 2014/09/25
+# modified: 2014/09/28
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -26,9 +26,9 @@ class bcolors:
 
 class Param:
     def __init__(self):
-        self.contrasts = ['t2']
+        self.contrasts = ['dmri']
         self.subjects = []
-        self.files = ['t2_seg.nii.gz']
+        self.files = [['dmri.nii.gz', 'bvecs.txt']]
 
 
 def test(data_file_path):
@@ -51,7 +51,12 @@ def test(data_file_path):
     for contrast in param.contrasts:
         test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
         for f in param.files:
-            cmd = "sct_convert_binary_to_trilinear -i ../"+data_file_path+'/'+contrast+'/'+f+" -s 5"
+            cmd = 'sct_dmri_separate_b0_and_dwi -i ../' + data_file_path + '/' + contrast + '/' + f[0] \
+                + ' -b ../' + data_file_path + '/' + contrast + '/' + f[1] \
+                + ' -a 1'\
+                + ' -o ./'\
+                + ' -v 1'\
+                + ' -r 0'
             s, output = sct.run(cmd, 0)
             test_all.write_to_log_file(fname_log, output, 'a')
             status += s
