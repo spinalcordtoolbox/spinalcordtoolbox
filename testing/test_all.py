@@ -152,29 +152,30 @@ def write_to_log_file(fname_log, string, mode = 'w'):
 
 def test_function(script_name):
     if script_name == 'test_debug':
-        sys.exit(test_debug())
+        test_debug()
     else:
         script_name = "test_"+script_name
 
-    if param.download:
-        print 'Downloading testing data...'
-        sct.run('git clone https://github.com/neuropoly/sct_testing_data.git')
-        #os.chdir('sct_testing_data')
-        path_data = './sct_testing_data/data'
-        param.download = 0
-    else:
-        path_data = './sct_testing_data/data'
+        if param.download:
+            print 'Downloading testing data...'
+            sct.run('git clone https://github.com/neuropoly/sct_testing_data.git')
+            #os.chdir('sct_testing_data')
+            path_data = './sct_testing_data/data'
+            param.download = 0
+        else:
+            path_data = './sct_testing_data/data'
 
+        print_line('Checking '+script_name)
 
-    print_line('Checking '+script_name)
+        script_tested = importlib.import_module(script_name)
 
-    script_tested = importlib.import_module(script_name)
-    print script_tested
-    status = script_tested.test(path_data)
-    if status == 0:
-        print_ok()
-    else:
-        print_fail()
+        status = script_tested.test(path_data)
+        if status == 0:
+            print_ok()
+        else:
+            print_fail()
+
+        return status
 
 
 def old_test_function(folder_test):

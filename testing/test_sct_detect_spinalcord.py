@@ -8,27 +8,29 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
-# modified: 2014/09/25
+# modified: 2014/09/28
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+import test_all
+import shutil
 import os
 import sct_utils as sct
-import test_all
 import time
-import shutil
+
 
 class bcolors:
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
     red = '\033[91m'
 
+
 class Param:
     def __init__(self):
         self.contrasts = ['t2']
         self.subjects = []
-        self.files = ['t2_seg.nii.gz']
+        self.files = ['t2.nii.gz']
 
 
 def test(data_file_path):
@@ -51,7 +53,8 @@ def test(data_file_path):
     for contrast in param.contrasts:
         test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
         for f in param.files:
-            cmd = "sct_convert_binary_to_trilinear -i ../"+data_file_path+'/'+contrast+'/'+f+" -s 5"
+            cmd = "sct_detect_spinalcord -i ../"+data_file_path+'/'+contrast+'/'+f+\
+                  " -o "+contrast+"_center.nii.gz -t "+contrast
             s, output = sct.run(cmd, 0)
             test_all.write_to_log_file(fname_log, output, 'a')
             status += s
