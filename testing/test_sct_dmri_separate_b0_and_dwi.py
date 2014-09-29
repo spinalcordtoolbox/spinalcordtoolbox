@@ -35,7 +35,7 @@ def test(data_file_path):
     # initialize parameters
     status = 0
     param = Param()
-    results_dir = 'results'
+    results_dir = 'results_sct_dmri_separate_b0_and_dwi'
 
     if os.path.isdir(results_dir):
         shutil.rmtree(results_dir)

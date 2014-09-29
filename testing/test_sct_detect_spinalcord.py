@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_convert_binary_to_trilinear script
+# Test function for sct_detect_spinalcord script
 #
 #   replace the shell test script in sct 1.0
 #
@@ -37,7 +37,7 @@ def test(data_file_path):
     # initialize parameters
     status = 0
     param = Param()
-    results_dir = 'results'
+    results_dir = 'results_sct_detect_spinalcord'
 
     if os.path.isdir(results_dir):
         shutil.rmtree(results_dir)
