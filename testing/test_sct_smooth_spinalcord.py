@@ -37,7 +37,7 @@ def test(data_file_path):
     status = 0
     param = Param()
     sigma = param.sigma
-    results_dir = 'results'
+    results_dir = 'results_sct_spinalcord'
 
     if os.path.isdir(results_dir):
         shutil.rmtree(results_dir)
