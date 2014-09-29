@@ -84,8 +84,8 @@ def getPxDimensions(file_name):
     return p1, p2, p3
 
     
-def plot(x_centerline_fit, y_centerline_fit, z_centerline_fit, x, y, z):
-    #fig2=plt.figure()
+def plot(x_centerline_fit, y_centerline_fit, z_centerline_fit, x, y, z, fname, nbptctl):
+    fig=plt.figure()
     plt.subplot(2,2,1)
     plt.plot(x_centerline_fit,y_centerline_fit,'r-')
     plt.plot(x,y,'b:')
@@ -93,18 +93,27 @@ def plot(x_centerline_fit, y_centerline_fit, z_centerline_fit, x, y, z):
     plt.ylabel('y')
 
     plt.subplot(2,2,2)
+    #plt.close()
     plt.plot(x_centerline_fit,z_centerline_fit,'r-')
     plt.plot(x,z,'b:')
+    plt.axis([55.0,57.0,0.0,140.0])
     plt.xlabel('x')
     plt.ylabel('z')
 
     plt.subplot(2,2,3)
     plt.plot(y_centerline_fit,z_centerline_fit,'r-')
     plt.plot(y,z,'b:')
+    plt.axis([221.0,225.5,0.0,140.0])
     plt.xlabel('y')
     plt.ylabel('z')
-    
-    
+
+    #fig.close()
+
+    path, file_name, ext_fname = sct_utils.extract_fname(fname)
+
+    plt.savefig('./curve_'+file_name+'_'+str(nbptctl),dpi=267)
+
+
 def save(file_name, div, size):   
     path, file_name, ext_fname = sct_utils.extract_fname(file_name)
     nbpt = int(size/int(div))
