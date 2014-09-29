@@ -14,9 +14,9 @@ import linear_fitting
 
 
 def main(file_name, smooth = 3):
-    #div = [4]
+    div = [25]
     #div = [13,15,19,23,25]
-    div = [3,5,7,9,11,13,15,19,23,25]
+    #div = [5,7,9,11,13,15,19,23,25]
     #div = int(div)
     path, fname, ext_fname = sct.extract_fname(file_name)
     exit = 0
