@@ -1,0 +1,8 @@
+Missing test files:
+    sct_get_centerline
+        t2_centerline_init.nii.gz
+    sct_process_segmentation
+        t2_segmentation_PropSeg.nii.gz
+    sct_propseg
+        t2_segmentation_PropSeg.nii.gz
+        t2_manual_segmentation.nii.gz
