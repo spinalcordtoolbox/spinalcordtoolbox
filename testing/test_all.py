@@ -145,7 +145,13 @@ def print_fail():
 
 
 def write_to_log_file(fname_log, string, mode = 'w'):
-    f = open(fname_log, mode)
+    status, output = sct.run('echo $SCT_DIR', 0)
+    path_logs_dir = output + '/testing/logs'
+
+    if not os.path.isdir(path_logs_dir):
+        os.makedirs(path_logs_dir)
+
+    f = open(path_logs_dir + fname_log, mode)
     f.write(string+'\n')
     f.close()
 
