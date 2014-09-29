@@ -36,7 +36,7 @@ class bcolors:
 class param:
     def __init__(self):
         self.download = 0
-        self.path_data = 0
+        self.path_data = './sct_testing_data/data'
         self.function_to_test = None
         self.function_to_avoid = None
         self.remove_tmp_file = 0
@@ -62,7 +62,7 @@ def main():
         if opt == '-d':
             param.download = arg
         if opt == '-p':
-            path_data = arg
+            param.path_data = arg
         if opt == '-f':
             function_to_test = arg
         if opt == '-a':
@@ -90,6 +90,9 @@ def main():
 
     elapsed_time = time.time() - start_time
     print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+
+    if param.remove_tmp_file == 1:
+        shutil.rmtree
 
     e = 0
     if sum(status) != 0:
@@ -169,7 +172,7 @@ def test_function(script_name):
             path_data = './sct_testing_data/data'
             param.download = 0
         else:
-            path_data = './sct_testing_data/data'
+            path_data = param.path_data
 
         print_line('Checking '+script_name)
 
@@ -242,9 +245,10 @@ def usage():
         '   sct_straighten_spinalcord\n' \
         '   sct_warp_template\n' \
         'OPTIONAL ARGUMENTS:\n' \
-        '   -h                      help, show this message' \
+        '   -h                      help, show this message\n' \
         '   -f <function>           Only test <function>\n' \
-        '   -a <function>           Avoid the <function> test\n'
+        '   -r {0,1} remove results file, default 0\n' \
+        '   -p <path>               path to data, default: ' + param.path_data
 
 
 if __name__ == "__main__":
