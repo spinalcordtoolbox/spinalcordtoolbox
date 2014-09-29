@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_propseg script
+# Test function for sct_extract_metric script
 #
 #   replace the shell test script in sct 1.0
 #
@@ -28,7 +28,7 @@ class Param:
     def __init__(self):
         self.contrasts = ['mt']
         self.subjects = []
-        self.files = [['t2_segmentation_PropSeg.nii.gz','t2_manual_segmentation.nii.gz', 't2_seg.nii.gz']]
+        self.files = [['mt1.nii.gz', 'segmentation_binary.nii.gz']]
 
 
 def test(data_file_path):
@@ -44,27 +44,26 @@ def test(data_file_path):
     os.chdir(results_dir)
 
     begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
-    fname_log = "sct_propseg.log"
+    fname_log = "sct_register_multimodal.log"
 
     test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
     for contrast in param.contrasts:
         test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
         for f in param.files:
-            cmd1 = 'sct_extract_metric -i ../' + data_file_path + '/' + contrast + '/' + f[0] \
-                + ' -t ' + contrast \
-                + ' -mesh'\
-                + ' -cross'\
-                + ' -centerline-binary'\
-                + ' -verbose'
-            cmd2 = 'sct_dice_coefficient ../' + data_file_path + '/' + contrast + '/' + f[1] \
-                + ' ' + f[2] \
-                + ' -bmax'
-            s, output = sct.run(cmd1, 0)
-            test_all.write_to_log_file(fname_log, output, 'a')
-            status += s
-            s, output = sct.run(cmd2, 0)
-            test_all.write_to_log_file(fname_log, output, 'a')
+            cmd = 'sct_register_multimodal -i ../' + data_file_path + '/' + contrast + '/label/template/MNI-Poly-AMU_T2.nii.gz' \
+                + ' -d ../' + data_file_path + '/' + contrast + '/' + f[0] \
+                + ' -s ../' + data_file_path + '/' + contrast + '/label/template/MNI-Poly-AMU_cord.nii.gz' \
+                + ' -t ../' + data_file_path + '/' + contrast + '/' + f[1] \
+                + ' -q ../' + data_file_path + '/' + contrast + '/label/template/warp_template2anat.nii.gz'\
+                + ' -x 0' \
+                + ' -o template2' + f[0] \
+                + ' -n 10x3' \
+                + ' -r 1' \
+                + ' -v 1'
+
+            s, output = sct.run(cmd, 0)
+            test_all.write_to_log_file(fname_log, cmd + '\n' + output, 'a')
             status += s
 
     os.chdir('..')
