@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from math import sqrt
 import sys
 try:
     import numpy as np
@@ -39,16 +40,40 @@ def polynomial_deriv(x,poly):
     y_fit_deriv = np.polyval(poly_deriv, x)
     
     return y_fit_deriv,poly_deriv
-    
+
+def norm(x, y, z, p1, p2, p3):
+    s = 0
+    for i in xrange (len(x)-1):
+        s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
+    print "centerline size: ", s
+    return s
+
 #=======================================================================================================================
 # Evaluate derivative of data points
 #=======================================================================================================================
 def evaluate_derivative_2D(x,y):
         
     y_deriv = np.array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range (0,len(x)-1)])
-    y_deriv = np.insert(y_deriv,-1,(y[-1] - y[-2])/(x[-1] - x[-2]))
+    y_deriv = np.append(y_deriv,(y[-1] - y[-2])/(x[-1] - x[-2]))
     
-    return y_deriv 
+    return y_deriv
+
+def evaluate_derivative_3D(x, y, z):
+
+    x_deriv = np.array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(x)-1)])
+    y_deriv = np.array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(y)-1)])
+    z_deriv = np.array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(z)-1)])
+
+    np.insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    np.append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+
+    np.insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    np.append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+
+    np.insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    np.append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+
+    return x_deriv, y_deriv, z_deriv
 
 #=======================================================================================================================
 # Non parametric regression
@@ -91,7 +116,7 @@ def non_parametric(x,y,f = 0.25,iter = 3):
         delta = (1 - delta**2)**2
 
     return yest 
-    
+
 #=======================================================================================================================
 # Univariate Spline fitting
 #=======================================================================================================================
