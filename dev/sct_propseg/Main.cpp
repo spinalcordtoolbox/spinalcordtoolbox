@@ -212,7 +212,7 @@ void help()
 	cout << StrPad("  -init-centerline <filename>",30) << StrPad("filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",70,StrPad("",30)) << endl;
     cout << StrPad("  -init <init_position>",30) << StrPad("int, axial slice where the propagation starts, default is middle axial slice",70,StrPad("",30)) << endl;
     cout << StrPad("  -init-mask <filename>",30) << StrPad("string, mask containing three center of the spinal cord, used to initiate the propagation",70,StrPad("",30)) << endl;
-	cout << StrPad("  -detect-radius <radius>",30) << StrPad("double, approximate radius of the spinal cord, default is 4 mm",70,StrPad("",30)) << endl;
+	cout << StrPad("  -radius <radius>",30) << StrPad("double, approximate radius of the spinal cord, default is 4 mm",70,StrPad("",30)) << endl;
 	cout << endl;
 	cout << StrPad("  -detect-n <numberslice>",30) << StrPad("int, number of axial slices computed in the detection process, default is 4",70,StrPad("",30)) << endl;
 	cout << StrPad("  -detect-gap <gap>",30) << StrPad("int, gap in Z direction for the detection process, default is 4",70,StrPad("",30)) << endl;
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
             i++;
             gapInterSlices = atoi(argv[i]);
         }
-		else if (strcmp(argv[i],"-detect-radius")==0) {
+		else if (strcmp(argv[i],"-radius")==0) {
             i++;
             radius = atof(argv[i]);
         }
@@ -675,7 +675,7 @@ int main(int argc, char *argv[])
         while (!isSpinalCordDetected && countFailure<10);
         if (!isSpinalCordDetected)
         {
-            cerr << "Error: Enable to detect the spinal cord. Please provide the initial position and orientation of the spinal cord (-init, -init-mask)" << endl;
+            cerr << "Error: Unable to detect the spinal cord. Please provide the initial position and orientation of the spinal cord (-init, -init-mask)" << endl;
             return EXIT_FAILURE;
         }
     }
