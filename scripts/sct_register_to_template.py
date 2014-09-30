@@ -149,9 +149,9 @@ def main():
 
     # check existence of input files
     print('\nCheck existence of input files...')
-    sct.check_file_exist(fname_data,verbose)
-    sct.check_file_exist(fname_landmarks,verbose)
-    sct.check_file_exist(fname_seg,verbose)
+    sct.check_file_exist(fname_data, verbose)
+    sct.check_file_exist(fname_landmarks, verbose)
+    sct.check_file_exist(fname_seg, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -249,11 +249,11 @@ def main():
 
    # Generate output files
     print('\nGenerate output files...')
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz','','warp_template2anat','.nii.gz')
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz','','warp_anat2template','.nii.gz')
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz')
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz')
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz','','template2anat',ext_data)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz','','anat2template',ext_data)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -266,8 +266,8 @@ def main():
 
     # to view results
     print '\nTo view results, type:'
-    print 'fslview template2anat '+fname_data+' &'
-    print 'fslview anat2template '+fname_template+' &\n'
+    print 'fslview template2anat -b 0,4000 '+fname_data+' &'
+    print 'fslview anat2template '+fname_template+' -b 0,4000 &\n'
 
 
 

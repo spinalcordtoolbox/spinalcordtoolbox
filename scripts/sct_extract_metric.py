@@ -15,7 +15,8 @@
 
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
-# TODO: remove hardcode MNI-Poly-AMU_level.nii.gz add condition in line
+# TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
+# TODO: rename fname_vertebral_labeling
 
 # Import common Python libraries
 import os
@@ -49,7 +50,7 @@ class param:
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
-        self.vertebral_labeling_file = path_sct+'/data/template/MNI-Poly-AMU_level.nii.gz'
+        self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
 
 class color:
     purple = '\033[95m'
@@ -77,23 +78,26 @@ def main():
     vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    fname_vertebral_labeling = param.vertebral_labeling_file
+    fname_vertebral_labeling = param.fname_vertebral_labeling
     fname_normalizing_label = ''  # optional then default is empty
     normalization_method = ''  # optional then default is empty
+    actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
+    warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
+    flag_h = 0
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = path_sct+'/testing/data/errsm_23/mt/label/atlas'
-        method = 'wath'
-        labels_of_interest = '0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/csa_volume.nii.gz'  # path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'  # path_sct+'/testing/data/errsm_23/mt/label/atlas'
+        method = 'wa'
+        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = ''  #'200:210' #'2:4'
-        vertebral_levels = '4:5'
+        vertebral_levels = '2:4'
         average_all_labels = 0
-        fname_output = path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
+        fname_output = ''  # path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
 
@@ -109,7 +113,7 @@ def main():
         elif opt in '-f':
             path_label = os.path.abspath(arg)  # save path of labels folder
         elif opt == '-h':  # help option
-            usage() # display usage
+            flag_h = 1
         elif opt in '-i':
             fname_data = arg
         elif opt in '-l':
@@ -129,16 +133,13 @@ def main():
         elif opt in '-z':  # slices numbers option
             slices_of_interest = arg # save labels numbers
 
-
-    #TODO: check if the case where the input images are not in AIL orientation is taken into account (if not, implement it)
-
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '':
+    if fname_data == '' or path_label == '' or flag_h:
         param.path_label = path_label
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck data file existence...', verbose)
+    sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_data)
     sct.check_file_exist(path_label)
     if fname_normalizing_label:
@@ -146,6 +147,22 @@ def main():
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
+
+    # Find path to the vertebral labeling file if vertebral levels were specified by the user
+    if vertebral_levels:
+        if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
+            print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
+            usage()
+        else:
+            fname_vertebral_labeling_list = sct.find_file_within_folder(fname_vertebral_labeling, path_label + '..')
+            if len(fname_vertebral_labeling_list) > 1:
+                print color.red + 'ERROR: More than one file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
+                sys.exit(2)
+            elif len(fname_vertebral_labeling_list) == 0:
+                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
+                sys.exit(2)
+            else:
+                fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
     # Check input parameters
     check_method(method, fname_normalizing_label, normalization_method)
@@ -160,34 +177,64 @@ def main():
 
     # print parameters
     print '\nChecked parameters:'
-    print '  data ................... '+fname_data
-    print '  folder label ........... '+path_label
-    print '  selected labels ........ '+str(label_id_user)
-    print '  estimation method ...... '+method
-    print '  vertebral levels ....... '+vertebral_levels
-    print '  slices of interest ..... '+slices_of_interest
+    print '  data ...................... '+fname_data
+    print '  folder label .............. '+path_label
+    print '  selected labels ........... '+str(label_id_user)
+    print '  estimation method ......... '+method
+    print '  slices of interest ........ '+slices_of_interest
+    print '  vertebral levels .......... '+vertebral_levels
+    print '  vertebral labeling file.... '+fname_vertebral_labeling
 
-    # Load image
-    sct.printv('\nLoad image...', verbose)
-    data = nib.load(fname_data).get_data()
+    # Check if the orientation of the data is RPI
+    orientation_data = sct.get_orientation(fname_data)
+
+    # If orientation is not RPI, change to RPI
+    if orientation_data != 'RPI':
+        sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
+        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        sct.create_folder(path_tmp)
+        # change orientation and load data
+        sct.printv('\nChange image orientation and load it...', verbose)
+        data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
+        # Do the same for labels
+        sct.printv('\nChange labels orientation and load them...', verbose)
+        labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
+        for i_label in range(0, nb_labels_total):
+            labels[i_label] = nib.load(sct.set_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
+        if fname_normalizing_label:  # if the "normalization" option is wanted,
+            normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
+            # compatibility with the rest of the code (dimensions: (1, x, y, z))
+            normalizing_label[0] = nib.load(sct.set_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
+        if vertebral_levels:  # if vertebral levels were selected,
+            data_vertebral_labeling = nib.load(sct.set_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
+
+        # Remove the temporary folder used to change the NIFTI files orientation into RPI
+        sct.printv('\nRemove the temporary folder...', verbose)
+        status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
+    else:
+        # Load image
+        sct.printv('\nLoad image...', verbose)
+        data = nib.load(fname_data).get_data()
+
+        # Load labels
+        sct.printv('\nLoad labels...', verbose)
+        labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
+        for i_label in range(0, nb_labels_total):
+            labels[i_label] = nib.load(path_label+label_file[i_label]).get_data()
+        if fname_normalizing_label:  # if the "normalization" option is wanted,
+            normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
+            # compatibility with the rest of the code (dimensions: (1, x, y, z))
+            normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
+        if vertebral_levels:  # if vertebral levels were selected,
+            data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
+
+    # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
-    sct.printv('  Done.', verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
     nx, ny, nz = data.shape
-    sct.printv('  '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-
-    # load label
-    sct.printv('\nLoad labels...', verbose)
-    labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
-    for i_label in range(0, nb_labels_total):
-        labels[i_label] = nib.load(path_label+label_file[i_label]).get_data()
-    if fname_normalizing_label:  # if the "normalization" option is wanted,
-        normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
-        # compatibility with the rest of the code (dimensions: (1, x, y, z))
-        normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
-    sct.printv('  Done.', verbose)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
     # Get dimensions of labels
     sct.printv('\nGet dimensions of label...', verbose)
@@ -200,20 +247,12 @@ def main():
         sys.exit(2)
 
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
-    if vertebral_levels != '':
-        if slices_of_interest != '':
-            print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
-            usage()
-        else:
-            if path_label.endswith('template/'):
-                fname_vertebral_labeling = path_label+'MNI-Poly-AMU_level.nii.gz'
-            else:
-                # folder label is atlas or spinal_levels
-                fname_vertebral_labeling = path_label+'../template/MNI-Poly-AMU_level.nii.gz'
-            slices_of_interest, actual_vert_levels, warning_vert_levels = get_slices_matching_with_vertebral_levels(data, vertebral_levels, fname_vertebral_labeling)
+    if vertebral_levels:
+        slices_of_interest, actual_vert_levels, warning_vert_levels = \
+            get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling)
 
     # select slice of interest by cropping data and labels
-    if slices_of_interest != '':
+    if slices_of_interest:
         data = remove_slices(data, slices_of_interest)
         for i_label in range(0, nb_labels_total):
             labels[i_label] = remove_slices(labels[i_label], slices_of_interest)
@@ -272,20 +311,17 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print color.bold + '\nEstimation results:\n'
+    print color.bold + '\nEstimation results:'
     for i in range(0, metric_mean.size):
         print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
-              +' +/- '+str(metric_std[i])+color.bold
+              +' +/- '+str(metric_std[i])+color.end
 
     # save and display metrics
-    save_metrics(label_id_user, label_name, slices_of_interest, actual_vert_levels, warning_vert_levels, metric_mean,
-                 metric_std, fname_output, fname_data, method, fname_normalizing_label)
+    save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
+                 method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
     # Print elapsed time
-    print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
-
-    # end of main.
-    print
+    print '\nElapsed time : ' + str(int(round(time.time() - start_time))) + 's\n'
 
 
 #=======================================================================================================================
@@ -317,8 +353,8 @@ def read_label_file(path_info_label):
         label_id.append(int(line[0]))
         label_name.append(line[1])
         label_file.append(line[2][:-1].strip())
-    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code l
-    # ines enable to avoid this error:
+    # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code
+    # lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
     label_name.append(line[1])
@@ -326,7 +362,7 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
+    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
@@ -345,13 +381,9 @@ def read_label_file(path_info_label):
 #=======================================================================================================================
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fname_vertebral_labeling):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling):
 
     sct.printv('\nFind slices corresponding to vertebral levels...', param.verbose)
-
-    # check existence of a vertebral labeling file
-    sct.printv('Check file existence...', 0)
-    sct.check_file_exist(fname_vertebral_labeling, 0)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -365,13 +397,8 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
         print '\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n'
         sys.exit(2)
 
-    # Read files vertebral_labeling.nii.gz
-    sct.printv('  Load vertebral labeling...', param.verbose)
-
-    # Load the vertebral labeling file and get the data in array format
-    data_vert_labeling = nib.load(fname_vertebral_labeling).get_data()
     # Extract the vertebral levels available in the metric image
-    vertebral_levels_available = np.array(list(set(data_vert_labeling[data_vert_labeling > 0])))
+    vertebral_levels_available = np.array(list(set(data_vertebral_labeling[data_vertebral_labeling > 0])))
 
     # Check if the vertebral levels selected are available
     warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
@@ -423,7 +450,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
     # Extract metric data size X, Y, Z
     [mx, my, mz] = metric_data.shape
     # Extract vertebral labeling data size X, Y, Z
-    [vx, vy, vz] = data_vert_labeling.shape
+    [vx, vy, vz] = data_vertebral_labeling.shape
 
     sct.printv('  Check consistency of data size...', param.verbose)
 
@@ -452,23 +479,25 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, fna
 
     sct.printv('  Find slices corresponding to vertebral levels...', param.verbose)
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
-    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vert_labeling == vert_levels_list[0]).nonzero()
-    # Record the bottom of slice of this level
+    X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vertebral_labeling == vert_levels_list[0]).nonzero()
+    # Record the bottom and top slices of this level
     slice_min_bottom = min(Z_bottom_level)
+    slice_max_bottom = max(Z_bottom_level)
 
     # Extract the X, Y, Z positions of voxels belonging to the last vertebral level
-    X_top_level, Y_top_level, Z_top_level = (data_vert_labeling == vert_levels_list[1]).nonzero()
-    # Record the top slice of this level
+    X_top_level, Y_top_level, Z_top_level = (data_vertebral_labeling == vert_levels_list[1]).nonzero()
+    # Record the bottom and top slices of this level
+    slice_min_top = min(Z_top_level)
     slice_max_top = max(Z_top_level)
 
     # Take into account the case where the ordering of the slice is reversed compared to the ordering of the vertebral
-    # levels
-    if slice_min_bottom > slice_max_top:
-        slice_min = min(Z_top_level)
-        slice_max = max(Z_bottom_level)
+    # levels (usually the case) and if several slices include two different vertebral levels
+    if slice_min_bottom >= slice_min_top or slice_max_bottom >= slice_max_top:
+        slice_min = slice_min_top
+        slice_max = slice_max_bottom
     else:
-        slice_min = min(Z_bottom_level)
-        slice_max = max(Z_top_level)
+        slice_min = slice_min_bottom
+        slice_max = slice_max_top
 
     # display info
     sct.printv('    '+str(slice_min)+':'+str(slice_max), param.verbose)
@@ -495,13 +524,12 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, actual_vert, warning_vert_levels, metric_mean, metric_std,
-                 fname_output, fname_data, method, fname_normalizing_label):
+def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
 
     # CSV format, header lines start with "#"
 
     # Save metric in a .txt file
-    print '\nWrite results in ' + fname_output + ' ...'
+    print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
@@ -617,11 +645,13 @@ def extract_metric_within_tract(data, labels, method, verbose):
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
-    ind_nonzero = labels_sum > ALMOST_ZERO
-    data1d = data[ind_nonzero]
+    ind_positive_labels = labels_sum > ALMOST_ZERO
+    ind_positive_data = data > 0
+    ind_positive = ind_positive_labels & ind_positive_data
+    data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
     for i in range(0, nb_labels):
-        labels2d[i] = labels[i][ind_nonzero]
+        labels2d[i] = labels[i][ind_positive]
 
     # clear memory
     del data, labels
