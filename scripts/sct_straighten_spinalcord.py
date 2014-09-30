@@ -51,6 +51,8 @@ from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
+import matplotlib.pyplot as plt
+
 
 
 # check if dependant software are installed
@@ -126,7 +128,7 @@ def main():
     # Display usage if optional arguments are not correctly provided
     if centerline_fitting == '':
         centerline_fitting = 'splines'
-    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'polynomial':
+    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'polynomial' and not centerline_fitting == 'non_parametrique':
         print '\n \n -f argument is not valid \n \n'
         usage()
     
@@ -247,23 +249,75 @@ def main():
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
         
-        
-    if verbose == 2:
-        # plot centerline
-        #print len(x_centerline_fit),len(y_centerline_fit),len(z_centerline), x_centerline
-        ax = plt.subplot(1,2,1)
-        plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
-        plt.plot(x_centerline_fit, z_centerline_fit, 'r-', label='fit')
-        plt.xlabel('x')
-        plt.ylabel('z')
-        ax = plt.subplot(1,2,2)
-        plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
-        plt.plot(y_centerline_fit, z_centerline_fit, 'r-', label='fit')
-        plt.xlabel('y')
-        plt.ylabel('z')
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels)
+    elif centerline_fitting == 'non_parametrique':
+        #fig1 = plt.figure()
+        #ax = Axes3D(fig1)
+        '''
+        print 'y_centerline = '
+        print y_centerline
+        print 'z_centerline = '
+        print z_centerline
+        plt.plot(y_centerline, z_centerline, 'b:', label='nonparam')
         plt.show()
+        plt.plot(x_centerline, z_centerline, 'b:', label='nonparam')
+        plt.show()
+        '''
+
+        z_centerline.append(z_centerline[-1] + 0.1)
+        x_centerline.append(x_centerline[-1])
+        y_centerline.append(y_centerline[-1])
+        print z_centerline
+        print x_centerline
+        x_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(x_centerline)).tolist()
+        y_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(y_centerline)).tolist()
+
+        x_centerline_fit.pop()
+        y_centerline_fit.pop()
+
+        z_centerline.pop()
+        x_centerline.pop()
+        y_centerline.pop()
+
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline, y_centerline, z_centerline)
+
+        #z_centerline_fit = z_centerline
+        #y_centerline_deriv = msct_smooth.evaluate_derivative_2D(z_centerline, y_centerline)
+        #x_centerline_deriv = msct_smooth.evaluate_derivative_2D(z_centerline, x_centerline)
+        #z_centerline_deriv = msct_smooth.evaluate_derivative_2D(x_centerline, z_centerline)
+
+
+    if verbose == 2:
+        if centerline_fitting == 'splines':
+            # plot centerline
+            #print len(x_centerline_fit),len(y_centerline_fit),len(z_centerline), x_centerline
+            ax = plt.subplot(1,2,1)
+            plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
+            plt.plot(x_centerline_fit, z_centerline_fit, 'r-', label='fit')
+            plt.xlabel('x')
+            plt.ylabel('z')
+            ax = plt.subplot(1,2,2)
+            plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
+            plt.plot(y_centerline_fit, z_centerline_fit, 'r-', label='fit')
+            plt.xlabel('y')
+            plt.ylabel('z')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels)
+            plt.show()
+        else:
+            ax = plt.subplot(1,2,1)
+            plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
+            plt.plot(x_centerline_fit, z_centerline, 'r-', label='fit')
+            plt.xlabel('x')
+            plt.ylabel('z')
+            ax = plt.subplot(1,2,2)
+            plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
+            plt.plot(y_centerline_fit, z_centerline, 'r-', label='fit')
+            plt.xlabel('y')
+            plt.ylabel('z')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels)
+            plt.show()
+
     
     if centerline_fitting == 'splines':
         z_centerline = z_centerline_fit
@@ -308,7 +362,7 @@ def main():
             for i in range(3,5):
                 landmark_curved[index][i][0] = x_centerline_fit[iz_curved[index]]
     
-    elif centerline_fitting=='splines':
+    elif centerline_fitting=='splines' or centerline_fitting == 'non_parametrique':
         for index in range(0, n_iz_curved, 1):
             # calculate d (ax+by+cz+d=0)
             # print iz_curved[index]
