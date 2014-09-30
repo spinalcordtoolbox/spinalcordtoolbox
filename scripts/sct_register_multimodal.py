@@ -412,11 +412,11 @@ def main():
 
     # Generate output files
     print('\nGenerate output files...')
-    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out, file_out, ext_out)
-    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out, 'warp_src2dest', '.nii.gz')
+    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out)
+    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out+'warp_src2dest'+'.nii.gz')
     if compute_dest2src:
-        fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out, file_dest+'_reg', ext_dest)
-        sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out, 'warp_dest2src', '.nii.gz')
+        fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest)
+        sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
     if remove_temp_files == 1:

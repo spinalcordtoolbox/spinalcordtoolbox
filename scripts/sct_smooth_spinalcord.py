@@ -120,7 +120,7 @@ def main():
 
     # Generate output file
     print '\nGenerate output file...'
-    sct.generate_output_file(path_tmp+'/anat_rpi_straight_smooth_curved.nii','',file_anat+'_smooth',ext_anat)
+    sct.generate_output_file(path_tmp+'/anat_rpi_straight_smooth_curved.nii', file_anat+'_smooth'+ext_anat)
 
     # Remove temporary files
     if remove_temp_files == 1:
