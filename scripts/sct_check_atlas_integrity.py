@@ -33,9 +33,12 @@ class param:
         self.verbose = 1
         self.file_info_label = 'info_label.txt'
         self.threshold_atlas = 0.5
+        self.threshold_GM = 0.5
+        self.fname_seg = ''
+        self.fname_GM = ''
 
 # constants
-ALMOST_ZERO = 0.000001
+ALMOST_ZERO = 0.0000001
 
 # main
 #=======================================================================================================================
@@ -43,8 +46,6 @@ def main():
     
     # Initialization
     path_atlas = ''
-    fname_seg = ''
-    verbose = param.verbose
     
     # Parameters for debug mode
     if param.debug:
@@ -52,7 +53,7 @@ def main():
     
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -61,18 +62,32 @@ def main():
         elif opt in ('-i'):
             path_atlas = arg
         elif opt in ('-s'):
-            fname_seg = arg
+            param.fname_seg = arg
+        elif opt in ('-m'):
+            param.fname_GM = arg
+        elif opt in ('-t'):
+            param.threshold_atlas = float(arg)
+        elif opt in ('-g'):
+            param.threshold_GM = float(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
     
     # display usage if a mandatory argument is not provided
-    if path_atlas == '':
-        usage()
+    if path_atlas == '' and not param.debug:
+        # get path of the toolbox
+        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+        path_atlas = path_sct+'/data/atlas/'
+        #fname_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
+        param.fname_seg = '/home/django/benjamindeleener/test/MNI-Poly-AMU_T2_seg.nii.gz'
+        param.fname_GM = path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz'
 
     # print arguments
     if param.verbose:
         print 'Check input parameters...'
-        print '.. Atlas folder path:    '+path_atlas
+        print '.. Atlas folder path:                '+path_atlas
+        print '.. Spinal cord segmentation path:    '+param.fname_seg
+        print '.. Spinal cord gray matter path:     '+param.fname_GM
+        print '.. Atlas threshold=                  '+str(param.threshold_atlas)
 
     # Check for end-caracter of folder path
     if path_atlas[-1] != "/": path_atlas=path_atlas+"/";
@@ -93,7 +108,7 @@ def main():
 
     # Check integrity
     sct.printv('\nCheck atlas integrity...', param.verbose)
-    check_integrity(atlas, atlas_name, fname_seg)
+    check_integrity(atlas, atlas_id, atlas_name)
 
 
 #=======================================================================================================================
@@ -153,9 +168,15 @@ def read_label_file(path_info_label):
 #=======================================================================================================================
 # Check integrity of the atlas
 #=======================================================================================================================
-def check_integrity(atlas, atlas_name, method='wath'):
+def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
 
     nb_tracts = len(atlas) # number of tracts
+
+    # Get dimensions of the atlas
+    sct.printv('\nGet dimensions of atlas...', param.verbose)
+    nx_atlas, ny_atlas, nz_atlas = atlas[0].shape
+    sct.printv('.. '+str(nx_atlas)+' x '+str(ny_atlas)+' x '+str(nz_atlas)+' x '+str(nb_tracts), param.verbose)
+
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
@@ -169,39 +190,96 @@ def check_integrity(atlas, atlas_name, method='wath'):
             atlas[i][atlas[i] < param.threshold_atlas] = 0
 
     # Does all the tracts are present?
+    tracts_are_present = True
+    sct.printv('\nDoes all the tracts are present in the atlas?',param.verbose)
     sum_tract = []
     for i_atlas in range(0, nb_tracts):
         sum_tract.append(np.sum(atlas[i_atlas]))
         if sum_tract[i_atlas] < ALMOST_ZERO:
-            sct.printv('The tract'+atlas_name[i_atlas]+' is non-existent',param.verbose)
+            sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' is non-existent',param.verbose)
+            tracts_are_present = False
+    if tracts_are_present: sct.printv('All the tracts are present.',param.verbose)
+
+
+    # Does any tract gets out the spinal cord?
+    if param.fname_seg != '':
+        # Loading spinal cord segmentation
+        segmentation = nib.load(param.fname_seg).get_data()
+        sct.printv('\nGet dimensions of segmentation image...', param.verbose)
+        nx_seg, ny_seg, nz_seg = segmentation.shape
+        sct.printv('.. ' + str(nx_seg) + ' x ' + str(ny_seg) + ' x ' + str(nz_seg), param.verbose)
+
+        # Check dimensions consistency between atlas and segmentation image
+        if (nx_seg, ny_seg, nz_seg) != (nx_atlas, ny_atlas, nz_atlas):
+            print '\nERROR: Segmentation image and the atlas DO NOT HAVE SAME DIMENSIONS.'
+            sys.exit(2)
+
+        tracts_are_inside_SC = True
+        sct.printv('\nDoes any tract gets out the spinal cord?',param.verbose)
+        ind_seg_outside_cord = segmentation<=ALMOST_ZERO
+        for i_atlas in range(0, nb_tracts):
+            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            sum_tract_outside_SC = np.sum(atlas[i_atlas][ind_atlas_positive & ind_seg_outside_cord])
+            if sum_tract_outside_SC > ALMOST_ZERO:
+                sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
+                percentage_out = float(sum_tract_outside_SC/sum_tract)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' gets out the spinal cord of '+str(round(percentage_out*100,2))+'%',param.verbose)
+                tracts_are_inside_SC = False
+        if tracts_are_inside_SC: sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+
+
+    # Does any tract overlaps the spinal cord gray matter?
+    if param.fname_GM != '':
+        # Loading spinal cord gray matter
+        graymatter = nib.load(param.fname_GM).get_data()
+        sct.printv('\nGet dimensions of gray matter image...', param.verbose)
+        nx_gm, ny_gm, nz_gm = graymatter.shape
+        sct.printv('.. ' + str(nx_gm) + ' x ' + str(ny_gm) + ' x ' + str(nz_gm), param.verbose)
+
+        # Check dimensions consistency between atlas and spinal cord gray matter image
+        if (nx_gm, ny_gm, nz_gm) != (nx_atlas, ny_atlas, nz_atlas):
+            print '\nERROR: Gray matter image and the atlas DO NOT HAVE SAME DIMENSIONS.'
+            sys.exit(2)
     
-    # Does the tracts get out the spinal cord?
-    # Loading segmentation
-    
+        tracts_overlap_GM = False
+        sct.printv('\nDoes any tract overlaps the spinal cord gray matter?',param.verbose)
+        ind_GM = graymatter>=param.threshold_GM
+        for i_atlas in range(0, nb_tracts):
+            ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
+            sum_tract_overlap_GM = np.sum(atlas[i_atlas][ind_atlas_positive & ind_GM])
+            if sum_tract_overlap_GM > ALMOST_ZERO:
+                sum_tract = np.sum(atlas[i_atlas])
+                percentage_overlap = float(sum_tract_overlap_GM/sum_tract)
+                sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' overlaps the spinal cord gray matter of '+str(round(percentage_overlap*100,2))+'%',param.verbose)
+                tracts_overlap_GM = True
+        if not tracts_overlap_GM: sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
 
 
 # Print usage
 # ==========================================================================================
 def usage():
     print """
-        """+os.path.basename(__file__)+"""
-            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-            
-            DESCRIPTION
-            Check the integrity of the spinal cord internal structure (tracts) atlas.
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+        
+DESCRIPTION
+Check the integrity of the spinal cord internal structure (tracts) atlas.
 
-            USAGE
-            """+os.path.basename(__file__)+""" -i <data>
-                
-                MANDATORY ARGUMENTS
-                -i <folder>           atlas folder path
-                
-                OPTIONAL ARGUMENTS
-                -s <segmentation>     segmentation image. If not provided, do not check ...
-                -v {0,1}              verbose. Default="""+str(param.verbose)+"""
-                -h                    help. Show this message
-                """
+USAGE
+"""+os.path.basename(__file__)+""" -i <atlas>
+            
+    MANDATORY ARGUMENTS
+    -i <folder>           atlas folder path.
+            
+    OPTIONAL ARGUMENTS
+    -s <segmentation>     segmentation image path.
+    -m <graymatter>       gray matter image path.
+    -t [0,1]              float, atlas threshold. Default="""+str(param.threshold_atlas)+"""
+    -g [0,1]              float, gray matter image threshold. Default="""+str(param.threshold_GM)+"""
+    -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+    -h                    help. Show this message.
+    """
     # exit program
     sys.exit(2)
 
