@@ -29,9 +29,7 @@ class param:
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
         self.verbose = 1  # verbose
-        self.test = 0
         self.folder_template = '/data/template'
-        self.folder_template_DS = '/testing/data'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
@@ -59,7 +57,6 @@ def main():
     file_template_seg = param.file_template_seg
     output_type = param.output_type
     speed = param.speed
-    test = param.test
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     smoothing_sigma = param.smoothing_sigma
@@ -69,10 +66,8 @@ def main():
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # # get path of the template
-    # path_template = path_sct+folder_template
-
-
+    # get path of the template
+    path_template = path_sct+folder_template
 
     # Parameters for debug mode
     if param.debug:
@@ -84,7 +79,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:l:m:o:r:s:t:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -98,31 +93,37 @@ def main():
             fname_seg = arg
         elif opt in ("-o"):
             output_type = int(arg)
+        elif opt in ("-p"):
+            path_template = arg
         elif opt in ("-r"):
             remove_temp_files = int(arg)
         elif opt in ("-s"):
             speed = arg
-        elif opt in ("-t"):
-            test = arg
-
-    if test:
-        folder_template = param.folder_template_DS
-
-    # get fname of the template + template objects
-    fname_template = path_sct+folder_template+'/'+file_template
-    fname_template_label = path_sct+folder_template+'/'+file_template_label
-    fname_template_seg = path_sct+folder_template+'/'+file_template_seg
-
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':
         usage()
+
+    # get fname of the template + template objects
+    fname_template = sct.slash_at_the_end(path_template, 1)+file_template
+    fname_template_label = sct.slash_at_the_end(path_template, 1)+file_template_label
+    fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
+
+    # check file existence
+    sct.printv('\nCheck file existence...', verbose)
+    sct.check_file_exist(fname_data, verbose)
+    sct.check_file_exist(fname_landmarks, verbose)
+    sct.check_file_exist(fname_seg, verbose)
+    sct.check_file_exist(fname_template, verbose)
+    sct.check_file_exist(fname_template_label, verbose)
+    sct.check_file_exist(fname_template_seg, verbose)
 
     # print arguments
     print '\nCheck parameters:'
     print '.. Data:                 '+fname_data
     print '.. Landmarks:            '+fname_landmarks
     print '.. Segmentation:         '+fname_seg
+    print '.. Path template:        '+path_template
     print '.. Output type:          '+str(output_type)
     print '.. Speed:                '+speed
     print '.. Remove temp files:    '+str(remove_temp_files)
@@ -136,22 +137,11 @@ def main():
     elif speed == "fast":
         nb_iterations = "10x3"
     elif speed == "superfast":
-        nb_iterations = "3x1" # only for debugging purpose-- do not inform the user about this option
+        nb_iterations = "1x0"  # only for debugging purpose-- do not inform the user about this option
     else:
         print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
         sys.exit(2)
     print '.. '+nb_iterations
-
-    # Get full path
-    # fname_data = os.path.abspath(fname_data)
-    # fname_landmarks = os.path.abspath(fname_landmarks)
-    # fname_seg = os.path.abspath(fname_seg)
-
-    # check existence of input files
-    print('\nCheck existence of input files...')
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_landmarks, verbose)
-    sct.check_file_exist(fname_seg, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -274,28 +264,32 @@ def main():
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Register anatomical image to the template.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <anat> -l <landmarks> -m <segmentation>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <anat>                    anatomical image\n' \
-        '  -l <landmarks>               landmarks at spinal cord center. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/\n' \
-        '  -m <segmentation>            spinal cord segmentation. \n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default='+str(param.output_type)+'\n' \
-        '  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default='+param.speed+'\n' \
-        '  -r {0, 1}                    remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
-        '  -t {0, 1}                    use down sampled template files (for testing)'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
+DESCRIPTION
+  Register anatomical image to the template.
+
+USAGE
+  """+os.path.basename(__file__)+""" -i <anat> -m <segmentation> -l <landmarks>
+
+MANDATORY ARGUMENTS
+  -i <anat>                    anatomical image
+  -m <segmentation>            spinal cord segmentation.
+  -l <landmarks>               landmarks at spinal cord center.
+                               See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/
+
+OPTIONAL ARGUMENTS
+  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param.output_type)+"""
+  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param.folder_template)+"""
+  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param.speed)+"""
+  -r {0, 1}                    remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -h                           help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -s normal\n"""
 
     # exit program
     sys.exit(2)
