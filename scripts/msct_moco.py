@@ -285,8 +285,8 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --dimensionality '+str(dim)+' ' \
                   ' --transform Translation[0.5]' \
                   ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 4]' \
-                  ' --convergence 10x5' \
-                  ' --shrink-factors 8x4' \
+                  ' --convergence 5x3' \
+                  ' --shrink-factors 2x1' \
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
