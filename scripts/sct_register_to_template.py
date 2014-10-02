@@ -104,6 +104,9 @@ def main():
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':
         usage()
 
+    # get absolute path
+    path_template = os.path.abspath(path_template)
+
     # get fname of the template + template objects
     fname_template = sct.slash_at_the_end(path_template, 1)+file_template
     fname_template_label = sct.slash_at_the_end(path_template, 1)+file_template_label
@@ -183,6 +186,10 @@ def main():
     # Remove unused label on template. Keep only label present in the input label image
     print('\nRemove unused label on template. Keep only label present in the input label image...')
     status, output = sct.run('sct_label_utils -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
+
+    # Make sure landmarks are INT
+    print '\nConvert landmarks to INT...'
+    sct.run('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz')
 
     # Create a cross for the template labels - 5 mm
     print('\nCreate a 5 mm cross for the template labels...')
