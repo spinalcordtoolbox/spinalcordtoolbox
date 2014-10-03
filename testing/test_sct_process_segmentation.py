@@ -44,14 +44,14 @@ def test(data_file_path):
     os.chdir(results_dir)
 
     begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
-    fname_log = "sct_convert_binary_to_trilinear.log"
+    fname_log = "sct_process_segmentation.log"
 
     test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
     for contrast in param.contrasts:
         test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
         for f in param.files:
-            cmd = 'sct_extract_metric -i ../' + data_file_path + '/' + contrast + '/' + f \
+            cmd = 'sct_process_segmentation -i ../' + data_file_path + '/' + contrast + '/' + f \
                 + ' -p compute_csa' \
                 + ' -s 1'\
                 + ' -b 1'\
