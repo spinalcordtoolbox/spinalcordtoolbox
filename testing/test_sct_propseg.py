@@ -26,7 +26,7 @@ class bcolors:
 
 class Param:
     def __init__(self):
-        self.contrasts = ['mt']
+        self.contrasts = ['t2']
         self.subjects = []
         self.files = [['t2_segmentation_PropSeg.nii.gz','t2_manual_segmentation.nii.gz', 't2_seg.nii.gz']]
 
@@ -51,7 +51,7 @@ def test(data_file_path):
     for contrast in param.contrasts:
         test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
         for f in param.files:
-            cmd1 = 'sct_extract_metric -i ../' + data_file_path + '/' + contrast + '/' + f[0] \
+            cmd1 = 'sct_propseg -i ../' + data_file_path + '/' + contrast + '/' + f[0] \
                 + ' -t ' + contrast \
                 + ' -mesh'\
                 + ' -cross'\
