@@ -296,7 +296,7 @@ def get_interpolation(program, interp):
     if program == 'flirt':
         if interp == 'nn':
             interp_program = ' -interp nearestneighbour'
-        elif interp == 'trilinear':
+        elif interp == 'linear':
             interp_program = ' -interp trilinear'
         elif interp == 'spline':
             interp_program = ' -interp spline'
@@ -304,7 +304,7 @@ def get_interpolation(program, interp):
     elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
-        elif interp == 'trilinear':
+        elif interp == 'linear':
             interp_program = ' -n Linear'
         elif interp == 'spline':
             interp_program = ' -n BSpline[3]'
@@ -312,13 +312,13 @@ def get_interpolation(program, interp):
     elif program == 'WarpImageMultiTransform':
         if interp == 'nn':
             interp_program = ' --use-NN'
-        elif interp == 'trilinear':
+        elif interp == 'linear':
             interp_program = ' '
         elif interp == 'spline':
             interp_program = ' --use-BSpline'
     # check if not assigned
     if interp_program == '':
-        printv('WARNING ('+os.path.basename(__file__)+'): interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
+        printv('WARNING ('+os.path.basename(__file__)+'): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
         interp_program = ' -n Linear'
     # return
     return interp_program
