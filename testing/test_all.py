@@ -37,9 +37,9 @@ status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR'
 class param:
     def __init__(self):
         self.download = 0
-        self.path_data = sct.slash_at_the_end(path_sct_testing, 1)+'sct_testing_data/data'
+        self.path_data = sct.slash_at_the_end(path_sct_testing, 1)
         self.function_to_test = None
-        self.function_to_avoid = None
+        # self.function_to_avoid = None
         self.remove_tmp_file = 0
         self.verbose = 1
         self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
@@ -50,7 +50,7 @@ class param:
 def main():
     path_data = param.path_data
     function_to_test = param.function_to_test
-    function_to_avoid = param.function_to_avoid
+    # function_to_avoid = param.function_to_avoid
     remove_tmp_file = param.remove_tmp_file
 
     # Check input parameters
@@ -63,27 +63,23 @@ def main():
             usage()
             sys.exit(0)
         if opt == '-d':
-            param.download = arg
+            param.download = int(arg)
         if opt == '-p':
             param.path_data = arg
         if opt == '-f':
             function_to_test = arg
-        if opt == '-a':
-            function_to_avoid = arg
+        # if opt == '-a':
+        #     function_to_avoid = arg
         if opt == '-r':
-            remove_tmp_file = arg
+            remove_tmp_file = int(arg)
 
-    functions = fill_functions()
     start_time = time.time()
 
-    if function_to_avoid:
-        try:
-            functions.remove(function_to_avoid)
-        except ValueError:
-            print 'The function you want to avoid does not figure in the functions to test list'
-
-    # get current path
-    path_current = sct.slash_at_the_end(os.getcwd(), 1)
+    # if function_to_avoid:
+    #     try:
+    #         functions.remove(function_to_avoid)
+    #     except ValueError:
+    #         print 'The function you want to avoid does not figure in the functions to test list'
 
     # download data
     if param.download:
@@ -95,12 +91,21 @@ def main():
         # clone git repos
         sct.run('git clone '+param.url_git)
         # update path_data field 
-        param.path_data = path_current+'sct_testing_data/data'
+        param.path_data = 'sct_testing_data/data'
 
-    # add slash at the end
-    param.path_data = sct.slash_at_the_end(param.path_data, 1)
+    # get absolute path and add slash at the end
+    param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
+
     # display path to data
     sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
+
+    # create temp folder that will have all results and go in it
+    param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.create_folder(param.path_tmp)
+    os.chdir(param.path_tmp)
+
+    # get list of all scripts to test
+    functions = fill_functions()
 
     # loop across all functions and test them
     status = []
@@ -115,8 +120,9 @@ def main():
     print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
     # remove temp files
-    if param.remove_tmp_file == 1:
-        shutil.rmtree
+    if param.remove_tmp_file:
+        sct.printv('\nRemove temporary files...', param.verbose)
+        sct.run('rm -rf '+param.path_tmp, param.verbose)
 
     e = 0
     if sum(status) != 0:
@@ -125,7 +131,7 @@ def main():
     sys.exit(e)
 
 
-# Print without new carriage return
+# list of all functions to test
 # ==========================================================================================
 def fill_functions():
     functions = []
@@ -146,12 +152,16 @@ def fill_functions():
     return functions
 
 
+# print without carriage return
+# ==========================================================================================
 def print_line(string):
     import sys
     sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
 
 
+# fill line with dots
+# ==========================================================================================
 def make_dot_lines(string):
     if len(string) < 52:
         dot_lines = '.'*(52 - len(string))
@@ -159,18 +169,20 @@ def make_dot_lines(string):
     else: return ''
 
 
+# print in color
+# ==========================================================================================
 def print_ok():
     print "[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]"
 
-
 def print_warning():
     print "[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]"
-
 
 def print_fail():
     print "[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]"
 
 
+# write to log file
+# ==========================================================================================
 def write_to_log_file(fname_log, string, mode = 'w'):
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = output + '/testing/logs'
@@ -183,23 +195,38 @@ def write_to_log_file(fname_log, string, mode = 'w'):
     f.close()
 
 
+# test function
+# ==========================================================================================
 def test_function(script_name):
     if script_name == 'test_debug':
         test_debug()
     else:
+        # build script name
         script_name = "test_"+script_name
-
+        # create folder and go in it
+        sct.create_folder(script_name)
+        os.chdir(script_name)
+    # begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
+    # fname_log = "sct_convert_binary_to_trilinear.log"
+    # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
+        # display script name
         print_line('Checking '+script_name)
-
+        # import function as a module        
         script_tested = importlib.import_module(script_name)
-
-        status = script_tested.test(param.path_data)
+        # test function
+        status, output = script_tested.test(param.path_data)
+        # manage status
         if status == 0:
             print_ok()
         else:
             print_fail()
+        # log file
+        # write_to_log_file(fname_log, output, 'a')
 
+        # return
         return status
+        # go back to parent folder
+        os.chdir('..')
 
 
 # def old_test_function(folder_test):
