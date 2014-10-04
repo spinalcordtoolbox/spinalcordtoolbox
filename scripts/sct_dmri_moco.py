@@ -97,7 +97,7 @@ def main():
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
         param.fname_bvals = ''  # path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
         param.verbose = 1
-        param.slicewise = 1
+        param.slicewise = 0
         param.run_eddy = 0
         param.program = 'slicereg'  # ants_affine, flirt
 
@@ -356,7 +356,6 @@ def dmri_moco(param):
     param_moco.todo = 'estimate'
     param_moco.mat_moco = 'mat_b0groups'
     moco.moco(param_moco)
-
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
