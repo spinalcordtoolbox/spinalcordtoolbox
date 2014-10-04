@@ -80,6 +80,7 @@ def main():
             print 'The function you want to avoid does not figure in the functions to test list'
 
     status = []
+    # loop across all functions and test them
     [status.append(test_function(f)) for f in functions if function_to_test == f]
 
     if not status:
@@ -223,32 +224,28 @@ def test_debug():
 # Print usage
 # ==========================================================================================
 def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n\n' \
-        'Test following majors scripts of the Toolbox:\n\n' \
-        '   test_debug\n' \
-        '   sct_convert_binary_to_trilinear\n' \
-        '   sct_detect_spinalcord\n' \
-        '   sct_dmri_moco\n' \
-        '   sct_dmri_separate_b0_and_dwi\n' \
-        '   sct_extract_metric\n' \
-        '   sct_get_centerline\n' \
-        '   sct_process_segmentation\n' \
-        '   sct_propseg\n' \
-        '   sct_register_multimodal\n' \
-        '   sct_register_to_template\n' \
-        '   sct_smooth_spinalcord\n' \
-        '   sct_straighten_spinalcord\n' \
-        '   sct_warp_template\n' \
-        'OPTIONAL ARGUMENTS:\n' \
-        '   -h                      help, show this message\n' \
-        '   -f <function>           Only test <function>\n' \
-        '   -r {0,1} remove results file, default 0\n' \
-        '   -p <path>               path to data, default: ' + param.path_data
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  Crash test for functions of the Spinal Cord Toolbox.
+
+USAGE
+  python """+os.path.basename(__file__)+"""
+
+OPTIONAL ARGUMENTS
+  -f <script_name>      test this specific script
+  -p <path_data>        path to testing data. Default="""+str(param.path_data)+"""
+  -r {0,1}              remove temp files. Default="""+str(param.remove_tmp_file)+"""
+  -h                    help. Show this message
+
+EXAMPLE
+  python """+os.path.basename(__file__)+""" \n"""
+
+    # exit program
+    sys.exit(2)
 
 
 if __name__ == "__main__":
