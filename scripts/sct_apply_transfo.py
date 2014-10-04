@@ -24,7 +24,7 @@ import sct_utils as sct
 # DEFAULT PARAMETERS
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.verbose = 0  # verbose
         self.dim = 3
         self.interp = 'spline'  # nn, trilinear, spline
@@ -46,12 +46,10 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_DATA_DIR')
-        # parameters
-        fname_src = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
-        fname_warp_list = path_sct_data+'/errsm_30/t1/warp_template2t1.nii.gz'
-        fname_dest = path_sct_data+'/errsm_30/t1/t1_crop.nii.gz'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_src = path_sct_data+'/template/MNI-Poly-AMU_T2.nii.gz'
+        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz'
+        fname_dest = path_sct_data+'/t2/t2.nii.gz'
         verbose = 1
 
     # Check input parameters
@@ -82,7 +80,7 @@ def main():
         usage()
 
     # get the right interpolation field depending on method
-    interp = sct.get_interpolation('WarpImageMultiTransform', param.interp)
+    interp = sct.get_interpolation('sct_antsApplyTransforms', param.interp)
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
@@ -113,7 +111,7 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('sct_WarpImageMultiTransform ' + dim + ' '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
+    sct.run('sct_antsApplyTransforms -d ' + str(dim) + ' -i '+fname_src+' -o '+fname_src_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)

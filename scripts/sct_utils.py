@@ -301,13 +301,13 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = 'spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine':
+    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms':
         if interp == 'nn':
-            interp_program = 'NearestNeighbor'
+            interp_program = ' -n NearestNeighbor'
         elif interp == 'trilinear':
-            interp_program = 'Linear'
+            interp_program = ' -n Linear'
         elif interp == 'spline':
-            interp_program = 'BSpline[3]'
+            interp_program = ' -n BSpline[3]'
     # WarpImageMultiTransform
     elif program == 'WarpImageMultiTransform':
         if interp == 'nn':
