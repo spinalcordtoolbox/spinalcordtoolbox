@@ -22,7 +22,6 @@ from os import listdir
 from os.path import isfile, join
 import importlib
 
-
 # define nice colors
 class bcolors:
     HEADER = '\033[95m'
@@ -32,11 +31,13 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+# get path of testing data
+status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 class param:
     def __init__(self):
         self.download = 0
-        self.path_data = './sct_testing_data/data'
+        self.path_data = sct.slash_at_the_end(path_sct_testing, 1)+'sct_testing_data/data'
         self.function_to_test = None
         self.function_to_avoid = None
         self.remove_tmp_file = 0
