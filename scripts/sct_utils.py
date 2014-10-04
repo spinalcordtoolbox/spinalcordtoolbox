@@ -295,11 +295,11 @@ def get_interpolation(program, interp):
     # FLIRT
     if program == 'flirt':
         if interp == 'nn':
-            interp_program = 'nearestneighbour'
+            interp_program = ' -interp nearestneighbour'
         elif interp == 'trilinear':
-            interp_program = 'trilinear'
+            interp_program = ' -interp trilinear'
         elif interp == 'spline':
-            interp_program = 'spline'
+            interp_program = ' -interp spline'
     # ANTs
     elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms':
         if interp == 'nn':
@@ -318,7 +318,7 @@ def get_interpolation(program, interp):
             interp_program = ' --use-BSpline'
     # check if not assigned
     if interp_program == '':
-        printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
-        interp_program = ' Linear'
+        printv('WARNING ('+os.path.basename(__file__)+'): interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
+        interp_program = ' -n Linear'
     # return
     return interp_program
