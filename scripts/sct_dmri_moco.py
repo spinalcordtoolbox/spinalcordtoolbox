@@ -61,7 +61,7 @@ class param:
         self.slicewise = 0
         self.suffix = '_moco'
         self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'ants_rigid'  # flirt, ants, ants_affine
+        self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'spline'  # nn, trilinear, spline
@@ -99,7 +99,7 @@ def main():
         param.verbose = 1
         param.slicewise = 1
         param.run_eddy = 0
-        param.program = 'ants_affine'  # ants_affine, flirt
+        param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
     try:
@@ -381,6 +381,8 @@ def dmri_moco(param):
         ext_mat = '.txt'  # affine matrix
     elif param.program == 'ants':
         ext_mat = '0Warp.nii.gz'  # warping field
+    elif param.program == 'slicereg':
+        ext_mat = 'Warp.nii.gz'  # warping field
     elif param.program == 'ants_affine' or param.program == 'ants_rigid':
         ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
@@ -469,10 +471,11 @@ OPTIONAL ARGUMENTS
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
   -m {method}      Method for registration:
-                     flirt: FSL flirt with Tx and Ty transformations.
+                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs).
                      ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
                      ants_affine: affine transformation constrained in axial plane.
                      ants_rigid: rigid transformation constrained in axial plane.
+                     flirt: FSL flirt with Tx and Ty transformations.
                      Default="""+str(param.program)+"""
   -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <path_out>    Output path.

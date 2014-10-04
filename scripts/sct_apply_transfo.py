@@ -24,8 +24,8 @@ import sct_utils as sct
 # DEFAULT PARAMETERS
 class param:
     def __init__(self):
-        self.debug = 0
-        self.verbose = 0  # verbose
+        self.debug = 1
+        self.verbose = 1  # verbose
         self.dim = 3
         self.interp = 'spline'  # nn, trilinear, spline
 
