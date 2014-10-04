@@ -64,7 +64,7 @@ class param:
         self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
-        self.interp = 'spline'  # nn, trilinear, spline
+        self.interp = 'spline'  # nn, linear, spline
         #Eddy Current Distortion Parameters:
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -478,7 +478,7 @@ OPTIONAL ARGUMENTS
                      Default="""+str(param.program)+"""
   -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <path_out>    Output path.
-  -p {nn,trilinear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
+  -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
