@@ -301,7 +301,7 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms':
+    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
         elif interp == 'trilinear':

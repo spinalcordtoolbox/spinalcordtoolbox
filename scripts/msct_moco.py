@@ -272,7 +272,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --shrinkFactors 1' \
                   ' --smoothingSigmas 1' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
+                  +sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
@@ -289,7 +289,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
@@ -306,7 +306,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
@@ -323,7 +323,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 2x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
