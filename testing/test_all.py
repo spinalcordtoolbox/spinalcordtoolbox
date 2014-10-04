@@ -41,6 +41,8 @@ class param:
         self.function_to_test = None
         self.function_to_avoid = None
         self.remove_tmp_file = 0
+        self.verbose = 1
+        self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
 
 
 # START MAIN
@@ -80,19 +82,39 @@ def main():
         except ValueError:
             print 'The function you want to avoid does not figure in the functions to test list'
 
-    status = []
-    # loop across all functions and test them
-    [status.append(test_function(f)) for f in functions if function_to_test == f]
+    # get current path
+    path_current = sct.slash_at_the_end(os.getcwd(), 1)
 
+    # download data
+    if param.download:
+        sct.printv('\nDownloading testing data...', param.verbose)
+        # remove data folder if exist
+        if os.path.exists('sct_testing_data'):
+            sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
+            sct.run('rm -rf sct_testing_data')
+        # clone git repos
+        sct.run('git clone '+param.url_git)
+        # update path_data field 
+        param.path_data = path_current+'sct_testing_data/data'
+
+    # add slash at the end
+    param.path_data = sct.slash_at_the_end(param.path_data, 1)
+    # display path to data
+    sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
+
+    # loop across all functions and test them
+    status = []
+    [status.append(test_function(f)) for f in functions if function_to_test == f]
     if not status:
         for f in functions:
             status.append(test_function(f))
-
     print 'status: '+str(status)
 
+    # display elapsed time
     elapsed_time = time.time() - start_time
     print 'Finished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
+    # remove temp files
     if param.remove_tmp_file == 1:
         shutil.rmtree
 
@@ -167,20 +189,11 @@ def test_function(script_name):
     else:
         script_name = "test_"+script_name
 
-        if param.download:
-            print 'Downloading testing data...'
-            sct.run('git clone https://github.com/neuropoly/sct_testing_data.git')
-            #os.chdir('sct_testing_data')
-            path_data = './sct_testing_data/data'
-            param.download = 0
-        else:
-            path_data = param.path_data
-
         print_line('Checking '+script_name)
 
         script_tested = importlib.import_module(script_name)
 
-        status = script_tested.test(path_data)
+        status = script_tested.test(param.path_data)
         if status == 0:
             print_ok()
         else:
@@ -189,19 +202,19 @@ def test_function(script_name):
         return status
 
 
-def old_test_function(folder_test):
-    fname_log = folder_test + ".log"
-    print_line('Checking '+folder_test)
-    os.chdir(folder_test)
-    status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
-    if status == 0:
-        print_ok()
-    else:
-        print_fail()
-    shutil.rmtree('./results')
-    os.chdir('../')
-    write_to_log_file(fname_log,output)
-    return status
+# def old_test_function(folder_test):
+#     fname_log = folder_test + ".log"
+#     print_line('Checking '+folder_test)
+#     os.chdir(folder_test)
+#     status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
+#     if status == 0:
+#         print_ok()
+#     else:
+#         print_fail()
+#     shutil.rmtree('./results')
+#     os.chdir('../')
+#     write_to_log_file(fname_log,output)
+#     return status
 
 
 def test_debug():
@@ -238,7 +251,9 @@ USAGE
 
 OPTIONAL ARGUMENTS
   -f <script_name>      test this specific script
+  -d {0,1}              download testing data. Default="""+str(param.download)+"""
   -p <path_data>        path to testing data. Default="""+str(param.path_data)+"""
+                        NB: no need to set if using "-d 1"
   -r {0,1}              remove temp files. Default="""+str(param.remove_tmp_file)+"""
   -h                    help. Show this message
 
