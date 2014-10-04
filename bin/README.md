@@ -2,7 +2,7 @@ This folder contains only compiled binaries.
 
 ANTs
 ====
-# 2014-10-04
+### 2014-10-04
 
 updated:
 - sct_antsRegistration
