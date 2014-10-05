@@ -14,12 +14,12 @@ from sklearn.metrics import mean_squared_error
 def returnSquaredErrors(fname=None, div=None, size=None):
     if fname == None:
         #fname = 'centerlines/t250_half_sup_straight_seg_centerline.nii.gz'
-        fname = 't2_crop_straightttt_seg.nii.gz'
+        fname = 't234_crop_200_500_straight_centerline.nii.gz'
     file = nibabel.load(fname)
     data = file.get_data()
     p1, p2, p3 = splinap.getPxDimensions(fname)
     nx, ny, nz = splinap.getDim(fname)
-    os.remove(fname)
+    #os.remove(fname)
 
 
 
@@ -63,24 +63,30 @@ def returnSquaredErrors(fname=None, div=None, size=None):
     #print x, x_fit
     #print y, y_fit
 
-    print msx, msy, mean_ms
-    size_crop = splinap.getSize(x, y, z, p1, p2, p3)
-
-
-    txt = open('results.txt','a')
-    txt.write(str(div)+' '+str(int(round(size))/div)+' '+str(size_crop)+' '+str(size)+' '+str(msx)+' '+str(msy)+' '+' '+str(mean_ms)+' '+fname+'\n')
-    txt.close()
-
-    #splinap.plot(x_fit,y_fit, z, x, y, z, fname, int(round(size))/div)
-
-
-    '''
     fig1 = plt.figure()
     ax = Axes3D(fig1)
     ax.plot(x,y,z,zdir='z')
     ax.plot(x_fit,y_fit,z,zdir='z')
     plt.show()
-    '''
+
+
+    print msx, msy, mean_ms
+    size_crop = splinap.getSize(x, y, z, p1, p2, p3)
+
+
+    txt = open('results.txt', 'a')
+    txt.write(str(div)+' '+str(int(round(size))/div)+' '+str(size_crop)+' '+str(size)+' '+str(msx)+' '+str(msy)+' '+' '+str(mean_ms)+' '+fname+'\n')
+    #txt.write(' plynomial_fitting '+str(size_crop)+' '+str(size)+' '+str(msx)+' '+str(msy)+' '+' '+str(mean_ms)+' '+fname+'\n')
+
+
+    txt.close()
+
+    #splinap.plot(x_fit,y_fit, z, x, y, z, fname, int(round(size))/div)
+
+
+
+
+
 
 
 def get_good_centerline (nx, ny,nz):
