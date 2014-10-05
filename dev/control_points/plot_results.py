@@ -4,6 +4,7 @@ import numpy
 import matplotlib.pyplot as plt
 import sys
 from scipy.stats.stats import *
+import math
 
 
 def main(file_name):
@@ -15,13 +16,45 @@ def main(file_name):
     #z=numpy.array([int(n[1]) for n in [line.strip().split() for line in r]])
     fo.close()
 
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+
+
+    # Tendance
+    x_fit = []
+    y_fit = []
+    for i in range(20,400):
+        x_fit.append(i)
+
+    for i in x_fit:
+        #y_fit.append(math.log(i*i/2+i*i*i))
+        y_fit.append(30*(math.log(i-15, 13)) - 25)
+
+    ax1.plot(x_fit, y_fit, color='yellow', label='30*log(x-15,13)-25')
+
+    y_fit = []
+
+    for i in x_fit:
+        #y_fit.append(math.log(i*i/2+i*i*i))
+        y_fit.append(30*(math.log(i, 10)) - 42)
+
+    ax1.plot(x_fit, y_fit, color='red', label='30*log(x,10)-42')
+
+    y_fit = []
+
+    for i in x_fit:
+        #y_fit.append(math.log(i*i/2+i*i*i))
+        y_fit.append(30*(math.log(i, 11)) - 55)
+
+    ax1.plot(x_fit, y_fit, color='blue', label='30*log(x,11)-55')
+
     print spearmanr(x, y)
     print pearsonr(x,y)
 
     print y
-    fig = plt.figure()
 
-    ax1 = fig.add_subplot(111)
+
+
 
     #ax1.set_title("Plot title...")
     ax1.set_xlabel('length (mm)')
@@ -60,5 +93,5 @@ def mainBis(file_name):
 if __name__ == "__main__":
     file_name = sys.argv[1]
     print file_name
-    #main(file_name)
-    mainBis(file_name)
+    main(file_name)
+    #mainBis(file_name)
