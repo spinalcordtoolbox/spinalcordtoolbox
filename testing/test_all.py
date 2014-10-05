@@ -246,13 +246,14 @@ def test_function(script_name):
 
 def test_debug():
     print_line ('Test if debug mode is on ........................... ')
+    path_sct_scripts = path_sct + '/scripts'
     debug = []
-    files = [f for f in listdir('../scripts') if isfile(join('../scripts',f))]
+    files = [f for f in listdir(path_sct_scripts) if isfile(join(path_sct_scripts, f))]
     for file in files:
         #print (file)
         file_fname, ext_fname = os.path.splitext(file)
         if ext_fname == '.py':
-            status, output = commands.getstatusoutput('python ../scripts/test_debug_off.py -i '+file_fname)
+            status, output = commands.getstatusoutput('python ' + path_sct_scripts + '/test_debug_off.py -i '+file_fname)
             if status != 0:
                 debug.append(output)
     if debug == []:
