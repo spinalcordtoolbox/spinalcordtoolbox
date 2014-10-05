@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 #
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
@@ -34,6 +35,8 @@ class param:
         self.remove_temp_files = 1 # remove temporary files
         self.verbose = 1
         self.nurbs_ctl_points = 0
+        self.smooth_sigma = 20
+        self.smooth_sigma_low = 3
 
 # check if needed Python libraries are already installed or not
 import os
@@ -77,6 +80,8 @@ def main():
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
     nurbs_ctl_points = param.nurbs_ctl_points
+    smooth_sigma = param.smooth_sigma
+    smooth_sigma_low = param.smooth_sigma_low
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -92,7 +97,7 @@ def main():
         fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
         fame_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
         remove_temp_files = 0
-        centerline_fitting = 'splines'
+        centerline_fitting = 'smooth'
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         verbose = 2
@@ -127,8 +132,8 @@ def main():
     
     # Display usage if optional arguments are not correctly provided
     if centerline_fitting == '':
-        centerline_fitting = 'splines'
-    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'polynomial' and not centerline_fitting == 'non_parametrique':
+        centerline_fitting = 'smooth'
+    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'polynomial' and not centerline_fitting == 'smooth':
         print '\n \n -f argument is not valid \n \n'
         usage()
     
@@ -175,13 +180,20 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # smoothing the centerline
+    if centerline_fitting == 'smooth':
+        sct.run('fslmaths ' + file_centerline + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline + ext_centerline)
+    else:
+        sct.run('fslmaths ' + file_centerline + ext_centerline + ' -s ' + str(smooth_sigma_low) + ' ' + file_centerline + ext_centerline)
+
     # Open centerline
     #==========================================================================================
     # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
     sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
-    
+
+
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
@@ -244,6 +256,7 @@ def main():
         else:
             print 'In sct_straighten_spinnalcord: nrbs_ctl_points = ',nurbs_ctl_points
             x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, nurbs_ctl_points)
+            print len(x_centerline_deriv)
 
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
@@ -266,10 +279,12 @@ def main():
         z_centerline.append(z_centerline[-1] + 0.1)
         x_centerline.append(x_centerline[-1])
         y_centerline.append(y_centerline[-1])
-        print z_centerline
-        print x_centerline
-        x_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(x_centerline)).tolist()
-        y_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(y_centerline)).tolist()
+        #print z_centerline
+        #print x_centerline
+        f_x, f_y = msct_smooth.opt_f(numpy.asarray(x_centerline), numpy.asarray(y_centerline), numpy.asarray(z_centerline))
+
+        x_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(x_centerline), f_x).tolist()
+        y_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(y_centerline), f_y).tolist()
 
         x_centerline_fit.pop()
         y_centerline_fit.pop()
@@ -278,12 +293,14 @@ def main():
         x_centerline.pop()
         y_centerline.pop()
 
-        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline, y_centerline, z_centerline)
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
-        #z_centerline_fit = z_centerline
-        #y_centerline_deriv = msct_smooth.evaluate_derivative_2D(z_centerline, y_centerline)
-        #x_centerline_deriv = msct_smooth.evaluate_derivative_2D(z_centerline, x_centerline)
-        #z_centerline_deriv = msct_smooth.evaluate_derivative_2D(x_centerline, z_centerline)
+    elif centerline_fitting == 'smooth':
+
+        x_centerline_fit = x_centerline
+        y_centerline_fit = y_centerline
+
+        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
 
     if verbose == 2:
@@ -362,7 +379,7 @@ def main():
             for i in range(3,5):
                 landmark_curved[index][i][0] = x_centerline_fit[iz_curved[index]]
     
-    elif centerline_fitting=='splines' or centerline_fitting == 'non_parametrique':
+    elif centerline_fitting=='splines' or centerline_fitting == 'non_parametrique' or centerline_fitting == 'smooth':
         for index in range(0, n_iz_curved, 1):
             # calculate d (ax+by+cz+d=0)
             # print iz_curved[index]

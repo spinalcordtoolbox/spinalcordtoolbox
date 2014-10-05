@@ -12,13 +12,38 @@
 #########################################################################################
 
 from math import sqrt
+from scipy.interpolate import splrep,splev
 import sys
 try:
     import numpy as np
 except ImportError:
     print '--- numpy not installed! ---'
     sys.exit(2)
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
 #from sct_nurbs import NURBS
+
+
+#=======================================================================================================================
+# Spline 2D using splrep & splev
+#=======================================================================================================================
+def spline_2D(z_centerline, x_centerline):
+
+    m = np.mean(x_centerline)
+    sigma = np.std(x_centerline)
+    print (m - np.sqrt(2*m))*(sigma**2), (m + np.sqrt(2*m))*(sigma**2)
+
+    smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+    print('\nSmoothing results with spline...')
+    tck = splrep(z_centerline, x_centerline, s=smoothing_param)
+    x_centerline_fit = splev(z_centerline, tck)
+    return x_centerline_fit
+    '''
+    plt.figure()
+    plt.plot(z_centerline,means)
+    plt.plot(z_centerline,means_smooth)
+    plt.show()
+    '''
 
 
 #=======================================================================================================================
@@ -31,6 +56,8 @@ def polynomial_fit(x,y,degree):
     y_fit = np.polyval(poly, x)
  
     return y_fit,poly
+
+
 #=======================================================================================================================
 # Polynomial derivative
 #=======================================================================================================================   
@@ -41,12 +68,14 @@ def polynomial_deriv(x,poly):
     
     return y_fit_deriv,poly_deriv
 
+
 def norm(x, y, z, p1, p2, p3):
     s = 0
     for i in xrange (len(x)-1):
         s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
     print "centerline size: ", s
     return s
+
 
 #=======================================================================================================================
 # Evaluate derivative of data points
@@ -58,22 +87,26 @@ def evaluate_derivative_2D(x,y):
     
     return y_deriv
 
+
 def evaluate_derivative_3D(x, y, z):
 
     x_deriv = np.array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(x)-1)])
     y_deriv = np.array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(y)-1)])
     z_deriv = np.array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(z)-1)])
 
-    np.insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    np.append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    x_deriv = np.insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    x_deriv = np.append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
-    np.insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    np.append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    #print len(x_deriv)
 
-    np.insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    np.append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    y_deriv = np.insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    y_deriv = np.append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+
+    z_deriv = np.insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    z_deriv = np.append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
     return x_deriv, y_deriv, z_deriv
+
 
 #=======================================================================================================================
 # Non parametric regression
@@ -115,7 +148,68 @@ def non_parametric(x,y,f = 0.25,iter = 3):
         delta = np.clip(residuals / (6.0 * s), -1, 1)
         delta = (1 - delta**2)**2
 
-    return yest 
+    return yest
+
+
+def opt_f(x, y, z):
+    print 'optimizing f parameter in non-parametric...'
+    f_list = [0.1, 0.15, 0.20, 0.22, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5]
+    msx_min = 2
+    msy_min = 2
+    f_opt_y = 5
+    f_opt_x = 5
+    for f in f_list:
+        try:
+            x_fit = non_parametric(z, x, f)
+            y_fit = non_parametric(z, y, f)
+
+            msx = mean_squared_error(x, x_fit)
+            msy = mean_squared_error(y, y_fit)
+
+            print msx, f
+            print msy, f
+
+            if msx < msx_min:
+                msx_min = msx
+                f_opt_x = f
+            if msy < msy_min:
+                msy_min = msy
+                f_opt_y = f
+
+            x_fit_d, y_fit_d, z_d = evaluate_derivative_3D(x_fit, y_fit, z)
+            x_fit_dd, y_fit_dd, z_dd = evaluate_derivative_3D(x_fit_d, y_fit_d, z_d)
+            amp_xd = np.max(abs(x_fit_dd))
+            amp_yd = np.max(abs(y_fit_dd))
+            mean_xd = np.mean(x_fit_dd)
+            mean_yd = np.mean(y_fit_dd)
+            mean = mean_xd + mean_yd
+
+            ax = plt.subplot(1,2,1)
+            plt.plot(z, x_fit, 'b-', label='centerline')
+            plt.plot(z, x_fit_d, 'r-', label='deriv')
+            plt.plot(z, x_fit_dd, 'y-', label='derivsec')
+            plt.xlabel('x')
+            plt.ylabel('z')
+            ax = plt.subplot(1,2,2)
+            plt.plot(z, y_fit, 'b-', label='centerline')
+            plt.plot(z, y_fit_d, 'r-', label='deriv')
+            plt.plot(z, y_fit_dd, 'r-', label='fit')
+            plt.xlabel('y')
+            plt.ylabel('z')
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels)
+            plt.show()
+
+            print 'AMP', amp_xd, amp_yd
+            print 'MEAN', mean_xd, mean_yd, mean
+
+        except np.linalg.linalg.LinAlgError:
+            print 'LinAlgError raised'
+
+    print msx_min, f_opt_x
+    print msy_min, f_opt_y
+    return f_opt_x, f_opt_y
+
 
 #=======================================================================================================================
 # Univariate Spline fitting
@@ -128,12 +222,10 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
     
     return ys    
     
-    
-    
+
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
-#=======================================================================================================================   
-
+#=======================================================================================================================
 def b_spline_nurbs(x,y,z, control_points = 0, degree = 3,point_number = 3000):
 
 
@@ -162,11 +254,9 @@ def b_spline_nurbs(x,y,z, control_points = 0, degree = 3,point_number = 3000):
     return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
 
 
-
 #=======================================================================================================================
 # 3D B-Spline function, python function
-#=======================================================================================================================   
-
+#=======================================================================================================================
 def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
     """see http://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.splprep.html for full input information"""
     from scipy.interpolate import splprep,splev
@@ -178,11 +268,9 @@ def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
     return xnew, ynew, znew 
 
 
-
 #=======================================================================================================================
 # lowpass filter  
-#=======================================================================================================================   
-
+#=======================================================================================================================
 def lowpass (y) :
     from scipy.fftpack import fftfreq, fft
     from scipy.signal import filtfilt, iirfilter
@@ -206,9 +294,3 @@ def moving_average(y, n=3) :
     y_smooth[n:] = y_smooth[n:] - y_smooth[:-n]
     
     return y_smooth[n - 1:] / n
-
-
-
-
-
-
