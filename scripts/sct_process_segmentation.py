@@ -205,7 +205,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     print '\nWrite NIFTI volumes...'
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'tmp.centerline.nii')
-    sct.generate_output_file('tmp.centerline.nii','./',file_data+'_centerline',ext_data)
+    sct.generate_output_file('tmp.centerline.nii', file_data+'_centerline'+ext_data)
 
     del data
 
@@ -491,9 +491,9 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'csa.txt', path_data, param.fname_csa, '')
+    sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
     if volume_output:
-        sct.generate_output_file(fname_csa_volume, path_data, name_output, ext_data)
+        sct.generate_output_file(fname_csa_volume, path_data+name_output)  # extension already included in name_output
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -508,7 +508,7 @@ def b_spline_centerline(x_centerline,y_centerline,z_centerline):
                           
     print '\nFitting centerline using B-spline approximation...'
     points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    nurbs = NURBS(3,3000,points) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    nurbs = NURBS(3,3000,points)  # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
                           
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]
