@@ -177,7 +177,7 @@ void PropagatedDeformableModel::computeMeshInitial()
 		double angle;
 		CMatrix3x3 trZ;
 		CVector3 point, normale;
-        CVector3 stretchingFactorWorld = image3D_->TransformContinuousIndexToPhysicalPoint(CVector3((1-1.0/stretchingFactor_), 0.0, 0.0))-image3D_->getOrigine();
+        CVector3 stretchingFactorWorld = image3D_->TransformContinuousIndexToPhysicalPoint(CVector3((1.0-1.0/stretchingFactor_), 0.0, 0.0))-image3D_->getOrigine();
 		// Compute initial disk
 		for (int k=0; k<resolutionRadiale_; k++)
 		{
