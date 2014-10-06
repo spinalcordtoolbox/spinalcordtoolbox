@@ -24,7 +24,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 15 # gap between landmarks along z
@@ -50,11 +50,6 @@ from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
-
-
-# check if dependant software are installed
-sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 
 
@@ -83,10 +78,8 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        # fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
-        # fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
-        fame_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
+        fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
+        fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         remove_temp_files = 0
         centerline_fitting = 'splines'
         import matplotlib.pyplot as plt
@@ -458,8 +451,8 @@ def main():
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
-    sct.run('sct_WarpImageMultiTransform 3 tmp.landmarks_curved.nii.gz tmp.landmarks_curved_rigid.nii.gz -R tmp.landmarks_straight.nii.gz tmp.curve2straight_rigid.txt --use-NN')
-    
+    sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -p nn')
+
     # Estimate b-spline transformation curve --> straight
     print '\nEstimate b-spline transformation: curve --> straight...'
     sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
@@ -495,9 +488,8 @@ def main():
     
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    sct.run('sct_WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
-    # sct.run('sct_WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
-    
+    sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -p '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+
     # come back to parent folder
     os.chdir('..')
 

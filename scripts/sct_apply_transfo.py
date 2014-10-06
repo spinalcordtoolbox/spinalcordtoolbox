@@ -132,7 +132,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform (ANTs).
+  Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest> -w <warp_list>
