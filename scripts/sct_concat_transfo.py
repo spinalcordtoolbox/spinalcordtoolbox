@@ -90,7 +90,7 @@ def main():
 
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
-    # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
+    # N.B. Here we take the inverse of the warp list
     fname_warp_list.reverse()
     cmd = 'sct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list)
     sct.printv('>> '+cmd, verbose)
@@ -98,7 +98,7 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final.nii.gz', path_out, file_out, ext_out)
+    sct.generate_output_file('warp_final.nii.gz', path_out+file_out+ext_out)
 
     print ''
 
