@@ -450,8 +450,7 @@ DESCRIPTION
   contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve
   maximum robustness. To do so, you can use sct_segmentation_propagation.
   The program outputs a warping field that can be used to register other images to the destination
-  image. To apply the warping field to another image, type this:
-    sct_WarpImageMultiTransform 3 another_image another_image_reg -R dest_image warp_src2dest.
+  image. To apply the warping field to another image, use sct_apply_transfo
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest>
