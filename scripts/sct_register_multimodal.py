@@ -268,11 +268,11 @@ def main():
         # destination image. This approach was chosen instead of inputting the transfo into ANTs, because if the transfo
         # does not bring the image to the same space as the destination image, then warping fields cannot be concatenated at the end.
         print('\nApply initial transformation to moving image...')
-        sct.run('sct_WarpImageMultiTransform 3 '+file_src_tmp+'.nii '+file_src_reg_tmp+'.nii -R '+file_dest_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+        sct.run('sct_apply_transfo -i '+file_src_tmp+'.nii -o '+file_src_reg_tmp+'.nii -d '+file_dest_tmp+'.nii -w '+fname_init_transfo+' -p spline')
         file_src_tmp = file_src_reg_tmp
         if use_segmentation:
             file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
-            sct.run('sct_WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+            sct.run('sct_apply_transfo -i '+file_src_seg_tmp+'.nii -o '+file_src_seg_reg_tmp+'.nii -d '+file_dest_seg_tmp+'.nii -w '+fname_init_transfo+' -p spline')
             file_src_seg_tmp = file_src_seg_reg_tmp
 
     # Pad the target and source image (because ants doesn't deform the extremities)
@@ -402,10 +402,10 @@ def main():
 
     # Apply warping field to src data
     print('\nApply transfo source --> dest...')
-    status, output = sct.run('sct_WarpImageMultiTransform 3 src.nii src_reg.nii -R dest.nii warp_src2dest.nii.gz --use-BSpline')
+    status, output = sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -p spline')
     if compute_dest2src:
         print('\nApply transfo dest --> source...')
-        status, output = sct.run('sct_WarpImageMultiTransform 3 dest.nii dest_reg.nii -R src.nii warp_dest2src.nii.gz --use-BSpline')
+        status, output = sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -p spline')
 
     # come back to parent folder
     os.chdir('..')
