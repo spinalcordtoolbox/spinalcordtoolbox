@@ -31,7 +31,8 @@ class Param:
         self.files = [['t2.nii.gz', 't2_centerline.nii.gz']]
 
 
-def test(data_file_path):
+def test(path_data):
+    '''
     # initialize parameters
     status = 0
     param = Param()
@@ -61,6 +62,16 @@ def test(data_file_path):
 
     os.chdir('..')
     return status
+    '''
+
+    folder_data = 't2/'
+    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
+
+    cmd = 'sct_straighten_spinalcord -i '+ path_data + folder_data + file_data[0] \
+          + ' -c ' + path_data + folder_data + file_data[1] \
+          + ' -f polynomial' \
+          + ' 1'
+    return sct.run(cmd, 0)
 
 
 if __name__ == "__main__":
