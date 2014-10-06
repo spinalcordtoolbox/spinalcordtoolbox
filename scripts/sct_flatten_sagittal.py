@@ -18,32 +18,21 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.interp = 'sinc' # final interpolation
-        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
-        self.remove_temp_files = 1 # remove temporary files
+        self.interp = 'sinc'  # final interpolation
+        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
+        self.remove_temp_files = 1  # remove temporary files
 
 # check if needed Python libraries are already installed or not
 import os
 import getopt
-import commands
 import sys
+import commands
 import sct_utils as sct
 from sct_nurbs import NURBS
 from sct_utils import fsloutput
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
+import nibabel
+import numpy
 
-# check if dependant software are installed
-sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 #=======================================================================================================================
 # main
@@ -64,8 +53,9 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_rpi.nii.gz'
-        fname_centerline = path_script+'../testing/sct_straighten_spinalcord/data/errsm_22_t2_cropped_centerline.nii.gz'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_anat = path_sct_data+'/t2/t2.nii.gz'
+        fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
     
@@ -230,7 +220,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         print '\nDelete temporary files...'
-        sct.run('rm tmp.*')
+        sct.run('rm -rf tmp.*')
 
     # to view results
     print '\nDone! To view results, type:'
