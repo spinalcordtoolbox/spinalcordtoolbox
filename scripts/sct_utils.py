@@ -308,14 +308,6 @@ def get_interpolation(program, interp):
             interp_program = ' -n Linear'
         elif interp == 'spline':
             interp_program = ' -n BSpline[3]'
-    # WarpImageMultiTransform
-    elif program == 'WarpImageMultiTransform':
-        if interp == 'nn':
-            interp_program = ' --use-NN'
-        elif interp == 'linear':
-            interp_program = ' '
-        elif interp == 'spline':
-            interp_program = ' --use-BSpline'
     # check if not assigned
     if interp_program == '':
         printv('WARNING ('+os.path.basename(__file__)+'): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
