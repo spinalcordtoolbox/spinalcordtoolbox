@@ -36,6 +36,7 @@ class param:
         self.verbose = 1
         self.nurbs_ctl_points = 0
         self.smooth_sigma = 20
+        self.smooth_padding = 60
         self.smooth_sigma_low = 3
 
 # check if needed Python libraries are already installed or not
@@ -81,6 +82,7 @@ def main():
     interpolation_warp = param.interpolation_warp
     nurbs_ctl_points = param.nurbs_ctl_points
     smooth_sigma = param.smooth_sigma
+    smooth_padding = param.smooth_padding
     smooth_sigma_low = param.smooth_sigma_low
 
     # get path of the toolbox
@@ -133,7 +135,7 @@ def main():
     # Display usage if optional arguments are not correctly provided
     if centerline_fitting == '':
         centerline_fitting = 'smooth'
-    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'polynomial' and not centerline_fitting == 'smooth':
+    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'non_parametrique' and not centerline_fitting == 'smooth':
         print '\n \n -f argument is not valid \n \n'
         usage()
     
@@ -180,29 +182,36 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # smoothing the centerline
-    if centerline_fitting == 'smooth':
-        sct.run('fslmaths ' + file_centerline + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline + ext_centerline)
-    else:
-        sct.run('fslmaths ' + file_centerline + ext_centerline + ' -s ' + str(smooth_sigma_low) + ' ' + file_centerline + ext_centerline)
-
-    # Open centerline
-    #==========================================================================================
-    # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
     sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
-
 
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
-    
+
+
+    # smoothing the centerline
+    if centerline_fitting == 'smooth':
+        pad = str(smooth_padding)
+        # padding, this avoid loss of information when smoothing the centerline
+        #file_centerline_pad = file_centerline + '_pad'
+        #sct.run('sct_c3d ' + file_centerline + ext_centerline + ' -pad ' + smooth_padding+ 'x' + smooth_padding + 'x0vox '+ smooth_padding + 'x' + smooth_padding + 'x0vox 0 -o ' + file_centerline_pad + ext_centerline)
+        #sct.run('fslmaths ' + file_centerline_pad + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline_pad + ext_centerline)
+        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_orient)
+        sct.run('fslmaths ' + fname_centerline_orient + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_orient)
+
+    else:
+        sct.run('fslmaths ' + fname_centerline_orient + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_orient)
+
+    # Open centerline
+    #==========================================================================================
+    # Change orientation of the input centerline into RPI
     print '\nOpen centerline volume...'
     file = nibabel.load(fname_centerline_orient)
     data = file.get_data()
-    
+
     # loop across z and associate x,y coordinate with the point having maximum intensity
     z_centerline = [iz for iz in range(0, nz, 1) if data[:,:,iz].any() ]
     nz_nonz = len(z_centerline)
@@ -297,8 +306,8 @@ def main():
 
     elif centerline_fitting == 'smooth':
 
-        x_centerline_fit = x_centerline
-        y_centerline_fit = y_centerline
+        x_centerline_fit = [x - smooth_padding for x in x_centerline]
+        y_centerline_fit = [y - smooth_padding for y in y_centerline]
 
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
