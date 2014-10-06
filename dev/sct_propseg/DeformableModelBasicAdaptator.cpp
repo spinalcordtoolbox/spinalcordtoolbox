@@ -29,6 +29,61 @@ typedef itk::ConjugateGradientOptimizer  OptimizerType;
 //typedef itk::LBFGSOptimizer OptimizerType;
 typedef OptimizerType::InternalOptimizerType  vnlOptimizerType;
 
+class CommandIterationUpdateConjugateGradient : public itk::Command
+{
+public:
+    typedef  CommandIterationUpdateConjugateGradient   Self;
+    typedef  itk::Command             Superclass;
+    typedef itk::SmartPointer<Self>  Pointer;
+    itkNewMacro( Self );
+protected:
+    CommandIterationUpdateConjugateGradient()
+    {
+        m_IterationNumber=0;
+        m_IterationDerivativeNumber=0;
+    }
+public:
+    typedef itk::ConjugateGradientOptimizer   OptimizerType;
+    typedef   const OptimizerType   *    OptimizerPointer;
+    
+    void Execute(itk::Object *caller, const itk::EventObject & event)
+    {
+        Execute( (const itk::Object *)caller, event);
+    }
+    
+    void Execute(const itk::Object * object, const itk::EventObject & event)
+    {
+        OptimizerPointer optimizer =
+        dynamic_cast< OptimizerPointer >( object );
+        if( m_FunctionEvent.CheckEvent( &event ) )
+        {
+            m_IterationNumber++;
+            if (m_IterationNumber>50000) {
+                throw itk::ExceptionObject("ERROR: Too many iterations");
+                //std::cout << m_IterationNumber << "   ";
+                //std::cout << optimizer->GetCachedValue() << "   ";
+                //std::cout << optimizer->GetCachedCurrentPosition() << std::endl;
+            }
+        }
+        else if( m_GradientEvent.CheckEvent( &event ) )
+        {
+            m_IterationDerivativeNumber++;
+            if (m_IterationDerivativeNumber>10000) {
+                throw itk::ExceptionObject("ERROR: Too many iterations");
+                //std::cout << m_IterationDerivativeNumber << "   ";
+                //std::cout << "Gradient " << optimizer->GetCachedDerivative() << "   ";
+            }
+        }
+        
+    }
+private:
+    unsigned long m_IterationNumber, m_IterationDerivativeNumber;
+    
+    
+    itk::FunctionEvaluationIterationEvent m_FunctionEvent;
+    itk::GradientEvaluationIterationEvent m_GradientEvent;
+};
+
 
 DeformableModelBasicAdaptator::DeformableModelBasicAdaptator(Image3D* image, Mesh* m) : image_(image), mesh_(m), meshBool_(true), numberOfIteration_(1)
 {
@@ -152,12 +207,17 @@ double DeformableModelBasicAdaptator::adaptation()
 	vnlOptimizer->set_max_function_evals( Max_Iterations );
 
 	vnlOptimizer->set_check_derivatives( 1 );
+    
+    CommandIterationUpdateConjugateGradient::Pointer observer =
+    CommandIterationUpdateConjugateGradient::New();
+    itkOptimizer->AddObserver( itk::IterationEvent(), observer );
+    itkOptimizer->AddObserver( itk::FunctionEvaluationIterationEvent(), observer );
 	
 	//cout << "Valeur initiale de la fonction de cout = " << costFunction->GetInitialValue() << endl;
 	//cout << "Valeur initiale de la norme des derivees = " << costFunction->getInitialNormDerivatives() << endl;
 	
 	//cout << "Optimisation du maillage..." << endl;
-	bool done = false;
+	bool done = false, error_occured = false;
 	double distance = 0.0;
 	Mesh* lastMesh = new Mesh;
 	double newDistanceMeshInitial = 0.0;
@@ -180,6 +240,7 @@ double DeformableModelBasicAdaptator::adaptation()
 			cout << "An error ocurred during Optimization" << endl;
 			cout << "Location    = " << e.GetLocation()    << endl;
 			cout << "Description = " << e.GetDescription() << endl;
+            error_occured = true;
 		}
         if (verbose_) {
             cout << "Report from vnl optimizer for deformation : " << endl;
@@ -188,6 +249,9 @@ double DeformableModelBasicAdaptator::adaptation()
         }
 
 		currentValue = itkOptimizer->GetCurrentPosition();
+        if (currentValue.size() == 0)
+            currentValue = itkOptimizer->GetCachedCurrentPosition();
+        
 
 		Mesh* newMesh = new Mesh(*mesh_);
 		vector<Vertex*> pointsNewMesh = newMesh->getListPoints();
@@ -229,6 +293,9 @@ double DeformableModelBasicAdaptator::adaptation()
 
 	OptimizerType::ParametersType finalPosition;
 	finalPosition = itkOptimizer->GetCurrentPosition();
+    
+    if (finalPosition.size() == 0)
+        finalPosition = itkOptimizer->GetCachedCurrentPosition();
 
 	if (!meshBool_)
 	{

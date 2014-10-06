@@ -134,7 +134,7 @@ def main():
         data.astype('int')
         img = nibabel.Nifti1Image(data, None, hdr)
         nibabel.save(img, 'tmp.'+file_label_output+'.nii.gz')
-        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz','./',file_label_output,ext_label_output)
+        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
 
 
 #=======================================================================================================================
