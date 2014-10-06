@@ -36,7 +36,7 @@ import time
 import glob
 import math
 import numpy as np
-from sct_eddy_correct import eddy_correct
+from sct_dmri_eddy_correct import eddy_correct
 import sct_utils as sct
 import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
