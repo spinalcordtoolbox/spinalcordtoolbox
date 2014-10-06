@@ -3,7 +3,7 @@
 # Test major functions.
 #
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
-# Updated: 2014-09-26
+# Updated: 2014-10-06
 
 
 import os
@@ -137,18 +137,18 @@ def fill_functions():
     functions = []
     functions.append('test_debug')
     functions.append('sct_convert_binary_to_trilinear')
-    functions.append('sct_detect_spinalcord')
+    #functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_moco')
-    functions.append('sct_dmri_separate_b0_and_dwi')
-    functions.append('sct_extract_metric')
-    functions.append('sct_get_centerline')
-    functions.append('sct_process_segmentation')
-    functions.append('sct_propseg')
+    #functions.append('sct_dmri_separate_b0_and_dwi')
+    #functions.append('sct_extract_metric')
+    #functions.append('sct_get_centerline')
+    #functions.append('sct_process_segmentation')
+    #functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
-    functions.append('sct_smooth_spinalcord')
+    #functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
-    functions.append('sct_warp_template')
+    #functions.append('sct_warp_template')
     return functions
 
 
@@ -184,13 +184,20 @@ def print_fail():
 # write to log file
 # ==========================================================================================
 def write_to_log_file(fname_log, string, mode = 'w'):
+
+    '''
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = output + '/testing/logs'
 
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
+    '''
 
-    f = open(path_logs_dir + fname_log, mode)
+    string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
+             + fname_log \
+             + string
+
+    f = open('../' + fname_log, mode)
     f.write(string+'\n')
     f.close()
 
@@ -202,13 +209,16 @@ def test_function(script_name):
         test_debug()
     else:
         # build script name
+        fname_log = script_name + ".log"
+        result_folder = "results_"+script_name
         script_name = "test_"+script_name
         # create folder and go in it
-        sct.create_folder(script_name)
-        os.chdir(script_name)
-    # begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
-    # fname_log = "sct_convert_binary_to_trilinear.log"
-    # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
+        sct.create_folder(result_folder)
+        os.chdir(result_folder)
+
+        #fname_log = "sct_convert_binary_to_trilinear.log"
+        # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
+
         # display script name
         print_line('Checking '+script_name)
         # import function as a module        
@@ -220,13 +230,15 @@ def test_function(script_name):
             print_ok()
         else:
             print_fail()
+
         # log file
-        # write_to_log_file(fname_log, output, 'a')
+        write_to_log_file(fname_log, output, 'w')
+
+        # go back to parent folder
+        os.chdir('..')
 
         # return
         return status
-        # go back to parent folder
-        os.chdir('..')
 
 
 # def old_test_function(folder_test):

@@ -29,9 +29,6 @@ def test(path_data):
         ' -i '+path_data+folder_data+file_data+ \
         ' -s 5'
 
-    # run command
-    status, output = sct.run(cmd, 0)
-
     # return
     return sct.run(cmd, 0)
 

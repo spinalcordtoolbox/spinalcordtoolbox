@@ -31,7 +31,8 @@ class Param:
         self.files = [['mt1.nii.gz', 'segmentation_binary.nii.gz']]
 
 
-def test(data_file_path):
+def test(path_data):
+    '''
     # initialize parameters
     status = 0
     param = Param()
@@ -68,6 +69,27 @@ def test(data_file_path):
 
     os.chdir('..')
     return status
+    '''
+
+
+
+    folder_data = 'mt/'
+    folder_template = 'template/'
+    file_data = ['mt1.nii.gz', 'mt1_seg.nii.gz', 'warp_template2mt.nii.gz']
+    file_template = ['MNI-Poly-AMU_T2.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']
+
+    cmd = 'sct_register_multimodal -i ' + path_data + folder_template + file_template[0] \
+          + ' -d ' + path_data + folder_data + file_data[0] \
+          + ' -s ' + path_data + folder_template + file_template[1] \
+          + ' -t ' + path_data + folder_data + file_data[1] \
+          + ' -q ' + path_data + folder_data + file_data[2] \
+          + ' -x 0' \
+          + ' -o template2' + file_data[0] \
+          + ' -n 10x3' \
+          + ' -r 1' \
+          + ' -v 1'
+
+    return sct.run(cmd, 0)
 
 
 if __name__ == "__main__":
