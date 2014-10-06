@@ -126,6 +126,7 @@ def main():
     sct.generate_output_file(path_tmp+'mtr.nii', path_out+file_out+ext_out)
     if register:
         sct.generate_output_file(path_tmp+'mt0_reg.nii', path_out+file_mt0+'_reg'+ext_out)
+        fname_mt0 = file_mt0+'_reg'
 
     # Remove temporary files
     if remove_tmp_files == 1:
