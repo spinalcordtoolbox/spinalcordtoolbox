@@ -113,7 +113,7 @@ def main():
     print '\nCheck parameters:'
     print '  Destination image ........ '+fname_src
     print '  Warping field ............ '+fname_transfo
-    print '  Path template ............ '+path_template+'\n'
+    print '  Path template ............ '+path_template
     print '  Output folder ............ '+folder_out+'\n'
 
     # Extract path, file and extension
@@ -151,7 +151,7 @@ def main():
             path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
             sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -p spline', verbose)
         # Copy list.txt
-        sct.run('cp '+path_sct+'data/'+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
+        sct.run('cp '+path_template+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
 
     # Warp spinal levels
     if warp_spinal_levels == 1:
@@ -196,7 +196,7 @@ OPTIONAL ARGUMENTS
   -a {0,1}              warp atlas of white matter. Default="""+str(param.warp_atlas)+"""
   -s {0,1}              warp spinal levels. Default="""+str(param.warp_spinal_levels)+"""
   -o <folder_out>       name of output folder. Default="""+param.folder_out+"""
-  -p <path_template>    Specify path to template data. Default=$SCT_DIR/"""+str(param.path_template)+"""
+  -p <path_template>    Specify path to template data. Default="""+str(param.path_template)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
   -h                    help. Show this message
 
