@@ -445,6 +445,10 @@ def main():
     #sct.run(fsloutput+'fslmaths tmp.landmarks_curved.nii -kernel box 3x3x3 -dilD tmp.landmarks_curved_dilated -odt short')
     #sct.run(fsloutput+'fslmaths tmp.landmarks_straight.nii -kernel box 3x3x3 -dilD tmp.landmarks_straight_dilated -odt short')
     
+    print '\nConvert landmarks to INT...'
+    sct.run('sct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz')
+    sct.run('sct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz')
+
     # Estimate rigid transformation
     print '\nEstimate rigid transformation between paired landmarks...'
     sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
