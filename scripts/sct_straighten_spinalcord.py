@@ -35,9 +35,9 @@ class param:
         self.remove_temp_files = 1 # remove temporary files
         self.verbose = 1
         self.nurbs_ctl_points = 0
-        self.smooth_sigma = 20
-        self.smooth_padding = 60
-        self.smooth_sigma_low = 3
+        self.smooth_sigma = 15
+        self.smooth_padding = 70
+        self.smooth_sigma_low = 6
 
 # check if needed Python libraries are already installed or not
 import os
@@ -135,7 +135,7 @@ def main():
     # Display usage if optional arguments are not correctly provided
     if centerline_fitting == '':
         centerline_fitting = 'smooth'
-    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'non_parametrique' and not centerline_fitting == 'smooth':
+    elif not centerline_fitting == '' and not centerline_fitting == 'splines' and not centerline_fitting == 'non_parametric' and not centerline_fitting == 'smooth':
         print '\n \n -f argument is not valid \n \n'
         usage()
     
@@ -191,7 +191,7 @@ def main():
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
-
+    fname_centerline_pad = 'pad_' + fname_centerline_orient
     # smoothing the centerline
     if centerline_fitting == 'smooth':
         pad = str(smooth_padding)
@@ -199,17 +199,19 @@ def main():
         #file_centerline_pad = file_centerline + '_pad'
         #sct.run('sct_c3d ' + file_centerline + ext_centerline + ' -pad ' + smooth_padding+ 'x' + smooth_padding + 'x0vox '+ smooth_padding + 'x' + smooth_padding + 'x0vox 0 -o ' + file_centerline_pad + ext_centerline)
         #sct.run('fslmaths ' + file_centerline_pad + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline_pad + ext_centerline)
-        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_orient)
-        sct.run('fslmaths ' + fname_centerline_orient + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_orient)
+        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
+        sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_pad)
 
     else:
-        sct.run('fslmaths ' + fname_centerline_orient + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_orient)
+        pad = str(smooth_padding)
+        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
+        sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
 
     # Open centerline
     #==========================================================================================
     # Change orientation of the input centerline into RPI
     print '\nOpen centerline volume...'
-    file = nibabel.load(fname_centerline_orient)
+    file = nibabel.load(fname_centerline_pad)
     data = file.get_data()
 
     # loop across z and associate x,y coordinate with the point having maximum intensity
@@ -253,37 +255,30 @@ def main():
     print '\nGet center of mass of the centerline/segmentation...'
     for iz in range(0, nz_nonz, 1):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(numpy.array(data[:,:,z_centerline[iz]]))
-    
+
+    x_centerline = [x - smooth_padding for x in x_centerline]
+    y_centerline = [y - smooth_padding for y in y_centerline]
 
     # clear variable
     del data
 
     # Fit the centerline points with the kind of curve given as argument of the script and return the new fitted coordinates
     if centerline_fitting == 'splines':
-        if nurbs_ctl_points == 0:
-            x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
-        else:
-            print 'In sct_straighten_spinnalcord: nrbs_ctl_points = ',nurbs_ctl_points
-            x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, nurbs_ctl_points)
-            print len(x_centerline_deriv)
+        #if nurbs_ctl_points == 0:
+        #    x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
+        #else:
+        #    print 'In sct_straighten_spinnalcord: nrbs_ctl_points = ',nurbs_ctl_points
+        #    x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, nurbs_ctl_points)
+        #    print len(x_centerline_deriv)
+
+        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline, y_centerline, z_centerline, 'pad_' + fname_centerline_orient)
 
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
-        
-    elif centerline_fitting == 'non_parametrique':
-        #fig1 = plt.figure()
-        #ax = Axes3D(fig1)
-        '''
-        print 'y_centerline = '
-        print y_centerline
-        print 'z_centerline = '
-        print z_centerline
-        plt.plot(y_centerline, z_centerline, 'b:', label='nonparam')
-        plt.show()
-        plt.plot(x_centerline, z_centerline, 'b:', label='nonparam')
-        plt.show()
-        '''
+
+
+    elif centerline_fitting == 'non_parametric':
 
         z_centerline.append(z_centerline[-1] + 0.1)
         x_centerline.append(x_centerline[-1])
@@ -295,6 +290,8 @@ def main():
         x_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(x_centerline), f_x).tolist()
         y_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(y_centerline), f_y).tolist()
 
+
+
         x_centerline_fit.pop()
         y_centerline_fit.pop()
 
@@ -305,10 +302,13 @@ def main():
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
     elif centerline_fitting == 'smooth':
+        # print x_centerline, y_centerline
 
-        x_centerline_fit = [x - smooth_padding for x in x_centerline]
-        y_centerline_fit = [y - smooth_padding for y in y_centerline]
+        #x_centerline_fit = [x - smooth_padding for x in x_centerline]
+        #y_centerline_fit = [y - smooth_padding for y in y_centerline]
 
+        x_centerline_fit = x_centerline
+        y_centerline_fit = y_centerline
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
 
@@ -388,7 +388,7 @@ def main():
             for i in range(3,5):
                 landmark_curved[index][i][0] = x_centerline_fit[iz_curved[index]]
     
-    elif centerline_fitting=='splines' or centerline_fitting == 'non_parametrique' or centerline_fitting == 'smooth':
+    elif centerline_fitting=='splines' or centerline_fitting == 'non_parametric' or centerline_fitting == 'smooth':
         for index in range(0, n_iz_curved, 1):
             # calculate d (ax+by+cz+d=0)
             # print iz_curved[index]

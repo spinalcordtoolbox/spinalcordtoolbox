@@ -25,6 +25,14 @@ import matplotlib.pyplot as plt
 
 
 #=======================================================================================================================
+# Over pad the input file, smooth and return the centerline
+#=======================================================================================================================
+def smooth(fname, padding):
+    sct.run('sct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+
+
+
+#=======================================================================================================================
 # Spline 2D using splrep & splev
 #=======================================================================================================================
 def spline_2D(z_centerline, x_centerline):
@@ -166,8 +174,11 @@ def opt_f(x, y, z):
             msx = mean_squared_error(x, x_fit)
             msy = mean_squared_error(y, y_fit)
 
-            print msx, f
-            print msy, f
+            msex = meanSquareError(x, x_fit)
+            msey = meanSquareError(y, y_fit)
+
+            print msx, msex, f
+            print msy, msey, f
 
             if msx < msx_min:
                 msx_min = msx
@@ -226,21 +237,27 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
 #=======================================================================================================================
-def b_spline_nurbs(x,y,z, control_points = 0, degree = 3,point_number = 3000):
+#def b_spline_nurbs(x, y, z, control_points=0, degree=3,point_number=3000):
 
+def b_spline_nurbs(x, y, z, fname_centerline, degree=3,point_number=3000):
 
-    from sct_nurbs_v2 import NURBS
-    #from sct_nurbs import NURBS
+    #from sct_nurbs_v2 import NURBS
+    from sct_nurbs import NURBS
           
     print '\nFitting centerline using B-spline approximation...'
-    data = [[x[n],y[n],z[n]] for n in range(len(x))]
+    data = [[x[n], y[n], z[n]] for n in range(len(x))]
+    '''
     if control_points == 0:
-        nurbs = NURBS(degree,point_number,data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+        nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
     else:
         print 'In b_spline_nurbs we get control_point = ', control_points
         nurbs = NURBS(degree, point_number, data, False, control_points)
-
-
+    '''
+    import math
+    centerlineSize = getSize(x, y, z, fname_centerline)
+    nbControl = 30*math.log(centerlineSize, 10) - 42
+    nbControl = round(nbControl)
+    nurbs = NURBS(degree, point_number, data, False, nbControl)
 
     P = nurbs.getCourbe3D()
     x_fit=P[0]
@@ -252,6 +269,53 @@ def b_spline_nurbs(x,y,z, control_points = 0, degree = 3,point_number = 3000):
     z_deriv=Q[2]
   
     return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
+
+
+def getSize(x, y, z, file_name):
+    # get pixdim
+    import commands
+    cmd1 = 'fslval '+file_name+' pixdim1'
+    status, output = commands.getstatusoutput(cmd1)
+    p1 = float(output)
+    cmd2 = 'fslval '+file_name+' pixdim2'
+    status, output = commands.getstatusoutput(cmd2)
+    p2 = float(output)
+    cmd3 = 'fslval '+file_name+' pixdim3'
+    status, output = commands.getstatusoutput(cmd3)
+    p3 = float(output)
+
+    # Centerline size
+    s = 0
+    for i in xrange (len(x)-1):
+        s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
+    #print "centerline size: ", s
+    return s
+
+
+#=======================================================================================================================
+# functions to get ceterline size
+#=======================================================================================================================
+def getPxDimensions(file_name):
+    import commands
+    cmd1 = 'fslval '+file_name+' pixdim1'
+    status, output = commands.getstatusoutput(cmd1)
+    p1 = float(output)
+    cmd2 = 'fslval '+file_name+' pixdim2'
+    status, output = commands.getstatusoutput(cmd2)
+    p2 = float(output)
+    cmd3 = 'fslval '+file_name+' pixdim3'
+    status, output = commands.getstatusoutput(cmd3)
+    p3 = float(output)
+    return p1, p2, p3
+
+
+#def getSize(x, y, z, p1, p2, p3):
+#    s = 0
+#    for i in xrange (len(x)-1):
+#        s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
+#    print "centerline size: ", s
+#    return s
+
 
 
 #=======================================================================================================================
@@ -288,9 +352,32 @@ def lowpass (y) :
 #=======================================================================================================================
 # moving_average
 #=======================================================================================================================   
-
 def moving_average(y, n=3) :
     y_smooth = np.cumsum(y, dtype=float)
     y_smooth[n:] = y_smooth[n:] - y_smooth[:-n]
     
     return y_smooth[n - 1:] / n
+
+
+#=======================================================================================================================
+# moving_average
+#=======================================================================================================================
+def meanSquareError(x, x_fit):
+    mse = 0
+    n = len(x)
+    for i in range(0,len(x)):
+        mse += (x[i]-x_fit[i])*(x[i]-x_fit[i])
+    #mse = (1/n)*mse
+    return mse
+
+
+
+
+
+
+
+
+
+
+
+
