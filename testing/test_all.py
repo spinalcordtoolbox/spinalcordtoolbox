@@ -5,6 +5,8 @@
 # Authors: Julien Cohen-Adad, Benjamin De Leener, Augustin Roux
 # Updated: 2014-10-06
 
+# TODO: list functions to test in help (do a search in testing folder)
+
 
 import os
 import shutil
@@ -97,7 +99,7 @@ def main():
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # display path to data
-    sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data: \n  '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -146,7 +148,7 @@ def fill_functions():
     #functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
-    #functions.append('sct_smooth_spinalcord')
+    functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     #functions.append('sct_warp_template')
     return functions
@@ -290,7 +292,7 @@ USAGE
   python """+os.path.basename(__file__)+"""
 
 OPTIONAL ARGUMENTS
-  -f <script_name>      test this specific script
+  -f <script_name>      test this specific script (do not add extension).
   -d {0,1}              download testing data. Default="""+str(param.download)+"""
   -p <path_data>        path to testing data. Default="""+str(param.path_data)+"""
                         NB: no need to set if using "-d 1"
