@@ -62,6 +62,7 @@ private:
 	double typeImageFactor_, gap_, radius_;
     unsigned int numberOfSlices_;
     float startSlice_;
+    double mean_resolution_;
     
     OrientationType orientation_;
 
