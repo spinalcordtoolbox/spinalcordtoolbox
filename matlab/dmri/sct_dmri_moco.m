@@ -4,13 +4,13 @@ function sct_dmri_moco(varargin)
 % if users does not provide data, calls a GUI to select data.
 %
 % INPUT
-% % TODO
 %     method : 'b0','dwi'*,'dwi_lowbvalue'
 %     crop : 'manual', 'box', 'none'*, 'centerline', 'autobox'
 %     eddy : 0 | 1*
 %     interp : 'nearestneighbour', 'spline'*, 'sinc'
 %     gaussian_mask : <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-    
+%     smooth_moco :   0 | 1*    
+
 % % JULIEN:  NOTES
 %	test slice-wise moco for dmri
 %	check disco.
