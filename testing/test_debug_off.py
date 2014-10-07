@@ -15,6 +15,9 @@
 import sys
 import getopt
 import importlib
+import commands
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+sys.path.append(path_sct + '/scripts')
 import sct_utils
 from os import listdir
 from os.path import isfile, join
@@ -24,7 +27,7 @@ def main():
     script_name = ''
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -48,7 +51,7 @@ def main():
             print ('\nno class param found in script '+script_name+'\n')
             sys.exit(0)
         else:
-            if hasattr(sct,'debug'):
+            if hasattr(sct, 'debug'):
                 if sct.debug == 1:
                     print ('\nWarning debug mode on in script '+script_name+'\n')
                     sys.exit(2)

@@ -208,7 +208,7 @@ def write_to_log_file(fname_log, string, mode = 'w'):
 # ==========================================================================================
 def test_function(script_name):
     if script_name == 'test_debug':
-        test_debug()
+        return test_debug()  # JULIEN
     else:
         # build script name
         fname_log = script_name + ".log"
@@ -259,22 +259,23 @@ def test_function(script_name):
 
 
 def test_debug():
-    print_line ('Test if debug mode is on ........................... ')
-    path_sct_scripts = path_sct + '/scripts'
+    print_line ('Checking if debug mode is on .......................')
+    path_sct_testing = path_sct + '/testing'
     debug = []
-    files = [f for f in listdir(path_sct_scripts) if isfile(join(path_sct_scripts, f))]
+    files = [f for f in listdir(path_sct_testing) if isfile(join(path_sct_testing, f))]
     for file in files:
-        #print (file)
         file_fname, ext_fname = os.path.splitext(file)
         if ext_fname == '.py':
-            status, output = commands.getstatusoutput('python ' + path_sct_scripts + '/test_debug_off.py -i '+file_fname)
+            status, output = commands.getstatusoutput('python ' + path_sct_testing + '/test_debug_off.py -i '+file_fname)
             if status != 0:
                 debug.append(output)
     if debug == []:
         print_ok()
+        return 0  # JULIEN
     else:
         print_fail()
         for string in debug: print string
+        return 1  # JULIEN
 
 
 # Print usage
