@@ -180,7 +180,7 @@ def fmri_moco(param):
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
+    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
