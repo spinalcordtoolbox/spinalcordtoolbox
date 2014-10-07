@@ -132,10 +132,11 @@ void Initialisation::setInputImage(ImageType::Pointer image)
 
 bool Initialisation::computeInitialParameters(float startFactor)
 {  
-	// Test Hough Transform for Circles Detection in axial images using ITK
 	ImageType::SizeType desiredSize = inputImage_->GetLargestPossibleRegion().GetSize();
-	float startZ;
-    
+	
+    // The spinal cord detection is performed on a bunch of axial slices. The choice of which slices will be analyzed depends on the startFactor. Default is the middle axial slice. The parameter startFactor must be the number of the slice, or a number between 0 and 1 representing the pourcentage of the image.
+    // For exemple, startFactor=0.5 means the detection will start in the middle axial slice.
+    float startZ;
     if (startFactor != -1.0) startSlice_ = startFactor;
     if (startSlice_ == -1.0) {
         startZ = desiredSize[1]/2;
@@ -147,14 +148,17 @@ bool Initialisation::computeInitialParameters(float startFactor)
     }
 	else startZ = startSlice_;
 
-	// Change radius depending of the image spacing to provide a radius in pixels - use average spacing of axial slice
+	// Adapt radius to the image spacing to provide a radius in pixels - use average spacing of axial slice
     ImageType::SpacingType spacing = inputImage_->GetSpacing();
-    radius_ = radius_/((spacing[0]+spacing[2])/2);
+    mean_resolution_ = (spacing[0]+spacing[2])/2;
 
+    // Adapt the gap between detection axial slices to the spacing
 	if (round(spacing[1]) != 0 && (int)gap_ % (int)round(spacing[1]) != 0)
 	{
 		gap_ = spacing[1];
 	}
+    
+    // Adapt the number of axial slices used for the detection to the spacing and the image dimensions.
 	if (startZ-((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1]) < 0 || startZ+((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1]) >= desiredSize[1])
 	{
 		numberOfSlices_ = numberOfSlices_-2;
@@ -165,12 +169,14 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		}
 	}
     
+    // Initalisation of the paremeters for the spinal cord detection
 	ImageType::IndexType desiredStart;
 	desiredStart[0] = 0;
 	desiredStart[1] = startZ;
 	desiredStart[2] = 0;
 	desiredSize[1] = 0;
 
+    // First extraction of the axial slice to check if the image contains information (not null)
 	ImageType::RegionType desiredRegionImage(desiredStart, desiredSize);
     typedef itk::ExtractImageFilter< ImageType, ImageType2D > Crop2DFilterType;
     Crop2DFilterType::Pointer cropFilter = Crop2DFilterType::New();
@@ -195,20 +201,25 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		cerr << "WARNING: The principal axial slice where the spinal cord detection will be performed (slice " << startZ << ") is full of constant value (" << maxIm << "). You can change it using -init parameter." << endl;
 	}
     
+    // Starting the spinal cord detection process
     if (verbose_) cout << "Initialization" << endl;
     
+    // Creation of a matrix of potential spinal cord centers
 	vector<vector <vector <Node*> > > centers;
+    
+    // Start of the detection of circles and ellipses. For each axial slices, a Hough transform is performed to detect circles. Each axial image is stretched in the antero-posterior direction in order to detect the spinal cord as a ellipse as well as a circle.
 	for (int i=round(-((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i<=round(((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i+=round(gap_/spacing[1]))
 	{
+        // Cropping of the image
 		if (verbose_) cout << "Slice num " << i << endl;
 		desiredStart[1] = startZ+i;
 		ImageType::RegionType desiredRegion(desiredStart, desiredSize);
 		FilterType::Pointer filter = FilterType::New();
 		filter->SetExtractionRegion(desiredRegion);
 		filter->SetInput(inputImage_);
-#if ITK_VERSION_MAJOR >= 4
+        #if ITK_VERSION_MAJOR >= 4
 		filter->SetDirectionCollapseToIdentity(); // This is required.
-#endif
+        #endif
 		try {
 			filter->Update();
 		} catch( itk::ExceptionObject & e ) {
@@ -218,6 +229,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			cout << desiredRegion << endl;
 		}
         
+        // The image is duplicated to allow multiple processing on the image.
 		ImageType2D::Pointer im = filter->GetOutput();
 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
 		duplicator->SetInputImage(im);
@@ -231,13 +243,16 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		clonedImageDirection[1][1] = imageDirection[1][2];
 		clonedImage->SetDirection(clonedImageDirection);
         
-		
+		// Initialization of resulting spinal cord center list.
 		vector<vector <Node*> > vecNode;
         
-		double stretchingFactor = 1.0, step = 0.25; // normal: 0.25
+        // Initialization of stretching parameters
+        // A stretchingFactor equals to 1 doesn't change the image
+		double stretchingFactor = 1.0, step = 0.25;
 		while (stretchingFactor <= 2.0)
 		{
 			if (verbose_) cout << "Stretching factor " << stretchingFactor << endl;
+            // Stretching the image in the antero-posterior direction. This direction is chosen because potential elliptical spinal cord will be transformed to circles and wil be detected by the Hough transform. The resulting circles will then be stretch in the other direction.
 			if (stretchingFactor != 1.0)
 			{
 				ImageType2D::SizeType inputSize = clonedImage->GetLargestPossibleRegion().GetSize(), outputSize;
@@ -259,33 +274,38 @@ bool Initialisation::computeInitialParameters(float startFactor)
 				im = resample->GetOutput();
 			}
             
+            // Searching the circles in the image using circular Hough transform, adapted from ITK
+            // The list of radii and accumulator values are then extracted for analyses
 			vector<CVector3> vecCenter;
 			vector<double> vecRadii, vecAccumulator;
 			searchCenters(im,vecCenter,vecRadii,vecAccumulator,startZ+i);
 			
+            // Reformating of the detected circles in the image. Each detected circle is push in a Node with all its information.
+            // The radii are transformed in mm using mean axial resolution
 			vector<Node*> vecNodeTemp;
 			for (unsigned int k=0; k<vecCenter.size(); k++) {
 				if (vecRadii[k] != 0.0) {
 					CVector3 center = vecCenter[k]; center[0] /= stretchingFactor;
-					vecNodeTemp.push_back(new Node(center,vecRadii[k]/stretchingFactor,vecAccumulator[k],vecCenter[k],vecRadii[k],stretchingFactor));
-                    //vecNodeTemp.push_back(new Node(vecCenter[k],vecRadii[k],vecAccumulator[k],stretchingFactor));
+					vecNodeTemp.push_back(new Node(center,mean_resolution_*vecRadii[k]/stretchingFactor,vecAccumulator[k],vecCenter[k],mean_resolution_*vecRadii[k],stretchingFactor));
 				}
 			}
 			vecNode.push_back(vecNodeTemp);
 			
-            
+            // Preparing next iteration of the spinal cord detection
 			stretchingFactor += step;
 		}
+        // Saving the detected centers
 		centers.push_back(vecNode);
 	}
     
 	// All centers are ordoned by slice
-	// First step -> delete points without neighbor
-	double limitDistance = sqrt(2.0*gap_*gap_);
+	// First step -> delete points without neighbour
+	double limitDistance = sqrt(2.0*gap_*gap_); // in mm
 	list<Node*> listPoints;
 	for (unsigned int k=0; k<numberOfSlices_; k++)
 	{
 		// For every point in a slice, we search on next and previous slice for neighbors
+        // Potential neighbours are circles that have a similar radius (less than 20% of difference)
 		for (unsigned int i=0; i<centers[k].size(); i++)
 		{
 			for (unsigned int m=0; m<centers[k][i].size(); m++)
@@ -294,10 +314,13 @@ bool Initialisation::computeInitialParameters(float startFactor)
 				double radius = centers[k][i][m]->getRadius();
 				if (k != 0) // search down
 				{
+                    // All the point are sorted by the distance
 					map<double,Node*> listNeighbors;
 					for (unsigned int j=0; j<centers[k-1][i].size(); j++)
 					{
-						double currentDistance = sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
+                        // Compute the distance between two adjacent centers (in mm)
+                        // If this distance is less or equal to the limit distance, the two centers are attached to each others
+						double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
 						if (currentDistance <= limitDistance)
 							listNeighbors[currentDistance] = centers[k-1][i][j];
 					}
@@ -318,7 +341,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 					map<double,Node*> listNeighbors;
 					for (unsigned int j=0; j<centers[k+1][i].size(); j++)
 					{
-						double currentDistance = sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k+1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k+1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k+1][i][j]->getPosition()[2],2));
+						double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k+1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k+1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k+1][i][j]->getPosition()[2],2));
 						if (currentDistance <= limitDistance)
 							listNeighbors[currentDistance] = centers[k+1][i][j];
 					}
@@ -360,25 +383,25 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	double maxAccumulator = 0.0, angleMax = 15.0;
 	for (unsigned int j=0; j<chains.size(); j++)
 	{
-		unsigned int lenght = chains[j].size();
+		unsigned int length = chains[j].size();
         double angle = 0.0;
-        if (lenght >= 3)
+        if (length >= 3)
         {
-            CVector3 vector1 = chains[j][0]->getPosition()-chains[j][lenght/2]->getPosition(), vector2 = (chains[j][lenght/2]->getPosition()-chains[j][lenght-1]->getPosition());
+            CVector3 vector1 = chains[j][0]->getPosition()-chains[j][length/2]->getPosition(), vector2 = (chains[j][length/2]->getPosition()-chains[j][length-1]->getPosition());
             angle = 360.0*acos((vector1*vector2)/(vector1.Norm()*vector2.Norm()))/(2.0*M_PI);
         }
-		if (lenght > maxLenght && angle <= angleMax)
+		if (length > maxLenght && angle <= angleMax)
 		{
 			maxLenght = chains[j].size();
 			max = j;
 			maxAccumulator = 0.0;
-			for (unsigned int k=0; k<lenght; k++)
+			for (unsigned int k=0; k<length; k++)
 				maxAccumulator += chains[j][k]->getAccumulator();
 		}
-		else if (lenght == maxLenght && angle <= angleMax)
+		else if (length == maxLenght && angle <= angleMax)
 		{
 			double accumulator = 0.0;
-			for (unsigned int k=0; k<lenght; k++)
+			for (unsigned int k=0; k<length; k++)
 				accumulator += chains[j][k]->getAccumulator();
 			if (accumulator > maxAccumulator) {
 				maxLenght = chains[j].size();
@@ -416,8 +439,6 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			for (unsigned int j=0; j<sizeMaxChain; j++)
 				initialRadius_ += chains[max][j]->getRadiusStretch();
 			initialRadius_ /= sizeMaxChain;
-            ImageType::SpacingType spacingImage = inputImage_->GetSpacing();
-            initialRadius_ *= (spacingImage[0]+spacingImage[2])/2.0;
             stretchingFactor_ = chains[max][0]->getStretchingFactor();
 		}
 		else
@@ -469,8 +490,8 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 	}
 	double *radius_result_small = new double[numberOfCircles], *radius_result_large = new double[numberOfCircles];
 	double *accumulator_result_small = new double[numberOfCircles], *accumulator_result_large = new double[numberOfCircles];
-	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_,-1.0);
-	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_+6.0,1.0);
+	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_/mean_resolution_,-1.0);
+	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_/mean_resolution_+6.0,1.0);
     
 	// search along results for nested circles
 	vector<unsigned int> listMostPromisingCenters;

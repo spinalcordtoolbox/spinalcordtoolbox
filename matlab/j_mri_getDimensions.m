@@ -20,7 +20,7 @@
 function dims = j_mri_getDimensions(result)
 
 
-[a b]= textscan(result,'%s %d', 'HeaderLines',8);
+[a b]= textscan(result,'%s %d');
 
 dims(1) = double(a{1,2}(1));
 dims(2) = double(a{1,2}(2));
