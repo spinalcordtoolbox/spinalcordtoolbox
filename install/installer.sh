@@ -42,23 +42,23 @@ echo "Copy toolbox..."
 cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
-# copy testing files
-echo
-echo "Copy example data & scripts..."
-if [ -e "../sct_testing" ]; then
-  cmd="sudo rm -rf ../sct_testing"
-  echo ">> $cmd"; $cmd
-fi
-cmd="mv spinalcordtoolbox/testing ../sct_testing"
-echo ">> $cmd"; $cmd
-cmd="sudo chmod -R 775 ../sct_testing"
-echo ">> $cmd"; $cmd
-
-# remove testing in installation folder
-echo
-echo "Remove testing in installation folder"
-cmd="sudo rm -rf ${SCT_DIR}/testing"
-echo ">> $cmd"; $cmd
+## copy testing files
+#echo
+#echo "Copy example data & scripts..."
+#if [ -e "../sct_testing" ]; then
+#  cmd="sudo rm -rf ../sct_testing"
+#  echo ">> $cmd"; $cmd
+#fi
+#cmd="mv spinalcordtoolbox/testing ../sct_testing"
+#echo ">> $cmd"; $cmd
+#cmd="sudo chmod -R 775 ../sct_testing"
+#echo ">> $cmd"; $cmd
+#
+## remove testing in installation folder
+#echo
+#echo "Remove testing in installation folder"
+#cmd="sudo rm -rf ${SCT_DIR}/testing"
+#echo ">> $cmd"; $cmd
 
 # check if .bashrc was already modified. If so, we delete lines about sct to be sure.
 echo
