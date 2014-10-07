@@ -330,17 +330,17 @@ def main():
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
     # from mpl_toolkits.mplot3d import Axes3D
-#     #display
-#     fig = plt.figure()
-#     ax = Axes3D(fig)
-#     ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
-#     ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-#     ax.set_xlabel('x')
-#     ax.set_ylabel('y')
-#     ax.set_zlabel('z')
-#     plt.show()
+    # #display
+    # fig = plt.figure()
+    # ax = Axes3D(fig)
+    # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
+    # ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    #       [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    #       [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
@@ -348,7 +348,7 @@ def main():
     landmark_straight = [ [ [ 0 for i in range(0,3)] for i in range (0,5) ] for i in iz_curved ] # same structure as landmark_curved
     
     # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the curved centerline (approximation curve --> line)
-    iz_straight = [0 for i in range (0,gapz+1)]
+    iz_straight = [0 for i in range (0,step_z+1)]
     #print iz_straight,len(iz_straight)
     iz_straight[0] = iz_curved[0]
     for index in range(1, n_iz_curved, 1):
