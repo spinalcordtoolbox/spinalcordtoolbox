@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform
+# crop image with GUI.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -184,7 +184,7 @@ def main():
     os.chdir('..')
 
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+file_tmp, path_out, file_out, ext_out)
+    sct.generate_output_file(path_tmp+file_tmp, path_out+file_out+ext_out)
 
     # Remove temporary files
     if remove_temp_files == 1:

@@ -85,7 +85,7 @@ def main():
     sct.printv('  register ..............'+str(register), verbose)
 
     # check existence of input files
-    sct.printv('\nCheck file existence...', verbose)
+    sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_mt0, verbose)
     sct.check_file_exist(fname_mt1, verbose)
 
@@ -123,9 +123,10 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'mtr.nii', path_out, file_out, ext_out)
+    sct.generate_output_file(path_tmp+'mtr.nii', path_out+file_out+ext_out)
     if register:
-        sct.generate_output_file(path_tmp+'mt0_reg.nii', path_out, file_mt0+'_reg', ext_out)
+        sct.generate_output_file(path_tmp+'mt0_reg.nii', path_out+file_mt0+'_reg'+ext_out)
+        fname_mt0 = file_mt0+'_reg'
 
     # Remove temporary files
     if remove_tmp_files == 1:
