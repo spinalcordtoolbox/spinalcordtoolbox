@@ -119,10 +119,8 @@ echo "Check if other dependent software are installed..."
 cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
-# go to testing folder
-path_toolbox_temp='pwd'
-cd ../sct_testing/
-path_testing='pwd' 
+# get current path
+path_toolbox_temp=`pwd`
 
 # display stuff
 echo ""
@@ -136,12 +134,8 @@ echo "or contact the developers."
 echo
 echo "You can now delete this folder by typing:"
 echo "> cd .."
-echo "> rm -rf ${path_toolbox_temp}*"
+echo "> rm -rf ${path_toolbox_temp}"
 echo
-echo "To get started, open a new Terminal and go to the testing folder:"
-echo "> cd $path_testing"
-echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
-echo
-echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
+echo "To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 
 
