@@ -27,7 +27,7 @@ class param:
         self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 15 # gap between landmarks along z
+        self.gapz = 15 # gap between landmarks along z voxels
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.fitting_method = 'splines' # splines | polynomial
         self.interpolation_warp = 'spline'
@@ -230,6 +230,7 @@ def main():
         #x_centerline_fit, y_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
+        z_centerline_fit = z_centerline
         
         
     if verbose == 2:
@@ -258,11 +259,11 @@ def main():
     print '\nGet coordinates of landmarks along curved centerline...'
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy.
     
-    # find derivative of polynomial
+    # find z indices along centerline given a specific gap
     step_z = int(round(nz_nonz/gapz))
     #iz_curved = [i for i in range (0, nz, gapz)]
-    iz_curved = [i*step_z for i in range (0, gapz)]
-    iz_curved.append(nz_nonz-1)     
+    iz_curved = [i*gapz for i in range (0, step_z)]
+    iz_curved.append(nz_nonz-1)
     #print iz_curved, len(iz_curved)
     n_iz_curved = len(iz_curved)
     #print n_iz_curved
@@ -328,19 +329,18 @@ def main():
             landmark_curved[index][3][2]=(-1/c)*(a*x+b*landmark_curved[index][3][1]+d)#z for +y
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
-    
-#    #display
-#    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-#    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
-#    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
-#    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    # from mpl_toolkits.mplot3d import Axes3D
+#     #display
+#     fig = plt.figure()
+#     ax = Axes3D(fig)
+#     ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
+#     ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
 #           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
 #           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-#    ax.set_xlabel('x')
-#    ax.set_ylabel('y')
-#    ax.set_zlabel('z')
-#    plt.show()
+#     ax.set_xlabel('x')
+#     ax.set_ylabel('y')
+#     ax.set_zlabel('z')
+#     plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
