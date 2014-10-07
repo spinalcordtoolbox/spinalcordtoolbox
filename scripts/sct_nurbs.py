@@ -74,8 +74,11 @@ except ImportError:
     sys.exit(2)
 #import matplotlib.pyplot as plt
 #from mpl_toolkits.mplot3d import Axes3D
+
+
 class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None):
+        #(self, degre=3, precision=1000, liste=None, sens=False, nurbs_ctl_points=None, size=None, div=None)
         """
         Ce constructeur initialise une NURBS et la construit.
         Si la variable sens est True : On construit la courbe en fonction des points de controle
@@ -105,7 +108,11 @@ class NURBS():
             P_y = [x[1] for x in liste]
             P_z = [x[2] for x in liste]
 
-            self.nbControle = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
+            if nbControl == None:
+                self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
+            else:
+                print 'In NURBS we get nurbs_ctl_points = ',nbControl
+                self.nbControl = nbControl
                                           #   increase nbeControle if "short data"
             self.pointsControle = self.reconstructGlobalApproximation(P_x,P_y,P_z,self.degre,self.nbControle)
             self.courbe3D, self.courbe3D_deriv= self.construct3D(self.pointsControle,self.degre,self.precision)
