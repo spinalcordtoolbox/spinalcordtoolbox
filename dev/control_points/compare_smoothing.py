@@ -11,6 +11,7 @@ import numpy as np
 
 def main(fname):
 
+    #list_sigma = [0.5, 5, 10, 15, 20]
     list_sigma = [0.5, 5, 10, 15, 20]
 
     for sigma in list_sigma:
