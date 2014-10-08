@@ -14,9 +14,6 @@ import linear_fitting
 import getopt
 
 
-#TODO coder notre propre MSE (utilisee dans linear fitting)
-
-
 class param:
     def __init__(self):
         self.remove = 0
