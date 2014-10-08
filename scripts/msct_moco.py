@@ -7,13 +7,14 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-08-14
+# Modified: 2014-10-04
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: params for ANTS: CC/MI, shrink fact, nb_it
+# TODO: use mask
 # TODO: unpad after applying transfo
-# TODO: make mask work with slicewise=0
 # TODO: do not output inverse warp for ants
 # TODO: ants: explore optin  --float  for faster computation
 
@@ -31,8 +32,8 @@ def moco(param):
 
     # retrieve parameters
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
-    fname_data = param.fname_data
-    fname_target = param.fname_target
+    file_data = param.file_data
+    file_target = param.file_target
     folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
@@ -49,8 +50,8 @@ def moco(param):
 
     # print arguments
     sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............'+fname_data, param.verbose)
-    sct.printv('  Reference file ........'+fname_target, param.verbose)
+    sct.printv('  Input file ............'+file_data, param.verbose)
+    sct.printv('  Reference file ........'+file_target, param.verbose)
     sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
     sct.printv('  Program ...............'+program, param.verbose)
     sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
@@ -59,11 +60,11 @@ def moco(param):
     sct.printv('  Mask size .............'+str(mask_size), param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
-    # check existence of input files
-    sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_target, verbose)
-
+    # # check existence of input files
+    # sct.printv('\nCheck file existence...', verbose)
+    # sct.check_file_exist(file_data, verbose)
+    # sct.check_file_exist(file_target, verbose)
+    #
     # Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
@@ -71,28 +72,28 @@ def moco(param):
     sct.create_folder(folder_mat)
 
     # get the right interpolation field depending on method
-    interp = sct.get_interpolation(param.program, param.interp)
+    #interp = sct.get_interpolation(param.program, param.interp)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # pad data (for ANTs)
     if program == 'ants' and todo == 'estimate' and slicewise == 0:
         sct.printv('\nPad data (for ANTs)...', verbose)
-        sct.run('sct_c3d '+fname_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+fname_target+'_pad.nii')
-        fname_target = fname_target+'_pad'
+        sct.run('sct_c3d '+file_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_target+'_pad.nii')
+        file_target = file_target+'_pad'
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
-    fname_data_splitT = fname_data + '_T'
-    sct.run(fsloutput + 'fslsplit ' + fname_data + ' ' + fname_data_splitT, verbose)
+    file_data_splitT = file_data + '_T'
+    sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # split target data along Z
     if slicewise:
-        file_data_ref_splitZ = fname_target + '_Z'
-        sct.run(fsloutput + 'fslsplit ' + fname_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
+        file_data_ref_splitZ = file_target + '_Z'
+        sct.run(fsloutput + 'fslsplit ' + file_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
 
     # Generate Gaussian Mask
     fslmask = []
@@ -160,8 +161,8 @@ def moco(param):
 
         # create indices and display stuff
         it = index[indice_index]
-        file_data_splitT_num.append(fname_data_splitT + str(it).zfill(4))
-        file_data_splitT_moco_num.append(fname_data + suffix + '_T' + str(it).zfill(4))
+        file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
+        file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
         sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
 
         # pad data (for ANTs)
@@ -174,20 +175,20 @@ def moco(param):
         if slicewise:
             # split data along Z
             sct.printv('Split data along Z...', verbose)
-            fname_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
-            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + fname_data_splitT_splitZ + ' -z'
+            file_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
+            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + file_data_splitT_splitZ + ' -z'
             status, output = sct.run(cmd, verbose)
             file_data_ref_splitZ_num = []
 
             # loop across Z
             sct.printv('Loop across Z ('+todo+')...', verbose)
             for iz in range(nz):
-                file_data_splitT_splitZ_num[it][iz] = fname_data_splitT_splitZ + str(iz).zfill(4)
+                file_data_splitT_splitZ_num[it][iz] = file_data_splitT_splitZ + str(iz).zfill(4)
                 file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
                 file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
                 file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
                 # run 2D registration
-                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], interp, 2, restrict_deformation, verbose)
+                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], param.interp, 2, restrict_deformation, verbose)
 
             # Merge data along Z
             if todo != 'estimate':
@@ -201,32 +202,37 @@ def moco(param):
         else:
             file_mat[it] = folder_mat + 'mat.T' + str(it)
             # run 3D registration
-            fail_mat[it] = register(program, todo, file_data_splitT_num[it], fname_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
+            fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
 
     # Replace failed transformation matrix to the closest good one
-    # TODO: do it also for the volume-based (not urgent...)
-    if slicewise:
+    # NB: this applies only for flirt, hence the ".txt" string added.
+    if slicewise and program == 'flirt':
         fT, fZ = np.where(fail_mat == 1)
         gT, gZ = np.where(fail_mat == 0)
         for it in range(len(fT)):
-            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'),verbose)
+            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'), verbose)
 
             # rename failed matrix
-            cmd = 'mv ' + file_mat[fT[it]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]] + '_failed'
+            cmd = 'mv ' + file_mat[fT[it]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]] + '_failed.txt'
             status, output = sct.run(cmd, verbose)
-
+            # find good Z indices across T corresponding to the current failed Zindex
             good_Zindex = np.where(gZ == fZ[it])
+            # find the corresponding T indices
             good_index = gT[good_Zindex]
-
-            I = np.amin(abs(good_index-fT[it]))
-            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]] + ' ' + file_mat[fT[it]][fZ[it]]
+            # find the T index that is closest to the current T
+            if len(good_index) == 1:
+                # this case was added, otherwise if good_index has single value [0], then I equals 1, hence it crashes.
+                I = 0
+            else:
+                I = np.amin(abs(good_index-fT[it]))
+            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]]+'.txt'
             status, output = sct.run(cmd, verbose)
 
     # Merge data along T
-    fname_data_moco = fname_data+suffix
+    file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        cmd = fsloutput + 'fslmerge -t ' + fname_data_moco
+        cmd = fsloutput + 'fslmerge -t ' + file_data_moco
         for indice_index in range(len(index)):
             cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
         sct.run(cmd, verbose)
@@ -243,17 +249,33 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
 
     # use flirt
     if program == 'flirt':
-        interp_fsl = sct.get_interpolation('flirt', interp)
+        #interp_fsl = sct.get_interpolation('flirt', interp)
         cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_src + ' -ref ' + file_dest
         if todo == 'estimate' or todo == 'estimate_and_apply':
             cmd = cmd + ' -omat ' + file_mat + '.txt -cost normcorr'
         if todo == 'apply' or todo == 'estimate_and_apply':
-            cmd = cmd + ' -out ' + file_out + ' -interp ' + interp_fsl
+            cmd = cmd + ' -out ' + file_out + sct.get_interpolation('flirt', interp)
             if todo == 'apply':
                 cmd = cmd + ' -applyxfm -init ' + file_mat + '.txt'
         sct.run(cmd, verbose)
         #Check transformation absurdity
         fail_mat = check_transformation_absurdity(file_mat+'.txt')
+
+    # use antsSliceRegularized
+    elif program == 'slicereg':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsSliceRegularizedRegistration' \
+                  ' -p 5' \
+                  ' --transform Translation[1]' \
+                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
+                  ' --iterations 5' \
+                  ' --shrinkFactors 1' \
+                  ' --smoothingSigmas 1' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  +sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
+        sct.run(cmd, verbose)
 
     # use ants
     elif program == 'ants':
@@ -267,9 +289,26 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
+        sct.run(cmd, verbose)
+
+    # use ants_rigid
+    elif program == 'ants_rigid':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsRegistration' \
+                  ' --dimensionality '+str(dim)+' ' \
+                  ' --transform Translation[0.5]' \
+                  ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 4]' \
+                  ' --convergence 5x3' \
+                  ' --shrink-factors 2x1' \
+                  ' --smoothing-sigmas 1x1mm' \
+                  ' --Restrict-Deformation '+restrict_deformation+'' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  +sct.get_interpolation('sct_antsRegistration', interp)
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
     # use ants_affine
@@ -284,9 +323,9 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 2x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
     # return status of failure
