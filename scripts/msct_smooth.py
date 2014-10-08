@@ -173,8 +173,8 @@ def opt_f(x, y, z):
             #msx = mean_squared_error(x, x_fit)
             #msy = mean_squared_error(y, y_fit)
 
-            msex = mean_squarederror(x, x_fit)
-            msey = mean_squarederror(y, y_fit)
+            msex = mean_squared_error(x, x_fit)
+            msey = mean_squared_error(y, y_fit)
 
             #print msx, msex, f
             #print msy, msey, f
@@ -361,11 +361,14 @@ def moving_average(y, n=3) :
 #=======================================================================================================================
 # moving_average
 #=======================================================================================================================
-def mean_squarederror(x, x_fit):
+def mean_squared_error(x, x_fit):
     mse = 0
-    n = len(x)
-    for i in range(0,len(x)):
-        mse += (x[i]-x_fit[i])*(x[i]-x_fit[i])
-    mse = float(mse)
-    mse *= (1/float(n))
-    return mse
+    if len(x_fit) == len(x) and len(x) is not 0:
+        n = len(x)
+        for i in range(0,len(x)):
+            mse += (x[i]-x_fit[i])*(x[i]-x_fit[i])
+        mse = float(mse)
+        mse *= (1/float(n))
+        return mse
+    else:
+        print "cannot calculate the mean squared error, check if the argument have the same length. \n"
