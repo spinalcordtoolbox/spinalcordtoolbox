@@ -25,7 +25,8 @@ import sct_utils as sct
 class param:
     def __init__(self):
         self.debug = 0
-        self.verbose = 0  # verbose
+        self.verbose = 1  # verbose
+        self.dim = 3
         self.interp = 'spline'  # nn, trilinear, spline
 
 
@@ -39,22 +40,21 @@ def main():
     fname_dest = ''  # destination image (fix)
     fname_src_reg = ''
     verbose = 1
+    dim = param.dim
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
-        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_DATA_DIR')
-        # parameters
-        fname_src = path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz'
-        fname_warp_list = path_sct_data+'/errsm_30/t1/warp_template2t1.nii.gz'
-        fname_dest = path_sct_data+'/errsm_30/t1/t1_crop.nii.gz'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_src = path_sct_data+'/template/MNI-Poly-AMU_T2.nii.gz'
+        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz'
+        fname_dest = path_sct_data+'/t2/t2.nii.gz'
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -72,13 +72,15 @@ def main():
             verbose = int(arg)
         elif opt in ('-w'):
             fname_warp_list = arg
+        elif opt in ('-x'):
+            dim = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
         usage()
 
     # get the right interpolation field depending on method
-    interp = sct.get_interpolation('WarpImageMultiTransform', param.interp)
+    interp = sct.get_interpolation('sct_antsApplyTransforms', param.interp)
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
@@ -89,6 +91,7 @@ def main():
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
+    sct.check_file_exist(fname_src)
     sct.check_file_exist(fname_dest)
     for i in range(len(fname_warp_list)):
         sct.check_file_exist(fname_warp_list[i])
@@ -109,11 +112,11 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list.reverse()
-    sct.run('sct_WarpImageMultiTransform 3 '+fname_src+' '+fname_src_reg+' '+' '.join(fname_warp_list)+' -R '+fname_dest+interp, verbose)
+    sct.run('sct_antsApplyTransforms -d ' + str(dim) + ' -i '+fname_src+' -o '+fname_src_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(fname_src_reg, path_out, file_out, ext_out)
+    sct.generate_output_file(fname_src_reg, path_out+file_out+ext_out)
 
     # to view results
     print '\nDone! To view results, type:'
@@ -130,7 +133,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Apply transformations. This function is a wrapper for sct_WarpImageMultiTransform (ANTs).
+  Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest> -w <warp_list>
@@ -142,8 +145,9 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
-  -p {nn,trilinear,spline}  interpolation method. Default="""+str(param.interp)+"""
+  -p {nn,linear,spline}  interpolation method. Default="""+str(param.interp)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -x {2,3}              dimension of the data. Default="""+str(param.dim)+"""
   -h                    help. Show this message
 
 EXAMPLE

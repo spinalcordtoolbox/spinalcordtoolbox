@@ -19,7 +19,7 @@ try:
 except ImportError:
     print '--- numpy not installed! ---'
     sys.exit(2)
-from sklearn.metrics import mean_squared_error
+#from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 #from sct_nurbs import NURBS
 
@@ -46,12 +46,11 @@ def spline_2D(z_centerline, x_centerline):
     tck = splrep(z_centerline, x_centerline, s=smoothing_param)
     x_centerline_fit = splev(z_centerline, tck)
     return x_centerline_fit
-    '''
-    plt.figure()
-    plt.plot(z_centerline,means)
-    plt.plot(z_centerline,means_smooth)
-    plt.show()
-    '''
+
+    # plt.figure()
+    # plt.plot(z_centerline,means)
+    # plt.plot(z_centerline,means_smooth)
+    # plt.show()
 
 
 #=======================================================================================================================
@@ -171,14 +170,14 @@ def opt_f(x, y, z):
             x_fit = non_parametric(z, x, f)
             y_fit = non_parametric(z, y, f)
 
-            msx = mean_squared_error(x, x_fit)
-            msy = mean_squared_error(y, y_fit)
+            #msx = mean_squared_error(x, x_fit)
+            #msy = mean_squared_error(y, y_fit)
 
-            msex = meanSquareError(x, x_fit)
-            msey = meanSquareError(y, y_fit)
+            msex = mean_squarederror(x, x_fit)
+            msey = mean_squarederror(y, y_fit)
 
-            print msx, msex, f
-            print msy, msey, f
+            #print msx, msex, f
+            #print msy, msey, f
 
             if msx < msx_min:
                 msx_min = msx
@@ -195,21 +194,21 @@ def opt_f(x, y, z):
             mean_yd = np.mean(y_fit_dd)
             mean = mean_xd + mean_yd
 
-            ax = plt.subplot(1,2,1)
-            plt.plot(z, x_fit, 'b-', label='centerline')
-            plt.plot(z, x_fit_d, 'r-', label='deriv')
-            plt.plot(z, x_fit_dd, 'y-', label='derivsec')
-            plt.xlabel('x')
-            plt.ylabel('z')
-            ax = plt.subplot(1,2,2)
-            plt.plot(z, y_fit, 'b-', label='centerline')
-            plt.plot(z, y_fit_d, 'r-', label='deriv')
-            plt.plot(z, y_fit_dd, 'r-', label='fit')
-            plt.xlabel('y')
-            plt.ylabel('z')
-            handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels)
-            plt.show()
+            # ax = plt.subplot(1,2,1)
+            # plt.plot(z, x_fit, 'b-', label='centerline')
+            # plt.plot(z, x_fit_d, 'r-', label='deriv')
+            # plt.plot(z, x_fit_dd, 'y-', label='derivsec')
+            # plt.xlabel('x')
+            # plt.ylabel('z')
+            # ax = plt.subplot(1,2,2)
+            # plt.plot(z, y_fit, 'b-', label='centerline')
+            # plt.plot(z, y_fit_d, 'r-', label='deriv')
+            # plt.plot(z, y_fit_dd, 'r-', label='fit')
+            # plt.xlabel('y')
+            # plt.ylabel('z')
+            # handles, labels = ax.get_legend_handles_labels()
+            # ax.legend(handles, labels)
+            # plt.show()
 
             print 'AMP', amp_xd, amp_yd
             print 'MEAN', mean_xd, mean_yd, mean
@@ -246,13 +245,13 @@ def b_spline_nurbs(x, y, z, fname_centerline, degree=3,point_number=3000):
           
     print '\nFitting centerline using B-spline approximation...'
     data = [[x[n], y[n], z[n]] for n in range(len(x))]
-    '''
-    if control_points == 0:
-        nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-    else:
-        print 'In b_spline_nurbs we get control_point = ', control_points
-        nurbs = NURBS(degree, point_number, data, False, control_points)
-    '''
+
+    # if control_points == 0:
+    #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
+    # else:
+    #     print 'In b_spline_nurbs we get control_point = ', control_points
+    #     nurbs = NURBS(degree, point_number, data, False, control_points)
+
     import math
     centerlineSize = getSize(x, y, z, fname_centerline)
     nbControl = 30*math.log(centerlineSize, 10) - 42
@@ -362,22 +361,11 @@ def moving_average(y, n=3) :
 #=======================================================================================================================
 # moving_average
 #=======================================================================================================================
-def meanSquareError(x, x_fit):
+def mean_squarederror(x, x_fit):
     mse = 0
     n = len(x)
     for i in range(0,len(x)):
         mse += (x[i]-x_fit[i])*(x[i]-x_fit[i])
-    #mse = (1/n)*mse
+    mse = float(mse)
+    mse *= (1/float(n))
     return mse
-
-
-
-
-
-
-
-
-
-
-
-

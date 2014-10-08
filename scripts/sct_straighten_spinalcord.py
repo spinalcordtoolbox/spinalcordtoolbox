@@ -27,9 +27,9 @@ class param:
         self.debug = 0
         self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 15 # gap between landmarks along z
+        self.gapz = 2 # gap between landmarks along z voxels
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        self.fitting_method = 'splines' # splines | polynomial
+        self.fitting_method = 'smooth' # splines | polynomial
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1 # remove temporary files
         self.verbose = 1
@@ -56,11 +56,6 @@ from scipy import ndimage
 import msct_smooth
 import matplotlib.pyplot as plt
 
-
-
-# check if dependant software are installed
-sct.check_if_installed('flirt -help','FSL')
-sct.check_if_installed('sct_WarpImageMultiTransform -h','ANTS')
 
 
 
@@ -95,8 +90,8 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
         fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
-        fame_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
+        # fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
+        # fame_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
         remove_temp_files = 0
         centerline_fitting = 'smooth'
         import matplotlib.pyplot as plt
@@ -194,6 +189,7 @@ def main():
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
     fname_centerline_pad = 'pad_' + fname_centerline_orient
+
     # smoothing the centerline
     if centerline_fitting == 'smooth':
         pad = str(smooth_padding)
@@ -222,7 +218,7 @@ def main():
     x_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
     z_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
-    
+
     # Two possible scenario:
     # 1. the centerline is probabilistic: each slice contains voxels with the probability of containing the centerline [0:...:1]
     # We only take the maximum value of the image to aproximate the centerline.
@@ -262,14 +258,22 @@ def main():
     # clear variable
     del data
 
+
+    # Following lines stand for changing centerline from segmentation to binary centerline
+    file = nibabel.load(fname_centerline_orient)
+    centerline_orient_hd = file.get_header()
+    centerline_orient_hd.set_data_dtype('uint8')
+    data_centerline = file.get_data()
+    data_centerline = data_centerline*0
+    for i in range(0, nz):
+        data_centerline[x_centerline[i], y_centerline[i], i] = 1
+    img_centerline = nibabel.Nifti1Image(data_centerline, None, centerline_orient_hd)
+    nibabel.save(img_centerline, fname_centerline_orient)
+
     # Fit the centerline points with the kind of curve given as argument of the script and return the new fitted coordinates
     if centerline_fitting == 'splines':
         #if nurbs_ctl_points == 0:
         #    x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline)
-        #else:
-        #    print 'In sct_straighten_spinnalcord: nrbs_ctl_points = ',nurbs_ctl_points
-        #    x_centerline_fit, y_centerline_fit,z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline,y_centerline,z_centerline, nurbs_ctl_points)
-        #    print len(x_centerline_deriv)
 
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.b_spline_nurbs(x_centerline, y_centerline, z_centerline, 'pad_' + fname_centerline_orient)
 
@@ -277,20 +281,17 @@ def main():
     elif centerline_fitting == 'polynomial':
         x_centerline_fit, y_centerline_fit, polyx, polyy = polynome_centerline(x_centerline,y_centerline,z_centerline)
 
+        z_centerline_fit = z_centerline
 
     elif centerline_fitting == 'non_parametric':
 
         z_centerline.append(z_centerline[-1] + 0.1)
         x_centerline.append(x_centerline[-1])
         y_centerline.append(y_centerline[-1])
-        #print z_centerline
-        #print x_centerline
         f_x, f_y = msct_smooth.opt_f(numpy.asarray(x_centerline), numpy.asarray(y_centerline), numpy.asarray(z_centerline))
 
         x_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(x_centerline), f_x).tolist()
         y_centerline_fit = msct_smooth.non_parametric(numpy.asarray(z_centerline), numpy.asarray(y_centerline), f_y).tolist()
-
-
 
         x_centerline_fit.pop()
         y_centerline_fit.pop()
@@ -300,16 +301,15 @@ def main():
         y_centerline.pop()
 
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
+        z_centerline_fit = z_centerline
+
 
     elif centerline_fitting == 'smooth':
-        # print x_centerline, y_centerline
-
-        #x_centerline_fit = [x - smooth_padding for x in x_centerline]
-        #y_centerline_fit = [y - smooth_padding for y in y_centerline]
 
         x_centerline_fit = x_centerline
         y_centerline_fit = y_centerline
         z_centerline_fit = z_centerline
+
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
 
@@ -339,11 +339,11 @@ def main():
     print '\nGet coordinates of landmarks along curved centerline...'
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy.
     
-    # find derivative of polynomial
+    # find z indices along centerline given a specific gap
     step_z = int(round(nz_nonz/gapz))
     #iz_curved = [i for i in range (0, nz, gapz)]
     iz_curved = [i*step_z for i in range (0, gapz)]
-    iz_curved.append(nz_nonz-1)     
+    iz_curved.append(nz_nonz-1)
     #print iz_curved, len(iz_curved)
     n_iz_curved = len(iz_curved)
     #print n_iz_curved
@@ -408,19 +408,20 @@ def main():
             landmark_curved[index][4][1],landmark_curved[index][3][1]=solve((y_n-y)**2+((-1/c)*(a*x+b*y_n+d)-z)**2-gapxy**2,y_n)  #y for -y and +y
             landmark_curved[index][3][2]=(-1/c)*(a*x+b*landmark_curved[index][3][1]+d)#z for +y
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
-    
-    # from mpl_toolkits.mplot3d import Axes3D
-    # #display
-    # fig = plt.figure()
-    # ax = Axes3D(fig)
-    # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
-    # ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-    #       [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-    #       [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-    # ax.set_xlabel('x')
-    # ax.set_ylabel('y')
-    # ax.set_zlabel('z')
-    # plt.show()
+
+    if verbose == 2:
+        from mpl_toolkits.mplot3d import Axes3D
+        #display
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
+        ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+              [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+              [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
@@ -475,6 +476,7 @@ def main():
     #==========================================================================================
     # Pad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV
     # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
+    #sct.run('fslview ' + fname_centerline_orient)
     print '\nPad input volume to deal with the fact that some landmarks on the curved centerline might be outside the FOV...'
     sct.run('sct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
     
@@ -548,7 +550,8 @@ def main():
     cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     print('>> '+cmd)
     commands.getstatusoutput(cmd)
-    
+    #sct.run(cmd)
+
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     print '\nEstimate b-spline transformation: straight --> curve...'
