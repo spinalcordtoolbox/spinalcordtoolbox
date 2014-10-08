@@ -268,11 +268,11 @@ def main():
         # destination image. This approach was chosen instead of inputting the transfo into ANTs, because if the transfo
         # does not bring the image to the same space as the destination image, then warping fields cannot be concatenated at the end.
         print('\nApply initial transformation to moving image...')
-        sct.run('sct_WarpImageMultiTransform 3 '+file_src_tmp+'.nii '+file_src_reg_tmp+'.nii -R '+file_dest_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+        sct.run('sct_apply_transfo -i '+file_src_tmp+'.nii -o '+file_src_reg_tmp+'.nii -d '+file_dest_tmp+'.nii -w '+fname_init_transfo+' -p spline')
         file_src_tmp = file_src_reg_tmp
         if use_segmentation:
             file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
-            sct.run('sct_WarpImageMultiTransform 3 '+file_src_seg_tmp+'.nii '+file_src_seg_reg_tmp+'.nii -R '+file_dest_seg_tmp+'.nii '+fname_init_transfo+' --use-BSpline')
+            sct.run('sct_apply_transfo -i '+file_src_seg_tmp+'.nii -o '+file_src_seg_reg_tmp+'.nii -d '+file_dest_seg_tmp+'.nii -w '+fname_init_transfo+' -p spline')
             file_src_seg_tmp = file_src_seg_reg_tmp
 
     # Pad the target and source image (because ants doesn't deform the extremities)
@@ -402,21 +402,21 @@ def main():
 
     # Apply warping field to src data
     print('\nApply transfo source --> dest...')
-    status, output = sct.run('sct_WarpImageMultiTransform 3 src.nii src_reg.nii -R dest.nii warp_src2dest.nii.gz --use-BSpline')
+    status, output = sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -p spline')
     if compute_dest2src:
         print('\nApply transfo dest --> source...')
-        status, output = sct.run('sct_WarpImageMultiTransform 3 dest.nii dest_reg.nii -R src.nii warp_dest2src.nii.gz --use-BSpline')
+        status, output = sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -p spline')
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     print('\nGenerate output files...')
-    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out, file_out, ext_out)
-    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out, 'warp_src2dest', '.nii.gz')
+    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out)
+    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out+'warp_src2dest'+'.nii.gz')
     if compute_dest2src:
-        fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out, file_dest+'_reg', ext_dest)
-        sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out, 'warp_dest2src', '.nii.gz')
+        fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest)
+        sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -450,8 +450,7 @@ DESCRIPTION
   contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve
   maximum robustness. To do so, you can use sct_segmentation_propagation.
   The program outputs a warping field that can be used to register other images to the destination
-  image. To apply the warping field to another image, type this:
-    sct_WarpImageMultiTransform 3 another_image another_image_reg -R dest_image warp_src2dest.
+  image. To apply the warping field to another image, use sct_apply_transfo
 
 USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest>
