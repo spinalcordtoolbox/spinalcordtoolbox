@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 #
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
@@ -94,8 +93,8 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        # fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
-        # fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
+        fname_anat = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
+        fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         fname_anat = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/data_rpi.nii'
         fame_centerline = '/Users/julien/code/spinalcordtoolbox/scripts/tmp.140713193417/segmentation_rpi.nii.gz'
         remove_temp_files = 0
@@ -182,6 +181,9 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # Open centerline
+    #==========================================================================================
+    # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
     sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
@@ -207,9 +209,7 @@ def main():
         sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
         sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
 
-    # Open centerline
-    #==========================================================================================
-    # Change orientation of the input centerline into RPI
+
     print '\nOpen centerline volume...'
     file = nibabel.load(fname_centerline_pad)
     data = file.get_data()
@@ -309,42 +309,27 @@ def main():
 
         x_centerline_fit = x_centerline
         y_centerline_fit = y_centerline
+        z_centerline_fit = z_centerline
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = msct_smooth.evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline)
 
 
     if verbose == 2:
-        if centerline_fitting == 'splines':
-            # plot centerline
-            #print len(x_centerline_fit),len(y_centerline_fit),len(z_centerline), x_centerline
-            ax = plt.subplot(1,2,1)
-            plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
-            plt.plot(x_centerline_fit, z_centerline_fit, 'r-', label='fit')
-            plt.xlabel('x')
-            plt.ylabel('z')
-            ax = plt.subplot(1,2,2)
-            plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
-            plt.plot(y_centerline_fit, z_centerline_fit, 'r-', label='fit')
-            plt.xlabel('y')
-            plt.ylabel('z')
-            handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels)
-            plt.show()
-        else:
-            ax = plt.subplot(1,2,1)
-            plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
-            plt.plot(x_centerline_fit, z_centerline, 'r-', label='fit')
-            plt.xlabel('x')
-            plt.ylabel('z')
-            ax = plt.subplot(1,2,2)
-            plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
-            plt.plot(y_centerline_fit, z_centerline, 'r-', label='fit')
-            plt.xlabel('y')
-            plt.ylabel('z')
-            handles, labels = ax.get_legend_handles_labels()
-            ax.legend(handles, labels)
-            plt.show()
+        # plot centerline
+        #print len(x_centerline_fit),len(y_centerline_fit),len(z_centerline), x_centerline
+        ax = plt.subplot(1,2,1)
+        plt.plot(x_centerline, z_centerline, 'b:', label='centerline')
+        plt.plot(x_centerline_fit, z_centerline_fit, 'r-', label='fit')
+        plt.xlabel('x')
+        plt.ylabel('z')
+        ax = plt.subplot(1,2,2)
+        plt.plot(y_centerline, z_centerline, 'b:', label='centerline')
+        plt.plot(y_centerline_fit, z_centerline_fit, 'r-', label='fit')
+        plt.xlabel('y')
+        plt.ylabel('z')
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles, labels)
+        plt.show()
 
-    
     if centerline_fitting == 'splines':
         z_centerline = z_centerline_fit
             
@@ -424,19 +409,18 @@ def main():
             landmark_curved[index][3][2]=(-1/c)*(a*x+b*landmark_curved[index][3][1]+d)#z for +y
             landmark_curved[index][4][2]=(-1/c)*(a*x+b*landmark_curved[index][4][1]+d)#z for -y
     
-    
-#    #display
-#    fig = plt.figure()
-#    ax = fig.add_subplot(111, projection='3d')
-#    ax.plot(x_centerline_fit, y_centerline_fit,z_centerline, 'g')
-#    ax.plot(x_centerline, y_centerline,z_centerline, 'r')
-#    ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
-#           [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
-#    ax.set_xlabel('x')
-#    ax.set_ylabel('y')
-#    ax.set_zlabel('z')
-#    plt.show()
+    # from mpl_toolkits.mplot3d import Axes3D
+    # #display
+    # fig = plt.figure()
+    # ax = Axes3D(fig)
+    # ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
+    # ax.plot([landmark_curved[i][j][0] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    #       [landmark_curved[i][j][1] for i in range(0, n_iz_curved) for j in range(0, 5)], \
+    #       [landmark_curved[i][j][2] for i in range(0, n_iz_curved) for j in range(0, 5)], '.')
+    # ax.set_xlabel('x')
+    # ax.set_ylabel('y')
+    # ax.set_zlabel('z')
+    # plt.show()
 
     # Get coordinates of landmarks along straight centerline
     #==========================================================================================
@@ -541,14 +525,18 @@ def main():
     #sct.run(fsloutput+'fslmaths tmp.landmarks_curved.nii -kernel box 3x3x3 -dilD tmp.landmarks_curved_dilated -odt short')
     #sct.run(fsloutput+'fslmaths tmp.landmarks_straight.nii -kernel box 3x3x3 -dilD tmp.landmarks_straight_dilated -odt short')
     
+    print '\nConvert landmarks to INT...'
+    sct.run('sct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz')
+    sct.run('sct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz')
+
     # Estimate rigid transformation
     print '\nEstimate rigid transformation between paired landmarks...'
     sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt')
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
-    sct.run('sct_WarpImageMultiTransform 3 tmp.landmarks_curved.nii.gz tmp.landmarks_curved_rigid.nii.gz -R tmp.landmarks_straight.nii.gz tmp.curve2straight_rigid.txt --use-NN')
-    
+    sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -p nn')
+
     # Estimate b-spline transformation curve --> straight
     print '\nEstimate b-spline transformation: curve --> straight...'
     sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0')
@@ -584,18 +572,17 @@ def main():
     
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    sct.run('sct_WarpImageMultiTransform 3 '+file_anat+ext_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
-    # sct.run('sct_WarpImageMultiTransform 3 '+fname_anat+' tmp.anat_rigid_warp.nii.gz -R tmp.landmarks_straight_crop.nii.gz '+interpolation_warp+ ' tmp.curve2straight.nii.gz')
-    
+    sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -p '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+
     # come back to parent folder
     os.chdir('..')
 
     # Generate output file (in current folder)
     # TODO: do not uncompress the warping field, it is too time consuming!
     print '\nGenerate output file (in current folder)...'
-    sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz','','warp_curve2straight','.nii.gz')  # warping field
-    sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz','','warp_straight2curve','.nii.gz')  # warping field
-    sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz','',file_anat+'_straight',ext_anat)  # straightened anatomic
+    sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz', 'warp_curve2straight.nii.gz')  # warping field
+    sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz', 'warp_straight2curve.nii.gz')  # warping field
+    sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat)  # straightened anatomic
 
     # Remove temporary files
     if remove_temp_files == 1:
