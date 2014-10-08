@@ -4,13 +4,13 @@ function sct_dmri_moco(varargin)
 % if users does not provide data, calls a GUI to select data.
 %
 % INPUT
-% % TODO
 %     method : 'b0','dwi'*,'dwi_lowbvalue'
-%     crop : 'manual'*, 'box', 'none', 'centerline', 'autobox'
+%     crop : 'manual', 'box', 'none'*, 'centerline', 'autobox'
 %     eddy : 0 | 1*
 %     interp : 'nearestneighbour', 'spline'*, 'sinc'
 %     gaussian_mask : <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-    
+%     smooth_moco :   0 | 1*    
+
 % % JULIEN:  NOTES
 %	test slice-wise moco for dmri
 %	check disco.
@@ -44,6 +44,7 @@ addOptional(p,'apply_moco_on_croped',1,@isnumeric);
 interp={'nearestneighbour', 'spline', 'sinc'};
 addOptional(p,'interp','spline',@(x) any(validatestring(x,interp)));
 addOptional(p,'gaussian_mask',0,@isnumeric);
+addOptional(p,'slicewise',1,@isnumeric);
 
 parse(p,varargin{:})
 
@@ -112,7 +113,7 @@ sct.dmri.grad_nonlin.JacDet			= '0';
 sct.dmri.eddy_correct.do			= p.Results.eddy;
 sct.dmri.eddy_correct.swapXY		= 0; % Swap X-Y dimension (to have X as phase-encoding direction). If acquisition was axial: set to 1, if sagittal: set to 0.
 sct.dmri.eddy_correct.mask_brain	= 0; % Create mask automatically using BET and use the mask to register pairs of opposite directions.   
-sct.dmri.eddy_correct.slicewise		= 1; % binary. Estimate transformation for each slice independently. If you assume eddy-current are not dependent of the Z direction, then put to 0, otherwise 1. Default=1.
+sct.dmri.eddy_correct.slicewise		= p.Results.slicewise; % binary. Estimate transformation for each slice independently. If you assume eddy-current are not dependent of the Z direction, then put to 0, otherwise 1. Default=1.
 sct.dmri.eddy_correct.dof			= which('schedule_TxTy_2mm.sch'); % 'TxSx' | 'TxSxKx'*    Degree of freedom for coregistration of gradient inversed polarity. Tx = Translation along X, Sx = scaling along X, Kx = shearing along X. N.B. data will be temporarily X-Y swapped because FLIRT can only compute shearing parameter along X, not Y
 sct.dmri.eddy_correct.fit_transfo	= 0; % Fit transformation parameter (linear least square). Assumes linearity between transformation coefficient (Ty, Sy, Ky) and diffusion gradient amplitude (G). Default=0
 sct.dmri.eddy_correct.apply_jacobian= 0; % Apply Jacobian to correct for intensity modulation due to stretching/expansion. Default=1. 
@@ -159,7 +160,7 @@ sct.dmri.moco_intra.gaussian_mask       = p.Results.gaussian_mask; % Default: 0.
 sct.dmri.moco_intra.dwi_group_size      = 10; % number of images averaged for 'dwi' method.
 sct.dmri.moco_intra.program             = 'FLIRT';% 'FLIRT' or 'SPM' (slicewise not available with SPM.... put slicewise = 0)
 sct.dmri.moco_intra.ref                 = '1'; % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
-sct.dmri.moco_intra.slicewise		    = 1; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
+sct.dmri.moco_intra.slicewise		    = p.Results.slicewise; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
 sct.dmri.moco_intra.cost_function_flirt	= 'normcorr'; % 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
 sct.dmri.moco_intra.cost_function_spm   = 'nmi'; % JULIEN: add other options
 sct.dmri.moco_intra.flirt_options       = ['-interp ' p.Results.interp]; % additional FLIRT options. Example: '-dof 6 -interp sinc'. N.B. If gradient non-linearities, it makes sense to use dof=12, otherwise dof=6.

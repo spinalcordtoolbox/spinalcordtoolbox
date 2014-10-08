@@ -429,9 +429,9 @@ def main():
     #sct.generate_output_file('tmp.centerline_polycoeffs_y.txt','./','centerline_polycoeffs_y','.txt')
     #sct.generate_output_file('tmp.centerline_coordinates.txt','./','centerline_coordinates','.txt')
     #sct.generate_output_file('tmp.anat_orient.nii','./',file_anat+'_rpi',ext_anat)
-    sct.generate_output_file('tmp.anat_orient_fit.nii','./',file_anat+'_rpi_align',ext_anat)
-    sct.generate_output_file('tmp.mask_orient_fit.nii','./',file_anat+'_mask',ext_anat)
-    fname_output_centerline = sct.generate_output_file('tmp.point_orient_fit.nii','./',file_anat+'_centerline',ext_anat)
+    sct.generate_output_file('tmp.anat_orient_fit.nii', file_anat+'_rpi_align'+ext_anat)
+    sct.generate_output_file('tmp.mask_orient_fit.nii', file_anat+'_mask'+ext_anat)
+    fname_output_centerline = sct.generate_output_file('tmp.point_orient_fit.nii', file_anat+'_centerline'+ext_anat)
 
     # Delete temporary files
     if remove_tmp_files == 1:
