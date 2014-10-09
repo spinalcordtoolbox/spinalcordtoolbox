@@ -91,6 +91,7 @@ def main():
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
+    sct.check_file_exist(fname_src)
     sct.check_file_exist(fname_dest)
     for i in range(len(fname_warp_list)):
         sct.check_file_exist(fname_warp_list[i])
