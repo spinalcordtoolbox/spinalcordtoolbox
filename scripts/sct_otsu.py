@@ -23,7 +23,7 @@ import time
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.threshold = '3'  # threshold value
         self.file_suffix = '_seg'  # output suffix
         self.verbose = 1
