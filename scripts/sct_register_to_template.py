@@ -201,7 +201,7 @@ def main():
 
     # Push the input labels in the template space
     print('\nPush the input labels to the straight space...')
-    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz')
+    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -p nn')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
@@ -213,7 +213,7 @@ def main():
 
     # Apply affine transformation: straight --> template
     print '\nApply affine transformation: straight --> template...'
-    status, output = sct.run('sct_apply_transfo -i data_rpi_straight.nii.gz -o data_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w straight2templateAffine.txt')
+    status, output = sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w straight2templateAffine.txt')
     status, output = sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w straight2templateAffine.txt')
 
     # now threshold at 0.5 (for partial volume interpolation)
@@ -239,7 +239,7 @@ def main():
     # Apply warping fields to anat and template
     if output_type == 1:
         sct.run('sct_apply_transfo -i '+fname_template+' -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
-        sct.run('sct_apply_transfo -i data.nii.gz  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
+        sct.run('sct_apply_transfo -i data.nii  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
 
     # come back to parent folder
     os.chdir('..')

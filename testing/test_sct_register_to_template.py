@@ -18,14 +18,15 @@ import sct_utils as sct
 
 
 def test(path_data):
-    folder_data = 't2/'
+    folder_data = ['t2/', 'template/']
     file_data = ['t2.nii.gz', 'labels.nii.gz', 't2_seg.nii.gz']
 
-    cmd = 'sct_register_to_template -i ' + path_data + folder_data + file_data[0] \
-          + ' -l ' + path_data + folder_data + file_data[1] \
-          + ' -m ' + path_data + folder_data + file_data[2] \
+    cmd = 'sct_register_to_template -i ' + path_data + folder_data[0] + file_data[0] \
+          + ' -l ' + path_data + folder_data[0] + file_data[1] \
+          + ' -m ' + path_data + folder_data[0] + file_data[2] \
           + ' -r 0' \
-          + ' -s superfast'
+          + ' -s superfast' \
+          + ' -p ' + path_data + folder_data[1]
 
     '''
     s, output = sct.run(cmd, 0)
