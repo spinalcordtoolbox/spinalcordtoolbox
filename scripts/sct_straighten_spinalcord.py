@@ -29,7 +29,7 @@ class param:
         self.gapxy = 20 # size of cross in x and y direction for the landmarks
         self.gapz = 2 # gap between landmarks along z voxels
         self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        self.fitting_method = 'smooth' # splines | polynomial
+        self.fitting_method = 'smooth' # smooth | splines | polynomial
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1 # remove temporary files
         self.verbose = 1
@@ -680,11 +680,11 @@ def usage():
         '\n'\
         'MANDATORY ARGUMENTS\n' \
         '  -i                input volume.\n' \
-        '  -c                centerline or segmentation. Centerline must cover each "z" slices.\n' \
+        '  -c                centerline or segmentation.\n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
         '  -p <padding>      amount of padding for generating labels. Default='+str(param.padding)+'\n' \
-        '  -f {splines,polynomial}  Method used to fit the centerline (or segmentation). Default='+str(param.fitting_method)+'\n' \
+        '  -f {smooth,splines,polynomial}  centerline regularization method. Default='+str(param.fitting_method)+'\n' \
         '  -w {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
         '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param.verbose)+'\n' \
