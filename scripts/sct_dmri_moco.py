@@ -40,6 +40,8 @@ from sct_dmri_eddy_correct import eddy_correct
 import sct_utils as sct
 import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
+import importlib
+
 
 class param:
     def __init__(self):
@@ -71,6 +73,7 @@ class param:
         self.min_norm = 0.001
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
+        self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
 
 
 #=======================================================================================================================
@@ -87,7 +90,7 @@ def main():
     path_out = '.'
 
     # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+    status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
@@ -99,11 +102,12 @@ def main():
         param.verbose = 1
         param.slicewise = 0
         param.run_eddy = 0
+        param.otsu = 3
         param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:t:v:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -137,6 +141,8 @@ def main():
             param.remove_tmp_files = int(arg)
         elif opt in ('-s'):
             param.mask_size = float(arg)
+        elif opt in ('-t'):
+            param.otsu = int(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
         elif opt in ('-z'):
@@ -146,15 +152,6 @@ def main():
     if param.fname_data == '' or param.fname_bvecs == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
-
-    # if param.cost_function_flirt == '':
-    #     param.cost_function_flirt = 'normcorr'
-
-    # if param.path_out == '':
-    #     path_out = ''
-    #     param.path_out = os.getcwd() + '/'
-    # global path_out
-    # path_out = param.path_out
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............'+param.fname_data, param.verbose)
@@ -331,9 +328,21 @@ def dmri_moco(param):
     sct.run(cmd, param.verbose)
 
     # Average DW Images
+    # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     fname_dwi_mean = 'dwi_mean'  
     sct.run(fsloutput + 'fslmaths ' + file_dwi_groups_means_merge + ' -Tmean ' + file_dwi_mean, param.verbose)
+
+    # segment dwi images using otsu algorithm
+    if param.otsu:
+        # import module
+        otsu = importlib.import_module('sct_otsu')
+        # get class from module
+        param_otsu = otsu.param()  #getattr(otsu, param)
+        param_otsu.fname_data = 'dwi_averaged_groups.nii'
+        param_otsu.threshold = param.otsu
+        # run module
+        otsu.otsu(param_otsu)
 
     #=======================================================================================================================
     #START MOCO
@@ -480,6 +489,8 @@ OPTIONAL ARGUMENTS
   -o <path_out>    Output path.
   -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
+  -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
+                   For no segmentation set to 0.
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
