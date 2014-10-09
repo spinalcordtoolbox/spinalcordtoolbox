@@ -60,19 +60,11 @@ def moco(param):
     sct.printv('  Mask size .............'+str(mask_size), param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
-    # # check existence of input files
-    # sct.printv('\nCheck file existence...', verbose)
-    # sct.check_file_exist(file_data, verbose)
-    # sct.check_file_exist(file_target, verbose)
-    #
     # Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
     # create folder for mat files
     sct.create_folder(folder_mat)
-
-    # get the right interpolation field depending on method
-    #interp = sct.get_interpolation(param.program, param.interp)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
