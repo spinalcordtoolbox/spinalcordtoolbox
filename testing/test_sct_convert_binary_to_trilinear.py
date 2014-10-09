@@ -11,11 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
+
 import sct_utils as sct
-import test_all
-import time
-import shutil
 
 
 def test(path_data):
