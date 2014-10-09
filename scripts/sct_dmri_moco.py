@@ -99,6 +99,7 @@ def main():
         param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
         param.fname_bvals = ''  # path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
+        param.remove_tmp_files = 0
         param.verbose = 1
         param.slicewise = 0
         param.run_eddy = 0
@@ -341,6 +342,7 @@ def dmri_moco(param):
         param_otsu = otsu.param()  #getattr(otsu, param)
         param_otsu.fname_data = 'dwi_averaged_groups.nii'
         param_otsu.threshold = param.otsu
+        param_otsu.file_suffix = ''
         # run module
         otsu.otsu(param_otsu)
 
