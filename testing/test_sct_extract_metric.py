@@ -13,58 +13,31 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
+
 import sct_utils as sct
-import test_all
-import time
-import shutil
-
-class bcolors:
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    red = '\033[91m'
-
-class Param:
-    def __init__(self):
-        self.contrasts = ['mt']
-        self.subjects = []
-        self.files = ['mtr.nii.gz']
 
 
-def test(data_file_path):
-    # initialize parameters
-    status = 0
-    param = Param()
-    results_dir = 'results_sct_extract_metric'
+def test(path_data):
 
-    if os.path.isdir(results_dir):
-        shutil.rmtree(results_dir)
+    # parameters
+    folder_data = ['mt/', 'label/atlas']
+    file_data = ['mtr.nii.gz']
 
-    os.makedirs(results_dir)
-    os.chdir(results_dir)
+    # define command
+    cmd = 'sct_extract_metric' \
+        ' -i '+path_data+folder_data[0]+file_data[0]+ \
+        ' -f '+path_data+folder_data[0]+folder_data[1]+ \
+        ' -l 2,17 '+ \
+        ' -m wath '+ \
+        ' -v 1:3'+ \
+        ' -o quantif_'+file_data[0]+'.txt' \
+        ' -v 1'
 
-    begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
-    fname_log = "sct_convert_binary_to_trilinear.log"
-
-    test_all.write_to_log_file(fname_log, begin_log_file, 'w')
-
-    for contrast in param.contrasts:
-        test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
-        for f in param.files:
-            cmd = 'sct_extract_metric -i ../' + data_file_path + '/' + contrast + '/' + f \
-                + ' -f ../' + data_file_path + '/' + contrast + '/label/atlas' \
-                + ' -l 2,17'\
-                + ' -m wa'\
-                + ' -v 1:3'\
-                + ' -o quantif_' + contrast + '.txt'
-            s, output = sct.run(cmd, 0)
-            test_all.write_to_log_file(fname_log, output, 'a')
-            status += s
-
-    os.chdir('..')
-    return status
+    # return
+    return sct.run(cmd, 0)
 
 
+# call to function
 if __name__ == "__main__":
     # call main function
     test()
