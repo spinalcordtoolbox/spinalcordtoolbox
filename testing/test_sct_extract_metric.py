@@ -3,8 +3,6 @@
 #
 # Test function for sct_extract_metric script
 #
-#   replace the shell test script in sct 1.0
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
