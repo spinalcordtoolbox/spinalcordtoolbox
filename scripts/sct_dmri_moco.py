@@ -470,7 +470,7 @@ OPTIONAL ARGUMENTS
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
   -m {method}      Method for registration:
-                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs).
+                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs). Disregard "-z"
                      ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
                      ants_affine: affine transformation constrained in axial plane.
                      ants_rigid: rigid transformation constrained in axial plane.
