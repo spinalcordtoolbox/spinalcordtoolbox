@@ -24,6 +24,7 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
+        self.fname_data = ''
         self.threshold = '3'  # threshold value
         self.file_suffix = '_seg'  # output suffix
         self.verbose = 1
@@ -33,12 +34,6 @@ class param:
 # main
 #=======================================================================================================================
 def main(param):
-
-
-    dim = 4  # by default, will be adjusted later
-
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
@@ -67,6 +62,16 @@ def main(param):
         elif opt in '-v':
             param.verbose = int(arg)
 
+    # run main program
+    otsu(param)
+
+
+# otsu
+#=======================================================================================================================
+def otsu(param):
+
+    dim = 4  # by default, will be adjusted later
+
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
@@ -79,7 +84,7 @@ def main(param):
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  data ..................'+param.fname_data, param.verbose)
-    sct.printv('  threshold .............'+param.threshold, param.verbose)
+    sct.printv('  threshold .............'+str(param.threshold), param.verbose)
 
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -111,9 +116,9 @@ def main(param):
         dim == 2
 
     # threshold images
-    sct.run('sct_ThresholdImage '+str(dim)+' data.nii data_otsu.nii Otsu '+param.threshold)
+    sct.run('sct_ThresholdImage '+str(dim)+' data.nii data_otsu.nii Otsu '+str(param.threshold))
     # binarize
-    sct.run('sct_ThresholdImage '+str(dim)+' data_otsu.nii data_otsu_thr.nii '+param.threshold+' '+param.threshold)
+    sct.run('sct_ThresholdImage '+str(dim)+' data_otsu.nii data_otsu_thr.nii '+str(param.threshold)+' '+str(param.threshold))
     # get largest component of binary mask
     sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii GetLargestComponent data_otsu_thr.nii')
     # Morphological Dilation
