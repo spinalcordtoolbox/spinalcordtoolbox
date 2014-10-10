@@ -15,8 +15,8 @@
 
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
-# TODO: vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
-# TODO: remove method 'change_orientation' if not used (= if we leave it in sct_utils.py)
+# TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
+# TODO: rename fname_vertebral_labeling
 
 # Import common Python libraries
 import os
@@ -25,12 +25,12 @@ import sys
 import time
 import commands
 import nibabel as nib
-# import numpy as np
+import numpy as np
 import sct_utils as sct
-from nibabel.parrec import *
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
 
 # constants
 ALMOST_ZERO = 0.000001
@@ -43,8 +43,7 @@ class param:
         self.verbose = 1
         self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
         self.vertebral_levels = ''
-        self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave
-        # empty.
+        self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
         self.average_all_labels = 0  # average all labels together after concatenation
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
@@ -77,16 +76,15 @@ def main():
     vertebral_levels = param.vertebral_levels
     average_all_labels = param.average_all_labels
     fname_output = param.fname_output
-    fname_vertebral_labeling = ''  # optional then default is empty
+    fname_vertebral_labeling = param.fname_vertebral_labeling
     fname_normalizing_label = ''  # optional then default is empty
     normalization_method = ''  # optional then default is empty
-    actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly
-    # to the vertebral levels available in the metric data
-    warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond
-    # exactly to the vertebral levels available in the metric data
+    actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
+    warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     threshold = param.threshold  # default defined in class "param"
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
+    flag_h = 0
 
     # Parameters for debug mode
     if param.debug:
@@ -114,7 +112,7 @@ def main():
         elif opt in '-f':
             path_label = os.path.abspath(arg)  # save path of labels folder
         elif opt == '-h':  # help option
-            usage() # display usage
+            flag_h = 1
         elif opt in '-i':
             fname_data = arg
         elif opt in '-l':
@@ -123,7 +121,7 @@ def main():
             method = arg
         elif opt in '-n':  # filename of the label by which the user wants to normalize
             fname_normalizing_label = arg
-        elif opt in '-o':  # output option
+        elif opt in '-o': # output option
             fname_output = arg  # fname of output file
         elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin' (see flag -m)
             threshold = float(arg)
@@ -131,15 +129,13 @@ def main():
             # vertebral levels option, if the user wants to average the metric across specific vertebral levels
              vertebral_levels = arg
         elif opt in '-w':
-            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs'
-            # for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
             normalization_method = arg
         elif opt in '-z':  # slices numbers option
             slices_of_interest = arg # save labels numbers
 
-
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '':
+    if fname_data == '' or path_label == '' or flag_h:
         param.path_label = path_label
         usage()
 
@@ -159,16 +155,15 @@ def main():
             print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
             usage()
         else:
-            fname_vertebral_labeling_list = sct.find_file_within_folder(param.fname_vertebral_labeling, path_label + '..')
+            fname_vertebral_labeling_list = sct.find_file_within_folder(fname_vertebral_labeling, path_label + '..')
             if len(fname_vertebral_labeling_list) > 1:
-                print color.red + 'ERROR: More than one file named \'' + param.fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
+                print color.red + 'ERROR: More than one file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             elif len(fname_vertebral_labeling_list) == 0:
-                print color.red + 'ERROR: No file named \'' + param.fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
+                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             else:
-                fname_vertebral_labeling = fname_vertebral_labeling_list[0]
-
+                fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
     # Check input parameters
     check_method(method, fname_normalizing_label, normalization_method)
@@ -191,9 +186,7 @@ def main():
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
 
-
-
-    # Check if the orientation of the NIFTI files is RPI, else change it into RPI
+    # Check if the orientation of the data is RPI
     orientation_data = sct.get_orientation(fname_data)
 
     # we assume here that the orientation of the label files to extract the metric from is the same as the orientation
@@ -201,34 +194,29 @@ def main():
     if orientation_data != 'RPI':
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
         path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
-        status, output = sct.run('mkdir ' + path_tmp)
+        sct.create_folder(path_tmp)
+        # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
-        data = nib.load(sct.change_orientation(fname_data, 'RPI', path_tmp)).get_data()
-        sct.printv('  Done.', verbose)
-
+        data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            labels[i_label] = nib.load(sct.change_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
+            labels[i_label] = nib.load(sct.set_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(sct.change_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
+            normalizing_label[0] = nib.load(sct.set_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(sct.change_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
-        sct.printv('  Done.', verbose)
+            data_vertebral_labeling = nib.load(sct.set_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
-        sct.printv('\nRemove the temporary folder used to change the NIFTI files orientation into RPI...', verbose)
+        sct.printv('\nRemove the temporary folder...', verbose)
         status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
-        sct.printv('  Done.', verbose)
-
     else:
         # Load image
         sct.printv('\nLoad image...', verbose)
         data = nib.load(fname_data).get_data()
-        sct.printv('  Done.', verbose)
 
         # Load labels
         sct.printv('\nLoad labels...', verbose)
@@ -241,8 +229,6 @@ def main():
             normalizing_label[0] = nib.load(fname_normalizing_label).get_data()  # load the data of the normalizing label
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(fname_vertebral_labeling).get_data()
-        sct.printv('  Done.', verbose)
-
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
@@ -301,26 +287,21 @@ def main():
                 normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
                 # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
                 normalizing_label_slice[0] = normalizing_label[0][..., z]
-                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method,
-                                                                       threshold, verbose=0)
+                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
-            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method,
-                                                                                        threshold, verbose=param.verbose)
-                                                                                          # mean and std are lists
+            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
 
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
     metric_mean, metric_std = extract_metric_within_tract(data, labels, method, threshold, verbose)  # mean and std are lists
 
-    if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations
-    # in the whole labels
-        metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std,
-                                                                                            metric_std_norm_label)
+    if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
+        metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
 
     # update label name if average
     if average_all_labels == 1:
@@ -332,7 +313,7 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print color.bold + '\nEstimation results:\n'
+    print color.bold + '\nEstimation results:'
     for i in range(0, metric_mean.size):
         print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
               +' +/- '+str(metric_std[i])+color.end
@@ -342,10 +323,7 @@ def main():
                  method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
     # Print elapsed time
-    print 'Elapsed time : ' + str(int(round(time.time() - start_time))) + ' sec'
-
-    # end of main.
-    print
+    print '\nElapsed time : ' + str(int(round(time.time() - start_time))) + 's\n'
 
 
 #=======================================================================================================================
@@ -386,7 +364,7 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck if all files listed in '+param.file_info_label+' are indeed present in '+path_info_label+' ...'
+    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
@@ -466,8 +444,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
         # of the initial list corresponding to this minimal distance
         warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
-                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in
-                       # the .txt output file
+                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
 
         print color.yellow + 'WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
                              'nearest superior level available: ' + str(int(vert_levels_list[1]))
@@ -549,13 +526,12 @@ def remove_slices(data_to_crop, slices_of_interest):
 #=======================================================================================================================
 # Save in txt file
 #=======================================================================================================================
-def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std,
-                 fname_output, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
+def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data, method, fname_normalizing_label, actual_vert=None, warning_vert_levels=None):
 
     # CSV format, header lines start with "#"
 
     # Save metric in a .txt file
-    print '\nWrite results in ' + fname_output + ' ...'
+    print '\nWrite results in ' + fname_output + '...'
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
