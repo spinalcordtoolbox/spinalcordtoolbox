@@ -96,9 +96,10 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        param.fname_bvals = ''  # path_sct_data+'/errsm_03_sub/dmri/bvecs.txt'
+        # param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
+        # param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
+        param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.slicewise = 0
@@ -237,6 +238,7 @@ def dmri_moco(param):
     file_b0 = 'b0'
     file_dwi = 'dwi'
     mat_final = 'mat_final/'
+    file_dwi_group = 'dwi_averaged_groups'  # no extension
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     
     # fname_data = param.fname_data
@@ -322,8 +324,8 @@ def dmri_moco(param):
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
-    file_dwi_groups_means_merge = 'dwi_averaged_groups'
-    cmd = fsloutput + 'fslmerge -t ' + file_dwi_groups_means_merge
+    # file_dwi_groups_means_merge = 'dwi_averaged_groups'
+    cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
     for iGroup in range(nb_groups):
         cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
     sct.run(cmd, param.verbose)
@@ -332,19 +334,21 @@ def dmri_moco(param):
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     fname_dwi_mean = 'dwi_mean'  
-    sct.run(fsloutput + 'fslmaths ' + file_dwi_groups_means_merge + ' -Tmean ' + file_dwi_mean, param.verbose)
+    sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_mean, param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
+        sct.printv('\nSegment group DWI using OTSU algorithm...', param.verbose)
         # import module
         otsu = importlib.import_module('sct_otsu')
         # get class from module
         param_otsu = otsu.param()  #getattr(otsu, param)
-        param_otsu.fname_data = 'dwi_averaged_groups.nii'
+        param_otsu.fname_data = file_dwi_group+'.nii'
         param_otsu.threshold = param.otsu
-        param_otsu.file_suffix = ''
+        param_otsu.file_suffix = '_seg'
         # run module
         otsu.otsu(param_otsu)
+        file_dwi_group = file_dwi_group+'_seg'
 
     #=======================================================================================================================
     #START MOCO
@@ -372,7 +376,7 @@ def dmri_moco(param):
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = 'dwi_averaged_groups'
+    param_moco.file_data = file_dwi_group
     param_moco.file_target = file_dwi + '_mean_' + str(0)  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
     #param_moco.todo = 'estimate'
