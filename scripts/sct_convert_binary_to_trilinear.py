@@ -129,7 +129,7 @@ def main():
 
     # Generate output files
     print('\nGenerate output files...')
-    fname_out = sct.generate_output_file(path_tmp+'/data_up_smooth_down.nii', '', file_data+suffix, ext_data)
+    fname_out = sct.generate_output_file(path_tmp+'/data_up_smooth_down.nii', ''+file_data+suffix+ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:

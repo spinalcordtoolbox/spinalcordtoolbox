@@ -148,7 +148,7 @@ public:
 		}
 
 		result = externe + alpha*interne1 + beta*interne2;
-		//cout << "Energie Externe = " << externe << endl << "Energie Interne = " << interne << endl << "Energie Totale : " << result << endl;
+		//cout << "Energie Externe = " << externe << endl << "Energie Interne = " << interne1 << endl << "Energie Totale : " << result << endl;
 		return result;
 	}
 
