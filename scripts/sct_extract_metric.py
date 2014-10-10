@@ -730,7 +730,7 @@ OPTIONAL ARGUMENTS
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
-                          bin: binary masks
+                          bin: binarize mask (threshold=0.5)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""

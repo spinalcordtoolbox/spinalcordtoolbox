@@ -445,7 +445,7 @@ for indice_index = 1:length(param.index)
                         
                             case 'FLIRT'
                                 j_disp(fname_log,['Process with FLIRT'])
-                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -omat ',fname_mat{iT},' -cost ',cost_function_flirt,fslmask,' ',flirt_options];
+                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -omat ',fname_mat{iT},' -cost ',cost_function_flirt,fslmask{1},' ',flirt_options];
                            
                 
                             case 'SPM'
@@ -505,7 +505,7 @@ for indice_index = 1:length(param.index)
                         
                             case 'FLIRT'
                             j_disp(fname_log,['Process with FLIRT'])  
-                            cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -out ',fname_data_splitT_moco_num{iT},' -omat ',fname_mat{iT},' -cost ', cost_function_flirt,fslmask,' ',flirt_options];
+                            cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -out ',fname_data_splitT_moco_num{iT},' -omat ',fname_mat{iT},' -cost ', cost_function_flirt,fslmask{1},' ',flirt_options];
                            
                 
                             case 'SPM'
