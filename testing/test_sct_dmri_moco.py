@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+#########################################################################################
+#
+# Test function sct_dmri_moco
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Augustin Roux
+# modified: 2014/10/06
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
+
+import sct_utils as sct
+
+
+def test(path_data):
+
+    folder_data = 'dmri/'
+    file_data = ['dmri.nii.gz', 'bvecs.txt']
+
+
+    cmd = 'sct_dmri_moco -i ' + path_data + folder_data + file_data[0] \
+                + ' -b '+ path_data + folder_data + file_data[1] \
+                + ' -v 1'\
+                + ' -z 0'\
+                + ' -f 0'\
+                + ' -s 15'\
+                + ' -d 3'\
+                + ' -r 1'\
+                + ' -p spline'
+
+    # return
+    return sct.run(cmd, 0)
+
+if __name__ == "__main__":
+    # call main function
+    test()

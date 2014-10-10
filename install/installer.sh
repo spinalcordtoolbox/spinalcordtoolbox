@@ -42,23 +42,23 @@ echo "Copy toolbox..."
 cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
-# copy testing files
-echo
-echo "Copy example data & scripts..."
-if [ -e "../sct_testing" ]; then
-  cmd="sudo rm -rf ../sct_testing"
-  echo ">> $cmd"; $cmd
-fi
-cmd="mv spinalcordtoolbox/testing ../sct_testing"
-echo ">> $cmd"; $cmd
-cmd="sudo chmod -R 775 ../sct_testing"
-echo ">> $cmd"; $cmd
-
-# remove testing in installation folder
-echo
-echo "Remove testing in installation folder"
-cmd="sudo rm -rf ${SCT_DIR}/testing"
-echo ">> $cmd"; $cmd
+## copy testing files
+#echo
+#echo "Copy example data & scripts..."
+#if [ -e "../sct_testing" ]; then
+#  cmd="sudo rm -rf ../sct_testing"
+#  echo ">> $cmd"; $cmd
+#fi
+#cmd="mv spinalcordtoolbox/testing ../sct_testing"
+#echo ">> $cmd"; $cmd
+#cmd="sudo chmod -R 775 ../sct_testing"
+#echo ">> $cmd"; $cmd
+#
+## remove testing in installation folder
+#echo
+#echo "Remove testing in installation folder"
+#cmd="sudo rm -rf ${SCT_DIR}/testing"
+#echo ">> $cmd"; $cmd
 
 # check if .bashrc was already modified. If so, we delete lines about sct to be sure.
 echo
@@ -119,10 +119,8 @@ echo "Check if other dependent software are installed..."
 cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
-# go to testing folder
-path_toolbox_temp='pwd'
-cd ../sct_testing/
-path_testing='pwd' 
+# get current path
+path_toolbox_temp=`pwd`
 
 # display stuff
 echo ""
@@ -136,12 +134,8 @@ echo "or contact the developers."
 echo
 echo "You can now delete this folder by typing:"
 echo "> cd .."
-echo "> rm -rf ${path_toolbox_temp}*"
+echo "> rm -rf ${path_toolbox_temp}"
 echo
-echo "To get started, open a new Terminal and go to the testing folder:"
-echo "> cd $path_testing"
-echo "and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
-echo
-echo "To see all commands available, start a new Terminal and type \"sct\" then backspace"
+echo "To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 
 
