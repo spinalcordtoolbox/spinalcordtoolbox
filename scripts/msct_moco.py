@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-08-14
+# Modified: 2014-10-04
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -60,19 +60,11 @@ def moco(param):
     sct.printv('  Mask size .............'+str(mask_size), param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
-    # # check existence of input files
-    # sct.printv('\nCheck file existence...', verbose)
-    # sct.check_file_exist(file_data, verbose)
-    # sct.check_file_exist(file_target, verbose)
-    #
     # Schedule file for FLIRT
     schedule_file = path_sct+file_schedule
 
     # create folder for mat files
     sct.create_folder(folder_mat)
-
-    # get the right interpolation field depending on method
-    interp = sct.get_interpolation(param.program, param.interp)
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
@@ -188,7 +180,7 @@ def moco(param):
                 file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
                 file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
                 # run 2D registration
-                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], interp, 2, restrict_deformation, verbose)
+                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], param.interp, 2, restrict_deformation, verbose)
 
             # Merge data along Z
             if todo != 'estimate':
@@ -202,7 +194,7 @@ def moco(param):
         else:
             file_mat[it] = folder_mat + 'mat.T' + str(it)
             # run 3D registration
-            fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], interp, 3, restrict_deformation, verbose)
+            fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
 
     # Replace failed transformation matrix to the closest good one
     # NB: this applies only for flirt, hence the ".txt" string added.
@@ -249,17 +241,33 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
 
     # use flirt
     if program == 'flirt':
-        interp_fsl = sct.get_interpolation('flirt', interp)
+        #interp_fsl = sct.get_interpolation('flirt', interp)
         cmd = fsloutput + 'flirt -schedule ' + schedule_file + ' -in ' + file_src + ' -ref ' + file_dest
         if todo == 'estimate' or todo == 'estimate_and_apply':
             cmd = cmd + ' -omat ' + file_mat + '.txt -cost normcorr'
         if todo == 'apply' or todo == 'estimate_and_apply':
-            cmd = cmd + ' -out ' + file_out + ' -interp ' + interp_fsl
+            cmd = cmd + ' -out ' + file_out + sct.get_interpolation('flirt', interp)
             if todo == 'apply':
                 cmd = cmd + ' -applyxfm -init ' + file_mat + '.txt'
         sct.run(cmd, verbose)
         #Check transformation absurdity
         fail_mat = check_transformation_absurdity(file_mat+'.txt')
+
+    # use antsSliceRegularized
+    elif program == 'slicereg':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsSliceRegularizedRegistration' \
+                  ' -p 5' \
+                  ' --transform Translation[1]' \
+                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
+                  ' --iterations 5' \
+                  ' --shrinkFactors 1' \
+                  ' --smoothingSigmas 1' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  +sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
+        sct.run(cmd, verbose)
 
     # use ants
     elif program == 'ants':
@@ -273,7 +281,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
@@ -285,12 +293,12 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --dimensionality '+str(dim)+' ' \
                   ' --transform Translation[0.5]' \
                   ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 4]' \
-                  ' --convergence 10x5' \
-                  ' --shrink-factors 8x4' \
+                  ' --convergence 5x3' \
+                  ' --shrink-factors 2x1' \
                   ' --smoothing-sigmas 1x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
@@ -307,7 +315,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothing-sigmas 2x1mm' \
                   ' --Restrict-Deformation '+restrict_deformation+'' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
-                  ' --interpolation '+interp
+                  +sct.get_interpolation('sct_antsRegistration', interp)
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
