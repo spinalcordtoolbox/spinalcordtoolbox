@@ -149,6 +149,7 @@ def fill_functions():
     #functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
+    functions.append('sct_resample')
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
