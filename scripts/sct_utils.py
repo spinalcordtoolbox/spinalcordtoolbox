@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os, fnmatch
+import os
 import sys
 import commands
 
@@ -28,7 +28,10 @@ class bcolors:
     yellow = '\033[93m'
     red = '\033[91m'
     normal = '\033[0m'
-
+    purple = '\033[95m'
+    cyan = '\033[96m'
+    bold = '\033[1m'
+    underline = '\033[4m'
 
 #==============e=========================================================================================================
 # run
@@ -74,20 +77,24 @@ def extract_fname(fname):
 # Check existence of a file or path
 def check_file_exist(fname, verbose=1):
 
-    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
+    #    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
+    # WARNING: dangerous change with potential dependencies (2014-09-26)
+    if os.path.isfile(fname) or os.path.isdir(fname):
         if verbose:
-            print('  OK: '+fname)
+            printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        print('  ERROR: ' + fname + ' does not exist. Exit program.\n')
+        printv('  ERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
         sys.exit(2)
 
+
 #=======================================================================================================================
-# find_pattern
+# find_file_within_folder
 #=======================================================================================================================
 def find_file_within_folder(fname, directory):
     """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
     strings"""
+    import fnmatch
 
     all_path = []
     for root, dirs, files in os.walk(directory):
@@ -126,38 +133,42 @@ def get_dimension(fname):
 # Get orientation of a nifti file
 def get_orientation(fname):
     status, output = commands.getstatusoutput('sct_orientation -get -i '+fname)
-    orientation = output.replace('Input image orientation : ','')
+    orientation = output.replace('Input image orientation : ', '')
     return orientation
 
+
 #=======================================================================================================================
-# change_orientation
+# set_orientation
 #=======================================================================================================================
-def change_orientation(fname, orientation, out_folder, out_file_fname=''):
+def set_orientation(fname_data, orientation, path_out=''):
     """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
      letter (e.g., RPI or AIL)"""
 
-    path_fname, file_fname, ext_fname = extract_fname(fname)
-    # if no output file name was specified, take the input file name concatenated with the new orientation
-    if not out_file_fname:
-        out_file_fname = file_fname+orientation
+    # get absolute path
+    fname_data = os.path.abspath(fname_data)
+    path_data, file_data, ext_data = extract_fname(fname_data)
+    if not path_out:
+        path_out = path_data
+    # set output file
+    fname_out = slash_at_the_end(path_out, 1) + file_data + '_' + orientation + ext_data
     # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname+' -o '+out_folder+'/'+
-                                              out_file_fname+ext_fname+' -orientation '+orientation)
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -orientation '+orientation)
 
-    return out_folder+'/'+out_file_fname+ext_fname
+    return fname_out
 
 
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
-def generate_output_file(fname_in, path_out, file_out, ext_out, verbose=1):
+def generate_output_file(fname_in, fname_out, verbose=1):
     # import stuff
     import shutil  # for moving files
     # get absolute fname
     fname_in = os.path.abspath(fname_in)
-    fname_out = os.path.abspath(path_out+file_out+ext_out)
+    fname_out = os.path.abspath(fname_out)
     # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
+    path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
         printv('  ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
@@ -232,6 +243,9 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.red
     elif type == 'code':
         color = bcolors.blue
+    elif type == 'bold':
+        color = bcolors.bold
+
     # print message
     if verbose:
         print(color+string+bcolors.normal)
@@ -265,16 +279,7 @@ def delete_nifti(fname_in):
 
 
 #=======================================================================================================================
-# create_folder:  create folder, and check if exists before creating it
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-        os.system('rm '+path_in+file_in+'.nii.gz')  # TODO: ask Julien if it's normal that there are two methods of the same name
-
-
-#=======================================================================================================================
-# create_folder:  create folder, and check if exists before creating it
+# create_folder:  create folder (check if exists before creating it)
 #=======================================================================================================================
 def create_folder(folder):
     if not os.path.exists(folder):
@@ -290,30 +295,22 @@ def get_interpolation(program, interp):
     # FLIRT
     if program == 'flirt':
         if interp == 'nn':
-            interp_program = 'nearestneighbour'
-        elif interp == 'trilinear':
-            interp_program = 'trilinear'
+            interp_program = ' -interp nearestneighbour'
+        elif interp == 'linear':
+            interp_program = ' -interp trilinear'
         elif interp == 'spline':
-            interp_program = 'spline'
+            interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine':
+    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
         if interp == 'nn':
-            interp_program = 'NearestNeighbor'
-        elif interp == 'trilinear':
-            interp_program = 'Linear'
+            interp_program = ' -n NearestNeighbor'
+        elif interp == 'linear':
+            interp_program = ' -n Linear'
         elif interp == 'spline':
-            interp_program = 'BSpline[3]'
-    # WarpImageMultiTransform
-    elif program == 'WarpImageMultiTransform':
-        if interp == 'nn':
-            interp_program = ' --use-NN'
-        elif interp == 'trilinear':
-            interp_program = ' '
-        elif interp == 'spline':
-            interp_program = ' --use-BSpline'
+            interp_program = ' -n BSpline[3]'
     # check if not assigned
     if interp_program == '':
-        printv('WARNING: interp_program not assigned. Using trilinear for ants_affine.', 1, 'warning')
-        interp_program = ' Linear'
+        printv('WARNING ('+os.path.basename(__file__)+'): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
+        interp_program = ' -n Linear'
     # return
     return interp_program
