@@ -37,11 +37,11 @@ def moco(param):
     folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
-    mask_size = param.mask_size
+    # mask_size = param.mask_size
     program = param.program  # flirt, ants
     file_schedule = param.file_schedule
     verbose = param.verbose
-    slicewise = param.slicewise
+    # slicewise = param.slicewise
     # ANTs parameters
     restrict_deformation = '1x1x0'  # TODO: find it automatically
     ext = '.nii'
@@ -55,7 +55,7 @@ def moco(param):
     sct.printv('  Reference file ........'+file_target, param.verbose)
     # sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
     sct.printv('  Program ...............'+program, param.verbose)
-    sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
+    # sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
     sct.printv('  Schedule file .........'+file_schedule, param.verbose)
     sct.printv('  Method ................'+todo, param.verbose)
     sct.printv('  Mask  .................'+param.fname_mask, param.verbose)
@@ -145,14 +145,14 @@ def moco(param):
     index = np.arange(nt)
     file_data_splitT_num = []
     file_data_splitT_moco_num = []
-    if slicewise:
-        fail_mat = np.zeros((nt, nz))
-        file_data_splitT_splitZ_num = [[[] for i in range(nz)] for i in range(nt)]
-        file_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
-        file_mat = [[[] for i in range(nz)] for i in range(nt)]
-    else:
-        fail_mat = np.zeros((nt))
-        file_mat = [[] for i in range(nt)]
+    # if slicewise:
+    #     fail_mat = np.zeros((nt, nz))
+    #     file_data_splitT_splitZ_num = [[[] for i in range(nz)] for i in range(nt)]
+    #     file_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
+    #     file_mat = [[[] for i in range(nz)] for i in range(nt)]
+    # else:
+    fail_mat = np.zeros((nt))
+    file_mat = [[] for i in range(nt)]
 
     # Motion correction: Loop across T
     for indice_index in range(nt):
@@ -199,7 +199,7 @@ def moco(param):
         # moco
         file_mat[it] = folder_mat + 'mat.T' + str(it)
         # run 3D registration
-        fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
+        fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose, param.fname_mask)
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
@@ -208,27 +208,27 @@ def moco(param):
 
     # Replace failed transformation matrix to the closest good one
     # NB: this applies only for flirt, hence the ".txt" string added.
-    if slicewise and program == 'flirt':
-        fT, fZ = np.where(fail_mat == 1)
-        gT, gZ = np.where(fail_mat == 0)
-        for it in range(len(fT)):
-            sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'), verbose)
-
-            # rename failed matrix
-            cmd = 'mv ' + file_mat[fT[it]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]] + '_failed.txt'
-            status, output = sct.run(cmd, verbose)
-            # find good Z indices across T corresponding to the current failed Zindex
-            good_Zindex = np.where(gZ == fZ[it])
-            # find the corresponding T indices
-            good_index = gT[good_Zindex]
-            # find the T index that is closest to the current T
-            if len(good_index) == 1:
-                # this case was added, otherwise if good_index has single value [0], then I equals 1, hence it crashes.
-                I = 0
-            else:
-                I = np.amin(abs(good_index-fT[it]))
-            cmd = 'cp ' + file_mat[good_index[I]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]]+'.txt'
-            status, output = sct.run(cmd, verbose)
+    # if slicewise and program == 'flirt':
+    #     fT, fZ = np.where(fail_mat == 1)
+    #     gT, gZ = np.where(fail_mat == 0)
+    #     for it in range(len(fT)):
+    #         sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'), verbose)
+    #
+    #         # rename failed matrix
+    #         cmd = 'mv ' + file_mat[fT[it]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]] + '_failed.txt'
+    #         status, output = sct.run(cmd, verbose)
+    #         # find good Z indices across T corresponding to the current failed Zindex
+    #         good_Zindex = np.where(gZ == fZ[it])
+    #         # find the corresponding T indices
+    #         good_index = gT[good_Zindex]
+    #         # find the T index that is closest to the current T
+    #         if len(good_index) == 1:
+    #             # this case was added, otherwise if good_index has single value [0], then I equals 1, hence it crashes.
+    #             I = 0
+    #         else:
+    #             I = np.amin(abs(good_index-fT[it]))
+    #         cmd = 'cp ' + file_mat[good_index[I]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]]+'.txt'
+    #         status, output = sct.run(cmd, verbose)
 
     # Merge data along T
     file_data_moco = file_data+suffix
@@ -243,7 +243,7 @@ def moco(param):
 #=======================================================================================================================
 # register:  registration of two volumes (or two images)
 #=======================================================================================================================
-def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_out, interp, dim, restrict_deformation, verbose):
+def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_out, interp, dim, restrict_deformation, verbose, fname_mask):
 
     # initialization
     fail_mat = 0  # by default, failed matrix is 0 (i.e., no failure)
@@ -267,7 +267,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
     elif program == 'slicereg':
         if todo == 'estimate' or todo == 'estimate_and_apply':
             cmd = 'sct_antsSliceRegularizedRegistration' \
-                  ' -p 5' \
+                  ' -p 3' \
                   ' --transform Translation[1]' \
                   ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
                   ' --iterations 5' \
@@ -275,6 +275,8 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                   ' --smoothingSigmas 1' \
                   ' --output ['+file_mat+','+file_out+'.nii]' \
                   +sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
+            if not fname_mask == '':
+                cmd += ' -x '+fname_mask
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)

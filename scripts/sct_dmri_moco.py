@@ -45,7 +45,7 @@ import importlib
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
@@ -61,7 +61,7 @@ class param:
         self.verbose = 1
         self.plot_graph = 0
         # param for msct_moco
-        self.slicewise = 0
+        # self.slicewise = 0
         self.suffix = '_moco'
         # self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
@@ -98,16 +98,17 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        #param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        #param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
+        # param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
+        # param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'
         param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
+        param.fname_mask = '/Users/julien/data/toronto/E23102/dmri/dwi_moco_mean_mask.nii.gz'
         param.remove_tmp_files = 0
         param.verbose = 1
-        param.slicewise = 0
         param.run_eddy = 0
         param.otsu = 0
-        param.dwi_group_size = 3
+        param.dwi_group_size = 5
+        param.iterative_averaging = 1
         param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
@@ -173,6 +174,8 @@ def main():
     param.fname_bvecs = os.path.abspath(param.fname_bvecs)
     if param.fname_bvals != '':
         param.fname_bvals = os.path.abspath(param.fname_bvals)
+    if param.fname_mask != '':
+        param.fname_mask = os.path.abspath(param.fname_mask)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -406,21 +409,21 @@ def dmri_moco(param):
         ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
     for it in range(nb_b0):
-        if param.slicewise:
-            for iz in range(nz):
-                sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, param.verbose)
-        else:
-            sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
+        # if param.slicewise:
+        #     for iz in range(nz):
+        #         sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, param.verbose)
+        # else:
+        sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            if param.slicewise:
-                for iz in range(nz):
-                    sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
-            else:
-                sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, param.verbose)
+            # if param.slicewise:
+            #     for iz in range(nz):
+            #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
+            # else:
+            sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, param.verbose)
 
     # Spline Regularization along T
     if param.spline_fitting:
