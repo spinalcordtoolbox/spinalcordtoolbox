@@ -45,7 +45,7 @@ import importlib
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
@@ -74,6 +74,7 @@ class param:
         self.swapXY = 0
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold (where csf disapeared).
         self.otsu = 0  # use otsu algorithm to segment dwi data for better moco. Value coresponds to data threshold. For no segmentation set to 0.
+        self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
 
 #=======================================================================================================================
@@ -96,15 +97,16 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        # param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        # param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
-        param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
+        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
+        param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        #param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
+        #param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.slicewise = 0
         param.run_eddy = 0
-        param.otsu = 3
+        param.otsu = 0
+        param.dwi_group_size = 2
         param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
@@ -334,7 +336,7 @@ def dmri_moco(param):
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     fname_dwi_mean = 'dwi_mean'  
-    sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_mean, param.verbose)
+    sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -346,9 +348,13 @@ def dmri_moco(param):
         param_otsu.fname_data = file_dwi_group+'.nii'
         param_otsu.threshold = param.otsu
         param_otsu.file_suffix = '_seg'
-        # run module
+        # run otsu
         otsu.otsu(param_otsu)
         file_dwi_group = file_dwi_group+'_seg'
+
+    # extract first DWI volume as target for registration
+    sct.run(fsloutput + 'fslroi ' + file_dwi_group + ' target_dwi.nii ' + str(index_dwi[0]) + ' 1', param.verbose)
+
 
     #=======================================================================================================================
     #START MOCO
@@ -377,7 +383,7 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_dwi_group
-    param_moco.file_target = file_dwi + '_mean_' + str(0)  # target is the first DW image (closest to the first b=0)
+    param_moco.file_target = 'target_dwi.nii'  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
     #param_moco.todo = 'estimate'
     param_moco.todo = 'estimate_and_apply'
