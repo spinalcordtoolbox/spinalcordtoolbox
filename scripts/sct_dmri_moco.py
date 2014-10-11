@@ -97,16 +97,16 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        #param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
-        #param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
+        #param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
+        #param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmri.nii.gz'
+        param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.slicewise = 0
         param.run_eddy = 0
         param.otsu = 0
-        param.dwi_group_size = 2
+        param.dwi_group_size = 3
         param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
@@ -383,7 +383,7 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_dwi_group
-    param_moco.file_target = 'target_dwi.nii'  # target is the first DW image (closest to the first b=0)
+    param_moco.file_target = 'target_dwi'  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
     #param_moco.todo = 'estimate'
     param_moco.todo = 'estimate_and_apply'
