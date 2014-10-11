@@ -111,9 +111,9 @@ def otsu(param):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     if nt == 1:
-        dim == 3
+        dim = 3
     if nz == 1:
-        dim == 2
+        dim = 2
 
     # threshold images
     sct.run('sct_ThresholdImage '+str(dim)+' data.nii data_otsu.nii Otsu '+str(param.threshold))
