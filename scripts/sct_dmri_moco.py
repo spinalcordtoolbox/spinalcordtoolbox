@@ -112,7 +112,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:m:o:p:r:t:v:x:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:m:o:p:r:t:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -148,8 +148,6 @@ def main():
             param.verbose = int(arg)
         elif opt in ('-x'):
             param.fname_mask = arg
-        elif opt in ('-z'):
-            param.slicewise = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
@@ -480,7 +478,6 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -z {0,1}         slice-by-slice motion correction. Default="""+str(param.slicewise)+"""
   -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
   -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
@@ -488,7 +485,8 @@ OPTIONAL ARGUMENTS
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
   -m {method}      Method for registration:
-                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs). Disregard "-z"
+                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs).
+                     slice: slicewise non-regularized (based on ANTs).
                      ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
                      ants_affine: affine transformation constrained in axial plane.
                      ants_rigid: rigid transformation constrained in axial plane.

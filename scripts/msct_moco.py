@@ -53,12 +53,12 @@ def moco(param):
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............'+file_data, param.verbose)
     sct.printv('  Reference file ........'+file_target, param.verbose)
-    sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
+    # sct.printv('  Centerline file .......'+param.fname_centerline, param.verbose)
     sct.printv('  Program ...............'+program, param.verbose)
     sct.printv('  Slicewise .............'+str(slicewise), param.verbose)
     sct.printv('  Schedule file .........'+file_schedule, param.verbose)
     sct.printv('  Method ................'+todo, param.verbose)
-    sct.printv('  Mask size .............'+str(mask_size), param.verbose)
+    sct.printv('  Mask  .................'+param.fname_mask, param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
 
     # Schedule file for FLIRT
@@ -89,60 +89,60 @@ def moco(param):
     sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # split target data along Z
-    if slicewise:
-        file_data_ref_splitZ = file_target + '_Z'
-        sct.run(fsloutput + 'fslsplit ' + file_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
+    # if slicewise:
+    #     file_data_ref_splitZ = file_target + '_Z'
+    #     sct.run(fsloutput + 'fslsplit ' + file_target + ' ' + file_data_ref_splitZ + ' -z', verbose)
 
-    # Generate Gaussian Mask
-    fslmask = []
-    # TODO: make case that works for slicewise=0
-    if mask_size > 0 and slicewise:
-        import nibabel
-        sigma = np.array([mask_size/px, mask_size/py])
-        dims = np.array([nx, ny, nz, nt])
-        data = nibabel.load((file_data_ref_splitZ + '0000.nii'))
-        hdr = data.get_header()
-        hdr.set_data_dtype('uint8')  # set imagetype to uint8
-
-        if param.fname_centerline == '':
-            import math
-            center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
-            fname_mask = 'gaussian_mask_in'
-            M_mask = gauss2d(dims, sigma, center)
-            # Write NIFTI volumes
-            img = nibabel.Nifti1Image(M_mask, None, hdr)
-            nibabel.save(img,(fname_mask+'.nii'))
-            for iz in range(nz):
-                fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
-            # sct.printv(('\n.. File created: '+fname_mask),verbose)
-        else:
-            centerline = nibabel.load(param.fname_centerline)
-            data_centerline = centerline.get_data()
-            cx, cy, cz = np.where(data_centerline > 0)
-            arg = np.argsort(cz)
-            cz = cz[arg]
-            cx = cx[arg]
-            cy = cy[arg]
-            fname_mask = 'gaussian_mask_in'
-            for iz in range(nz):
-                center = np.array([cx[iz], cy[iz]])
-                M_mask = gauss2d(dims, sigma, center)
-                # Write NIFTI volumes
-                img = nibabel.Nifti1Image(M_mask, None, hdr)
-                nibabel.save(img,(fname_mask+str(iz)+'.nii'))
-                fslmask.append(' -inweight ' + fname_mask+str(iz) + ' -refweight ' + fname_mask+str(iz))
-
-            #Merging all masks
-            cmd = 'fslmerge -z mask '
-            for iz in range(nz):
-                cmd = cmd + fname_mask+str(iz)+' '
-            status, output = sct.run(cmd, verbose)
-    else:
-        for iz in range(nz):
-            fslmask.append('')  # TODO: adapt if volume-based moco
-    index = np.arange(nt)
+    # THIS PART IS NO MORE USED BECAUSE MASK IS CREATED BEFORE (julien 2014-10-11)
+    # # Generate Gaussian Mask
+    # fslmask = []
+    # if mask_size > 0 and slicewise:
+    #     import nibabel
+    #     sigma = np.array([mask_size/px, mask_size/py])
+    #     dims = np.array([nx, ny, nz, nt])
+    #     data = nibabel.load((file_data_ref_splitZ + '0000.nii'))
+    #     hdr = data.get_header()
+    #     hdr.set_data_dtype('uint8')  # set imagetype to uint8
+    #
+    #     if param.fname_centerline == '':
+    #         import math
+    #         center = np.array([math.ceil(nx/2), math.ceil(ny/2), math.ceil(nz/2), math.ceil(nt/2)])
+    #         fname_mask = 'gaussian_mask_in'
+    #         M_mask = gauss2d(dims, sigma, center)
+    #         # Write NIFTI volumes
+    #         img = nibabel.Nifti1Image(M_mask, None, hdr)
+    #         nibabel.save(img,(fname_mask+'.nii'))
+    #         for iz in range(nz):
+    #             fslmask.append(' -inweight ' + fname_mask + ' -refweight ' + fname_mask)
+    #         # sct.printv(('\n.. File created: '+fname_mask),verbose)
+    #     else:
+    #         centerline = nibabel.load(param.fname_centerline)
+    #         data_centerline = centerline.get_data()
+    #         cx, cy, cz = np.where(data_centerline > 0)
+    #         arg = np.argsort(cz)
+    #         cz = cz[arg]
+    #         cx = cx[arg]
+    #         cy = cy[arg]
+    #         fname_mask = 'gaussian_mask_in'
+    #         for iz in range(nz):
+    #             center = np.array([cx[iz], cy[iz]])
+    #             M_mask = gauss2d(dims, sigma, center)
+    #             # Write NIFTI volumes
+    #             img = nibabel.Nifti1Image(M_mask, None, hdr)
+    #             nibabel.save(img,(fname_mask+str(iz)+'.nii'))
+    #             fslmask.append(' -inweight ' + fname_mask+str(iz) + ' -refweight ' + fname_mask+str(iz))
+    #
+    #         #Merging all masks
+    #         cmd = 'fslmerge -z mask '
+    #         for iz in range(nz):
+    #             cmd = cmd + fname_mask+str(iz)+' '
+    #         status, output = sct.run(cmd, verbose)
+    # else:
+    #     for iz in range(nz):
+    #         fslmask.append('')  # TODO: adapt if volume-based moco
 
     # Motion correction: initialization
+    index = np.arange(nt)
     file_data_splitT_num = []
     file_data_splitT_moco_num = []
     if slicewise:
@@ -169,38 +169,37 @@ def moco(param):
             sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
             file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
-        # Slice-by-slice moco
-        if slicewise:
-            # split data along Z
-            sct.printv('Split data along Z...', verbose)
-            file_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
-            cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + file_data_splitT_splitZ + ' -z'
-            status, output = sct.run(cmd, verbose)
-            file_data_ref_splitZ_num = []
+        # # Slice-by-slice moco
+        # if slicewise:
+        #     # split data along Z
+        #     sct.printv('Split data along Z...', verbose)
+        #     file_data_splitT_splitZ = file_data_splitT_num[it] + '_Z'
+        #     cmd = fsloutput + 'fslsplit ' + file_data_splitT_num[it] + ' ' + file_data_splitT_splitZ + ' -z'
+        #     status, output = sct.run(cmd, verbose)
+        #     file_data_ref_splitZ_num = []
+        #
+        #     # loop across Z
+        #     sct.printv('Loop across Z ('+todo+')...', verbose)
+        #     for iz in range(nz):
+        #         file_data_splitT_splitZ_num[it][iz] = file_data_splitT_splitZ + str(iz).zfill(4)
+        #         file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
+        #         file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
+        #         file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
+        #         # run 2D registration
+        #         fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], param.interp, 2, restrict_deformation, verbose)
+        #
+        #     # Merge data along Z
+        #     if todo != 'estimate':
+        #         sct.printv('Concatenate along Z...', verbose)
+        #         cmd = fsloutput + 'fslmerge -z ' + file_data_splitT_moco_num[it]
+        #         for iz in range(nz):
+        #             cmd = cmd + ' ' + file_data_splitT_splitZ_moco_num[it][iz]
+        #         sct.run(cmd, verbose)
 
-            # loop across Z
-            sct.printv('Loop across Z ('+todo+')...', verbose)
-            for iz in range(nz):
-                file_data_splitT_splitZ_num[it][iz] = file_data_splitT_splitZ + str(iz).zfill(4)
-                file_data_splitT_splitZ_moco_num[it][iz] = file_data_splitT_splitZ_num[it][iz] + suffix
-                file_data_ref_splitZ_num.append(file_data_ref_splitZ + str(iz).zfill(4))
-                file_mat[it][iz] = folder_mat + 'mat.T' + str(it) + '_Z' + str(iz)
-                # run 2D registration
-                fail_mat[it, iz] = register(program, todo, file_data_splitT_splitZ_num[it][iz], file_data_ref_splitZ_num[iz], file_mat[it][iz], schedule_file, file_data_splitT_splitZ_moco_num[it][iz], param.interp, 2, restrict_deformation, verbose)
-
-            # Merge data along Z
-            if todo != 'estimate':
-                sct.printv('Concatenate along Z...', verbose)
-                cmd = fsloutput + 'fslmerge -z ' + file_data_splitT_moco_num[it]
-                for iz in range(nz):
-                    cmd = cmd + ' ' + file_data_splitT_splitZ_moco_num[it][iz]
-                sct.run(cmd, verbose)
-
-        # volume-based moco
-        else:
-            file_mat[it] = folder_mat + 'mat.T' + str(it)
-            # run 3D registration
-            fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
+        # moco
+        file_mat[it] = folder_mat + 'mat.T' + str(it)
+        # run 3D registration
+        fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
@@ -269,6 +268,22 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
         if todo == 'estimate' or todo == 'estimate_and_apply':
             cmd = 'sct_antsSliceRegularizedRegistration' \
                   ' -p 5' \
+                  ' --transform Translation[1]' \
+                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
+                  ' --iterations 5' \
+                  ' --shrinkFactors 1' \
+                  ' --smoothingSigmas 1' \
+                  ' --output ['+file_mat+','+file_out+'.nii]' \
+                  +sct.get_interpolation('sct_antsSliceRegularizedRegistration', interp)
+        if todo == 'apply':
+            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
+        sct.run(cmd, verbose)
+
+    # use antsSliceRegularized
+    elif program == 'slice':
+        if todo == 'estimate' or todo == 'estimate_and_apply':
+            cmd = 'sct_antsSliceRegularizedRegistration' \
+                  ' -p 0' \
                   ' --transform Translation[1]' \
                   ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
                   ' --iterations 5' \
