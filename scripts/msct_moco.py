@@ -44,6 +44,7 @@ def moco(param):
     slicewise = param.slicewise
     # ANTs parameters
     restrict_deformation = '1x1x0'  # TODO: find it automatically
+    ext = '.nii'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -70,6 +71,11 @@ def moco(param):
     sct.printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
+
+    # copy file_target to a temporary file
+    sct.printv('\nCopy file_target to a temporary file...', verbose)
+    sct.run('cp '+file_target+ext+' target.nii')
+    file_target = 'target'
 
     # pad data (for ANTs)
     if program == 'ants' and todo == 'estimate' and slicewise == 0:
@@ -195,6 +201,11 @@ def moco(param):
             file_mat[it] = folder_mat + 'mat.T' + str(it)
             # run 3D registration
             fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose)
+
+        # average registered volume with target image
+        # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
+        if param.iterative_averaging:
+            sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
     # Replace failed transformation matrix to the closest good one
     # NB: this applies only for flirt, hence the ".txt" string added.
