@@ -45,12 +45,13 @@ import importlib
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_data = ''
         self.fname_bvecs = ''
         self.fname_bvals = ''
         self.fname_target = ''
-        self.fname_centerline = ''
+        self.fname_mask = ''
+        # self.fname_centerline = ''
         # self.path_out = ''
         self.mat_final = ''
         self.todo = ''
@@ -62,7 +63,7 @@ class param:
         # param for msct_moco
         self.slicewise = 0
         self.suffix = '_moco'
-        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
+        # self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
@@ -111,7 +112,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:l:m:o:p:r:s:t:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:m:o:p:r:t:v:x:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -133,8 +134,6 @@ def main():
             param.plot_graph = int(arg)
         elif opt in ('-i'):
             param.fname_data = arg
-        elif opt in ('-l'):
-            param.fname_centerline = arg
         elif opt in ('-m'):
             param.program = arg
         elif opt in ('-o'):
@@ -143,12 +142,12 @@ def main():
             param.interp = arg
         elif opt in ('-r'):
             param.remove_tmp_files = int(arg)
-        elif opt in ('-s'):
-            param.mask_size = float(arg)
         elif opt in ('-t'):
             param.otsu = int(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
+        elif opt in ('-x'):
+            param.fname_mask = arg
         elif opt in ('-z'):
             param.slicewise = int(arg)
 
@@ -168,6 +167,8 @@ def main():
     sct.check_file_exist(param.fname_bvecs, param.verbose)
     if not param.fname_bvals == '':
         sct.check_file_exist(param.fname_bvals, param.verbose)
+    if not param.fname_mask == '':
+        sct.check_file_exist(param.fname_mask, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
@@ -465,10 +466,11 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of DWI data. Uses slice-by-slice and group-wise registration. Outputs are:
-  - motion-corrected data (with suffix _moco)
-  - mean b=0 data (b0_mean)
-  - mean dwi data (dwi_mean)
+  Motion correction of DWI data. Features to improve robustness are:
+  - group-wise (-d)
+  - slice-wise regularized along z using polynomial function (-m slicereg)
+  - masking (-x)
+  - spline regularization along T (-f).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <dmri> -b <bvecs>
@@ -483,11 +485,6 @@ OPTIONAL ARGUMENTS
   -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
                    in time
-  -s <int>         Size of Gaussian mask for more robust motion correction (in mm). 
-                   For no mask, put 0. Default=0
-                   N.B. if centerline is provided, mask is centered on centerline. If not, mask
-                   is centered in the middle of each slice.
-  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
   -m {method}      Method for registration:
@@ -504,6 +501,7 @@ OPTIONAL ARGUMENTS
   -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
                    For no segmentation set to 0.
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -x <mask>        binary mask to limit voxels considered by the registration metric.
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
 
