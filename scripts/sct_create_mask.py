@@ -30,10 +30,12 @@ class param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
-        self.method = 'coord'  # {coord,point,center,centerline}
-        self.shape = 'gaussian'  # box | cylinder | gaussian
+        self.method_list = ['coord', 'point', 'centerline', 'center']
+        self.method = 'coord'  # default method
+        self.shape_list = ['cylinder', 'box', 'gaussian']
+        self.shape = 'cylinder'  # default shape
         self.size = '40'  # in mm. if gaussian, size corresponds to sigma.
-        self.file_suffix = '_mask'  # output suffix
+        self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
 
@@ -47,8 +49,9 @@ def main(param):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/mt/mt0.nii.gz'
-        param.method = 'coord,20x20'  # coord | point | centerline | center
+        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
+        param.method = 'coord,68x69'
+        param.shape = 'cylinder'
         param.remove_tmp_files = 0
         param.verbose = 1
 
@@ -85,7 +88,7 @@ def create_mask(param):
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
+        sct.printv('\nERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
 
     # parse argument for method
@@ -94,6 +97,16 @@ def create_mask(param):
     method_type = method_list[0]
     method_val = method_list[1]
     del method_list
+
+    # check existence of method type
+    if not method_type in param.method_list:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method is not recognized. See usage.', 1, 'error')
+        usage()
+
+    # check existence of shape
+    if not param.shape in param.shape_list:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Shape is not recognized. See usage.', 1, 'error')
+        usage()
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
@@ -191,7 +204,8 @@ def create_mask(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+'mask.nii.gz', path_out+file_out+param.file_suffix+ext_out)
+    fname_out = path_out+param.file_prefix+file_out+ext_out
+    sct.generate_output_file(path_tmp+'mask.nii.gz', fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
@@ -200,7 +214,7 @@ def create_mask(param):
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+path_out+file_out+param.file_suffix+ext_out+' &', param.verbose, 'code')
+    sct.printv('fslview '+param.fname_data+' '+fname_out+' -l Red -t 0.5 &', param.verbose, 'code')
     print
 
 
@@ -225,17 +239,15 @@ def create_line(fname, coord, nz):
 # ==========================================================================================
 def create_mask2d(center, shape, size, nx, ny):
 
-    # initialize 2d plane
+    # initialize 2d grid
     xx, yy = numpy.mgrid[:nx, :ny]
     mask2d = numpy.zeros((nx, ny))
-    # x = numpy.zeros((nx, ny))
-    # y = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
     radius = round(float(size)/2)
 
     if shape == 'box':
-        mask2d[center[0]-radius:center[0]+radius, center[1]-radius:center[1]+radius] = 1
+        mask2d[xc-radius:xc+radius, yc-radius:yc+radius] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
