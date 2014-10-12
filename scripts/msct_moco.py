@@ -151,7 +151,8 @@ def moco(param):
     #     file_data_splitT_splitZ_moco_num = [[[] for i in range(nz)] for i in range(nt)]
     #     file_mat = [[[] for i in range(nz)] for i in range(nt)]
     # else:
-    fail_mat = np.zeros((nt))
+    failed_transfo = [0 for i in range(nt)]
+    # fail_mat = np.zeros((nt))
     file_mat = [[] for i in range(nt)]
 
     # Motion correction: Loop across T
@@ -198,36 +199,29 @@ def moco(param):
         # moco
         file_mat[it] = folder_mat + 'mat.T' + str(it)
         # run 3D registration
-        fail_mat[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose, param.fname_mask)
+        failed_transfo[it] = register(program, todo, file_data_splitT_num[it], file_target, file_mat[it], schedule_file, file_data_splitT_moco_num[it], param.interp, 3, restrict_deformation, verbose, param.fname_mask)
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-        if param.iterative_averaging:
+        if param.iterative_averaging and failed_transfo[it] == 0:
             sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
-    # Replace failed transformation matrix to the closest good one
-    # NB: this applies only for flirt, hence the ".txt" string added.
-    # if slicewise and program == 'flirt':
-    #     fT, fZ = np.where(fail_mat == 1)
-    #     gT, gZ = np.where(fail_mat == 0)
-    #     for it in range(len(fT)):
-    #         sct.printv(('\nReplace failed matrix T'+str(fT[it])+' Z'+str(fZ[it])+'...'), verbose)
-    #
-    #         # rename failed matrix
-    #         cmd = 'mv ' + file_mat[fT[it]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]] + '_failed.txt'
-    #         status, output = sct.run(cmd, verbose)
-    #         # find good Z indices across T corresponding to the current failed Zindex
-    #         good_Zindex = np.where(gZ == fZ[it])
-    #         # find the corresponding T indices
-    #         good_index = gT[good_Zindex]
-    #         # find the T index that is closest to the current T
-    #         if len(good_index) == 1:
-    #             # this case was added, otherwise if good_index has single value [0], then I equals 1, hence it crashes.
-    #             I = 0
-    #         else:
-    #             I = np.amin(abs(good_index-fT[it]))
-    #         cmd = 'cp ' + file_mat[good_index[I]][fZ[it]]+'.txt' + ' ' + file_mat[fT[it]][fZ[it]]+'.txt'
-    #         status, output = sct.run(cmd, verbose)
+    # Replace failed transformation with the closest good one
+    failed_transfo[5] = 1
+    failed_transfo[6] = 1
+    sct.printv(('\nReplace failed transformations...'), verbose)
+    fT = [i for i, j in enumerate(failed_transfo) if j == 1]
+    gT = [i for i, j in enumerate(failed_transfo) if j == 0]
+    for it in range(len(fT)):
+        abs_dist = [abs(gT[i]-fT[it]) for i in range(len(gT))]
+        index_good = abs_dist.index(min(abs_dist))
+        if not index_good == []:
+            sct.printv('  transfo #'+str(fT[it])+' --> use transfo #'+str(gT[index_good]), verbose)
+            # copy transformation
+            sct.run('cp '+file_mat[gT[index_good]]+'Warp.nii.gz'+' '+file_mat[fT[it]]+'Warp.nii.gz')
+        else:
+            # exit program if no transformation exists.
+            sct.printv('ERROR ('+os.path.basename(__file__)+'): No good transformation exist. Exit program.', verbose, 'error')
 
     # Merge data along T
     file_data_moco = file_data+suffix
@@ -299,8 +293,8 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
     # check if output file exists
     if not os.path.isfile(file_out+'.nii'):
         # sct.printv(output, verbose, 'error')
-        sct.printv('WARNING (msct_moco): Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Use previous transformation for this volume.\n', verbose, 'warning')
-        # copy previous transformation
+        sct.printv('WARNING (msct_moco): Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', verbose, 'warning')
+        fail_mat = 1
 
     # return status of failure
     return fail_mat
