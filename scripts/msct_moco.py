@@ -207,21 +207,22 @@ def moco(param):
             sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one
-    failed_transfo[5] = 1
-    failed_transfo[6] = 1
     sct.printv(('\nReplace failed transformations...'), verbose)
     fT = [i for i, j in enumerate(failed_transfo) if j == 1]
     gT = [i for i, j in enumerate(failed_transfo) if j == 0]
     for it in range(len(fT)):
         abs_dist = [abs(gT[i]-fT[it]) for i in range(len(gT))]
-        index_good = abs_dist.index(min(abs_dist))
-        if not index_good == []:
+        if not abs_dist == []:
+            index_good = abs_dist.index(min(abs_dist))
             sct.printv('  transfo #'+str(fT[it])+' --> use transfo #'+str(gT[index_good]), verbose)
             # copy transformation
             sct.run('cp '+file_mat[gT[index_good]]+'Warp.nii.gz'+' '+file_mat[fT[it]]+'Warp.nii.gz')
+            # apply transformation
+            sct.run('sct_apply_transfo -i '+file_data_splitT_num[fT[it]]+'.nii -d '+file_target+'.nii -w '+file_mat[fT[it]]+'Warp.nii.gz'+' -o '+file_data_splitT_moco_num[fT[it]]+'.nii'+' -p '+param.interp, verbose)
         else:
             # exit program if no transformation exists.
-            sct.printv('ERROR ('+os.path.basename(__file__)+'): No good transformation exist. Exit program.', verbose, 'error')
+            sct.printv('\nERROR in '+os.path.basename(__file__)+': No good transformation exist. Exit program.\n', verbose, 'error')
+            sys.exit(2)
 
     # Merge data along T
     file_data_moco = file_data+suffix
