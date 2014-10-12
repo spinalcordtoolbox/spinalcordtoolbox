@@ -75,7 +75,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:m:o:p:r:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:m:o:p:r:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -101,6 +101,8 @@ def main():
             param.remove_tmp_files = int(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
+        elif opt in ('-x'):
+            param.fname_mask = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
@@ -339,6 +341,7 @@ DESCRIPTION
   - slice-wise regularized along z using polynomial function (-m slicereg)
   - masking (-x)
   - spline regularization along T (-f).
+  - iterative averaging of target volume
 
 USAGE
   """+os.path.basename(__file__)+""" -i <fmri>
