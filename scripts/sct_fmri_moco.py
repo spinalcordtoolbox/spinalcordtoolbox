@@ -28,8 +28,9 @@ class param:
         self.debug = 0
         self.fname_data = ''
         self.fname_target = ''
-        self.fname_centerline = ''
+        #self.fname_centerline = ''
         # self.path_out = ''
+        self.fname_mask = ''
         self.mat_final = ''
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
@@ -41,13 +42,14 @@ class param:
         # param for msct_moco
         self.slicewise = 0
         self.suffix = '_moco'
-        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
+        #self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
         self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'spline'  # nn, linear, spline
         #Eddy Current Distortion Parameters:
         self.min_norm = 0.001
+        self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
 
 #=======================================================================================================================
@@ -68,13 +70,12 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
-        param.slicewise = 0
         param.run_eddy = 0
         param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:l:m:o:p:r:s:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:m:o:p:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -90,8 +91,6 @@ def main():
             param.plot_graph = int(arg)
         elif opt in ('-i'):
             param.fname_data = arg
-        elif opt in ('-l'):
-            param.fname_centerline = arg
         elif opt in ('-m'):
             param.program = arg
         elif opt in ('-o'):
@@ -100,27 +99,27 @@ def main():
             param.interp = arg
         elif opt in ('-r'):
             param.remove_tmp_files = int(arg)
-        elif opt in ('-s'):
-            param.mask_size = float(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
-        elif opt in ('-z'):
-            param.slicewise = int(arg)
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
 
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  input file ............'+param.fname_data, param.verbose)
-
     # check existence of input files
     sct.printv('\nCheck file existence...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
+    if not param.fname_mask == '':
+        sct.check_file_exist(param.fname_mask, param.verbose)
+
+    sct.printv('\nInput parameters:', param.verbose)
+    sct.printv('  input file ............'+param.fname_data, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
+    if param.fname_mask != '':
+        param.fname_mask = os.path.abspath(param.fname_mask)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -335,28 +334,25 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of DWI data. Uses slice-by-slice and group-wise registration. Outputs are:
-  - motion-corrected data (with suffix _moco)
-  - mean b=0 data (b0_mean)
-  - mean dwi data (dwi_mean)
+  Motion correction of fMRI data. Some robust features include:
+  - group-wise (-d)
+  - slice-wise regularized along z using polynomial function (-m slicereg)
+  - masking (-x)
+  - spline regularization along T (-f).
 
 USAGE
   """+os.path.basename(__file__)+""" -i <fmri>
 
 MANDATORY ARGUMENTS
-  -i <fmri>        diffusion data
+  -i <fmri>        fMRI data
 
 OPTIONAL ARGUMENTS
-  -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.group_size)+"""
-  -s <int>         Size of Gaussian mask for more robust motion correction (in mm).
-                   For no mask, put 0. Default=0
-                   N.B. if centerline is provided, mask is centered on centerline. If not, mask
-                   is centered in the middle of each slice.
-  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
+  -d <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
   -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
                    N.B. Use only if you want to correct large drifts with time.
   -m {method}      Method for registration:
-                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs). Disregard "-z"
+                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs).
+                     slice: slicewise non-regularized (based on ANTs).
                      ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
                      ants_affine: affine transformation constrained in axial plane.
                      ants_rigid: rigid transformation constrained in axial plane.
@@ -366,6 +362,7 @@ OPTIONAL ARGUMENTS
   -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -x <mask>        binary mask to limit voxels considered by the registration metric.
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
 
