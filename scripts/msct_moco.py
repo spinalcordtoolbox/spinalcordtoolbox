@@ -261,7 +261,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
     elif program == 'slicereg':
         if todo == 'estimate' or todo == 'estimate_and_apply':
             cmd = 'sct_antsSliceRegularizedRegistration' \
-                  ' -p 3' \
+                  ' -p 2' \
                   ' --transform Translation[1]' \
                   ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
                   ' --iterations 5' \
