@@ -31,8 +31,8 @@ class param:
         self.debug = 0
         self.fname_data = ''
         self.method = 'coord'  # {coord,point,center,centerline}
-        self.shape = 'box'  # box | cylinder | gaussian
-        self.size = '10'  # in mm. if gaussian, size corresponds to sigma.
+        self.shape = 'gaussian'  # box | cylinder | gaussian
+        self.size = '40'  # in mm. if gaussian, size corresponds to sigma.
         self.file_suffix = '_mask'  # output suffix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -226,28 +226,23 @@ def create_line(fname, coord, nz):
 def create_mask2d(center, shape, size, nx, ny):
 
     # initialize 2d plane
-    # xx, yy = numpy.mgrid[:nx, :ny]
+    xx, yy = numpy.mgrid[:nx, :ny]
     mask2d = numpy.zeros((nx, ny))
-    x = numpy.zeros((nx, ny))
-    y = numpy.zeros((nx, ny))
+    # x = numpy.zeros((nx, ny))
+    # y = numpy.zeros((nx, ny))
+    xc = center[0]
+    yc = center[1]
     radius = round(float(size)/2)
 
     if shape == 'box':
         mask2d[center[0]-radius:center[0]+radius, center[1]-radius:center[1]+radius] = 1
 
-    # elif shape == 'cylinder':
-    #     mask2d =
-    #     # TODO
+    elif shape == 'cylinder':
+        mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
 
     elif shape == 'gaussian':
-        sigma = size
-        for i in range(nx):
-            x[i, :] = i + 1
-        for i in range(ny):
-            y[:, i] = i + 1
-        xc = center[0]
-        yc = center[1]
-        mask2d = numpy.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
+        sigma = float(radius)
+        mask2d = numpy.exp(-(((xx-xc)**2)/(2*(sigma**2)) + ((yy-yc)**2)/(2*(sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)
