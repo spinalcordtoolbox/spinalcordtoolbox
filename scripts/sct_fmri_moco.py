@@ -68,7 +68,7 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = '/Users/julien/data/spinalcordtoolbox_data/oxford/fmri/fmri_sub.nii.gz'  #path_sct_data+'/fmri/fmri.nii.gz'
+        param.fname_data = '/Users/julien/data/spinalcordtoolbox_data/oxford/fmri/fmri_sub_bad.nii.gz'  #path_sct_data+'/fmri/fmri.nii.gz'
         param.fname_mask = '/Users/julien/data/spinalcordtoolbox_data/oxford/fmri/fmri_sub_mask.nii.gz'  #path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
         param.group_size = 3
