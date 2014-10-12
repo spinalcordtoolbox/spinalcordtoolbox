@@ -35,16 +35,16 @@ class param:
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
         self.group_size = 3  # number of images averaged for 'dwi' method.
-        self.spline_fitting = 0
+        #self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
-        self.plot_graph = 0
+        #self.plot_graph = 0
         # param for msct_moco
-        self.slicewise = 0
+        #self.slicewise = 0
         self.suffix = '_moco'
         #self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
         self.poly = '2'  # degree of polynomial function for moco
-        self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
+        #self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
         # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
         self.interp = 'spline'  # nn, linear, spline
         #Eddy Current Distortion Parameters:
@@ -76,20 +76,14 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:m:o:p:r:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-c'):
-            param.cost_function_flirt = arg
-        elif opt in ('-d'):
-            param.group_size = int(arg)
-        elif opt in ('-f'):
-            param.spline_fitting = int(arg)
         elif opt in ('-g'):
-            param.plot_graph = int(arg)
+            param.group_size = int(arg)
         elif opt in ('-i'):
             param.fname_data = arg
         elif opt in ('-m'):
@@ -261,10 +255,10 @@ def fmri_moco(param):
             # else:
             sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
 
-    # Spline Regularization along T
-    if param.spline_fitting:
-        moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
-
+    # # Spline Regularization along T
+    # if param.spline_fitting:
+    #     moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
+    #
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
@@ -297,10 +291,9 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 
 DESCRIPTION
   Motion correction of fMRI data. Some robust features include:
-  - group-wise (-d)
+  - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-z)
   - masking (-m)
-  - spline regularization along T (-f).
   - iterative averaging of target volume
 
 USAGE
@@ -310,15 +303,12 @@ MANDATORY ARGUMENTS
   -i <fmri>        fMRI data
 
 OPTIONAL ARGUMENTS
-  -d <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
+  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -z <degpoly>     degree of polynomial function used for regularization along Z. Default="""+param.poly+"""
                    For no regularization set to 0.
-  -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
-                   N.B. Use only if you want to correct large drifts with time.
   -o <path_out>    Output path.
   -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
-  -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
