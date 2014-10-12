@@ -78,10 +78,10 @@ def moco(param):
     file_target = 'target'
 
     # pad data (for ANTs)
-    if program == 'ants' and todo == 'estimate' and slicewise == 0:
-        sct.printv('\nPad data (for ANTs)...', verbose)
-        sct.run('sct_c3d '+file_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_target+'_pad.nii')
-        file_target = file_target+'_pad'
+    # if program == 'ants' and todo == 'estimate':
+    #     sct.printv('\nPad data (for ANTs)...', verbose)
+    #     sct.run('sct_c3d '+file_target+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_target+'_pad.nii')
+    #     file_target = file_target+'_pad'
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
@@ -163,11 +163,10 @@ def moco(param):
         file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
         sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
 
-        # pad data (for ANTs)
-        # TODO: check if need to pad also for the estimate_and_apply
-        if program == 'ants' and todo == 'estimate' and slicewise == 0:
-            sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
-            file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
+        # # pad data (for ANTs)
+        # if program == 'ants' and todo == 'estimate':
+        #     sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
+        #     file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
         # # Slice-by-slice moco
         # if slicewise:
@@ -279,7 +278,7 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
                 cmd += ' -x '+fname_mask
         if todo == 'apply':
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
-        sct.run(cmd, verbose)
+        status, output = sct.run(cmd, verbose)
 
     # use antsSliceRegularized
     elif program == 'slice':
@@ -297,56 +296,11 @@ def register(program, todo, file_src, file_dest, file_mat, schedule_file, file_o
             cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
         sct.run(cmd, verbose)
 
-    # use ants
-    elif program == 'ants':
-        if todo == 'estimate' or todo == 'estimate_and_apply':
-            cmd = 'sct_antsRegistration' \
-                  ' --dimensionality '+str(dim)+' ' \
-                  ' --transform BSplineSyN[1, 1x1x5, 0x0x0, 2]' \
-                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
-                  ' --convergence 10x5' \
-                  ' --shrink-factors 2x1' \
-                  ' --smoothing-sigmas 1x1mm' \
-                  ' --Restrict-Deformation '+restrict_deformation+'' \
-                  ' --output ['+file_mat+','+file_out+'.nii]' \
-                  +sct.get_interpolation('sct_antsRegistration', interp)
-        if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0Warp.nii.gz'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
-        sct.run(cmd, verbose)
-
-    # use ants_rigid
-    elif program == 'ants_rigid':
-        if todo == 'estimate' or todo == 'estimate_and_apply':
-            cmd = 'sct_antsRegistration' \
-                  ' --dimensionality '+str(dim)+' ' \
-                  ' --transform Translation[0.5]' \
-                  ' --metric CC['+file_dest+'.nii, '+file_src+'.nii, 1, 4]' \
-                  ' --convergence 5x3' \
-                  ' --shrink-factors 2x1' \
-                  ' --smoothing-sigmas 1x1mm' \
-                  ' --Restrict-Deformation '+restrict_deformation+'' \
-                  ' --output ['+file_mat+','+file_out+'.nii]' \
-                  +sct.get_interpolation('sct_antsRegistration', interp)
-        if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
-        sct.run(cmd, verbose)
-
-    # use ants_affine
-    elif program == 'ants_affine':
-        if todo == 'estimate' or todo == 'estimate_and_apply':
-            cmd = 'sct_antsRegistration' \
-                  ' --dimensionality '+str(dim)+' ' \
-                  ' --transform Affine[0.5]' \
-                  ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 32]' \
-                  ' --convergence 10x5' \
-                  ' --shrink-factors 2x1' \
-                  ' --smoothing-sigmas 2x1mm' \
-                  ' --Restrict-Deformation '+restrict_deformation+'' \
-                  ' --output ['+file_mat+','+file_out+'.nii]' \
-                  +sct.get_interpolation('sct_antsRegistration', interp)
-        if todo == 'apply':
-            cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'0GenericAffine.mat'+' -o '+file_out+'.nii'+' -p '+interp+' -x '+str(dim)
-        sct.run(cmd, verbose)
+    # check if output file exists
+    if not os.path.isfile(file_out+'.nii'):
+        # sct.printv(output, verbose, 'error')
+        sct.printv('WARNING (msct_moco): Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Use previous transformation for this volume.\n', verbose, 'warning')
+        # copy previous transformation
 
     # return status of failure
     return fail_mat

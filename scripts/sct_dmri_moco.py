@@ -491,9 +491,6 @@ OPTIONAL ARGUMENTS
   -m {method}      Method for registration:
                      slicereg: slicewise regularized Tx and Ty transformations (based on ANTs).
                      slice: slicewise non-regularized (based on ANTs).
-                     ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
-                     ants_affine: affine transformation constrained in axial plane.
-                     ants_rigid: rigid transformation constrained in axial plane.
                      flirt: FSL flirt with Tx and Ty transformations.
                      Default="""+str(param.program)+"""
   -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
