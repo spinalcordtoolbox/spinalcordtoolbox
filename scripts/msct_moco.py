@@ -162,7 +162,7 @@ def moco(param):
         it = index[indice_index]
         file_data_splitT_num.append(file_data_splitT + str(it).zfill(4))
         file_data_splitT_moco_num.append(file_data + suffix + '_T' + str(it).zfill(4))
-        sct.printv(('\nVolume '+str((it+1))+'/'+str(nt)+':'), verbose)
+        sct.printv(('\nVolume '+str((it))+'/'+str(nt-1)+':'), verbose)
 
         # # pad data (for ANTs)
         # if program == 'ants' and todo == 'estimate':
