@@ -467,11 +467,12 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of DWI data. Features to improve robustness are:
+  Motion correction of DWI data. Some robust features include:
   - group-wise (-d)
   - slice-wise regularized along z using polynomial function (-m slicereg)
   - masking (-x)
   - spline regularization along T (-f).
+  - iterative averaging of target volume
 
 USAGE
   """+os.path.basename(__file__)+""" -i <dmri> -b <bvecs>
