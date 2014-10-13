@@ -7,8 +7,28 @@
 # Installation location: /usr/local/spinalcordtoolbox/
 
 # parameters
-#PATH_INSTALL="/usr/local/"
-SCT_DIR="/usr/local/spinalcordtoolbox"
+PATH_INSTALL="/usr/local"
+
+function usage()
+{
+cat << EOF
+
+`basename ${0}`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+Install the Spinal Cord Toolbox
+
+USAGE
+`basename ${0}` -p <path>
+
+MANDATORY ARGUMENTS
+-p <path>                   installation path
+-h                          display this help
+
+EOF
+}
 
 echo
 echo "============================="
@@ -22,6 +42,32 @@ if [ "$(whoami)" == "root" ]; then
   exit 1
 fi
 
+while getopts “hp:” OPTION
+do
+    case $OPTION in
+        h)
+            usage
+            exit 1
+            ;;
+        p)
+            PATH_INSTALL=$OPTARG
+            ;;
+        ?)
+            usage
+            exit
+            ;;
+    esac
+done
+
+if [[ ! -d $PATH_INSTALL ]]; then
+  echo "ERROR: Installation path is not correct: ${PATH_INSTALL}. Exit program."
+  exit
+fi
+
+# Set toolbox installation path
+SCT_DIR="${PATH_INSTALL}/spinalcordtoolbox"
+
+
 # check if folder already exists - if so, delete it
 echo
 echo "Check if spinalcordtoolbox is already installed (if so, delete it)..."
@@ -32,7 +78,7 @@ fi
 
 # create folder
 echo
-echo "Create folder: /usr/local/spinalcordtoolbox..."
+echo "Create folder: ${PATH_INSTALL}/spinalcordtoolbox..."
 cmd="sudo mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
