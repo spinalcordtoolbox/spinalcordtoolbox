@@ -41,11 +41,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        # get path of the testing data
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_DATA_DIR')
-        # parameters
-        fname_warp_list = path_sct_data+'/errsm_30/t2/warp_template2anat.nii.gz'+','+path_sct_data+'/errsm_30/t1/warp_src2dest.nii.gz'
-        fname_dest = path_sct_data+'/errsm_30/t1/t1_crop.nii.gz'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-'+path_sct_data+'/mt/warp_template2mt.nii.gz'
+        fname_dest = path_sct_data+'/mt/mtr.nii.gz'
         verbose = 1
 
     # Check input parameters
@@ -70,11 +68,20 @@ def main():
         usage()
 
     # Parse list of warping fields
-    sct.printv('\nParse list of warping fields...', verbose)
+    sct.printv('\nParse list of transformations...', verbose)
+    use_inverse = []
+    fname_warp_list_invert = []
     fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
     fname_warp_list = fname_warp_list.split(",")  # parse with comma
     for i in range(len(fname_warp_list)):
-        sct.printv('  Warp #'+str(i)+': '+fname_warp_list[i], verbose)
+        # Check if inverse matrix is specified with '-' at the beginning of file name
+        if fname_warp_list[i].find('-') == 0:
+            use_inverse.append('-i ')
+            fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
+        else:
+            use_inverse.append('')
+        sct.printv('  Transfo #'+str(i)+': '+use_inverse[i]+fname_warp_list[i], verbose)
+        fname_warp_list_invert.append(use_inverse[i]+fname_warp_list[i])
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -92,7 +99,7 @@ def main():
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list.reverse()
-    cmd = 'sct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list)
+    cmd = 'sct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
 
@@ -120,7 +127,8 @@ USAGE
   """+os.path.basename(__file__)+""" -w <warp_list> -d <dest>
 
 MANDATORY ARGUMENTS
-  -w <warp_list>        list of warping fields separated with ","
+  -w <warp_list>        list of affine matrix or warping fields separated with ","
+                        N.B. if you want to use the inverse matrix, add "-" before matrix file name.
   -d <dest>             destination image
 
 OPTIONAL ARGUMENTS
