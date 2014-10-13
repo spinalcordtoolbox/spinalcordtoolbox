@@ -45,7 +45,7 @@ class param:
         self.numberIterations = "15x3" # number of iterations
         self.numberIterationsStep2 = "10" # number of iterations at step 2
         self.verbose  = 0 # verbose
-        self.compute_dest2sr = 0 # compute dest2src warping field
+        # self.compute_dest2sr = 0 # compute dest2src warping field
         self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
         self.interp = 'spline'  # nn, linear, spline
 
@@ -76,7 +76,7 @@ def main():
     # fname_init_transfo_inv = ''
     use_init_transfo = ''
     #gradientStep = param.gradientStep
-    compute_dest2src = param.compute_dest2sr
+    # compute_dest2src = param.compute_dest2sr
     algo = param.algo
     start_time = time.time()
     # restrict_deformation = '1x1x1'
@@ -97,12 +97,12 @@ def main():
         numberIterationsStep2 = '1'
         gradientStep_input = '0.5'
         remove_temp_files = 0
-        compute_dest2src = 1
+        # compute_dest2src = 1
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:y:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:y:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -136,8 +136,8 @@ def main():
             param.interp = arg
         elif opt in ('-y'):
             numberIterationsStep2 = arg
-        elif opt in ('-z'):
-            compute_dest2src = int(arg)
+        # elif opt in ('-z'):
+        #     compute_dest2src = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
