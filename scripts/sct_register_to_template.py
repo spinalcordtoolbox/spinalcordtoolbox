@@ -134,13 +134,13 @@ def main():
     # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
     print('\nAssign number of iterations based on speed...')
     if speed == "slow":
-        nb_iterations = "50x30"
+        nb_iterations = "50"
     elif speed == "normal":
-        nb_iterations = "50x15"
+        nb_iterations = "15"
     elif speed == "fast":
-        nb_iterations = "10x3"
+        nb_iterations = "5"
     elif speed == "superfast":
-        nb_iterations = "1x0"  # only for debugging purpose-- do not inform the user about this option
+        nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
     else:
         print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
         sys.exit(2)
@@ -222,10 +222,7 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    #nb_iterations = '50x15'
-    # TODO: nb iteration for step 2
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
-    # status, output = sct.run('sct_register_straight_spinalcord_to_template -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x spline', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate warping fields: template2anat & anat2template...')
