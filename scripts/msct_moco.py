@@ -37,11 +37,8 @@ def moco(param):
     folder_mat = sct.slash_at_the_end(param.mat_moco, 1)  # output folder of mat file
     todo = param.todo
     suffix = param.suffix
-    program = param.program  # flirt, ants
-    file_schedule = param.file_schedule
+    #file_schedule = param.file_schedule
     verbose = param.verbose
-    # ANTs parameters
-    restrict_deformation = '1x1x0'  # TODO: find it automatically
     ext = '.nii'
 
     # get path of the toolbox
@@ -51,14 +48,12 @@ def moco(param):
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  Input file ............'+file_data, param.verbose)
     sct.printv('  Reference file ........'+file_target, param.verbose)
-    sct.printv('  Program ...............'+program, param.verbose)
-    # sct.printv('  Schedule file .........'+file_schedule, param.verbose)
-    sct.printv('  Method ................'+todo, param.verbose)
+    sct.printv('  Polynomial degree .....'+param.param[0], param.verbose)
+    sct.printv('  Smoothing kernel ......'+param.param[1], param.verbose)
+    sct.printv('  Gradient step .........'+param.param[2], param.verbose)
+    sct.printv('  Todo ..................'+todo, param.verbose)
     sct.printv('  Mask  .................'+param.fname_mask, param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
-
-    # Schedule file for FLIRT
-    schedule_file = path_sct+file_schedule
 
     # create folder for mat files
     sct.create_folder(folder_mat)
@@ -142,12 +137,12 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         cmd = 'sct_antsSliceRegularizedRegistration' \
-              ' -p 2' \
-              ' --transform Translation[1]' \
+              ' -p '+param.param[0]+ \
+              ' --transform Translation['+param.param[2]+']' \
               ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
               ' --iterations 5' \
               ' --shrinkFactors 1' \
-              ' --smoothingSigmas 2' \
+              ' --smoothingSigmas '+param.param[1]+ \
               ' --output ['+file_mat+','+file_out+'.nii]' \
               +sct.get_interpolation('sct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
@@ -331,20 +326,20 @@ def combine_matrix(param):
             np.savetxt(os.path.join(param.mat_final, fname), Matrix_final, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
-
-#=======================================================================================================================
-# gauss2d: creates a 2D Gaussian Function
-#=======================================================================================================================
-def gauss2d(dims, sigma, center):
-    x = np.zeros((dims[0],dims[1]))
-    y = np.zeros((dims[0],dims[1]))
-
-    for i in range(dims[0]):
-        x[i,:] = i+1
-    for i in range(dims[1]):
-        y[:,i] = i+1
-
-    xc = center[0]
-    yc = center[1]
-
-    return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
+#
+# #=======================================================================================================================
+# # gauss2d: creates a 2D Gaussian Function
+# #=======================================================================================================================
+# def gauss2d(dims, sigma, center):
+#     x = np.zeros((dims[0],dims[1]))
+#     y = np.zeros((dims[0],dims[1]))
+#
+#     for i in range(dims[0]):
+#         x[i,:] = i+1
+#     for i in range(dims[1]):
+#         y[:,i] = i+1
+#
+#     xc = center[0]
+#     yc = center[1]
+#
+#     return np.exp(-(((x-xc)**2)/(2*(sigma[0]**2)) + ((y-yc)**2)/(2*(sigma[1]**2))))
