@@ -51,8 +51,6 @@ class param:
         self.fname_bvals = ''
         self.fname_target = ''
         self.fname_mask = ''
-        # self.fname_centerline = ''
-        # self.path_out = ''
         self.mat_final = ''
         self.todo = ''
         self.dwi_group_size = 3  # number of images averaged for 'dwi' method.
@@ -60,15 +58,12 @@ class param:
         self.remove_tmp_files = 1
         self.verbose = 1
         self.plot_graph = 0
-        # param for msct_moco
-        # self.slicewise = 0
         self.suffix = '_moco'
-        # self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
-        self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
-        # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        self.param = ['2',  # degree of polynomial function for moco
+                      '2',  # smoothing sigma in mm
+                      '1',  # gradientStep
+                      'MI'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
-        #Eddy Current Distortion Parameters:
         self.run_eddy = 0
         self.mat_eddy = ''
         self.min_norm = 0.001
@@ -90,6 +85,7 @@ def main():
     # initialization
     start_time = time.time()
     path_out = '.'
+    param_user = ''
 
     # get path of the toolbox
     status, param.path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -98,22 +94,21 @@ def main():
     if param.debug:
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        # param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        # param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'
-        param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
-        param.fname_mask = '/Users/julien/data/toronto/E23102/dmri/dwi_moco_mean_mask.nii.gz'
+        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
+        param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        # param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'
+        # param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
+        # param.fname_mask = '/Users/julien/data/toronto/E23102/dmri/dwi_moco_mean_mask.nii.gz'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.run_eddy = 0
         param.otsu = 0
         param.dwi_group_size = 5
         param.iterative_averaging = 1
-        param.program = 'slicereg'  # ants_affine, flirt
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:c:d:e:f:g:m:o:p:r:t:v:x:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:e:f:g:m:o:p:r:t:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -123,24 +118,20 @@ def main():
             param.fname_bvals = arg
         elif opt in ('-b'):
             param.fname_bvecs = arg
-        elif opt in ('-c'):
-            param.cost_function_flirt = arg
-        elif opt in ('-d'):
-            param.dwi_group_size = int(arg)
         elif opt in ('-e'):
             param.run_eddy = int(arg)
         elif opt in ('-f'):
             param.spline_fitting = int(arg)
         elif opt in ('-g'):
-            param.plot_graph = int(arg)
+            param.group_size = int(arg)
         elif opt in ('-i'):
             param.fname_data = arg
         elif opt in ('-m'):
-            param.program = arg
+            param.fname_mask = arg
         elif opt in ('-o'):
             path_out = arg
         elif opt in ('-p'):
-            param.interp = arg
+            param_user = arg
         elif opt in ('-r'):
             param.remove_tmp_files = int(arg)
         elif opt in ('-t'):
@@ -148,12 +139,19 @@ def main():
         elif opt in ('-v'):
             param.verbose = int(arg)
         elif opt in ('-x'):
-            param.fname_mask = arg
+            param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
+
+    # parse argument for param
+    if not param_user == '':
+        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        # TODO: check integrity of input
+        # param.param = [i for i in range(len(param_user))]
+        del param_user
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............'+param.fname_data, param.verbose)
@@ -244,22 +242,8 @@ def dmri_moco(param):
     mat_final = 'mat_final/'
     file_dwi_group = 'dwi_averaged_groups'  # no extension
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
-    
-    # fname_data = param.fname_data
-    # fname_bvecs = param.fname_bvecs
-    # fname_bvals = param.fname_bvals
-    # slicewise = param.slicewise
-    # dwi_group_size = param.dwi_group_size
-    # interp = param.interp
-    # verbose = param.verbose
-    # bval_min = param.bval_min
-    #
-    # # Extract path, file and extension
-    # path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    #
-    # file_b0 = 'b0'
-    # file_dwi = 'dwi'
-    
+    ext_mat = 'Warp.nii.gz'  # warping field
+
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
@@ -269,9 +253,8 @@ def dmri_moco(param):
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
-    #=======================================================================================================================
     # Prepare NIFTI (mean/groups...)
-    #=======================================================================================================================
+    #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
     status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
@@ -358,9 +341,8 @@ def dmri_moco(param):
     sct.run(fsloutput + 'fslroi ' + file_dwi_group + ' target_dwi.nii ' + str(index_dwi[0]) + ' 1', param.verbose)
 
 
-    #=======================================================================================================================
-    #START MOCO
-    #=======================================================================================================================
+    # START MOCO
+    #===================================================================================================================
 
     # Estimate moco on b0 groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -397,32 +379,14 @@ def dmri_moco(param):
 
     # Copy b=0 registration matrices
     sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-    # first, use the right extension
-    # TODO: output param in moco so that we don't need to do the following twice
-    if param.program == 'flirt':
-        ext_mat = '.txt'  # affine matrix
-    elif param.program == 'ants':
-        ext_mat = '0Warp.nii.gz'  # warping field
-    elif param.program == 'slicereg':
-        ext_mat = 'Warp.nii.gz'  # warping field
-    elif param.program == 'ants_affine' or param.program == 'ants_rigid':
-        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
 
     for it in range(nb_b0):
-        # if param.slicewise:
-        #     for iz in range(nz):
-        #         sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, param.verbose)
-        # else:
         sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
 
     # Copy DWI registration matrices
     sct.printv('\nCopy DWI registration matrices...', param.verbose)
     for iGroup in range(nb_groups):
         for dwi in range(len(group_indexes[iGroup])):
-            # if param.slicewise:
-            #     for iz in range(nz):
-            #         sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+'_Z'+str(iz)+ext_mat, param.verbose)
-            # else:
             sct.run('cp '+'mat_dwigroups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][dwi])+ext_mat, param.verbose)
 
     # Spline Regularization along T
