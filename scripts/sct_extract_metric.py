@@ -90,12 +90,13 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2/csa_volume.nii.gz'  # path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'  # path_sct+'/testing/data/errsm_23/mt/label/atlas'
-        method = 'wa'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_data = path_sct_data+'/mt/mtr.nii.gz'
+        path_label = path_sct_data+'/mt/label/template'
+        method = 'wath'
         labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = ''  #'200:210' #'2:4'
-        vertebral_levels = '2:4'
+        slices_of_interest = '1:4'  #'200:210' #'2:4'
+        vertebral_levels = ''
         average_all_labels = 0
         fname_output = ''  # path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
@@ -512,11 +513,15 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
 #=======================================================================================================================
 def remove_slices(data_to_crop, slices_of_interest):
 
-    # extract slice numbers
-    slices_list = [int(x) for x in slices_of_interest.split(':')] # 2-element list
+    # check if user selected specific slices using delimitor ','
+    if not slices_of_interest.find(',') == -1:
+        slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
+    else:
+        slices_range = [int(x) for x in slices_of_interest.split(':')]  # 2-element list
+        slices_list = [i for i in range(slices_range[0], slices_range[1]+1)]
 
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
-    data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
+    data_cropped = data_to_crop[..., slices_list]
 
     return data_cropped
 
@@ -735,7 +740,8 @@ OPTIONAL ARGUMENTS
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
   -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
-  -z <zmin:zmax>        Slices to estimate the metric from. Example: 5:23. First slice is 0 (not 1)
+  -z <zmin:zmax>        Slice range to estimate the metric from. First slice is 0. Example: 5:23
+                        You can also select specific slices using commas. Example: 0,2,3,5,12
   -h                    help. Show this message
 
 EXAMPLE
