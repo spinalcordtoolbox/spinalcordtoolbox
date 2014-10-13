@@ -21,8 +21,8 @@ def test(path_data):
 
 
     cmd = 'sct_fmri_moco -i ' + path_data + folder_data + file_data[0] \
-                + ' -d 3' \
-                + ' -p spline' \
+                + ' -g 5' \
+                + ' -x spline' \
                 + ' -r 0' \
                 + ' -v 1'
 
