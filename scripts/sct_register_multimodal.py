@@ -336,7 +336,7 @@ def main():
                '--initial-moving-transform stage1Warp.nii.gz '
                '--transform '+algo+'['+gradientStep+',3,0] '
                '--metric MI[dest_pad.nii,src_regAffine.nii,1,32] '
-               '--convergence '+numberIterationsStep2+' '
+               '--convergence '+numberIterations+' '
                '--shrink-factors 1 '
                '--smoothing-sigmas 0mm '
                '--Restrict-Deformation 1x1x0 '
