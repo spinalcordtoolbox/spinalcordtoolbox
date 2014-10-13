@@ -37,7 +37,8 @@ class param:
         self.suffix = '_moco'
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
-                      '1']  # gradientStep
+                      '1',  # gradientStep
+                      'MI'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
@@ -301,11 +302,13 @@ OPTIONAL ARGUMENTS
   -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2,MI
                      1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
                         For no regularization set to 0.
                      2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
                      3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
+                     4) metric: {MI,MeanSquares}. Default="""+param.param[3]+"""
+                        If you find very large deformations, switching to MeanSquares can help.
   -o <path_out>    Output path.
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
