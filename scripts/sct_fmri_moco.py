@@ -25,7 +25,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_target = ''
         #self.fname_centerline = ''
@@ -38,8 +38,8 @@ class param:
         self.remove_tmp_files = 1
         self.verbose = 1
         self.suffix = '_moco'
-        self.param = ['2'  # degree of polynomial function for moco
-                      '2'  # smoothing sigma in mm
+        self.param = ['2',  # degree of polynomial function for moco
+                      '2',  # smoothing sigma in mm
                       '1']  # gradientStep
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
@@ -67,7 +67,7 @@ def main():
         #param.fname_mask = path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
         param.group_size = 3
-        param_user = '2,1,0.5'
+        #param_user = '2,1,0.5'
 
     # Check input parameters
     try:
