@@ -38,7 +38,7 @@ class param:
         self.debug               = 0
         self.remove_temp_files   = 1 # remove temporary files
         self.outSuffix           = "_reg"
-        self.padding             = 3 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
+        self.padding             = 0 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
 #        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
         self.algo = 'SyN'
         self.numberIterations    = "15x3" # number of iterations
@@ -70,8 +70,8 @@ def main():
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     use_segmentation = 0 # use spinal cord segmentation to improve robustness
-    fname_init_transfo = ''
-    fname_init_transfo_inv = ''
+    # fname_init_transfo = ''
+    # fname_init_transfo_inv = ''
     use_init_transfo = ''
     gradientStep_input = param.gradientStep_input
     compute_dest2src = param.compute_dest2sr
@@ -102,7 +102,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:p:q:r:s:t:v:x:y:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:n:o:p:q:r:s:t:v:x:y:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -122,8 +122,8 @@ def main():
             fname_output = arg
         elif opt in ('-p'):
             padding = arg
-        elif opt in ('-q'):
-            fname_init_transfo = arg
+        # elif opt in ('-q'):
+        #     fname_init_transfo = arg
         elif opt in ('-r'):
             remove_temp_files = int(arg)
         elif opt in ("-s"):
@@ -136,8 +136,8 @@ def main():
             compute_dest2src = int(arg)
         elif opt in ('-y'):
             numberIterationsStep2 = arg
-        elif opt in ('-z'):
-            fname_init_transfo_inv = arg
+        # elif opt in ('-z'):
+        #     fname_init_transfo_inv = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -166,10 +166,10 @@ def main():
     # print arguments
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
-    print '  Destinationf ........ '+fname_dest
+    print '  Destination ......... '+fname_dest
     print '  Segmentation source . '+fname_src_seg
     print '  Segmentation dest ... '+fname_dest_seg
-    print '  Init transfo ........ '+fname_init_transfo
+    # print '  Init transfo ........ '+fname_init_transfo
     print '  Output name ......... '+fname_output
     print '  Algorithm ........... '+algo
     print '  Iterations at step1 (seg) .... '+str(numberIterations)
@@ -232,6 +232,9 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # get affine transformation matrix using header
+
+
     # Find orientation of source data
     print('\nFind orientation of source data...')
     orientation = sct.get_orientation('src.nii')
@@ -249,6 +252,7 @@ def main():
         sys.exit(2)
     sct.printv('  '+str(dimension_si), verbose)
 
+    # TODO: SHOULD BE DEST, NOT SOURCE!!!
     # Adjust ANTs variable so that the deformation is restricted in the slice plane
     restrict_deformation = '1x1x1'
     if dimension_si == 0:
@@ -274,27 +278,6 @@ def main():
             file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
             sct.run('sct_apply_transfo -i '+file_src_seg_tmp+'.nii -o '+file_src_seg_reg_tmp+'.nii -d '+file_dest_seg_tmp+'.nii -w '+fname_init_transfo+' -p spline')
             file_src_seg_tmp = file_src_seg_reg_tmp
-
-    # Pad the target and source image (because ants doesn't deform the extremities)
-    if padding:
-        # Pad source image
-        print('\nPad source...')
-        pad_image(file_src_tmp, file_src_tmp+'_pad.nii', padding)
-        file_src_tmp += '_pad'  # update file name
-        # Pad destination image
-        print('\nPad destination...')
-        pad_image(file_dest_tmp, file_dest_tmp+'_pad.nii', padding)
-        file_dest_tmp += '_pad'  # update file name
-        if use_segmentation:
-            # Pad source image
-            print('\nPad source segmentation...')
-            file_src_seg_tmp = file_src_seg_tmp
-            pad_image(file_src_seg_tmp, file_src_seg_tmp+'_pad.nii', padding)
-            file_src_seg_tmp += '_pad'  # update file name
-            # Pad destination image
-            print('\nPad destination segmentation...')
-            pad_image(file_dest_seg_tmp, file_dest_seg_tmp+'_pad.nii', padding)
-            file_dest_seg_tmp += '_pad'  # update file name
 
     # don't use spinal cord segmentation
     if use_segmentation == 0:
@@ -323,41 +306,47 @@ def main():
     # use spinal cord segmentation
     elif use_segmentation == 1:
 
+        # First, put anat in metric space
+
+sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii,src_seg.nii,1,16] -c 0 -f 1 -s 0 -o [regSeg0,regSeg0.nii.gz] -n NearestNeighbor
+
         # Estimate transformation using ANTS
-        print('\nStep #1: Estimate transformation using spinal cord segmentations...')
-
-        cmd = 'sct_antsRegistration \
---dimensionality 3 \
---transform '+algo+'['+str(gradientStep[1])+',3,0] \
---metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] \
---convergence '+numberIterations+' \
---shrink-factors 4x1 \
---smoothing-sigmas 1x1mm \
---Restrict-Deformation '+restrict_deformation+' \
---output [regSeg,regSeg.nii]'
-
+        sct.printv('\nStep #1: Estimate transformation using spinal cord segmentations...', verbose)
+        cmd = ('sct_antsRegistration '
+               '--dimensionality 3 '
+               '--transform '+algo+'['+str(gradientStep[1])+',3,0] '
+               '--metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] '
+               '--convergence '+numberIterations+' '
+               '--shrink-factors 4x1 '
+               '--smoothing-sigmas 1x1mm '
+               '--Restrict-Deformation '+restrict_deformation+' '
+               '--output [regSeg,regSeg.nii]')
         status, output = sct.run(cmd)
-        if verbose:
-            print output
+        # if verbose:
+        #     print output
 
-        print('\nStep #2: Improve local deformation using images (start from previous transformation)...')
+        # Pad the target and source image (because ants doesn't deform the extremities)
+        sct.printv('\nPad the target and source image (because ants doesn''t deform the extremities)...', verbose)
+        pad_image(file_src_tmp, file_src_tmp, padding)
+        pad_image(file_dest_tmp, file_dest_tmp, padding)
 
-        cmd = 'sct_antsRegistration \
---dimensionality 3 \
---initial-moving-transform regSeg0Warp.nii.gz \
---transform '+algo+'['+str(gradientStep[0])+',3,0] \
---metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
---convergence '+numberIterationsStep2+' \
---shrink-factors 1 \
---smoothing-sigmas 0mm \
---Restrict-Deformation '+restrict_deformation+' \
---output [reg,'+file_src_tmp+'_reg.nii] \
---collapse-output-transforms 0 \
---interpolation BSpline[3]'
-
+        # 2nd stage registration
+        sct.printv('\nStep #2: Improve local deformation using images (start from previous transformation)...', verbose)
+        cmd = ('sct_antsRegistration '
+               '--dimensionality 3 '
+               '--initial-moving-transform regSeg0Warp.nii.gz '
+               '--transform '+algo+'['+str(gradientStep[1])+',3,0] '
+               '--metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] '
+               '--convergence '+numberIterationsStep2+' '
+               '--shrink-factors 1 '
+               '--smoothing-sigmas 0mm '
+               '--Restrict-Deformation '+restrict_deformation+' '
+               '--output [reg,'+file_src_tmp+'_reg.nii] '
+               '--collapse-output-transforms 0 '
+               '--interpolation BSpline[3]')
         status, output = sct.run(cmd)
-        if verbose:
-            print output
+        # if verbose:
+        #     print output
 
     # Concatenate transformations
     print('\nConcatenate transformations...')
@@ -462,11 +451,7 @@ MANDATORY ARGUMENTS
 OPTIONAL ARGUMENTS
   -s <source_seg>              segmentation for source image (mandatory if -t is used)
   -t <dest_seg>                segmentation for destination image (mandatory if -s is used)
-  -q <init_transfo>            transformation file (ITK-based) to apply to source image before
-                               registration. Default=none
   -x {0,1}                     compute inverse transformation (dest --> source)
-  -z <init_transfo_inv>        inverse transformation file to obtain warp_dest2src deformation field
-                               N.B. Only use this flag with -q and -x
   -o <output>                  name of output file. Default=source_reg
   -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
   -y <N>                       number of iterations at step 2 (if using segmentation). Set 0 to register based on segmentation only. Default="""+param.numberIterationsStep2+"""
