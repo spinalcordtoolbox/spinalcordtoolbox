@@ -40,7 +40,7 @@ ALMOST_ZERO = 0.000001
 
 class param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
@@ -98,7 +98,6 @@ def main():
         slices_of_interest = '1:4'  #'200:210' #'2:4'
         vertebral_levels = ''
         average_all_labels = 0
-        fname_output = ''  # path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
 
@@ -563,7 +562,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
     # Write selected slices
     fid_metric.write('\n'+'# Slices (z): ')
     if slices_of_interest != '':
-        fid_metric.write('%s to %s' % (slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+        fid_metric.write(slices_of_interest)
     else:
         fid_metric.write('ALL')
 
