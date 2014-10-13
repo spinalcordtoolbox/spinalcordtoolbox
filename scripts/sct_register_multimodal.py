@@ -42,9 +42,9 @@ class param:
         self.padding = 3 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
 #        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
         self.algo = 'SyN'
-        self.numberIterations = "15x3" # number of iterations
-        self.numberIterationsStep2 = "10" # number of iterations at step 2
-        self.verbose  = 0 # verbose
+        self.numberIterations = "10"  # number of iterations for last stage
+        # self.numberIterationsStep2 = "10" # number of iterations at step 2
+        self.verbose  = 1 # verbose
         # self.compute_dest2sr = 0 # compute dest2src warping field
         self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
         self.interp = 'spline'  # nn, linear, spline
@@ -68,7 +68,7 @@ def main():
     fname_output = ''
     padding = param.padding
     numberIterations = param.numberIterations
-    numberIterationsStep2 = param.numberIterationsStep2
+    # numberIterationsStep2 = param.numberIterationsStep2
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     use_segmentation = 0 # use spinal cord segmentation to improve robustness
@@ -93,8 +93,8 @@ def main():
         fname_src = path_sct_data+'/t2/t2.nii.gz'
         fname_dest_seg = path_sct_data+'/mt/mt1_seg.nii.gz'
         fname_src_seg = path_sct_data+'/t2/t2_seg.nii.gz'
-        numberIterations = '3x0'
-        numberIterationsStep2 = '1'
+        numberIterations = '3'
+        # numberIterationsStep2 = '1'
         gradientStep_input = '0.5'
         remove_temp_files = 0
         # compute_dest2src = 1
@@ -102,7 +102,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:y:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -134,8 +134,8 @@ def main():
             verbose = int(arg)
         elif opt in ('-x'):
             param.interp = arg
-        elif opt in ('-y'):
-            numberIterationsStep2 = arg
+        # elif opt in ('-y'):
+        #     numberIterationsStep2 = arg
         # elif opt in ('-z'):
         #     compute_dest2src = int(arg)
 
@@ -170,8 +170,7 @@ def main():
     # print '  Init transfo ........ '+fname_init_transfo
     print '  Output name ......... '+fname_output
     print '  Algorithm ........... '+algo
-    print '  Iterations at step1 (seg) .... '+str(numberIterations)
-    print '  Iterations at step2 (image) .. '+str(numberIterationsStep2)
+    print '  Number of iterations  '+str(numberIterations)
     print '  Gradient step ....... '+gradientStep
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
@@ -286,25 +285,18 @@ def main():
     if use_segmentation == 0:
 
         # Estimate transformation using ANTS
-        print('\nEstimate transformation using ANTS (might take a couple of minutes)...')
+        sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
-        cmd = 'sct_antsRegistration \
---dimensionality 3 \
-'+use_init_transfo+' \
---transform '+algo+'['+str(gradientStep[0])+',3,0] \
---metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] \
---convergence '+numberIterations+' \
---shrink-factors 2x1 \
---smoothing-sigmas 0x0mm \
---Restrict-Deformation '+restrict_deformation+' \
---output [reg,'+file_src_tmp+'_reg.nii] \
---collapse-output-transforms 1 \
---interpolation BSpline[3] \
---winsorize-image-intensities [0.005,0.995]'
-
+        cmd = ('sct_antsRegistration '
+               '--transform '+algo+'['+str(gradientStep[0])+',3,0] '
+               '--metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] '
+               '--convergence 20x'+numberIterations+' '
+               '--shrink-factors 2x1 '
+               '--Restrict-Deformation 1x1x0 '
+               '--interpolation BSpline[3]')
         status, output = sct.run(cmd)
-        if verbose:
-            print output
+        # if verbose:
+        #     print output
 
     # use spinal cord segmentation
     elif use_segmentation == 1:
@@ -347,7 +339,7 @@ def main():
                '--convergence '+numberIterationsStep2+' '
                '--shrink-factors 1 '
                '--smoothing-sigmas 0mm '
-               # '--Restrict-Deformation '+restrict_deformation+' '
+               '--Restrict-Deformation 1x1x0 '
                '--output [stage2,src_regAffineWarp.nii] '
                '--collapse-output-transforms 0 '
                '--interpolation BSpline[3]')
@@ -445,7 +437,7 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
   This program co-registers two spinal cord volumes. The deformation is non-rigid and is constrained
   in the Z direction (i.e., axial plane). Hence, this function assumes that orientation of the DEST
-  image is axial. If you need to register two volumes with large deformations and/or different
+  image is axial (RPI). If you need to register two volumes with large deformations and/or different
   contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve
   maximum robustness. To do so, you can use sct_segmentation_propagation.
   The program outputs a warping field that can be used to register other images to the destination
@@ -464,9 +456,7 @@ OPTIONAL ARGUMENTS
   -x {0,1}                     compute inverse transformation (dest --> source)
                                CURRENTLY NOT WORKING!!!
   -o <output>                  name of output file. Default=source_reg
-  -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
-  -y <N>                       number of iterations at step 2 (if using segmentation).
-                               Set 0 to register based on segmentation only. Default="""+param.numberIterationsStep2+"""
+  -n <N>                       number of iterations for last stage. Default="""+param.numberIterations+"""
   -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
                                Default="""+param.gradientStep+"""
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
