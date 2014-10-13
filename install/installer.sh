@@ -7,7 +7,7 @@
 # Installation location: /usr/local/spinalcordtoolbox/
 
 # parameters
-PATH_INSTALL="/usr/local"
+PATH_INSTALL="/usr/local/"
 
 function usage()
 {
@@ -64,8 +64,14 @@ if [[ ! -d $PATH_INSTALL ]]; then
   exit
 fi
 
+# check if last character is /. If not, add it.
+LEN=${#PATH_INSTALL}-1
+if [ "${PATH_INSTALL}" != "/" ]; then
+  PATH_INSTALL=$PATH_INSTALL"/"
+fi
+
 # Set toolbox installation path
-SCT_DIR="${PATH_INSTALL}/spinalcordtoolbox"
+SCT_DIR="${PATH_INSTALL}spinalcordtoolbox"
 
 
 # check if folder already exists - if so, delete it
@@ -78,7 +84,7 @@ fi
 
 # create folder
 echo
-echo "Create folder: ${PATH_INSTALL}/spinalcordtoolbox..."
+echo "Create folder: ${PATH_INSTALL}spinalcordtoolbox..."
 cmd="sudo mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
