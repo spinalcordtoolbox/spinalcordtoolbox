@@ -358,10 +358,12 @@ def main():
         # Concatenate multi-stage transformations
         sct.printv('\nConcatenate multi-stage transformations...', verbose)
         sct.run('sct_concat_transfo -w stage1Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
+        sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage1InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
 
     # Concatenate transformations
     sct.printv('\nConcatenate affine and local transformations...', verbose)
     sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,warp_src2dest0.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
+    sct.run('sct_concat_transfo -w warp_dest2src0.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
 
     # # if user has initial transfo:
     # if fname_init_transfo != '':
@@ -401,22 +403,20 @@ def main():
     #     commands.getstatusoutput(cmd2)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
 
     # Apply warping field to src data
-    print('\nApply transfo source --> dest...')
+    sct.printv('\nApply transfo source --> dest...', verbose)
     sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2destFinal.nii.gz -p '+param.interp)
-    # if compute_dest2src:
-    #     print('\nApply transfo dest --> source...')
-    #     status, output = sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -p spline')
+    sct.printv('\nApply transfo dest --> source...', verbose)
+    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2srcFinal.nii.gz -p '+param.interp)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
-    print('\nGenerate output files...')
+    sct.printv('\nGenerate output files...', verbose)
     fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out)
     sct.generate_output_file(path_tmp+'/warp_src2destFinal.nii.gz', path_out+'warp_src2dest.nii.gz')
-    # if compute_dest2src:
-    #     fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest)
-    #     sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
+    fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest)
+    sct.generate_output_file(path_tmp+'/warp_dest2srcFinal.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -430,8 +430,7 @@ def main():
     # to view results
     print '\nTo view results, type:'
     print 'fslview '+fname_dest+' '+fname_src2dest+' &'
-    # if compute_dest2src:
-    #     print 'fslview '+fname_src+' '+fname_dest2src+' &'
+    print 'fslview '+fname_src+' '+fname_dest2src+' &'
     print ''
 
 
