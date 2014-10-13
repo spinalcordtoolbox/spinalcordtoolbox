@@ -35,19 +35,13 @@ class param:
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
         self.group_size = 3  # number of images averaged for 'dwi' method.
-        #self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
-        #self.plot_graph = 0
-        # param for msct_moco
-        #self.slicewise = 0
         self.suffix = '_moco'
-        #self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.poly = '2'  # degree of polynomial function for moco
-        #self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
-        # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        self.param = ['2'  # degree of polynomial function for moco
+                      '2'  # smoothing sigma in mm
+                      '1']  # gradientStep
         self.interp = 'spline'  # nn, linear, spline
-        #Eddy Current Distortion Parameters:
         self.min_norm = 0.001
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
@@ -60,6 +54,7 @@ def main():
     # initialization
     start_time = time.time()
     path_out = '.'
+    param_user = ''
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -72,11 +67,11 @@ def main():
         #param.fname_mask = path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
         param.group_size = 3
-        param.poly = '2'
+        param_user = '2,1,0.5'
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -91,13 +86,13 @@ def main():
         elif opt in ('-o'):
             path_out = arg
         elif opt in ('-p'):
-            param.interp = arg
+            param_user = arg
         elif opt in ('-r'):
             param.remove_tmp_files = int(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
-        elif opt in ('-z'):
-            param.poly = arg
+        elif opt in ('-x'):
+            param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
@@ -109,6 +104,13 @@ def main():
     sct.check_file_exist(param.fname_data, param.verbose)
     if not param.fname_mask == '':
         sct.check_file_exist(param.fname_mask, param.verbose)
+
+    # parse argument for param
+    if not param_user == '':
+        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        # TODO: check integrity of input
+        # param.param = [i for i in range(len(param_user))]
+        del param_user
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............'+param.fname_data, param.verbose)
@@ -292,7 +294,7 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
   Motion correction of fMRI data. Some robust features include:
   - group-wise (-g)
-  - slice-wise regularized along z using polynomial function (-z)
+  - slice-wise regularized along z using polynomial function (-p)
   - masking (-m)
   - iterative averaging of target volume
 
@@ -300,15 +302,19 @@ USAGE
   """+os.path.basename(__file__)+""" -i <fmri>
 
 MANDATORY ARGUMENTS
-  -i <fmri>        fMRI data
+  -i <fmri>        4D data
 
 OPTIONAL ARGUMENTS
   -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
-  -z <degpoly>     degree of polynomial function used for regularization along Z. Default="""+param.poly+"""
-                   For no regularization set to 0.
+  -p <param>       parameters for registration.
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2
+                     1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
+                        For no regularization set to 0.
+                     2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
+                     3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
   -o <path_out>    Output path.
-  -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message
