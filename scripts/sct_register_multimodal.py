@@ -47,6 +47,7 @@ class param:
         self.verbose  = 0 # verbose
         self.compute_dest2sr = 0 # compute dest2src warping field
         self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
+        self.interp = 'spline'  # nn, linear, spline
 
 import sys
 import getopt
@@ -78,7 +79,7 @@ def main():
     compute_dest2src = param.compute_dest2sr
     algo = param.algo
     start_time = time.time()
-    restrict_deformation = '1x1x1'
+    # restrict_deformation = '1x1x1'
     print ''
 
     # get path of the toolbox
@@ -101,7 +102,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:n:o:q:r:s:t:v:x:y:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:y:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -132,11 +133,11 @@ def main():
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-x'):
-            compute_dest2src = int(arg)
+            param.interp = arg
         elif opt in ('-y'):
             numberIterationsStep2 = arg
-        # elif opt in ('-z'):
-        #     fname_init_transfo_inv = arg
+        elif opt in ('-z'):
+            compute_dest2src = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -401,7 +402,7 @@ def main():
 
     # Apply warping field to src data
     print('\nApply transfo source --> dest...')
-    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2destFinal.nii.gz -p spline')
+    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2destFinal.nii.gz -p '+param.interp)
     # if compute_dest2src:
     #     print('\nApply transfo dest --> source...')
     #     status, output = sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -p spline')
@@ -465,8 +466,11 @@ OPTIONAL ARGUMENTS
                                CURRENTLY NOT WORKING!!!
   -o <output>                  name of output file. Default=source_reg
   -n <N1xN2>                   number of iterations for first and second stage. Default="""+param.numberIterations+"""
-  -y <N>                       number of iterations at step 2 (if using segmentation). Set 0 to register based on segmentation only. Default="""+param.numberIterationsStep2+"""
-  -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation. Default="""+param.gradientStep+"""
+  -y <N>                       number of iterations at step 2 (if using segmentation).
+                               Set 0 to register based on segmentation only. Default="""+param.numberIterationsStep2+"""
+  -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
+                               Default="""+param.gradientStep+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -r {0,1}                     remove temporary files. Default='+str(param.remove_temp_files)+'
   -v {0,1}                     verbose. Default="""+str(param.verbose)+"""
 
