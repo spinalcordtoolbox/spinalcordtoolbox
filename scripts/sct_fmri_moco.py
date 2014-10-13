@@ -18,18 +18,15 @@ import commands
 import getopt
 import time
 import math
-import numpy as np
 import sct_utils as sct
 import msct_moco as moco
-from sct_dmri_separate_b0_and_dwi import identify_b0
+
 
 class param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
         self.fname_target = ''
-        #self.fname_centerline = ''
-        # self.path_out = ''
         self.fname_mask = ''
         self.mat_final = ''
         self.num_target = 0  # target volume (or group) for moco
@@ -257,10 +254,6 @@ def fmri_moco(param):
             # else:
             sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
 
-    # # Spline Regularization along T
-    # if param.spline_fitting:
-    #     moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
-    #
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
