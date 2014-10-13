@@ -51,6 +51,7 @@ def moco(param):
     sct.printv('  Polynomial degree .....'+param.param[0], param.verbose)
     sct.printv('  Smoothing kernel ......'+param.param[1], param.verbose)
     sct.printv('  Gradient step .........'+param.param[2], param.verbose)
+    sct.printv('  Metric ................'+param.param[3], param.verbose)
     sct.printv('  Todo ..................'+todo, param.verbose)
     sct.printv('  Mask  .................'+param.fname_mask, param.verbose)
     sct.printv('  Output mat folder .....'+folder_mat, param.verbose)
@@ -134,12 +135,18 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # initialization
     failed_transfo = 0  # by default, failed matrix is 0 (i.e., no failure)
 
+    # get metric radius (if MeanSquares, CC) or nb bins (if MI)
+    if param.param[3] == 'MI':
+        metric_radius = '16'
+    else:
+        metric_radius = '4'
+
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
         cmd = 'sct_antsSliceRegularizedRegistration' \
               ' -p '+param.param[0]+ \
               ' --transform Translation['+param.param[2]+']' \
-              ' --metric MI['+file_dest+'.nii, '+file_src+'.nii, 1, 16, Regular, 0.2]' \
+              ' --metric '+param.param[3]+'['+file_dest+'.nii, '+file_src+'.nii, 1, '+metric_radius+', Regular, 0.2]' \
               ' --iterations 5' \
               ' --shrinkFactors 1' \
               ' --smoothingSigmas '+param.param[1]+ \
@@ -154,7 +161,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
     # check if output file exists
     if not os.path.isfile(file_out+'.nii'):
         # sct.printv(output, verbose, 'error')
-        sct.printv('WARNING (msct_moco): Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', param.verbose, 'warning')
+        sct.printv('WARNING in '+os.path.basename(__file__)+': Improper calculation of mutual information. Either the mask you provided is too small, or the subject moved a lot. If you see too many messages like this try with a bigger mask. Using previous transformation for this volume.', param.verbose, 'warning')
         failed_transfo = 1
 
     # return status of failure
