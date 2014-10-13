@@ -42,25 +42,7 @@ echo "Copy toolbox..."
 cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
-## copy testing files
-#echo
-#echo "Copy example data & scripts..."
-#if [ -e "../sct_testing" ]; then
-#  cmd="sudo rm -rf ../sct_testing"
-#  echo ">> $cmd"; $cmd
-#fi
-#cmd="mv spinalcordtoolbox/testing ../sct_testing"
-#echo ">> $cmd"; $cmd
-#cmd="sudo chmod -R 775 ../sct_testing"
-#echo ">> $cmd"; $cmd
-#
-## remove testing in installation folder
-#echo
-#echo "Remove testing in installation folder"
-#cmd="sudo rm -rf ${SCT_DIR}/testing"
-#echo ">> $cmd"; $cmd
-
-# check if .bashrc was already modified. If so, we delete lines about sct to be sure.
+# check if .bashrc was already modified. If so, we delete lines related to SCT
 echo
 echo "Edit .bashrc..."
 if grep -q "SPINALCORDTOOLBOX" ~/.bashrc; then
@@ -74,17 +56,9 @@ fi
 echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
-# echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
-
-echo ${SCT_DIR}
-
-unamestr='uname'
-#if [[ ! "$unamestr" == 'Linux' ]]; then
-#  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
-#fi
 echo 'export SCT_DIR PATH' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
