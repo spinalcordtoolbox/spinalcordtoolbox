@@ -47,21 +47,23 @@ sct_propseg -i t1.nii.gz -t t1
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
 # --> t1_seg_modif.nii.gz
-# register to template (template registered to t2). N.B. only uses segmentation (more accurate)
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d t1.nii.gz -x 1 -v 1 -n 15x3 -y 3 -g 0.2,0.5 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t t1_seg_modif.nii.gz
+# register to template (template registered to t2).
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d t1.nii.gz -n 3 -g 0.2 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t t1_seg_modif.nii.gz -v 1
 # check results
-fslview t1 -b 0,800 template2anat_reg -b 0,4000 &
-# concatenate transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
-sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
-# warp template
-sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
-# check registration of template to T1
-fslview t1.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 &
+fslview t1 -b 0,800 template2anat_reg -b 10,4000 &
+
+# concatenate transfo -- FIX ISSUE BEFORE DOING IT
+#sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
+#sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
+#sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
 # warp T1 to template space
-sct_apply_transfo -i t1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
+#sct_apply_transfo -i t1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
 # check registration of T1 to template
-fslview t1_reg.nii.gz -b 0,800 $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 &
+#fslview t1_reg.nii.gz -b 0,800 $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 &
+
+# ALTERNATIVE THAT WORKS:
+# warp template
+sct_warp_template -d t1.nii.gz -w warp_src2dest.nii.gz -p ../t2/label -a 0
 # go back to root folder
 cd ..
 
