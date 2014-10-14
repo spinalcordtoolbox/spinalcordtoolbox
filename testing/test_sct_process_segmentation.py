@@ -13,56 +13,24 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import sct_utils as sct
-import test_all
-import time
-import shutil
-
-class bcolors:
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    red = '\033[91m'
-
-class Param:
-    def __init__(self):
-        self.contrasts = ['mt']
-        self.subjects = []
-        self.files = ['t2_segmentation_PropSeg.nii.gz']
 
 
-def test(data_file_path):
-    # initialize parameters
-    status = 0
-    param = Param()
-    results_dir = 'results_sct_process_segmentation'
+def test(path_data):
 
-    if os.path.isdir(results_dir):
-        shutil.rmtree(results_dir)
+    # parameters
+    folder_data = 't2/'
+    file_data = 't2_seg.nii.gz'
 
-    os.makedirs(results_dir)
-    os.chdir(results_dir)
-
-    begin_log_file = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n"
-    fname_log = "sct_process_segmentation.log"
-
-    test_all.write_to_log_file(fname_log, begin_log_file, 'w')
-
-    for contrast in param.contrasts:
-        test_all.write_to_log_file(fname_log, bcolors.red+"Contrast: "+contrast+"\n", 'a')
-        for f in param.files:
-            cmd = 'sct_process_segmentation -i ../' + data_file_path + '/' + contrast + '/' + f \
-                + ' -p compute_csa' \
-                + ' -s 1'\
-                + ' -b 1'\
-                + ' -r 0'\
-                + ' -v 1'
-            s, output = sct.run(cmd, 0)
-            test_all.write_to_log_file(fname_log, output, 'a')
-            status += s
-
-    os.chdir('..')
-    return status
+    # define command
+    cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
+          + ' -p compute_csa' \
+          + ' -s 1'\
+          + ' -b 1'\
+          + ' -r 0'\
+          + ' -v 1'
+    # return
+    return sct.run(cmd, 0)
 
 
 if __name__ == "__main__":
