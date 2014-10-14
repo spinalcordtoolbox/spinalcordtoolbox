@@ -17,6 +17,7 @@ cd t2
 # spinal cord segmentation
 # tips: we use "-max-deformation 3" otherwise the segmentation does not cover the whole spinal cord
 # tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
+# tips: we use "-centerline-binary" to get the centerline, which can be used to initialize segmentation on other contrasts.
 sct_propseg -i t2.nii.gz -t t2 -centerline-binary -mesh -max-deformation 4 -init 130
 # you can check results with "fslview". You can also use MITKWORKBENCH to view the mesh.
 fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
@@ -123,22 +124,25 @@ sct_extract_metric -i mtr.nii.gz -f label/atlas/ -a
 # go back to root folder
 cd ..
 
+
 # fmri
 # ----------
 cd fmri
 # moco
 sct_fmri_moco -i fmri.nii.gz
-
-# create "fmri_mean-mask.nii.gz" on fmri_mean (will be used for segmentation). Three points in middle of the cord.
-fslview fmri_mean &
-
-
+# put T2 centerline into fmri space
+sct_c3d fmri_moco_mean.nii.gz ../t2/t2_centerline.nii.gz -reslice-identity -interpolation NearestNeighbor -o t2_centerline.nii.gz
 # segment mean volume
-sct_propseg -i fmri_mean.nii.gz -t t2 -init-mask fmri_mean-mask.nii.gz -detect-radius 5
+# tips: we use the T2 centerline to help initialize the segmentation
+# tips: we use "-radius 6" otherwise the segmentation is too small
+sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_centerline.nii.gz -radius 6
+# check segmentation
+fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
+# here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register to template (template registered to t2). Only uses segmentation (more accurate)
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d fmri_mean.nii.gz -x 1 -v 1 -n 15x3 -y 0 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_mean_seg.nii.gz
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_moco_mean_seg_modif.nii.gz -n 3
 # concatenate transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_mean.nii.gz -o warp_template2fmri.nii.gz
-sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
-# warp template and atlas
-sct_warp_template -d fmri_mean.nii.gz -w warp_template2fmri.nii.gz
+ sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+ sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
+# warp template, atlas and spinal levels
+sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1

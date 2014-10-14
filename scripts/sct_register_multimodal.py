@@ -75,7 +75,7 @@ def main():
     # fname_init_transfo = ''
     # fname_init_transfo_inv = ''
     use_init_transfo = ''
-    #gradientStep = param.gradientStep
+    gradientStep = param.gradientStep
     # compute_dest2src = param.compute_dest2sr
     algo = param.algo
     start_time = time.time()
@@ -95,7 +95,7 @@ def main():
         # fname_src_seg = path_sct_data+'/t2/t2_seg.nii.gz'
         numberIterations = '3'
         # numberIterationsStep2 = '1'
-        gradientStep_input = '0.5'
+        gradientStep = '0.5'
         remove_temp_files = 0
         # compute_dest2src = 1
         verbose = 1
@@ -111,7 +111,7 @@ def main():
         elif opt in ("-d"):
             fname_dest = arg
         elif opt in ('-g'):
-            gradientStep_input = arg
+            gradientStep = arg
         elif opt in ("-i"):
             fname_src = arg
         elif opt in ("-m"):
@@ -150,16 +150,6 @@ def main():
         usage()
     elif fname_src_seg != '' and fname_dest_seg != '':
         use_segmentation = 1
-
-    # Check if gradient step is float
-    print '\nParse gradient step...'
-    try:
-        float(gradientStep_input)
-        gradientStep = gradientStep_input
-        # gradientStep.append(gradientStep_input[i])
-    except:
-        sct.printv('  WARNING: Not a float. Using default value: ', 1, 'warning')
-        gradientStep = param.gradientStep
 
     # print arguments
     print '\nInput parameters:'
