@@ -39,7 +39,7 @@ class param:
         self.debug = 0
         self.remove_temp_files = 1 # remove temporary files
         self.outSuffix  = "_reg"
-        self.padding = 3 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
+        self.padding = 5 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
 #        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
         self.algo = 'SyN'
         self.numberIterations = "10"  # number of iterations for last stage
@@ -102,7 +102,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:q:r:s:t:v:x:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:p:q:r:s:t:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -120,8 +120,8 @@ def main():
             numberIterations = arg
         elif opt in ("-o"):
             fname_output = arg
-        # elif opt in ('-p'):
-        #     padding = arg
+        elif opt in ('-p'):
+            padding = arg
         # elif opt in ('-q'):
         #     fname_init_transfo = arg
         elif opt in ('-r'):
@@ -277,7 +277,7 @@ def main():
     #         file_src_seg_tmp = file_src_seg_reg_tmp
 
     # Pad the target and source image (because ants doesn't deform the extremities)
-    sct.printv('\nPad the target and source image (because ants doesn''t deform the extremities)...', verbose)
+    sct.printv('\nPad destination volume (because ants doesn''t deform the extremities)...', verbose)
     # pad_image('src.nii', 'src_pad.nii', padding)
     pad_image('dest.nii', 'dest_pad.nii', padding)
 
@@ -456,6 +456,8 @@ OPTIONAL ARGUMENTS
   -x {0,1}                     compute inverse transformation (dest --> source)
                                CURRENTLY NOT WORKING!!!
   -o <output>                  name of output file. Default=source_reg
+  -p <padding>                 size of padding (top & bottom), to enable deformation at edges.
+                               Default="""+str(param.padding)+"""
   -n <N>                       number of iterations for last stage. Default="""+param.numberIterations+"""
   -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
                                Default="""+param.gradientStep+"""
