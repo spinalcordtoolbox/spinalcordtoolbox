@@ -160,7 +160,7 @@ def main():
                 print color.red + 'ERROR: More than one file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             elif len(fname_vertebral_labeling_list) == 0:
-                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
+                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + '\' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             else:
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
