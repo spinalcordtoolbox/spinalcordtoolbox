@@ -44,7 +44,7 @@ class param:
         self.algo = 'SyN'
         self.numberIterations = "10"  # number of iterations for last stage
         # self.numberIterationsStep2 = "10" # number of iterations at step 2
-        self.verbose  = 1 # verbose
+        self.verbose  = 1  # verbose
         # self.compute_dest2sr = 0 # compute dest2src warping field
         self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
         self.interp = 'spline'  # nn, linear, spline
@@ -91,8 +91,8 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_dest = path_sct_data+'/mt/mt1.nii.gz'
         fname_src = path_sct_data+'/t2/t2.nii.gz'
-        fname_dest_seg = path_sct_data+'/mt/mt1_seg.nii.gz'
-        fname_src_seg = path_sct_data+'/t2/t2_seg.nii.gz'
+        # fname_dest_seg = path_sct_data+'/mt/mt1_seg.nii.gz'
+        # fname_src_seg = path_sct_data+'/t2/t2_seg.nii.gz'
         numberIterations = '3'
         # numberIterationsStep2 = '1'
         gradientStep_input = '0.5'
@@ -221,8 +221,6 @@ def main():
     sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/src.nii')
     sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii')
     if use_segmentation:
-        # file_src_seg_tmp = 'src_seg'
-        # file_dest_seg_tmp = 'dest_seg'
         sct.run('sct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii.gz')
         sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii.gz')
 
@@ -235,51 +233,14 @@ def main():
     if use_segmentation:
         sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii.gz,src_seg.nii.gz,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_seg_regAffine.nii.gz] -n NearestNeighbor')
 
-    # TODO: REORIENT DATA INSTEAD! AND DO NOT FORGET TO OUTPUT AFFINE MATRIX AND CONCATENATE IT
-    # # Find orientation of destination data
-    # sct.printv('\nFind orientation of destination data...', verbose)
-    # orientation = sct.get_orientation('dest.nii')
-    # sct.printv('  '+orientation, verbose)
-    # # Find the dimension corresponding to z
-    # sct.printv('\nFind the dimension corresponding to the superior-inferior direction...', verbose)
-    # dimension_si = 0
-    # if orientation.find('I') != '-1':
-    #     dimension_si = orientation.find('I')
-    # elif orientation.find('S') != '-1':
-    #     dimension_si = orientation.find('S')
-    # else:
-    #     sct.printv('ERROR in '+os.path.basename(__file__)+': Cannot find proper dimension. Exit program.', 1, 'error')
-    #     sys.exit(2)
-    # sct.printv('  '+str(dimension_si), verbose)
-    # # Adjust ANTs variable so that the deformation is restricted in the slice plane
-    # if dimension_si == 0:
-    #     restrict_deformation = '0x1x1'
-    # elif dimension_si == 1:
-    #     restrict_deformation = '1x0x1'
-    # elif dimension_si == 2:
-    #     restrict_deformation = '1x1x0'
-    # else:
-    #     sct.printv('ERROR in '+os.path.basename(__file__)+': Cannot adjust variable: restrict_deformation. There is something wrong with your NIFTI header. Exit program.', 1, 'error')
-    #     sys.exit(2)
-
-    # # if use initial transformation (!! needs to be inserted before the --transform field in sct_antsRegistration)
-    # if fname_init_transfo != '':
-    #     file_src_reg_tmp = file_src_tmp+'_reg'
-    #     # apply initial transformation to moving image, and then estimate transformation between this output and
-    #     # destination image. This approach was chosen instead of inputting the transfo into ANTs, because if the transfo
-    #     # does not bring the image to the same space as the destination image, then warping fields cannot be concatenated at the end.
-    #     print('\nApply initial transformation to moving image...')
-    #     sct.run('sct_apply_transfo -i '+file_src_tmp+'.nii -o '+file_src_reg_tmp+'.nii -d '+file_dest_tmp+'.nii -w '+fname_init_transfo+' -p spline')
-    #     file_src_tmp = file_src_reg_tmp
-    #     if use_segmentation:
-    #         file_src_seg_reg_tmp = file_src_seg_tmp+'_reg'
-    #         sct.run('sct_apply_transfo -i '+file_src_seg_tmp+'.nii -o '+file_src_seg_reg_tmp+'.nii -d '+file_dest_seg_tmp+'.nii -w '+fname_init_transfo+' -p spline')
-    #         file_src_seg_tmp = file_src_seg_reg_tmp
-
-    # Pad the target and source image (because ants doesn't deform the extremities)
+    # Pad the destination image (because ants doesn't deform the extremities)
     sct.printv('\nPad destination volume (because ants doesn''t deform the extremities)...', verbose)
     # pad_image('src.nii', 'src_pad.nii', padding)
     pad_image('dest.nii', 'dest_pad.nii', padding)
+
+    # TODO: CHECK IF DATA IS RPI
+    # # Find orientation of destination data
+    # sct.printv('\nFind orientation of destination data...', verbose)
 
     # don't use spinal cord segmentation
     if use_segmentation == 0:
@@ -288,23 +249,20 @@ def main():
         sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
         cmd = ('sct_antsRegistration '
-               '--transform '+algo+'['+str(gradientStep[0])+',3,0] '
-               '--metric MI['+file_dest_tmp+'.nii,'+file_src_tmp+'.nii,1,32] '
+               '--dimensionality 3 '
+               '--transform '+algo+'['+gradientStep+',3,0] '
+               '--metric MI[dest_pad.nii,src.nii,1,32] '
                '--convergence 20x'+numberIterations+' '
                '--shrink-factors 2x1 '
+               '--smoothing-sigmas 2x0mm '
                '--Restrict-Deformation 1x1x0 '
+               '--output [stage1,src_regAffineWarp.nii] '
                '--interpolation BSpline[3]')
-        status, output = sct.run(cmd)
-        # if verbose:
-        #     print output
+        sct.run(cmd)
 
     # use spinal cord segmentation
     elif use_segmentation == 1:
 
-        # First, put anat in metric space
-
-#sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii,src_seg.nii,1,16] -c 0 -f 1 -s 0 -o [regSeg0,regSeg0.nii.gz] -n NearestNeighbor
-# sct_antsSliceRegularizedRegistration -m MeanSquares[dest_seg.nii,regSeg0.nii.gz,1,4,0.2] -t Translation[0.5] -i 5 -s 5 -p 5 -f 1 -o [regSeg1,regSeg1.nii.gz]
         # Estimate transformation using ANTS
         sct.printv('\nStep #1: Estimate large-scale deformation using segmentations...', verbose)
 
@@ -316,18 +274,7 @@ def main():
                '-f 1 '
                '-s 5 '
                '-o [stage1,regSeg.nii]')
-        status, output = sct.run(cmd)
-        # cmd = ('sct_antsRegistration '
-        #        '--dimensionality 3 '
-        #        '--transform '+algo+'['+str(gradientStep[1])+',3,0] '
-        #        '--metric MI['+file_dest_seg_tmp+'.nii,'+file_src_seg_tmp+'.nii,1,32] '
-        #        '--convergence '+numberIterations+' '
-        #        '--shrink-factors 4x1 '
-        #        '--smoothing-sigmas 1x1mm '
-        #        '--Restrict-Deformation '+restrict_deformation+' '
-        #        '--output [regSeg,regSeg.nii]')
-        # if verbose:
-        #     print output
+        sct.run(cmd)
 
         # 2nd stage registration
         sct.printv('\nStep #2: Estimate small-scale deformations using images...', verbose)
@@ -343,9 +290,7 @@ def main():
                '--output [stage2,src_regAffineWarp.nii] '
                '--collapse-output-transforms 0 '
                '--interpolation BSpline[3]')
-        status, output = sct.run(cmd)
-        # if verbose:
-        #     print output
+        sct.run(cmd)
 
         # Concatenate multi-stage transformations
         sct.printv('\nConcatenate multi-stage transformations...', verbose)
@@ -354,45 +299,8 @@ def main():
 
     # Concatenate transformations
     sct.printv('\nConcatenate affine and local transformations...', verbose)
-    sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,warp_src2dest0.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
-    sct.run('sct_concat_transfo -w warp_dest2src0.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
-
-    # # if user has initial transfo:
-    # if fname_init_transfo != '':
-    #     if use_segmentation == 0:
-    #         # src --> dest
-    #         cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz '+fname_init_transfo
-    #         # dest --> src
-    #         if compute_dest2src:
-    #             cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' reg0InverseWarp.nii.gz'
-    #
-    #     elif use_segmentation == 1:
-    #         # src --> dest
-    #         cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz '+fname_init_transfo
-    #         # dest --> src
-    #         if compute_dest2src:
-    #             cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii '+fname_init_transfo_inv+' regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
-
-    # # if user does not have initial transfo:
-    # if use_segmentation == 0:
-    #     # src --> dest
-    #     cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg0Warp.nii.gz'
-    #     # dest --> src
-    #     if compute_dest2src:
-    #         cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii reg0InverseWarp.nii.gz'
-    #
-    # elif use_segmentation == 1:
-    #     # src --> dest
-    #     cmd1 = 'sct_ComposeMultiTransform 3 warp_src2dest.nii.gz -R dest.nii reg1Warp.nii.gz regSeg0Warp.nii.gz'
-    #     # dest --> src
-    #     if compute_dest2src:
-    #         cmd2 = 'sct_ComposeMultiTransform 3 warp_dest2src.nii.gz -R src.nii regSeg0InverseWarp.nii.gz reg1InverseWarp.nii.gz'
-
-    # print('>> ' + cmd1)
-    # commands.getstatusoutput(cmd1)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
-    # if compute_dest2src:
-    #     print('>> ' + cmd2)
-    #     commands.getstatusoutput(cmd2)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
+    sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
+    sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
@@ -453,8 +361,6 @@ MANDATORY ARGUMENTS
 OPTIONAL ARGUMENTS
   -s <source_seg>              segmentation for source image (mandatory if -t is used)
   -t <dest_seg>                segmentation for destination image (mandatory if -s is used)
-  -x {0,1}                     compute inverse transformation (dest --> source)
-                               CURRENTLY NOT WORKING!!!
   -o <output>                  name of output file. Default=source_reg
   -p <padding>                 size of padding (top & bottom), to enable deformation at edges.
                                Default="""+str(param.padding)+"""
@@ -479,9 +385,7 @@ EXAMPLES
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in, file_out, padding):
-    cmd = 'sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out
-    print(">> "+cmd)
-    os.system(cmd)
+    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
     return
 #
 #
