@@ -24,7 +24,7 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.register = 1
+        # self.register = 1
         self.verbose = 1
         self.file_out = 'mtr'
         self.remove_tmp_files = 1
@@ -38,7 +38,7 @@ def main():
     fname_mt0 = ''
     fname_mt1 = ''
     file_out = param.file_out
-    register = param.register
+    # register = param.register
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
     remove_tmp_files = param.remove_tmp_files
     verbose = param.verbose
@@ -56,7 +56,7 @@ def main():
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:x:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -70,8 +70,8 @@ def main():
             remove_tmp_files = int(arg)
         elif opt in '-v':
             verbose = int(arg)
-        elif opt in '-x':
-            register = int(arg)
+        # elif opt in '-x':
+        #     register = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_mt0 == '' or fname_mt1 == '':
@@ -82,7 +82,6 @@ def main():
     sct.printv('\nInput parameters:', verbose)
     sct.printv('  mt0 ...................'+fname_mt0, verbose)
     sct.printv('  mt1 ...................'+fname_mt1, verbose)
-    sct.printv('  register ..............'+str(register), verbose)
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', verbose)
@@ -106,17 +105,17 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # register MTC0 on MTC1
-    if register:
-        sct.printv('\nRegister mt0 on mt1...', verbose)
-        sct.run("sct_register_multimodal -i mt0.nii -d mt1.nii", verbose)
-        file_mt0_tmp = "mt0_reg.nii"
-    else:
-        file_mt0_tmp = "mt0.nii"
+    # # register MTC0 on MTC1
+    # if register:
+    #     sct.printv('\nRegister mt0 on mt1...', verbose)
+    #     sct.run("sct_register_multimodal -i mt0.nii -d mt1.nii", verbose)
+    #     file_mt0_tmp = "mt0_reg.nii"
+    # else:
+    #     file_mt0_tmp = "mt0.nii"
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    sct.run(fsloutput+'fslmaths -dt double '+file_mt0_tmp+' -sub mt1.nii -mul 100 -div '+file_mt0+' -thr 0 -uthr 100 mtr.nii', verbose)
+    sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -124,9 +123,6 @@ def main():
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
     sct.generate_output_file(path_tmp+'mtr.nii', path_out+file_out+ext_out)
-    if register:
-        sct.generate_output_file(path_tmp+'mt0_reg.nii', path_out+file_mt0+'_reg'+ext_out)
-        fname_mt0 = file_mt0+'_reg'
 
     # Remove temporary files
     if remove_tmp_files == 1:
@@ -158,7 +154,6 @@ MANDATORY ARGUMENTS
   -j <mt1>         image with MT pulse
 
 OPTIONAL ARGUMENTS
-  -x {0,1}         register mt0 on mt1. Default="""+str(param.register)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -h               help. Show this message
