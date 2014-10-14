@@ -167,11 +167,9 @@ def main():
             sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -p linear', verbose)
 
     # to view results
-    print '\nDone! To view results, type:'
-    print 'fslview '+fname_src+' '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz '+folder_out+folder_template+\
-          'MNI-Poly-AMU_GM.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz '+folder_out+folder_template\
-          +'MNI-Poly-AMU_level.nii.gz '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz '+' &'
-    print ''
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv('fslview '+fname_src+' '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -b 0,4000 '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', verbose)
+    print
 
 
 # Print usage
