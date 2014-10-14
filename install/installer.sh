@@ -7,8 +7,28 @@
 # Installation location: /usr/local/spinalcordtoolbox/
 
 # parameters
-#PATH_INSTALL="/usr/local/"
-SCT_DIR="/usr/local/spinalcordtoolbox"
+PATH_INSTALL="/usr/local/"
+
+function usage()
+{
+cat << EOF
+
+`basename ${0}`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+Install the Spinal Cord Toolbox
+
+USAGE
+`basename ${0}` -p <path>
+
+MANDATORY ARGUMENTS
+-p <path>                   installation path
+-h                          display this help
+
+EOF
+}
 
 echo
 echo "============================="
@@ -22,6 +42,38 @@ if [ "$(whoami)" == "root" ]; then
   exit 1
 fi
 
+while getopts “hp:” OPTION
+do
+    case $OPTION in
+        h)
+            usage
+            exit 1
+            ;;
+        p)
+            PATH_INSTALL=$OPTARG
+            ;;
+        ?)
+            usage
+            exit
+            ;;
+    esac
+done
+
+if [[ ! -d $PATH_INSTALL ]]; then
+  echo "ERROR: Installation path is not correct: ${PATH_INSTALL}. Exit program."
+  exit
+fi
+
+# check if last character is /. If not, add it.
+LEN=${#PATH_INSTALL}-1
+if [ "${PATH_INSTALL}" != "/" ]; then
+  PATH_INSTALL=$PATH_INSTALL"/"
+fi
+
+# Set toolbox installation path
+SCT_DIR="${PATH_INSTALL}spinalcordtoolbox"
+
+
 # check if folder already exists - if so, delete it
 echo
 echo "Check if spinalcordtoolbox is already installed (if so, delete it)..."
@@ -32,7 +84,7 @@ fi
 
 # create folder
 echo
-echo "Create folder: /usr/local/spinalcordtoolbox..."
+echo "Create folder: ${PATH_INSTALL}spinalcordtoolbox..."
 cmd="sudo mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
@@ -42,25 +94,7 @@ echo "Copy toolbox..."
 cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
-## copy testing files
-#echo
-#echo "Copy example data & scripts..."
-#if [ -e "../sct_testing" ]; then
-#  cmd="sudo rm -rf ../sct_testing"
-#  echo ">> $cmd"; $cmd
-#fi
-#cmd="mv spinalcordtoolbox/testing ../sct_testing"
-#echo ">> $cmd"; $cmd
-#cmd="sudo chmod -R 775 ../sct_testing"
-#echo ">> $cmd"; $cmd
-#
-## remove testing in installation folder
-#echo
-#echo "Remove testing in installation folder"
-#cmd="sudo rm -rf ${SCT_DIR}/testing"
-#echo ">> $cmd"; $cmd
-
-# check if .bashrc was already modified. If so, we delete lines about sct to be sure.
+# check if .bashrc was already modified. If so, we delete lines related to SCT
 echo
 echo "Edit .bashrc..."
 if grep -q "SPINALCORDTOOLBOX" ~/.bashrc; then
@@ -74,17 +108,9 @@ fi
 echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
-# echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc # to remove
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
-
-echo ${SCT_DIR}
-
-unamestr='uname'
-#if [[ ! "$unamestr" == 'Linux' ]]; then
-#  echo 'export DYLD_LIBRARY_PATH=${SCT_DIR}/lib:$DYLD_LIBRARY_PATH' >> ~/.bashrc
-#fi
 echo 'export SCT_DIR PATH' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.

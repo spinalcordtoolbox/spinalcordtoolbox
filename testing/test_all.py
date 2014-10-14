@@ -36,6 +36,7 @@ class bcolors:
 # get path of testing data
 status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
+
 class param:
     def __init__(self):
         self.download = 0
@@ -143,11 +144,13 @@ def fill_functions():
     functions.append('sct_dmri_moco')
     #functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
+    functions.append('sct_fmri_moco')
     #functions.append('sct_get_centerline')
     #functions.append('sct_process_segmentation')
     #functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
+    functions.append('sct_resample')
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
@@ -261,13 +264,17 @@ def test_function(script_name):
 def test_debug():
     print_line ('Checking if debug mode is on .......................')
     path_sct_testing = path_sct + '/testing'
+    path_sct_scripts = path_sct + '/scripts'
     debug = []
-    files = [f for f in listdir(path_sct_testing) if isfile(join(path_sct_testing, f))]
+    files = [f for f in listdir(path_sct_scripts) if isfile(join(path_sct_scripts, f))]
+    #print(files)
     for file in files:
         file_fname, ext_fname = os.path.splitext(file)
         if ext_fname == '.py':
-            status, output = commands.getstatusoutput('python ' + path_sct_testing + '/test_debug_off.py -i '+file_fname)
+            cmd = 'python ' + path_sct_testing + '/test_debug_off.py -i ' + file_fname
+            status, output = commands.getstatusoutput(cmd)
             if status != 0:
+                print cmd
                 debug.append(output)
     if debug == []:
         print_ok()
