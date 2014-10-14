@@ -260,6 +260,11 @@ def main():
                '--interpolation BSpline[3]')
         sct.run(cmd)
 
+        # Concatenate transformations
+        sct.printv('\nConcatenate affine and local transformations...', verbose)
+        sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
+        sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
+
     # use spinal cord segmentation
     elif use_segmentation == 1:
 
@@ -297,10 +302,10 @@ def main():
         sct.run('sct_concat_transfo -w stage1Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
         sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage1InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
 
-    # Concatenate transformations
-    sct.printv('\nConcatenate affine and local transformations...', verbose)
-    sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
-    sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
+        # Concatenate transformations
+        sct.printv('\nConcatenate affine and local transformations...', verbose)
+        sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,warp_src2dest0.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
+        sct.run('sct_concat_transfo -w warp_dest2src0.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
