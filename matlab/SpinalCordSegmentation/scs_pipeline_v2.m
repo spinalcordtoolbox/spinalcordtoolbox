@@ -19,16 +19,16 @@ clear variables
 %path_name_in = '/Users/gbm4900/Downloads/';
 %path_name_in = '/Users/gbm4900/code/';
 %path_name_in = '/Users/Shared/template_mcgill/43/space/';
-path_name_in = '/home/django/benjamindeleener/data/segmentation_spinalCord/errsm_18/T2/Horsfield_long/';
+path_name_in = '/home/django/tanguy/data/Boston/2014-07/Connectome/HC_SC_008/qsapcedata/';
 no_patient = '';
-path_name_out = '/home/django/benjamindeleener/data/segmentation_spinalCord/errsm_18/T2/Horsfield_long/';
+path_name_out = '/home/django/tanguy/data/Boston/2014-07/Connectome/HC_SC_008/qsapcedata/';
 % Creates the scs_results folder
 warning off MATLAB:MKDIR:DirectoryExists
 mkdir(path_name_out,'scs_results')
 %mkdir(path_name_out,'scs_results')
 path_name_out = [path_name_out 'scs_results' filesep];
 %path_name_out = '/Users/gbm4900/data/template_mcgill/43/space/';
-input{1,1} = [path_name_in 'anat_data'];
+input{1,1} = [path_name_in '336610.nii.gz'];
 %input{1,1} = [path_name_in 'space'];
 % output{1,1} = [path_name_out strrep(input{1,1},path_name_in,no_patient) datestr(now, '_yyyy_mm_dd')];   % all matrices in .mat
 output{1,1} = [path_name_out strrep(input{1,1},path_name_in,no_patient)];
@@ -41,7 +41,7 @@ output{1,4} = [path_name_out strrep(input{1,1},path_name_in,no_patient) '_straig
 
 for i=1:size(input,1)
     param{i}.image_type = 2;            % 1=T1; 2=T2
-    param{i}.interval = 20;             % Interval in mm between two slices for the initialization
+    param{i}.interval = 1;             % Interval in mm between two slices for the initialization
  
     param{i}.nom_radius = 5;            % Nominal radius in mm that reprensents the initial estimate
     param{i}.tolerance = 0.01;          % Percentage of the nominal radius that is used as the criterion to determine convergence
