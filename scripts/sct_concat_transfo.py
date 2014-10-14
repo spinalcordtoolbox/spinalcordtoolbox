@@ -24,7 +24,7 @@ import sct_utils as sct
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
@@ -98,7 +98,7 @@ def main():
     # Concatenate warping fields
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
-    fname_warp_list.reverse()
+    fname_warp_list_invert.reverse()
     cmd = 'sct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
