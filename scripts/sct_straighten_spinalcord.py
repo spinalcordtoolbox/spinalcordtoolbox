@@ -25,13 +25,13 @@ class param:
     ## The constructor
     def __init__(self):
         self.debug = 0
-        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
-        self.gapxy = 20 # size of cross in x and y direction for the landmarks
-        self.gapz = 2 # gap between landmarks along z voxels
-        self.padding = 30 # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
+        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
+        self.gapxy = 20  # size of cross in x and y direction for the landmarks
+        self.gapz = 15  # gap between landmarks along z voxels
+        self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.fitting_method = 'smooth' # smooth | splines | polynomial
         self.interpolation_warp = 'spline'
-        self.remove_temp_files = 1 # remove temporary files
+        self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
         self.nurbs_ctl_points = 0
         self.smooth_sigma = 15
