@@ -9,7 +9,7 @@ SCT_DIR_LOCAL=${PWD%/*}
 echo ${SCT_DIR_LOCAL}
 
 # program list
-PROGRAM_LIST="sct_propseg sct_change_nifti_pixel_type sct_crop_image sct_detect_spinalcord sct_dice_coefficient sct_hausdorff_distance sct_modif_header sct_orientation" #
+PROGRAM_LIST="sct_propseg sct_change_nifti_pixel_type sct_crop_image sct_detect_spinalcord sct_dice_coefficient sct_hausdorff_distance sct_modif_header sct_orientation" # 
 
 PATH_BIN_SCT=osx
 unamestr=`uname`
@@ -29,11 +29,19 @@ for program in $PROGRAM_LIST; do
   echo ">> $cmd"; $cmd
 
   echo
-  cmd="cmake ."
+  cmd="mkdir build"
   echo ">> $cmd"; $cmd
 
   echo
-  cmd="make"
+  cmd="cd build"
+  echo ">> $cmd"; $cmd
+
+  echo
+  cmd="cmake .."
+  echo ">> $cmd"; $cmd
+
+  echo
+  cmd="make -j 4"
   echo ">> $cmd"; $cmd
 
   echo
@@ -41,11 +49,16 @@ for program in $PROGRAM_LIST; do
   echo ">> $cmd"; $cmd
 
   echo
-  cmd="make"
+  cmd="make clean"
   echo ">> $cmd"; $cmd
 
   echo
-  cmd="make clean"
+  cmd="cd .."
   echo ">> $cmd"; $cmd
+
+  echo
+  cmd="rm -rf build"
+  echo ">> $cmd"; $cmd
+
 
 done

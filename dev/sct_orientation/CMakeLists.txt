@@ -1,3 +1,6 @@
+set(CMAKE_C_COMPILER "gcc")
+set(CMAKE_CXX_COMPILER "g++")
+
 project(sct_orientation)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
@@ -12,6 +15,10 @@ if(PLATFORM_CHECK)
   endif()
 endif()
 
+SET(CMAKE_CXX_COMPILER "g++")
+SET(CMAKE_C_COMPILER "gcc")
+
+
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   if (NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fPIC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
@@ -21,6 +28,9 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   endif()
 endif()
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
