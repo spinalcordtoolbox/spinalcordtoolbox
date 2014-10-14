@@ -24,10 +24,13 @@ end
 n_smooth=feval(fitresult,xout);
 area(xout,n_smooth)
 % compute mean of the pdf
-disp(['mean: ' num2str(sum(n_smooth'.*xout)/sum(n_smooth))]) %int(f(x)*x)
+xmean=sum(n_smooth'.*xout)/sum(n_smooth);
+disp(['mean: ' num2str(xmean)]) %int(f(x)*x)
 % compute median of the pdf
 [~,I] = min(abs(cumsum(n_smooth/sum(n_smooth))-0.5)); %int(f(x))=0.5
 disp(['median: ' num2str(xout(I))])
+disp(['std: ' num2str(sqrt(sum(n_smooth'.*(xout-xmean).^2/sum(n_smooth))))])
+
 
 
 function [fitresult, gof] = createFit(xout, n,smoothness)

@@ -1,4 +1,4 @@
-function sct_matrix2txt(M,output)
+function sct_tools_matrix2txt(M,output)
 % sct_matrix2txt(Matrix,fname_output)
 output_fid = fopen(output,'w+');
 for i_line=1:size(M,1)
