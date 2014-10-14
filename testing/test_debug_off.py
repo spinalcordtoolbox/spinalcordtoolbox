@@ -23,7 +23,7 @@ from os import listdir
 from os.path import isfile, join
 
 
-def main():
+def main(script_name = ''):
     script_name = ''
 
     try:
@@ -38,16 +38,19 @@ def main():
 
     try:
         script_tested = importlib.import_module(script_name)
+        print script_tested
     except IOError:
         sct_utils.printv("\nException caught: IOerror, can not import "+script_name+'\n', 1, 'warning')
         sys.exit(2)
     except ImportError, e:
         sct_utils.printv("\nException caught: ImportError in "+script_name+'\n', 1, 'warning')
+        print e
         sys.exit(2)
     else:
         try:
             sct = script_tested.param()
         except AttributeError:
+        #except IOError:
             print ('\nno class param found in script '+script_name+'\n')
             sys.exit(0)
         else:
