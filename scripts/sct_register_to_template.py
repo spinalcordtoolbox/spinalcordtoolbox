@@ -155,22 +155,22 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data_rpi.nii')
+    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks_rpi.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation_rpi.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Change orientation of input images to RPI
-    print('\nChange orientation of input images to RPI...')
-    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
-    status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
-    status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
+    # print('\nChange orientation of input images to RPI...')
+    # status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
+    # status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
+    # status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    status, output = sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r '+str(remove_temp_files))
+    sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
 
     # Apply straightening to segmentation
     print('\nApply straightening to segmentation...')
