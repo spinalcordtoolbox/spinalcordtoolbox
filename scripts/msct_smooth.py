@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Touati
-# Created: 2014-07-08
+# Created: 2014-10-08
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -95,7 +95,11 @@ def evaluate_derivative_2D(x,y):
     return y_deriv
 
 
-def evaluate_derivative_3D(x, y, z):
+def evaluate_derivative_3D(x, y, z, px, py, pz):
+
+    x = [x_elem*px for x_elem in x]
+    y = [y_elem*py for y_elem in y]
+    z = [z_elem*pz for z_elem in z]
 
     x_deriv = np.array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(x)-1)])
     y_deriv = np.array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(y)-1)])
