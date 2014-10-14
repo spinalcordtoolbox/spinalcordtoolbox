@@ -155,18 +155,18 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data_rpi.nii')
-    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks_rpi.nii.gz')
-    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation_rpi.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Change orientation of input images to RPI
-    # print('\nChange orientation of input images to RPI...')
-    # status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
-    # status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
-    # status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
+    print('\nChange orientation of input images to RPI...')
+    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
+    status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
+    status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
@@ -222,16 +222,18 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -n '+nb_iterations+' -v '+str(verbose)+' -x spline', verbose)
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -n '+nb_iterations+' -v '+str(verbose)+' -x spline -p 10', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
-    print('\nConcatenate warping fields: template2anat & anat2template...')
-    cmd = 'sct_ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii warp_straight2curve.nii.gz -i straight2templateAffine.txt warp_dest2src.nii.gz'
-    print '>> '+cmd
-    commands.getstatusoutput(cmd)
-    cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
-    print '>> '+cmd
-    commands.getstatusoutput(cmd)
+    print('\nConcatenate transformations: template --> straight --> anat...')
+    sct.run('sct_concat_transfo -w warp_dest2src.nii.gz,-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz')
+    print('\nConcatenate transformations: anat --> straight --> template...')
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,warp_src2dest.nii.gz -d '+fname_template+' -o warp_anat2template.nii.gz')
+    # cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
+    # print '>> '+cmd
+    # commands.getstatusoutput(cmd)
+
+# sct_ComposeMultiTransform 3 warp_final.nii.gz -R data.nii warp_dest2src.nii.gz -i straight2templateAffine.txt warp_straight2curve.nii.gz
 
     # Apply warping fields to anat and template
     if output_type == 1:
