@@ -14,6 +14,8 @@ cd sct_example_data
 # t2
 # ===========================================================================================
 cd t2
+# orient data to RPI
+sct_orientation -i t2.nii.gz -o t2.nii.gz -orientation RPI
 # spinal cord segmentation
 # tips: we use "-max-deformation 3" otherwise the segmentation does not cover the whole spinal cord
 # tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
