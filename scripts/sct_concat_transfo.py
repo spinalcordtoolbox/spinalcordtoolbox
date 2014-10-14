@@ -24,7 +24,7 @@ import sct_utils as sct
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
