@@ -8,6 +8,7 @@
 
 # parameters
 PATH_INSTALL="/usr/local/"
+ISSUDO="sudo "
 
 function usage()
 {
@@ -51,6 +52,7 @@ do
             ;;
         p)
             PATH_INSTALL=$OPTARG
+            ISSUDO=""
             ;;
         ?)
             usage
@@ -78,20 +80,20 @@ SCT_DIR="${PATH_INSTALL}spinalcordtoolbox"
 echo
 echo "Check if spinalcordtoolbox is already installed (if so, delete it)..."
 if [ -e "${SCT_DIR}" ]; then
-  cmd="sudo rm -rf ${SCT_DIR}"
+  cmd="${ISSUDO}rm -rf ${SCT_DIR}"
   echo ">> $cmd"; $cmd
 fi
 
 # create folder
 echo
 echo "Create folder: ${PATH_INSTALL}spinalcordtoolbox..."
-cmd="sudo mkdir ${SCT_DIR}"
+cmd="${ISSUDO}mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
 # copy files
 echo
 echo "Copy toolbox..."
-cmd="sudo cp -r spinalcordtoolbox/* ${SCT_DIR}"
+cmd="${ISSUDO}cp -r spinalcordtoolbox/* ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
 # check if .bashrc was already modified. If so, we delete lines related to SCT
