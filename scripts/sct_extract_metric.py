@@ -140,7 +140,7 @@ def main():
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck data file existence...', verbose)
+    sct.printv('\nCheck data files existence...', verbose)
     sct.check_file_exist(fname_data)
     sct.check_file_exist(path_label)
     if fname_normalizing_label:
