@@ -134,13 +134,13 @@ def main():
     # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
     print('\nAssign number of iterations based on speed...')
     if speed == "slow":
-        nb_iterations = "50x30"
+        nb_iterations = "50"
     elif speed == "normal":
-        nb_iterations = "50x15"
+        nb_iterations = "15"
     elif speed == "fast":
-        nb_iterations = "10x3"
+        nb_iterations = "5"
     elif speed == "superfast":
-        nb_iterations = "1x0"  # only for debugging purpose-- do not inform the user about this option
+        nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
     else:
         print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
         sys.exit(2)
@@ -170,7 +170,7 @@ def main():
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    status, output = sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r '+str(remove_temp_files))
+    sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
 
     # Apply straightening to segmentation
     print('\nApply straightening to segmentation...')
@@ -222,19 +222,18 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    #nb_iterations = '50x15'
-    # TODO: nb iteration for step 2
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r '+str(remove_temp_files)+' -n '+nb_iterations+' -v '+str(verbose)+' -x 1',verbose)
-    # status, output = sct.run('sct_register_straight_spinalcord_to_template -i data_rpi_straight.nii.gz -l landmarks_rpi_cross3x3_straight.nii.gz -t '+path_template+'/MNI-Poly-AMU_T2.nii.gz -f template_label_cross.nii.gz -m '+path_template+'/mask_gaussian_templatespace_sigma20.nii.gz -r 1 -n '+nb_iterations+' -v 1')
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -n '+nb_iterations+' -v '+str(verbose)+' -x spline -p 10', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
-    print('\nConcatenate warping fields: template2anat & anat2template...')
-    cmd = 'sct_ComposeMultiTransform 3 warp_template2anat.nii.gz -R data.nii warp_straight2curve.nii.gz -i straight2templateAffine.txt warp_dest2src.nii.gz'
-    print '>> '+cmd
-    commands.getstatusoutput(cmd)
-    cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
-    print '>> '+cmd
-    commands.getstatusoutput(cmd)
+    print('\nConcatenate transformations: template --> straight --> anat...')
+    sct.run('sct_concat_transfo -w warp_dest2src.nii.gz,-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz')
+    print('\nConcatenate transformations: anat --> straight --> template...')
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,warp_src2dest.nii.gz -d '+fname_template+' -o warp_anat2template.nii.gz')
+    # cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
+    # print '>> '+cmd
+    # commands.getstatusoutput(cmd)
+
+# sct_ComposeMultiTransform 3 warp_final.nii.gz -R data.nii warp_dest2src.nii.gz -i straight2templateAffine.txt warp_straight2curve.nii.gz
 
     # Apply warping fields to anat and template
     if output_type == 1:

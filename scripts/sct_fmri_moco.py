@@ -18,36 +18,30 @@ import commands
 import getopt
 import time
 import math
-import numpy as np
 import sct_utils as sct
 import msct_moco as moco
-from sct_dmri_separate_b0_and_dwi import identify_b0
+
 
 class param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
         self.fname_target = ''
-        self.fname_centerline = ''
-        # self.path_out = ''
+        self.fname_mask = ''
         self.mat_final = ''
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
         self.group_size = 3  # number of images averaged for 'dwi' method.
-        self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
-        self.plot_graph = 0
-        # param for msct_moco
-        self.slicewise = 0
         self.suffix = '_moco'
-        self.mask_size = 0  # sigma of gaussian mask in mm --> std of the kernel. Default is 0
-        self.program = 'slicereg'  # flirt, ants, ants_affine, slicereg
-        self.file_schedule = '/flirtsch/schedule_TxTy.sch'  # /flirtsch/schedule_TxTy_2mm.sch, /flirtsch/schedule_TxTy.sch
-        # self.cost_function_flirt = ''  # 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
+        self.param = ['2',  # degree of polynomial function for moco
+                      '2',  # smoothing sigma in mm
+                      '1',  # gradientStep
+                      'MI'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
-        #Eddy Current Distortion Parameters:
         self.min_norm = 0.001
+        self.iterative_averaging = 1  # iteratively average target image for more robust moco
 
 
 #=======================================================================================================================
@@ -58,6 +52,7 @@ def main():
     # initialization
     start_time = time.time()
     path_out = '.'
+    param_user = ''
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -67,60 +62,61 @@ def main():
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
+        #param.fname_mask = path_sct_data+'/fmri/fmri.nii.gz'
         param.verbose = 1
-        param.slicewise = 0
-        param.run_eddy = 0
-        param.program = 'slicereg'  # ants_affine, flirt
+        param.group_size = 3
+        #param_user = '2,1,0.5'
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:d:f:g:l:m:o:p:r:s:v:z:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:x:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-        elif opt in ('-c'):
-            param.cost_function_flirt = arg
-        elif opt in ('-d'):
-            param.group_size = int(arg)
-        elif opt in ('-f'):
-            param.spline_fitting = int(arg)
         elif opt in ('-g'):
-            param.plot_graph = int(arg)
+            param.group_size = int(arg)
         elif opt in ('-i'):
             param.fname_data = arg
-        elif opt in ('-l'):
-            param.fname_centerline = arg
         elif opt in ('-m'):
-            param.program = arg
+            param.fname_mask = arg
         elif opt in ('-o'):
             path_out = arg
         elif opt in ('-p'):
-            param.interp = arg
+            param_user = arg
         elif opt in ('-r'):
             param.remove_tmp_files = int(arg)
-        elif opt in ('-s'):
-            param.mask_size = float(arg)
         elif opt in ('-v'):
             param.verbose = int(arg)
-        elif opt in ('-z'):
-            param.slicewise = int(arg)
+        elif opt in ('-x'):
+            param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
         usage()
 
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  input file ............'+param.fname_data, param.verbose)
-
     # check existence of input files
     sct.printv('\nCheck file existence...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
+    if not param.fname_mask == '':
+        sct.check_file_exist(param.fname_mask, param.verbose)
+
+    # parse argument for param
+    if not param_user == '':
+        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        # TODO: check integrity of input
+        # param.param = [i for i in range(len(param_user))]
+        del param_user
+
+    sct.printv('\nInput parameters:', param.verbose)
+    sct.printv('  input file ............'+param.fname_data, param.verbose)
 
     # Get full path
     param.fname_data = os.path.abspath(param.fname_data)
+    if param.fname_mask != '':
+        param.fname_mask = os.path.abspath(param.fname_mask)
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -176,6 +172,7 @@ def fmri_moco(param):
     file_data = 'fmri'
     mat_final = 'mat_final/'
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
+    ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
@@ -185,20 +182,6 @@ def fmri_moco(param):
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
     status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
-
-    # # Merge b=0 images
-    # sct.printv('\nMerge b=0...', param.verbose)
-    # cmd = fsloutput + 'fslmerge -t ' + file_b0
-    # for it in range(nb_b0):
-    #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
-    # status, output = sct.run(cmd, param.verbose)
-    # sct.printv(('  File created: ' + file_b0), param.verbose)
-    #
-    # # Average b=0 images
-    # sct.printv('\nAverage b=0...', param.verbose)
-    # file_b0_mean = file_b0+'_mean'
-    # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
-    # status, output = sct.run(cmd, param.verbose)
 
     # assign an index to each volume
     index_fmri = range(0, nt)
@@ -261,30 +244,8 @@ def fmri_moco(param):
 
     # create final mat folder
     sct.create_folder(mat_final)
-    #
-    # # Copy b=0 registration matrices
-    # sct.printv('\nCopy b=0 registration matrices...', param.verbose)
-    # # first, use the right extension
-    # # TODO: output param in moco so that we don't need to do the following twice
-    #
-    # for it in range(nb_b0):
-    #     if param.slicewise:
-    #         for iz in range(nz):
-    #             sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+'_Z'+str(iz)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+'_Z'+str(iz)+ext_mat, param.verbose)
-    #     else:
-    #         sct.run('cp '+'mat_b0groups/'+'mat.T'+str(it)+ext_mat+' '+mat_final+'mat.T'+str(index_b0[it])+ext_mat, param.verbose)
 
-    # define type of tranformation depending of software used
-    if param.program == 'flirt':
-        ext_mat = '.txt'  # affine matrix
-    elif param.program == 'ants':
-        ext_mat = '0Warp.nii.gz'  # warping field
-    elif param.program == 'slicereg':
-        ext_mat = 'Warp.nii.gz'  # warping field
-    elif param.program == 'ants_affine' or param.program == 'ants_rigid':
-        ext_mat = '0GenericAffine.mat'  # ITK affine matrix
-
-    # Copy DWI registration matrices
+    # Copy registration matrices
     sct.printv('\nCopy transformations...', param.verbose)
     for iGroup in range(nb_groups):
         for data in range(len(group_indexes[iGroup])):
@@ -294,16 +255,6 @@ def fmri_moco(param):
             # else:
             sct.run('cp '+'mat_groups/'+'mat.T'+str(iGroup)+ext_mat+' '+mat_final+'mat.T'+str(group_indexes[iGroup][data])+ext_mat, param.verbose)
 
-    # Spline Regularization along T
-    if param.spline_fitting:
-        moco.spline(mat_final, nt, nz, param.verbose, np.array(index_b0), param.plot_graph)
-
-    # # combine Eddy Matrices
-    # if param.run_eddy:
-    #     param.mat_2_combine = 'mat_eddy'
-    #     param.mat_final = mat_final
-    #     moco.combine_matrix(param)
-    #
     # Apply moco on all fmri data
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
@@ -335,36 +286,31 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of DWI data. Uses slice-by-slice and group-wise registration. Outputs are:
-  - motion-corrected data (with suffix _moco)
-  - mean b=0 data (b0_mean)
-  - mean dwi data (dwi_mean)
+  Motion correction of fMRI data. Some robust features include:
+  - group-wise (-g)
+  - slice-wise regularized along z using polynomial function (-p)
+  - masking (-m)
+  - iterative averaging of target volume
 
 USAGE
   """+os.path.basename(__file__)+""" -i <fmri>
 
 MANDATORY ARGUMENTS
-  -i <fmri>        diffusion data
+  -i <fmri>        4D data
 
 OPTIONAL ARGUMENTS
-  -d <nvols>       group nvols successive DWI volumes for more robustness. Default="""+str(param.group_size)+"""
-  -s <int>         Size of Gaussian mask for more robust motion correction (in mm).
-                   For no mask, put 0. Default=0
-                   N.B. if centerline is provided, mask is centered on centerline. If not, mask
-                   is centered in the middle of each slice.
-  -l <centerline>  (requires -s). Centerline file to specify the centre of Gaussian Mask.
-  -f {0,1}         spline regularization along T. Default="""+str(param.spline_fitting)+"""
-                   N.B. Use only if you want to correct large drifts with time.
-  -m {method}      Method for registration:
-                     slicereg: slicewise regularized Tx and Ty transformations (based on ANTs). Disregard "-z"
-                     ants: non-rigid deformation constrained in axial plane. HIGHLY EXPERIMENTAL!
-                     ants_affine: affine transformation constrained in axial plane.
-                     ants_rigid: rigid transformation constrained in axial plane.
-                     flirt: FSL flirt with Tx and Ty transformations.
-                     Default="""+str(param.program)+"""
+  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
+  -m <mask>        binary mask to limit voxels considered by the registration metric.
+  -p <param>       parameters for registration.
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2,MI
+                     1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
+                        For no regularization set to 0.
+                     2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
+                     3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
+                     4) metric: {MI,MeanSquares}. Default="""+param.param[3]+"""
+                        If you find very large deformations, switching to MeanSquares can help.
   -o <path_out>    Output path.
-  -p {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
-  -g {0,1}         display graph of moco parameters. Default="""+str(param.plot_graph)+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -h               help. Show this message

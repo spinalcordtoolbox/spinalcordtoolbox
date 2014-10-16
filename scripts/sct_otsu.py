@@ -111,9 +111,9 @@ def otsu(param):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     if nt == 1:
-        dim == 3
+        dim = 3
     if nz == 1:
-        dim == 2
+        dim = 2
 
     # threshold images
     sct.run('sct_ThresholdImage '+str(dim)+' data.nii data_otsu.nii Otsu '+str(param.threshold))
@@ -124,7 +124,7 @@ def otsu(param):
     # Morphological Dilation
     sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii MD data_otsu_thr.nii')
     # Morphological Erosion
-    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii MD data_otsu_thr.nii')
+    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii ME data_otsu_thr.nii')
     # Fill holes
     sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii FillHoles data_otsu_thr.nii')
 
