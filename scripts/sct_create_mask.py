@@ -22,6 +22,7 @@ import sct_utils as sct
 import time
 import numpy
 import nibabel
+from scipy import ndimage
 
 
 # DEFAULT PARAMETERS
@@ -49,9 +50,10 @@ def main(param):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
-        param.method = 'coord,68x69'
+        param.fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2rpi.nii.gz' #'/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
+        param.method = 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
+        param.size = 20
         param.remove_tmp_files = 0
         param.verbose = 1
 
@@ -95,7 +97,8 @@ def create_mask(param):
     method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
     # method_list = param.method.split(',')  # parse with comma
     method_type = method_list[0]
-    method_val = method_list[1]
+    if not method_type == 'center':
+        method_val = method_list[1]
     del method_list
 
     # check existence of method type
@@ -111,6 +114,13 @@ def create_mask(param):
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
+    if method_type == 'centerline':
+        sct.check_file_exist(method_val, param.verbose)
+
+    # check if orientation is RPI
+    if not sct.get_orientation(param.fname_data) == 'RPI':
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
+        sys.exit(2)
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -130,6 +140,8 @@ def create_mask(param):
     # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
+    if method_type == 'centerline':
+        sct.run('sct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -166,7 +178,7 @@ def create_mask(param):
 
     if method_type == 'centerline':
         # get name of centerline from user argument
-        fname_centerline = method_val
+        fname_centerline = 'centerline.nii.gz'
     else:
         # generate volume with line along Z at coordinates 'coord'
         sct.printv('\nCreate line...', param.verbose)
@@ -178,11 +190,19 @@ def create_mask(param):
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     data_centerline = centerline.get_data()  # get centerline
-    cx, cy, cz = numpy.where(data_centerline > 0)
-    arg = numpy.argsort(cz)
-    cz = cz[arg]
-    cx = cx[arg]
-    cy = cy[arg]
+    z_centerline = [iz for iz in range(0, nz, 1) if data_centerline[:, :, iz].any()]
+    nz = len(z_centerline)
+    # get center of mass of the centerline
+    cx = [0] * nz
+    cy = [0] * nz
+    for iz in range(0, nz, 1):
+        cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline[iz]]))
+
+    # cx, cy, cz = numpy.where(data_centerline > 0)
+    # arg = numpy.argsort(cz)
+    # cz = cz[arg]
+    # cx = cx[arg]
+    # cy = cy[arg]
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
