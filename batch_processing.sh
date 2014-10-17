@@ -71,8 +71,6 @@ sct_create_mask -i dmri.nii.gz -m coord,110x20 -s 60 -f cylinder
 sct_dmri_moco -i dmri.nii.gz -b bvecs.txt -g 3 -m mask_dmri.nii.gz -p 2,2,1,MeanSquares -t 0
 # check moco
 fslview -m ortho,ortho dmri_moco dmri &
-# create "init-mask.nii.gz" on mean_dwi_moco (will be used for segmentation). Three points in middle of the cord.
-fslview dwi_moco_mean &
 # segment mean_dwi
 # tips: use flag "-init" to start propagation from another slice, otherwise results are not good.
 sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init 3
