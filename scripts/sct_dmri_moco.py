@@ -431,7 +431,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of fMRI data. Some robust features include:
+  Motion correction of dMRI data. Some robust features include:
   - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-p)
   - masking (-m)
