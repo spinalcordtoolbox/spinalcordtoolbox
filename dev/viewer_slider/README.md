@@ -2,6 +2,8 @@
 Viewer for 4D data
 ==================
 
+to try:
+http://stackoverflow.com/questions/6697259/interactive-matplotlib-plot-with-two-sliders
 
 ~~~
 import numpy as np
