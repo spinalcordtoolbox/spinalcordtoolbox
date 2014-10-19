@@ -44,6 +44,8 @@ import sct_utils as sct
 from sct_nurbs import NURBS
 import scipy
 import nibabel
+from sct_orientation import get_orientation, set_orientation
+
 
 # MAIN
 # ==========================================================================================
@@ -75,6 +77,7 @@ def main():
         fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         name_process = 'compute_csa'
         verbose = 1
+        volume_output = 1
         remove_temp_files = 0
         from matplotlib.pyplot import imshow, gray, show
         from mpl_toolkits.mplot3d import Axes3D
@@ -163,11 +166,10 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the input segmentation into RPI
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
+    set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
 
     # Extract orientation of the input segmentation
-    status,sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data + ' -get')
-    orientation = sct_orientation_output[-3:]
+    orientation = get_orientation(file_data+ext_data)
     print '\nOrientation of segmentation image: ' + orientation
 
     # Get size of data
@@ -215,7 +217,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the output centerline into input orientation
     print '\nOrient centerline image to input orientation: ' + orientation
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -orientation ' + orientation)
+    set_orientation(path_tmp+'/'+file_data+'_centerline'+ext_data, orientation, file_data+'_centerline'+ext_data)
 
    # Remove temporary files
     if remove_temp_files:
@@ -245,7 +247,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation of the input segmentation into RPI...', verbose)
-    fname_segmentation_orient = sct.set_orientation('segmentation.nii', 'RPI')
+    fname_segmentation_orient = set_orientation('segmentation.nii', 'RPI', 'segmentation_orient.nii')
 
     # Get size of data
     sct.printv('\nGet data dimensions...', verbose)
@@ -464,9 +466,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if volume_output:
         sct.printv('\nCreate volume of CSA values...', verbose)
         # get orientation of the input data
-        orientation = sct.get_orientation('segmentation.nii')
-        # status, sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
-        # orientation = sct_orientation_output[-3:]
+        orientation = get_orientation('segmentation.nii')
         # loop across slices
         for iz in range(min_z_index,max_z_index+1):
             # retrieve seg pixels
@@ -484,7 +484,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
         nibabel.save(img, 'csa_RPI.nii')
         # Change orientation of the output centerline into input orientation
-        fname_csa_volume = sct.set_orientation('csa_RPI.nii', orientation)
+        fname_csa_volume = set_orientation('csa_RPI.nii', orientation, 'csa_RPI_orient.nii')
 
     # come back to parent folder
     os.chdir('..')

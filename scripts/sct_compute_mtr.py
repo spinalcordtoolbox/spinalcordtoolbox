@@ -105,14 +105,6 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # # register MTC0 on MTC1
-    # if register:
-    #     sct.printv('\nRegister mt0 on mt1...', verbose)
-    #     sct.run("sct_register_multimodal -i mt0.nii -d mt1.nii", verbose)
-    #     file_mt0_tmp = "mt0_reg.nii"
-    # else:
-    #     file_mt0_tmp = "mt0.nii"
-
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
     sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
