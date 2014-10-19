@@ -216,6 +216,7 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
 	} else {
 		if (startSlice == 0.5) startSlice = desiredSize1[dim]/2;
 		if (endSlice == 0.5) endSlice = desiredSize1[dim]/2;
+        else if (endSlice < 0) endSlice = desiredSize1[dim] + endSlice - 1.0;
 		else if (endSlice == -1.0) endSlice = desiredSize1[dim]-1;
 	}
     
