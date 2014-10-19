@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import nibabel
 import time
+from sct_orientation import set_orientation
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -137,8 +138,7 @@ def main():
 
     # change orientation
     sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run('sct_orientation -i '+file_tmp+' -o rpi_'+file_tmp+' -s RPI')
-    file_tmp = 'rpi_'+file_tmp
+    file_tmp = set_orientation(file_tmp, 'RPI', 'rpi_'+file_tmp)
 
     # get image of medial slab
     sct.printv('\nGet image of medial slab...', verbose)
@@ -166,7 +166,7 @@ def main():
 
     # check if user clicked two times
     if len(cropping_coordinates.xs) != 2:
-        sct.printv('\nERROR: You have to select two points. Exit program. ', 1)
+        sct.printv('\nERROR: You have to select two points. Exit program.\n', 1, 'error')
         sys.exit(2)
 
     # convert coordinates to integer
