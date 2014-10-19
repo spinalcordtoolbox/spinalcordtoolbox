@@ -164,9 +164,9 @@ def main():
 
     # Change orientation of input images to RPI
     print('\nChange orientation of input images to RPI...')
-    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
-    status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
-    status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
+    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -s RPI')
+    status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -s RPI')
+    status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -s RPI')
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')

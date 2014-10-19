@@ -163,11 +163,11 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the input segmentation into RPI
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
+    sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -s RPI')
 
     # Extract orientation of the input segmentation
-    status,sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data + ' -get')
-    orientation = sct_orientation_output[-3:]
+    status, sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data)
+    orientation = sct_orientation_output[4:-3]
     print '\nOrientation of segmentation image: ' + orientation
 
     # Get size of data
@@ -215,7 +215,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the output centerline into input orientation
     print '\nOrient centerline image to input orientation: ' + orientation
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -orientation ' + orientation)
+    sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -s ' + orientation)
 
    # Remove temporary files
     if remove_temp_files:
@@ -465,8 +465,6 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         sct.printv('\nCreate volume of CSA values...', verbose)
         # get orientation of the input data
         orientation = sct.get_orientation('segmentation.nii')
-        # status, sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
-        # orientation = sct_orientation_output[-3:]
         # loop across slices
         for iz in range(min_z_index,max_z_index+1):
             # retrieve seg pixels
