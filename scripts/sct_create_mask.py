@@ -33,7 +33,7 @@ class param:
         self.debug = 0
         self.fname_data = ''
         self.method_list = ['coord', 'point', 'centerline', 'center']
-        self.method = 'coord'  # default method
+        self.method = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
         self.size = '40'  # in mm. if gaussian, size corresponds to sigma.
@@ -90,9 +90,8 @@ def create_mask(param):
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # display usage if a mandatory argument is not provided
-    if param.fname_data == '':
-        sct.printv('\nERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage()
+    if param.fname_data == '' or param.method == '':
+        sct.printv('\nERROR: All mandatory arguments are not provided. Type '+os.path.basename(__file__)+' -h.\n', 1, 'error')
 
     # parse argument for method
     method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
@@ -104,8 +103,7 @@ def create_mask(param):
 
     # check existence of method type
     if not method_type in param.method_list:
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method is not recognized. See usage.', 1, 'error')
-        usage()
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method is not recognized. Type '+os.path.basename(__file__)+' -h.\n', 1, 'error')
 
     # check existence of shape
     if not param.shape in param.shape_list:
@@ -121,7 +119,6 @@ def create_mask(param):
     # check if orientation is RPI
     if not get_orientation(param.fname_data) == 'RPI':
         sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
-        sys.exit(2)
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -299,14 +296,14 @@ USAGE
 
 MANDATORY ARGUMENTS
   -i <data>        image to create mask on. Only used to get header. Must be 3D.
-  -m <method,val>  method to generate mask and associated value:
+
+OPTIONAL ARGUMENTS
+  -m <method,val>  method to generate mask and associated value. Default="""+str(param.method)+"""
                      coord: X,Y coordinate of center of mask. E.g.: coord,20x15
                      point: volume that contains a single point. E.g.: point,label.nii.gz
                      center: mask is created at center of FOV. In that case, "val" is not required.
                      centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
-  -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma".
-
-OPTIONAL ARGUMENTS
+  -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma". Default="""+str(param.size)+"""
   -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param.shape)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
