@@ -98,10 +98,10 @@ def main():
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
-    sct.run('sct_orientation -i anat.nii -o anat_rpi.nii -orientation RPI')
+    sct.run('sct_orientation -i anat.nii -o anat_rpi.nii -s RPI')
     # Change orientation of the input image into RPI
     print '\nOrient centerline to RPI orientation...'
-    sct.run('sct_orientation -i centerline.nii -o centerline_rpi.nii -orientation RPI')
+    sct.run('sct_orientation -i centerline.nii -o centerline_rpi.nii -s RPI')
 
     # Straighten the spinal cord
     print '\nStraighten the spinal cord...'

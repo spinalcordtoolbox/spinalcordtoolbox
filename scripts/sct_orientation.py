@@ -71,7 +71,7 @@ def main(param):
     get_or_set_orientation(param)
 
 
-# otsu
+# get_or_set_orientation
 #=======================================================================================================================
 def get_or_set_orientation(param):
 
