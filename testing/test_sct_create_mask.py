@@ -18,20 +18,22 @@ import commands
 def test(data_path):
 
     # parameters
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz','labels.nii.gz','t2_centerline_init.nii.gz']
+    folder_data = 'mt/'
+    file_data = ['mt1.nii.gz', 'mt1_point.nii.gz', 'mt1_seg.nii.gz']
 
     # define command
 
     # method coord
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
-          + ' -m coord,30x27'\
+          + ' -m coord,15x17'\
           + ' -s 10'
     status, output = commands.getstatusoutput(cmd)
 
     # method point
+    # create label
+
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
-          + ' -m point,' + file_data[1] \
+          + ' -m point,' + data_path + folder_data + file_data[1] \
           + ' -s 10'
     s, o = commands.getstatusoutput(cmd)
 
