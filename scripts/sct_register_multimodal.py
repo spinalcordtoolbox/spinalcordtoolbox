@@ -133,7 +133,7 @@ def main():
         param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
         del param_user
         # TODO: check integrity of input
-        numberIterations, algo, gradientStep, metric = param.param
+    numberIterations, algo, gradientStep, metric = param.param
 
     # print arguments
     print '\nInput parameters:'
