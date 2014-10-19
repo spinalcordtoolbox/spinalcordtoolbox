@@ -23,6 +23,7 @@ import time
 import numpy
 import nibabel
 from scipy import ndimage
+from sct_orientation import get_orientation, set_orientation
 
 
 # DEFAULT PARAMETERS
@@ -50,8 +51,8 @@ def main(param):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2rpi.nii.gz' #'/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
-        param.method = 'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
+        param.fname_data = '/Users/julien/data/toronto/E22576/dmri/dmri.nii.gz' #'/Users/julien/data/temp/sct_example_data/t2/t2rpi.nii.gz' #'/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
+        param.method = 'center' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
         param.size = 20
         param.remove_tmp_files = 0
@@ -229,7 +230,7 @@ def create_mask(param):
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...', param.verbose)
         sct.run('rm -rf '+path_tmp, param.verbose)
 
     # to view results

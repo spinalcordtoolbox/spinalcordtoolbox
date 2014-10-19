@@ -195,11 +195,15 @@ def check_orientation_input(param):
         return -1
 
 
-# get_orientation
+# get_orientation (uses FSL)
 # ==========================================================================================
 def get_orientation(fname):
-    status, output = sct.run('isct_orientation3d -i '+fname+' -get', 0)
-    orientation = output[26:]
+    status, output = sct.run('fslhd '+fname, 0)
+    # status, output = sct.run('isct_orientation3d -i '+fname+' -get', 0)
+    # orientation = output[26:]
+    orientation = output[output.find('sform_xorient')+15:output.find('sform_xorient')+16]+ \
+                  output[output.find('sform_yorient')+15:output.find('sform_yorient')+16]+ \
+                  output[output.find('sform_zorient')+15:output.find('sform_zorient')+16]
     return orientation
 
 
