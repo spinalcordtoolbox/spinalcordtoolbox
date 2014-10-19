@@ -11,7 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+#import sct_utils as sct
+import commands
 
 
 def test(data_path):
@@ -26,24 +27,36 @@ def test(data_path):
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
           + ' -m coord,30x27'\
           + ' -s 10'
+    status, output = commands.getstatusoutput(cmd)
 
     # method point
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
           + ' -m point,' + file_data[1] \
           + ' -s 10'
+    s, o = commands.getstatusoutput(cmd)
+
+    status += s
+    output += o
 
     # method center
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
           + ' -m center' \
           + ' -s 10'
+    s, o = commands.getstatusoutput(cmd)
+
+    status += s
+    output += o
 
     # method centerline
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
           + ' -m centerline,' + data_path + folder_data + file_data[2] \
           + ' -s 10'
+    s, o = commands.getstatusoutput(cmd)
 
-    # return
-    return sct.run(cmd, 0)
+    status += s
+    output += o
+
+    return status, output
 
 
 if __name__ == "__main__":
