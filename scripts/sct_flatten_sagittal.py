@@ -32,6 +32,7 @@ from sct_nurbs import NURBS
 from sct_utils import fsloutput
 import nibabel
 import numpy
+from sct_orientation import get_orientation, set_orientation
 
 
 #=======================================================================================================================
@@ -99,12 +100,11 @@ def main():
     print ''
     
     # Get input image orientation
-    status, output = sct.run('sct_orientation -i ' + fname_anat)
-    input_image_orientation = output[4:-3]
+    input_image_orientation = get_orientation(fname_anat)
 
     # Reorient input data into RL PA IS orientation
-    sct.run('sct_orientation -i '+fname_anat+' -o tmp.anat_orient.nii -s RPI')
-    sct.run('sct_orientation -i '+fname_centerline+' -o tmp.centerline_orient.nii -s RPI')
+    set_orientation(fname_anat, 'RPI', 'tmp.anat_orient.nii')
+    set_orientation(fname_centerline, 'RPI', 'tmp.centerline_orient.nii')
 
     # Open centerline
     #==========================================================================================
@@ -211,7 +211,7 @@ def main():
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    sct.run('sct_orientation -i tmp.anat_orient_fit.nii -o tmp.anat_orient_fit_reorient.nii -s '+input_image_orientation)
+    set_orientation('tmp.anat_orient_fit.nii', input_image_orientation, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
