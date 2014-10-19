@@ -448,12 +448,12 @@ OPTIONAL ARGUMENTS
   -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2,MI
-                     1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
+                     1) degree of polynomial function used for regularization along Z.
                         For no regularization set to 0.
-                     2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
-                     3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
-                     4) metric: {MI,MeanSquares}. Default="""+param.param[3]+"""
+                     2) smoothing kernel size (in mm).
+                     3) gradient step. The higher the more deformation allowed.
+                     4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
   -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
                    For no segmentation set to 0.
