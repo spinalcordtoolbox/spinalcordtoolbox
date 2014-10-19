@@ -134,12 +134,11 @@ def get_or_set_orientation(param):
         if todo == 'set_orientation':
             # set orientation
             sct.printv('\nChange orientation...', param.verbose)
-            sct.run('isct_orientation3d -i data.nii -orientation '+param.orientation+' -o data_orient.nii', param.verbose)
+            set_orientation('data.nii', param.orientation, 'data_orient.nii')
         elif todo == 'get_orientation':
             # get orientation
             sct.printv('\nGet orientation...', param.verbose)
-            status, output = sct.run('isct_orientation3d -i data.nii -get', param.verbose)
-            sct.printv(output[26:], 1)
+            sct.printv(get_orientation('data.nii'), 1)
 
     else:
         # split along T dimension
@@ -152,7 +151,7 @@ def get_or_set_orientation(param):
             for it in range(nt):
                 file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
                 file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-                sct.run('isct_orientation3d -i '+file_data_split+' -orientation '+param.orientation+' -o '+file_data_split_orient, param.verbose)
+                set_orientation(file_data_split, param.orientation, file_data_split_orient)
             # Merge files back
             sct.printv('\nMerge file back...', param.verbose)
             cmd = fsloutput+'fslmerge -t data_orient'
@@ -162,10 +161,8 @@ def get_or_set_orientation(param):
             sct.run(cmd, param.verbose)
 
         elif todo == 'get_orientation':
-            # get orientation
             sct.printv('\nGet orientation...', param.verbose)
-            status, output = sct.run('isct_orientation3d -i data_T0000.nii -get', param.verbose)
-            sct.printv(output[26:], 1)
+            sct.printv(get_orientation('data_T0000.nii'), 1)
 
     # come back to parent folder
     os.chdir('..')
@@ -196,6 +193,20 @@ def check_orientation_input(param):
         return 0
     else:
         return -1
+
+
+# get_orientation
+# ==========================================================================================
+def get_orientation(fname):
+    status, output = sct.run('isct_orientation3d -i '+fname+' -get', 0)
+    orientation = output[26:]
+    return orientation
+
+
+# set_orientation
+# ==========================================================================================
+def set_orientation(fname_in, orientation, fname_out):
+    sct.run('isct_orientation3d -i '+fname_in+' -orientation '+orientation+' -o '+fname_out, 0)
 
 
 # Print usage
