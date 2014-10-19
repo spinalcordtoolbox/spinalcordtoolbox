@@ -19,8 +19,9 @@ cd t2
 # tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
 # tips: we use "-centerline-binary" to get the centerline, which can be used to initialize segmentation on other contrasts.
 sct_propseg -i t2.nii.gz -t t2 -centerline-binary -mesh -max-deformation 4 -init 130
-# you can check results with "fslview". You can also use MITKWORKBENCH to view the mesh.
-fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
+# check your results:
+# >> fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
+# tips: You can also use MITKWORKBENCH to view the mesh.
 # At this point you should make labels. Here we can use the file labels.nii.gz, which contains labels at C3 (value=3) and T4 (value=11).
 # register to template
 sct_register_to_template -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -o 1 -s normal -r 0
@@ -39,25 +40,25 @@ cd ..
 # ----------
 cd t1
 # crop data using graphical user interface (put two points)
-sct_crop -i t1.nii.gz
+# >> sct_crop -i t1.nii.gz
 # segmentation (used for registration to template)
 sct_propseg -i t1.nii.gz -t t1
 # check results
-fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
+# >> fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
 # --> t1_seg_modif.nii.gz
 # register to template (template registered to t2).
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d t1.nii.gz -n 1 -g 0.2 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t t1_seg_modif.nii.gz -r 0
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d t1.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t t1_seg_modif.nii.gz -r 0 -p 1,SyN,0.2,MI
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
 sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
 sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
 # check results
-fslview t1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+# >> fslview t1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # warp T1 to template space
 sct_apply_transfo -i t1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
 # check registration of T1 to template
-fslview t1_reg.nii.gz -b 0,800 $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 &
+# >> fslview t1_reg.nii.gz -b 0,800 $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 &
 # go back to root folder
 cd ..
 
@@ -70,22 +71,22 @@ sct_create_mask -i dmri.nii.gz -m coord,110x20 -s 60 -f cylinder
 # motion correction
 sct_dmri_moco -i dmri.nii.gz -b bvecs.txt -g 3 -m mask_dmri.nii.gz -p 2,2,1,MeanSquares -t 0
 # check moco
-fslview -m ortho,ortho dmri_moco dmri &
+# >> fslview -m ortho,ortho dmri_moco dmri &
 # segment mean_dwi
 # tips: use flag "-init" to start propagation from another slice, otherwise results are not good.
 sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init 3
 # check segmentation
-fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 & 
+# >> fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 & 
 # register to template (template registered to t2).
 # tips: here, we register the spinal cord segmentation to the mean DWI image because the contrasts are similar
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d dwi_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t dwi_moco_mean_seg.nii.gz -n 30 -g 0.1 -x linear
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d dwi_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t dwi_moco_mean_seg.nii.gz -p 30,SyN,0.1,MI -x linear
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_dmri2template.nii.gz
 # warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # visualize white matter template on DWI
-fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 &
+# >> fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 &
 # compute tensors (using FSL)
 dtifit -k dmri_moco -o dti -m dwi_moco_mean -r bvecs.txt -b bvals.txt
 # compute FA within lateral cortico-spinal tracts from slices 1 to 3
@@ -98,7 +99,7 @@ cd ..
 # ----------
 cd mt
 # register mt0 on mt1
-sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -n 5 -p 3 -g 0.2
+sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 5,SyN,0.2,MI
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
 # create initialization points on mt1 to help segmentation. Three points in middle of the cord.
@@ -109,9 +110,9 @@ sct_c3d mt1.nii.gz -scale 0 -landmarks-to-spheres landmarks.txt 0.5 -o mt1_init.
 # segment mt1
 sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1-mask.nii.gz -detect-radius 5 -max-deformation 5
 # check results
-fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
+# >> fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 # register to template (template registered to t2).
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1.nii.gz -x 1 -v 1 -n 15x3 -y 5 -g 0.1,0.5 -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t mt1_seg.nii.gz
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1.nii.gz -p3,SyN,0.1,MI -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t mt1_seg.nii.gz
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
 sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_mt2template.nii.gz
@@ -135,12 +136,12 @@ sct_c3d fmri_moco_mean.nii.gz ../t2/t2_centerline.nii.gz -reslice-identity -inte
 # tips: we use "-radius 6" otherwise the segmentation is too small
 sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_centerline.nii.gz -radius 6
 # check segmentation
-fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
+# >> fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register to template (template registered to t2). Only uses segmentation (more accurate)
 sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_moco_mean_seg_modif.nii.gz -n 3
 # concatenate transfo
- sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
- sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
