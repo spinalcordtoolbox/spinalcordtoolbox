@@ -207,7 +207,8 @@ def get_orientation(fname):
 # ==========================================================================================
 def set_orientation(fname_in, orientation, fname_out):
     sct.run('isct_orientation3d -i '+fname_in+' -orientation '+orientation+' -o '+fname_out, 0)
-    return fname_out
+    # return full path
+    return os.path.abspath(fname_out)
 
 
 # Print usage
