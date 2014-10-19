@@ -82,6 +82,7 @@ import sct_utils as sct
 import nibabel
 import numpy
 from sct_utils import fsloutput
+from sct_orientation import get_orientation, set_orientation
 
 
 #=======================================================================================================================
@@ -147,8 +148,7 @@ def main():
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    status, output = sct.run('sct_orientation -i ' + fname_anat + ' -get')
-    input_image_orientation = output[-3:]
+    input_image_orientation = get_orientation(fname_anat)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -420,8 +420,8 @@ def main():
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
-    sct.run('sct_orientation -i tmp.point_orient_fit.nii -o tmp.point_orient_fit.nii -orientation '+input_image_orientation)
-    sct.run('sct_orientation -i tmp.mask_orient_fit.nii -o tmp.mask_orient_fit.nii -orientation '+input_image_orientation)
+    set_orientation('tmp.point_orient_fit.nii', input_image_orientation, 'tmp.point_orient_fit.nii')
+    set_orientation('tmp.mask_orient_fit.nii', input_image_orientation, 'tmp.mask_orient_fit.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
