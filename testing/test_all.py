@@ -130,6 +130,7 @@ def main():
     e = 0
     if sum(status) != 0:
         e = 1
+    print e
 
     sys.exit(e)
 
@@ -190,7 +191,7 @@ def print_fail():
 
 # write to log file
 # ==========================================================================================
-def write_to_log_file(fname_log, string, mode = 'w'):
+def write_to_log_file(fname_log, string, mode='w'):
 
     '''
     status, output = sct.run('echo $SCT_DIR', 0)
