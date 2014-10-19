@@ -228,6 +228,10 @@ def printv(string, verbose=1, type='normal'):
     if verbose:
         print(color+string+bcolors.normal)
 
+    # if error, exit prohram
+    if type == 'error':
+        sys.exit(2)
+
 
 #=======================================================================================================================
 # slash_at_the_end: make sure there is (or not) a slash at the end of path name
