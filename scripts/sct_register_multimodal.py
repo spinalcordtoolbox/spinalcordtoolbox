@@ -23,12 +23,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: testing script for all cases
-# TODO: try to combine seg and image based for 2nd stage
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
-# TODO: set gradient-step-length in mm instead of vox size.
+# TODO: testing script for all cases
 
-# Note for the developer: DO NOT use --collapse-output-transforms 1, otherise inverse warping field is not output
+# Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
 
 # DEFAULT PARAMETERS
@@ -39,10 +37,11 @@ class param:
         self.remove_temp_files = 1  # remove temporary files
         self.outSuffix  = "_reg"
         self.padding = 5  # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
-        self.algo = 'SyN'
-        self.numberIterations = "10"  # number of iterations for last stage
+        self.param = ['10',  # number of iterations for last stage
+                      'SyN',  # algo
+                      '0.5',  # gradientStep
+                      'MI']  # metric: MI,MeanSquares
         self.verbose = 1  # verbose
-        self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
         self.interp = 'spline'  # nn, linear, spline
 
 import sys
@@ -51,7 +50,6 @@ import os
 import commands
 import time
 import sct_utils as sct
-from sct_orientation import get_orientation
 
 
 # MAIN
@@ -65,13 +63,14 @@ def main():
     fname_dest_seg = ''
     fname_output = ''
     padding = param.padding
-    numberIterations = param.numberIterations
+    param_user = ''
+    # numberIterations = param.numberIterations
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     use_segmentation = 0  # use spinal cord segmentation to improve robustness
     use_init_transfo = ''
-    gradientStep = param.gradientStep
-    algo = param.algo
+    # gradientStep = param.gradientStep
+    # algo = param.algo
     start_time = time.time()
     print ''
 
@@ -84,14 +83,13 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_dest = path_sct_data+'/mt/mt1.nii.gz'
         fname_src = path_sct_data+'/t2/t2.nii.gz'
-        numberIterations = '3'
-        gradientStep = '0.5'
+        param_user = '10,SyN,0.5,MI'
         remove_temp_files = 0
         verbose = 1
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:g:i:m:n:o:p:q:r:s:t:v:x:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -99,20 +97,14 @@ def main():
             usage()
         elif opt in ("-d"):
             fname_dest = arg
-        elif opt in ('-g'):
-            gradientStep = arg
         elif opt in ("-i"):
             fname_src = arg
         elif opt in ("-m"):
             fname_mask = arg
-        elif opt in ("-n"):
-            numberIterations = arg
         elif opt in ("-o"):
             fname_output = arg
         elif opt in ('-p'):
-            padding = arg
-        # elif opt in ('-q'):
-        #     fname_init_transfo = arg
+            param_user = arg
         elif opt in ('-r'):
             remove_temp_files = int(arg)
         elif opt in ("-s"):
@@ -123,6 +115,8 @@ def main():
             verbose = int(arg)
         elif opt in ('-x'):
             param.interp = arg
+        elif opt in ('-z'):
+            padding = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -134,6 +128,13 @@ def main():
     elif fname_src_seg != '' and fname_dest_seg != '':
         use_segmentation = 1
 
+    # parse argument for param
+    if not param_user == '':
+        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        del param_user
+        # TODO: check integrity of input
+        numberIterations, algo, gradientStep, metric = param.param
+
     # print arguments
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
@@ -144,6 +145,7 @@ def main():
     print '  Algorithm ........... '+algo
     print '  Number of iterations  '+str(numberIterations)
     print '  Gradient step ....... '+gradientStep
+    print '  Metric .............. '+metric
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
 
@@ -163,6 +165,12 @@ def main():
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', param.verbose)
     sct.check_if_rpi(fname_dest)
+
+    # set metricSize
+    if metric == 'MI':
+        metricSize = '32'  # corresponds to number of bins
+    else:
+        metricSize = '4'  # corresponds to radius
 
     # get full path
     fname_src = os.path.abspath(fname_src)
@@ -222,7 +230,7 @@ def main():
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+algo+'['+gradientStep+',3,0] '
-               '--metric MI[dest_pad.nii,src.nii,1,32] '
+               '--metric '+metric+'[dest_pad.nii,src.nii,1,'+metricSize+'] '
                '--convergence 20x'+numberIterations+' '
                '--shrink-factors 2x1 '
                '--smoothing-sigmas 2x0mm '
@@ -258,7 +266,7 @@ def main():
                '--dimensionality 3 '
                '--initial-moving-transform stage1Warp.nii.gz '
                '--transform '+algo+'['+gradientStep+',3,0] '
-               '--metric MI[dest_pad.nii,src_regAffine.nii,1,32] '
+               '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
                '--convergence '+numberIterations+' '
                '--shrink-factors 1 '
                '--smoothing-sigmas 0mm '
@@ -331,21 +339,24 @@ USAGE
   """+os.path.basename(__file__)+""" -i <source> -d <dest>
 
 MANDATORY ARGUMENTS
-  -i <source>                  source image
-  -d <dest>                    destination image
+  -i <source>      source image
+  -d <dest>        destination image
 
 OPTIONAL ARGUMENTS
-  -s <source_seg>              segmentation for source image (mandatory if -t is used)
-  -t <dest_seg>                segmentation for destination image (mandatory if -s is used)
-  -o <output>                  name of output file. Default=source_reg
-  -p <padding>                 size of padding (top & bottom), to enable deformation at edges.
-                               Default="""+str(param.padding)+"""
-  -n <N>                       number of iterations for last stage. Default="""+param.numberIterations+"""
-  -g <gradientStep>            gradientStep for SyN transformation. The larger the more deformation.
-                               Default="""+param.gradientStep+"""
+  -s <source_seg>  segmentation for source image (mandatory if -t is used)
+  -t <dest_seg>    segmentation for destination image (mandatory if -s is used)
+  -o <output>      name of output file. Default=source_reg
+  -p <param>       parameters for registration.
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
+                     1) number of iterations for last stage.
+                     2) algo: {SyN, BSplineSyN}
+                     3) gradient step. The larger the more deformation.
+                     4) metric: {MI,MeanSquares}.
+                        If you find very large deformations, switching to MeanSquares can help.
+  -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param.padding)+"""
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
-  -r {0,1}                     remove temporary files. Default='+str(param.remove_temp_files)+'
-  -v {0,1}                     verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default='+str(param.remove_temp_files)+'
+  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
 
 EXAMPLES
   1. Register mean DWI data to the T1 volume using segmentations:
