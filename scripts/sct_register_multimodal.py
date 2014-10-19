@@ -140,7 +140,6 @@ def main():
     print '  Destination ......... '+fname_dest
     print '  Segmentation source . '+fname_src_seg
     print '  Segmentation dest ... '+fname_dest_seg
-    # print '  Init transfo ........ '+fname_init_transfo
     print '  Output name ......... '+fname_output
     print '  Algorithm ........... '+algo
     print '  Number of iterations  '+str(numberIterations)
@@ -163,8 +162,7 @@ def main():
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', param.verbose)
-    if not get_orientation(fname_dest) == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Destination data should be RPI orientation. Use sct_orientation to reorient your data.\n', 1, 'error')
+    sct.check_if_rpi(fname_dest)
 
     # get full path
     fname_src = os.path.abspath(fname_src)
@@ -213,12 +211,7 @@ def main():
 
     # Pad the destination image (because ants doesn't deform the extremities)
     sct.printv('\nPad destination volume (because ants doesn''t deform the extremities)...', verbose)
-    # pad_image('src.nii', 'src_pad.nii', padding)
     pad_image('dest.nii', 'dest_pad.nii', padding)
-
-    # TODO: CHECK IF DATA IS RPI
-    # # Find orientation of destination data
-    # sct.printv('\nFind orientation of destination data...', verbose)
 
     # don't use spinal cord segmentation
     if use_segmentation == 0:

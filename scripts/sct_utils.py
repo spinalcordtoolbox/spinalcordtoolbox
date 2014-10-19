@@ -93,6 +93,15 @@ def check_if_3d(fname):
 
 
 #=======================================================================================================================
+# check_if_rpi:  check if data are in RPI orientation
+#=======================================================================================================================
+def check_if_rpi(fname):
+    from sct_orientation import get_orientation
+    if not get_orientation(fname) == 'RPI':
+        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_orientation to reorient your data. Exit program.\n', 1, 'error')
+
+
+#=======================================================================================================================
 # find_file_within_folder
 #=======================================================================================================================
 def find_file_within_folder(fname, directory):
