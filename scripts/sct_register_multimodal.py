@@ -23,7 +23,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO!!!!: account for non-axial destination --> reorient image
 # TODO: testing script for all cases
 # TODO: try to combine seg and image based for 2nd stage
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
@@ -36,7 +35,7 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
         self.outSuffix  = "_reg"
         self.padding = 5  # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
@@ -52,6 +51,8 @@ import os
 import commands
 import time
 import sct_utils as sct
+from sct_orientation import get_orientation
+
 
 # MAIN
 # ==========================================================================================
@@ -125,13 +126,11 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
-        sct.printv('ERROR: Input file missing. Exit program.', 1, 'error')
-        usage()
+        sct.printv('ERROR in '+os.path.basename(__file__)+': All mandatory arguments are not provided. Type: '+os.path.basename(__file__)+' -h.\n', 1, 'error')
 
     # check segmentation data
     if (fname_src_seg != '' and fname_dest_seg == '') or (fname_src_seg == '' and fname_dest_seg != ''):
-        sct.printv("ERROR: You need to select a segmentation file for the source AND the destination image. Exit program.", 1, 'error')
-        usage()
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': You need to select a segmentation file for the source AND the destination image.\n', 1, 'error')
     elif fname_src_seg != '' and fname_dest_seg != '':
         use_segmentation = 1
 
@@ -157,10 +156,15 @@ def main():
         sct.check_file_exist(fname_src_seg)
         sct.check_file_exist(fname_dest_seg)
 
-    # Get dimensions of data
-    sct.printv('\nGet dimensions of data...', param.verbose)
-    if not sct.is3d(fname_src) or not sct.is3d(fname_dest):
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Input data should be 3D. Exit program.\n', 1, 'error')
+    # Get if input is 3D
+    sct.printv('\nCheck if input data are 3D...', param.verbose)
+    sct.check_if_3d(fname_src)
+    sct.check_if_3d(fname_dest)
+
+    # check if destination data is RPI
+    sct.printv('\nCheck if destination data is RPI...', param.verbose)
+    if not get_orientation(fname_dest) == 'RPI':
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Destination data should be RPI orientation. Use sct_orientation to reorient your data.\n', 1, 'error')
 
     # get full path
     fname_src = os.path.abspath(fname_src)

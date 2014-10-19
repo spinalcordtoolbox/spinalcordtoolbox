@@ -72,19 +72,24 @@ def extract_fname(fname):
 
 
 #=======================================================================================================================
-# check_file_exist
+# check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
-# Check existence of a file or path
 def check_file_exist(fname, verbose=1):
-
-    #    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
-    # WARNING: dangerous change with potential dependencies (2014-09-26)
     if os.path.isfile(fname) or os.path.isdir(fname):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+
+
+#=======================================================================================================================
+# check_if_3d
+#=======================================================================================================================
+def check_if_3d(fname):
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    if not nt == 1:
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -123,15 +128,6 @@ def get_dimension(fname):
     pz = float(output_split[13])
     pt = float(output_split[15])
     return nx, ny, nz, nt, px, py, pz, pt
-
-
-#=======================================================================================================================
-# is3d
-#=======================================================================================================================
-# check if nifti volume is 3d
-def is3d(fname):
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
-    return nt == 1
 
 
 #=======================================================================================================================
