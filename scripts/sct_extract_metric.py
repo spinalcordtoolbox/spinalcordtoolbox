@@ -31,9 +31,6 @@ from sct_orientation import get_orientation, set_orientation
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-# TODO: do we really need that???
-sys.path.append(path_sct + '/scripts')
 
 
 # constants
