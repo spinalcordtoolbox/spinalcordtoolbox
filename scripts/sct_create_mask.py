@@ -155,7 +155,7 @@ def create_mask(param):
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
-        sct.printv('WARNING '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
+        sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
         sct.run(fsloutput+'fslroi data data -0 1', param.verbose)
 
