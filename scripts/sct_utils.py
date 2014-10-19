@@ -126,36 +126,6 @@ def get_dimension(fname):
     return nx, ny, nz, nt, px, py, pz, pt
 
 
-
-#=======================================================================================================================
-# get_orientation
-#=======================================================================================================================
-# Get orientation of a nifti file
-def get_orientation(fname):
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname)
-    orientation = output[4:-3]  # output.replace('Input image orientation : ', '')
-    return orientation
-
-
-#=======================================================================================================================
-# set_orientation
-#=======================================================================================================================
-def set_orientation(fname_data, orientation, path_out=''):
-    """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
-     letter (e.g., RPI or AIL)"""
-
-    # get absolute path
-    fname_data = os.path.abspath(fname_data)
-    path_data, file_data, ext_data = extract_fname(fname_data)
-    if not path_out:
-        path_out = path_data
-    # set output file
-    fname_out = slash_at_the_end(path_out, 1) + file_data + '_' + orientation + ext_data
-    # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -s '+orientation)
-    return fname_out
-
-
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
