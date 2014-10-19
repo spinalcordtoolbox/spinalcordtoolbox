@@ -132,8 +132,8 @@ def get_dimension(fname):
 #=======================================================================================================================
 # Get orientation of a nifti file
 def get_orientation(fname):
-    status, output = commands.getstatusoutput('sct_orientation -get -i '+fname)
-    orientation = output.replace('Input image orientation : ', '')
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname)
+    orientation = output[4:-3]  # output.replace('Input image orientation : ', '')
     return orientation
 
 
@@ -152,8 +152,7 @@ def set_orientation(fname_data, orientation, path_out=''):
     # set output file
     fname_out = slash_at_the_end(path_out, 1) + file_data + '_' + orientation + ext_data
     # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -orientation '+orientation)
-
+    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -s '+orientation)
     return fname_out
 
 

@@ -180,7 +180,7 @@ def main():
     # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
-    sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
+    sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -s RPI')
 
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)

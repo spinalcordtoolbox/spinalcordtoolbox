@@ -99,12 +99,12 @@ def main():
     print ''
     
     # Get input image orientation
-    status, output = sct.run('sct_orientation -i ' + fname_anat + ' -get')
-    input_image_orientation = output[-3:]
+    status, output = sct.run('sct_orientation -i ' + fname_anat)
+    input_image_orientation = output[4:-3]
 
     # Reorient input data into RL PA IS orientation
-    sct.run('sct_orientation -i '+fname_anat+' -o tmp.anat_orient.nii -orientation RPI')
-    sct.run('sct_orientation -i '+fname_centerline+' -o tmp.centerline_orient.nii -orientation RPI')
+    sct.run('sct_orientation -i '+fname_anat+' -o tmp.anat_orient.nii -s RPI')
+    sct.run('sct_orientation -i '+fname_centerline+' -o tmp.centerline_orient.nii -s RPI')
 
     # Open centerline
     #==========================================================================================
@@ -211,7 +211,7 @@ def main():
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    sct.run('sct_orientation -i tmp.anat_orient_fit.nii -o tmp.anat_orient_fit_reorient.nii -orientation '+input_image_orientation)
+    sct.run('sct_orientation -i tmp.anat_orient_fit.nii -o tmp.anat_orient_fit_reorient.nii -s '+input_image_orientation)
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
