@@ -118,7 +118,7 @@ def create_mask(param):
         sct.check_file_exist(method_val, param.verbose)
 
     # check if orientation is RPI
-    if not sct.get_orientation(param.fname_data) == 'RPI':
+    if not get_orientation(param.fname_data) == 'RPI':
         sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
         sys.exit(2)
 
