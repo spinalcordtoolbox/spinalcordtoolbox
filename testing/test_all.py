@@ -140,10 +140,12 @@ def fill_functions():
     functions = []
     functions.append('test_debug')
     functions.append('sct_convert_binary_to_trilinear')
+    functions.append('sct_create_mask')
     functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
+    functions.append('sct_flatten_sagital')
     functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline')
     functions.append('sct_process_segmentation')
