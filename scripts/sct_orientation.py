@@ -27,7 +27,8 @@ class param:
         self.fname_data = ''
         self.fname_out = ''
         self.orientation = ''
-        self.verbose = 1
+        self.list_of_correct_orientation = 'RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'
+        self.verbose = 0
         self.remove_tmp_files = 1
 
 
@@ -40,8 +41,8 @@ def main(param):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
-        param.orientation = 'RPI'
+        param.fname_data = path_sct_data+'/dmri/dwi_moco_mean.nii.gz'
+        param.orientation = ''
         param.remove_tmp_files = 0
         param.verbose = 1
 
@@ -49,10 +50,10 @@ def main(param):
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
     except getopt.GetoptError:
-        usage()
+        usage(param)
     for opt, arg in opts:
         if opt == '-h':
-            usage()
+            usage(param)
         elif opt in '-i':
             param.fname_data = arg
         elif opt in '-o':
@@ -79,11 +80,21 @@ def get_or_set_orientation(param):
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage()
+        usage(param)
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
+
+    # find what to do
+    if param.orientation == '':
+        todo = 'get_orientation'
+    else:
+        todo = 'set_orientation'
+        # check if orientation is correct
+        if check_orientation_input(param):
+            sct.printv('\nERROR in '+os.path.basename(__file__)+': orientation is not recognized. Use one of the following orientation: '+param.list_of_correct_orientation+'\n', 1, 'error')
+            sys.exit(2)
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -120,56 +131,84 @@ def get_or_set_orientation(param):
 
     # if 4d, loop across the data
     if nt == 1:
-        dim = 3
+        if todo == 'set_orientation':
+            # set orientation
+            sct.printv('\nChange orientation...', param.verbose)
+            sct.run('isct_orientation3d -i data.nii -orientation '+param.orientation+' -o data_orient.nii', param.verbose)
+        elif todo == 'get_orientation':
+            # get orientation
+            sct.printv('\nGet orientation...', param.verbose)
+            status, output = sct.run('isct_orientation3d -i data.nii -get', param.verbose)
+            sct.printv(output[26:], 1)
 
     else:
         # split along T dimension
         sct.printv('\nSplit along T dimension...', param.verbose)
         sct.run(fsloutput+'fslsplit data data_T', param.verbose)
 
-        # change orientation
-        sct.printv('\nChange orientation...', param.verbose)
-        for it in range(nt):
-            file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
-            file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-            sct.run('isct_orientation3d -i '+file_data_split+' -orientation '+param.orientation+' -o '+file_data_split_orient, param.verbose)
+        if todo == 'set_orientation':
+            # set orientation
+            sct.printv('\nChange orientation...', param.verbose)
+            for it in range(nt):
+                file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
+                file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
+                sct.run('isct_orientation3d -i '+file_data_split+' -orientation '+param.orientation+' -o '+file_data_split_orient, param.verbose)
+            # Merge files back
+            sct.printv('\nMerge file back...', param.verbose)
+            cmd = fsloutput+'fslmerge -t data_orient'
+            for it in range(nt):
+                file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
+                cmd = cmd+' '+file_data_split_orient
+            sct.run(cmd, param.verbose)
 
-        # Merge files back
-        sct.printv('\nMerge file back...', param.verbose)
-        cmd = fsloutput+'fslmerge -t data_orient'
-        for it in range(nt):
-            file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-            cmd = cmd+' '+file_data_split_orient
-        sct.run(cmd, param.verbose)
+        elif todo == 'get_orientation':
+            # get orientation
+            sct.printv('\nGet orientation...', param.verbose)
+            status, output = sct.run('isct_orientation3d -i data_T0000.nii -get', param.verbose)
+            sct.printv(output[26:], 1)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+'data_orient.nii', fname_out)
+    if todo == 'set_orientation':
+        sct.printv('\nGenerate output files...', param.verbose)
+        sct.generate_output_file(path_tmp+'data_orient.nii', fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...', param.verbose)
         sct.run('rm -rf '+path_tmp, param.verbose)
 
     # to view results
-    sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+fname_out+' &', param.verbose, 'code')
-    print
+    if todo == 'set_orientation':
+        sct.printv('\nDone! To view results, type:', param.verbose)
+        sct.printv('fslview '+fname_out+' &', param.verbose, 'code')
+        print
+
+
+# check_orientation_input
+# ==========================================================================================
+def check_orientation_input(param):
+    """check if orientation input by user is correct"""
+
+    if param.orientation in param.list_of_correct_orientation:
+        return 0
+    else:
+        return -1
 
 
 # Print usage
 # ==========================================================================================
-def usage():
+def usage(param):
     print """
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Get or set orientation of 3D or 4D data. Available orientations are: XXX
+  Get or set orientation of 3D or 4D data. Available orientations are:
+  """+param.list_of_correct_orientation+"""
 
 USAGE
   Get orientation: """+os.path.basename(__file__)+""" -i <data>
