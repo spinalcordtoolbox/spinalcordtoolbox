@@ -224,7 +224,7 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -n '+nb_iterations+' -v '+str(verbose)+' -x spline -p 10', verbose)
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -p '+nb_iterations+',SyN,0.5,MI -v '+str(verbose)+' -x spline -z 10', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate transformations: template --> straight --> anat...')
