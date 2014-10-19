@@ -36,16 +36,13 @@
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
-        self.remove_temp_files = 1 # remove temporary files
+        self.debug = 1
+        self.remove_temp_files = 1  # remove temporary files
         self.outSuffix  = "_reg"
-        self.padding = 5 # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
-#        self.convertDeformation  = 0 # Convert deformation field to 4D volume (readable by fslview)
+        self.padding = 5  # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
         self.algo = 'SyN'
         self.numberIterations = "10"  # number of iterations for last stage
-        # self.numberIterationsStep2 = "10" # number of iterations at step 2
-        self.verbose  = 1  # verbose
-        # self.compute_dest2sr = 0 # compute dest2src warping field
+        self.verbose = 1  # verbose
         self.gradientStep = '0.5'  # gradientStep in SyN transformation. First value is for image-based, second is for segmentation-based (if exist)
         self.interp = 'spline'  # nn, linear, spline
 
@@ -68,18 +65,13 @@ def main():
     fname_output = ''
     padding = param.padding
     numberIterations = param.numberIterations
-    # numberIterationsStep2 = param.numberIterationsStep2
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
-    use_segmentation = 0 # use spinal cord segmentation to improve robustness
-    # fname_init_transfo = ''
-    # fname_init_transfo_inv = ''
+    use_segmentation = 0  # use spinal cord segmentation to improve robustness
     use_init_transfo = ''
     gradientStep = param.gradientStep
-    # compute_dest2src = param.compute_dest2sr
     algo = param.algo
     start_time = time.time()
-    # restrict_deformation = '1x1x1'
     print ''
 
     # get path of the toolbox
@@ -91,13 +83,9 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_dest = path_sct_data+'/mt/mt1.nii.gz'
         fname_src = path_sct_data+'/t2/t2.nii.gz'
-        # fname_dest_seg = path_sct_data+'/mt/mt1_seg.nii.gz'
-        # fname_src_seg = path_sct_data+'/t2/t2_seg.nii.gz'
         numberIterations = '3'
-        # numberIterationsStep2 = '1'
         gradientStep = '0.5'
         remove_temp_files = 0
-        # compute_dest2src = 1
         verbose = 1
 
     # Check input parameters
@@ -134,10 +122,6 @@ def main():
             verbose = int(arg)
         elif opt in ('-x'):
             param.interp = arg
-        # elif opt in ('-y'):
-        #     numberIterationsStep2 = arg
-        # elif opt in ('-z'):
-        #     compute_dest2src = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -173,16 +157,16 @@ def main():
         sct.check_file_exist(fname_src_seg)
         sct.check_file_exist(fname_dest_seg)
 
+    # Get dimensions of data
+    sct.printv('\nGet dimensions of data...', param.verbose)
+    if not sct.is3d(fname_src) or not sct.is3d(fname_dest):
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Input data should be 3D. Exit program.\n', 1, 'error')
+
     # get full path
     fname_src = os.path.abspath(fname_src)
     fname_dest = os.path.abspath(fname_dest)
     fname_src_seg = os.path.abspath(fname_src_seg)
     fname_dest_seg = os.path.abspath(fname_dest_seg)
-    # if not fname_init_transfo == '':
-    #     fname_init_transfo = os.path.abspath(fname_init_transfo)  # test if not empty, otherwise it will transform the empty string into a string with path, which is a problem because the emptiness of the string is tested later.
-    # if not fname_init_transfo_inv == '':
-    #     fname_init_transfo_inv = os.path.abspath(fname_init_transfo_inv)
-    #fname_output = os.path.abspath(fname_output)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -338,8 +322,8 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  This program co-registers two spinal cord volumes. The deformation is non-rigid and is constrained
-  in the Z direction (i.e., axial plane). Hence, this function assumes that orientation of the DEST
+  This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along Z
+  direction (i.e., axial plane). Hence, this function assumes that orientation of the destination
   image is axial (RPI). If you need to register two volumes with large deformations and/or different
   contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve
   maximum robustness. To do so, you can use sct_segmentation_propagation.
