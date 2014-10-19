@@ -253,6 +253,11 @@ def dmri_moco(param):
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
+    # check if dmri and bvecs are the same size
+    if not nb_b0 + nb_dwi == nt:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Size of data ('+str(nt)+') and size of bvecs ('+str(nb_b0+nb_dwi)+') are not the same. Check your bvecs file.\n', 1, 'error')
+        sys.exit(2)
+
     # Prepare NIFTI (mean/groups...)
     #===================================================================================================================
     # Split into T dimension
