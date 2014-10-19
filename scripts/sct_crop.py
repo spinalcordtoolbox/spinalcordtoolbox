@@ -137,7 +137,7 @@ def main():
 
     # change orientation
     sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run('sct_orientation -i '+file_tmp+' -o rpi_'+file_tmp+' -orientation RPI')
+    sct.run('sct_orientation -i '+file_tmp+' -o rpi_'+file_tmp+' -s RPI')
     file_tmp = 'rpi_'+file_tmp
 
     # get image of medial slab
