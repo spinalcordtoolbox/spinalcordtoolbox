@@ -30,7 +30,7 @@ from sct_orientation import get_orientation, set_orientation
 class param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.fname_data = ''
         self.method_list = ['coord', 'point', 'centerline', 'center']
         self.method = 'center'  # default method
@@ -51,8 +51,8 @@ def main(param):
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        param.fname_data = '/Users/julien/data/toronto/E22576/dmri/dmri.nii.gz' #'/Users/julien/data/temp/sct_example_data/t2/t2rpi.nii.gz' #'/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'  #path_sct_data+'/mt/mt0.nii.gz'
-        param.method = 'center' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
+        param.fname_data = path_sct_data+'/mt/mt1.nii.gz'
+        param.method = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
         param.size = 20
         param.remove_tmp_files = 0
@@ -168,7 +168,7 @@ def create_mask(param):
         sct.printv('\nExtract coordinate of point...', param.verbose)
         status, output = sct.run('sct_label_utils -i '+fname_point+' -t display-voxel', param.verbose)
         # parse to get coordinate
-        # TODO
+        coord = output[output.find('Position=')+10:-17].split(',')
 
     if method_type == 'center':
         # set coordinate at center of FOV
