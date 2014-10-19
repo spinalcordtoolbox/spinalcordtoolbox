@@ -20,6 +20,7 @@ import os
 import sys
 import time
 import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
 
 
 class param:
@@ -98,10 +99,10 @@ def main():
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
-    sct.run('sct_orientation -i anat.nii -o anat_rpi.nii -orientation RPI')
+    set_orientation('anat.nii', 'RPI', 'anat_rpi.nii')
     # Change orientation of the input image into RPI
     print '\nOrient centerline to RPI orientation...'
-    sct.run('sct_orientation -i centerline.nii -o centerline_rpi.nii -orientation RPI')
+    set_orientation('centerline.nii', 'RPI', 'centerline_rpi.nii')
 
     # Straighten the spinal cord
     print '\nStraighten the spinal cord...'

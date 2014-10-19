@@ -42,6 +42,8 @@ import os
 import commands
 import time
 import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
+
 
 # MAIN
 # ==========================================================================================
@@ -164,9 +166,9 @@ def main():
 
     # Change orientation of input images to RPI
     print('\nChange orientation of input images to RPI...')
-    status, output = sct.run('sct_orientation -i data.nii -o data_rpi.nii -orientation RPI')
-    status, output = sct.run('sct_orientation -i landmarks.nii.gz -o landmarks_rpi.nii.gz -orientation RPI')
-    status, output = sct.run('sct_orientation -i segmentation.nii.gz -o segmentation_rpi.nii.gz -orientation RPI')
+    set_orientation('data.nii', 'RPI', 'data_rpi.nii')
+    set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
+    set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
 
     # Straighten the spinal cord using centerline/segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
@@ -222,7 +224,7 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -n '+nb_iterations+' -v '+str(verbose)+' -x spline -p 10', verbose)
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -p '+nb_iterations+',SyN,0.5,MI -v '+str(verbose)+' -x spline -z 10', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate transformations: template --> straight --> anat...')

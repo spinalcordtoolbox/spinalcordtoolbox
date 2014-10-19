@@ -55,8 +55,7 @@ from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
 #import matplotlib.pyplot as plt
-
-
+from sct_orientation import get_orientation, set_orientation
 
 
 #=======================================================================================================================
@@ -180,7 +179,7 @@ def main():
     # Change orientation of the input centerline into RPI
     print '\nOrient centerline to RPI orientation...'
     fname_centerline_orient = 'tmp.centerline_rpi' + ext_centerline
-    sct.run('sct_orientation -i ' + file_centerline + ext_centerline + ' -o ' + fname_centerline_orient + ' -orientation RPI')
+    set_orientation(file_centerline+ext_centerline, 'RPI', fname_centerline_orient)
 
     print '\nGet dimensions of input centerline...'
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
