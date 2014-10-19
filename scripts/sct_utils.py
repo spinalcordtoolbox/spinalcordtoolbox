@@ -84,8 +84,7 @@ def check_file_exist(fname, verbose=1):
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('  ERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
-        sys.exit(2)
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
 
 
 #=======================================================================================================================
