@@ -153,13 +153,13 @@ def main():
         for it in range(nt):
             file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
             file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-            sct.run('sct_antsApplyTransforms -d ' + str(dim) + ' -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
+            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
         # Merge files back
         sct.printv('\nMerge file back...', verbose)
         cmd = fsloutput+'fslmerge -t '+fname_out
         for it in range(nt):
-            file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-            cmd = cmd+' '+file_data_split_orient
+            file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
+            cmd = cmd+' '+file_data_split_reg
         sct.run(cmd, param.verbose)
         # come back to parent folder
         os.chdir('..')
@@ -197,7 +197,6 @@ OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
   -p {nn,linear,spline}  interpolation method. Default="""+str(param.interp)+"""
   -v {0,1}              verbose. Default="""+str(param.verbose)+"""
-  -x {2,3}              dimension of the data. Default="""+str(param.dim)+"""
   -h                    help. Show this message
 
 EXAMPLE
