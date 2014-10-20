@@ -116,35 +116,35 @@ def main():
         fname_src_reg = path_out+file_out+ext_out
     else:
         path_out, file_out, ext_out = sct.extract_fname(fname_src_reg)
-    fname_out = path_out+file_out+ext_out
-
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, verbose)
-
-    # Copying input data to tmp folder
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
-    # go to tmp folder
-    os.chdir(path_tmp)
-    # convert to nii format
-    sct.run('fslchfiletype NIFTI data', verbose)
+    fname_out = os.path.abspath(path_out+file_out+ext_out)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if 3d
     if nt == 1:
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_antsApplyTransforms -d 3 -i data.nii -o data_reg.nii -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
+        sct.run('sct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
 
     # if 4d, loop across the T dimension
     else:
+        # create temporary folder
+        sct.printv('\nCreate temporary folder...', verbose)
+        path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+        sct.run('mkdir '+path_tmp, verbose)
+
+        # Copying input data to tmp folder
+        # NB: cannot use c3d here because c3d cannot convert 4D data.
+        sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+        sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
+        # go to tmp folder
+        os.chdir(path_tmp)
+        # convert to nii format
+        sct.run('fslchfiletype NIFTI data', verbose)
+
         # split along T dimension
         sct.printv('\nSplit along T dimension...', verbose)
         sct.run(fsloutput+'fslsplit data data_T', verbose)
@@ -156,18 +156,17 @@ def main():
             sct.run('sct_antsApplyTransforms -d ' + str(dim) + ' -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
         # Merge files back
         sct.printv('\nMerge file back...', verbose)
-        cmd = fsloutput+'fslmerge -t data_reg'
+        cmd = fsloutput+'fslmerge -t '+fname_out
         for it in range(nt):
             file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
             cmd = cmd+' '+file_data_split_orient
         sct.run(cmd, param.verbose)
-
-    # come back to parent folder
-    os.chdir('..')
+        # come back to parent folder
+        os.chdir('..')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'data_reg.nii', fname_out)
+    sct.generate_output_file(fname_out, fname_out)
 
     # to view results
     print '\nDone! To view results, type:'
