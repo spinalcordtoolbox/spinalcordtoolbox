@@ -140,6 +140,7 @@ def main():
 def fill_functions():
     functions = []
     functions.append('test_debug')
+    functions.append('sct_compute_mtr')
     functions.append('sct_convert_binary_to_trilinear')
     functions.append('sct_create_mask')
     functions.append('sct_detect_spinalcord')
