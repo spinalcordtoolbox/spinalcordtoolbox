@@ -4,8 +4,8 @@ function param = j_mri_moco_v8(param)
 % fMRI data.
 % For details on the algorithm see:
 % https://docs.google.com/drawings/d/1FoKXYbyFh_q20zsvl_mEcxlUR405gZ4c8DcrUvBxsIM/edit?hl=en_US
-% 
-% 
+%
+%
 % INPUT
 % param				structure
 %
@@ -25,7 +25,7 @@ function param = j_mri_moco_v8(param)
 %   flirt_options		string		Additional FLIRT options. E.g., '-interp sinc'. Default is ''.
 %   merge_back			binary		0 || 1*. Merge data back after moco?
 %   gaussian_mask       float       <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-%   centerline          matrix      
+%   centerline          matrix
 %
 %
 % HIGHLY FACULTATIVE
@@ -34,16 +34,16 @@ function param = j_mri_moco_v8(param)
 %
 % OUTPUT
 % param
-% 
+%
 %   Example:
 %   TODO
-%   
+%
 %
 % TODO
 % - manage interspersed for volume-based
 % - no need to interpolate sinc when only estimating
 % - for DTI, have a test that checks the mean intensity: if too low, use the registration matrix of the previous volume
-% 
+%
 % Julien Cohen-Adad <jcohen@nmr.mgh.harvard.edu>
 % 2011-06-13: Created
 % 2011-07-07: Modified
@@ -56,7 +56,7 @@ function param = j_mri_moco_v8(param)
 % 2013-03-20: In slicewise mode, the files split along z are now tmp_moco files.
 %             If a file is not indexed, its moco version is no longer created.
 % 2013-04-08: Added a suffix data in param. This suffix is added to the processed data
-% 
+%
 % =========================================================================
 
 % debug if error
@@ -88,19 +88,22 @@ if isfield(param,'merge_back'), merge_back = param.merge_back; else merge_back =
 if isfield(param,'slicewise'), slicewise = param.slicewise; else slicewise = 0; end
 if isfield(param,'gaussian_mask'), mask = param.gaussian_mask; mask=mask(:); else mask = 0; end
 if isfield(param,'centerline'), centerline = param.centerline; else centerline = repmat(ceil(dims/2)',dims(3),1); end
+if isfield(param,'ref_weight'), ref_weight = param.ref_weight; end
+
+
 
 nb_fails = 0;
 
 options_spm_coreg = struct(...
-                    'graphics',0,... % Don't display graphics for spm_coreg2
-                    'cost_fun',cost_spm_coreg); 
+    'graphics',0,... % Don't display graphics for spm_coreg2
+    'cost_fun',cost_spm_coreg);
 options_spm_reslice = struct(...
-                              'mask',1,... % don't mask anything
-                              'mean',0,... % write mean image
-                              'which',1,... % don't reslice the first image
-                              'wrap',[0 0 0]',...
-                              'interp',5); % the B-spline interpolation method
-                
+    'mask',1,... % don't mask anything
+    'mean',0,... % write mean image
+    'which',1,... % don't reslice the first image
+    'wrap',[0 0 0]',...
+    'interp',5); % the B-spline interpolation method
+
 % START FUNCTION
 j_disp(fname_log,['\n\n\n=========================================================================================================='])
 j_disp(fname_log,['   Running: j_mri_moco_v8'])
@@ -132,9 +135,9 @@ if ~exist(folder_mat,'dir'), mkdir(folder_mat), end
 
 % split into T dimension
 if split_data
-	j_disp(fname_log,['\nSplit along T dimension...'])
-	cmd = [fsloutput,'fslsplit ',fname_data,' ',fname_data_splitT];
-	j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+    j_disp(fname_log,['\nSplit along T dimension...'])
+    cmd = [fsloutput,'fslsplit ',fname_data,' ',fname_data_splitT];
+    j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
 end
 numT = j_numbering(nt,4,0);
 
@@ -147,35 +150,35 @@ j_disp(fname_log,['\nCreate schedule file for FLIRT...'])
 
 schedule_file = [folder_mat,'schedule_',dof];
 switch (dof)
-	case 'TxSx'
-	fname_schedule = which('j_mri_schedule_TxSx.m');
-	
-	case 'TxSxKx'
-	fname_schedule = which('j_mri_schedule_TxSxKx.m');
-		
-	case 'TxSxKy'
-	fname_schedule = which('j_mri_schedule_TxSxKy.m');
-		
-	case 'TxSxKxKy'
-	fname_schedule = which('j_mri_schedule_TxSxKxKy.m');
-		
-	case 'TxTyTzSxSySzKxKyKz'
-	fname_schedule = which('j_mri_schedule_TxTyTzSxSySzKxKyKz.m');
-    
+    case 'TxSx'
+        fname_schedule = which('j_mri_schedule_TxSx.m');
+        
+    case 'TxSxKx'
+        fname_schedule = which('j_mri_schedule_TxSxKx.m');
+        
+    case 'TxSxKy'
+        fname_schedule = which('j_mri_schedule_TxSxKy.m');
+        
+    case 'TxSxKxKy'
+        fname_schedule = which('j_mri_schedule_TxSxKxKy.m');
+        
+    case 'TxTyTzSxSySzKxKyKz'
+        fname_schedule = which('j_mri_schedule_TxTyTzSxSySzKxKyKz.m');
+        
     case 'Tx'
-    fname_schedule = which('j_mri_schedule_Tx.m');
-    
+        fname_schedule = which('j_mri_schedule_Tx.m');
+        
     otherwise
-    schedule_file = [folder_mat,'schedule'];
-    fname_schedule = dof;
-    dof='UserTransfo';
+        schedule_file = [folder_mat,'schedule'];
+        fname_schedule = dof;
+        dof='UserTransfo';
 end
 
 
 
 % check if schedule file was found
 if isempty(fname_schedule)
-	error('Schedule file was not found. Thanks for playing with us.')
+    error('Schedule file was not found. Thanks for playing with us.')
 end
 j_disp(fname_log,['.. Schedule file: ',fname_schedule])
 copyfile(fname_schedule,schedule_file);
@@ -188,17 +191,17 @@ j_disp(fname_log,['.. File created (locally): ',schedule_file])
 % check if there is an indexation that tells which volume should be corrected
 j_disp(fname_log,'\nCheck if there is an index that tells which volume to correct...')
 if isfield(param,'index')
-	if ~isempty(param.index)
-		j_disp(fname_log,'Found!')
-	else
-		% no indexation. Create one that includes all the volumes.
-		j_disp(fname_log,'No indexation found. Create one that includes all the volumes.')
-		param.index = (1:nt);
-	end	
+    if ~isempty(param.index)
+        j_disp(fname_log,'Found!')
+    else
+        % no indexation. Create one that includes all the volumes.
+        j_disp(fname_log,'No indexation found. Create one that includes all the volumes.')
+        param.index = (1:nt);
+    end
 else
-	% no indexation. Create one that includes all the volumes.
-	j_disp(fname_log,'No indexation found. Create one that includes all the volumes.')
-	param.index = (1:nt);
+    % no indexation. Create one that includes all the volumes.
+    j_disp(fname_log,'No indexation found. Create one that includes all the volumes.')
+    param.index = (1:nt);
 end
 param.index=param.index(:);
 j_disp(fname_log,['.. Index of volumes to correct: ',num2str(param.index')])
@@ -222,30 +225,45 @@ end
 
 
 % Generate Gaussian mask
-j_disp(fname_log,'\nUse Gaussian Mask?')
+j_disp(fname_log,'\nUse Mask?')
 if mask
-    j_disp(fname_log,'Yes! Create mask...')
     fname_mask = [output_path 'tmp_moco.gaussian_mask_in'];
-    %fname_mask_ref = [output_path 'tmp_moco.gaussian_mask_ref'];
-    sigma=mask./scales(1:2);
-    for iZ=1:dims(3)
-            M_mask(:,:,iZ)=gauss2d(dims, sigma, centerline(iZ,:));
-    end
-    if slicewise
-        for iZ=1:dims(3)
-            save_avw_v2(M_mask(:,:,iZ),[fname_mask '_' numZ{iZ}],'f',scales, [fname_data_ref_splitZ '0000'],1);
-            fslmask{iZ} = [' -inweight ' fname_mask '_' numZ{iZ} ' -refweight ' fname_mask '_' numZ{iZ}];
+    if exist('ref_weight')
+        if slicewise
+            cmd=['fslsplit ' ref_weight ' ' fname_mask ' -z']
+            j_disp(fname_log,['>> ',cmd]);
+            [status result] = unix(cmd);
+            if status, error(result); end
+            j_disp(fname_log,['.. File created: ',fname_mask])
+            for iZ=1:dims(3)
+                fslmask{iZ} = [' -inweight ' fname_mask '_' numZ{iZ} ' -refweight ' fname_mask '_' numZ{iZ}];
+            end
+        else
+            fslmask=ref_weight;
         end
     else
-        save_avw_v2(M_mask,fname_mask,'f',scales, fname_data,1);
-        fslmask = [' -inweight ' fname_mask ' -refweight ' fname_mask];
+        j_disp(fname_log,'Yes! Create mask...')
+        %fname_mask_ref = [output_path 'tmp_moco.gaussian_mask_ref'];
+        sigma=mask./scales(1:2);
+        for iZ=1:dims(3)
+            M_mask(:,:,iZ)=floor(gauss2d(dims, sigma, centerline(iZ,:))+1/2);
+        end
+        if slicewise
+            for iZ=1:dims(3)
+                save_avw_v2(M_mask(:,:,iZ),[fname_mask '_' numZ{iZ}],'f',scales, [fname_data_ref_splitZ '0000'],1);
+                fslmask{iZ} = [' -inweight ' fname_mask '_' numZ{iZ} ' -refweight ' fname_mask '_' numZ{iZ}];
+            end
+        else
+            save_avw_v2(M_mask,fname_mask,'f',scales, fname_data,1);
+            fslmask = [' -refweight ' fname_mask];
+        end
+        j_disp(fname_log,['.. File created: ',fname_mask])
+        
+        disp('mask_preview :')
+        S=num2str(floor(M_mask+0.5));
+        S(:,2:3:end)=[];
+        disp(S);
     end
-    j_disp(fname_log,['.. File created: ',fname_mask])
-    
-    disp('mask_preview :')
-    S=num2str(floor(M_mask+0.5));
-    S(:,2:3:end)=[];
-    disp(S);
 else
     fslmask=cell(1,dims(3)); fslmask(1:dims(3))={''};
 end
@@ -261,229 +279,229 @@ j_disp(fname_log,'Loop on iT...')
 fail_mat = -ones(nt,nz);
 for indice_index = 1:length(param.index)
     iT = param.index(indice_index);
-	j_disp(fname_log,['\nVolume ',num2str(iT),'/',num2str(nt),':'])
-	j_disp(fname_log,['--------------------'])
-
-	% name of volume
-	fname_data_splitT_num{iT} = [fname_data_splitT,numT{iT}];
-	fname_data_splitT_moco_num{iT} = [fname_data_splitT,suffix,numT{iT}];
-
-		% volume-based or slice-by-slice motion correction?
-  		j_disp(fname_log,'Slicewise motion correction?')
-		if slicewise
-			
-			% SLICE-WISE MOTION CORRECTION
-			% if slicewise, split data along Z
- 			j_disp(fname_log,['.. Yes!'])
- 			j_disp(fname_log,['Split data along Z...'])
-			fname_data_splitT_splitZ = [fname_data_splitT_num{iT},'_splitZ'];
-			cmd = [fsloutput,'fslsplit ',fname_data_splitT_num{iT},' ',fname_data_splitT_splitZ,' -z'];
-			j_disp(fname_log,['>> ',cmd]);
-			[status result] = unix(cmd);
-			if status, error(result); end
-            
-            % loop on Z
-			j_disp(fname_log,['Loop on Z...'])
-			for iZ = 1:nz
-				% motion correction
-				% TODO: add more options!x
-				fname_data_splitT_splitZ_num{iT,iZ} = [fname_data_splitT_splitZ,numZ{iZ}];
-				fname_data_splitT_splitZ_moco_num{iT,iZ} = [fname_data_splitT_splitZ_num{iT,iZ},suffix];
-				fname_data_ref_splitZ_num{iZ} = [fname_data_ref_splitZ,numZ{iZ}];
-				fname_mat{iT,iZ} = [folder_mat,'mat.T',num2str(iT),'_Z',num2str(iZ),'.txt'];
-                switch(todo)
-					
-					case 'estimate'
-                       
-                       switch (program)
-                            case 'FLIRT'     				
-                                j_disp(fname_log,['Process with FLIRT'])
-                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -omat ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -cost ',cost_function_flirt,fslmask{iZ},' ',flirt_options];
-                            
-                            case 'SPM'
-                                 j_disp(fname_log,['Process with SPM'])
-                                %put ".nii" extension on files name
-                                fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
-                                fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
-
-                                % open matrix file
-                                fid = fopen(fname_mat{iT,iZ},'w');
-                                
-                                % read input and reference headers
-                                fname_data_splitT_splitZ_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});                     
-                                ref_header=spm_vol(fname_data_ref_splitZ_num_ext{iZ});
-
-                                % generate transformation matrix
-                                j_disp(fname_log,[' File to registrate : ', fname_data_splitT_splitZ_num_ext{iT,iZ}])
-                                j_disp(fname_log,[' Reference : ', fname_data_ref_splitZ_num_ext{iZ}])
-                                
-                                transfo=spm_coreg2(ref_header,fname_data_splitT_splitZ_header,options_spm_coreg); 
-                                matrix_transfo = spm_matrix(transfo); 
-                                for line=1:4
-                                    fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
-                                end
-                                    fclose(fid);
-                       end
-                      
+    j_disp(fname_log,['\nVolume ',num2str(iT),'/',num2str(nt),':'])
+    j_disp(fname_log,['--------------------'])
+    
+    % name of volume
+    fname_data_splitT_num{iT} = [fname_data_splitT,numT{iT}];
+    fname_data_splitT_moco_num{iT} = [fname_data_splitT,suffix,numT{iT}];
+    
+    % volume-based or slice-by-slice motion correction?
+    j_disp(fname_log,'Slicewise motion correction?')
+    if slicewise
+        
+        % SLICE-WISE MOTION CORRECTION
+        % if slicewise, split data along Z
+        j_disp(fname_log,['.. Yes!'])
+        j_disp(fname_log,['Split data along Z...'])
+        fname_data_splitT_splitZ = [fname_data_splitT_num{iT},'_splitZ'];
+        cmd = [fsloutput,'fslsplit ',fname_data_splitT_num{iT},' ',fname_data_splitT_splitZ,' -z'];
+        j_disp(fname_log,['>> ',cmd]);
+        [status result] = unix(cmd);
+        if status, error(result); end
+        
+        % loop on Z
+        j_disp(fname_log,['Loop on Z...'])
+        for iZ = 1:nz
+            % motion correction
+            % TODO: add more options!x
+            fname_data_splitT_splitZ_num{iT,iZ} = [fname_data_splitT_splitZ,numZ{iZ}];
+            fname_data_splitT_splitZ_moco_num{iT,iZ} = [fname_data_splitT_splitZ_num{iT,iZ},suffix];
+            fname_data_ref_splitZ_num{iZ} = [fname_data_ref_splitZ,numZ{iZ}];
+            fname_mat{iT,iZ} = [folder_mat,'mat.T',num2str(iT),'_Z',num2str(iZ),'.txt'];
+            switch(todo)
+                
+                case 'estimate'
                     
-					case 'apply'
-					% build file name of input matrix
+                    switch (program)
+                        case 'FLIRT'
+                            j_disp(fname_log,['Process with FLIRT'])
+                            cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -omat ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -cost ',cost_function_flirt,fslmask{iZ},' ',flirt_options];
                             
-                    switch(program)
-                        
-                        case 'FLIRT'                
-                        j_disp(fname_log,['Process with FLIRT'])
-                        cmd = [fsloutput,'flirt -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -applyxfm -init ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' ',flirt_options];
                         case 'SPM'
-                        j_disp(fname_log,['Process with SPM'])
-                        fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
-                        fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
-                        
-                        M_transfo = textread(fname_mat{iT,iZ});
-                        M_transfo = M_transfo(1:4,1:4);
-                        fname_data_splitT_splitZ_num_ext_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});
-                        fname_data_splitT_splitZ_num_ext_header.mat=M_transfo^(-1)*fname_data_splitT_splitZ_num_ext_header.mat;
-                        spm_get_space(fname_data_splitT_splitZ_num_ext{iT,iZ},fname_data_splitT_splitZ_num_ext_header.mat); 
+                            j_disp(fname_log,['Process with SPM'])
+                            %put ".nii" extension on files name
+                            fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
+                            fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
                             
-                        options_spm_reslice.output = [fname_data_splitT_splitZ_moco_num{iT,iZ},'.nii'];
-                        spm_reslice2({fname_data_ref_splitZ_num_ext{iZ};fname_data_splitT_splitZ_num_ext{iT,iZ}},options_spm_reslice);
-                    
-                    end
-                    
-                    
-                    case 'estimate_and_apply'
-                        
-				                   
-                    switch(program)
-                        
-                        case 'FLIRT'                
-                        j_disp(fname_log,['Process with FLIRT'])
-                        cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -omat ',fname_mat{iT,iZ},' -cost ', cost_function_flirt,fslmask{iZ},' ',flirt_options];
-                        case 'SPM'
-                        j_disp(fname_log,['Process with SPM'])
-                        % put ".nii" extension on files name
-                        fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
-                        fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
-                        
-                        fname_data_splitT_splitZ_num_ext_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});                     
-                        ref_header=spm_vol(fname_data_ref_splitZ_num_ext{iZ});
-                        
-                        if ~strcmp(cost_spm_coreg,'none')
-                            % generate transformation matrix
-                            j_disp(fname_log,['Create transformation matrix... : '])
-                            j_disp(fname_log,['Source : ',fname_data_splitT_splitZ_num_ext{iT,iZ}])
-                            j_disp(fname_log,['Reference : ', fname_data_ref_splitZ_num_ext{iZ}])
-
-                            transfo=spm_coreg2(ref_header,fname_data_splitT_splitZ_num_ext_header,options_spm_coreg); 
-                            M_transfo = spm_matrix(transfo);
-                            
-                            % open and write matrix file
+                            % open matrix file
                             fid = fopen(fname_mat{iT,iZ},'w');
+                            
+                            % read input and reference headers
+                            fname_data_splitT_splitZ_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});
+                            ref_header=spm_vol(fname_data_ref_splitZ_num_ext{iZ});
+                            
+                            % generate transformation matrix
+                            j_disp(fname_log,[' File to registrate : ', fname_data_splitT_splitZ_num_ext{iT,iZ}])
+                            j_disp(fname_log,[' Reference : ', fname_data_ref_splitZ_num_ext{iZ}])
+                            
+                            transfo=spm_coreg2(ref_header,fname_data_splitT_splitZ_header,options_spm_coreg);
+                            matrix_transfo = spm_matrix(transfo);
                             for line=1:4
-                                fprintf(fid,'%f %f %f %f\n',M_transfo(line,1),M_transfo(line,2),M_transfo(line,3),M_transfo(line,4));
+                                fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
                             end
                             fclose(fid);
-                            
-                            % modify file header
-                            fname_data_splitT_splitZ_num_ext_header.mat=M_transfo^(-1)*fname_data_splitT_splitZ_num_ext_header.mat;
-                            spm_get_space(fname_data_splitT_splitZ_num_ext{iT,iZ},fname_data_splitT_splitZ_num_ext_header.mat); 
-                        end
-
-                        % apply transformation
-
-                        options_spm_reslice.output = [fname_data_splitT_splitZ_moco_num{iT,iZ},'.nii'];
-                        spm_reslice2({fname_data_ref_splitZ_num_ext{iZ};fname_data_splitT_splitZ_num_ext{iT,iZ}},options_spm_reslice); 
-                   
-
                     end
-                
-                end
-                
-				if strcmp(program , 'FLIRT')
-                    j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-                end
-                
-                % Check transformation absurdity
-                M_transfo = textread(fname_mat{iT,iZ});
-                M_transfo = M_transfo(1:4,1:4);
-                if ( abs(M_transfo(1,4)) > 10 || abs(M_transfo(2,4)) > 10 || abs(M_transfo(3,4) > 10) || abs(M_transfo(4,4) > 10) )
-                    nb_fails = nb_fails + 1;
-                    j_disp(fname_log,['failure #',num2str(nb_fails), ' this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '])
-                    msgbox(['failure #',num2str(nb_fails), ' : (ref: ',fname_data_ref_splitZ_num{iZ},', in: ',fname_data_splitT_splitZ_num{iT,iZ},') this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '], 'Correction failure','warn')
-                    fail_mat(iT,iZ) = 1;
-                else
-                    fail_mat(iT,iZ) = 0;
-                end
-            end	% iZ
+                    
+                    
+                case 'apply'
+                    % build file name of input matrix
+                    
+                    switch(program)
+                        
+                        case 'FLIRT'
+                            j_disp(fname_log,['Process with FLIRT'])
+                            cmd = [fsloutput,'flirt -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -applyxfm -init ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' ',flirt_options];
+                        case 'SPM'
+                            j_disp(fname_log,['Process with SPM'])
+                            fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
+                            fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
+                            
+                            M_transfo = textread(fname_mat{iT,iZ});
+                            M_transfo = M_transfo(1:4,1:4);
+                            fname_data_splitT_splitZ_num_ext_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});
+                            fname_data_splitT_splitZ_num_ext_header.mat=M_transfo^(-1)*fname_data_splitT_splitZ_num_ext_header.mat;
+                            spm_get_space(fname_data_splitT_splitZ_num_ext{iT,iZ},fname_data_splitT_splitZ_num_ext_header.mat);
+                            
+                            options_spm_reslice.output = [fname_data_splitT_splitZ_moco_num{iT,iZ},'.nii'];
+                            spm_reslice2({fname_data_ref_splitZ_num_ext{iZ};fname_data_splitT_splitZ_num_ext{iT,iZ}},options_spm_reslice);
+                            
+                    end
+                    
+                    
+                case 'estimate_and_apply'
+                    
+                    
+                    switch(program)
+                        
+                        case 'FLIRT'
+                            j_disp(fname_log,['Process with FLIRT'])
+                            cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -omat ',fname_mat{iT,iZ},' -cost ', cost_function_flirt,fslmask{iZ},' ',flirt_options];
+                        case 'SPM'
+                            j_disp(fname_log,['Process with SPM'])
+                            % put ".nii" extension on files name
+                            fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
+                            fname_data_ref_splitZ_num_ext{iZ}=[fname_data_ref_splitZ_num{iZ},'.nii'];
+                            
+                            fname_data_splitT_splitZ_num_ext_header=spm_vol(fname_data_splitT_splitZ_num_ext{iT,iZ});
+                            ref_header=spm_vol(fname_data_ref_splitZ_num_ext{iZ});
+                            
+                            if ~strcmp(cost_spm_coreg,'none')
+                                % generate transformation matrix
+                                j_disp(fname_log,['Create transformation matrix... : '])
+                                j_disp(fname_log,['Source : ',fname_data_splitT_splitZ_num_ext{iT,iZ}])
+                                j_disp(fname_log,['Reference : ', fname_data_ref_splitZ_num_ext{iZ}])
+                                
+                                transfo=spm_coreg2(ref_header,fname_data_splitT_splitZ_num_ext_header,options_spm_coreg);
+                                M_transfo = spm_matrix(transfo);
+                                
+                                % open and write matrix file
+                                fid = fopen(fname_mat{iT,iZ},'w');
+                                for line=1:4
+                                    fprintf(fid,'%f %f %f %f\n',M_transfo(line,1),M_transfo(line,2),M_transfo(line,3),M_transfo(line,4));
+                                end
+                                fclose(fid);
+                                
+                                % modify file header
+                                fname_data_splitT_splitZ_num_ext_header.mat=M_transfo^(-1)*fname_data_splitT_splitZ_num_ext_header.mat;
+                                spm_get_space(fname_data_splitT_splitZ_num_ext{iT,iZ},fname_data_splitT_splitZ_num_ext_header.mat);
+                            end
+                            
+                            % apply transformation
+                            
+                            options_spm_reslice.output = [fname_data_splitT_splitZ_moco_num{iT,iZ},'.nii'];
+                            spm_reslice2({fname_data_ref_splitZ_num_ext{iZ};fname_data_splitT_splitZ_num_ext{iT,iZ}},options_spm_reslice);
+                            
+                            
+                    end
+                    
+            end
             
-            if ~strcmp(todo,'estimate')
-                % merge into Z dimension
-                j_disp(fname_log,['Concatenate along Z...'])
-                cmd = [fsloutput,'fslmerge -z ',fname_data_splitT_moco_num{iT}];
-                for iZ = 1:nz
-                    cmd = strcat(cmd,[' ',fname_data_splitT_splitZ_moco_num{iT,iZ}]);
-                end
-                j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-                
-                % remove tmp files
-                j_disp(fname_log,['Remove temporary splited files...'])
-                cmd = ['rm -f ' fname_data_splitT_num{iT} '*'];
+            if strcmp(program , 'FLIRT')
                 j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
             end
             
-		else
-			
-			% Volume-based motion correction
-			% =======================================================
- 			j_disp(fname_log,['.. Nope! Volume-based motion correction'])
-            fname_mat{iT} = [folder_mat,'mat.T',numT{iT},'.txt'];
-			switch(todo)
-
-				case 'estimate'
+            % Check transformation absurdity
+            M_transfo = textread(fname_mat{iT,iZ});
+            M_transfo = M_transfo(1:4,1:4);
+            if ( abs(M_transfo(1,4)) > 10 || abs(M_transfo(2,4)) > 10 || abs(M_transfo(3,4) > 10) || abs(M_transfo(4,4) > 10) )
+                nb_fails = nb_fails + 1;
+                j_disp(fname_log,['failure #',num2str(nb_fails), ' this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '])
+                msgbox(['failure #',num2str(nb_fails), ' : (ref: ',fname_data_ref_splitZ_num{iZ},', in: ',fname_data_splitT_splitZ_num{iT,iZ},') this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '], 'Correction failure','warn')
+                fail_mat(iT,iZ) = 1;
+            else
+                fail_mat(iT,iZ) = 0;
+            end
+        end	% iZ
+        
+        if ~strcmp(todo,'estimate')
+            % merge into Z dimension
+            j_disp(fname_log,['Concatenate along Z...'])
+            cmd = [fsloutput,'fslmerge -z ',fname_data_splitT_moco_num{iT}];
+            for iZ = 1:nz
+                cmd = strcat(cmd,[' ',fname_data_splitT_splitZ_moco_num{iT,iZ}]);
+            end
+            j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+            
+            % remove tmp files
+            j_disp(fname_log,['Remove temporary splited files...'])
+            cmd = ['rm -f ' fname_data_splitT_num{iT} '*'];
+            j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+        end
+        
+    else
+        
+        % Volume-based motion correction
+        % =======================================================
+        j_disp(fname_log,['.. Nope! Volume-based motion correction'])
+        fname_mat{iT} = [folder_mat,'mat.T',numT{iT},'.txt'];
+        switch(todo)
+            
+            case 'estimate'
+                
+                switch (program)
                     
-                     switch (program)
+                    case 'FLIRT'
+                        j_disp(fname_log,['Process with FLIRT'])
+                        cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -omat ',fname_mat{iT},' -cost ',cost_function_flirt,fslmask{1},' ',flirt_options];
                         
-                            case 'FLIRT'
-                                j_disp(fname_log,['Process with FLIRT'])
-                                cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -omat ',fname_mat{iT},' -cost ',cost_function_flirt,fslmask{1},' ',flirt_options];
-                           
+                        
+                    case 'SPM'
+                        j_disp(fname_log,['Process with SPM'])
+                        %put ".nii" extension on files name
+                        fname_data_splitT_num_ext{iT}=[fname_data_splitT_num{iT},'.nii'];
+                        fname_target_ext=[fname_target,'.nii'];
+                        
+                        
+                        % read input and reference headers
+                        fname_data_splitT_header=spm_vol(fname_data_splitT_num_ext{iT});
+                        ref_header=spm_vol(fname_target_ext);
+                        
+                        % generate transformation matrix
+                        j_disp(fname_log,['Create transformation matrix... : '])
+                        j_disp(fname_log,['Source : ',fname_data_splitT_num_ext{iT}])
+                        j_disp(fname_log,['Reference : ', fname_target_ext])
+                        transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg);
+                        matrix_transfo = spm_matrix(transfo);
+                        
+                        % open and write matrix file
+                        fid = fopen(fname_mat{iT},'w');
+                        for line=1:4
+                            fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
+                        end
+                        fclose(fid);
+                end
                 
-                            case 'SPM'
-                                j_disp(fname_log,['Process with SPM'])
-                                %put ".nii" extension on files name
-                                fname_data_splitT_num_ext{iT}=[fname_data_splitT_num{iT},'.nii'];
-                                fname_target_ext=[fname_target,'.nii'];
-
-                                
-                                % read input and reference headers
-                                fname_data_splitT_header=spm_vol(fname_data_splitT_num_ext{iT});                     
-                                ref_header=spm_vol(fname_target_ext);
-
-                                % generate transformation matrix
-                                j_disp(fname_log,['Create transformation matrix... : '])
-                                j_disp(fname_log,['Source : ',fname_data_splitT_num_ext{iT}])
-                                j_disp(fname_log,['Reference : ', fname_target_ext])
-                                transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg); 
-                                matrix_transfo = spm_matrix(transfo);
-                                
-                                % open and write matrix file
-                                fid = fopen(fname_mat{iT},'w');
-                                for line=1:4
-                                    fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
-                                end
-                                    fclose(fid);
-                     end
-                      
                 
-                case 'apply'
-				% build file name of input matrix
+            case 'apply'
+                % build file name of input matrix
                 fname_mat{iT} = [folder_mat,'mat.T',numT{iT},'.txt'];
-                    switch(program)
-                        
-                        case 'FLIRT'                
+                switch(program)
+                    
+                    case 'FLIRT'
                         j_disp(fname_log,['Process with FLIRT'])
                         cmd = [fsloutput,'flirt -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -applyxfm -init ',fname_mat{iT},' -out ',fname_data_splitT_moco_num{iT},' ',flirt_options];
-                        case 'SPM'
+                    case 'SPM'
                         j_disp(fname_log,['Process with SPM'])
                         fname_data_splitT_num_ext{iT}=[fname_data_splitT_num{iT},'.nii'];
                         fname_target_ext=[fname_target,'.nii'];
@@ -492,81 +510,81 @@ for indice_index = 1:length(param.index)
                         M_transfo = M_transfo(1:4,1:4);
                         fname_data_splitT_num_ext_header=spm_vol(fname_data_splitT_num_ext{iT});
                         fname_data_splitT_num_ext_header.mat=M_transfo^(-1)*fname_data_splitT_num_ext_header.mat;
-                        spm_get_space(fname_data_splitT_num_ext{iT},fname_data_splitT_num_ext_header.mat); 
-                            
-                        options_spm_reslice.output = [fname_data_splitT_moco_num{iT},'.nii'];
-                        spm_reslice2({fname_target_ext;fname_data_splitT_num_ext{iT}},options_spm_reslice); 
-                   
-                    end
-                 
-                case 'estimate_and_apply' 				
-                
-                     switch (program)
+                        spm_get_space(fname_data_splitT_num_ext{iT},fname_data_splitT_num_ext_header.mat);
                         
-                            case 'FLIRT'
-                            j_disp(fname_log,['Process with FLIRT'])  
-                            cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -out ',fname_data_splitT_moco_num{iT},' -omat ',fname_mat{iT},' -cost ', cost_function_flirt,fslmask{1},' ',flirt_options];
-                           
+                        options_spm_reslice.output = [fname_data_splitT_moco_num{iT},'.nii'];
+                        spm_reslice2({fname_target_ext;fname_data_splitT_num_ext{iT}},options_spm_reslice);
+                        
+                end
                 
-                            case 'SPM'
-                                j_disp(fname_log,['Process with SPM'])
-                                % put ".nii" extension on files name
-                                fname_data_splitT_num_ext{iT}=[fname_data_splitT_num{iT},'.nii'];
-                                fname_target_ext=[fname_target,'.nii'];
-                                
-                                                              
-                                
-                                fname_data_splitT_header=spm_vol(fname_data_splitT_num_ext{iT});                     
-                                ref_header=spm_vol(fname_target_ext);
-
-                                if ~strcmp(cost_spm_coreg,'none')
-                                    % generate transformation matrix
-                                    j_disp(fname_log,['Create transformation matrix... : '])
-                                    j_disp(fname_log,['Source : ',fname_data_splitT_num_ext{iT}])
-                                    j_disp(fname_log,['Reference : ', fname_target_ext])
-
-                                    transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg); 
-                                    M_transfo = spm_matrix(transfo); 
-
-
-                                    % open and write matrix file
-                                    fid = fopen(fname_mat{iT},'w');
-                                    transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg); 
-                                    matrix_transfo = spm_matrix(transfo); % Permet de convertir les données de transfo en matrice de transfo
-                                    for line=1:4
-                                        fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
-                                    end
-                                    fclose(fid);
-                                    % modify file header
-                                    fname_data_splitT_header.mat=M_transfo^(-1)*fname_data_splitT_header.mat;
-                                    spm_get_space(fname_data_splitT_num_ext{iT},fname_data_splitT_header.mat); 
-
-                                end
-                                
-                                % apply transformation
-
-                                options_spm_reslice.output = [fname_data_splitT_moco_num{iT},'.nii'];
-                                spm_reslice2({fname_target_ext;fname_data_splitT_num_ext{iT}},options_spm_reslice); 
-                     end
-            end
-            
- 			if strcmp(program , 'FLIRT')
-                j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-            end
-            
-            % Check transformation absurdity
-            M_transfo = textread(fname_mat{iT});
-            M_transfo = M_transfo(1:4,1:4);
-            if ( abs(M_transfo(1,4)) > 10 || abs(M_transfo(2,4)) > 10 || abs(M_transfo(3,4) > 10) || abs(M_transfo(4,4) > 10) )
-                 nb_fails = nb_fails + 1;
-                 j_disp(fname_log,['failure #',num2str(nb_fails), ' this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '])
-                 msgbox(['failure #',num2str(nb_fails), ' : (ref: ',fname_target,', in: ',fname_data_splitT_num{iT},') this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '], 'Correction failure','warn')
-            end
-		end
-
-% END OF MOCO
-		
-
+            case 'estimate_and_apply'
+                
+                switch (program)
+                    
+                    case 'FLIRT'
+                        j_disp(fname_log,['Process with FLIRT'])
+                        cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_num{iT},' -ref ',fname_target,' -out ',fname_data_splitT_moco_num{iT},' -omat ',fname_mat{iT},' -cost ', cost_function_flirt,fslmask{1},' ',flirt_options];
+                        
+                        
+                    case 'SPM'
+                        j_disp(fname_log,['Process with SPM'])
+                        % put ".nii" extension on files name
+                        fname_data_splitT_num_ext{iT}=[fname_data_splitT_num{iT},'.nii'];
+                        fname_target_ext=[fname_target,'.nii'];
+                        
+                        
+                        
+                        fname_data_splitT_header=spm_vol(fname_data_splitT_num_ext{iT});
+                        ref_header=spm_vol(fname_target_ext);
+                        
+                        if ~strcmp(cost_spm_coreg,'none')
+                            % generate transformation matrix
+                            j_disp(fname_log,['Create transformation matrix... : '])
+                            j_disp(fname_log,['Source : ',fname_data_splitT_num_ext{iT}])
+                            j_disp(fname_log,['Reference : ', fname_target_ext])
+                            
+                            transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg);
+                            M_transfo = spm_matrix(transfo);
+                            
+                            
+                            % open and write matrix file
+                            fid = fopen(fname_mat{iT},'w');
+                            transfo=spm_coreg2(ref_header,fname_data_splitT_header,options_spm_coreg);
+                            matrix_transfo = spm_matrix(transfo); % Permet de convertir les données de transfo en matrice de transfo
+                            for line=1:4
+                                fprintf(fid,'%f %f %f %f\n',matrix_transfo(line,1),matrix_transfo(line,2),matrix_transfo(line,3),matrix_transfo(line,4));
+                            end
+                            fclose(fid);
+                            % modify file header
+                            fname_data_splitT_header.mat=M_transfo^(-1)*fname_data_splitT_header.mat;
+                            spm_get_space(fname_data_splitT_num_ext{iT},fname_data_splitT_header.mat);
+                            
+                        end
+                        
+                        % apply transformation
+                        
+                        options_spm_reslice.output = [fname_data_splitT_moco_num{iT},'.nii'];
+                        spm_reslice2({fname_target_ext;fname_data_splitT_num_ext{iT}},options_spm_reslice);
+                end
+        end
+        
+        if strcmp(program , 'FLIRT')
+            j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+        end
+        
+        % Check transformation absurdity
+        M_transfo = textread(fname_mat{iT});
+        M_transfo = M_transfo(1:4,1:4);
+        if ( abs(M_transfo(1,4)) > 10 || abs(M_transfo(2,4)) > 10 || abs(M_transfo(3,4) > 10) || abs(M_transfo(4,4) > 10) )
+            nb_fails = nb_fails + 1;
+            j_disp(fname_log,['failure #',num2str(nb_fails), ' this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '])
+            msgbox(['failure #',num2str(nb_fails), ' : (ref: ',fname_target,', in: ',fname_data_splitT_num{iT},') this tranformation matrix is absurd, try others parameters (SPM, cost_function...) '], 'Correction failure','warn')
+        end
+    end
+    
+    % END OF MOCO
+    
+    
 end % loop on T
 
 % replace failed transformation matrix to the closest good one
@@ -597,14 +615,14 @@ end
 
 % merge data
 if ~strcmp(todo,'estimate')
-	if merge_back
-		j_disp(fname_log,'\n\nMerge data back along T...')
-		cmd = [fsloutput,'fslmerge -t ',fname_data_moco];
-		for indice_index = 1:length(param.index)
-			cmd = cat(2,cmd,[' ',fname_data_splitT_moco_num{param.index(indice_index)}]);
-		end
-		j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-		j_disp(fname_log,['.. File created: ',fname_data_moco])
+    if merge_back
+        j_disp(fname_log,'\n\nMerge data back along T...')
+        cmd = [fsloutput,'fslmerge -t ',fname_data_moco];
+        for indice_index = 1:length(param.index)
+            cmd = cat(2,cmd,[' ',fname_data_splitT_moco_num{param.index(indice_index)}]);
+        end
+        j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+        j_disp(fname_log,['.. File created: ',fname_data_moco])
         
         % Delete temp files
         if delete_tmp_files
@@ -612,8 +630,8 @@ if ~strcmp(todo,'estimate')
             cmd = ['rm -rf ' output_path ' tmp_moco.*'];
             j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
         end
-
-	end
+        
+    end
 end
 
 

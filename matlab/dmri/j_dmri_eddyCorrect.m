@@ -239,8 +239,7 @@ j_disp(fname_log,['.. updated data file name: ',fname_data_new])
 
 % get data dimensions
 j_disp(fname_log,['\nGet dimensions of the data...'])
-cmd = ['fslsize ',fname_data_new]; [status result] = unix(cmd); if status, error(result); end
-dims = j_mri_getDimensions(result);
+[~,dims] = read_avw(fname_data_new);
 nx = dims(1);
 ny = dims(2);
 nz = dims(3);
