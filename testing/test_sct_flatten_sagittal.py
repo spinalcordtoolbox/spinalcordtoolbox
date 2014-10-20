@@ -22,7 +22,7 @@ def test(data_path):
     file_data = ['t2.nii.gz','t2_centerline_init.nii.gz']
 
     # define command
-    cmd = 'sct_flatten_sagital -i ' + data_path + folder_data + file_data[0] \
+    cmd = 'sct_flatten_sagittal -i ' + data_path + folder_data + file_data[0] \
           + ' -c ' + data_path + folder_data + file_data[1]
 
     # return
