@@ -157,14 +157,14 @@ def main():
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+moving_name+".nii,"+fixed_name+".nii,1,5] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+fixed_name+".nii,"+moving_name+".nii.gz,1,5] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
         cmd += " --masks["+moving_seg_name+".nii,"+fixed_seg_name+".nii]"
     sct.run(cmd)
     moving_name = moving_name_temp
 
     moving_name_temp = file_output+ext_output
-    sct.run("sct_crop_image -i "+moving_name+".nii -dim 1 -start "+padding+" -end -"+padding+" -o "+file_output+ext_output)
+    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+padding+" -end -"+padding+" -o "+file_output+ext_output)
     moving_name = moving_name_temp
 
     # move output files to initial folder
@@ -191,6 +191,7 @@ def usage():
         '  This function returns the grey matter segmentation.\n' \
         '\n'\
         'USAGE\n' \
+        '  '+os.path.basename(__file__)+' -i <ref> -d <moving> -o <output>\n' \
         '  '+os.path.basename(__file__)+' -i <anat volume> -t <t2star volume> -l <landmarks>\n' \
         '\n'\
         'MANDATORY ARGUMENTS\n' \
