@@ -99,7 +99,7 @@ cd ..
 # ----------
 cd mt
 # register mt0 on mt1
-sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 5,SyN,0.2,MI
+sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 20,BSplineSyN,0.2,MeanSquares
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
 # create initialization points on mt1 to help segmentation. Three points in middle of the cord.
@@ -108,7 +108,7 @@ echo -8.84 0.41 7.14 1 >> landmarks.txt
 echo -8.34 0 -9.87 1 >> landmarks.txt
 sct_c3d mt1.nii.gz -scale 0 -landmarks-to-spheres landmarks.txt 0.5 -o mt1_init.nii.gz
 # segment mt1
-sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1-mask.nii.gz -detect-radius 5 -max-deformation 5
+sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -detect-radius 5 -max-deformation 5
 # check results
 # >> fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 # register to template (template registered to t2).
@@ -139,7 +139,7 @@ sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_centerline.nii.gz
 # >> fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register to template (template registered to t2). Only uses segmentation (more accurate)
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_moco_mean_seg_modif.nii.gz -n 3
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -s ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -t fmri_moco_mean_seg_modif.nii.gz -p 5,SyN,0.2,CC
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
 sct_concat_transfo -w warp_dest2src.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz

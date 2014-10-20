@@ -157,6 +157,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
+        print '  File created: '+path_out+file_out+ext_out
         return path_out+file_out+ext_out
     # if fname_out already exists in nii or nii.gz
     if path_in != os.path.abspath(path_out):
