@@ -253,6 +253,11 @@ def dmri_moco(param):
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
+    # check if dmri and bvecs are the same size
+    if not nb_b0 + nb_dwi == nt:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Size of data ('+str(nt)+') and size of bvecs ('+str(nb_b0+nb_dwi)+') are not the same. Check your bvecs file.\n', 1, 'error')
+        sys.exit(2)
+
     # Prepare NIFTI (mean/groups...)
     #===================================================================================================================
     # Split into T dimension
@@ -431,7 +436,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Motion correction of fMRI data. Some robust features include:
+  Motion correction of dMRI data. Some robust features include:
   - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-p)
   - masking (-m)
@@ -448,12 +453,12 @@ OPTIONAL ARGUMENTS
   -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2,MI
-                     1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
+                     1) degree of polynomial function used for regularization along Z.
                         For no regularization set to 0.
-                     2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
-                     3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
-                     4) metric: {MI,MeanSquares}. Default="""+param.param[3]+"""
+                     2) smoothing kernel size (in mm).
+                     3) gradient step. The higher the more deformation allowed.
+                     4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
   -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
                    For no segmentation set to 0.

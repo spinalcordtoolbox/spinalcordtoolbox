@@ -27,6 +27,7 @@ import commands
 import nibabel as nib
 import numpy as np
 import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -187,28 +188,28 @@ def main():
     print '  vertebral labeling file.... '+fname_vertebral_labeling
 
     # Check if the orientation of the data is RPI
-    orientation_data = sct.get_orientation(fname_data)
+    orientation_data = get_orientation(fname_data)
 
     # we assume here that the orientation of the label files to extract the metric from is the same as the orientation
     # of the metric file (since the labels were registered to the metric)
     if orientation_data != 'RPI':
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
         sct.create_folder(path_tmp)
         # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
-        data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
+        data = nib.load(set_orientation(fname_data, 'RPI', path_tmp+'orient_data.nii')).get_data()
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            labels[i_label] = nib.load(sct.set_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
+            labels[i_label] = nib.load(set_orientation(path_label+label_file[i_label], 'RPI', path_tmp+'orient_'+label_file[i_label])).get_data()
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(sct.set_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
+            normalizing_label[0] = nib.load(set_orientation(fname_normalizing_label, 'RPI', path_tmp+'orient_normalizing_volume.nii')).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(sct.set_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
+            data_vertebral_labeling = nib.load(set_orientation(fname_vertebral_labeling, 'RPI', path_tmp+'orient_vertebral_labeling.nii.gz')).get_data()
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
