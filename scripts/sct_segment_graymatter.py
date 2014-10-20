@@ -61,7 +61,7 @@ def main():
     # check existence of input files
     sct.check_file_exist(fname_ref)
     sct.check_file_exist(fname_moving)
-    if (fname_seg_moving != '' and fname_seg_moving == '') or (fname_seg_moving == '' and fname_seg_moving != ''):
+    if (fname_seg_moving != '' and fname_seg_fixed == '') or (fname_seg_moving == '' and fname_seg_fixed != ''):
         print('\nERROR: You need to provide one mask for each image (moving and fixed)')
         usage()
     if fname_seg_moving != '':
@@ -115,6 +115,16 @@ def main():
         fixed_seg_name_temp = fixed_seg_name+"_pad"
         sct.run("sct_c3d "+fixed_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_seg_name_temp+".nii")
         fixed_seg_name = fixed_seg_name_temp
+
+    # binarise the moving image
+    moving_name_temp_bin = moving_name_temp + "_bin"
+    cmd = 'fslmaths ' + moving_name_temp + '.nii -thr 0.25 ' + moving_name_temp_bin + '.nii'
+    sct.run(cmd, 1)
+
+    cmd = 'fslmaths ' + moving_name_temp_bin + '.nii -bin ' + moving_name_temp_bin + '.nii'
+    sct.run(cmd, 1)
+
+    moving_name = moving_name_temp_bin
 
 
     # register template to anat file: this generate warp_template2anat.nii
