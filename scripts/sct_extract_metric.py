@@ -287,18 +287,18 @@ def main():
                 normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
                 # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
                 normalizing_label_slice[0] = normalizing_label[0][..., z]
-                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0)
+                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0, threshold)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
-            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
+            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose, threshold)  # mean and std are lists
 
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, threshold, verbose)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, threshold)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
@@ -630,7 +630,7 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, threshold, verbose):
+def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
 
     nb_labels = len(labels) # number of labels
 
