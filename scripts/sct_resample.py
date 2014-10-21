@@ -84,7 +84,7 @@ def resample(param):
         sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
 
     # check existence of input files
-    sct.printv('\ncheck existence of input files...', param.verbose)
+    sct.printv('\nCheck existence of input files...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
 
     # extract resampling factor
@@ -93,7 +93,7 @@ def resample(param):
     factor = [float(factor_split[i]) for i in range(len(factor_split))]
     # check if it has three values
     if not len(factor) == 3:
-        sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1. Exit program.\n', 1, 'error')
+        sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
     else:
         fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
 
