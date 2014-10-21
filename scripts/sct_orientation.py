@@ -19,8 +19,9 @@ import commands
 import sct_utils as sct
 import time
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -34,7 +35,7 @@ class param:
 
 # main
 #=======================================================================================================================
-def main(param):
+def main():
 
     # Parameters for debug mode
     if param.debug:
@@ -45,27 +46,27 @@ def main(param):
         param.orientation = ''
         param.remove_tmp_files = 0
         param.verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
-    except getopt.GetoptError:
-        usage(param)
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
+        except getopt.GetoptError:
             usage(param)
-        elif opt in '-i':
-            param.fname_data = arg
-        elif opt in '-o':
-            param.fname_out = arg
-        elif opt in '-r':
-            param.remove_tmp_files = int(arg)
-        elif opt in '-s':
-            param.orientation = arg
-        elif opt in '-t':
-            param.threshold = arg
-        elif opt in '-v':
-            param.verbose = int(arg)
+        for opt, arg in opts:
+            if opt == '-h':
+                usage(param)
+            elif opt in '-i':
+                param.fname_data = arg
+            elif opt in '-o':
+                param.fname_out = arg
+            elif opt in '-r':
+                param.remove_tmp_files = int(arg)
+            elif opt in '-s':
+                param.orientation = arg
+            elif opt in '-t':
+                param.threshold = arg
+            elif opt in '-v':
+                param.verbose = int(arg)
 
     # run main program
     get_or_set_orientation(param)
@@ -73,14 +74,13 @@ def main(param):
 
 # get_or_set_orientation
 #=======================================================================================================================
-def get_or_set_orientation(param):
+def get_or_set_orientation():
 
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
         sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage(param)
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
@@ -92,7 +92,7 @@ def get_or_set_orientation(param):
     else:
         todo = 'set_orientation'
         # check if orientation is correct
-        if check_orientation_input(param):
+        if check_orientation_input():
             sct.printv('\nERROR in '+os.path.basename(__file__)+': orientation is not recognized. Use one of the following orientation: '+param.list_of_correct_orientation+'\n', 1, 'error')
             sys.exit(2)
 
@@ -186,7 +186,7 @@ def get_or_set_orientation(param):
 
 # check_orientation_input
 # ==========================================================================================
-def check_orientation_input(param):
+def check_orientation_input():
     """check if orientation input by user is correct"""
 
     if param.orientation in param.list_of_correct_orientation:
@@ -217,7 +217,7 @@ def set_orientation(fname_in, orientation, fname_out):
 
 # Print usage
 # ==========================================================================================
-def usage(param):
+def usage():
     print """
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,7 +225,7 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 
 DESCRIPTION
   Get or set orientation of 3D or 4D data. Available orientations are:
-  """+param.list_of_correct_orientation+"""
+  """+param_default.list_of_correct_orientation+"""
 
 USAGE
   Get orientation: """+os.path.basename(__file__)+""" -i <data>
@@ -237,8 +237,8 @@ MANDATORY ARGUMENTS
 OPTIONAL ARGUMENTS
   -s <orient>      orientation. Default=None.
   -o <fname_out>   output file name. Default=None.
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -253,6 +253,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
-    main(param)
+    main()

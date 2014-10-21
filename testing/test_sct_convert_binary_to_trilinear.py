@@ -12,8 +12,8 @@
 #########################################################################################
 
 
-import sct_utils as sct
-
+#import sct_utils as sct
+import commands
 
 def test(path_data):
 
@@ -27,8 +27,8 @@ def test(path_data):
         ' -s 5'
 
     # return
-    return sct.run(cmd, 0)
-
+    #return sct.run(cmd, 0)
+    return commands.getstatusoutput(cmd)
 
 # call to function
 if __name__ == "__main__":
