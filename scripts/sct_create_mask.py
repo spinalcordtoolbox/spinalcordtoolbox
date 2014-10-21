@@ -95,7 +95,7 @@ def create_mask():
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.method == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
+        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
 
     # parse argument for method
     method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
