@@ -1,33 +1,32 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_sctraighten_spinalcord script
-#
-#   replace the shell test script in sct 1.0
+# Test function sct_compute_mtr
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
-# modified: 2014/09/28
+# modified: 2014/10/20
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+#import sct_utils as sct
 import commands
 
 
-def test(path_data):
+def test(data_path):
 
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
+    # parameters
+    folder_data = 'mt/'
+    file_data = ['mt0.nii.gz','mt1.nii.gz']
 
-    cmd = 'sct_straighten_spinalcord -i '+ path_data + folder_data + file_data[0] \
-          + ' -c ' + path_data + folder_data + file_data[1] \
-          + ' -f splines' \
-          + ' -r 0' \
-          + ' -v 1'
-    return sct.run(cmd, 0)
+    # define command
+    cmd = 'sct_compute_mtr -i ' + data_path + folder_data + file_data[0] \
+          + ' -j ' + data_path + folder_data + file_data[1]
+
+    # return
+    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 
