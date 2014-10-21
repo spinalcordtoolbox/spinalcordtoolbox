@@ -32,6 +32,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
+        self.fname_out = ''
         self.method_list = ['coord', 'point', 'centerline', 'center']
         self.method = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
@@ -60,18 +61,21 @@ def main(param):
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:r:s:v:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
+            sys.exit(2)
         elif opt in '-f':
             param.shape = arg
         elif opt in '-i':
             param.fname_data = arg
         elif opt in '-m':
             param.method = arg
+        elif opt in ('-o'):
+            param.fname_out = arg
         elif opt in '-r':
             param.remove_tmp_files = int(arg)
         elif opt in '-s':
@@ -91,7 +95,8 @@ def create_mask(param):
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.method == '':
-        sct.printv('\nERROR: All mandatory arguments are not provided. Type '+os.path.basename(__file__)+' -h.\n', 1, 'error')
+        usage()
+        sct.printv('ERROR: All mandatory arguments are not provided.\n', 1, 'error')
 
     # parse argument for method
     method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
@@ -127,7 +132,11 @@ def create_mask(param):
 
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
-    path_out, file_out, ext_out = '', file_data, ext_data
+
+    # Get output folder and file name
+    if param.fname_out == '':
+        param.fname_out = param.file_prefix+file_data+ext_data
+    #fname_out = os.path.abspath(path_out+file_out+ext_out)
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
@@ -222,8 +231,7 @@ def create_mask(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_out = path_out+param.file_prefix+file_out+ext_out
-    sct.generate_output_file(path_tmp+'mask.nii.gz', fname_out)
+    sct.generate_output_file(path_tmp+'mask.nii.gz', param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
@@ -232,7 +240,7 @@ def create_mask(param):
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+param.fname_data+' '+fname_out+' -l Red -t 0.5 &', param.verbose, 'code')
+    sct.printv('fslview '+param.fname_data+' '+param.fname_out+' -l Red -t 0.5 &', param.verbose, 'code')
     print
 
 
@@ -305,6 +313,7 @@ OPTIONAL ARGUMENTS
                      centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
   -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma". Default="""+str(param.size)+"""
   -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param.shape)+"""
+  -o <output>      name of output mask. Default is "mask_INPUTFILE".
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param.verbose)+"""
   -h               help. Show this message
@@ -313,7 +322,7 @@ EXAMPLE
   """+os.path.basename(__file__)+""" -i dwi_mean.nii -m coord,35x42 -s 20 -f box\n"""
 
     # exit program
-    sys.exit(2)
+    #sys.exit(2)
 
 
 #=======================================================================================================================
