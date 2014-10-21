@@ -29,7 +29,7 @@ from sct_orientation import get_orientation, set_orientation
 # DEFAULT PARAMETERS
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.fname_data = ''
         self.fname_out = ''
         self.method_list = ['coord', 'point', 'centerline', 'center']
