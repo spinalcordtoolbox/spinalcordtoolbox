@@ -1,11 +1,12 @@
 # !/etc/bash
-# example batch to process multi-parametric data of the spinal cord
-# specific to errsm_30
+# 
+# example of commands to process multi-parametric data of the spinal cord
+
 
 # set default FSL output to be nii.gz
 export FSLOUTPUTTYPE=NIFTI_GZ
 
-# download example data
+# download example data (errsm_30)
 git clone https://github.com/neuropoly/sct_example_data.git
 
 # go in folder
@@ -103,9 +104,9 @@ sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 20,BSplineSyN,0.2,Me
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
 # create initialization points on mt1 to help segmentation. Three points in middle of the cord.
-echo -8.50 0.84 24.17 1 > landmarks.txt
-echo -8.84 0.41 7.14 1 >> landmarks.txt
-echo -8.34 0 -9.87 1 >> landmarks.txt
+echo -8.50 0.84 24.17 1 \n-8.84 0.41 7.14 1 \n-8.34 0 -9.87 1 > landmarks.txt
+#echo -8.84 0.41 7.14 1 >> landmarks.txt
+#echo -8.34 0 -9.87 1 >> landmarks.txt
 sct_c3d mt1.nii.gz -scale 0 -landmarks-to-spheres landmarks.txt 0.5 -o mt1_init.nii.gz
 # segment mt1
 sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -detect-radius 5 -max-deformation 5
