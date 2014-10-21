@@ -28,7 +28,6 @@ from sct_orientation import get_orientation, set_orientation
 
 # DEFAULT PARAMETERS
 class param:
-    ## The constructor
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -45,7 +44,7 @@ class param:
 
 # main
 #=======================================================================================================================
-def main(param):
+def main():
 
     # Parameters for debug mode
     if param.debug:
@@ -64,10 +63,11 @@ def main(param):
         opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
     except getopt.GetoptError:
         usage()
+    if not opts:
+        usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
-            sys.exit(2)
         elif opt in '-f':
             param.shape = arg
         elif opt in '-i':
@@ -84,36 +84,36 @@ def main(param):
             param.verbose = int(arg)
 
     # run main program
-    create_mask(param)
+    create_mask()
 
 
 # create_mask
 #=======================================================================================================================
-def create_mask(param):
+def create_mask():
 
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.method == '':
-        usage()
-        sct.printv('ERROR: All mandatory arguments are not provided.\n', 1, 'error')
+        sct.printv('ERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
 
     # parse argument for method
     method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
     # method_list = param.method.split(',')  # parse with comma
     method_type = method_list[0]
+
+    # check existence of method type
+    if not method_type in param.method_list:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method "'+method_type+'" is not recognized. See usage (add -h).\n', 1, 'error')
+
+    # check method val
     if not method_type == 'center':
         method_val = method_list[1]
     del method_list
 
-    # check existence of method type
-    if not method_type in param.method_list:
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method is not recognized. Type '+os.path.basename(__file__)+' -h.\n', 1, 'error')
-
     # check existence of shape
     if not param.shape in param.shape_list:
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Shape is not recognized. See usage.', 1, 'error')
-        usage()
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Shape "'+param.shape+'" is not recognized. See usage (add -h).\n', 1, 'error')
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
@@ -322,14 +322,12 @@ EXAMPLE
   """+os.path.basename(__file__)+""" -i dwi_mean.nii -m coord,35x42 -s 20 -f box\n"""
 
     # exit program
-    #sys.exit(2)
+    sys.exit(2)
 
 
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # initialize parameters
     param = param()
-    # call main function
-    main(param)
+    main()
