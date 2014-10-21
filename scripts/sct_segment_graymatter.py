@@ -20,7 +20,8 @@ def main():
     fname_ref = ''
     fname_moving = ''
     transformation = 'SyN'
-    gradient_step = '0.25'
+    gradient_step = '0.5'
+    radius = '4'
     fname_seg_fixed = ''
     fname_seg_moving = ''
     fname_output = ''
@@ -117,14 +118,14 @@ def main():
         fixed_seg_name = fixed_seg_name_temp
 
     # binarise the moving image
-    moving_name_temp_bin = moving_name_temp + "_bin"
-    cmd = 'fslmaths ' + moving_name_temp + '.nii -thr 0.25 ' + moving_name_temp_bin + '.nii'
-    sct.run(cmd, 1)
-
-    cmd = 'fslmaths ' + moving_name_temp_bin + '.nii -bin ' + moving_name_temp_bin + '.nii'
-    sct.run(cmd, 1)
-
-    moving_name = moving_name_temp_bin
+    # moving_name_temp_bin = moving_name_temp + "_bin"
+    # cmd = 'fslmaths ' + moving_name_temp + '.nii -thr 0.25 ' + moving_name_temp_bin + '.nii'
+    # sct.run(cmd, 1)
+    #
+    # cmd = 'fslmaths ' + moving_name_temp_bin + '.nii -bin ' + moving_name_temp_bin + '.nii'
+    # sct.run(cmd, 1)
+    #
+    # moving_name = moving_name_temp_bin
 
 
     # register template to anat file: this generate warp_template2anat.nii
@@ -157,9 +158,9 @@ def main():
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+fixed_name+".nii,"+moving_name+".nii.gz,1,5] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
-        cmd += " --masks["+moving_seg_name+".nii,"+fixed_seg_name+".nii]"
+        cmd += " --masks["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
     moving_name = moving_name_temp
 
@@ -172,6 +173,7 @@ def main():
 
     # remove temporary file
     if remove_temp == 1:
+        os.chdir('../')
         print('\nRemove temporary files...')
         sct.run("rm -rf "+path_tmp)
 
