@@ -46,27 +46,27 @@ def main():
         param.orientation = ''
         param.remove_tmp_files = 0
         param.verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
-    except getopt.GetoptError:
-        usage(param)
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
+        except getopt.GetoptError:
             usage(param)
-        elif opt in '-i':
-            param.fname_data = arg
-        elif opt in '-o':
-            param.fname_out = arg
-        elif opt in '-r':
-            param.remove_tmp_files = int(arg)
-        elif opt in '-s':
-            param.orientation = arg
-        elif opt in '-t':
-            param.threshold = arg
-        elif opt in '-v':
-            param.verbose = int(arg)
+        for opt, arg in opts:
+            if opt == '-h':
+                usage(param)
+            elif opt in '-i':
+                param.fname_data = arg
+            elif opt in '-o':
+                param.fname_out = arg
+            elif opt in '-r':
+                param.remove_tmp_files = int(arg)
+            elif opt in '-s':
+                param.orientation = arg
+            elif opt in '-t':
+                param.threshold = arg
+            elif opt in '-v':
+                param.verbose = int(arg)
 
     # run main program
     get_or_set_orientation(param)

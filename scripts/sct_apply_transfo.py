@@ -52,31 +52,31 @@ def main():
         fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz'
         fname_dest = path_sct_data+'/t2/t2.nii.gz'
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_src = arg
-        elif opt in ('-d'):
-            fname_dest = arg
-        elif opt in ('-o'):
-            fname_src_reg = arg
-        elif opt in ('-p'):
-            param.interp = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ('-w'):
-            fname_warp_list = arg
-        elif opt in ('-x'):
-            dim = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_src = arg
+            elif opt in ('-d'):
+                fname_dest = arg
+            elif opt in ('-o'):
+                fname_src_reg = arg
+            elif opt in ('-p'):
+                param.interp = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
+            elif opt in ('-w'):
+                fname_warp_list = arg
+            elif opt in ('-x'):
+                dim = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':

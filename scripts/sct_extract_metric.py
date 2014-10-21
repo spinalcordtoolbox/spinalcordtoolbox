@@ -102,40 +102,40 @@ def main():
         average_all_labels = 0
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
-    except getopt.GetoptError as err: # check if the arguments are defined
-        print str(err) # error
-        usage() # display usage
-    if not opts:
-        usage()
-    for opt, arg in opts: # explore flags
-        if opt in '-a':
-            average_all_labels = 1
-        elif opt in '-f':
-            path_label = os.path.abspath(arg)  # save path of labels folder
-        elif opt == '-h':  # help option
-            flag_h = 1
-        elif opt in '-i':
-            fname_data = arg
-        elif opt in '-l':
-            labels_of_interest = arg
-        elif opt in '-m':  # method for metric extraction
-            method = arg
-        elif opt in '-n':  # filename of the label by which the user wants to normalize
-            fname_normalizing_label = arg
-        elif opt in '-o': # output option
-            fname_output = arg  # fname of output file
-        elif opt in '-v':
-            # vertebral levels option, if the user wants to average the metric across specific vertebral levels
-             vertebral_levels = arg
-        elif opt in '-w':
-            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
-            normalization_method = arg
-        elif opt in '-z':  # slices numbers option
-            slices_of_interest = arg # save labels numbers
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+        except getopt.GetoptError as err: # check if the arguments are defined
+            print str(err) # error
+            usage() # display usage
+        if not opts:
+            usage()
+        for opt, arg in opts: # explore flags
+            if opt in '-a':
+                average_all_labels = 1
+            elif opt in '-f':
+                path_label = os.path.abspath(arg)  # save path of labels folder
+            elif opt == '-h':  # help option
+                flag_h = 1
+            elif opt in '-i':
+                fname_data = arg
+            elif opt in '-l':
+                labels_of_interest = arg
+            elif opt in '-m':  # method for metric extraction
+                method = arg
+            elif opt in '-n':  # filename of the label by which the user wants to normalize
+                fname_normalizing_label = arg
+            elif opt in '-o': # output option
+                fname_output = arg  # fname of output file
+            elif opt in '-v':
+                # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+                 vertebral_levels = arg
+            elif opt in '-w':
+                # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+                normalization_method = arg
+            elif opt in '-z':  # slices numbers option
+                slices_of_interest = arg # save labels numbers
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '' or flag_h:

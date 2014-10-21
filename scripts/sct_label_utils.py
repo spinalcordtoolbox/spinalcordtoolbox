@@ -55,33 +55,35 @@ def main():
         type_process = 'cross'
         cross_radius = 5
         dilate = True
+    else:
+        # extract path of the script
+        path_script = os.path.dirname(__file__)+'/'
 
-    # extract path of the script
-    path_script = os.path.dirname(__file__)+'/'
-    
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:o:c:r:t:l:d')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:o:c:r:t:l:d')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_label = arg
-        elif opt in ('-o'):
-            fname_label_output = arg
-        elif opt in ('-c'):
-            cross_radius = int(arg)
-        elif opt in ('-d'):
-            dilate = True
-        elif opt in ('-r'):
-            fname_ref = arg
-        elif opt in ('-t'):
-            type_process = arg
-        elif opt in ('-l'):
-            output_level = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_label = arg
+            elif opt in ('-o'):
+                fname_label_output = arg
+            elif opt in ('-c'):
+                cross_radius = int(arg)
+            elif opt in ('-d'):
+                dilate = True
+            elif opt in ('-r'):
+                fname_ref = arg
+            elif opt in ('-t'):
+                type_process = arg
+            elif opt in ('-l'):
+                output_level = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_label == '':

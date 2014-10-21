@@ -67,29 +67,29 @@ def main():
         warp_atlas = 1
         warp_spinal_levels = 1
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-a"):
-            warp_atlas = int(arg)
-        elif opt in ("-d"):
-            fname_src = arg
-        elif opt in ("-o"):
-            folder_out = arg
-        elif opt in ("-p"):
-            path_template = arg
-        elif opt in ("-s"):
-            warp_spinal_levels = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ("-w"):
-            fname_transfo = arg
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-a"):
+                warp_atlas = int(arg)
+            elif opt in ("-d"):
+                fname_src = arg
+            elif opt in ("-o"):
+                folder_out = arg
+            elif opt in ("-p"):
+                path_template = arg
+            elif opt in ("-s"):
+                warp_spinal_levels = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
+            elif opt in ("-w"):
+                fname_transfo = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_transfo == '':

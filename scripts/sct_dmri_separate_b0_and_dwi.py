@@ -56,29 +56,31 @@ def main():
         fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
         average = 1
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-a"):
-            average = int(arg)
-        elif opt in ("-b"):
-            fname_bvecs = arg
-        elif opt in ("-i"):
-            fname_data = arg
-        elif opt in ('-m'):
-            fname_bvals = arg
-        elif opt in ("-o"):
-            path_out = arg
-        elif opt in ("-r"):
-            remove_temp_file = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-a"):
+                average = int(arg)
+            elif opt in ("-b"):
+                fname_bvecs = arg
+            elif opt in ("-i"):
+                fname_data = arg
+            elif opt in ('-m'):
+                fname_bvals = arg
+            elif opt in ("-o"):
+                path_out = arg
+            elif opt in ("-r"):
+                remove_temp_file = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_bvecs == '':
