@@ -53,7 +53,7 @@ class param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.dwi_group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 3  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -78,10 +78,6 @@ class param:
 #=======================================================================================================================
 def main():
 
-    print '\n\n\n\n==================================================='
-    print '          Running: sct_dmri_moco'
-    print '===================================================\n\n\n\n'
-
     # initialization
     start_time = time.time()
     path_out = '.'
@@ -96,14 +92,11 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        # param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'
-        # param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
-        # param.fname_mask = '/Users/julien/data/toronto/E23102/dmri/dwi_moco_mean_mask.nii.gz'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.run_eddy = 0
         param.otsu = 0
-        param.dwi_group_size = 5
+        param.group_size = 5
         param.iterative_averaging = 1
 
     # Check input parameters
@@ -279,15 +272,15 @@ def dmri_moco(param):
     status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
-    nb_groups = int(math.floor(nb_dwi/param.dwi_group_size))
+    nb_groups = int(math.floor(nb_dwi/param.group_size))
     
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
-        group_indexes.append(index_dwi[(iGroup*param.dwi_group_size):((iGroup+1)*param.dwi_group_size)])
+        group_indexes.append(index_dwi[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
     
     # add the remaining images to the last DWI group
-    nb_remaining = nb_dwi%param.dwi_group_size  # number of remaining images
+    nb_remaining = nb_dwi%param.group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
@@ -450,7 +443,7 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
+  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
