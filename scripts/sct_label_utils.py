@@ -22,8 +22,9 @@ import sct_utils as sct
 import nibabel
 import numpy as np
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug               = 0
@@ -54,33 +55,35 @@ def main():
         type_process = 'cross'
         cross_radius = 5
         dilate = True
+    else:
+        # extract path of the script
+        path_script = os.path.dirname(__file__)+'/'
 
-    # extract path of the script
-    path_script = os.path.dirname(__file__)+'/'
-    
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:o:c:r:t:l:d')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:o:c:r:t:l:d')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_label = arg
-        elif opt in ('-o'):
-            fname_label_output = arg
-        elif opt in ('-c'):
-            cross_radius = int(arg)
-        elif opt in ('-d'):
-            dilate = True
-        elif opt in ('-r'):
-            fname_ref = arg
-        elif opt in ('-t'):
-            type_process = arg
-        elif opt in ('-l'):
-            output_level = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_label = arg
+            elif opt in ('-o'):
+                fname_label_output = arg
+            elif opt in ('-c'):
+                cross_radius = int(arg)
+            elif opt in ('-d'):
+                dilate = True
+            elif opt in ('-r'):
+                fname_ref = arg
+            elif opt in ('-t'):
+                type_process = arg
+            elif opt in ('-l'):
+                output_level = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_label == '':
@@ -247,6 +250,7 @@ def remove_label(data, fname_ref):
 
     return data
 
+
 # need binary centerline and segmentation with vertebral level. output_level=1 -> write .txt file. output_level=1 -> write centerline with vertebral levels
 #=======================================================================================================================
 def extract_disk_position(data_level, fname_centerline, output_level, fname_label_output):
@@ -298,6 +302,7 @@ def extract_disk_position(data_level, fname_centerline, output_level, fname_labe
 
     return data_centerline
 
+
 #=======================================================================================================================
 def extract_centerline(data,fname_label_output):
     # the Z image is assume to be in second dimension
@@ -321,6 +326,7 @@ def extract_centerline(data,fname_label_output):
         fo.write("%i %i %i\n" %line)
     fo.close()
 
+
 #=======================================================================================================================
 def extract_segmentation(data,fname_label_output):
     # the Z image is assume to be in second dimension
@@ -342,6 +348,7 @@ def extract_segmentation(data,fname_label_output):
         line = (X[i],Y[i],Z[i])
         fo.write("%i %i %i\n" %line)
     fo.close()
+
 
 #=======================================================================================================================
 def fraction_volume(data,fname_ref,fname_label_output):
@@ -403,6 +410,7 @@ def fraction_volume(data,fname_ref,fname_label_output):
         fo.write("%i %f\n" %(i,volume_fraction[i]))
     fo.close()
 
+
 #=======================================================================================================================
 def write_vertebral_levels(data,fname_vert_level_input):
     fo = open(fname_vert_level_input)
@@ -424,12 +432,14 @@ def write_vertebral_levels(data,fname_vert_level_input):
                 if vert[k+1] < Y[i] <= vert[k]:
                     data[X[i]][Y[i]][Z[i]] = k+1
 
+
 #=======================================================================================================================
 def display_voxel(data):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
     for k in range(0,len(X)):
         print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k],Y[k],Z[k]])
+
 
 #=======================================================================================================================
 # usage
@@ -458,6 +468,6 @@ def usage():
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
     main()

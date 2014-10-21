@@ -30,7 +30,7 @@
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -86,37 +86,39 @@ def main():
         param_user = '10,SyN,0.5,MI'
         remove_temp_files = 0
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-d"):
-            fname_dest = arg
-        elif opt in ("-i"):
-            fname_src = arg
-        elif opt in ("-m"):
-            fname_mask = arg
-        elif opt in ("-o"):
-            fname_output = arg
-        elif opt in ('-p'):
-            param_user = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ("-s"):
-            fname_src_seg = arg
-        elif opt in ("-t"):
-            fname_dest_seg = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ('-x'):
-            param.interp = arg
-        elif opt in ('-z'):
-            padding = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-d"):
+                fname_dest = arg
+            elif opt in ("-i"):
+                fname_src = arg
+            elif opt in ("-m"):
+                fname_mask = arg
+            elif opt in ("-o"):
+                fname_output = arg
+            elif opt in ('-p'):
+                param_user = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ("-s"):
+                fname_src_seg = arg
+            elif opt in ("-t"):
+                fname_dest_seg = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
+            elif opt in ('-x'):
+                param.interp = arg
+            elif opt in ('-z'):
+                padding = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -347,16 +349,16 @@ OPTIONAL ARGUMENTS
   -t <dest_seg>    segmentation for destination image (mandatory if -s is used)
   -o <output>      name of output file. Default=source_reg
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
                      1) number of iterations for last stage.
                      2) algo: {SyN, BSplineSyN}
                      3) gradient step. The larger the more deformation.
                      4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
-  -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param.padding)+"""
-  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
+  -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param_default.padding)+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
   -r {0,1}         remove temporary files. Default='+str(param.remove_temp_files)+'
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
 
 EXAMPLES
   1. Register mean DWI data to the T1 volume using segmentations:
@@ -390,7 +392,8 @@ def pad_image(fname_in, file_out, padding):
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
 
