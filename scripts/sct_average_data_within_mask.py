@@ -27,7 +27,6 @@ except ImportError, e:
 debugging           = 0 # automatic file names for debugging
 
 
-
 # MAIN
 # ==========================================================================================
 def main():

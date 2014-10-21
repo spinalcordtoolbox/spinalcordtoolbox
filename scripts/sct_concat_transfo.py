@@ -21,7 +21,7 @@ import commands
 import sct_utils as sct
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -50,6 +50,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hw:d:o:v:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -148,6 +150,6 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
     main()

@@ -32,11 +32,11 @@ from sct_orientation import get_orientation, set_orientation
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-
 # constants
 ALMOST_ZERO = 0.000001
 
-class param:
+
+class Param:
     def __init__(self):
         self.debug = 0
         self.method = 'wath'
@@ -50,17 +50,19 @@ class param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
 
-class color:
-    purple = '\033[95m'
-    cyan = '\033[96m'
-    darkcyan = '\033[36m'
-    blue = '\033[94m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    red = '\033[91m'
-    bold = '\033[1m'
-    underline = '\033[4m'
-    end = '\033[0m'
+
+class Color:
+    def __init__(self):
+        self.purple = '\033[95m'
+        self.cyan = '\033[96m'
+        self.darkcyan = '\033[36m'
+        self.blue = '\033[94m'
+        self.green = '\033[92m'
+        self.yellow = '\033[93m'
+        self.red = '\033[91m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.end = '\033[0m'
 
 
 #=======================================================================================================================
@@ -107,6 +109,8 @@ def main():
     except getopt.GetoptError as err: # check if the arguments are defined
         print str(err) # error
         usage() # display usage
+    if not opts:
+        usage()
     for opt, arg in opts: # explore flags
         if opt in '-a':
             average_all_labels = 1
@@ -770,6 +774,7 @@ List of labels in: """+file_label+""":
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    color = Color()
     # call main function
     main()

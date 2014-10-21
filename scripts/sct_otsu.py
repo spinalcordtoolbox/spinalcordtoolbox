@@ -20,7 +20,7 @@ import sct_utils as sct
 import time
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -33,7 +33,7 @@ class param:
 
 # main
 #=======================================================================================================================
-def main(param):
+def main():
 
     # Parameters for debug mode
     if param.debug:
@@ -50,6 +50,8 @@ def main(param):
         opts, args = getopt.getopt(sys.argv[1:], 'hi:r:t:v:')
     except getopt.GetoptError:
         usage()
+    if not opts:
+        usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -63,19 +65,18 @@ def main(param):
             param.verbose = int(arg)
 
     # run main program
-    otsu(param)
+    otsu()
 
 
 # otsu
 #=======================================================================================================================
-def otsu(param):
+def otsu():
 
     dim = 4  # by default, will be adjusted later
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage()
+        sct.printv('ERROR: All mandatory arguments are not provided. See usage (add -h).', 1, 'error')
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
@@ -181,6 +182,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
-    main(param)
+    main()

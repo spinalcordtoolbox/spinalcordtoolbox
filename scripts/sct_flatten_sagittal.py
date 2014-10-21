@@ -13,8 +13,9 @@
 
 # TODO: check input param with -s flag
 
+
 ## Default parameters
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -65,6 +66,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
     except getopt.GetoptError as err:
         print str(err)
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -247,9 +250,9 @@ def usage():
         '  -c                centerline.\n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
-        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param.interp)+'\n' \
-        '  -d <deg>          degree of fitting polynome. Default='+str(param.deg_poly)+'\n' \
-        '  -r {0, 1}         remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
+        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param_default.interp)+'\n' \
+        '  -d <deg>          degree of fitting polynome. Default='+str(param_default.deg_poly)+'\n' \
+        '  -r {0, 1}         remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -295,6 +298,7 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
