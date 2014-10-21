@@ -82,35 +82,35 @@ def main():
         remove_temp_files = 0
         from matplotlib.pyplot import imshow, gray, show
         from mpl_toolkits.mplot3d import Axes3D
-        
-    # Check input parameters
-    try:
-         opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts :
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-i"):
-            fname_segmentation = arg
-        elif opt in ("-p"):
-            name_process = arg
-        elif opt in("-m"):
-            name_method = arg
-        elif opt in('-b'):
-            volume_output = int(arg)
-        elif opt in('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-s'):
-            spline_smoothing = int(arg)
-        elif opt in ('-f'):
-            figure_fit = int(arg)
-        elif opt in ('-o'):
-            name_output = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts :
+            if opt == '-h':
+                usage()
+            elif opt in ("-i"):
+                fname_segmentation = arg
+            elif opt in ("-p"):
+                name_process = arg
+            elif opt in("-m"):
+                name_method = arg
+            elif opt in('-b'):
+                volume_output = int(arg)
+            elif opt in('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-s'):
+                spline_smoothing = int(arg)
+            elif opt in ('-f'):
+                figure_fit = int(arg)
+            elif opt in ('-o'):
+                name_output = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':

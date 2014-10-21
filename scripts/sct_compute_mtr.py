@@ -54,27 +54,27 @@ def main():
         fname_mt1 = path_sct+'/testing/data/errsm_23/mt/mt1.nii.gz'
         register = 1
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in '-i':
-            fname_mt0 = arg
-        elif opt in '-j':
-            fname_mt1 = arg
-        elif opt in '-r':
-            remove_tmp_files = int(arg)
-        elif opt in '-v':
-            verbose = int(arg)
-        # elif opt in '-x':
-        #     register = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in '-i':
+                fname_mt0 = arg
+            elif opt in '-j':
+                fname_mt1 = arg
+            elif opt in '-r':
+                remove_tmp_files = int(arg)
+            elif opt in '-v':
+                verbose = int(arg)
+            # elif opt in '-x':
+            #     register = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_mt0 == '' or fname_mt1 == '':
