@@ -27,7 +27,7 @@ from sct_orientation import get_orientation, set_orientation
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -306,16 +306,16 @@ MANDATORY ARGUMENTS
   -i <data>        image to create mask on. Only used to get header. Must be 3D.
 
 OPTIONAL ARGUMENTS
-  -m <method,val>  method to generate mask and associated value. Default="""+str(param.method)+"""
+  -m <method,val>  method to generate mask and associated value. Default="""+str(param_default.method)+"""
                      coord: X,Y coordinate of center of mask. E.g.: coord,20x15
                      point: volume that contains a single point. E.g.: point,label.nii.gz
                      center: mask is created at center of FOV. In that case, "val" is not required.
                      centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
-  -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma". Default="""+str(param.size)+"""
-  -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param.shape)+"""
+  -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma". Default="""+str(param_default.size)+"""
+  -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param_default.shape)+"""
   -o <output>      name of output mask. Default is "mask_INPUTFILE".
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -329,5 +329,6 @@ EXAMPLE
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     main()
