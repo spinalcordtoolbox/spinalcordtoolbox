@@ -29,12 +29,14 @@ import sct_utils as sct
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-class param:
+
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1
         self.remove_temp_files = 1
+
 
 class LineBuilder:
     def __init__(self, line):
@@ -67,10 +69,7 @@ class LineBuilder:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-
 def main():
-
-
     # Initialization
     fname_data = ''
     suffix_out = '_crop'
@@ -218,8 +217,8 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -h                    help. Show this message
-  -v {0,1}              verbose. Default = """+str(param.verbose)+"""
-  -r {0,1}              remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -v {0,1}              verbose. Default = """+str(param_default.verbose)+"""
+  -r {0,1}              remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
 EXAMPLE
   """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
 
@@ -231,6 +230,7 @@ EXAMPLE
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

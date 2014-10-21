@@ -22,8 +22,9 @@ import commands
 import sct_utils as sct
 import time
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -36,7 +37,7 @@ class param:
 
 # main
 #=======================================================================================================================
-def main(param):
+def main():
 
     # Parameters for debug mode
     if param.debug:
@@ -68,12 +69,12 @@ def main(param):
             param.verbose = int(arg)
 
     # run main program
-    resample(param)
+    resample()
 
 
 # resample
 #=======================================================================================================================
-def resample(param):
+def resample():
 
     dim = 4  # by default, will be adjusted later
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
@@ -209,8 +210,8 @@ MANDATORY ARGUMENTS
                    For 2x upsampling, set to 2. For 2x downsampling set to 0.5
 
 OPTIONAL ARGUMENTS
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_debug.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_debug.verbose)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -225,6 +226,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_debug = Param()
     # call main function
-    main(param)
+    main()

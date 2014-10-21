@@ -20,8 +20,9 @@
 
 # 2014-06-06: corrected bug related to small FOV volumes Solution: reduced spline order (3), computation of a lot of point (1000)
 
+
 ## Create a structure to pass important user parameters to the main function
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -100,6 +101,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:w:f:v:n:')
     except getopt.GetoptError as err:
         print str(err)
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -682,11 +685,11 @@ def usage():
         '  -c                centerline or segmentation.\n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
-        '  -p <padding>      amount of padding for generating labels. Default='+str(param.padding)+'\n' \
-        '  -f {smooth,splines,polynomial}  centerline regularization method. Default='+str(param.fitting_method)+'\n' \
-        '  -w {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param.interpolation_warp)+'\n' \
-        '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param.verbose)+'\n' \
+        '  -p <padding>      amount of padding for generating labels. Default='+str(param_default.padding)+'\n' \
+        '  -f {smooth,splines,polynomial}  centerline regularization method. Default='+str(param_default.fitting_method)+'\n' \
+        '  -w {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
+        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
+        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -699,6 +702,7 @@ def usage():
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

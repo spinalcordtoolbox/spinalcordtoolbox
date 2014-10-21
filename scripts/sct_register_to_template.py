@@ -21,7 +21,7 @@
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -83,6 +83,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -290,10 +292,10 @@ MANDATORY ARGUMENTS
                                See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/
 
 OPTIONAL ARGUMENTS
-  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param.output_type)+"""
-  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param.folder_template)+"""
-  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param.speed)+"""
-  -r {0, 1}                    remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
+  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param_default.folder_template)+"""
+  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
+  -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -h                           help. Show this message
 
 EXAMPLE
@@ -308,6 +310,7 @@ EXAMPLE
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
