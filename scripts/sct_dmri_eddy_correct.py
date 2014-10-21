@@ -57,6 +57,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],'hi:c:b:g:m:o:p:r:s:v:')
     except getopt.GetoptError:
         usage()
+    if not opts:
+            usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()

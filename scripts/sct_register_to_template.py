@@ -78,31 +78,31 @@ def main():
         fname_landmarks = path_sct+'/testing/data/errsm_23/t2/t2_landmarks_C2_T2_center.nii.gz'
         fname_seg = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         speed = 'superfast'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-i"):
-            fname_data = arg
-        elif opt in ('-l'):
-            fname_landmarks = arg
-        elif opt in ("-m"):
-            fname_seg = arg
-        elif opt in ("-o"):
-            output_type = int(arg)
-        elif opt in ("-p"):
-            path_template = arg
-        elif opt in ("-r"):
-            remove_temp_files = int(arg)
-        elif opt in ("-s"):
-            speed = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-i"):
+                fname_data = arg
+            elif opt in ('-l'):
+                fname_landmarks = arg
+            elif opt in ("-m"):
+                fname_seg = arg
+            elif opt in ("-o"):
+                output_type = int(arg)
+            elif opt in ("-p"):
+                path_template = arg
+            elif opt in ("-r"):
+                remove_temp_files = int(arg)
+            elif opt in ("-s"):
+                speed = arg
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':

@@ -86,39 +86,39 @@ def main():
         param_user = '10,SyN,0.5,MI'
         remove_temp_files = 0
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-d"):
-            fname_dest = arg
-        elif opt in ("-i"):
-            fname_src = arg
-        elif opt in ("-m"):
-            fname_mask = arg
-        elif opt in ("-o"):
-            fname_output = arg
-        elif opt in ('-p'):
-            param_user = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ("-s"):
-            fname_src_seg = arg
-        elif opt in ("-t"):
-            fname_dest_seg = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ('-x'):
-            param.interp = arg
-        elif opt in ('-z'):
-            padding = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-d"):
+                fname_dest = arg
+            elif opt in ("-i"):
+                fname_src = arg
+            elif opt in ("-m"):
+                fname_mask = arg
+            elif opt in ("-o"):
+                fname_output = arg
+            elif opt in ('-p'):
+                param_user = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ("-s"):
+                fname_src_seg = arg
+            elif opt in ("-t"):
+                fname_dest_seg = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
+            elif opt in ('-x'):
+                param.interp = arg
+            elif opt in ('-z'):
+                padding = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':

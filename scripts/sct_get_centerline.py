@@ -107,28 +107,28 @@ def main():
         fname_point = path_sct+'testing/data/errsm_23/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
         import matplotlib.pyplot as plt
-
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:p:g:r:k:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:p:g:r:k:')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_anat = arg
-        elif opt in ('-p'):
-            fname_point = arg
-        elif opt in ('-g'):
-            slice_gap = int(arg)
-        elif opt in ('-r'):
-            remove_tmp_files = int(arg)
-        elif opt in ('-k'):
-            gaussian_kernel = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_anat = arg
+            elif opt in ('-p'):
+                fname_point = arg
+            elif opt in ('-g'):
+                slice_gap = int(arg)
+            elif opt in ('-r'):
+                remove_tmp_files = int(arg)
+            elif opt in ('-k'):
+                gaussian_kernel = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_point == '':

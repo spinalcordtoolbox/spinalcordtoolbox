@@ -60,30 +60,30 @@ def main():
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
-    
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_anat = arg
-        elif opt in ('-c'):
-            fname_centerline = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-d'):
-            degree_poly = int(arg)
-        elif opt in ('-f'):
-            centerline_fitting = str(arg)
-        elif opt in ('-s'):
-            interp = str(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_anat = arg
+            elif opt in ('-c'):
+                fname_centerline = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-d'):
+                degree_poly = int(arg)
+            elif opt in ('-f'):
+                centerline_fitting = str(arg)
+            elif opt in ('-s'):
+                interp = str(arg)
     
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':

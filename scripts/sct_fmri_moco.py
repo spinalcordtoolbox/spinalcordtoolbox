@@ -66,33 +66,33 @@ def main():
         param.verbose = 1
         param.group_size = 3
         #param_user = '2,1,0.5'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:x:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:x:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-g'):
-            param.group_size = int(arg)
-        elif opt in ('-i'):
-            param.fname_data = arg
-        elif opt in ('-m'):
-            param.fname_mask = arg
-        elif opt in ('-o'):
-            path_out = arg
-        elif opt in ('-p'):
-            param_user = arg
-        elif opt in ('-r'):
-            param.remove_tmp_files = int(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
-        elif opt in ('-x'):
-            param.interp = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-g'):
+                param.group_size = int(arg)
+            elif opt in ('-i'):
+                param.fname_data = arg
+            elif opt in ('-m'):
+                param.fname_mask = arg
+            elif opt in ('-o'):
+                path_out = arg
+            elif opt in ('-p'):
+                param_user = arg
+            elif opt in ('-r'):
+                param.remove_tmp_files = int(arg)
+            elif opt in ('-v'):
+                param.verbose = int(arg)
+            elif opt in ('-x'):
+                param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '':

@@ -55,33 +55,33 @@ def main():
         param.method = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
         param.size = 20
-        param.remove_tmp_files = 0
+        param.remove_tmp_files = 1
         param.verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in '-f':
-            param.shape = arg
-        elif opt in '-i':
-            param.fname_data = arg
-        elif opt in '-m':
-            param.method = arg
-        elif opt in ('-o'):
-            param.fname_out = arg
-        elif opt in '-r':
-            param.remove_tmp_files = int(arg)
-        elif opt in '-s':
-            param.size = int(arg)
-        elif opt in '-v':
-            param.verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in '-f':
+                param.shape = arg
+            elif opt in '-i':
+                param.fname_data = arg
+            elif opt in '-m':
+                param.method = arg
+            elif opt in ('-o'):
+                param.fname_out = arg
+            elif opt in '-r':
+                param.remove_tmp_files = int(arg)
+            elif opt in '-s':
+                param.size = int(arg)
+            elif opt in '-v':
+                param.verbose = int(arg)
 
     # run main program
     create_mask()
