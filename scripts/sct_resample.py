@@ -44,7 +44,7 @@ def main(param):
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
-        param.factor = '0.5x0.5x1'
+        param.factor = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
 
@@ -52,6 +52,8 @@ def main(param):
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hf:i:r:v:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -78,17 +80,22 @@ def resample(param):
     ext = '.nii'
 
     # display usage if a mandatory argument is not provided
-    if param.fname_data == '' or param.factor == 0:
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage()
+    if param.fname_data == '' or param.factor == '':
+        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
 
     # check existence of input files
     sct.printv('\ncheck existence of input files...', param.verbose)
     sct.check_file_exist(param.fname_data, param.verbose)
 
     # extract resampling factor
+    sct.printv('\nParse resampling factor...', param.verbose)
     factor_split = param.factor.split('x')
-    fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
+    factor = [float(factor_split[i]) for i in range(len(factor_split))]
+    # check if it has three values
+    if not len(factor) == 3:
+        sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1. Exit program.\n', 1, 'error')
+    else:
+        fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -191,14 +198,15 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Resample 3D or 4D data.
+  Anisotropic resampling of 3D or 4D data.
 
 USAGE
   """+os.path.basename(__file__)+""" -i <data> -r <factor>
 
 MANDATORY ARGUMENTS
   -i <data>        image to segment. Can be 2D, 3D or 4D.
-  -f <factor>      resampling factor. For 2x upsampling, set to 2. For 2x downsampling set to 0.5
+  -f <fxxfyxfz>    resampling factor in each of the first 3 dimensions (x,y,z). Separate with "x"
+                   For 2x upsampling, set to 2. For 2x downsampling set to 0.5
 
 OPTIONAL ARGUMENTS
   -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
@@ -206,7 +214,7 @@ OPTIONAL ARGUMENTS
   -h               help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i dwi.nii.gz -f 0.5\n"""
+  """+os.path.basename(__file__)+""" -i dwi.nii.gz -f 0.5x0.5x1\n"""
 
     # exit program
     sys.exit(2)
