@@ -82,7 +82,7 @@ info{1}='no';
             y = interp1(z, y, 1:size(m_volume,3),'spline');
             z = 1:size(m_volume,3);
         end
-        m_center_line=[x' y' z'];
+        m_center_line=[x' y(end:-1:1)' z'];
 
         % Display of the initial center_line
         f=figure('color','w');  
