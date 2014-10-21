@@ -17,8 +17,9 @@
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -86,6 +87,8 @@ def main():
     try:
          opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts :
         if opt == '-h':
@@ -627,12 +630,12 @@ MANDATORY ARGUMENTS
                               Output is a text file with z (1st column) and CSA in mm^2 (2nd column)
 
 OPTIONAL ARGUMENTS
-  -s {0,1}                   smooth CSA values with spline. Default="""+str(param.spline_smoothing)+"""
+  -s {0,1}                   smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
   -b {0,1}                   outputs a volume in which each slice\'s value is equal to the CSA in
-                             mm^2. Default="""+str(param.volume_output)+"""
-  -o <output_name>           name of the output volume if -b 1. Default="""+str(param.name_output)+"""
-  -r {0,1}                   remove temporary files. Default="""+str(param.remove_temp_files)+"""
-  -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
+                             mm^2. Default="""+str(param_default.volume_output)+"""
+  -o <output_name>           name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
+  -r {0,1}                   remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
+  -v {0,1}                   verbose. Default="""+str(param_default.verbose)+"""
   -h                         help. Show this message
 
 EXAMPLE
@@ -646,6 +649,7 @@ EXAMPLE
 # =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

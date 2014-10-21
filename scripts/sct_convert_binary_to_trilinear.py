@@ -28,8 +28,7 @@ sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
 
-
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.smoothing_sigma = 5
@@ -38,7 +37,6 @@ class param:
         self.remove_temp_files = 1
         self.verbose = 1
         
-
 
 # main
 #=======================================================================================================================
@@ -65,6 +63,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -145,7 +145,6 @@ def main():
     print 'fslview '+file_data+' '+file_data+suffix+' &\n'
 
 
-
 # Print usage
 # ==========================================================================================
 def usage():
@@ -166,9 +165,9 @@ def usage():
         '  -i <bin_seg>      binary segmentation of spinal cord\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default='+str(param.smoothing_sigma)+'\n' \
-        '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
-        '  -v {0,1}          verbose. Default='+str(param.verbose)+'\n' \
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default='+str(param_default.smoothing_sigma)+'\n' \
+        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
+        '  -v {0,1}          verbose. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message\n' \
         '\n'\
         'EXAMPLE\n' \
@@ -185,6 +184,7 @@ def usage():
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

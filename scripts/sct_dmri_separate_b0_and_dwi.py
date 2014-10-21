@@ -22,13 +22,15 @@ import commands
 import numpy
 import sct_utils as sct
 
-class param:
+
+class Param:
     def __init__(self):
         self.debug = 0
         self.average = 0
         self.remove_tmp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
+
 
 # MAIN
 # ==========================================================================================
@@ -273,11 +275,11 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -a {0,1}         average b=0 and DWI data. Default="""+str(param.average)+"""
+  -a {0,1}         average b=0 and DWI data. Default="""+str(param_default.average)+"""
   -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <output>      output folder. Default = local folder.
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -291,6 +293,7 @@ EXAMPLE
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

@@ -19,8 +19,9 @@ import commands
 import sct_utils as sct
 import time
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -59,6 +60,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], 'hi:j:r:v:')
     except getopt.GetoptError:
         usage()
+    if not opts:
+        usage()
     for opt, arg in opts:
         if opt == '-h':
             usage()
@@ -75,8 +78,7 @@ def main():
 
     # display usage if a mandatory argument is not provided
     if fname_mt0 == '' or fname_mt1 == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-        usage()
+        sct.printv('ERROR: All mandatory arguments are not provided. See usage (add -h).', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', verbose)
@@ -146,8 +148,8 @@ MANDATORY ARGUMENTS
   -j <mt1>         image with MT pulse
 
 OPTIONAL ARGUMENTS
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -162,6 +164,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
