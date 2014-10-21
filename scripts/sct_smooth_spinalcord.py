@@ -23,7 +23,7 @@ import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
 
 
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.remove_temp_files = 1 # remove temporary files
@@ -49,6 +49,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], 'hi:c:r:s:v:')
     except getopt.GetoptError as err:
         print str(err)
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -162,8 +164,8 @@ def usage():
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=3.' \
-        '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param.verbose)+'\n' \
+        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
+        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'
 
@@ -174,5 +176,6 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     main()

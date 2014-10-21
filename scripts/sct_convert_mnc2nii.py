@@ -23,7 +23,7 @@ from scipy.io import netcdf
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -49,6 +49,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -115,12 +117,11 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <output>           output volume. Add extension. Default="data".nii
-  -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 """
     # exit program
     sys.exit(2)
-
 
 
 #=======================================================================================================================
@@ -128,6 +129,7 @@ OPTIONAL ARGUMENTS
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

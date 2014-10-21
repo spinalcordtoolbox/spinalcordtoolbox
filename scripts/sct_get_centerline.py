@@ -59,10 +59,8 @@
 # TODO: subsample input data for faster processing (but might create problems of coordinate)-- alternatively, find appropriate schedule file without the 1mm at the end
 
 
-
-
 ## Default parameters
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -115,6 +113,8 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:],'hi:p:g:r:k:')
     except getopt.GetoptError as err:
         print str(err)
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -471,9 +471,9 @@ MANDATORY ARGUMENTS
   -p <point>       binary nifti file. Point in the spinal cord (e.g., created using fslview)
 
 OPTIONAL ARGUMENTS
-  -g <gap>         gap between slices for registration. Higher is faster but less robust. Default="""+str(param.gap)+"""
-  -k <kernel>      kernel size for gaussian mask. Higher is more robust but less accurate. Default="""+str(param.gaussian_kernel)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -g <gap>         gap between slices for registration. Higher is faster but less robust. Default="""+str(param_default.gap)+"""
+  -k <kernel>      kernel size for gaussian mask. Higher is more robust but less accurate. Default="""+str(param_default.gaussian_kernel)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message.
 
 EXAMPLE
@@ -486,7 +486,8 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
 

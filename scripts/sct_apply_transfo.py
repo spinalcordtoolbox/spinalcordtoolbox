@@ -22,8 +22,9 @@ import commands
 import sct_utils as sct
 import time
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
@@ -56,6 +57,8 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
     except getopt.GetoptError:
+        usage()
+    if not opts:
         usage()
     for opt, arg in opts:
         if opt == '-h':
@@ -195,8 +198,8 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
-  -p {nn,linear,spline}  interpolation method. Default="""+str(param.interp)+"""
-  -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -p {nn,linear,spline}  interpolation method. Default="""+str(param_default.interp)+"""
+  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 
 EXAMPLE
@@ -212,6 +215,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
