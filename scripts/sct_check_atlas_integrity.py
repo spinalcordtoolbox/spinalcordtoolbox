@@ -41,6 +41,7 @@ class Param:
 # constants
 ALMOST_ZERO = 0.0000001
 
+
 # main
 #=======================================================================================================================
 def main():
@@ -51,29 +52,29 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-    
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            path_atlas = arg
-        elif opt in ('-s'):
-            param.fname_seg = arg
-        elif opt in ('-m'):
-            param.fname_GM = arg
-        elif opt in ('-t'):
-            param.threshold_atlas = float(arg)
-        elif opt in ('-g'):
-            param.threshold_GM = float(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                path_atlas = arg
+            elif opt in ('-s'):
+                param.fname_seg = arg
+            elif opt in ('-m'):
+                param.fname_GM = arg
+            elif opt in ('-t'):
+                param.threshold_atlas = float(arg)
+            elif opt in ('-g'):
+                param.threshold_GM = float(arg)
+            elif opt in ('-v'):
+                param.verbose = int(arg)
     
     # display usage if a mandatory argument is not provided
     if path_atlas == '' and not param.debug:

@@ -44,23 +44,23 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-    
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_data = arg
-        elif opt in ('-o'):
-            fname_out = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_data = arg
+            elif opt in ('-o'):
+                fname_out = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
     
     # display usage if a mandatory argument is not provided
     if fname_data == '':

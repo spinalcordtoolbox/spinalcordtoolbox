@@ -83,21 +83,23 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
         remove_temp_files = 0
-        
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:r:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_data = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_data = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_data == '':
