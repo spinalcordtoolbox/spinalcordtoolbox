@@ -22,8 +22,9 @@ import commands
 import sct_utils as sct
 import time
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -36,7 +37,7 @@ class param:
 
 # main
 #=======================================================================================================================
-def main(param):
+def main():
 
     # Parameters for debug mode
     if param.debug:
@@ -47,33 +48,33 @@ def main(param):
         param.factor = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:i:r:v:')
-    except getopt.GetoptError:
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in '-f':
-            param.factor = arg
-        elif opt in '-i':
-            param.fname_data = arg
-        elif opt in '-r':
-            param.remove_tmp_files = int(arg)
-        elif opt in '-v':
-            param.verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in '-f':
+                param.factor = arg
+            elif opt in '-i':
+                param.fname_data = arg
+            elif opt in '-r':
+                param.remove_tmp_files = int(arg)
+            elif opt in '-v':
+                param.verbose = int(arg)
 
     # run main program
-    resample(param)
+    resample()
 
 
 # resample
 #=======================================================================================================================
-def resample(param):
+def resample():
 
     dim = 4  # by default, will be adjusted later
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
@@ -209,8 +210,8 @@ MANDATORY ARGUMENTS
                    For 2x upsampling, set to 2. For 2x downsampling set to 0.5
 
 OPTIONAL ARGUMENTS
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_debug.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_debug.verbose)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -225,6 +226,7 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_debug = Param()
     # call main function
-    main(param)
+    main()

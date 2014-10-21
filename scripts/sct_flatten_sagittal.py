@@ -13,8 +13,9 @@
 
 # TODO: check input param with -s flag
 
+
 ## Default parameters
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -59,28 +60,30 @@ def main():
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
-    
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_anat = arg
-        elif opt in ('-c'):
-            fname_centerline = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-d'):
-            degree_poly = int(arg)
-        elif opt in ('-f'):
-            centerline_fitting = str(arg)
-        elif opt in ('-s'):
-            interp = str(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_anat = arg
+            elif opt in ('-c'):
+                fname_centerline = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-d'):
+                degree_poly = int(arg)
+            elif opt in ('-f'):
+                centerline_fitting = str(arg)
+            elif opt in ('-s'):
+                interp = str(arg)
     
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
@@ -247,9 +250,9 @@ def usage():
         '  -c                centerline.\n' \
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
-        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param.interp)+'\n' \
-        '  -d <deg>          degree of fitting polynome. Default='+str(param.deg_poly)+'\n' \
-        '  -r {0, 1}         remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
+        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param_default.interp)+'\n' \
+        '  -d <deg>          degree of fitting polynome. Default='+str(param_default.deg_poly)+'\n' \
+        '  -r {0, 1}         remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -295,6 +298,7 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

@@ -13,7 +13,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+#import sct_utils as sct
+import commands
 
 
 def test(path_data):
@@ -29,7 +30,8 @@ def test(path_data):
           + ' -k 4'\
           + ' -r 1'
     # return
-    return sct.run(cmd, 0)
+    #return sct.run(cmd, 0)
+    return commands.getstatusoutput(cmd)
 
 
 if __name__ == "__main__":
