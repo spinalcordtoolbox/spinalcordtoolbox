@@ -13,6 +13,7 @@
 
 #import sct_utils as sct
 import commands
+import time
 
 
 def test(data_path):
@@ -29,6 +30,7 @@ def test(data_path):
           + ' -s 10' \
           + ' -r 0'
     status, output = commands.getstatusoutput(cmd)
+    time.sleep(1)  # here add one second, otherwise the next test will try to create a temporary folder with the same name (because it is typically ran in less than one second)
 
     # method point
     # create label
@@ -39,9 +41,9 @@ def test(data_path):
           + ' -r 0'
 
     s, o = commands.getstatusoutput(cmd)
-
     status += s
     output += o
+    time.sleep(1)
 
     # method center
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
@@ -50,9 +52,9 @@ def test(data_path):
           + ' -r 0'
 
     s, o = commands.getstatusoutput(cmd)
-
     status += s
     output += o
+    time.sleep(1)
 
     # method centerline
     cmd = 'sct_create_mask -i ' + data_path + folder_data + file_data[0] \
@@ -61,7 +63,6 @@ def test(data_path):
           + ' -r 0'
 
     s, o = commands.getstatusoutput(cmd)
-
     status += s
     output += o
 
