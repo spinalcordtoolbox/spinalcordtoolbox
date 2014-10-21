@@ -1,8 +1,9 @@
 function sct_dcm_dir2nii_withscaling(dcmdir)
 % sct_dcm_dir2nii_withscaling('./*.dcm')
 [Series, desc]=sct_dcm_dir_SeriesList(dcmdir,'Y');
-Series_str=sprintf('%s ' , Series{:});
-unix(['dcm2nii ' Series_str]);
+for i=1:length(Series)
+    dicm2nii(Series{i},[Series{i} filesep]);
+end
 
 for iSerie=find(~cellfun(@isempty,strfind(Series,'Scaled')))
     fnifti=dir([Series{iSerie} filesep '*.nii*']);
