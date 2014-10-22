@@ -62,7 +62,7 @@ do
 done
 
 if [[ ! -d $PATH_INSTALL ]]; then
-  echo "ERROR: Installation path is not correct: ${PATH_INSTALL}. Exit program."
+  echo "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first."
   exit
 fi
 
