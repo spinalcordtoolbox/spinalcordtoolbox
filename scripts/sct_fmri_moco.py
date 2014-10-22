@@ -31,7 +31,7 @@ class Param:
         self.mat_final = ''
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
-        self.group_size = 3  # number of consecutive images averaged
+        self.group_size = 1  # number of consecutive images averaged
         self.remove_tmp_files = 1
         self.verbose = 1
         self.suffix = '_moco'
