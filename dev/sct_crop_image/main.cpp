@@ -59,15 +59,12 @@ vector<float> splitString(string s, string delimiter, float shift=0.0)
     size_t pos = 0;
     string token;
     vector<float> result;
-    if (s.find(delimiter) == string::npos) {
-        result.push_back(atof(s.c_str()));
-        return result;
-    }
     while ((pos = s.find(delimiter)) != std::string::npos) {
         token = s.substr(0, pos);
         s.erase(0, pos + delimiter.length());
         result.push_back(atof(token.c_str())+shift);
     }
+    result.push_back(atof(s.c_str())+shift);
     return result;
 }
 
@@ -316,8 +313,6 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
             else if (endSlices[i] < 0) endSlices[i] = desiredSize1[dims[i]] + endSlices[i] - 1.0;
             else if (endSlices[i] == 0.0) endSlices[i] = desiredSize1[dims[i]]-1;
         }
-        
-		
 	}
     
 	typename ImageType::IndexType desiredStart1;
