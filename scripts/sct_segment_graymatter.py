@@ -20,12 +20,12 @@ def main():
     fname_ref = ''
     fname_moving = ''
     transformation = 'SyN'
-    gradient_step = '0.5'
-    radius = '4'
+    gradient_step = '0.20'
+    radius = '5'
     fname_seg_fixed = ''
     fname_seg_moving = ''
     fname_output = ''
-    padding = '5'
+    padding = '10'
 
     moving_name = 'moving'
     fixed_name = 'fixed'
@@ -83,9 +83,9 @@ def main():
     sct.run("sct_c3d "+fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
     sct.run("sct_c3d "+fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
     if fname_seg_moving != '':
-        sct.run("sct_c3d "+fname_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
+        sct.run("sct_c3d "+fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
     if fname_seg_fixed != '':
-        sct.run("sct_c3d "+fname_moving+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
+        sct.run("sct_c3d "+fname_seg_fixed+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -100,6 +100,19 @@ def main():
     # hdr.set_data_dtype('uint32') # set imagetype to uint32
     # img = nibabel.Nifti1Image(data_denoised, None, hdr)
     # nibabel.save(img, fixed_name+".nii.gz")
+
+    # cropping in x & y directions
+    fixed_name_temp = fixed_name + "_crop"
+    cmd = "sct_crop_image -i " + fixed_name + ".nii -o " + fixed_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1"
+    print cmd
+    sct.run(cmd)
+    fixed_name = fixed_name_temp
+    if fname_seg_fixed != '':
+        fixed_seg_name_temp = fixed_seg_name+"_crop"
+        sct.run("sct_crop_image -i " + fixed_seg_name + ".nii -o " + fixed_seg_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1")
+        fixed_seg_name = fixed_seg_name_temp
+
+    #sct_crop_image -i t2star_denoised.nii -o t2star_denoised_crop.nii -m ../t2star_seg.nii.gz -shift 10,10 -dim 0,1
 
     # padding the images
     moving_name_temp = moving_name+"_pad"
@@ -155,18 +168,30 @@ def main():
     #--> warp_template2t2star
 
 
+
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
     cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
-        cmd += " --masks["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
+        cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
     moving_name = moving_name_temp
 
-    moving_name_temp = file_output+ext_output
-    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+padding+" -end -"+padding+" -o "+file_output+ext_output)
+    moving_name_temp = moving_name+"_unpadded"
+    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+".nii")
+
+    sct.run("sct_crop_image -i "+moving_name+"0Warp.nii.gz -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+"0Warp.nii")
+
+    sct.run("sct_crop_image -i "+moving_name+"0InverseWarp.nii -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+"0InverseWarp.nii")
     moving_name = moving_name_temp
+
+    # TODO change "fixed.nii"
+    moving_name_temp = file_output+ext_output
+    #sct.run("sct_c3d "+fixed_name+".nii "+file_output+ext_output+" -reslice-identity  -o "+file_output+'_register'+ext_output)
+    sct.run("sct_c3d fixed.nii "+moving_name+".nii -reslice-identity -o "+file_output+ext_output)
+    sct.run("sct_c3d fixed.nii "+moving_name+"0Warp.nii -reslice-identity -o "+file_output+"0Warp"+ext_output)
+    sct.run("sct_c3d fixed.nii "+moving_name+"0InverseWarp.nii -reslice-identity -o "+file_output+"0InverseWarp"+ext_output)
 
     # move output files to initial folder
     sct.run("cp "+file_output+"* ../")
@@ -210,7 +235,7 @@ def usage():
 
 if __name__ == "__main__":
     # initialize parameters
-    # param = param()
+    # param = Param()
     # call main function
     main()
 
