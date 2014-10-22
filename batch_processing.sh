@@ -106,7 +106,7 @@ sct_c3d mt1.nii.gz -scale 0 -landmarks-to-spheres landmarks.txt 0.5 -o mt1_init.
 sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -detect-radius 5 -max-deformation 5
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
-# create mask encompassing the spinal cord (will be used for registration of mt0 on mt1)
+# use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
 sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 40 -f cylinder
 # register mt0 on mt1
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 20,BSplineSyN,0.2,MeanSquares
@@ -130,8 +130,11 @@ cd ..
 # fmri
 # ----------
 cd fmri
+# create mask at the center of the FOV (will be used for moco)
+sct_create_mask -i fmri.nii.gz -m center -s 30 -f cylinder
 # moco
-sct_fmri_moco -i fmri.nii.gz
+sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz
+# tips: if you have low SNR you can group consecutive images with "-g"
 # put T2 centerline into fmri space
 sct_c3d fmri_moco_mean.nii.gz ../t2/t2_centerline.nii.gz -reslice-identity -interpolation NearestNeighbor -o t2_centerline.nii.gz
 # segment mean volume
