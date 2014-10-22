@@ -1,4 +1,4 @@
-function [path, list]=sct_tools_ls(fname)
+function [list, path]=sct_tools_ls(fname)
 % [path, list]=sct_tools_ls('*T.txt);
 list=dir(fname);
 path=[fileparts(fname) filesep];

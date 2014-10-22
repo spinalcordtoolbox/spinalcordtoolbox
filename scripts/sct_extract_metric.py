@@ -36,7 +36,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # constants
 ALMOST_ZERO = 0.000001
 
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.method = 'wath'
@@ -63,6 +63,18 @@ class color:
     underline = '\033[4m'
     end = '\033[0m'
 
+class Color:
+    def __init__(self):
+        self.purple = '\033[95m'
+        self.cyan = '\033[96m'
+        self.darkcyan = '\033[36m'
+        self.blue = '\033[94m'
+        self.green = '\033[92m'
+        self.yellow = '\033[93m'
+        self.red = '\033[91m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.end = '\033[0m'
 
 #=======================================================================================================================
 # main
@@ -733,12 +745,13 @@ OPTIONAL ARGUMENTS
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
-                          bin: binary masks
+                          bin: binarize mask (threshold=0.5)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
   -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
-  -z <zmin:zmax>        Slices to estimate the metric from. Example: 5:23. First slice is 0 (not 1)
+  -z <zmin:zmax>        Slice range to estimate the metric from. First slice is 0. Example: 5:23
+                        You can also select specific slices using commas. Example: 0,2,3,5,12
   -h                    help. Show this message
 
 EXAMPLE
@@ -768,6 +781,7 @@ List of labels in: """+file_label+""":
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    color = Color()
     # call main function
     main()

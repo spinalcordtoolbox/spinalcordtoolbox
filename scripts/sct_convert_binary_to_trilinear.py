@@ -28,8 +28,7 @@ sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
 
-
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.smoothing_sigma = 5
@@ -38,7 +37,6 @@ class param:
         self.remove_temp_files = 1
         self.verbose = 1
         
-
 
 # main
 #=======================================================================================================================
@@ -60,23 +58,25 @@ def main():
         fname_data = path_sct+'/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
         remove_temp_files = 0
         param.mask_size = 10
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:v:r:s:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_data = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-s'):
-            smoothing_sigma = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_data = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-s'):
+                smoothing_sigma = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_data == '':
@@ -145,7 +145,6 @@ def main():
     print 'fslview '+file_data+' '+file_data+suffix+' &\n'
 
 
-
 # Print usage
 # ==========================================================================================
 def usage():
@@ -166,9 +165,9 @@ def usage():
         '  -i <bin_seg>      binary segmentation of spinal cord\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default='+str(param.smoothing_sigma)+'\n' \
-        '  -r {0,1}          remove temporary files. Default='+str(param.remove_temp_files)+'\n' \
-        '  -v {0,1}          verbose. Default='+str(param.verbose)+'\n' \
+        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default='+str(param_default.smoothing_sigma)+'\n' \
+        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
+        '  -v {0,1}          verbose. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message\n' \
         '\n'\
         'EXAMPLE\n' \
@@ -185,6 +184,7 @@ def usage():
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
