@@ -12,6 +12,7 @@
 #########################################################################################
 
 import sct_utils as sct
+import commands
 
 
 def test(path_data):
@@ -28,7 +29,9 @@ def test(path_data):
                 + ' -x spline'
 
     # return
-    return sct.run(cmd, 0)
+    #return sct.run(cmd, 0)
+    return commands.getstatusoutput(cmd)
+
 
 if __name__ == "__main__":
     # call main function

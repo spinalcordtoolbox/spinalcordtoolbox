@@ -1,0 +1,48 @@
+In this file are listed the complete steps of preprocessing for the volume that are in the template :
+
+1 - Crop image a little above the brainstem and a little under L2 level (see any subject to assess this)  (sct_crop_image). HAS TO BE DONE MANUALLY
+
+2 - Generate a centerline with Propseg and correct/finish/improve it manually (sct_propseg , sct_erase_centerline , sct_generate_centerline, fslmaths -add ). HAS TO BE DONE MANUALLY : start by generating a centerline with propseg (you may need to use a mask to initialize it), then you can erase the parts that you dont like using sct_erase_centerline -s start -e end. Then you have to create a mask to generate centerline parts thats you’ve juste erase : put landmark all along the centerline part and then use sct_generate_centerline. Then you have to add all those parts using fslmaths -add. The centerline must cover ALL cropped image
+
+
+3 - Straighten volume using this centerline (sct_straighten_spinalcord)
+
+
+4 - Apply warping field curve to straight the the centerline  ( sct_WarpImageMultiTransform )
+
+
+5 - Crop volume one more time to erase the blanks spaces (sct_detect_extrema sct_crop_image ). To do this use sct_detect_extrema with your straight centerline as input it will return you two arrays [a,b,c] [d,e,f] containning the coordinates of the upper and lore nonzero points. use c and f to crop your volume. 
+
+
+6 - Create a cross of 5 mm at the top center of the volume and a point at the bottom center of the volume ( sct_create_cross ). Use sct_create_cross with your straightened-cropped volume with flag -x a -y b. Usually a=d b=e which is normal if the straightening is good. If they are not equal then make a choice…
+
+
+7 - Push this volume into the template space, in which you’ve already created the crosses. You only have to create the cross in the template space once, if you don’t change anything it’s already been done and the script is hard coded to use those files (the flags exist anyway). You have to use sct_push_into_template_space using your volume and the mask created at the previous step.
+
+
+((Dont do this. THIS STEP COULD BE UNUSEFUL  : - Normalize overall intensity ( fslmaths in -inm 1000 out )))
+
+
+
+8 - Create a mask in which you put 5 labels : 1 PMJ 2 C3 3 T1 4 T7 5 L1. For each subjects. Meaning a label with intensity value 1 in the spinal cord at the PMJ, one with intensity value 2 at C3 …..
+
+
+9 - Use sct_average_levels to create the same landmarks in the template space. This scripts take the folder containing all the masks created in previous step and for a given landmark it averages values across all subjects and put a landmark at this averaged value. You only have to do this once for a given preprocessing process. If you change to preprocessing or if you had subjects 2 choices : assume that it will not change the average too much and use the previous mask, or generate a new one.
+
+
+10 - use sct_align_vertebrae -t affine -w spline to align the vertebrae. 
+
+
+11 - Crop the straight centerline the same way you’ve cropped the volume the second time and push this straight 
+cropped centerline into the template space (sct_crop_image sct_create_cross sct_push_into_template_space )
+
+
+12 - use this centerline and the volume to normalize intensity (sct_normalize )
+
+
+IMPORTANT : 
+normalize.sh does 10 and 12 once 11 is done
+
+
+For T1 volumes you can register your T1 initial volumes to your T2 initial volumes using register_multimodal (without segmentations or with if you have them). And run the same commands as the T2 ones, but they are steps you don’t need to do twice ( generating the centerline for instance, assuming the registration is good enough, you should always check this)
+

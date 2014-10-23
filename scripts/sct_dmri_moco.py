@@ -43,7 +43,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 
 
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -62,7 +62,7 @@ class param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MI'] # metric: MI,MeanSquares
+                      'MeanSquares'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -98,41 +98,43 @@ def main():
         param.otsu = 0
         param.group_size = 5
         param.iterative_averaging = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:e:f:g:m:o:p:r:t:v:x:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:e:f:g:m:o:p:r:t:v:x:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-a'):
-            param.fname_bvals = arg
-        elif opt in ('-b'):
-            param.fname_bvecs = arg
-        elif opt in ('-e'):
-            param.run_eddy = int(arg)
-        elif opt in ('-f'):
-            param.spline_fitting = int(arg)
-        elif opt in ('-g'):
-            param.group_size = int(arg)
-        elif opt in ('-i'):
-            param.fname_data = arg
-        elif opt in ('-m'):
-            param.fname_mask = arg
-        elif opt in ('-o'):
-            path_out = arg
-        elif opt in ('-p'):
-            param_user = arg
-        elif opt in ('-r'):
-            param.remove_tmp_files = int(arg)
-        elif opt in ('-t'):
-            param.otsu = int(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
-        elif opt in ('-x'):
-            param.interp = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-a'):
+                param.fname_bvals = arg
+            elif opt in ('-b'):
+                param.fname_bvecs = arg
+            elif opt in ('-e'):
+                param.run_eddy = int(arg)
+            elif opt in ('-f'):
+                param.spline_fitting = int(arg)
+            elif opt in ('-g'):
+                param.group_size = int(arg)
+            elif opt in ('-i'):
+                param.fname_data = arg
+            elif opt in ('-m'):
+                param.fname_mask = arg
+            elif opt in ('-o'):
+                path_out = arg
+            elif opt in ('-p'):
+                param_user = arg
+            elif opt in ('-r'):
+                param.remove_tmp_files = int(arg)
+            elif opt in ('-t'):
+                param.otsu = int(arg)
+            elif opt in ('-v'):
+                param.verbose = int(arg)
+            elif opt in ('-x'):
+                param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
@@ -443,26 +445,26 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
+  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param.param[0]+','+param.param[1]+','+param.param[2]+','+param.param[3]+"""
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
                      1) degree of polynomial function used for regularization along Z.
                         For no regularization set to 0.
                      2) smoothing kernel size (in mm).
                      3) gradient step. The higher the more deformation allowed.
                      4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
-  -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
+  -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param_default.otsu)+"""
                    For no segmentation set to 0.
   -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
-  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
+  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param_default.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
                    in time
   -o <path_out>    Output path.
-  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -475,5 +477,6 @@ EXAMPLE
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     main()
