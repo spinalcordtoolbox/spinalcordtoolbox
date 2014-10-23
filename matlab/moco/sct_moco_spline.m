@@ -24,25 +24,16 @@ for iZ=unique(Z_index)
     
     TZ=T(Z_index==iZ);
     % abrupt motion detection
-    [~,locs]=findpeaks(abs(diff(Y(Z_index==iZ))),'MINPEAKDISTANCE',15,'THRESHOLD',0.7);
-    ind_ab=[ind_ab (locs+1)];
+    u=minL1Potts(Y(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
+    v=minL1Potts(X(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
+    ind_ab=[ind_ab TZ(find(diff(u))) TZ(find(diff(v)))];
 end
-ind_ab=sort(ind_ab);
-if length(ind_ab)>1
-    ind_ab_cat=clusterdata(ind_ab',1);
-    
-    ind_ab_keep=[];
-    for i=unique(ind_ab_cat)'
-        ind_ab_keep=[ind_ab_keep floor(mean(ind_ab(ind_ab_cat==i)))];
-    end
-    ind_ab=ind_ab_keep;
-end
+ind_ab=sort(ind_ab); ind_ab=ind_ab(~(diff(ind_ab)<15));
 
-ind_ab=sort(ind_ab);
 
-if ~isempty(ind_ab)
-    ind_ab = input(['abrut motion detect around volume ' num2str(ind_ab) '.. specify exact volume # (before motion) as a matrix:']);
-end
+% if ~isempty(ind_ab)
+%     ind_ab = input(['abrut motion detect around volume ' num2str(ind_ab) '.. specify exact volume # (before motion) as a matrix:']);
+% end
 
 ind_ab=[0 ind_ab max(T)];
 
@@ -54,8 +45,13 @@ for iZ=unique(Z_index)
         Tpiece=ind_ab(iab-1)+1:ind_ab(iab);
         
         index=Ttmp>ind_ab(iab-1) &Ttmp<=ind_ab(iab);% Piece index
+        if length(find(index))>1
         Xfitresult=spline(Ttmp(index),Xtmp(index)); Yfitresult=spline(Ttmp(index),Ytmp(index));
         Xout(iZ,Tpiece) = feval(Xfitresult,Tpiece); Yout(iZ,Tpiece)=feval(Yfitresult,Tpiece);
+        else
+            Xout(iZ,Tpiece)=(Xtmp(find(index)+1)-Xtmp(index))/(max(Tpiece)-min(Tpiece))*(Tpiece-Tpiece(1))+Xtmp(index);
+            Yout(iZ,Tpiece)=(Ytmp(find(index)+1)-Ytmp(index))/(max(Tpiece)-min(Tpiece))*(Tpiece-Tpiece(1))+Ytmp(index);
+        end
     end
     % plot splines
     Ttotal=1:max(T);
