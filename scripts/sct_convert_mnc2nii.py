@@ -23,7 +23,7 @@ from scipy.io import netcdf
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -44,21 +44,23 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/Users/julien/mri/temp/average305_t1_tal_lin.mnc'
         fname_out = '/Users/julien/mri/temp/average305_t1_tal_lin.nii'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_data = arg
-        elif opt in ('-o'):
-            fname_out = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_data = arg
+            elif opt in ('-o'):
+                fname_out = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_data == '':
@@ -115,12 +117,11 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <output>           output volume. Add extension. Default="data".nii
-  -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 """
     # exit program
     sys.exit(2)
-
 
 
 #=======================================================================================================================
@@ -128,6 +129,7 @@ OPTIONAL ARGUMENTS
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
