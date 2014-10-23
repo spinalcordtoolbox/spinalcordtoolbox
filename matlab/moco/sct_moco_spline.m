@@ -2,7 +2,7 @@ function sct_moco_spline(fname_mat, varargin)
 % ind_abrupt=sct_moco_spline(fname_mat, fname_log(optional) )
 if ~isempty(varargin), log_spline = varargin{1}; else log_spline = 'log_sct_moco_spline'; end
 if length(varargin)>1, ind_ab = varargin{2}; else ind_ab = []; end
-
+installPottslab
 
 j_disp(log_spline,['\nSmoothing Patient Motion...'])
 % LOAD MATRIX
