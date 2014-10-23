@@ -48,7 +48,7 @@ def main(script_name = ''):
         sys.exit(2)
     else:
         try:
-            sct = script_tested.param()
+            sct = script_tested.Param()
         except AttributeError:
         #except IOError:
             print ('\nno class param found in script '+script_name+'\n')

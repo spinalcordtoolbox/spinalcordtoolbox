@@ -22,13 +22,15 @@ import commands
 import numpy
 import sct_utils as sct
 
-class param:
+
+class Param:
     def __init__(self):
         self.debug = 0
         self.average = 0
         self.remove_tmp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
+
 
 # MAIN
 # ==========================================================================================
@@ -54,29 +56,31 @@ def main():
         fname_bvecs = path_sct+'/testing/data/errsm_23/dmri/bvecs.txt'
         average = 1
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'ha:b:i:m:o:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-a"):
-            average = int(arg)
-        elif opt in ("-b"):
-            fname_bvecs = arg
-        elif opt in ("-i"):
-            fname_data = arg
-        elif opt in ('-m'):
-            fname_bvals = arg
-        elif opt in ("-o"):
-            path_out = arg
-        elif opt in ("-r"):
-            remove_temp_file = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-a"):
+                average = int(arg)
+            elif opt in ("-b"):
+                fname_bvecs = arg
+            elif opt in ("-i"):
+                fname_data = arg
+            elif opt in ('-m'):
+                fname_bvals = arg
+            elif opt in ("-o"):
+                path_out = arg
+            elif opt in ("-r"):
+                remove_temp_file = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_bvecs == '':
@@ -273,11 +277,11 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -a {0,1}         average b=0 and DWI data. Default="""+str(param.average)+"""
+  -a {0,1}         average b=0 and DWI data. Default="""+str(param_default.average)+"""
   -m <bvals>       bvals file. Used to identify low b-values (in case different from 0).
   -o <output>      output folder. Default = local folder.
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -291,6 +295,7 @@ EXAMPLE
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
