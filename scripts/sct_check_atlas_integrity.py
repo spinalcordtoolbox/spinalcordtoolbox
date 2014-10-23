@@ -25,8 +25,9 @@ import sct_utils as sct
 import nibabel as nib
 import numpy as np
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -40,6 +41,7 @@ class param:
 # constants
 ALMOST_ZERO = 0.0000001
 
+
 # main
 #=======================================================================================================================
 def main():
@@ -50,35 +52,36 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-    
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:s:m:g:t:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            path_atlas = arg
-        elif opt in ('-s'):
-            param.fname_seg = arg
-        elif opt in ('-m'):
-            param.fname_GM = arg
-        elif opt in ('-t'):
-            param.threshold_atlas = float(arg)
-        elif opt in ('-g'):
-            param.threshold_GM = float(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                path_atlas = arg
+            elif opt in ('-s'):
+                param.fname_seg = arg
+            elif opt in ('-m'):
+                param.fname_GM = arg
+            elif opt in ('-t'):
+                param.threshold_atlas = float(arg)
+            elif opt in ('-g'):
+                param.threshold_GM = float(arg)
+            elif opt in ('-v'):
+                param.verbose = int(arg)
     
     # display usage if a mandatory argument is not provided
     if path_atlas == '' and not param.debug:
         # get path of the toolbox
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
         path_atlas = path_sct+'/data/atlas/'
-        #fname_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
-        param.fname_seg = '/home/django/benjamindeleener/test/MNI-Poly-AMU_T2_seg.nii.gz'
+        param.fname_seg = path_sct+'/data/template/MNI-Poly-AMU_cord.nii.gz'
         param.fname_GM = path_sct+'/data/template/MNI-Poly-AMU_GM.nii.gz'
 
     # print arguments
@@ -275,9 +278,9 @@ USAGE
     OPTIONAL ARGUMENTS
     -s <segmentation>     segmentation image path.
     -m <graymatter>       gray matter image path.
-    -t [0,1]              float, atlas threshold. Default="""+str(param.threshold_atlas)+"""
-    -g [0,1]              float, gray matter image threshold. Default="""+str(param.threshold_GM)+"""
-    -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+    -t [0,1]              float, atlas threshold. Default="""+str(param_default.threshold_atlas)+"""
+    -g [0,1]              float, gray matter image threshold. Default="""+str(param_default.threshold_GM)+"""
+    -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
     -h                    help. Show this message.
     """
     # exit program
@@ -290,6 +293,7 @@ USAGE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

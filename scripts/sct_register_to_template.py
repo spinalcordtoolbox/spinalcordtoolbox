@@ -21,7 +21,7 @@
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -78,29 +78,31 @@ def main():
         fname_landmarks = path_sct+'/testing/data/errsm_23/t2/t2_landmarks_C2_T2_center.nii.gz'
         fname_seg = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         speed = 'superfast'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-i"):
-            fname_data = arg
-        elif opt in ('-l'):
-            fname_landmarks = arg
-        elif opt in ("-m"):
-            fname_seg = arg
-        elif opt in ("-o"):
-            output_type = int(arg)
-        elif opt in ("-p"):
-            path_template = arg
-        elif opt in ("-r"):
-            remove_temp_files = int(arg)
-        elif opt in ("-s"):
-            speed = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-i"):
+                fname_data = arg
+            elif opt in ('-l'):
+                fname_landmarks = arg
+            elif opt in ("-m"):
+                fname_seg = arg
+            elif opt in ("-o"):
+                output_type = int(arg)
+            elif opt in ("-p"):
+                path_template = arg
+            elif opt in ("-r"):
+                remove_temp_files = int(arg)
+            elif opt in ("-s"):
+                speed = arg
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':
@@ -290,10 +292,10 @@ MANDATORY ARGUMENTS
                                See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/
 
 OPTIONAL ARGUMENTS
-  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param.output_type)+"""
-  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param.folder_template)+"""
-  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param.speed)+"""
-  -r {0, 1}                    remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
+  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param_default.folder_template)+"""
+  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
+  -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -h                           help. Show this message
 
 EXAMPLE
@@ -308,6 +310,7 @@ EXAMPLE
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
