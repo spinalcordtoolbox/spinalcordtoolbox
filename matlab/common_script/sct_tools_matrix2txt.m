@@ -8,3 +8,4 @@ for i_line=1:size(M,1)
     end
     fprintf(output_fid, '\n',M(i_line,i_column));
 end
+fclose(output_fid);
