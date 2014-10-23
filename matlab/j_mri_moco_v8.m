@@ -230,7 +230,7 @@ if mask
     fname_mask = [output_path 'tmp_moco.gaussian_mask_in'];
     if exist('ref_weight')
         if slicewise
-            cmd=['fslsplit ' ref_weight ' ' fname_mask ' -z']
+            cmd=['fslsplit ' ref_weight ' ' fname_mask ' -z'];
             j_disp(fname_log,['>> ',cmd]);
             [status result] = unix(cmd);
             if status, error(result); end
@@ -309,7 +309,7 @@ for indice_index = 1:length(param.index)
             out= [folder_mat 'unused.nii'];
             cmd = ['sct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
             j_disp(fname_log,['>> ',cmd]);
-            [status result] = unix(cmd)
+            [status result] = unix(cmd);
             unix(['rm ' out ' ' mat_tmp 'W* ' mat_tmp 'I*'])
             mat_tmp=[mat_tmp 'TxTy_poly.csv'];
         end
@@ -336,8 +336,8 @@ for indice_index = 1:length(param.index)
                             fclose(fileID);
                             % Create transfo matrix
                             M=diag([1 1 1 1]); 
-                            M(1,4)=mocoArray{:, 1}(iZ);
-                            M(2,4)=-mocoArray{:, 2}(iZ);
+                            M(1,4)=-mocoArray{:, 1}(iZ);
+                            M(2,4)=mocoArray{:, 2}(iZ);
                             
                             % save to FSL matrix file
                             sct_tools_matrix2txt(M,fname_mat{iT,iZ});

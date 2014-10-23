@@ -1,6 +1,7 @@
 function sct_cropXY(data_file,varargin)
 % sct_cropXY data_file.nii
 % sct_cropXY data_file.nii autobox
+% sct_cropXY data_file.nii autobox 30
 
 dbstop if error
 
@@ -8,7 +9,8 @@ dbstop if error
 fname_data = [data_path,data_file];
 
 if isempty(varargin), crop_method='centerline'; else crop_method=varargin{1}; end
-crop_margin=35;
+if length(varargin)>1, crop_margin=str2num(varargin{2}); else crop_margin=30; end
+
 
 [~, dims] = read_avw(fname_data);
 
