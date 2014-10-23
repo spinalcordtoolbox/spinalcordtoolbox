@@ -41,7 +41,7 @@ for i in $SUBJECTS_MTL; do
 
 
 	echo "normalizing"
-	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}.nii.gz
+	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}_aligned.nii.gz
 
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t2_output/${i}_preprocessed.nii.gz
@@ -50,7 +50,7 @@ for i in $SUBJECTS_MTL; do
 
 done
 
-cd ../marseille/
+cd ../Marseille/
 
 for i in $SUBJECTS_MAR; do
 
@@ -74,7 +74,7 @@ for i in $SUBJECTS_MAR; do
 	WarpImageMultiTransform 3 centerline_straight_${i}.nii.gz centerline_straight_${i}_aligned.nii.gz -R /home/django/jtouati/code/spinalcordtoolbox/dev/template_creation/template_shape-mask.nii.gz n2t.txt --use-BSpline
 
 	echo "normalizing"
-	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}.nii.gz
+	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}_aligned.nii.gz
 
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t2_output/${i}_preprocessed.nii.gz
@@ -122,7 +122,7 @@ for i in $SUBJECTS_MTL; do
 
 
 	echo "normalizing"
-	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}.nii.gz
+	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}_aligned.nii.gz
 
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t1_output/${i}_preprocessed.nii.gz
@@ -131,7 +131,7 @@ for i in $SUBJECTS_MTL; do
 
 done
 
-cd ../marseille/
+cd ../Marseille/
 
 for i in $SUBJECTS_MAR; do
 
@@ -155,7 +155,7 @@ for i in $SUBJECTS_MAR; do
 	WarpImageMultiTransform 3 centerline_straight_${i}.nii.gz centerline_straight_${i}_aligned.nii.gz -R /home/django/jtouati/code/spinalcordtoolbox/dev/template_creation/template_shape-mask.nii.gz n2t.txt --use-BSpline
 
 	echo "normalizing"
-	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}.nii.gz
+	sct_normalize.py -i ${i}_aligned.nii.gz -c centerline_straight_${i}_aligned.nii.gz
 
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t1_output/${i}_preprocessed.nii.gz
