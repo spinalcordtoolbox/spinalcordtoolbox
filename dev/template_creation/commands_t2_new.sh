@@ -474,3 +474,80 @@ sct_crop_image -i centerline_straight.nii.gz -o centerline_straight_crop.nii.gz 
 sct_create_cross.py -i centerline_straight_crop.nii.gz -x 55 -y 225
 
 sct_push_into_template_space.py -i centerline_straight_crop.nii.gz -n landmark_native.nii.gz 
+
+
+#MD
+
+
+sct_crop_image -i MD_t2.nii.gz -o MD_t2_crop.nii.gz -dim 2 -start 8 -end 534
+
+sct_propseg -i MD_t2_crop.nii.gz -t t2 -centerline-binary -init-centerline MD_t2_crop-mask.nii.gz 
+
+sct_generate_centerline.py -i up.nii.gz -o cup.nii.gz
+
+sct_generate_centerline.py -i down.nii.gz -o cdown.nii.gz
+
+fslmaths MD_t2_crop_centerline.nii.gz -add cup semi.nii.gz
+
+fslmaths semi.nii.gz -add cdown.nii.gz full_centerline.nii.gz
+
+sct_straighten_spinalcord -i MD_t2_crop.nii.gz -c full_centerline.nii.gz 
+
+WarpImageMultiTransform 3 /home/django/jtouati/data/template_data/new_data/Marseille/MD/T2/full_centerline.nii.gz centerline_straight.nii.gz -R /home/django/jtouati/data/template_data/new_data/Marseille/MD/T2/MD_t2_crop_straight.nii.gz /home/django/jtouati/data/template_data/new_data/Marseille/MD/T2/warp_curve2straight.nii.gz 
+
+sct_detect_extrema.py -i centerline_straight.nii.gz 
+
+sct_crop_image -i MD_t2_crop_straight.nii.gz -o MD_t2_crop_straight_crop.nii.gz -dim 2 -start 30 -end 567 
+ 
+sct_create_cross.py -i  MD_t2_crop_straight_crop.nii.gz -x 57 -y 161
+
+sct_push_into_template_space.py -i  MD_t2_crop_straight_crop.nii.gz -n landmark_native.nii.gz 
+
+sct_crop_image -i centerline_straight.nii.gz -o centerline_straight_crop.nii.gz -dim 2 -start 30 -end 567  
+
+sct_create_cross.py -i centerline_straight_crop.nii.gz -x 57 -y 161
+
+sct_push_into_template_space.py -i centerline_straight_crop.nii.gz -n landmark_native.nii.gz 
+
+
+
+
+#MLL 
+
+sct_crop_image -i MLL_t2.nii.gz -o MLL_t2_crop.nii.gz -dim 2 -start 12 -end 542
+
+sct_propseg -i MLL_t2_crop.nii.gz -t t2 -centerline-binary -init-mask MLL_t2_crop-mask.nii.gz 
+
+sct_erase_centerline.py -i MLL_t2_crop_centerline.nii.gz -s 0 -e 115
+
+sct_erase_centerline.py -i centerline_erased.nii.gz -s 453 -e 530
+
+sct_generate_centerline.py -i up.nii.gz -o cup.nii.gz
+
+sct_generate_centerline.py -i down.nii.gz -o cdown.nii.gz
+
+fslmaths centerline_erased.nii.gz -add cup.nii.gz semi.nii.gz
+
+fslmaths semi.nii.gz -add cdown.nii.gz full_centerline.nii.gz
+
+sct_straighten_spinalcord -i MLL_t2_crop.nii.gz -c full_centerline.nii.gz 
+
+WarpImageMultiTransform 3 full_centerline.nii.gz centerline_straight.nii.gz -R MLL_t2_crop_straight.nii.gz warp_curve2straight.nii.gz 
+ 
+sct_detect_extrema.py -i centerline_straight.nii.gz 
+
+sct_crop_image -i MLL_t2_crop_straight.nii.gz -o MLL_t2_crop_straight_crop.nii.gz -dim 2 -start 29 -end 568
+
+sct_create_cross.py -i MLL_t2_crop_straight_crop.nii.gz -x 55 -y 161
+
+sct_push_into_template_space.py -i MLL_t2_crop_straight_crop.nii.gz -n landmark_native.nii.gz 
+
+sct_crop_image -i centerline_straight.nii.gz -o centerline_straight_crop.nii.gz -dim 2 -start 29 -end 568  
+ 
+sct_create_cross.py -i centerline_straight_crop.nii.gz -x 55 -y 161
+ 
+sct_push_into_template_space.py -i centerline_straight_crop.nii.gz -n landmark_native.nii.gz 
+ 
+
+
+
