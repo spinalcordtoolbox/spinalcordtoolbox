@@ -164,10 +164,7 @@ j_disp(sct.log,['.. Masking:               ',sct.dmri.mask.method])
 fprintf('\n');
 j_disp(sct.log,'Get dimensions of the data...')
 fname_data = [sct.dmri.path,sct.dmri.file];
-cmd = ['fslsize ',fname_data];
-[status result] = unix(cmd);
-if status, error(result); end
-dims = j_mri_getDimensions(result);
+[~, dims] = read_avw(fname_data);
 sct.dmri.nx = dims(1);
 sct.dmri.ny = dims(2);
 sct.dmri.nz = dims(3);
@@ -515,10 +512,7 @@ if ~strcmp(sct.dmri.crop.method,'none')
         j_disp(sct.log,'Get dimensions of the data after cropping...')
         
         fname_data = [sct.dmri.path,sct.dmri.file];
-        cmd = ['fslsize ',fname_data];
-        [status result] = unix(cmd);
-        if status, error(result); end
-        dims = j_mri_getDimensions(result);
+        [~,dims] = read_avw(fname_data);
         sct.dmri.nx = dims(1);
         sct.dmri.ny = dims(2);
         sct.dmri.nz = dims(3);
@@ -657,10 +651,7 @@ end
 % get data dimensions and orientation
 j_disp(sct.log,'\nGet dimensions of the data...')
 fname_data = [sct.dmri.path,sct.dmri.file];
-cmd = ['fslsize ',fname_data];
-[status result] = unix(cmd);
-if status, error(result); end
-dims = j_mri_getDimensions(result);
+[~,dims] = read_avw(fname_data);
 sct.dmri.nx = dims(1);
 sct.dmri.ny = dims(2);
 sct.dmri.nz = dims(3);
@@ -1121,7 +1112,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
         
         % Find registration matrix to the closest DWI data
         j_disp(sct.log,['\nFind registration matrix to the closest DWI data...'])
-        for i_file = 1:sct.dmri.nt
+        for i_file = [1 sct.dmri.nt]
             % find which mat file to use
             [min_closest_b0 i_b0] = min(abs(index_b0'-i_file));
             % copy mat file
@@ -1300,13 +1291,7 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
     %----------------------------------------------------------------------
     % Smooth estimated motion
     if sct.dmri.moco_intra.smooth_motion
-        if sct.dmri.moco_intra.slicewise
-            for iZ=1:sct.dmri.nz
-                sct_moco_spline([sct.output_path 'mat_moco/*T*Z' num2str(iZ) '.txt'], sct.log)
-            end
-        else
-            sct_moco_spline([sct.output_path 'mat_moco/*T*.txt'], sct.log)
-        end
+        sct_moco_spline([sct.output_path 'mat_moco/*T*Z*.txt'], sct.log)
     end
     
 else

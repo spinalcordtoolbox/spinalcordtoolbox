@@ -130,6 +130,7 @@ def main():
     e = 0
     if sum(status) != 0:
         e = 1
+    print e
 
     sys.exit(e)
 
@@ -139,11 +140,14 @@ def main():
 def fill_functions():
     functions = []
     functions.append('test_debug')
+    functions.append('sct_compute_mtr')
     functions.append('sct_convert_binary_to_trilinear')
+    functions.append('sct_create_mask')
     functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
+    #functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline')
     functions.append('sct_process_segmentation')
@@ -188,7 +192,7 @@ def print_fail():
 
 # write to log file
 # ==========================================================================================
-def write_to_log_file(fname_log, string, mode = 'w'):
+def write_to_log_file(fname_log, string, mode='w'):
 
     '''
     status, output = sct.run('echo $SCT_DIR', 0)

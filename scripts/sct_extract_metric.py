@@ -27,18 +27,16 @@ import commands
 import nibabel as nib
 import numpy as np
 import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-# TODO: do we really need that???
-sys.path.append(path_sct + '/scripts')
-
 
 # constants
 ALMOST_ZERO = 0.000001
 
-class param:
+
+class Param:
     def __init__(self):
         self.debug = 0
         self.method = 'wath'
@@ -52,17 +50,19 @@ class param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
 
-class color:
-    purple = '\033[95m'
-    cyan = '\033[96m'
-    darkcyan = '\033[36m'
-    blue = '\033[94m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    red = '\033[91m'
-    bold = '\033[1m'
-    underline = '\033[4m'
-    end = '\033[0m'
+
+class Color:
+    def __init__(self):
+        self.purple = '\033[95m'
+        self.cyan = '\033[96m'
+        self.darkcyan = '\033[36m'
+        self.blue = '\033[94m'
+        self.green = '\033[92m'
+        self.yellow = '\033[93m'
+        self.red = '\033[91m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.end = '\033[0m'
 
 
 #=======================================================================================================================
@@ -91,8 +91,10 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = path_sct_data+'/mt/mtr.nii.gz'
-        path_label = path_sct_data+'/mt/label/template'
+        # fname_data = path_sct_data+'/mt/mtr.nii.gz'
+        # path_label = path_sct_data+'/mt/label/template'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'
         method = 'wath'
         labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
         slices_of_interest = '1:4'  #'200:210' #'2:4'
@@ -100,38 +102,40 @@ def main():
         average_all_labels = 0
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
-    except getopt.GetoptError as err: # check if the arguments are defined
-        print str(err) # error
-        usage() # display usage
-    for opt, arg in opts: # explore flags
-        if opt in '-a':
-            average_all_labels = 1
-        elif opt in '-f':
-            path_label = os.path.abspath(arg)  # save path of labels folder
-        elif opt == '-h':  # help option
-            flag_h = 1
-        elif opt in '-i':
-            fname_data = arg
-        elif opt in '-l':
-            labels_of_interest = arg
-        elif opt in '-m':  # method for metric extraction
-            method = arg
-        elif opt in '-n':  # filename of the label by which the user wants to normalize
-            fname_normalizing_label = arg
-        elif opt in '-o': # output option
-            fname_output = arg  # fname of output file
-        elif opt in '-v':
-            # vertebral levels option, if the user wants to average the metric across specific vertebral levels
-             vertebral_levels = arg
-        elif opt in '-w':
-            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
-            normalization_method = arg
-        elif opt in '-z':  # slices numbers option
-            slices_of_interest = arg # save labels numbers
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+        except getopt.GetoptError as err: # check if the arguments are defined
+            print str(err) # error
+            usage() # display usage
+        if not opts:
+            usage()
+        for opt, arg in opts: # explore flags
+            if opt in '-a':
+                average_all_labels = 1
+            elif opt in '-f':
+                path_label = os.path.abspath(arg)  # save path of labels folder
+            elif opt == '-h':  # help option
+                flag_h = 1
+            elif opt in '-i':
+                fname_data = arg
+            elif opt in '-l':
+                labels_of_interest = arg
+            elif opt in '-m':  # method for metric extraction
+                method = arg
+            elif opt in '-n':  # filename of the label by which the user wants to normalize
+                fname_normalizing_label = arg
+            elif opt in '-o': # output option
+                fname_output = arg  # fname of output file
+            elif opt in '-v':
+                # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+                 vertebral_levels = arg
+            elif opt in '-w':
+                # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+                normalization_method = arg
+            elif opt in '-z':  # slices numbers option
+                slices_of_interest = arg # save labels numbers
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '' or flag_h:
@@ -186,28 +190,28 @@ def main():
     print '  vertebral labeling file.... '+fname_vertebral_labeling
 
     # Check if the orientation of the data is RPI
-    orientation_data = sct.get_orientation(fname_data)
+    orientation_data = get_orientation(fname_data)
+    print orientation_data
 
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = 'tmp.' + time.strftime("%y%m%d%H%M%S")
+        path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
         sct.create_folder(path_tmp)
         # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
-        data = nib.load(sct.set_orientation(fname_data, 'RPI', path_tmp)).get_data()
+        data = nib.load(set_orientation(fname_data, 'RPI', path_tmp+'orient_data.nii')).get_data()
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            labels[i_label] = nib.load(sct.set_orientation(path_label + label_file[i_label], 'RPI', path_tmp)).get_data()
+            labels[i_label] = nib.load(set_orientation(path_label+label_file[i_label], 'RPI', path_tmp+'orient_'+label_file[i_label])).get_data()
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(sct.set_orientation(fname_normalizing_label, 'RPI', path_tmp)).get_data()
+            normalizing_label[0] = nib.load(set_orientation(fname_normalizing_label, 'RPI', path_tmp+'orient_normalizing_volume.nii')).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(sct.set_orientation(fname_vertebral_labeling, 'RPI', path_tmp)).get_data()
-
+            data_vertebral_labeling = nib.load(set_orientation(fname_vertebral_labeling, 'RPI', path_tmp+'orient_vertebral_labeling.nii.gz')).get_data()
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
         status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
@@ -770,6 +774,7 @@ List of labels in: """+file_label+""":
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    color = Color()
     # call main function
     main()
