@@ -100,17 +100,19 @@ def main():
     nz_nonz = len(z_centerline)
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    
+    print z_centerline,nz_nonz,len(x_centerline)
     print '\nGet center of mass of the centerline ...'
     for iz in xrange(len(z_centerline)):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
     
-    means = [0 for i in xrange(len(z_centerline))]
+    means = [0 for iz in range(0, nz_nonz, 1)]
         
     print '\nGet mean intensity along the centerline ...'        
     for iz in xrange(len(z_centerline)):
-
-        means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),iz])
+        # print iz
+   #      print iz-min(z_centerline)
+   #      print x_centerline[iz-min(z_centerline)]
+        means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
     
     
     print('\nSmoothing results with spline...')    
@@ -128,7 +130,7 @@ def main():
     print('\nNormalizing intensity along centerline...')    
     for iz in xrange(len(z_centerline)):
         
-        data[:,:,iz] = data[:,:,iz]*(mean_intensity/means_smooth[iz])
+        data[:,:,z_centerline[iz]] = data[:,:,z_centerline[iz]]*(mean_intensity/means_smooth[iz])
        
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     # save volume
