@@ -1,3 +1,7 @@
+
+# add path
+export PATH=${PATH}:$SCT_DIR/dev/template_creation
+
 #ALT
 
 sct_crop_image -i ALT_t2.nii.gz -o ALT_t2_crop.nii.gz -start 0 -end 533 -dim 2
@@ -554,6 +558,54 @@ cd marseille_tr
 # convert to nii
 dcm2nii -o . /Volumes/data_shared/marseille/TR/01_0016_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-19/original-primary-m-norm-dis2d-comp-sp-composed_e01_*.dcm
 # change file name
-mv *.nii.gz tr_t2.nii.gz
+mv *.nii.gz t2.nii.gz
+# orient to RPI
+sct_orientation -i t2.nii.gz -s RPI
+# open fslview and look at cropping coordinates. Then, crop
+sct_crop_image -i t2_RPI.nii.gz -o t2_RPI_crop.nii.gz -dim 1,2 -start 38,0 -end 218,520
+# get centerline
+sct_propseg -i t2_RPI_crop.nii.gz -t t2 -init-centerline t2_RPI_crop-mask.nii.gz -centerline-binary -max-deformation 5 -verbose -min-contrast 10
+# manually adjust centerline and add points in missing parts (e.g., in brainstem)
+# N.B. no need to erase because propseg centerline is fine.
+# generate centerline from missing parts
+sct_generate_centerline.py -i t2_RPI_crop-mask_bottom.nii.gz -o t2_RPI_crop_centerline_bottom.nii.gz
+sct_generate_centerline.py -i t2_RPI_crop-mask_top.nii.gz -o t2_RPI_crop_centerline_top.nii.gz
+# add centerline
+fslmaths t2_RPI_crop_centerline -add t2_RPI_crop_centerline_bottom -add t2_RPI_crop_centerline_top -bin full_centerline
+# straighten spinal cord
+sct_straighten_spinalcord -i t2_RPI_crop.nii.gz -c full_centerline.nii.gz 
+# check if ok:
+fslview t2_RPI_crop_straight.nii.gz &
+# apply curve2straight to centerline
+sct_apply_transfo -i full_centerline.nii.gz -o centerline_straight.nii.gz -d t2_RPI_crop_straight.nii.gz -w warp_curve2straight.nii.gz -p linear
+# detect extrema of straight centerline
+sct_detect_extrema.py -i centerline_straight.nii.gz 
+# crop image and centerline based on Z-extrema
+# NB: for the future, use benjamin's function
+sct_crop_image -i t2_RPI_crop_straight.nii.gz -o t2_RPI_crop_straight_crop.nii.gz -dim 2 -start 29 -end 552
+sct_crop_image -i centerline_straight.nii.gz -o centerline_straight_crop.nii.gz -dim 2 -start 29 -end 552
+# create cross
+sct_create_cross.py -i t2_RPI_crop_straight_crop.nii.gz -x 53 -y 125
+# push cross into template
+# N.B. by default, it uses the template space into /dev/template_creation/template_shape.nii.gz
+sct_push_into_template_space.py -i t2_RPI_crop_straight_crop.nii.gz -n landmark_native.nii.gz
+# apply warping field to centerline
+sct_apply_transfo -i centerline_straight_crop.nii.gz -o centerline_straight_crop_2temp.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape.nii.gz -w native2temp.txt -p linear
+# check result:
+fslview t2_RPI_crop_straight_crop_2temp.nii.gz centerline_straight_crop_2temp &
+# create labels manually: 1: PMJ, 2: C3, 3: T1, 4: T7, 5: L1. 
+# --> labels.nii.gz
+# estimate and apply affine transformation to align vertebrae
+sct_align_vertebrae.py -i t2_RPI_crop_straight_crop_2temp.nii.gz -l labels.nii.gz -R ${SCT_DIR}/dev/template_creation/template_shape-mask.nii.gz -o t2_RPI_crop_straight_crop_2temp_aligned.nii.gz -t affine -w spline
+# N.B. here, possible improvement in using antsRegistration constrained along z and highly regularized
+# apply transfo to centerline
+sct_apply_transfo -i centerline_straight_crop_2temp.nii.gz -o centerline_straight_crop_2temp_aligned.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape-mask.nii.gz -w n2t.txt -p linear
+# normalize intensity within spinal cord
+sct_normalize.py -i t2_RPI_crop_straight_crop_2temp_aligned.nii.gz -c centerline_straight_crop_2temp_aligned.nii.gz
+# now you can use file: t2_RPI_crop_straight_crop_2temp_aligned_normalized.nii.gz into template creation: buildtemplateparallel.sh
+
+
+
+
 
 
