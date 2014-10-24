@@ -386,7 +386,7 @@ OPTIONAL ARGUMENTS
                         If you find very large deformations, switching to MeanSquares can help.
   -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param_default.padding)+"""
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
-  -r {0,1}         remove temporary files. Default='+str(param.remove_temp_files)+'
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_temp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
 
 EXAMPLES
