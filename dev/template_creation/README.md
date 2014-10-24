@@ -32,7 +32,10 @@ normalize.sh does 10 and 12 once 11 is done
 
 For T1 volumes you can register your T1 initial volumes to your T2 initial volumes using register_multimodal (without segmentations or with if you have them). And run the same commands as the T2 ones, but they are steps you don’t need to do twice ( generating the centerline for instance, assuming the registration is good enough, you should always check this) Use registert1.sh and see commands*.sh
 
-
+All data are located in:
+~~~
+users_hd2/jtouati/data/template_data 
+~~~
 
                                                          —————CREATION————— 
 
