@@ -548,6 +548,12 @@ sct_create_cross.py -i centerline_straight_crop.nii.gz -x 55 -y 161
  
 sct_push_into_template_space.py -i centerline_straight_crop.nii.gz -n landmark_native.nii.gz 
  
-
+# TR
+mkdir marseille_tr
+cd marseille_tr
+# convert to nii
+dcm2nii -o . /Volumes/data_shared/marseille/TR/01_0016_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-19/original-primary-m-norm-dis2d-comp-sp-composed_e01_*.dcm
+# change file name
+mv *.nii.gz tr_t2.nii.gz
 
 
