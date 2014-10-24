@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-#
+# 
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Touati
@@ -160,7 +160,8 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 
 DESCRIPTION
 
-Generates 3D centerline from an input mask. 
+Generates 3D centerline from an input mask. The mask contains points along the spinal cord and this
+function interpolates the points using 3D spline. Output is a binary volume. 
 
 USAGE
   """+os.path.basename(__file__)+"""  -i <input_volume> 
