@@ -25,7 +25,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -38,8 +38,6 @@ class param:
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.verbose = 1  # verbose
-
-
 
 
 # MAIN
@@ -69,29 +67,29 @@ def main():
         warp_atlas = 1
         warp_spinal_levels = 1
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-a"):
-            warp_atlas = int(arg)
-        elif opt in ("-d"):
-            fname_src = arg
-        elif opt in ("-o"):
-            folder_out = arg
-        elif opt in ("-p"):
-            path_template = arg
-        elif opt in ("-s"):
-            warp_spinal_levels = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ("-w"):
-            fname_transfo = arg
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ("-a"):
+                warp_atlas = int(arg)
+            elif opt in ("-d"):
+                fname_src = arg
+            elif opt in ("-o"):
+                folder_out = arg
+            elif opt in ("-p"):
+                path_template = arg
+            elif opt in ("-s"):
+                warp_spinal_levels = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
+            elif opt in ("-w"):
+                fname_transfo = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_transfo == '':
@@ -191,11 +189,11 @@ MANDATORY ARGUMENTS
   -w <warp>             warping field
 
 OPTIONAL ARGUMENTS
-  -a {0,1}              warp atlas of white matter. Default="""+str(param.warp_atlas)+"""
-  -s {0,1}              warp spinal levels. Default="""+str(param.warp_spinal_levels)+"""
-  -o <folder_out>       name of output folder. Default="""+param.folder_out+"""
-  -p <path_template>    Specify path to template data. Default="""+str(param.path_template)+"""
-  -v {0,1}              verbose. Default="""+str(param.verbose)+"""
+  -a {0,1}              warp atlas of white matter. Default="""+str(param_default.warp_atlas)+"""
+  -s {0,1}              warp spinal levels. Default="""+str(param_default.warp_spinal_levels)+"""
+  -o <folder_out>       name of output folder. Default="""+param_default.folder_out+"""
+  -p <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
+  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 
 EXAMPLE
@@ -209,6 +207,7 @@ EXAMPLE
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()

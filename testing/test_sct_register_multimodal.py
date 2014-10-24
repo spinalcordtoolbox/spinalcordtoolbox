@@ -13,7 +13,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+#import sct_utils as sct
+import commands
+
 
 def test(path_data):
 
@@ -22,15 +24,15 @@ def test(path_data):
 
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -x 0' \
           + ' -o data_reg.nii.gz'  \
-          + ' -n 1' \
-          + ' -p 1' \
+          + ' -p 3,SyN,0.5,MI'  \
+          + ' -z 1' \
           + ' -x linear' \
           + ' -r 0' \
           + ' -v 1'
 
-    return sct.run(cmd, 0)
+    #return sct.run(cmd, 0)
+    return commands.getstatusoutput(cmd)
 
 
 if __name__ == "__main__":

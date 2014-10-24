@@ -23,19 +23,20 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import nibabel
 import time
+from sct_orientation import set_orientation
+import sct_utils as sct
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-import sct_utils as sct
 
-class param:
+
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1
         self.remove_temp_files = 1
+
 
 class LineBuilder:
     def __init__(self, line):
@@ -68,14 +69,10 @@ class LineBuilder:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-
 def main():
-
-
     # Initialization
     fname_data = ''
     suffix_out = '_crop'
-    file_tmp = 'data.nii'
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI
@@ -86,23 +83,24 @@ def main():
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
         remove_temp_files = 0
-        
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:r:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:r:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-i'):
-            fname_data = arg
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-v'):
-            verbose = int(arg)
-            
-            
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_data = arg
+            elif opt in ('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-v'):
+                verbose = int(arg)
+
     # display usage if a mandatory argument is not provided
     if fname_data == '':
         usage()
@@ -110,6 +108,15 @@ def main():
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
     sct.check_file_exist(fname_data)
+
+    # Get dimensions of data
+    sct.printv('\nGet dimensions of data...', verbose)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    # check if 4D data
+    if not nt == 1:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Data should be 3D.\n', 1, 'error')
+        sys.exit(2)
 
     # print arguments
     print '\nCheck parameters:'
@@ -125,24 +132,18 @@ def main():
     sct.run('mkdir '+path_tmp)
 
     # copy files into tmp folder
-    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+file_tmp)
+    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # # Get dimensions of data
-    # sct.printv('\nGet dimensions of data...', verbose)
-    # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_tmp)
-    # sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-
     # change orientation
     sct.printv('\nChange orientation to RPI...', verbose)
-    sct.run('sct_orientation -i '+file_tmp+' -o rpi_'+file_tmp+' -orientation RPI')
-    file_tmp = 'rpi_'+file_tmp
+    set_orientation('data.nii', 'RPI', 'data_rpi.nii')
 
     # get image of medial slab
     sct.printv('\nGet image of medial slab...', verbose)
-    image_array = nibabel.load(file_tmp).get_data()
+    image_array = nibabel.load('data_rpi.nii').get_data()
     nx, ny, nz = image_array.shape
     scipy.misc.imsave('image.jpg', image_array[math.floor(nx/2), :, :])
 
@@ -166,7 +167,7 @@ def main():
 
     # check if user clicked two times
     if len(cropping_coordinates.xs) != 2:
-        sct.printv('\nERROR: You have to select two points. Exit program. ', 1)
+        sct.printv('\nERROR: You have to select two points. Exit program.\n', 1, 'error')
         sys.exit(2)
 
     # convert coordinates to integer
@@ -177,14 +178,13 @@ def main():
 
     # crop image
     sct.printv('\nCrop image...', verbose)
-    sct.run(fsloutput+'fslroi '+file_tmp+' crop_'+file_tmp+' 0 -1 0 -1 '+str(zcrop[0])+' '+str(zcrop[1]-zcrop[0]+1))
-    file_tmp = 'crop_'+file_tmp
+    sct.run(fsloutput+'fslroi data_rpi.nii data_rpi_crop.nii 0 -1 0 -1 '+str(zcrop[0])+' '+str(zcrop[1]-zcrop[0]+1))
 
     # come back to parent folder
     os.chdir('..')
 
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+file_tmp, path_out+file_out+ext_out)
+    sct.generate_output_file(path_tmp+'data_rpi_crop.nii', path_out+file_out+ext_out)
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -219,8 +219,8 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -h                    help. Show this message
-  -v {0,1}              verbose. Default = """+str(param.verbose)+"""
-  -r {0,1}              remove temporary files. Default="""+str(param.remove_temp_files)+"""
+  -v {0,1}              verbose. Default = """+str(param_default.verbose)+"""
+  -r {0,1}              remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
 EXAMPLE
   """+os.path.basename(__file__)+""" -i t1.nii.gz\n"""
 
@@ -232,6 +232,7 @@ EXAMPLE
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
