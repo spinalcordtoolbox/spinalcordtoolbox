@@ -575,7 +575,7 @@ fslmaths t2_RPI_crop_centerline -add t2_RPI_crop_centerline_bottom -add t2_RPI_c
 # straighten spinal cord
 sct_straighten_spinalcord -i t2_RPI_crop.nii.gz -c full_centerline.nii.gz 
 # check if ok:
-fslview t2_RPI_crop_straight.nii.gz &
+# fslview t2_RPI_crop_straight.nii.gz &
 # apply curve2straight to centerline
 sct_apply_transfo -i full_centerline.nii.gz -o centerline_straight.nii.gz -d t2_RPI_crop_straight.nii.gz -w warp_curve2straight.nii.gz -p linear
 # detect extrema of straight centerline
@@ -592,7 +592,7 @@ sct_push_into_template_space.py -i t2_RPI_crop_straight_crop.nii.gz -n landmark_
 # apply warping field to centerline
 sct_apply_transfo -i centerline_straight_crop.nii.gz -o centerline_straight_crop_2temp.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape.nii.gz -w native2temp.txt -p linear
 # check result:
-fslview t2_RPI_crop_straight_crop_2temp.nii.gz centerline_straight_crop_2temp &
+# fslview t2_RPI_crop_straight_crop_2temp.nii.gz centerline_straight_crop_2temp &
 # create labels manually: 1: PMJ, 2: C3, 3: T1, 4: T7, 5: L1. 
 # --> labels.nii.gz
 # estimate and apply affine transformation to align vertebrae
