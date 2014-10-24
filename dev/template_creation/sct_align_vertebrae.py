@@ -115,7 +115,7 @@ def main():
     # if final_warp == 'NN':
     #     print 'Apply transfo to input image\n...'
     #     sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -r ' + template_landmark + ' -t ' + warping + ' -n NearestNeighbor')
-        
+    print "kfpek"    
     if final_warp == 'spline':
         print 'Apply transfo to input image\n...'
         sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + template_landmark + ' -w ' + warping + ' -p spline')
