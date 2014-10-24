@@ -10,20 +10,20 @@ N.B. preprocessing for T1 has less steps because some are made in T2. E.g., gene
 
 List of steps is below. Functions involved are in brackets ():
 
-- Crop image a little above the brainstem and a little under L2/L3 vertebral disk (sct_crop_image). 
-- Generate a centerline with Propseg and correct/finish/improve it manually (sct_propseg, sct_erase_centerline, sct_generate_centerline, fslmaths -add). Start by generating a centerline with propseg (you may need to use a mask to initialize it), then you can erase the parts that you dont like using sct_erase_centerline -s start -e end. Then you have to create a mask to generate centerline parts that are missing (typically in the brainstem and in lumbar levels): put landmarks all along the centerline part and then use sct_generate_centerline. Then you have to add all those parts using fslmaths -add. Then, you have to binarize the resulting volume. The centerline must cover ALL cropped image, i.e., Z=[0..Zmax].
-- Straighten volume using this centerline (sct_straighten_spinalcord)
-- Apply warping field curve to straight the the centerline  ( sct_WarpImageMultiTransform )
-- Crop volume one more time to erase the blank spaces (sct_detect_extrema, sct_crop_image ). To do this use sct_detect_extrema with your straight centerline as input it will return you two arrays [a,b,c] [d,e,f] containning the coordinates of the upper and lower nonzero points. use c and f to crop your volume. 
+1. Crop image a little above the brainstem and a little under L2/L3 vertebral disk (sct_crop_image). 
+2. Generate a centerline with Propseg and correct/finish/improve it manually (sct_propseg, sct_erase_centerline, sct_generate_centerline, fslmaths -add). Start by generating a centerline with propseg (you may need to use a mask to initialize it), then you can erase the parts that you dont like using sct_erase_centerline -s start -e end. Then you have to create a mask to generate centerline parts that are missing (typically in the brainstem and in lumbar levels): put landmarks all along the centerline part and then use sct_generate_centerline. Then you have to add all those parts using fslmaths -add. Then, you have to binarize the resulting volume. The centerline must cover ALL cropped image, i.e., Z=[0..Zmax].
+3. Straighten volume using this centerline (sct_straighten_spinalcord)
+4. Apply warping field curve to straight the the centerline  ( sct_WarpImageMultiTransform )
+5. Crop volume one more time to erase the blank spaces (sct_detect_extrema, sct_crop_image ). To do this use sct_detect_extrema with your straight centerline as input it will return you two arrays [a,b,c] [d,e,f] containning the coordinates of the upper and lower nonzero points. use c and f to crop your volume. 
   - todo: replace detect_extrema with label_utils
-- Create a cross of 5 mm at the top center of the volume and a point at the bottom center of the volume ( sct_create_cross ). Use sct_create_cross with your straightened-cropped volume with flag -x a -y b. Usually a=d b=e which is normal if the straightening is good. If they are not equal then make a choice…
+6. Create a cross of 5 mm at the top center of the volume and a point at the bottom center of the volume ( sct_create_cross ). Use sct_create_cross with your straightened-cropped volume with flag -x a -y b. Usually a=d b=e which is normal if the straightening is good. If they are not equal then make a choice…
   - todo: use sct_label_utils
-- Push the straightened volume into the template space. The template space has crosses in it for registration. If you want to use another template or cross landmarks, there is a flag. You have to use ``sct_push_into_template_space``. Input: previous volume, mask created at previous step.
-- Create a mask in which you put 5 labels with following values: 1: PMJ, 2: C3, 3: T1, 4: T7, 5: L1. 
-- (ALREADY DONE: Use sct_average_levels to create the same landmarks in the template space. This scripts take the folder containing all the masks created in previous step and for a given landmark it averages values across all subjects and put a landmark at this averaged value. You only have to do this once for a given preprocessing process. If you change to preprocessing or if you had subjects 2 choices : assume that it will not change the average too much and use the previous mask, or generate a new one.)
-- use sct_align_vertebrae -t affine -w spline to align the vertebrae.
-- Crop the straight centerline the same way you've cropped the volume the second time and push this straight cropped centerline into the template space (sct_crop_image, sct_create_cross, sct_push_into_template_space)
-- use this centerline and the volume to normalize intensity (sct_normalize). Before you should apply the transformation outputed in 10 to the centerline generated in 11
+7. Push the straightened volume into the template space. The template space has crosses in it for registration. If you want to use another template or cross landmarks, there is a flag. You have to use ``sct_push_into_template_space``. Input: previous volume, mask created at previous step.
+8. Create a mask in which you put 5 labels with following values: 1: PMJ, 2: C3, 3: T1, 4: T7, 5: L1. 
+9. (ALREADY DONE: Use sct_average_levels to create the same landmarks in the template space. This scripts take the folder containing all the masks created in previous step and for a given landmark it averages values across all subjects and put a landmark at this averaged value. You only have to do this once for a given preprocessing process. If you change to preprocessing or if you had subjects 2 choices : assume that it will not change the average too much and use the previous mask, or generate a new one.)
+10. Use sct_align_vertebrae -t affine (transformation) -w spline (interpolation) to align the vertebrae using affine transformation along Z.
+11. Crop the straight centerline the same way you've cropped the volume the second time and push this straight cropped centerline into the template space (sct_crop_image, sct_create_cross, sct_push_into_template_space)
+12. use this centerline and the volume to normalize intensity (sct_normalize). Before you should apply the transformation outputed in 10 to the centerline generated in 11
 
 
 IMPORTANT : 
