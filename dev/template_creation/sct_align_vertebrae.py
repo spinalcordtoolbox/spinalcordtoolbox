@@ -110,15 +110,15 @@ def main():
         
     if final_warp == '' :    
         print 'Apply transfo to input image\n...'
-        sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping)
+        sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping)
         
     if final_warp == 'NN':
         print 'Apply transfo to input image\n...'
-        sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping + ' --use-NN')
+        sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping + ' --use-NN')
         
     if final_warp == 'spline':
         print 'Apply transfo to input image\n...'
-        sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping + ' --use-BSpline')
+        sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping + ' --use-BSpline')
             
     
     if compose :
@@ -129,7 +129,7 @@ def main():
         
         
         print 'Apply transfo to input landmarks\n...'
-        sct.run('sct_WarpImageMultiTransform 3 ' + cross_native + ' cross_affine.nii.gz -R ' + template_landmark + ' ' + warping_affine + ' --use-NN')
+        sct.run('sct_antsApplyTransforms 3 ' + cross_native + ' cross_affine.nii.gz -R ' + template_landmark + ' ' + warping_affine + ' --use-NN')
         
         print 'Computing transfo between moved landmarks and template landmarks\n...'
         sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField cross_template.nii.gz cross_affine.nii.gz warp_affine2temp.nii.gz 5x5x5 3 2 0')    
@@ -141,15 +141,15 @@ def main():
         
         if final_warp == '' :    
             print 'Apply concat warp to input image\n...'
-            sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat)
+            sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat)
         
         if final_warp == 'NN':
             print 'Apply concat warp to input image\n...'
-            sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat + ' --use-NN')
+            sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat + ' --use-NN')
         
         if final_warp == 'spline':
             print 'Apply concat warp to input image\n...'
-            sct.run('sct_WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat + ' --use-BSpline')
+            sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -R ' + template_landmark + ' ' + warping_concat + ' --use-BSpline')
           
     
     
