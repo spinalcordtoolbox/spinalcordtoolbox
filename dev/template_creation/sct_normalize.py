@@ -18,7 +18,7 @@ class param:
     def __init__(self):
         self.debug = 0
         self.verbose = 0
-        self.mean_intensity = 1000
+        self.mean_intensity = 1000  # value to assign to the spinal cord
         self.padding = 3 # vox
         
 # check if needed Python libraries are already installed or not
@@ -140,9 +140,8 @@ def main():
     sct.printv('\n.. File created:' + output_name,verbose)
 
     print('\nNormalizing overall intensity...')    
-    sct.run('fslmaths ' + output_name + ' -inm ' + str(mean_intensity) + ' ' + output_name)
+    # sct.run('fslmaths ' + output_name + ' -inm ' + str(mean_intensity) + ' ' + output_name)
      
-
     # to view results
     print '\nDone !'
     print '\nTo view results, type:'
