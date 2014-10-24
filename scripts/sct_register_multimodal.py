@@ -241,7 +241,7 @@ def main():
         if algo == 'sliceReg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
-                   '-m '+metric+'[dest_pad.nii,src.nii,1,'+metricSize+',Regular,0.2] '
+                   '-m '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
                    '-p 3 '
                    '-i '+numberIterations+' '
                    '-f 1 '
@@ -252,7 +252,7 @@ def main():
             cmd = ('sct_antsRegistration '
                    '--dimensionality 3 '
                    '--transform '+algo+'['+gradientStep+',3,0] '
-                   '--metric '+metric+'[dest_pad.nii,src.nii,1,'+metricSize+'] '
+                   '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
                    '--convergence 20x'+numberIterations+' '
                    '--shrink-factors 2x1 '
                    '--smoothing-sigmas 2x0mm '
