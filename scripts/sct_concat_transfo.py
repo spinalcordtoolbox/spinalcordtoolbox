@@ -21,7 +21,7 @@ import commands
 import sct_utils as sct
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -45,23 +45,25 @@ def main():
         fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz,-'+path_sct_data+'/mt/warp_template2mt.nii.gz'
         fname_dest = path_sct_data+'/mt/mtr.nii.gz'
         verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hw:d:o:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hw:d:o:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-w'):
-            fname_warp_list = arg
-        elif opt in ('-d'):
-            fname_dest = arg
-        elif opt in ('-o'):
-            fname_warp_final = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-w'):
+                fname_warp_list = arg
+            elif opt in ('-d'):
+                fname_dest = arg
+            elif opt in ('-o'):
+                fname_warp_final = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_warp_list == '' or fname_dest == '':
@@ -148,6 +150,6 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
     main()

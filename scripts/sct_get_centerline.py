@@ -59,10 +59,8 @@
 # TODO: subsample input data for faster processing (but might create problems of coordinate)-- alternatively, find appropriate schedule file without the 1mm at the end
 
 
-
-
 ## Default parameters
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -82,6 +80,7 @@ import sct_utils as sct
 import nibabel
 import numpy
 from sct_utils import fsloutput
+from sct_orientation import get_orientation, set_orientation
 
 
 #=======================================================================================================================
@@ -108,26 +107,28 @@ def main():
         fname_point = path_sct+'testing/data/errsm_23/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
         import matplotlib.pyplot as plt
-
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:p:g:r:k:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input param
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:p:g:r:k:')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_anat = arg
-        elif opt in ('-p'):
-            fname_point = arg
-        elif opt in ('-g'):
-            slice_gap = int(arg)
-        elif opt in ('-r'):
-            remove_tmp_files = int(arg)
-        elif opt in ('-k'):
-            gaussian_kernel = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_anat = arg
+            elif opt in ('-p'):
+                fname_point = arg
+            elif opt in ('-g'):
+                slice_gap = int(arg)
+            elif opt in ('-r'):
+                remove_tmp_files = int(arg)
+            elif opt in ('-k'):
+                gaussian_kernel = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_point == '':
@@ -147,8 +148,7 @@ def main():
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    status, output = sct.run('sct_orientation -i ' + fname_anat + ' -get')
-    input_image_orientation = output[-3:]
+    input_image_orientation = get_orientation(fname_anat)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -420,8 +420,8 @@ def main():
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
-    sct.run('sct_orientation -i tmp.point_orient_fit.nii -o tmp.point_orient_fit.nii -orientation '+input_image_orientation)
-    sct.run('sct_orientation -i tmp.mask_orient_fit.nii -o tmp.mask_orient_fit.nii -orientation '+input_image_orientation)
+    set_orientation('tmp.point_orient_fit.nii', input_image_orientation, 'tmp.point_orient_fit.nii')
+    set_orientation('tmp.mask_orient_fit.nii', input_image_orientation, 'tmp.mask_orient_fit.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
@@ -471,9 +471,9 @@ MANDATORY ARGUMENTS
   -p <point>       binary nifti file. Point in the spinal cord (e.g., created using fslview)
 
 OPTIONAL ARGUMENTS
-  -g <gap>         gap between slices for registration. Higher is faster but less robust. Default="""+str(param.gap)+"""
-  -k <kernel>      kernel size for gaussian mask. Higher is more robust but less accurate. Default="""+str(param.gaussian_kernel)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -g <gap>         gap between slices for registration. Higher is faster but less robust. Default="""+str(param_default.gap)+"""
+  -k <kernel>      kernel size for gaussian mask. Higher is more robust but less accurate. Default="""+str(param_default.gaussian_kernel)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message.
 
 EXAMPLE
@@ -486,7 +486,8 @@ EXAMPLE
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
 
