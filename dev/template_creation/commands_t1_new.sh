@@ -189,4 +189,33 @@ sct_create_cross.py -i MLL_t1_crop_straight_crop.nii.gz -x 55 -y 161
 sct_push_into_template_space.py -i MLL_t1_crop_straight_crop.nii.gz -n landmark_native.nii.gz 
 
 
-
+# TR
+cd marseille_tr
+mkdir t1
+cd t1
+# convert to nii
+dcm2nii -o . -r N /Volumes/data_shared/marseille/TR/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5/original-primary-m-norm-dis2d-comp-sp-composed_e01_*.dcm
+# change file name
+mv *.nii.gz t1.nii.gz
+# create mask of spinal cord on T2 image (will be used for registration)
+sct_create_mask -i ../t2/t2_RPI_crop.nii.gz -m centerline,../t2/full_centerline.nii.gz -s 50 -f cylinder -o ../t2/mask_spinalcord.nii.gz
+# register to T1 to T2: RIGID
+sct_ANTSUseLandmarkImagesToGetAffineTransform ../t2/labels_t2_RPI_crop_PMJ-L1.nii.gz labels_t1_PMJ-L1.nii.gz rigid t1_to_t2.txt
+sct_apply_transfo -i t1.nii.gz -d ../t2/t2_RPI_crop.nii.gz -w t1_to_t2.txt -o t1_regAffine.nii.gz
+# make labels along T1 (every z=50) and then generate centerline
+# --> labels_t1_centerline.nii.gz
+sct_generate_centerline.py -i labels_t1_centerline.nii.gz -o t1_centerline.nii.gz
+# register to T1 to T2: NON-RIGID
+sct_register_multimodal -i t1_regAffine.nii.gz -d ../t2/t2_RPI_crop.nii.gz -s t1_centerline.nii.gz -t ../t2/full_centerline.nii.gz -p 0,SyN,0.5,MeanSquares -z 0 -o t1_regAffineWarp.nii.gz
+# straighten t1
+sct_apply_transfo -i t1_regAffineWarp.nii.gz -d ../t2/t2_RPI_crop_straight.nii.gz -w ../t2/warp_curve2straight.nii.gz -o t1_regAffineWarp_straight.nii.gz
+# crop t1
+sct_crop_image -i t1_regAffineWarp_straight.nii.gz -o t1_regAffineWarp_straight_crop.nii.gz -dim 2 -start 29 -end 552
+# push t1 straight into template space
+sct_apply_transfo -i t1_regAffineWarp_straight_crop.nii.gz -o t1_regAffineWarp_straight_crop_to_template.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape.nii.gz -w ../t2/native2temp.txt -p spline
+# copy centerline
+cp ../t2/centerline_straight_crop_2temp_aligned.nii.gz .
+# normalize intensity within spinal cord
+sct_normalize.py -i t1_regAffineWarp_straight_crop_to_template.nii.gz -c centerline_straight_crop_2temp_aligned.nii.gz
+#
+# PROBLEM!!! little shift between t1 and t2.  NEED TO FIX THAT.
