@@ -520,9 +520,9 @@ sct_apply_transfo -i t1_regAffineWarp.nii.gz -d ../t2/t2_RPI_crop_straight.nii.g
 sct_crop_image -i t1_regAffineWarp_straight.nii.gz -o t1_regAffineWarp_straight_crop.nii.gz -dim 2 -start 29 -end 552
 # push t1 straight into template space
 sct_apply_transfo -i t1_regAffineWarp_straight_crop.nii.gz -o t1_regAffineWarp_straight_crop_to_template.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape.nii.gz -w ../t2/native2temp.txt -p spline
+# align to vertebrae
+sct_apply_transfo -i t1_regAffineWarp_straight_crop_to_template.nii.gz -o t1_regAffineWarp_straight_crop_to_template_aligned.nii.gz -d ${SCT_DIR}/dev/template_creation/template_shape-mask.nii.gz -w ../t2/n2t.txt -p spline
 # copy centerline
 cp ../t2/centerline_straight_crop_2temp_aligned.nii.gz .
 # normalize intensity within spinal cord
-sct_normalize.py -i t1_regAffineWarp_straight_crop_to_template.nii.gz -c centerline_straight_crop_2temp_aligned.nii.gz
-#
-# PROBLEM!!! little shift between t1 and t2.  NEED TO FIX THAT.
+sct_normalize.py -i t1_regAffineWarp_straight_crop_to_template_aligned.nii.gz -c centerline_straight_crop_2temp_aligned.nii.gz
