@@ -7,7 +7,7 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 - [Installation](https://sourceforge.net/p/spinalcordtoolbox/wiki/installation/)
 - [List of tools](http://sourceforge.net/p/spinalcordtoolbox/wiki/tools/)
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
-
+- [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
 ## License
 
@@ -33,7 +33,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Changes
-
-List of changes [here](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
