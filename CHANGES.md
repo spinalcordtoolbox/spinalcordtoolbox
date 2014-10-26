@@ -8,12 +8,21 @@ XXX
 - NEW: sct_convert_mnc2nii
 - NEW: sct_create_mask: create mask of different shapes (cylinder, box, gaussian). Useful for moco.
 - NEW: sct_fmri_moco: motion correction function for fMRI data. Uses regularization along z.
+- NEW: sct_compute_mtr: compute MTR
+- NEW: sct_otsu: OTSU segmentation (usefull for DWI data)
+- NEW: sct_resample: quick upsample/downsample 3D or 4D data
+- NEW: sct_segment_greymatter: function to segment the grey matter by warping that one from the atlas
+- OPT: sct_orientation can now be applied to 4d data
+- OPT: sct_register_multimodal now using the new antsSliceReg method that regularizes along z.
 - OPT: new version of the white matter atlas: more accurate, deformation accounting for internal structure (use BSplineSyN instead of SyN).
-- OPT: sct_dmri_moco now using ANTs for more robustness and better spline interpolation.
+- OPT: sct_dmri_moco now using the new antsSliceReg method that regularizes along z.
 - OPT: removed all .py extensions for callable functions (created links)
 - INST: now possible to specify installation path for the toolbox
+- INST: conda dependences are now automatically installed by the installer.
 - INST: added pillow (fixed issue #117)
+- INST: "getting started" now provided via example commands in batch_processing.sh
 - REF: sct_straighten_spinalcord (fixed issues #56, #116)
+- TEST: major changes on the testing framework for better modularity with Travis. Now using separate small dataset.
 
 1.0.3 (2014-07-30)
 
