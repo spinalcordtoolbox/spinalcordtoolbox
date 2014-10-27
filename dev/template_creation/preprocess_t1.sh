@@ -483,15 +483,36 @@ sct_push_into_template_space.py -i  MD_t1_crop_straight_crop.nii.gz -n landmark_
 
 #MLL 
 
-sct_crop_image -i MLL_t1.nii.gz -o MLL_t1_crop.nii.gz -dim 2 -start 12 -end 542
+sct_crop_image -i MLL_t1.nii.gz -o MLL_t1.nii.gz -dim 1 -start 12 -end 251 
+
+sct_propseg -i MLL_t1_crop.nii.gz -t t1 -centerline-binary -init-mask init.nii.gz
+
+sct_erase_centerline.py -i MLL_t1_crop_centerline.nii.gz -s 0 -e 63
+
+sct_erase_centerline.py -i centerline_erased.nii.gz -s 467 -e 532
+
+sct_generate_centerline.py -i up.nii.gz -o cup.nii.gz
+
+sct_generate_centerline.py -i down.nii.gz -o cdown.nii.gz
 
 sct_straighten_spinalcord -i MLL_t1_crop.nii.gz -c full_centerline.nii.gz 
 
-sct_crop_image -i MLL_t1_crop_straight.nii.gz -o MLL_t1_crop_straight_crop.nii.gz -dim 2 -start 29 -end 568
+WarpImageMultiTransform 3 full_centerline.nii.gz centerline_straight.nii.gz -R MLL_t1_crop_straight.nii.gz warp_curve2straight.nii.gz 
 
-sct_create_cross.py -i MLL_t1_crop_straight_crop.nii.gz -x 55 -y 161
+sct_detect_extrema.py -i centerline_straight.nii.gz
+
+sct_crop_image -i MLL_t1_crop_straight.nii.gz -o MLL_t1_crop_straight_crop.nii.gz -dim 2 -start 30 -end 568
+
+sct_create_cross.py -i MLL_t1_crop_straight_crop.nii.gz -x 116 -y 152
 
 sct_push_into_template_space.py -i MLL_t1_crop_straight_crop.nii.gz -n landmark_native.nii.gz 
+
+sct_crop_image -i centerline_straight.nii.gz -o centerline_straight_crop.nii.gz -dim 2 -start 30 -end 568
+
+sct_create_cross.py -i centerline_straight_crop.nii.gz -x 116 -y 152
+
+sct_push_into_template_space.py -i centerline_straight_crop.nii.gz -n landmark_native.nii.gz 
+
 
 
 

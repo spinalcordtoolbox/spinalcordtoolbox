@@ -14,7 +14,7 @@ mkdir t2_output
 
 SUBJECTS_MTL="errsm_02 errsm_04 errsm_05 errsm_09 errsm_10 errsm_11 errsm_12 errsm_13 errsm_14 errsm_16 errsm_17 errsm_18 errsm_20 errsm_21 errsm_22 errsm_23 errsm_24 errsm_25 errsm_26 errsm_30 errsm_31 errsm_32 errsm_33"
 
-SUBJECTS_MAR="1 7 ALT JD JW MD MLL MT T020b T047 TR TT VC VG VP"
+SUBJECTS_MAR="1 7 ALT JD JW MD MLL MT T047 VC VG VP"
 
 cd montreal/
 
@@ -54,7 +54,11 @@ for i in $SUBJECTS_MTL; do
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t2_output/${i}_preprocessed.nii.gz
 
-	cd ../../..
+    cd ..
+
+    rm -rf second_step
+
+	cd ../..
 
 done
 
@@ -95,12 +99,17 @@ for i in $SUBJECTS_MAR; do
 	echo "moving file"
 	mv ${i}_aligned_normalized.nii.gz ../../../../t2_output/${i}_preprocessed.nii.gz
 
-	cd ../../..
+    cd ..
+
+    rm -rf second_step
+
+
+	cd ../..
 
 
 done
 
-# cd /home/django/jtouati/data/template_data/new_data
+# cd /home/django/jtouati/data/template_data
 #
 #
 # if [ -e "t1_output" ];then
@@ -182,5 +191,5 @@ done
 # done
 #
 #
-#
-#
+
+

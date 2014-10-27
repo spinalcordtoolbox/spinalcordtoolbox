@@ -100,7 +100,7 @@ def main():
     nz_nonz = len(z_centerline)
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    print z_centerline,nz_nonz,len(x_centerline)
+    # print z_centerline,nz_nonz,len(x_centerline)
     print '\nGet center of mass of the centerline ...'
     for iz in xrange(len(z_centerline)):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
