@@ -136,14 +136,24 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'extract_centerline':
-        extract_centerline(fname_segmentation,remove_temp_files)
+        fname_output = extract_centerline(fname_segmentation,remove_temp_files)
+        # to view results
+        sct.printv('\nDone! To view results, type:', param.verbose)
+        sct.printv('fslview '+fname_output+' &', param.verbose, 'code')
 
     if name_process == 'compute_csa':
         compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output)
 
+        sct.printv('\nDone! To view results, type:', param.verbose)
+        sct.printv('See '+param.fname_csa+' file.')
+        if (volume_output):
+            sct.printv('fslview '+name_output+' &', param.verbose, 'code')
+
     # display elapsed time
     elapsed_time = time.time() - start_time
     print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+
+    
 
     # End of Main
 
@@ -226,6 +236,8 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     if remove_temp_files:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
+
+    return file_data+'_centerline'+ext_data
 
 
 # compute_csa
