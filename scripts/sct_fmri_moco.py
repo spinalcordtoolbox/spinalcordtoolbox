@@ -31,14 +31,14 @@ class Param:
         self.mat_final = ''
         self.num_target = 0  # target volume (or group) for moco
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 1  # number of consecutive images averaged
         self.remove_tmp_files = 1
         self.verbose = 1
         self.suffix = '_moco'
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MI'] # metric: MI,MeanSquares
+                      'MeanSquares'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.min_norm = 0.001
         self.iterative_averaging = 1  # iteratively average target image for more robust moco
