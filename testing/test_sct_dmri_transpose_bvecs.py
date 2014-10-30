@@ -18,7 +18,7 @@ import commands
 def test(data_path):
 
     # parameters
-    folder_data = ['dmri']
+    folder_data = ['dmri/']
     file_data = ['bvecs.txt']
 
     # define command
