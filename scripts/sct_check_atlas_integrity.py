@@ -282,6 +282,8 @@ USAGE
     -g [0,1]              float, gray matter image threshold. Default="""+str(param_default.threshold_GM)+"""
     -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
     -h                    help. Show this message.
+    EXAMPLE
+        """+os.path.basename(__file__)+""" -i ./template/atlas/ -s t2_seg.nii.gz
     """
     # exit program
     sys.exit(2)
