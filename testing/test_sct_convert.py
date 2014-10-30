@@ -22,7 +22,7 @@ def test(data_path):
     file_data = ['t2.nii.gz']
 
     # define command (currently only check the gz uncompressor)
-    cmd = 'sct_convert -i ' + data_path + folder_data[0] + file_data[0]
+    cmd = 'sct_convert -i ' + data_path + folder_data[0] + file_data[0] + ' -o data.nii'
 
     #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)

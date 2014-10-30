@@ -87,10 +87,13 @@ def main():
         path_in, file_in, ext_in = sct.extract_fname(fname_data)
         path_out, file_out, ext_out = sct.extract_fname(fname_out)
 
+    # if nii.gz, uncompress
+    remove_file_later = 0
     if ext_in=='.nii.gz':
         print "Uncompressing input file..."
         sct.run("gunzip -c "+fname_data+" >"+path_in+file_in+".nii")
         ext_in='.nii'
+        remove_file_later = 1
         fname_data=path_in+file_in+ext_in
 
     if ext_in=='.nii' and ext_out=='.mnc':
@@ -101,6 +104,10 @@ def main():
         nii2volviewer(fname_data,fname_out)
     elif ext_in=='.mnc' and ext_out=='.header':
         mnc2volviewer(fname_data,fname_out)
+
+    # remove uncompressed nifti file
+    if remove_file_later:
+        os.remove(fname_data)
 
 
 # Convert file from nifti to minc
