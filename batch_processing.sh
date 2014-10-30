@@ -99,9 +99,8 @@ cd ..
 # mt
 # ----------
 cd mt
-# create initialization points on mt1 to help segmentation. Three points in middle of the cord.
-echo $'-8.50 0.84 24.17 1 \n-8.84 0.41 7.14 1 \n-8.34 0 -9.87 1' > landmarks.txt
-sct_c3d mt1.nii.gz -scale 0 -landmarks-to-spheres landmarks.txt 0.5 -o mt1_init.nii.gz
+# create points along the spinal cord mt1 to help segmentation.
+sct_label_utils -i mt1.nii.gz -t create -x 100,90,4,1:102,93,2,1:101,91,0,1 -o mt1_init.nii.gz
 # segment mt1
 sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -detect-radius 5 -max-deformation 5
 # check results
