@@ -17,6 +17,7 @@ XXX
 - OPT: new version of the white matter atlas: more accurate, deformation accounting for internal structure (use BSplineSyN instead of SyN).
 - OPT: sct_dmri_moco now using the new antsSliceReg method that regularizes along z.
 - OPT: removed all .py extensions for callable functions (created links)
+- OPT: sct_label_utils: now possible to create labels. Also added other useful features.
 - INST: now possible to specify installation path for the toolbox
 - INST: conda dependences are now automatically installed by the installer.
 - INST: added pillow (fixed issue #117)
