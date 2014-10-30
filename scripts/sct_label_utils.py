@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Register anatomical image to the template using the spinal cord centerline/segmentation.
-# we assume here that we have a RPI orientation, where Z axis is inferior-superior direction
+# Create, remove or display labels.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2014-06-03
+# Modified: 2014-10-29
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -27,7 +26,10 @@ import numpy as np
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug               = 0
+        self.debug = 0
+        self.fname_label_output = 'labels.nii.gz'
+        self.labels = []
+        self.verbose = 1
 
 
 #=======================================================================================================================
@@ -37,12 +39,12 @@ def main():
 
     # Initialization
     fname_label = ''
-    fname_label_output = ''
+    fname_label_output = param.fname_label_output
     cross_radius = 5
-    dilate = False;
+    dilate = False
     fname_ref = ''
     type_process = ''
-    output_level = 0 # 0 for image with point ; 1 for txt file
+    output_level = 0  # 0: image ; 1: txt file
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -50,18 +52,16 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_label = path_sct+'/testing/data/errsm_23/t2/landmarks_rpi.nii.gz'
-        fname_label_output = 'landmarks_rpi_output.nii.gz'
-        type_process = 'cross'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_label = path_sct_data+'/mt/mt1.nii.gz'
+        param.labels = '5,5,2,1:5,7,2,3'
+        type_process = 'create'
         cross_radius = 5
         dilate = True
     else:
-        # extract path of the script
-        path_script = os.path.dirname(__file__)+'/'
-
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:o:c:r:t:l:d')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:c:r:t:l:dx:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -84,11 +84,13 @@ def main():
                 type_process = arg
             elif opt in ('-l'):
                 output_level = int(arg)
+            elif opt in '-x':
+                param.labels = arg
 
     # display usage if a mandatory argument is not provided
-    if fname_label == '':
-        usage()
-        
+    if fname_label == '' or type_process == '':
+        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
+
     # check existence of input files
     sct.check_file_exist(fname_label)
     if fname_ref != '':
@@ -104,12 +106,10 @@ def main():
     data = img.get_data()
     hdr = img.get_header()
 
-    #print '\nGet dimensions of input centerline...'
+    # Get dimensions
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_label)
-    #print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-    #print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
-
+    # switch to process
     if type_process == 'cross':
         data = cross(data, cross_radius, fname_ref, dilate, px, py)
     elif type_process == 'remove':
@@ -130,7 +130,11 @@ def main():
     elif type_process == 'display-voxel':
         display_voxel(data)
         output_level = 1
+    elif type_process == 'create':
+        data = create_label(data)
+        output_level = 0
 
+    # write nifti file
     if (output_level == 0):
         hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32.
         print '\nWrite NIFTI volumes...'
@@ -140,7 +144,8 @@ def main():
         sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
 
 
-#=======================================================================================================================
+# cross
+# ==========================================================================================
 def cross(data, cross_radius, fname_ref, dilate, px, py):
     X, Y, Z = (data > 0).nonzero()
     a = len(X)
@@ -222,6 +227,28 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
                 data[X[i]-d4-1][Y[i]-1][Z[i]] = data[X[i]-d4][Y[i]-1][Z[i]] = data[X[i]-d4+1][Y[i]-1][Z[i]] = data[X[i]-d4+1][Y[i]][Z[i]] = data[X[i]-d4+1][Y[i]+1][Z[i]] = data[X[i]-d4][Y[i]+1][Z[i]] = data[X[i]-d4-1][Y[i]+1][Z[i]] = data[X[i]-d4-1][Y[i]][Z[i]] = data[X[i]-d4][Y[i]][Z[i]]
 
     return data
+
+
+# create_label
+#=======================================================================================================================
+def create_label(data):
+
+    # create labels volume (all zeros)
+    data_label = data*0
+
+    # parse argument for labels
+    list_labels = param.labels.split(':')  # parse with space
+
+    # loop across labels
+    for i in range(0, len(list_labels)):
+        # get labels coordinates and value
+        x, y, z, v = list_labels[i].split(',')
+        # display info
+        sct.printv('Label #'+str(i)+': '+str(x)+','+str(y)+','+str(z)+' --> '+str(v), 1)
+        # assing value
+        data_label[x, y, z] = int(v)
+
+    return data_label
 
 
 #=======================================================================================================================
@@ -445,23 +472,44 @@ def display_voxel(data):
 # usage
 #=======================================================================================================================
 def usage():
-    print 'USAGE: \n' \
-        '  sct_label_utils -i <inputdata> -o <outputdata> -c <crossradius>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i           input volume.\n' \
-        '  -o           output volume.\n' \
-        '  -t           process: cross, remove, display-voxel\n' \
-        '  -c           cross radius in mm (default=5mm).\n' \
-        '  -r           reference image for label removing' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -h           help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  sct_label_utils -i t2.nii.gz -c 5\n'
+    print """
+"""+os.path.basename(__file__)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+
+DESCRIPTION
+  Utility function for labels.
+
+USAGE
+  """+os.path.basename(__file__)+""" -i <data> -t process <process>
+
+MANDATORY ARGUMENTS
+  -i <data>        labels or image to create labels on. Must be 3D.
+  -t <process>     process:
+                     cross: create a cross. Must use flag "-c"
+                     remove: remove labels. Must use flag "-r".
+                     display-voxel: display all labels in file
+                     create: create labels. Must use flag "-l" to list labels.
+
+OPTIONAL ARGUMENTS
+  -l <x,y,z,v>     labels. Use ":" if you have multiple labels.
+                     x: x-coordinates
+                     y: y-coordinates
+                     z: z-coordinates
+                     v: value of label
+  -o <output>      output volume
+  -r <volume>      reference volume for label removing.
+  -c <radius>      cross radius in mm (default=5mm).
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -d               dilate.
+  -h               help. Show this message
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i t2.nii.gz -c 5\n"""
+
+    # exit program
     sys.exit(2)
-    
+
     
 #=======================================================================================================================
 # Start program
@@ -469,5 +517,6 @@ def usage():
 if __name__ == "__main__":
     # initialize parameters
     param = Param()
+    param_default = Param()
     # call main function
     main()
