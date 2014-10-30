@@ -62,7 +62,7 @@ class Param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MI'] # metric: MI,MeanSquares
+                      'MeanSquares'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''

@@ -230,7 +230,7 @@ if mask
     fname_mask = [output_path 'tmp_moco.gaussian_mask_in'];
     if exist('ref_weight')
         if slicewise
-            cmd=['fslsplit ' ref_weight ' ' fname_mask ' -z']
+            cmd=['fslsplit ' ref_weight ' ' fname_mask ' -z'];
             j_disp(fname_log,['>> ',cmd]);
             [status result] = unix(cmd);
             if status, error(result); end
@@ -300,6 +300,21 @@ for indice_index = 1:length(param.index)
         [status result] = unix(cmd);
         if status, error(result); end
         
+        
+        
+        % If slice regulation
+        if strcmp(todo,'estimate') && strcmp(program,'ANTS')
+            j_disp(fname_log,['Process with ANTS'])
+            mat_tmp=[folder_mat,'mat.T',num2str(iT),'_tmp']; 
+            out= [folder_mat 'unused.nii'];
+            cmd = ['sct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
+            j_disp(fname_log,['>> ',cmd]);
+            [status result] = unix(cmd);
+            unix(['rm ' out ' ' mat_tmp 'W* ' mat_tmp 'I*'])
+            mat_tmp=[mat_tmp 'TxTy_poly.csv'];
+        end
+        
+        
         % loop on Z
         j_disp(fname_log,['Loop on Z...'])
         for iZ = 1:nz
@@ -312,12 +327,27 @@ for indice_index = 1:length(param.index)
             switch(todo)
                 
                 case 'estimate'
-                    
                     switch (program)
+                        case 'ANTS'
+                            j_disp(fname_log,['convert ANTS matrix to FSL'])
+                            % Open the text file.
+                            fileID = fopen(mat_tmp,'r');
+                            mocoArray = textscan(fileID, '%f%f%[^\n\r]', 'Delimiter', ',', 'HeaderLines' ,1, 'ReturnOnError', false);
+                            fclose(fileID);
+                            % Create transfo matrix
+                            M=diag([1 1 1 1]); 
+                            M(1,4)=-mocoArray{:, 1}(iZ);
+                            M(2,4)=mocoArray{:, 2}(iZ);
+                            
+                            % save to FSL matrix file
+                            sct_tools_matrix2txt(M,fname_mat{iT,iZ});
+                            j_disp(fname_log,[fname_mat{iT,iZ} ' created']);
+                            
+
                         case 'FLIRT'
                             j_disp(fname_log,['Process with FLIRT'])
                             cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -omat ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -cost ',cost_function_flirt,fslmask{iZ},' ',flirt_options];
-                            
+                            j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
                         case 'SPM'
                             j_disp(fname_log,['Process with SPM'])
                             %put ".nii" extension on files name
@@ -352,6 +382,11 @@ for indice_index = 1:length(param.index)
                         case 'FLIRT'
                             j_disp(fname_log,['Process with FLIRT'])
                             cmd = [fsloutput,'flirt -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -applyxfm -init ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' ',flirt_options];
+                             j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+                        case 'ANTS'
+                            j_disp(fname_log,['Process with FLIRT'])
+                            cmd = [fsloutput,'flirt -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -applyxfm -init ',fname_mat{iT,iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' ',flirt_options];
+                             j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
                         case 'SPM'
                             j_disp(fname_log,['Process with SPM'])
                             fname_data_splitT_splitZ_num_ext{iT,iZ}=[fname_data_splitT_splitZ_num{iT,iZ},'.nii'];
@@ -377,6 +412,7 @@ for indice_index = 1:length(param.index)
                         case 'FLIRT'
                             j_disp(fname_log,['Process with FLIRT'])
                             cmd = [fsloutput,'flirt -schedule ', schedule_file, ' -in ',fname_data_splitT_splitZ_num{iT,iZ},' -ref ',fname_data_ref_splitZ_num{iZ},' -out ',fname_data_splitT_splitZ_moco_num{iT,iZ},' -omat ',fname_mat{iT,iZ},' -cost ', cost_function_flirt,fslmask{iZ},' ',flirt_options];
+                             j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
                         case 'SPM'
                             j_disp(fname_log,['Process with SPM'])
                             % put ".nii" extension on files name
@@ -417,7 +453,7 @@ for indice_index = 1:length(param.index)
                     
             end
             
-            if strcmp(program , 'FLIRT')
+            if strcmp(program , 'FLIRT') || strcmp(program , 'ANTS')
                 j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
             end
             
@@ -567,10 +603,7 @@ for indice_index = 1:length(param.index)
                         spm_reslice2({fname_target_ext;fname_data_splitT_num_ext{iT}},options_spm_reslice);
                 end
         end
-        
-        if strcmp(program , 'FLIRT')
-            j_disp(fname_log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-        end
+       
         
         % Check transformation absurdity
         M_transfo = textread(fname_mat{iT});
