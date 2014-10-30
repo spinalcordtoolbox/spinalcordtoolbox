@@ -69,7 +69,7 @@ def main():
                 param.verbose = int(arg)
 
     # run main program
-    get_or_set_orientation(param)
+    get_or_set_orientation()
 
 
 # get_or_set_orientation
