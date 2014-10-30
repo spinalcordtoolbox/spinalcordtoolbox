@@ -492,7 +492,7 @@ MANDATORY ARGUMENTS
                      create: create labels. Must use flag "-l" to list labels.
 
 OPTIONAL ARGUMENTS
-  -l <x,y,z,v>     labels. Use ":" if you have multiple labels.
+  -x <x,y,z,v>     labels. Use ":" if you have multiple labels.
                      x: x-coordinates
                      y: y-coordinates
                      z: z-coordinates
