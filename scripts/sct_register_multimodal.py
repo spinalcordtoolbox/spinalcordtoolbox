@@ -222,15 +222,15 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # Put source into destination space using header
-    sct.printv('\nPut source into destination space using header...', verbose)
-    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
-    if use_segmentation:
-        sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii.gz,src_seg.nii.gz,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_seg_regAffine.nii.gz] -n NearestNeighbor')
-
     # Pad the destination image (because ants doesn't deform the extremities)
     sct.printv('\nPad src and destination volume (because ants doesn''t deform the extremities)...', verbose)
     pad_image('dest.nii', 'dest_pad.nii', padding)
+
+    # Put source into destination space using header
+    sct.printv('\nPut source into destination space using header...', verbose)
+    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
+    if use_segmentation:
+        sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii.gz,src_seg.nii.gz,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_seg_regAffine.nii.gz] -n NearestNeighbor')
 
     # don't use spinal cord segmentation
     if use_segmentation == 0:
