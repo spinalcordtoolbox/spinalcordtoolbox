@@ -56,7 +56,7 @@ def main():
             usage()
         for opt, arg in opts:
             if opt == '-h':
-                usage(param)
+                usage()
             elif opt in '-i':
                 param.fname_data = arg
             elif opt in '-o':
