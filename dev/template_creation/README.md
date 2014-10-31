@@ -90,7 +90,7 @@ showq –u <username>
 qsub submit.sh
 
 Example : 
-
+~~~
 #!/bin/bash
 #PBS -l nodes=1:ppn=16,pmem=31700m,walltime=48:00:00
 #PBS -A rrp-355-aa
@@ -98,7 +98,7 @@ Example :
 #PBS -e error.txt
 #PBS -V
 #PBS -N build_template
-
+~~~
 cd /gs/project/rrp-355-aa/final_data_T2
 
 bash buildtemplateparallel.sh -d 3 -o AVT -n 0 -c 2 -j 16 *.nii.gz
@@ -128,6 +128,8 @@ buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
 ~~~
 - N.B. if we do not want the normalization, you need to put: 0 at line 918
 - Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
+
+CAREFUL : be sure to set the right path to waitForSGEQjobs.pl line 1205
 
 
 OUTPUT OT TEMPLATE CREATION
