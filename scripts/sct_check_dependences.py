@@ -121,8 +121,18 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    # check pillow
+    print_line("Check if pillow is installed ")
+    try:
+        import PIL
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  pillow is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
+        install_software = 1
+
     # check numpy
-    print_line('Check if numpy is installed ................... ')
+    print_line('Check if numpy is installed ')
     try:
         import numpy
         print_ok()
@@ -132,7 +142,7 @@ def main():
         install_software = 1
 
     # check scipy
-    print_line('Check if scipy is installed ................... ')
+    print_line('Check if scipy is installed ')
     try:
         import scipy
         print_ok()
@@ -142,7 +152,7 @@ def main():
         install_software = 1
 
     # check sympy
-    print_line('Check if sympy is installed ................... ')
+    print_line('Check if sympy is installed ')
     try:
         import sympy
         print_ok()
@@ -152,7 +162,7 @@ def main():
         install_software = 1
 
     # check matplotlib
-    print_line('Check if matplotlib is installed .............. ')
+    print_line('Check if matplotlib is installed ')
     try:
         import matplotlib
         print_ok()
@@ -162,7 +172,7 @@ def main():
         install_software = 1
 
     # check nibabel
-    print_line('Check if nibabel is installed ................. ')
+    print_line('Check if nibabel is installed ')
     try:
         import nibabel
         print_ok()
@@ -172,7 +182,7 @@ def main():
         install_software = 1
 
     # check if FSL is declared
-    print_line('Check if FSL is declared ...................... ')
+    print_line('Check if FSL is declared ')
     cmd = 'which fsl'
     status, output = commands.getstatusoutput(cmd)
 #    status, output = commands.getstatusoutput(cmd)
@@ -202,7 +212,7 @@ def main():
 
     # check if FSL is installed
     if not fsl_is_working:
-        print_line('Check if FSL is installed ..................... ')
+        print_line('Check if FSL is installed ')
         # check first under /usr for faster search
         (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
         if output:
@@ -223,7 +233,7 @@ def main():
                 install_software = 1
 
     # check ANTs
-    print_line('Check which ANTs is running .................., ')
+    print_line('Check which ANTs is running ')
     # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
     cmd = 'which sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
@@ -240,7 +250,7 @@ def main():
         print (status, output), '\n'
 
     # check if ANTs is compatible with OS
-    print_line('Check ANTs compatibility with OS .............. ')
+    print_line('Check ANTs compatibility with OS ')
     cmd = 'sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
@@ -253,7 +263,7 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d
-    print_line('Check which sct_c3d is running ................ ')
+    print_line('Check which sct_c3d is running ')
     # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
     status, output = commands.getstatusoutput('which sct_c3d')
     if output:
@@ -268,7 +278,7 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d compatibility with OS
-    print_line('Check sct_c3d compatibility with OS ........... ')
+    print_line('Check sct_c3d compatibility with OS ')
     (status, output) = commands.getstatusoutput('sct_c3d -h')
     if status in [0, 256]:
         print_ok()
@@ -279,7 +289,7 @@ def main():
         print (status, output), '\n'
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with OS ........... ')
+    print_line('Check PropSeg compatibility with OS ')
     (status, output) = commands.getstatusoutput('sct_propseg')
     if status in [0, 256]:
         print_ok()
@@ -290,7 +300,7 @@ def main():
         print (status, output), '\n'
 
     # Check ANTs integrity
-    print_line('Check integrity of ANTs output ................ ')
+    print_line('Check integrity of ANTs output ')
     (status, output) = commands.getstatusoutput('isct_test_ants -v 0')
     if status in [0]:
         print_ok()
@@ -380,12 +390,21 @@ def main():
     #    print
     
 
-# Print without new carriage return
+# print without carriage return
 # ==========================================================================================
 def print_line(string):
     import sys
-    sys.stdout.write(string)
+    sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
+
+
+# fill line with dots
+# ==========================================================================================
+def make_dot_lines(string):
+    if len(string) < 52:
+        dot_lines = '.'*(52 - len(string))
+        return dot_lines
+    else: return ''
 
 
 def print_ok():
