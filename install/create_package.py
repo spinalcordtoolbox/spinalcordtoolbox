@@ -76,8 +76,6 @@ sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 sct.run('cp -r ../bin/sct_* '+folder_sct+'spinalcordtoolbox/bin/')
-sct.run('cp -r ../bin/isct_* '+folder_sct+'spinalcordtoolbox/bin/')
-sct.run('cp -r ../bin/msct_* '+folder_sct+'spinalcordtoolbox/bin/')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
 elif OSname == 'linux':
