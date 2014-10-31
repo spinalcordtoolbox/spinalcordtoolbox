@@ -77,6 +77,7 @@ sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
 sct.run('cp -r ../bin/sct_* '+folder_sct+'spinalcordtoolbox/bin/')
+sct.run('cp -r ../bin/isct_* '+folder_sct+'spinalcordtoolbox/bin/')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
 elif OSname == 'linux':
@@ -88,34 +89,6 @@ sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 # testing
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
 sct.run('cp ../testing/*.py '+folder_sct+'spinalcordtoolbox/testing/')
-#
-# # testing - sct_propseg
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_propseg')
-# sct.run('cp ../testing/sct_propseg/test_sct_propseg.sh '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
-# sct.run('cp -r ../testing/sct_propseg/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_propseg/')
-#
-# # testing - sct_register_to_template
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_register_to_template')
-# sct.run('cp ../testing/sct_register_to_template/test_sct_register_to_template.sh '+folder_sct+'spinalcordtoolbox/testing/sct_register_to_template/')
-#
-# # testing - sct_register_multimodal
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal')
-# sct.run('cp ../testing/sct_register_multimodal/test_sct_register_multimodal.sh '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal/')
-# sct.run('cp -r ../testing/sct_register_multimodal/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal/')
-# sct.run('cp -r ../testing/sct_register_multimodal/check_integrity '+folder_sct+'spinalcordtoolbox/testing/sct_register_multimodal/')
-#
-# # testing - sct_warp_template
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template')
-# sct.run('cp ../testing/sct_warp_template/test_sct_warp_template.sh '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template/')
-# sct.run('cp -r ../testing/sct_warp_template/snapshots '+folder_sct+'spinalcordtoolbox/testing/sct_warp_template/')
-#
-# # testing - sct_extract_metric
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/sct_extract_metric')
-# sct.run('cp ../testing/sct_extract_metric/test_sct_extract_metric.sh '+folder_sct+'spinalcordtoolbox/testing/sct_extract_metric/')
-#
-# # testing - data
-# sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing/data')
-# sct.run('cp -r ../testing/data/errsm_23 '+folder_sct+'spinalcordtoolbox/testing/data/')
 
 # remove .DS_Store files
 sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
@@ -124,7 +97,7 @@ sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
 if OSname == 'osx':
     sct.run('find '+folder_sct+' -type d | xargs dot_clean -m')
 
-# remove pycharm files
+# remove python-related files
 sct.run('rm '+folder_sct+'spinalcordtoolbox/scripts/*.pyc')
 if os.path.exists(folder_sct+'spinalcordtoolbox/scripts/.idea'):
     sct.run('rm -rf '+folder_sct+'spinalcordtoolbox/scripts/.idea')
