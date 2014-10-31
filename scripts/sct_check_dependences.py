@@ -185,7 +185,6 @@ def main():
     print_line('Check if FSL is declared ')
     cmd = 'which fsl'
     status, output = commands.getstatusoutput(cmd)
-#    status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
         path_fsl = output[:-7]
@@ -198,17 +197,6 @@ def main():
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
-
-#    if complete_test:
-#        print '\n'+cmd+'\n'+str(status)+'\n'+path_sct+'\n'
-
-        # In a previous version we edited the bash_profile. We don't do that anymore because some users might have funky configurations.
-        # add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
-        #     'FSLDIR='+path_fsl+'\n' \
-        #     '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
-        #     'PATH=${FSLDIR}/bin:${PATH}\n' \
-        #     'export FSLDIR PATH')
-        # restart_terminal = 1
 
     # check if FSL is installed
     if not fsl_is_working:
@@ -319,75 +307,6 @@ def main():
         print "File generated: "+file_log+'\n'
 
     sys.exit(e + install_software)
-
-    # # check if ANTS is installed
-    # print_line('Check if ANTs is installed .................... ')
-    # (status, output) = commands.getstatusoutput('find /usr -name "sct_antsRegistration" -type f -print -quit 2>/dev/null')
-    # if output:
-    #     print_ok()
-    #     path_ants = os.path.dirname(output)
-    #     print '  '+path_ants
-    # else:
-    #     print_fail()
-    #     print '  ANTs is not installed! Follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/ants_installation/'
-    #     ants_is_installed = 0
-    #     install_software = 1
-    # 
-    # # check if ANTS is declared
-    # if ants_is_installed:
-    #     print_line('Check if ANTs is declared ..................... ')
-    #     (status, output) = commands.getstatusoutput('which sct_antsRegistration')
-    #     if output:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print '  ANTs is not declared! Modifying .bash_profile ...'
-    #         add_bash_profile('#ANTS (added on '+time.strftime("%Y-%m-%d")+')\n' \
-    #             'PATH=${PATH}:'+path_ants)
-    #         restart_terminal = 1
-
-    # # check if sct_c3d is installed
-    # print_line('Check if sct_c3d is installed ..................... ')
-    # output = ''
-    # if os_running == 'osx':
-    #     # in OSX, sct_c3d is typically installed under /Applications
-    #     (status, output) = commands.getstatusoutput('find /Applications -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if not output:
-    #     # check the typical /usr folder
-    #     (status, output) = commands.getstatusoutput('find /usr -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if not output:
-    #     # if still not found, check everywhere (takes a while)
-    #     (status, output) = commands.getstatusoutput('find / -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if output:
-    #     print_ok()
-    #     path_sct_c3d = os.path.dirname(output)
-    #     print '  '+path_sct_c3d
-    # else:
-    #     print_fail()
-    #     print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.sct_c3d'
-    #     sct_c3d_is_installed = 0
-    #     install_software = 1
-    # 
-    # # check if sct_c3d is declared
-    # if sct_c3d_is_installed:
-    #     print_line('Check if sct_c3d is declared ...................... ')
-    #     (status, output) = commands.getstatusoutput('which sct_c3d')
-    #     if output:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print '  sct_c3d is not declared! Modifying .bash_profile ...'
-    #         add_bash_profile('#sct_c3d (added on '+time.strftime("%Y-%m-%d")+')\n' \
-    #             'PATH=${PATH}:'+path_sct_c3d)
-    #         restart_terminal = 1
-    # 
-    #    if install_software:
-    #        print '\nDone! Please install the required software, then run this script again.'
-    #    elif restart_terminal:
-    #        print '\nDone! Please restart your Terminal for changes to take effect.'
-    #    else:
-    #        print '\nDone! Everything is in order :-)'
-    #    print
     
 
 # print without carriage return
