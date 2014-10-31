@@ -137,6 +137,7 @@ GR_iteration_X --> within this folder, the generated template is called: AVTtemp
 
 To find the final version of the template, go to the highest iteration.
 
+CAREFUL : be sure to set the right path to waitForSGEQjobs.pl line 1205
 
 
 
