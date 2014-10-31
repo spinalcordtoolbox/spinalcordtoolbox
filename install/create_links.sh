@@ -74,6 +74,11 @@ do
   $cmd
 done
 
+#removing sct_nurbs, sct_segment_graymatter & sct_utils links
+cmd="rm sct_nurbs sct_segment_graymatter sct_utils"
+$cmd
+
+
 suffix_sh='.sh'
 for script in *.sh
 do
