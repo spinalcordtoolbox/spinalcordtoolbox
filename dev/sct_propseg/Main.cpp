@@ -221,7 +221,7 @@ void help()
     cout << StrPad("  -max-area <number>",30) << StrPad("double, in mm^2, stop condition: maximum cross-sectional area, default is 120 mm^2",70,StrPad("",30)) << endl;
     cout << StrPad("  -max-deformation <number>",30) << StrPad("double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm",70,StrPad("",30)) << endl;
     cout << StrPad("  -min-contrast <number>",30) << StrPad("double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50",70,StrPad("",30)) << endl;
-	cout << StrPad("  -d <number>",30) << StrPad("double, trade-off between distance of most promising point and feature strength, default depend on the contrast",70,StrPad("",30)) << endl;
+	cout << StrPad("  -d <number>",30) << StrPad("double, trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",70,StrPad("",30)) << endl;
 	cout << endl;
 }
 
@@ -784,7 +784,7 @@ int main(int argc, char *argv[])
         SpinalCord* meshOutputFinal = prop_CSF->getOutputFinal();
         if (output_mesh) meshOutputFinal->save(outputFilenameMeshCSF,initialImage);
         if (output_cross) meshOutputFinal->computeCrossSectionalArea(true,outputFilenameAreasCSF,true,image3DGrad);
-        image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinaryCSF,orientationFilter.getInitialImageOrientation());
+        image3DGrad->TransformMeshToBinaryImage(meshOutputFinal,outputFilenameBinaryCSF,orientationFilter.getInitialImageOrientation(),true);
         
         if (verbose) {
             double lengthPropagation = meshOutputFinal->getLength();
@@ -793,7 +793,10 @@ int main(int argc, char *argv[])
         delete prop_CSF;
     }
     
-    
+    if (verbose) {
+        cout << endl << "Segmentation finished. To view results, type:" << endl;
+        cout << "fslview " << inputFilename << " " << outputFilenameBinary << " &" << endl;
+    }
 	
 	delete image3DGrad, prop;
     return EXIT_SUCCESS;
