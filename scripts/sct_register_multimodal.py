@@ -256,7 +256,7 @@ def main():
                    '--convergence 20x'+numberIterations+' '
                    '--shrink-factors 2x1 '
                    '--smoothing-sigmas 2x0mm '
-                   '--Restrict-Deformation 1x1x0 '
+                   '--restrict-deformation 1x1x0 '
                    '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsSliceReg add "0Warp"
                    '--interpolation BSpline[3] '
                    +masking)
@@ -297,7 +297,7 @@ def main():
                '--convergence '+numberIterations+' '
                '--shrink-factors 1 '
                '--smoothing-sigmas 0mm '
-               '--Restrict-Deformation 1x1x0 '
+               '--restrict-deformation 1x1x0 '
                '--output [stage2,src_regAffineWarp.nii] '
                '--collapse-output-transforms 0 '
                '--interpolation BSpline[3] '
