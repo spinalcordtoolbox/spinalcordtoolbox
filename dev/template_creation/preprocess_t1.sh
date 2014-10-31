@@ -527,6 +527,7 @@ dcm2nii -o . -r N /Volumes/data_shared/marseille/TR/01_0007_sc-mprage-1mm-2palli
 mv *.nii.gz t1.nii.gz
 # create mask of spinal cord on T2 image (will be used for registration)
 sct_create_mask -i ../t2/t2_RPI_crop.nii.gz -m centerline,../t2/full_centerline.nii.gz -s 50 -f cylinder -o ../t2/mask_spinalcord.nii.gz
+# create labels on PMJ (value = 1) and L1 (value = 2) on the T2 and on the T1 and call it labels_t2_RPI_crop_PMJ-L1.nii.gz and labels_t1_PMJ-L1.nii.gz, respectively. See snapshots. 
 # register to T1 to T2: RIGID
 sct_ANTSUseLandmarkImagesToGetAffineTransform ../t2/labels_t2_RPI_crop_PMJ-L1.nii.gz labels_t1_PMJ-L1.nii.gz rigid t1_to_t2.txt
 sct_apply_transfo -i t1.nii.gz -d ../t2/t2_RPI_crop.nii.gz -w t1_to_t2.txt -o t1_regAffine.nii.gz
