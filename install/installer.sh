@@ -114,6 +114,8 @@ echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
 echo 'export SCT_DIR PATH' >> ~/.bashrc
+# forbid to run several ITK instances in parallel (see issue #201).
+echo 'export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
 if [ -e "$HOME/.bash_profile" ]; then
