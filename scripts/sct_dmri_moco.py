@@ -43,7 +43,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 
 
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
@@ -53,7 +53,7 @@ class param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.dwi_group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 3  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -62,7 +62,7 @@ class param:
         self.param = ['2',  # degree of polynomial function for moco
                       '2',  # smoothing sigma in mm
                       '1',  # gradientStep
-                      'MI'] # metric: MI,MeanSquares
+                      'MeanSquares'] # metric: MI,MeanSquares
         self.interp = 'spline'  # nn, linear, spline
         self.run_eddy = 0
         self.mat_eddy = ''
@@ -78,10 +78,6 @@ class param:
 #=======================================================================================================================
 def main():
 
-    print '\n\n\n\n==================================================='
-    print '          Running: sct_dmri_moco'
-    print '===================================================\n\n\n\n'
-
     # initialization
     start_time = time.time()
     path_out = '.'
@@ -96,50 +92,49 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
-        # param.fname_data = '/Users/julien/data/toronto/E23102/dmri/dmrir.nii.gz'
-        # param.fname_bvecs = '/Users/julien/data/toronto/E23102/dmri/bvecs_3.txt'
-        # param.fname_mask = '/Users/julien/data/toronto/E23102/dmri/dwi_moco_mean_mask.nii.gz'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.run_eddy = 0
         param.otsu = 0
-        param.dwi_group_size = 5
+        param.group_size = 5
         param.iterative_averaging = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:e:f:g:m:o:p:r:t:v:x:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:a:b:e:f:g:m:o:p:r:t:v:x:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ('-a'):
-            param.fname_bvals = arg
-        elif opt in ('-b'):
-            param.fname_bvecs = arg
-        elif opt in ('-e'):
-            param.run_eddy = int(arg)
-        elif opt in ('-f'):
-            param.spline_fitting = int(arg)
-        elif opt in ('-g'):
-            param.group_size = int(arg)
-        elif opt in ('-i'):
-            param.fname_data = arg
-        elif opt in ('-m'):
-            param.fname_mask = arg
-        elif opt in ('-o'):
-            path_out = arg
-        elif opt in ('-p'):
-            param_user = arg
-        elif opt in ('-r'):
-            param.remove_tmp_files = int(arg)
-        elif opt in ('-t'):
-            param.otsu = int(arg)
-        elif opt in ('-v'):
-            param.verbose = int(arg)
-        elif opt in ('-x'):
-            param.interp = arg
+        if not opts:
+            usage()
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-a'):
+                param.fname_bvals = arg
+            elif opt in ('-b'):
+                param.fname_bvecs = arg
+            elif opt in ('-e'):
+                param.run_eddy = int(arg)
+            elif opt in ('-f'):
+                param.spline_fitting = int(arg)
+            elif opt in ('-g'):
+                param.group_size = int(arg)
+            elif opt in ('-i'):
+                param.fname_data = arg
+            elif opt in ('-m'):
+                param.fname_mask = arg
+            elif opt in ('-o'):
+                path_out = arg
+            elif opt in ('-p'):
+                param_user = arg
+            elif opt in ('-r'):
+                param.remove_tmp_files = int(arg)
+            elif opt in ('-t'):
+                param.otsu = int(arg)
+            elif opt in ('-v'):
+                param.verbose = int(arg)
+            elif opt in ('-x'):
+                param.interp = arg
 
     # display usage if a mandatory argument is not provided
     if param.fname_data == '' or param.fname_bvecs == '':
@@ -253,6 +248,11 @@ def dmri_moco(param):
     sct.printv('\nIdentify b=0 and DWI images...', param.verbose)
     index_b0, index_dwi, nb_b0, nb_dwi = identify_b0('bvecs.txt', param.fname_bvals, param.bval_min, param.verbose)
 
+    # check if dmri and bvecs are the same size
+    if not nb_b0 + nb_dwi == nt:
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Size of data ('+str(nt)+') and size of bvecs ('+str(nb_b0+nb_dwi)+') are not the same. Check your bvecs file.\n', 1, 'error')
+        sys.exit(2)
+
     # Prepare NIFTI (mean/groups...)
     #===================================================================================================================
     # Split into T dimension
@@ -274,15 +274,15 @@ def dmri_moco(param):
     status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
-    nb_groups = int(math.floor(nb_dwi/param.dwi_group_size))
+    nb_groups = int(math.floor(nb_dwi/param.group_size))
     
     # Generate groups indexes
     group_indexes = []
     for iGroup in range(nb_groups):
-        group_indexes.append(index_dwi[(iGroup*param.dwi_group_size):((iGroup+1)*param.dwi_group_size)])
+        group_indexes.append(index_dwi[(iGroup*param.group_size):((iGroup+1)*param.group_size)])
     
     # add the remaining images to the last DWI group
-    nb_remaining = nb_dwi%param.dwi_group_size  # number of remaining images
+    nb_remaining = nb_dwi%param.group_size  # number of remaining images
     if nb_remaining > 0:
         nb_groups += 1
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
@@ -445,26 +445,26 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.dwi_group_size)+"""
+  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. E.g.: -p 3,1,0.2,MI
-                     1) degree of polynomial function used for regularization along Z. Default="""+param.param[0]+"""
+                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
+                     1) degree of polynomial function used for regularization along Z.
                         For no regularization set to 0.
-                     2) smoothing kernel size (in mm). Default="""+param.param[1]+"""
-                     3) gradient step. The higher the more deformation allowed. Default="""+param.param[2]+"""
-                     4) metric: {MI,MeanSquares}. Default="""+param.param[3]+"""
+                     2) smoothing kernel size (in mm).
+                     3) gradient step. The higher the more deformation allowed.
+                     4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
-  -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param.otsu)+"""
+  -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param_default.otsu)+"""
                    For no segmentation set to 0.
   -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
-  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param.run_eddy)+"""
+  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param_default.run_eddy)+"""
                    N.B. Only use this option if pairs of opposite gradient images were adjacent
                    in time
   -o <path_out>    Output path.
-  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param.interp)+"""
-  -v {0,1}         verbose. Default="""+str(param.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param.remove_tmp_files)+"""
+  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
+  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -h               help. Show this message
 
 EXAMPLE
@@ -477,5 +477,6 @@ EXAMPLE
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    param = param()
+    param = Param()
+    param_default = Param()
     main()

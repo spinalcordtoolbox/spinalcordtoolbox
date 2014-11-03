@@ -34,7 +34,7 @@ crops = {'manual', 'box', 'none', 'centerline', 'autobox'};
 addOptional(p,'crop','none',@(x) any(validatestring(x,crops)));
 addOptional(p,'eddy',1,@isnumeric);
 moco_methods={'b0','dwi','dwi_lowbvalue','none'};
-addOptional(p,'method','dwi',@(x) any(validatestring(x,moco_methods)));
+addOptional(p,'method','dwi_lowbvalue',@(x) any(validatestring(x,moco_methods)));
 addOptional(p,'crop_margin',25,@isnumeric);
 addOptional(p,'data','');
 addOptional(p,'bvec','');
@@ -45,6 +45,7 @@ interp={'nearestneighbour', 'spline', 'sinc'};
 addOptional(p,'interp','spline',@(x) any(validatestring(x,interp)));
 addOptional(p,'gaussian_mask',0,@isnumeric);
 addOptional(p,'slicewise',1,@isnumeric);
+addOptional(p,'ref',1,@isnumeric);
 
 parse(p,varargin{:})
 
@@ -79,7 +80,9 @@ end
 
 sct.output_path         = [sct.dmri.path 'dwi_process_data/'];
 % TODO: if ~exist('./dwi_process_data','dir')
-mkdir('dwi_process_data')
+if exist(sct.output_path)
+    unix(['rm -rf ' sct.output_path]);
+end
 mkdir(sct.output_path);
 
 % Misc
@@ -158,8 +161,8 @@ sct.dmri.moco_intra.smooth_motion       = p.Results.smooth_moco; % Apply a splin
 sct.dmri.schemefile                     = '';
 sct.dmri.moco_intra.gaussian_mask       = p.Results.gaussian_mask; % Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
 sct.dmri.moco_intra.dwi_group_size      = 10; % number of images averaged for 'dwi' method.
-sct.dmri.moco_intra.program             = 'FLIRT';% 'FLIRT' or 'SPM' (slicewise not available with SPM.... put slicewise = 0)
-sct.dmri.moco_intra.ref                 = '1'; % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
+sct.dmri.moco_intra.program             = 'ANTS';% 'FLIRT' or 'SPM' (slicewise not available with SPM.... put slicewise = 0)
+sct.dmri.moco_intra.ref                 = num2str(p.Results.ref); % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
 sct.dmri.moco_intra.slicewise		    = p.Results.slicewise; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
 sct.dmri.moco_intra.cost_function_flirt	= 'normcorr'; % 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
 sct.dmri.moco_intra.cost_function_spm   = 'nmi'; % JULIEN: add other options

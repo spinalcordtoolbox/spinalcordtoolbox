@@ -14,7 +14,8 @@
 #########################################################################################
 
 
-import sct_utils as sct
+#import sct_utils as sct
+import commands
 
 
 def test(path_data):
@@ -47,9 +48,8 @@ def test(path_data):
     output += output_buf
     '''
 
-    return sct.run(cmd, 0)
-
-
+    #return sct.run(cmd, 0)
+    return commands.getstatusoutput(cmd)
 
 
 if __name__ == "__main__":
