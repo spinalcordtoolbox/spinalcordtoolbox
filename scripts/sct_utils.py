@@ -72,20 +72,33 @@ def extract_fname(fname):
 
 
 #=======================================================================================================================
-# check_file_exist
+# check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
-# Check existence of a file or path
 def check_file_exist(fname, verbose=1):
-
-    #    if os.path.isfile(fname) or os.path.isfile(fname + '.nii') or os.path.isfile(fname + '.nii.gz') or os.path.isdir(fname):
-    # WARNING: dangerous change with potential dependencies (2014-09-26)
     if os.path.isfile(fname) or os.path.isdir(fname):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('  ERROR: ' + fname + ' does not exist. Exit program.\n', verbose, 'error')
-        sys.exit(2)
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+
+
+#=======================================================================================================================
+# check_if_3d
+#=======================================================================================================================
+def check_if_3d(fname):
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    if not nt == 1:
+        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+
+
+#=======================================================================================================================
+# check_if_rpi:  check if data are in RPI orientation
+#=======================================================================================================================
+def check_if_rpi(fname):
+    from sct_orientation import get_orientation
+    if not get_orientation(fname) == 'RPI':
+        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_orientation to reorient your data. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -126,37 +139,6 @@ def get_dimension(fname):
     return nx, ny, nz, nt, px, py, pz, pt
 
 
-
-#=======================================================================================================================
-# get_orientation
-#=======================================================================================================================
-# Get orientation of a nifti file
-def get_orientation(fname):
-    status, output = commands.getstatusoutput('sct_orientation -get -i '+fname)
-    orientation = output.replace('Input image orientation : ', '')
-    return orientation
-
-
-#=======================================================================================================================
-# set_orientation
-#=======================================================================================================================
-def set_orientation(fname_data, orientation, path_out=''):
-    """Change orientation of a NIFTI file and return the absolute path of the new image - orientation must be in capital
-     letter (e.g., RPI or AIL)"""
-
-    # get absolute path
-    fname_data = os.path.abspath(fname_data)
-    path_data, file_data, ext_data = extract_fname(fname_data)
-    if not path_out:
-        path_out = path_data
-    # set output file
-    fname_out = slash_at_the_end(path_out, 1) + file_data + '_' + orientation + ext_data
-    # generate a new file changing the orientation as wished
-    status, output = commands.getstatusoutput('sct_orientation -i '+fname_data+' -o '+fname_out+' -orientation '+orientation)
-
-    return fname_out
-
-
 #=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
@@ -175,7 +157,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
-        printv('  WARNING: File '+path_out+file_out+ext_out+' same as output. Do nothing.', 1, 'warning')
+        print '  File created: '+path_out+file_out+ext_out
         return path_out+file_out+ext_out
     # if fname_out already exists in nii or nii.gz
     if path_in != os.path.abspath(path_out):
@@ -249,6 +231,10 @@ def printv(string, verbose=1, type='normal'):
     # print message
     if verbose:
         print(color+string+bcolors.normal)
+
+    # if error, exit prohram
+    if type == 'error':
+        sys.exit(2)
 
 
 #=======================================================================================================================
