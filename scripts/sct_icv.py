@@ -14,12 +14,13 @@
 
 import os, sys, getopt, re
 
+
 # Default parameters
 # ==========================================================================================
-class parameters:
+class Param:
     def __init__(self):
-        self.N4Correct=True #Need to be True for correct -f value in BET
-        self.ImageDimension=3
+        self.N4Correct = True  #Need to be True for correct -f value in BET
+        self.ImageDimension = 3
         
         # MNI152 templates (T1 2mm)
         self.path_atlas='${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz'
@@ -48,6 +49,8 @@ def main():
         try:
             opts, args = getopt.getopt(sys.argv[1:],'hi:c:o:d:v:')
         except getopt.GetoptError:
+            usage()
+        if not opts:
             usage()
         if not opts:
             # no option supplied
@@ -351,5 +354,5 @@ def parse_report(path):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    param = parameters()
+    param = Param()
     main()

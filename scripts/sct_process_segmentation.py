@@ -17,8 +17,9 @@
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
+
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
@@ -44,6 +45,8 @@ import sct_utils as sct
 from sct_nurbs import NURBS
 import scipy
 import nibabel
+from sct_orientation import get_orientation, set_orientation
+
 
 # MAIN
 # ==========================================================================================
@@ -75,36 +78,39 @@ def main():
         fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         name_process = 'compute_csa'
         verbose = 1
+        volume_output = 1
         remove_temp_files = 0
         from matplotlib.pyplot import imshow, gray, show
         from mpl_toolkits.mplot3d import Axes3D
-        
-    # Check input parameters
-    try:
-         opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts :
-        if opt == '-h':
+    else:
+        # Check input parameters
+        try:
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
+        except getopt.GetoptError:
             usage()
-        elif opt in ("-i"):
-            fname_segmentation = arg
-        elif opt in ("-p"):
-            name_process = arg
-        elif opt in("-m"):
-            name_method = arg
-        elif opt in('-b'):
-            volume_output = int(arg)
-        elif opt in('-r'):
-            remove_temp_files = int(arg)
-        elif opt in ('-s'):
-            spline_smoothing = int(arg)
-        elif opt in ('-f'):
-            figure_fit = int(arg)
-        elif opt in ('-o'):
-            name_output = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
+        if not opts:
+            usage()
+        for opt, arg in opts :
+            if opt == '-h':
+                usage()
+            elif opt in ("-i"):
+                fname_segmentation = arg
+            elif opt in ("-p"):
+                name_process = arg
+            elif opt in("-m"):
+                name_method = arg
+            elif opt in('-b'):
+                volume_output = int(arg)
+            elif opt in('-r'):
+                remove_temp_files = int(arg)
+            elif opt in ('-s'):
+                spline_smoothing = int(arg)
+            elif opt in ('-f'):
+                figure_fit = int(arg)
+            elif opt in ('-o'):
+                name_output = arg
+            elif opt in ('-v'):
+                verbose = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
@@ -163,11 +169,10 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the input segmentation into RPI
     print '\nOrient segmentation image to RPI orientation...'
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + file_data+ext_data + ' -o ' + fname_segmentation_orient + ' -orientation RPI')
+    set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
 
     # Extract orientation of the input segmentation
-    status,sct_orientation_output = sct.run('sct_orientation -i ' + file_data+ext_data + ' -get')
-    orientation = sct_orientation_output[-3:]
+    orientation = get_orientation(file_data+ext_data)
     print '\nOrientation of segmentation image: ' + orientation
 
     # Get size of data
@@ -215,7 +220,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     # Change orientation of the output centerline into input orientation
     print '\nOrient centerline image to input orientation: ' + orientation
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    sct.run('sct_orientation -i ' + path_tmp+'/'+file_data+'_centerline'+ext_data + ' -o ' + file_data+'_centerline'+ext_data + ' -orientation ' + orientation)
+    set_orientation(path_tmp+'/'+file_data+'_centerline'+ext_data, orientation, file_data+'_centerline'+ext_data)
 
    # Remove temporary files
     if remove_temp_files:
@@ -245,7 +250,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation of the input segmentation into RPI...', verbose)
-    fname_segmentation_orient = sct.set_orientation('segmentation.nii', 'RPI')
+    fname_segmentation_orient = set_orientation('segmentation.nii', 'RPI', 'segmentation_orient.nii')
 
     # Get size of data
     sct.printv('\nGet data dimensions...', verbose)
@@ -464,9 +469,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if volume_output:
         sct.printv('\nCreate volume of CSA values...', verbose)
         # get orientation of the input data
-        orientation = sct.get_orientation('segmentation.nii')
-        # status, sct_orientation_output = sct.run('sct_orientation -i '+path_data_seg+file_data_seg+ext_data_seg + ' -get')
-        # orientation = sct_orientation_output[-3:]
+        orientation = get_orientation('segmentation.nii')
         # loop across slices
         for iz in range(min_z_index,max_z_index+1):
             # retrieve seg pixels
@@ -484,7 +487,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
         nibabel.save(img, 'csa_RPI.nii')
         # Change orientation of the output centerline into input orientation
-        fname_csa_volume = sct.set_orientation('csa_RPI.nii', orientation)
+        fname_csa_volume = set_orientation('csa_RPI.nii', orientation, 'csa_RPI_orient.nii')
 
     # come back to parent folder
     os.chdir('..')
@@ -627,12 +630,12 @@ MANDATORY ARGUMENTS
                               Output is a text file with z (1st column) and CSA in mm^2 (2nd column)
 
 OPTIONAL ARGUMENTS
-  -s {0,1}                   smooth CSA values with spline. Default="""+str(param.spline_smoothing)+"""
+  -s {0,1}                   smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
   -b {0,1}                   outputs a volume in which each slice\'s value is equal to the CSA in
-                             mm^2. Default="""+str(param.volume_output)+"""
-  -o <output_name>           name of the output volume if -b 1. Default="""+str(param.name_output)+"""
-  -r {0,1}                   remove temporary files. Default="""+str(param.remove_temp_files)+"""
-  -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
+                             mm^2. Default="""+str(param_default.volume_output)+"""
+  -o <output_name>           name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
+  -r {0,1}                   remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
+  -v {0,1}                   verbose. Default="""+str(param_default.verbose)+"""
   -h                         help. Show this message
 
 EXAMPLE
@@ -646,6 +649,7 @@ EXAMPLE
 # =========================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
+    param_default = Param()
     # call main function
     main()
