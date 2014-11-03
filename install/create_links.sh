@@ -74,6 +74,10 @@ do
   $cmd
 done
 
+#removing internal stuff or stuff under development
+cmd="rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct"
+$cmd
+
 suffix_sh='.sh'
 for script in *.sh
 do
@@ -89,6 +93,5 @@ do
   echo ">> $cmd"
   $cmd
 done
-
 
 cd ${CURRENT_DIR}

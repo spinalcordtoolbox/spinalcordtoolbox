@@ -267,21 +267,26 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
         
 DESCRIPTION
-Check the integrity of the spinal cord internal structure (tracts) atlas.
+  Check the integrity of the warped atlas by (i) evaluating the number of tracts that disappeared
+  given a threshold, (ii) evaluating the number of voxels outside the spinal cord segmentation and
+  (iii) evaluating the overlap between the white matter tracts and the gray matter.
 
 USAGE
 """+os.path.basename(__file__)+""" -i <atlas>
             
-    MANDATORY ARGUMENTS
-    -i <folder>           atlas folder path.
+MANDATORY ARGUMENTS
+  -i <folder>           atlas folder path.
             
-    OPTIONAL ARGUMENTS
-    -s <segmentation>     segmentation image path.
-    -m <graymatter>       gray matter image path.
-    -t [0,1]              float, atlas threshold. Default="""+str(param_default.threshold_atlas)+"""
-    -g [0,1]              float, gray matter image threshold. Default="""+str(param_default.threshold_GM)+"""
-    -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
-    -h                    help. Show this message.
+OPTIONAL ARGUMENTS
+  -s <segmentation>     segmentation image path.
+  -m <graymatter>       gray matter image path.
+  -t [0,1]              float, atlas threshold. Default="""+str(param_default.threshold_atlas)+"""
+  -g [0,1]              float, gray matter image threshold. Default="""+str(param_default.threshold_GM)+"""
+  -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
+  -h                    help. Show this message.
+
+EXAMPLE
+  """+os.path.basename(__file__)+""" -i ./template/atlas/ -s t2_seg.nii.gz
     """
     # exit program
     sys.exit(2)
