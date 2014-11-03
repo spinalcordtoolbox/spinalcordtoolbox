@@ -113,26 +113,29 @@ Connect to Magma
 ~~~
 ssh <username>@magma.criugm.qc.ca
 ~~~
-- Add this to your ``~/.bashrc``:
+- Add this to your ``~/.bashrc`` (only need to do it once):
 ~~~
 PATH=${PATH}:/usr/local/ants/bin
 export ANTSPATH=/usr/local/ants/bin/
 ~~~
+- go to data folder
+~~~
+cd /data/neuropoly<username>
+~~~
+- Launch script to create template (based on qsub):
+~~~
+./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
+~~~
+
+- N.B. if we do not want the normalization, you need to put: 0 at line 918
+- N.B. Things are installed in ``/usr/local/`` (ants, fsl …)
+- N.B. be sure to set the right path to waitForSGEQjobs.pl line 1205
+- Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
 
 - To see all the jobs currently running type :
 ~~~
 qstat
 ~~~
-- Things are installed in /usr/local/ (ants, fsl …)
-- Directory to work in is /data/neuropoly/<username>
-- To run jobs use qsub as well. However the template creation script does it all by itself. So you just need to run:
-~~~
-./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
-~~~
-- N.B. if we do not want the normalization, you need to put: 0 at line 918
-- Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
-
-CAREFUL : be sure to set the right path to waitForSGEQjobs.pl line 1205
 
 
 OUTPUT OT TEMPLATE CREATION
