@@ -109,8 +109,11 @@ To create template, run: ``qsub submit_template_ants.sh``
 Connect to Magma 
 ----------------
 
-- To connect use ssh : ssh <username>@magma.criugm.qc.ca
-- Similarily to guillimin you have a .bashrc. Add this:
+- To connect use ssh
+~~~
+ssh <username>@magma.criugm.qc.ca
+~~~
+- Add this to your ``~/.bashrc``:
 ~~~
 PATH=${PATH}:/usr/local/ants/bin
 export ANTSPATH=/usr/local/ants/bin/
@@ -124,7 +127,7 @@ qstat
 - Directory to work in is /data/neuropoly/<username>
 - To run jobs use qsub as well. However the template creation script does it all by itself. So you just need to run:
 ~~~
-buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
+./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
 ~~~
 - N.B. if we do not want the normalization, you need to put: 0 at line 918
 - Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
@@ -138,8 +141,3 @@ OUTPUT OT TEMPLATE CREATION
 GR_iteration_X --> within this folder, the generated template is called: AVTtemplate.nii.gz.
 
 To find the final version of the template, go to the highest iteration.
-
-
-
-
-
