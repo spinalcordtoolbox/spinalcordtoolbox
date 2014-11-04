@@ -33,8 +33,8 @@ class Param:
         self.debug = 0
         self.verbose = 1
         self.file_info_label = 'info_label.txt'
-        self.threshold_atlas = 0.5
-        self.threshold_GM = 0.5
+        self.threshold_atlas = 0.25
+        self.threshold_GM = 0.25
         self.fname_seg = ''
         self.fname_GM = ''
 
@@ -218,17 +218,24 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sys.exit(2)
 
         tracts_are_inside_SC = True
+        total_outside = 0
+        total_sum_tracts = 0
         sct.printv('\nDoes any tract gets out the spinal cord?',param.verbose)
         ind_seg_outside_cord = segmentation<=ALMOST_ZERO
         for i_atlas in range(0, nb_tracts):
             ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
             sum_tract_outside_SC = np.sum(atlas[i_atlas][ind_atlas_positive & ind_seg_outside_cord])
+            sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
             if sum_tract_outside_SC > ALMOST_ZERO:
-                sum_tract = np.sum(atlas[i_atlas][ind_atlas_positive])
                 percentage_out = float(sum_tract_outside_SC/sum_tract)
                 sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' gets out the spinal cord of '+str(round(percentage_out*100,2))+'%',param.verbose)
                 tracts_are_inside_SC = False
+                total_outside += sum_tract_outside_SC
+            total_sum_tracts += sum_tract
         if tracts_are_inside_SC: sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+        else:
+            total_percentage_out = float(total_outside/total_sum_tracts)
+            sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out*100, 2)) + '%', param.verbose)
 
 
     # Does any tract overlaps the spinal cord gray matter?
@@ -245,18 +252,24 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
             sys.exit(2)
     
         tracts_overlap_GM = False
+        total_overlaps = 0
+        total_sum_tracts = 0
         sct.printv('\nDoes any tract overlaps the spinal cord gray matter?',param.verbose)
         ind_GM = graymatter>=param.threshold_GM
         for i_atlas in range(0, nb_tracts):
             ind_atlas_positive = atlas[i_atlas]>=ALMOST_ZERO
             sum_tract_overlap_GM = np.sum(atlas[i_atlas][ind_atlas_positive & ind_GM])
+            sum_tract = np.sum(atlas[i_atlas])
             if sum_tract_overlap_GM > ALMOST_ZERO:
-                sum_tract = np.sum(atlas[i_atlas])
                 percentage_overlap = float(sum_tract_overlap_GM/sum_tract)
                 sct.printv('The tract #'+str(atlas_id[i_atlas])+atlas_name[i_atlas]+' overlaps the spinal cord gray matter of '+str(round(percentage_overlap*100,2))+'%',param.verbose)
                 tracts_overlap_GM = True
+                total_overlaps += sum_tract_overlap_GM
+            total_sum_tracts += sum_tract
         if not tracts_overlap_GM: sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
-
+        else:
+            total_percentage_overlap = float(total_overlaps/total_sum_tracts)
+            sct.printv('\nTotal percentage of present tracts overlapping grey matter: ' + str(round(total_percentage_overlap*100, 2)) + '%', param.verbose)
 
 # Print usage
 # ==========================================================================================
