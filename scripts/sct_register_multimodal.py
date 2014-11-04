@@ -381,6 +381,7 @@ OPTIONAL ARGUMENTS
                      2) algo: {SyN, BSplineSyN, sliceReg}
                         N.B. if you use sliceReg, then you should set -z 0. Also, the two input
                         volumes should have same the same dimensions.
+                        For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
                      3) gradient step. The larger the more deformation.
                      4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.

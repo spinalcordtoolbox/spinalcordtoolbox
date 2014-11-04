@@ -433,7 +433,8 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
   Motion correction of dMRI data. Some robust features include:
   - group-wise (-g)
-  - slice-wise regularized along z using polynomial function (-p)
+  - slice-wise regularized along z using polynomial function (-p). 
+    For more info about the method, type: sct_antsSliceRegularizedRegistration
   - masking (-m)
   - iterative averaging of target volume
 
