@@ -232,7 +232,9 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
                 tracts_are_inside_SC = False
                 total_outside += sum_tract_outside_SC
             total_sum_tracts += sum_tract
-        if tracts_are_inside_SC: sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+        if tracts_are_inside_SC:
+            sct.printv('All the tracts are inside the spinal cord.',param.verbose)
+            sct.printv('\nTotal percentage of present tracts outside the spinal cord: 0%', param.verbose)
         else:
             total_percentage_out = float(total_outside/total_sum_tracts)
             sct.printv('\nTotal percentage of present tracts outside the spinal cord: ' + str(round(total_percentage_out*100, 2)) + '%', param.verbose)
@@ -266,10 +268,12 @@ def check_integrity(atlas, atlas_id, atlas_name, method='wath'):
                 tracts_overlap_GM = True
                 total_overlaps += sum_tract_overlap_GM
             total_sum_tracts += sum_tract
-        if not tracts_overlap_GM: sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
+        if not tracts_overlap_GM:
+            sct.printv('No tract overlaps the spinal cord gray matter.',param.verbose)
+            sct.printv('\nTotal percentage of present tracts overlapping gray matter: 0%', param.verbose)
         else:
             total_percentage_overlap = float(total_overlaps/total_sum_tracts)
-            sct.printv('\nTotal percentage of present tracts overlapping grey matter: ' + str(round(total_percentage_overlap*100, 2)) + '%', param.verbose)
+            sct.printv('\nTotal percentage of present tracts overlapping gray matter: ' + str(round(total_percentage_overlap*100, 2)) + '%', param.verbose)
 
 # Print usage
 # ==========================================================================================
