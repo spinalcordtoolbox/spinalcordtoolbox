@@ -20,8 +20,9 @@ def main():
     fname_ref = ''
     fname_moving = ''
     transformation = 'SyN'
-    gradient_step = '0.20'
-    radius = '5'
+    metric = 'MI'
+    gradient_step = '0.25'
+    radius = '32'
     fname_seg_fixed = ''
     fname_seg_moving = ''
     fname_output = ''
@@ -172,7 +173,7 @@ def main():
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric CC["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
         cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
@@ -180,18 +181,14 @@ def main():
 
     moving_name_temp = moving_name+"_unpadded"
     sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+".nii")
-
-    sct.run("sct_crop_image -i "+moving_name+"0Warp.nii.gz -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+"0Warp.nii")
-
-    sct.run("sct_crop_image -i "+moving_name+"0InverseWarp.nii -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+"0InverseWarp.nii")
+    sct.run("mv "+moving_name+"0Warp.nii.gz "+file_output+"0Warp"+ext_output)
+    sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+file_output+"0InverseWarp"+ext_output)
     moving_name = moving_name_temp
 
     # TODO change "fixed.nii"
     moving_name_temp = file_output+ext_output
     #sct.run("sct_c3d "+fixed_name+".nii "+file_output+ext_output+" -reslice-identity  -o "+file_output+'_register'+ext_output)
     sct.run("sct_c3d fixed.nii "+moving_name+".nii -reslice-identity -o "+file_output+ext_output)
-    sct.run("sct_c3d fixed.nii "+moving_name+"0Warp.nii -reslice-identity -o "+file_output+"0Warp"+ext_output)
-    sct.run("sct_c3d fixed.nii "+moving_name+"0InverseWarp.nii -reslice-identity -o "+file_output+"0InverseWarp"+ext_output)
 
     # move output files to initial folder
     sct.run("cp "+file_output+"* ../")
