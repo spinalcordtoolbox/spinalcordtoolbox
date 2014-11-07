@@ -11,34 +11,46 @@
 #
 # Usage:
 # from msct_parser import *
-# parser = Parser()
-# parser.add_option("-input","file")
+# parser = Parser(__file__)
+# parser.usage.set_description('Here is your script description')
+# parser.add_option("-input","file", "image"*, True*, "t2.nii.gz"*)
+# * optional arguments : description, mandatory (boolean), example
 # parser.add_option("-test","int")
+# parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
 # parser.add_option("-test2") # this is a option without
-# arguments = parser.parse(sys.argv[1:])
-# 
+#
+# Usage are available as follow:
+# string_usage = parser.usage.generate()
+#
 # Arguments are available directly:
-# fname_input = arguments["-input"]
-# test_int_value = arguments["-test"]
+# arguments = parser.parse(sys.argv[1:])
+# if "-input" in arguments:
+#     fname_input = arguments["-input"]
+# if "-dim" in arguments:
+#     dim = arguments["-dim"]
+# else:
+#     print string_usage
 #
 # TO DO:
 # - generate the usage based on the option list
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
+# Author: Benjamin De Leener, Augustin Roux
 # Created: 2014-10-27
+# Last modified: 2014-11-07
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 import os
+import time
 import sys
 import commands
 import sct_utils as sct
 import re, collections
+import datetime
 from itertools import *
-
 
 
 class SpellingChecker:
@@ -83,43 +95,66 @@ class SpellingChecker:
         return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) #
         #return max(candidates, key=self.NWORDS.get) # return the most potential candidate
 
+########################################################################################################################
+####### OPTION
+########################################################################################################################
+
 class Option:
     # list of option type that can be casted
     OPTION_TYPES = ["str","int","float","long","complex"]
 
     ## Constructor
-    def __init__(self, name, type_value, mandatory, default_value, help):
+    def __init__(self, name, type_value, description, mandatory, example,default_value, help, parser):
         self.name = name
         self.type_value = type_value
+        self.description = description
         self.mandatory = mandatory
+        self.example = example
         self.default_value = default_value
         self.help = help
+        self.parser = parser
+
 
     def safe_cast(self, val, to_type):
         return to_type(val)
 
     # Do we need to stop the execution if the input is not correct?
-    def check_integrity(self, param):
+    def check_integrity(self, arguments, index):
+        # arguments[index] as the option (example: '-input')
+        # & argmuments[index+1] must be the corresponding arg (ex: 't2.nii.gz')
+        # Check if the argument of the option exist
+        if len(arguments) > index+1:
+            param = arguments[index + 1]
+        else:
+            self.parser.usage.error("Option " + self.name + " needs an argument...")
+        if param in self.parser.options:
+            self.parser.usage.error("Option " + self.name + " needs an argument...")
         if self.type_value in self.OPTION_TYPES:
             try:
                 return self.safe_cast(param,eval(self.type_value))
             except ValueError:
-                sct.printv("Error: Option "+self.name+" must be "+self.type_value,1,"error")
+                self.parser.usage.error("Option "+self.name+" must be "+self.type_value,1,"error")
         elif self.type_value == "file":
-            sct.printv("Check file existence...",1)
+            sct.printv("Check file existence...")
             sct.check_file_exist(param,1)
             return param
-        else:
-            sct.printv("Error: type of option \""+self.type_value+"\" is not supported by the parser.",1,"error")
+        elif type(self.type_value) is not list:
+            self.parser.usage.error("Error: type of option \""+self.type_value+"\" is not supported by the parser.")
+
+########################################################################################################################
+####### PARSER
+########################################################################################################################
 
 class Parser:
     ## Constructor
-    def __init__(self):
+    def __init__(self, __file__):
         self.options = dict()
         self.spelling = SpellingChecker()
+        self.errors = ''
+        self.usage = Usage(self, __file__)
 
-    def add_option(self, name, type_value=None, mandatory=False, help=None, default_value=None):
-        self.options[name] = Option(name, type_value, mandatory, default_value, help)
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self)
 
     def parse(self, arguments):
         # initialize results
@@ -127,6 +162,12 @@ class Parser:
 
         # initialize the spelling checker
         self.spelling.setWordsAsList([name for name in self.options])
+
+        for option in [opt for opt in self.options if self.options[opt].mandatory]:
+            if option not in arguments:
+                spelling_candidates = self.spelling.correct(option)
+                if (len(spelling_candidates)!=0): self.usage.error(" Did you mean: "+', '.join(spelling_candidates))
+                else: self.usage.error(option + ' is a mandatory argument.\n')
 
         skip = False
         for index,arg in enumerate(arguments):
@@ -138,7 +179,7 @@ class Parser:
             # if so, check the integrity of the argument
             if arg in self.options:
                 if self.options[arg].type_value:
-                    argument = self.options[arg].check_integrity(arguments[index+1])
+                    argument = self.options[arg].check_integrity(arguments, index)
                     dictionary[arg] = argument
                     skip = True
                 else:
@@ -149,22 +190,155 @@ class Parser:
                 serror = "Error: wrong input arguments. See documentation."
                 spelling_candidates = self.spelling.correct(arg)
                 if (len(spelling_candidates)!=0): serror=serror+" Did you mean: "+', '.join(spelling_candidates)
-                sct.printv(serror,1,"error")
+                self.usage.error(serror)
 
         # check if all mandatory arguments are provided by the user
-        for option in [opt for opt in self.options if opt.mandatory]:
-            if option not in dictionary:
-                sct.printv("Error: blablabla",1,"error")
+        # if dictionary:
+        #     for option in [opt for opt in self.options if self.options[opt].mandatory]:
+        #         if option not in dictionary:
+        #             self.usage.error('Error: ' + option + ' is a mandatory argument.\n')
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
 
-class Usage:
-    # Constructor
-    def __init__(self):
-        self.description
-        self.usage
-        self.argument
+########################################################################################################################
+####### USAGE
+########################################################################################################################
+# This class should be used as follow:
+#
+# usage = Usage(parser, __file__)
+# usage.set_description('This is an example of script using the Usage class')
+# usage.generate()
 
-        self.exemple
-        self.
+class Usage:
+
+    # Constructor
+    def __init__(self, parser, file):
+        self.file = (file)
+        self.header = ''
+        self.version = ''
+        self.usage = ''
+        self.example = ''
+        self.description = ''
+        self.arguments = parser.options
+        #self.error = parser.errors
+        self.arguments_string = ''
+
+    def set_header(self):
+        creation = time.gmtime(os.path.getmtime(__file__))
+        self.header = """
+"""+os.path.basename(self.file)+"""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
+
+    def set_description(self, description):
+        self.description = '\n\n    DESCRIPTION\n' + align(description)
+
+    def set_usage(self):
+        self.usage = '\n\n    USAGE\n' + os.path.basename(self.file)
+                     #+ str([arg for arg in self.arguments])
+        for opt in self.arguments:
+            self.usage += '     ' + opt + ' ' + str(self.arguments[opt].type_value)
+
+    def set_arguments(self):
+        mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
+        optional = [opt for opt in self.arguments if not self.arguments[opt].mandatory]
+        #optional = self.arguments
+        #optional = mandatory
+        if mandatory:
+            self.arguments_string = '\n\n    MANDATORY ARGUMENTS\n'
+            for opt in mandatory:
+                type_value = self.refactor_type_value(opt)
+                line = [opt, type_value, self.arguments[opt].description]
+                self.arguments_string += tab(line) + '\n'
+        if optional:
+            self.arguments_string += '\n\n    OPTIONAL ARGUMENTS\n'
+            for opt in optional:
+                type_value = self.refactor_type_value(opt)
+                line = [opt, type_value, self.arguments[opt].description]
+                self.arguments_string += tab(line) + '\n'
+
+    def refactor_type_value(self, opt):
+        if type(self.arguments[opt].type_value) is not list:
+            type_value = '<' + self.arguments[opt].type_value + '>'
+        else:
+            type_value = '{'
+            for char in self.arguments[opt].type_value:
+                type_value += str(char) + ','
+            type_value = type_value[:-1]
+            type_value += '}'
+        return type_value
+
+    def set_example(self):
+        self.example = '\n\n    EXAMPLE\n' + \
+            os.path.basename(self.file)
+        for opt in [opt for opt in self.arguments if self.arguments[opt].example]:
+            self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
+
+    def generate(self, error=None):
+        self.set_header()
+        self.set_arguments()
+        self.set_usage()
+        self.set_example()
+        usage = self.header + self.description + self.usage  + self.arguments_string + self.example
+
+        if error:
+            print "Error: " + error
+            print 'aborted...'
+            print usage
+            exit(1)
+        else:
+            return usage
+
+    def error(self, error):
+        self.generate(error)
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+def tab(strings):
+    tab = ''
+    for string in strings:
+        if len(string) < 20:
+            spaces = ' '*(20 - len(string))
+            string += spaces
+            tab += string
+    return tab
+
+
+def align(string):
+    i = 0
+    s=''
+    r = 0
+    last_i = 0
+    strings = []
+    for c in string:
+        i += 1
+        if c == ' ':
+            last_space = i
+        if i%100 == 0:
+            strings.append(string[0:last_space])
+            string = string[last_space:-1]
+            i = i - last_space
+            #r = last_space
+            #last_i = i
+    strings.append(string)
+    for yes in strings:
+        s += yes + '\n'
+    return s
+
+if __name__ == "__main__":
+    # call main function
+    #alyn('un deux trois quatre')
+    align('un deux trois quatre sdhsdf gfh dsgh fsghfs ghgf hfgs hfghs fghsfg hgfs hsgfhsfghgfshfsg h fsgh fgsh sfghfsg hsfg  hfsg hfgsh fsgh fg hfg h fsgh sfg hsfg hsfgh  sfg h')
+
+
+
+
+
+
+
+
+
