@@ -7,6 +7,7 @@
 # Type of options are:
 # - file (check file existence)
 # - str, int, float, long, complex (check if input is the correct type)
+# - list
 # - None, return True when detected
 #
 # Usage:
@@ -53,51 +54,10 @@ import datetime
 from itertools import *
 
 
-class SpellingChecker:
-    # spelling checker from http://norvig.com/spell-correct.html
-    def __init__(self):
-        self.alphabet = 'abcdefghijklmnopqrstuvwxyz-_0123456789'
-
-    # wirds_dict must be a list of string
-    def setWordsAsList(self, words_dict):
-        self.NWORDS = self.train(words_dict)
-
-    # text must be a string with all the word, separated with space of \n
-    def setWordsAsText(self, text):
-        self.NWORDS = self.train(self.words(text))
-
-    # fname must be the path of the file containing the dictionary
-    def setWordsAsFile(self, fname):
-        self.NWORDS = self.train(self.words(file(fname).read()))
-
-    def words(self, text): return re.findall('[a-z]+', text.lower()) 
-
-    def train(self, features):
-        model = collections.defaultdict(lambda: 1)
-        for f in features:
-            model[f] += 1
-        return model
-
-    def edits1(self, word):
-        splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]
-        deletes    = [a + b[1:] for a, b in splits if b]
-        transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]
-        replaces   = [a + c + b[1:] for a, b in splits for c in self.alphabet if b]
-        inserts    = [a + c + b     for a, b in splits for c in self.alphabet]
-        return set(deletes + transposes + replaces + inserts)
-
-    def known_edits2(self, word):
-        return set(e2 for e1 in self.edits1(word) for e2 in self.edits1(e1) if e2 in self.NWORDS)
-
-    def known(self, words): return set(w for w in words if w in self.NWORDS)
-
-    def correct(self, word):
-        return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) #
-        #return max(candidates, key=self.NWORDS.get) # return the most potential candidate
-
 ########################################################################################################################
 ####### OPTION
 ########################################################################################################################
+
 
 class Option:
     # list of option type that can be casted
@@ -114,7 +74,6 @@ class Option:
         self.help = help
         self.parser = parser
 
-
     def safe_cast(self, val, to_type):
         return to_type(val)
 
@@ -127,7 +86,8 @@ class Option:
             param = arguments[index + 1]
         else:
             self.parser.usage.error("Option " + self.name + " needs an argument...")
-        if param in self.parser.options:
+        spelling_candidates = self.parser.spelling.correct(param)
+        if param in self.parser.options or len(spelling_candidates) != 0:
             self.parser.usage.error("Option " + self.name + " needs an argument...")
         if self.type_value in self.OPTION_TYPES:
             try:
@@ -138,12 +98,16 @@ class Option:
             sct.printv("Check file existence...")
             sct.check_file_exist(param,1)
             return param
-        elif type(self.type_value) is not list:
-            self.parser.usage.error("Error: type of option \""+self.type_value+"\" is not supported by the parser.")
+        elif type(self.type_value) is list:
+            if param not in self.type_value:
+                self.parser.usage.error(self.name + " only takes " + print_list_with_brackets(self.type_value) + " as potential arguments.")
+        else:
+            self.parser.usage.error("Error: type of option \"" + self.type_value +"\" is not supported by the parser.")
 
 ########################################################################################################################
 ####### PARSER
 ########################################################################################################################
+
 
 class Parser:
     ## Constructor
@@ -163,12 +127,6 @@ class Parser:
         # initialize the spelling checker
         self.spelling.setWordsAsList([name for name in self.options])
 
-        for option in [opt for opt in self.options if self.options[opt].mandatory]:
-            if option not in arguments:
-                spelling_candidates = self.spelling.correct(option)
-                if (len(spelling_candidates)!=0): self.usage.error(" Did you mean: "+', '.join(spelling_candidates))
-                else: self.usage.error(option + ' is a mandatory argument.\n')
-
         skip = False
         for index,arg in enumerate(arguments):
             # if argument need to be skipped, we pass
@@ -187,16 +145,17 @@ class Parser:
             # if not in the list of known options, there is a syntax error in the list of arguments
             # check if the input argument is close to a known option
             else:
-                serror = "Error: wrong input arguments. See documentation."
                 spelling_candidates = self.spelling.correct(arg)
-                if (len(spelling_candidates)!=0): serror=serror+" Did you mean: "+', '.join(spelling_candidates)
-                self.usage.error(serror)
+                if len(spelling_candidates) != 0:
+                    self.usage.error(" Did you mean: "+', '.join(spelling_candidates) + '?')
+                else:
+                    self.usage.error("Error: wrong input arguments. See documentation.")
 
         # check if all mandatory arguments are provided by the user
-        # if dictionary:
-        #     for option in [opt for opt in self.options if self.options[opt].mandatory]:
-        #         if option not in dictionary:
-        #             self.usage.error('Error: ' + option + ' is a mandatory argument.\n')
+        if dictionary:
+            for option in [opt for opt in self.options if self.options[opt].mandatory]:
+                if option not in dictionary:
+                    self.usage.error('Error: ' + option + ' is a mandatory argument.\n')
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
@@ -204,11 +163,7 @@ class Parser:
 ########################################################################################################################
 ####### USAGE
 ########################################################################################################################
-# This class should be used as follow:
-#
-# usage = Usage(parser, __file__)
-# usage.set_description('This is an example of script using the Usage class')
-# usage.generate()
+
 
 class Usage:
 
@@ -263,11 +218,7 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         if type(self.arguments[opt].type_value) is not list:
             type_value = '<' + self.arguments[opt].type_value + '>'
         else:
-            type_value = '{'
-            for char in self.arguments[opt].type_value:
-                type_value += str(char) + ','
-            type_value = type_value[:-1]
-            type_value += '}'
+            type_value = print_list_with_brackets(self.arguments[opt].type_value)
         return type_value
 
     def set_example(self):
@@ -281,7 +232,7 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        usage = self.header + self.description + self.usage  + self.arguments_string + self.example
+        usage = self.header + self.description + self.usage + self.arguments_string + self.example
 
         if error:
             print "Error: " + error
@@ -295,9 +246,66 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         self.generate(error)
 
 ########################################################################################################################
-########################################################################################################################
+####### SPELLING CHECKER
 ########################################################################################################################
 
+
+class SpellingChecker:
+    # spelling checker from http://norvig.com/spell-correct.html
+    def __init__(self):
+        self.alphabet = 'abcdefghijklmnopqrstuvwxyz-_0123456789'
+
+    # wirds_dict must be a list of string
+    def setWordsAsList(self, words_dict):
+        self.NWORDS = self.train(words_dict)
+
+    # text must be a string with all the word, separated with space of \n
+    def setWordsAsText(self, text):
+        self.NWORDS = self.train(self.words(text))
+
+    # fname must be the path of the file containing the dictionary
+    def setWordsAsFile(self, fname):
+        self.NWORDS = self.train(self.words(file(fname).read()))
+
+    def words(self, text): return re.findall('[a-z]+', text.lower())
+
+    def train(self, features):
+        model = collections.defaultdict(lambda: 1)
+        for f in features:
+            model[f] += 1
+        return model
+
+    def edits1(self, word):
+        splits     = [(word[:i], word[i:]) for i in range(len(word) + 1)]
+        deletes    = [a + b[1:] for a, b in splits if b]
+        transposes = [a + b[1] + b[0] + b[2:] for a, b in splits if len(b)>1]
+        replaces   = [a + c + b[1:] for a, b in splits for c in self.alphabet if b]
+        inserts    = [a + c + b     for a, b in splits for c in self.alphabet]
+        return set(deletes + transposes + replaces + inserts)
+
+    def known_edits2(self, word):
+        return set(e2 for e1 in self.edits1(word) for e2 in self.edits1(e1) if e2 in self.NWORDS)
+
+    def known(self, words): return set(w for w in words if w in self.NWORDS)
+
+    def correct(self, word):
+        return self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) #
+        #return max(candidates, key=self.NWORDS.get) # return the most potential candidate
+
+########################################################################################################################
+
+########################################################################################################################
+
+
+def print_list_with_brackets(list):
+    type_value = '{'
+    for char in list:
+        type_value += str(char) + ','
+    type_value = type_value[:-1]
+    type_value += '}'
+    return type_value
+
+# This function is used for arguments usage's field to verticaly align words
 def tab(strings):
     tab = ''
     for string in strings:
@@ -308,37 +316,20 @@ def tab(strings):
     return tab
 
 
-def align(string):
+# This function split a string into a list of 100 char max strings
+def align(string, pad=100):
     i = 0
-    s=''
-    r = 0
-    last_i = 0
+    s = ''
     strings = []
     for c in string:
         i += 1
         if c == ' ':
             last_space = i
-        if i%100 == 0:
+        if i%pad == 0:
             strings.append(string[0:last_space])
             string = string[last_space:-1]
             i = i - last_space
-            #r = last_space
-            #last_i = i
     strings.append(string)
     for yes in strings:
         s += yes + '\n'
     return s
-
-if __name__ == "__main__":
-    # call main function
-    #alyn('un deux trois quatre')
-    align('un deux trois quatre sdhsdf gfh dsgh fsghfs ghgf hfgs hfghs fghsfg hgfs hsgfhsfghgfshfsg h fsgh fgsh sfghfsg hsfg  hfsg hfgsh fsgh fg hfg h fsgh sfg hsfg hsfgh  sfg h')
-
-
-
-
-
-
-
-
-
