@@ -2,7 +2,7 @@
 #########################################################################################
 #
 # Parser
-# Add option with name, type, default value and help using add_option method.
+# Add option with name, type, short description, mandatory or not, example using add_option method.
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 # Type of options are:
 # - file (check file existence)
