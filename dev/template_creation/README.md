@@ -126,6 +126,11 @@ cd /data/neuropoly<username>
 ~~~
 ./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
 ~~~
+Things that were modified on buildtemplateparallel:
+~~~
+line 662: QSUBOPTS="-q all.q" # to force all queue in MAGMA
+
+~~~
 
 - N.B. if we do not want the normalization, you need to put: 0 at line 918
 - N.B. Things are installed in ``/usr/local/`` (ants, fsl …)
