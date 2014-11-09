@@ -65,7 +65,7 @@ for opt, arg in opts:
     elif opt in ('-s'):
         OSname = str(arg)
     elif opt in ('-f'):
-        folder_ants = str(arg)
+        folder_ants = sct.slash_at_the_end(str(arg), 1)  # add slash at the end
 
 # check if OS exists
 if OSname not in listOS:

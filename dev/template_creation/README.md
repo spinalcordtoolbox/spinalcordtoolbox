@@ -126,11 +126,17 @@ cd /data/neuropoly<username>
 ~~~
 ./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
 ~~~
+Things that were modified on buildtemplateparallel:
+~~~
+line 662: QSUBOPTS="-q all.q" # to force all queue in MAGMA
+~~~
 
-- N.B. if we do not want the normalization, you need to put: 0 at line 918
-- N.B. Things are installed in ``/usr/local/`` (ants, fsl …)
-- N.B. be sure to set the right path to waitForSGEQjobs.pl line 1205
+Important stuff:
+- if we do not want the normalization, you need to put: 0 at line 918
+- Things are installed in ``/usr/local/`` (ants, fsl …)
+- be sure to set the right path to waitForSGEQjobs.pl line 1205
 - Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
+- all images need to be in the current folder where the script is launched.
 
 - To see all the jobs currently running type :
 ~~~
