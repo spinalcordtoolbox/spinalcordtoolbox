@@ -20,9 +20,10 @@ def main():
     fname_ref = ''
     fname_moving = ''
     transformation = 'SyN'
-    metric = 'MI'
-    gradient_step = '0.25'
-    radius = '32'
+    metric = 'CC'
+    gradient_step = '0.2'
+    radius = '5'
+    iteration='20x15'
     fname_seg_fixed = ''
     fname_seg_moving = ''
     fname_output = ''
@@ -173,7 +174,7 @@ def main():
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence 20x15 --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence "+iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
         cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
