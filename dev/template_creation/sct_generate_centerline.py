@@ -17,6 +17,7 @@ class param:
     def __init__(self):
         self.verbose = 1
         self.output_name = 'generated_centerline.nii.gz'
+        self.smoothness = '1'
         
 # check if needed Python libraries are already installed or not
 import sys
@@ -34,9 +35,10 @@ def main():
     fname = ''
     verbose = param.verbose
     output_name = param.output_name
+    smoothness = param.smoothness
          
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:o:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:o:s:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -46,6 +48,8 @@ def main():
             fname = arg         
         elif opt in ("-o"):
             output_name = arg    
+        elif opt in ("-s"):
+            smoothness = arg    
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -57,6 +61,9 @@ def main():
     
     sct.check_file_exist(fname)
     
+    # check if RPI
+    sct.check_if_rpi(fname)
+
     # Display arguments
     print'\nCheck input arguments...'
     print'  Input volume ...................... '+fname
@@ -91,11 +98,11 @@ def main():
     #f1 = non_parametric(Z,X,f=0.8)
     #f2 = non_parametric(Z,Y,f=0.8)
 
-    f1 = interpolate.UnivariateSpline(Z,X,s=1)
-    f2 = interpolate.UnivariateSpline(Z,Y,s=1)
+    f1 = interpolate.UnivariateSpline(Z, X, s=smoothness)
+    f2 = interpolate.UnivariateSpline(Z, Y, s=smoothness)
   
-    #f1 = polynomial_fit(Z,X,8)
-    #f2 = polynomial_fit(Z,Y,8)
+    #f1 = polynomial_fit(Z,X,smoothness)
+    #f2 = polynomial_fit(Z,Y,smoothness)
     
     
     #tckp,u = interpolate.splprep([X,Y,Z],s=1000,k=3)
@@ -136,13 +143,6 @@ def main():
         plt.plot(Z_new,Y_fit)
         plt.plot(Z,Y,'o',linestyle = 'None')
         plt.show()
-
-        fig1 = plt.figure()
-        ax = Axes3D(fig1)
-        ax.plot(X,Y,Z,'o',linestyle = 'None',zdir='z')
-        ax.plot(X_fit,Y_fit,Z_new,zdir='z')
-        plt.show()
-
     
     data =data*0
     
@@ -186,6 +186,7 @@ MANDATORY ARGUMENTS
  
 OPTIONAL ARGUMENTS
   -o <output_name>          name of the output. Default="""+str(param.output_name)+""" 
+  -s <smoothness>           smoothness of spline. Default="""+str(param.smoothness)+""" 
   -v {0,1,2}                verbose.Verbose 2 for plotting. Default="""+str(param.verbose)+"""
   -h                        help. Show this message
 
