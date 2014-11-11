@@ -5,9 +5,10 @@
 # Add option with name, type, short description, mandatory or not, example using add_option method.
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 # Type of options are:
-# - file (check file existence)
+# - file, folder (check existence)
+# - folder_creation (check existence and if does not exist, create it)
 # - str, int, float, long, complex (check if input is the correct type)
-# - list
+# - multiple_choice
 # - None, return True when detected
 #
 # Usage:
@@ -53,11 +54,9 @@ import re, collections
 import datetime
 from itertools import *
 
-
 ########################################################################################################################
 ####### OPTION
 ########################################################################################################################
-
 
 class Option:
     # list of option type that can be casted
@@ -74,40 +73,64 @@ class Option:
         self.help = help
         self.parser = parser
 
-    def safe_cast(self, val, to_type):
+    def __safe_cast__(self, val, to_type):
         return to_type(val)
 
     # Do we need to stop the execution if the input is not correct?
     def check_integrity(self, arguments, index):
         # arguments[index] as the option (example: '-input')
         # & argmuments[index+1] must be the corresponding arg (ex: 't2.nii.gz')
-        # Check if the argument of the option exist
-        if len(arguments) > index+1:
-            param = arguments[index + 1]
+        
+        if len(arguments) > index+1: # Check if option is not the last item
+            param = arguments[index+1]
         else:
-            self.parser.usage.error("Option " + self.name + " needs an argument...")
-        spelling_candidates = self.parser.spelling.correct(param)
-        if param in self.parser.options or len(spelling_candidates) != 0:
-            self.parser.usage.error("Option " + self.name + " needs an argument...")
+            self.parser.usage.error("ERROR: Option " + self.name + " needs an argument...")
+
+        if param in self.parser.options: # check if option has an argument that is not another option
+            self.parser.usage.error("ERROR: Option " + self.name + " needs an argument...")
+
+        
+        ###############################################################################
+        # check integrity of each option type
         if self.type_value in self.OPTION_TYPES:
+            # check if a int is really a int (same for str, float, long and complex)
             try:
-                return self.safe_cast(param,eval(self.type_value))
+                return self.__safe_cast__(param,eval(self.type_value))
             except ValueError:
-                self.parser.usage.error("Option "+self.name+" must be "+self.type_value,1,"error")
+                self.parser.usage.error("ERROR: Option "+self.name+" must be "+self.type_value)
+
         elif self.type_value == "file":
+            # check if the file exist
             sct.printv("Check file existence...")
             sct.check_file_exist(param,1)
             return param
+
+        elif self.type_value == "folder":
+            # check if the folder exist. If not, create it.
+            sct.printv("Check folder existence...")
+            sct.check_folder_exist(param,1)
+            return param
+
+        elif self.type_value == "folder_creation":
+            # check if the folder exist. If not, create it.
+            sct.printv("Check folder existence...")
+            result_creation = sct.create_folder(param)
+            if result_creation == 2:
+                sct.printv("ERROR: Permission denied for folder creation...",type="error")
+            elif result_creation == 1:
+                sct.printv("Folder "+param+" has been created.",type='warning')
+            return param
+
         elif type(self.type_value) is list:
             if param not in self.type_value:
                 self.parser.usage.error(self.name + " only takes " + print_list_with_brackets(self.type_value) + " as potential arguments.")
+        
         else:
-            self.parser.usage.error("Error: type of option \"" + self.type_value +"\" is not supported by the parser.")
+            self.parser.usage.error("ERROR: Type of option \"" + self.type_value +"\" is not supported by the parser.")
 
 ########################################################################################################################
 ####### PARSER
 ########################################################################################################################
-
 
 class Parser:
     ## Constructor
@@ -129,33 +152,32 @@ class Parser:
 
         skip = False
         for index,arg in enumerate(arguments):
-            # if argument need to be skipped, we pass
-            if skip:
+            if skip: # if argument need to be skipped, we pass
                 skip = False
                 continue
-            # for each argument, check if is in the option list.
-            # if so, check the integrity of the argument
+
             if arg in self.options:
+                # for each argument, check if is in the option list.
+                # if so, check the integrity of the argument
                 if self.options[arg].type_value:
-                    argument = self.options[arg].check_integrity(arguments, index)
-                    dictionary[arg] = argument
+                    dictionary[arg] = self.options[arg].check_integrity(arguments, index)
                     skip = True
                 else:
                     dictionary[arg] = True
-            # if not in the list of known options, there is a syntax error in the list of arguments
-            # check if the input argument is close to a known option
             else:
+                # if not in the list of known options, there is a syntax error in the list of arguments
+                # check if the input argument is close to a known option
                 spelling_candidates = self.spelling.correct(arg)
                 if len(spelling_candidates) != 0:
                     self.usage.error(" Did you mean: "+', '.join(spelling_candidates) + '?')
                 else:
-                    self.usage.error("Error: wrong input arguments. See documentation.")
+                    self.usage.error("ERROR: wrong input arguments. See documentation.")
 
         # check if all mandatory arguments are provided by the user
         if dictionary:
             for option in [opt for opt in self.options if self.options[opt].mandatory]:
                 if option not in dictionary:
-                    self.usage.error('Error: ' + option + ' is a mandatory argument.\n')
+                    self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
@@ -163,7 +185,6 @@ class Parser:
 ########################################################################################################################
 ####### USAGE
 ########################################################################################################################
-
 
 class Usage:
 
@@ -235,9 +256,8 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         usage = self.header + self.description + self.usage + self.arguments_string + self.example
 
         if error:
-            print "Error: " + error
-            print 'aborted...'
-            print usage
+            sct.printv(error+'\nAborted...',type='warning')
+            sct.printv(usage,type='normal')
             exit(1)
         else:
             return usage
@@ -248,7 +268,6 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
 ########################################################################################################################
 ####### SPELLING CHECKER
 ########################################################################################################################
-
 
 class SpellingChecker:
     # spelling checker from http://norvig.com/spell-correct.html
