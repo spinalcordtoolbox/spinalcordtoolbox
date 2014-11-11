@@ -23,6 +23,7 @@ import commands
 import getopt
 import sct_utils as sct
 import nibabel as nib
+from scipy.io import netcdf
 
 
 # DEFAULT PARAMETERS
@@ -87,11 +88,12 @@ def main():
         path_in, file_in, ext_in = sct.extract_fname(fname_data)
         path_out, file_out, ext_out = sct.extract_fname(fname_out)
 
+    # if nii.gz, uncompression
     if ext_in=='.nii.gz':
         print "Uncompressing input file..."
-        sct.run("gunzip -c "+fname_data+" >"+path_in+file_in+".nii")
-        ext_in='.nii'
-        fname_data=path_in+file_in+ext_in
+        fname_data_tmp=path_in+"tmp."+file_in+".nii"
+        sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
+        fname_data=fname_data_tmp
 
     if ext_in=='.nii' and ext_out=='.mnc':
         nii2mnc(fname_data,fname_out)
@@ -102,12 +104,16 @@ def main():
     elif ext_in=='.mnc' and ext_out=='.header':
         mnc2volviewer(fname_data,fname_out)
 
+    # remove temp files
+    sct.run('rm -rf '+path_in+'tmp.*', param.verbose)
+
 
 # Convert file from nifti to minc
 # ==========================================================================================
 def nii2mnc(fname_data,fname_out):
     print "Converting from nifti to minc"
     sct.run("nii2mnc "+fname_data+" "+fname_out)
+
     
 
 # Convert file from minc to nifti
@@ -115,6 +121,14 @@ def nii2mnc(fname_data,fname_out):
 def mnc2nii(fname_data,fname_out):
     print "Converting from minc to nifti"
     sct.run("mnc2nii "+fname_data+" "+fname_out)
+    # # open minc
+    # mnc = nib.minc.MincFile(netcdf.netcdf_file(fname_data, 'r'))
+    # img = mnc.get_scaled_data()
+    # affine = mnc.get_affine()
+    # # hdr = nib.MincImage()
+    # # save as nifti
+    # nii = nib.Nifti1Image(img, affine)
+    # nib.save(nii, fname_out)
 
 # Convert file from nifti to volumeviewer
 # ==========================================================================================

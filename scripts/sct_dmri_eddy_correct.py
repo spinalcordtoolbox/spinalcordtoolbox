@@ -26,9 +26,11 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
+
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
-class eddy_class:
+
+class Param:
     def __init__(self):
         self.fname_data                = ''
         self.fname_bvecs               = ''
@@ -50,7 +52,6 @@ class eddy_class:
 #=======================================================================================================================
 def main():
     start_time = time.time()
-    param = eddy_class()
 
     # Check input parameters
     try:
@@ -391,5 +392,6 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    param = Param()
     # call main function
     main()

@@ -1,18 +1,6 @@
 This folder contains only compiled binaries.
 
-ANTs
-====
-### 2014-10-04
+- ANTs build date (linux & OSX): 2014-11-01
+- sct build date (linux & OSX): 2014-10-31
+- c3d build date (linux & OSX): 2014-09-03
 
-updated:
-- sct_antsRegistration
-- sct_ComposeMultiTransform
-- sct_ANTSUseLandmarkImagesToGetAffineTransform
-- sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField
-
-added:
-- sct_antsApplyTransforms
-- sct_antsSliceRegularizedRegistration
-
-removed:
-- sct_WarpImageMultiTransform
