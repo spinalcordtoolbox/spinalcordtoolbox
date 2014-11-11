@@ -222,15 +222,15 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # Put source into destination space using header
-    sct.printv('\nPut source into destination space using header...', verbose)
-    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
-    if use_segmentation:
-        sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii.gz,src_seg.nii.gz,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_seg_regAffine.nii.gz] -n NearestNeighbor')
-
     # Pad the destination image (because ants doesn't deform the extremities)
     sct.printv('\nPad src and destination volume (because ants doesn''t deform the extremities)...', verbose)
     pad_image('dest.nii', 'dest_pad.nii', padding)
+
+    # Put source into destination space using header
+    sct.printv('\nPut source into destination space using header...', verbose)
+    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
+    if use_segmentation:
+        sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_seg.nii.gz,src_seg.nii.gz,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_seg_regAffine.nii.gz] -n NearestNeighbor')
 
     # don't use spinal cord segmentation
     if use_segmentation == 0:
@@ -241,7 +241,7 @@ def main():
         if algo == 'sliceReg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
-                   '-m '+metric+'[dest_pad.nii,src.nii,1,'+metricSize+',Regular,0.2] '
+                   '-m '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
                    '-p 3 '
                    '-i '+numberIterations+' '
                    '-f 1 '
@@ -252,11 +252,11 @@ def main():
             cmd = ('sct_antsRegistration '
                    '--dimensionality 3 '
                    '--transform '+algo+'['+gradientStep+',3,0] '
-                   '--metric '+metric+'[dest_pad.nii,src.nii,1,'+metricSize+'] '
+                   '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
                    '--convergence 20x'+numberIterations+' '
                    '--shrink-factors 2x1 '
                    '--smoothing-sigmas 2x0mm '
-                   '--Restrict-Deformation 1x1x0 '
+                   '--restrict-deformation 1x1x0 '
                    '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsSliceReg add "0Warp"
                    '--interpolation BSpline[3] '
                    +masking)
@@ -297,7 +297,7 @@ def main():
                '--convergence '+numberIterations+' '
                '--shrink-factors 1 '
                '--smoothing-sigmas 0mm '
-               '--Restrict-Deformation 1x1x0 '
+               '--restrict-deformation 1x1x0 '
                '--output [stage2,src_regAffineWarp.nii] '
                '--collapse-output-transforms 0 '
                '--interpolation BSpline[3] '
@@ -381,12 +381,13 @@ OPTIONAL ARGUMENTS
                      2) algo: {SyN, BSplineSyN, sliceReg}
                         N.B. if you use sliceReg, then you should set -z 0. Also, the two input
                         volumes should have same the same dimensions.
+                        For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
                      3) gradient step. The larger the more deformation.
                      4) metric: {MI,MeanSquares}.
                         If you find very large deformations, switching to MeanSquares can help.
   -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param_default.padding)+"""
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
-  -r {0,1}         remove temporary files. Default='+str(param.remove_temp_files)+'
+  -r {0,1}         remove temporary files. Default="""+str(param.remove_temp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
 
 EXAMPLES

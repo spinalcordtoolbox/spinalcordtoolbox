@@ -154,7 +154,11 @@ def main():
     
     # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
     if centerline_fitting == 'splines':
-        x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+        try:
+            x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+        except ValueError:
+            print "splines fitting doesn't work, trying with polynomial fitting...\n"
+            x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline,y_centerline,z_centerline)
     elif centerline_fitting == 'polynome':
         x_centerline_fit, y_centerline_fit = polynome_centerline(x_centerline,y_centerline,z_centerline)
 
@@ -280,15 +284,15 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
     
     # Fit centerline in the Z-X plane using polynomial function
     print '\nFit centerline in the Z-X plane using polynomial function...'
-    coeffsx = np.polyfit(z_centerline, x_centerline, deg=5)
-    polyx = np.poly1d(coeffsx)
-    x_centerline_fit = np.polyval(polyx, z_centerline)
+    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=5)
+    polyx = numpy.poly1d(coeffsx)
+    x_centerline_fit = numpy.polyval(polyx, z_centerline)
     
     #Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
-    coeffsy = np.polyfit(z_centerline, y_centerline, deg=5)
-    polyy = np.poly1d(coeffsy)
-    y_centerline_fit = np.polyval(polyy, z_centerline)
+    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
+    polyy = numpy.poly1d(coeffsy)
+    y_centerline_fit = numpy.polyval(polyy, z_centerline)
     
     
     return x_centerline_fit,y_centerline_fit

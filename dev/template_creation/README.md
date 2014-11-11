@@ -1,10 +1,11 @@
-                                                     ———PREPROCESSING———— 
+PREPROCESSING
+=============
 
 - Preprocessing is done for each subject. Preprocessing is first done for T2, and then for T1. Preprocessing for T1 involves registration to T2.
 
 - the list of commands is included in files:
-  - commands_preprocess_t2.sh
-  - commands_preprocess_t1.sh
+  - preprocess_t2.sh
+  - preprocess_t1.sh
 
 N.B. preprocessing for T1 has less steps because some are made in T2. E.g., generation of centerlines. 
 
@@ -29,63 +30,67 @@ List of steps is below. Functions involved are in brackets ():
 IMPORTANT : 
 normalize.sh does 10 and 12 once 11 is done
 
+For T1 volumes, do the same as: preprocess_t1/TR.
 
-For T1 volumes you can register your T1 initial volumes to your T2 initial volumes using register_multimodal (without segmentations or with if you have them). And run the same commands as the T2 ones, but they are steps you don’t need to do twice ( generating the centerline for instance, assuming the registration is good enough, you should always check this) Use registert1.sh and see commands*.sh
+All data are located in:
+~~~
+users_hd2/jtouati/data/template_data
+~~~
 
 
+TEMPLATE CREATION
+=================
 
-                                                         —————CREATION————— 
+Connect to Guillimin
+--------------------
 
+- First register yourself. Choose Guillimin server
+- To connect to the server :  
+	``ssh <username>@guillimin.clumeq.ca``
+  - To transfer files from your system to the server (run this from your system): 
+  - To transfer files from the server to your system:
+    ``scp <username>@ guillimin.clumeq.ca:<path to file >`
+- You have a .bash_profile and .bashrc on the server. Use .bahsrc rather than .bash_profile.
+Add this to your .bashrc:
+~~~
+PATH=${PATH}:/gs/project/rrp-355-aa/bin/ants/bin
+export ANTSPATH=/gs/project/rrp-355-aa/bin/ants/bin/
+~~~
 
-Calcul Quebec:
+- There are pre-installed modules that you'll need to load in order to use (e.g. cmake). To see all modules available :
 
-	-	First register yourself. Choose Guillimin server
+~~~
+module avail
+~~~
 
-	-	To connect to the server :  
-		ssh <username>@guillimin.clumeq.ca
+- To load module (have to reload every time you login) (you can put this in your .bashrc if you need the module all the time):
 
-	-	You can add this to your .bash_profile : alias guillimin="ssh jtouati@guillimin.clumeq.ca" and you’ll just have to enter guillimin 				instead of the previous command (quite useful). 
+~~~
+module load <module_name>
+~~~
 
-	-	To transfer files from your system to the server (run this from your system): 
+- You have to build everything from source because you don't have root permission to install anything yourself. You can send an email to guillimin@calculquebec.ca if you need them to install something on your session. They are quite responsive.
 
-		scp <yourfile> <username>@ guillimin.clumeq.ca:<repository> 
-
-	-	To transfer files from the server to your system:
-
-		scp <username>@ guillimin.clumeq.ca:<path to file > .
-
-	-	You have a .bash_profile and .bashrc on the server. Use .bahsrc rather than .bash_profile  
-
-	-	There are pre-installed modules that you’ll need to load in order to use (e.g. cmake). To see all modules available :
-		module avail
-
-	-	To load module (have to reload every time you login) (you can put this in your .bashrc if you need the module all the time):
-		module load <module_name>
-
-	-	You have to build everything from source though because you don’t have root permission to install anything yourself. You can send an email to 			guillimin@calculquebec.ca if you need them to install something on your session they are quite responsive.
-
-	-	In terms of Disk space you have a home folder /home/<username> -> 10GB, a project space /gs/project/<id> id is the one shared by all the people in 		the group (login to calculquebec website and you’ll find it) –> 1TB
+- In terms of Disk space you have a home folder /home/<username> -> 10GB, a project space /gs/project/<id> id is the one shared by all the people in the group (login to calculquebec website and you’ll find it) –> 1TB
 	
-	-	You should work in this directory ( for us it is /gs/project/rrp-355-aa )
+- The folder common to the lab (where you need to work) is:
+~~~
+/gs/project/rrp-355-aa
+~~~
 
+See https://wiki.calculquebec.ca/w/Accueil
 
- 
+Read the next one carefully everything’s in there :
+http://www.hpc.mcgill.ca/index.php/starthere 
 
+- To see if you have jobs running or pending enter :
+showq –u <username>
 
-	See https://wiki.calculquebec.ca/w/Accueil
-
-	Read the next one carefully everything’s in there :
-	http://www.hpc.mcgill.ca/index.php/starthere 
-
-	- To see if you have jobs running or pending enter :
-	showq –u <username>
-
-	- To run a job : you need to create a .sh file with the correct header (see bellow for examples), submit.sh e.g. Then just enter :
-	qsub submit.sh
-
+- To run a job : you need to create a .sh file with the correct header (see bellow for examples), submit.sh e.g. Then just enter :
+qsub submit.sh
 
 Example : 
-
+~~~
 #!/bin/bash
 #PBS -l nodes=1:ppn=16,pmem=31700m,walltime=48:00:00
 #PBS -A rrp-355-aa
@@ -93,30 +98,55 @@ Example :
 #PBS -e error.txt
 #PBS -V
 #PBS -N build_template
-
+~~~
 cd /gs/project/rrp-355-aa/final_data_T2
 
 bash buildtemplateparallel.sh -d 3 -o AVT -n 0 -c 2 -j 16 *.nii.gz
 
+To create template, run: ``qsub submit_template_ants.sh``
 
 
-Magma : 
+Connect to Magma 
+----------------
 
-	-	To connect use ssh : ssh <username>@magma.criugm.qc.ca
+- To connect use ssh
+~~~
+ssh <username>@magma.criugm.qc.ca
+~~~
+- Add this to your ``~/.bashrc`` (only need to do it once):
+~~~
+PATH=${PATH}:/usr/local/ants/bin
+export ANTSPATH=/usr/local/ants/bin/
+~~~
+- go to data folder
+~~~
+cd /data/neuropoly<username>
+~~~
+- Launch script to create template (based on qsub):
+~~~
+./buildtemplateparallel.sh -d 3 -n 0 -o AVT *.nii.gz
+~~~
+Things that were modified on buildtemplateparallel:
+~~~
+line 662: QSUBOPTS="-q all.q" # to force all queue in MAGMA
+~~~
 
-	-	Similarily to guillimin you have a .bashrc
+Important stuff:
+- if we do not want the normalization, you need to put: 0 at line 918
+- Things are installed in ``/usr/local/`` (ants, fsl …)
+- be sure to set the right path to waitForSGEQjobs.pl line 1205
+- Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
+- all images need to be in the current folder where the script is launched.
 
-	-	To see all the jobs currently running type :
-		qstat
-
-	-	Things are installed in /usr/local/ (ants, fsl …)
-
-	-	Directory to work in is /data/neuropoly/<username>
-
-	-	To run jobs use qsub as well. But the template creation script does it all by itself. 
-
-	-	Typically you’ll want to do screen then run your script. You can close the terminal, it will continue to run.
-
+- To see all the jobs currently running type :
+~~~
+qstat
+~~~
 
 
+OUTPUT OT TEMPLATE CREATION
+---------------------------
 
+GR_iteration_X --> within this folder, the generated template is called: AVTtemplate.nii.gz.
+
+To find the final version of the template, go to the highest iteration.

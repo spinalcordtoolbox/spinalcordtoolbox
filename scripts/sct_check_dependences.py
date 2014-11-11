@@ -121,8 +121,18 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    # check pillow
+    print_line("Check if pillow is installed ")
+    try:
+        import PIL
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  pillow is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
+        install_software = 1
+
     # check numpy
-    print_line('Check if numpy is installed ................... ')
+    print_line('Check if numpy is installed ')
     try:
         import numpy
         print_ok()
@@ -132,7 +142,7 @@ def main():
         install_software = 1
 
     # check scipy
-    print_line('Check if scipy is installed ................... ')
+    print_line('Check if scipy is installed ')
     try:
         import scipy
         print_ok()
@@ -142,7 +152,7 @@ def main():
         install_software = 1
 
     # check sympy
-    print_line('Check if sympy is installed ................... ')
+    print_line('Check if sympy is installed ')
     try:
         import sympy
         print_ok()
@@ -152,7 +162,7 @@ def main():
         install_software = 1
 
     # check matplotlib
-    print_line('Check if matplotlib is installed .............. ')
+    print_line('Check if matplotlib is installed ')
     try:
         import matplotlib
         print_ok()
@@ -162,7 +172,7 @@ def main():
         install_software = 1
 
     # check nibabel
-    print_line('Check if nibabel is installed ................. ')
+    print_line('Check if nibabel is installed ')
     try:
         import nibabel
         print_ok()
@@ -172,10 +182,9 @@ def main():
         install_software = 1
 
     # check if FSL is declared
-    print_line('Check if FSL is declared ...................... ')
+    print_line('Check if FSL is declared ')
     cmd = 'which fsl'
     status, output = commands.getstatusoutput(cmd)
-#    status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
         path_fsl = output[:-7]
@@ -189,20 +198,9 @@ def main():
         print '>> '+cmd
         print (status, output), '\n'
 
-#    if complete_test:
-#        print '\n'+cmd+'\n'+str(status)+'\n'+path_sct+'\n'
-
-        # In a previous version we edited the bash_profile. We don't do that anymore because some users might have funky configurations.
-        # add_bash_profile('#FSL (added on '+time.strftime("%Y-%m-%d")+')\n' \
-        #     'FSLDIR='+path_fsl+'\n' \
-        #     '. ${FSLDIR}/etc/fslconf/fsl.sh\n' \
-        #     'PATH=${FSLDIR}/bin:${PATH}\n' \
-        #     'export FSLDIR PATH')
-        # restart_terminal = 1
-
     # check if FSL is installed
     if not fsl_is_working:
-        print_line('Check if FSL is installed ..................... ')
+        print_line('Check if FSL is installed ')
         # check first under /usr for faster search
         (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
         if output:
@@ -223,7 +221,7 @@ def main():
                 install_software = 1
 
     # check ANTs
-    print_line('Check which ANTs is running .................., ')
+    print_line('Check which ANTs is running ')
     # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
     cmd = 'which sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
@@ -240,7 +238,7 @@ def main():
         print (status, output), '\n'
 
     # check if ANTs is compatible with OS
-    print_line('Check ANTs compatibility with OS .............. ')
+    print_line('Check ANTs compatibility with OS ')
     cmd = 'sct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
@@ -253,7 +251,7 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d
-    print_line('Check which sct_c3d is running ................ ')
+    print_line('Check which sct_c3d is running ')
     # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
     status, output = commands.getstatusoutput('which sct_c3d')
     if output:
@@ -268,7 +266,7 @@ def main():
         print (status, output), '\n'
 
     # check sct_c3d compatibility with OS
-    print_line('Check sct_c3d compatibility with OS ........... ')
+    print_line('Check sct_c3d compatibility with OS ')
     (status, output) = commands.getstatusoutput('sct_c3d -h')
     if status in [0, 256]:
         print_ok()
@@ -279,7 +277,7 @@ def main():
         print (status, output), '\n'
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with OS ........... ')
+    print_line('Check PropSeg compatibility with OS ')
     (status, output) = commands.getstatusoutput('sct_propseg')
     if status in [0, 256]:
         print_ok()
@@ -290,7 +288,7 @@ def main():
         print (status, output), '\n'
 
     # Check ANTs integrity
-    print_line('Check integrity of ANTs output ................ ')
+    print_line('Check integrity of ANTs output ')
     (status, output) = commands.getstatusoutput('isct_test_ants -v 0')
     if status in [0]:
         print_ok()
@@ -309,83 +307,23 @@ def main():
         print "File generated: "+file_log+'\n'
 
     sys.exit(e + install_software)
-
-    # # check if ANTS is installed
-    # print_line('Check if ANTs is installed .................... ')
-    # (status, output) = commands.getstatusoutput('find /usr -name "sct_antsRegistration" -type f -print -quit 2>/dev/null')
-    # if output:
-    #     print_ok()
-    #     path_ants = os.path.dirname(output)
-    #     print '  '+path_ants
-    # else:
-    #     print_fail()
-    #     print '  ANTs is not installed! Follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/ants_installation/'
-    #     ants_is_installed = 0
-    #     install_software = 1
-    # 
-    # # check if ANTS is declared
-    # if ants_is_installed:
-    #     print_line('Check if ANTs is declared ..................... ')
-    #     (status, output) = commands.getstatusoutput('which sct_antsRegistration')
-    #     if output:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print '  ANTs is not declared! Modifying .bash_profile ...'
-    #         add_bash_profile('#ANTS (added on '+time.strftime("%Y-%m-%d")+')\n' \
-    #             'PATH=${PATH}:'+path_ants)
-    #         restart_terminal = 1
-
-    # # check if sct_c3d is installed
-    # print_line('Check if sct_c3d is installed ..................... ')
-    # output = ''
-    # if os_running == 'osx':
-    #     # in OSX, sct_c3d is typically installed under /Applications
-    #     (status, output) = commands.getstatusoutput('find /Applications -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if not output:
-    #     # check the typical /usr folder
-    #     (status, output) = commands.getstatusoutput('find /usr -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if not output:
-    #     # if still not found, check everywhere (takes a while)
-    #     (status, output) = commands.getstatusoutput('find / -name "sct_c3d" -type f -print -quit 2>/dev/null')
-    # if output:
-    #     print_ok()
-    #     path_sct_c3d = os.path.dirname(output)
-    #     print '  '+path_sct_c3d
-    # else:
-    #     print_fail()
-    #     print '  Please install it from there: http://www.itksnap.org/pmwiki/pmwiki.php?n=Downloads.sct_c3d'
-    #     sct_c3d_is_installed = 0
-    #     install_software = 1
-    # 
-    # # check if sct_c3d is declared
-    # if sct_c3d_is_installed:
-    #     print_line('Check if sct_c3d is declared ...................... ')
-    #     (status, output) = commands.getstatusoutput('which sct_c3d')
-    #     if output:
-    #         print_ok()
-    #     else:
-    #         print_warning()
-    #         print '  sct_c3d is not declared! Modifying .bash_profile ...'
-    #         add_bash_profile('#sct_c3d (added on '+time.strftime("%Y-%m-%d")+')\n' \
-    #             'PATH=${PATH}:'+path_sct_c3d)
-    #         restart_terminal = 1
-    # 
-    #    if install_software:
-    #        print '\nDone! Please install the required software, then run this script again.'
-    #    elif restart_terminal:
-    #        print '\nDone! Please restart your Terminal for changes to take effect.'
-    #    else:
-    #        print '\nDone! Everything is in order :-)'
-    #    print
     
 
-# Print without new carriage return
+# print without carriage return
 # ==========================================================================================
 def print_line(string):
     import sys
-    sys.stdout.write(string)
+    sys.stdout.write(string + make_dot_lines(string))
     sys.stdout.flush()
+
+
+# fill line with dots
+# ==========================================================================================
+def make_dot_lines(string):
+    if len(string) < 52:
+        dot_lines = '.'*(52 - len(string))
+        return dot_lines
+    else: return ''
 
 
 def print_ok():

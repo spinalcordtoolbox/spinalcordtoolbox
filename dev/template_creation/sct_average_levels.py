@@ -80,7 +80,7 @@ def main():
             for i in xrange(n_l):
                 average[compteur][i] = Z[i]
             
-            compteur = compteur + 1
+        compteur = compteur + 1
             
     average = array([int(round(mean([average[:,i]]))) for i in xrange(n_l)]) 
       
@@ -97,12 +97,12 @@ def main():
     hdr = img.get_header()
     compteur = 0
     for i in average :
-        data[int(round(nx/2.0)),int(round(ny/2.0)),i] = n_l - compteur
+        data[int(round(nx/2.0)),int(round(ny/2.0)),int(round(i))] = int(round(n_l - compteur))
         compteur = compteur + 1
         
     
     print '\nSave volume ...'
-    hdr.set_data_dtype('float32') # set imagetype to uint8
+    #hdr.set_data_dtype('float32') # set imagetype to uint8
     # save volume
     #data = data.astype(float32, copy =False)
     img = nibabel.Nifti1Image(data, None, hdr)
