@@ -25,7 +25,7 @@ import sct_utils as sct
 import nibabel
 from numpy import linspace
 import os
-from msct_smooth import non_parametric, Univariate_Spline, polynomial_fit
+from msct_smooth import non_parametric, Univariate_Spline, polynomial_fit, opt_f
 from scipy import interpolate
 
 def main():
@@ -78,9 +78,21 @@ def main():
     # f1 = interpolate.interp1d(Z, X, kind='cubic')
  #    f2 = interpolate.interp1d(Z,Y, kind='cubic')
  #
-    
-    f1 = interpolate.UnivariateSpline(Z,X, s=100)
-    f2 = interpolate.UnivariateSpline(Z,Y,s=100)
+
+    # sort X and Y arrays using Z
+    X = [X[i] for i in Z[:].argsort()]
+    Y = [Y[i] for i in Z[:].argsort()]
+    Z = [Z[i] for i in Z[:].argsort()]
+
+    print X, Y, Z
+
+    #f_opt_x, f_opt_y = opt_f(X,Y,Z)
+    #print "f_opt = "+str(f_opt_x)+" "+str(f_opt_y)
+    #f1 = non_parametric(Z,X,f=0.8)
+    #f2 = non_parametric(Z,Y,f=0.8)
+
+    f1 = interpolate.UnivariateSpline(Z,X,s=1)
+    f2 = interpolate.UnivariateSpline(Z,Y,s=1)
   
     #f1 = polynomial_fit(Z,X,8)
     #f2 = polynomial_fit(Z,Y,8)
@@ -91,6 +103,9 @@ def main():
     
     X_fit = f1(Z_new)
     Y_fit = f2(Z_new)
+
+    print X_fit
+    print Y_fit
 
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
