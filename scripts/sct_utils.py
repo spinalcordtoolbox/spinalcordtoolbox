@@ -12,6 +12,7 @@
 #########################################################################################
 
 import os
+import errno
 import sys
 import commands
 
@@ -75,13 +76,43 @@ def extract_fname(fname):
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
 def check_file_exist(fname, verbose=1):
-    if os.path.isfile(fname) or os.path.isdir(fname):
+    if os.path.isfile(fname):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
         printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
+
+#=======================================================================================================================
+# check_folder_exist:  Check existence of a folder.
+#   Does not create it. If you want to create a folder, use create_folder
+#=======================================================================================================================
+def check_folder_exist(fname, verbose=1):
+    if os.path.isdir(fname):
+        if verbose:
+            printv('  OK: '+fname, verbose, 'normal')
+        pass
+    else:
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+
+
+#=======================================================================================================================
+# create_folder:  create folder (check if exists before creating it)
+#   output: 0 -> folder created
+#           1 -> folder already exist
+#           2 -> permission denied
+#=======================================================================================================================
+def create_folder(folder):
+    if not os.path.exists(folder):
+        try:
+            os.makedirs(folder)
+            return 0
+        except OSError, e:
+            if e.errno != errno.EEXIST:
+                return 2
+    else:
+        return 1
 
 #=======================================================================================================================
 # check_if_3d
@@ -262,14 +293,6 @@ def delete_nifti(fname_in):
     # delete nifti if exist
     if os.path.isfile(path_in+file_in+'.nii.gz'):
         os.system('rm '+path_in+file_in+'.nii.gz')
-
-
-#=======================================================================================================================
-# create_folder:  create folder (check if exists before creating it)
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
 
 
 #=======================================================================================================================
