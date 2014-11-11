@@ -97,7 +97,7 @@ def main():
 
     # Check folder existence
     sct.printv('\nCheck atlas existence...', param.verbose)
-    sct.check_file_exist(path_atlas)
+    sct.check_folder_exist(path_atlas)
     
     # Extract atlas info
     atlas_id, atlas_name, atlas_file = read_label_file(path_atlas)
