@@ -112,6 +112,8 @@ def main():
     # switch to process
     if type_process == 'cross':
         data = cross(data, cross_radius, fname_ref, dilate, px, py)
+    if type_process == 'plan':
+        data = plan(data, cross_radius)
     elif type_process == 'remove':
         data = remove_label(data, fname_ref)
     elif type_process == 'disk':
@@ -228,6 +230,16 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
 
     return data
 
+
+# plan
+# ==========================================================================================
+def plan(data, width):
+    X, Y, Z = (data > 0).nonzero()
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(X)):
+        value = int(data[X[i]][Y[i]][Z[i]])
+        data[:,:,Z[i]-width:Z[i]+width] = 100+5*value
+    return data
 
 # create_label
 #=======================================================================================================================
