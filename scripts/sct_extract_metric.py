@@ -145,9 +145,9 @@ def main():
     # Check existence of data file
     sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_data)
-    sct.check_file_exist(path_label)
+    sct.check_folder_exist(path_label)
     if fname_normalizing_label:
-        sct.check_file_exist(fname_normalizing_label)
+        sct.check_folder_exist(fname_normalizing_label)
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
