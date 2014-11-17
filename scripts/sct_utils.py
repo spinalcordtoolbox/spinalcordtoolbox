@@ -71,6 +71,15 @@ def extract_fname(fname):
 
     return path_fname, file_fname, ext_fname
 
+#=======================================================================================================================
+# get_absolute_path
+#=======================================================================================================================
+# Return the absolute path of a file or a directory
+def get_absolute_path(fname):
+    if os.path.isfile(fname) or os.path.isdir(fname):
+        return os.path.realpath(fname)
+    else:
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
 #=======================================================================================================================
 # check_file_exist:  Check existence of a file or path
@@ -81,7 +90,7 @@ def check_file_exist(fname, verbose=1):
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -94,7 +103,7 @@ def check_folder_exist(fname, verbose=1):
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -158,16 +167,20 @@ def get_dimension(fname):
     status, output = commands.getstatusoutput(cmd)
     # split output according to \n field
     output_split = output.split()
-    # extract dimensions as integer
-    nx = int(output_split[1])
-    ny = int(output_split[3])
-    nz = int(output_split[5])
-    nt = int(output_split[7])
-    px = float(output_split[9])
-    py = float(output_split[11])
-    pz = float(output_split[13])
-    pt = float(output_split[15])
-    return nx, ny, nz, nt, px, py, pz, pt
+
+    if output_split[0] == 'ERROR:':
+        printv('\n'+output,1,'error')
+    else:
+        # extract dimensions as integer
+        nx = int(output_split[1])
+        ny = int(output_split[3])
+        nz = int(output_split[5])
+        nt = int(output_split[7])
+        px = float(output_split[9])
+        py = float(output_split[11])
+        pz = float(output_split[13])
+        pt = float(output_split[15])
+        return nx, ny, nz, nt, px, py, pz, pt
 
 
 #=======================================================================================================================
