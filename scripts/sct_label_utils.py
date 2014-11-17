@@ -114,6 +114,9 @@ def main():
         data = cross(data, cross_radius, fname_ref, dilate, px, py)
     if type_process == 'plan':
         data = plan(data, cross_radius)
+    if type_process == 'plan_ref':
+        data = plan_ref(data, fname_ref, file_label_output, ext_label_output)
+        output_level = 1
     elif type_process == 'remove':
         data = remove_label(data, fname_ref)
     elif type_process == 'disk':
@@ -235,10 +238,36 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
 # ==========================================================================================
 def plan(data, width):
     X, Y, Z = (data > 0).nonzero()
+
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i in range(0,len(X)):
         value = int(data[X[i]][Y[i]][Z[i]])
         data[:,:,Z[i]-width:Z[i]+width] = 100+5*value
+
+    return data
+
+# plan
+# ==========================================================================================
+def plan_ref(data, fname_ref, file_label_output, ext_label_output):
+    X, Y, Z = (data != 0).nonzero()
+
+    img_ref = nibabel.load(fname_ref)
+    # 3d array for each x y z voxel values for the input nifti image
+    data_ref = img_ref.get_data()
+    hdr_ref = img_ref.get_header()
+    data_ref[:,:,:] = 0.0
+
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(X)):
+        data_ref[:,:,Z[i]] = data[X[i]][Y[i]][Z[i]]
+
+    hdr_ref.set_data_dtype('float32')
+    print '\nWrite NIFTI volumes...'
+    data_ref.astype('float32')
+    img_ref_output = nibabel.Nifti1Image(data_ref, None, hdr_ref)
+    nibabel.save(img_ref_output, 'tmp.'+file_label_output+'.nii.gz')
+    sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
+
     return data
 
 # create_label
