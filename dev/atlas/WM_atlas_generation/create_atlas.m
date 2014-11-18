@@ -274,11 +274,11 @@ cmd = ['sct_c3d ' Warp_tmp 'y' ext ' ' Warp_tmp 'ys' ext ' -copy-transform -o ' 
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the mask
-cmd = ['sct_WarpImageMultiTransform 2 ' mask_nohd ext ' ' mask_nohd suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+cmd = ['sct_antsApplyTransforms -d 2 -i ' mask_nohd ext ' -o ' mask_nohd suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the initial atlas
-cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_nifti suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_nifti suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the tract files and copying geometry and saving
@@ -286,10 +286,10 @@ for label = 1:length(label_values)/2
     tract_atlas_g = [path_out 'tract_atlas_' num2str(label)];
     tract_atlas_d = [path_out 'tract_atlas_' num2str(label+length(label_values)/2)];
     
-    cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
-    cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
 %     cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
@@ -503,16 +503,16 @@ for iz = 1:nb_slices
     warp_slice = [ prefix_ants, 'concat_sym_', num2str(zslice), ext];
     
     % Apply transform to reference slice as a control
-    cmd = ['sct_WarpImageMultiTransform 2 ' templatecit_slice_ref ext ' ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' templatecit_slice_ref ext ' -o ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply transform to the initial atlas as a control
 %     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
-    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_slice ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     cmd = ['sct_c3d ' templatecit_slice_ref ' ' atlas_slice ext ' -copy-transform -o ' atlas_slice ext];  % copy geom-- added: 2014-08-30
     disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_slice ext ' ' atlas_slice suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_slice ext ' -o ' atlas_slice suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply tranform to the tract files and constraint to be symmetric
@@ -529,19 +529,19 @@ for iz = 1:nb_slices
 %         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
         % LEFT
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext ext];  % copy geom-- added: 2014-08-30
         disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g suffix_ants ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g suffix_ants ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         
         % RIGHT
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' ' affine_atlas ' -r ' templateci_slice_ref_thresh ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext ext];  % copy geom-- added: 2014-08-30
         disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d suffix_ants ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d suffix_ants ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
         % copy header from template to registered atlas
