@@ -75,14 +75,16 @@ def main():
             img = nibabel.load(file)
             data = img.get_data()
             X,Y,Z = (data>0).nonzero()
-            Z = sort(Z)
+            Z = [Z[i] for i in Z.argsort()]
+            Z.reverse()
             
             for i in xrange(n_l):
-                average[compteur][i] = Z[i]
+                if i < len(Z):
+                    average[compteur][i] = Z[i]
             
             compteur = compteur + 1
 
-    average = array([int(round(mean([average[:,i]]))) for i in xrange(n_l)]) 
+    average = array([int(round(mean([average[average[:,i]>0,i]]))) for i in xrange(n_l)]) 
       
     #print average     
     
@@ -96,10 +98,10 @@ def main():
     data = img.get_data()
     hdr = img.get_header()
     data[:,:,:] = 0
-    compteur = 0
-    for i in average :
-        print int(round(nx/2.0)),int(round(ny/2.0)),int(round(i)),int(round(n_l - compteur))
-        data[int(round(nx/2.0)),int(round(ny/2.0)),int(round(i))] = int(round(n_l - compteur))
+    compteur = 1
+    for i in average:
+        print int(round(nx/2.0)),int(round(ny/2.0)),int(round(i)),int(round(compteur))
+        data[int(round(nx/2.0)),int(round(ny/2.0)),int(round(i))] = int(round(compteur))
         compteur = compteur + 1
         
     
