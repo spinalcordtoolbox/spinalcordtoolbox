@@ -485,12 +485,14 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         # loop across slices
         for iz in range(min_z_index,max_z_index+1):
             # retrieve seg pixels
-            x_seg, y_seg = (data_seg[:, :, iz] > 0).nonzero()
-            seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
+            #x_seg, y_seg = (data_seg[:, :, iz] > 0).nonzero()
+            #seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
             # loop across pixels in segmentation
-            for i in seg :
-                # replace value with csa value
-                data_seg[i[0], i[1], iz] = csa[iz-min_z_index]
+            #for i in seg :
+            # replace value with csa value
+            for ix in range(0, nx):
+                for iy in range(0, ny):
+                    data_seg[ix, iy, iz] = csa[iz-min_z_index]
         # create header
         hdr_seg.set_data_dtype('uint8')  # set imagetype to uint8
         # save volume
