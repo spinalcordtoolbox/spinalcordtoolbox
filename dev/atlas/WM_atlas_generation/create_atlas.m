@@ -388,8 +388,8 @@ for iz = 1:nb_slices-1
     % ANTs website crashes when using option --transform BSplineSyN. Use
     % the version from github instead.
     cmd =['sct_antsRegistration --dimensionality 2 ',...
-        '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
-        '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
+        '--convergence 100x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 end
@@ -439,8 +439,8 @@ for iz = 1:nb_slices
     % initial transformation
     cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--initial-moving-transform ', warp_slice, ' ',...
-        '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
-        '--convergence 200x10 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
+        '--convergence 200x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' prefix_ants, 'concat_', num2str(zslice) ',' templatecit_slice_ref 'to_' num2str(zslice) ext ']' ];
     disp(cmd)
     [status,result] = unix(cmd);
@@ -611,9 +611,7 @@ end
 
 for label = 1:length(label_values)
     for k = 1:length(z_disks_mid)-1
-    
         tractsHR{label} = m_linear_interp(tractsHR{label},z_disks_mid(k)+1,z_disks_mid(k+1)+1);
-        
     end
 end
 
@@ -627,7 +625,6 @@ for label = 1:length(label_values)
     for zslice = 0:max_indx
         numSlice = zslice+1;
         tracts{label}(:,:,numSlice) = dnsamplelin(tractsHR{label}(:,:,numSlice),interp_factor);
-        
     end
 end
 
@@ -635,10 +632,13 @@ end
 
 %--- Loop on labels to compute partial volume values without HR version ---
 
+% create variable of tract numbering with 2 digits starting at 00
+cell_tract = m_numbering(length(label_values), 2, 0);
+% loop across tracts
 for label = 1:length(label_values)
     
     % Save ML version and copy geometry
-    filetractML = [path_results prefix_out '_' num2str(label)];
+    filetractML = [path_results prefix_out '_' cell_tract{label}];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
     cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
@@ -648,5 +648,10 @@ for label = 1:length(label_values)
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)	 
 end
 
+
+% FINISHED!
+bricon = ' -b 0.2,1 '
+disp 'Done! To see results, type:'
+disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz ',path_results,'WMtract__00.nii.gz -l Red',bricon,path_results,'WMtract__01.nii.gz -l Green',bricon,path_results,'WMtract__02.nii.gz -l Blue',bricon,path_results,'WMtract__03.nii.gz -l Yellow',bricon,path_results,'WMtract__04.nii.gz -l Pink &'])
 
 
