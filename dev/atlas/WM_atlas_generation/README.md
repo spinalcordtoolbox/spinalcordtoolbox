@@ -2,3 +2,5 @@
 # Run from matlab
 create_atlas.m
 
+# TODO
+- regularize warping fields along z.
