@@ -652,6 +652,7 @@ end
 % FINISHED!
 bricon = ' -b 0.2,1 '
 disp 'Done! To see results, type:'
-disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz ',path_results,'WMtract__00.nii.gz -l Red',bricon,path_results,'WMtract__01.nii.gz -l Green',bricon,path_results,'WMtract__02.nii.gz -l Blue',bricon,path_results,'WMtract__03.nii.gz -l Yellow',bricon,path_results,'WMtract__04.nii.gz -l Pink &'])
+disp(['cd ',path_results])
+disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz -b 0,4000 WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink &'])
 
 
