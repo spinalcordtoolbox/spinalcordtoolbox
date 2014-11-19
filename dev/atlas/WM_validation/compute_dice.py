@@ -44,7 +44,7 @@ results_file = DICE_estimation_folder + 'results.txt'
 atlas_tracts_folder = 'cropped_atlas'
 
 # Tract of the dorsal column
-sct.run('add_tracts_dc.py')
+sct.run('./add_tracts_dc.py')
 dorsal_column_tract = DICE_estimation_folder + 'dorsal_column.nii.gz'
 
 # Name and path of the binarized created tracts 
