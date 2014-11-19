@@ -235,45 +235,45 @@ def main():
     
         # Perform maximum likelihood estimation
         # [X_map, D_map] = metric_estimation('ml', D_map, generated_phantom_noise, folder_cropped_atlas, values_synthetic_data, metrics_estimation_results, read_results)
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml ')
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml ')
         X_map = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_map[:,i] = abs(X_map.ravel() - values_synthetic_data)
         # Get metrics estimation in dorsal column
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml -l '+dorsal_column_labels +' -a' )
         X_map_dc = read_results(metrics_estimation_results)
         # Get the difference between this np.mean and the metrics estimated
         D_map_dc[0, i] = abs(X_map_dc - dc_val_avg)
         
         # Perform binary estimation
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m bin')
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m bin')
         X_bin = read_results(metrics_estimation_results)
         D_bin[:,i] = abs(X_bin.ravel() - values_synthetic_data)
         
         # Get results in dorsal column
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m bin -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m bin -l '+dorsal_column_labels +' -a' )
         X_bin_dc = read_results(metrics_estimation_results)
         D_bin_dc[0, i] = abs(X_bin_dc - dc_val_avg)
         
         # Perform weighted average estimation
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wa')
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wa')
         X_wa = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_wa[:,i] = abs(X_wa.ravel() - values_synthetic_data)
         
         # Get results in dorsal column
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wa -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wa -l '+dorsal_column_labels +' -a' )
         X_wa_dc = read_results(metrics_estimation_results)
         D_wa_dc[0, i] = abs(X_wa_dc - dc_val_avg)
         
         # Perform thresholded weighted average estimation
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wath')
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wath')
         X_wath = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_wath[:,i] = abs(X_wath.ravel() - values_synthetic_data)
         
         # Get results in dorsal column
-        sct.run('sct_extract_metric.py -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wath -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wath -l '+dorsal_column_labels +' -a' )
         X_wath_dc = read_results(metrics_estimation_results)
         D_wath_dc[0, i] = abs(X_wath_dc - dc_val_avg)
         
@@ -286,7 +286,7 @@ def main():
                     header_mask = mask_folder[l] + mask_prefix[l] + '0' + str(k) + mask_ext
                 else:
                     header_mask = mask_folder[l] + mask_prefix[l] + str(k) + mask_ext                        
-                status, output = sct.run('sct_average_data_within_mask.py -i ' + generated_phantom_noise + ' -m ' + header_mask + ' -v 0')
+                status, output = sct.run('sct_average_data_within_mask -i ' + generated_phantom_noise + ' -m ' + header_mask + ' -v 0')
                 X_man[l,k] = float(output)
                 if k != dorsal_column_mask_index:
                     D_man[l,k,i] = abs(X_man[l,k] - values_synthetic_data[k])
@@ -382,7 +382,7 @@ def init_values(number_of_tracts, number_of_iterations):
 # def metric_estimation(method, D_, image, atlas_folder, true_values, results_file, read_results_function):
 #     absolute_error = D_
 #     # Extract_metric
-#     sct.run('sct_extract_metric.py -i ' + image + ' -f ' + atlas_folder + ' -m ' + method)
+#     sct.run('sct_extract_metric -i ' + image + ' -f ' + atlas_folder + ' -m ' + method)
 #     np.mean_metric_values = read_results_function(results_file)
 #     # Get the absolute deviation with the real value in the phantom
 #     absolute_error = abs(np.mean_metric_values.ravel() - true_values)
