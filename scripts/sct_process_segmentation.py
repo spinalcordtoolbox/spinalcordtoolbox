@@ -638,7 +638,7 @@ USAGE
 MANDATORY ARGUMENTS
   -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)
   -p <process>              type of process to be performed:
-                            - extract_centerline: extract centerline as binay file from segmentation
+                            - extract_centerline: extract centerline as binary file from segmentation
                             - compute_csa: computes cross-sectional area by counting pixels in each
                               slice and then geometrically adjusting using centerline orientation.
                               Output is a text file with z (1st column) and CSA in mm^2 (2nd column)
