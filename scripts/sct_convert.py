@@ -132,10 +132,10 @@ def mnc2nii(fname_data,fname_out):
 # ==========================================================================================
 def mnc2niigz(fname_data,fname_out):
     print "Converting from minc to nifti"
-    path_in, file_in, ext_in = sct.extract_fname(fname_data)
-    fname_data_tmp=path_in+file_in+".nii"
+    path_out, file_out, ext_out = sct.extract_fname(fname_out)
+    fname_data_tmp=path_out+file_out+".nii"
     sct.run("mnc2nii "+fname_data+" "+fname_data_tmp)
-    sct.run("gzip "+fname_data_tmp+" >"+fname_out)
+    sct.run("gzip "+fname_data_tmp)
 
 # Convert file from nifti to volumeviewer
 # ==========================================================================================
