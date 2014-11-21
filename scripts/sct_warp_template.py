@@ -70,7 +70,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:s:t:v:')
         except getopt.GetoptError:
             usage()
         for opt, arg in opts:
@@ -82,7 +82,7 @@ def main():
                 fname_src = arg
             elif opt in ("-o"):
                 folder_out = arg
-            elif opt in ("-p"):
+            elif opt in ("-t"):
                 path_template = arg
             elif opt in ("-s"):
                 warp_spinal_levels = int(arg)
