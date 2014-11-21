@@ -88,19 +88,18 @@ def main():
         path_in, file_in, ext_in = sct.extract_fname(fname_data)
         path_out, file_out, ext_out = sct.extract_fname(fname_out)
 
-    # if nii.gz, uncompression
-    if ext_in=='.nii.gz':
-        print "Uncompressing input file..."
-        fname_data_tmp=path_in+"tmp."+file_in+".nii"
-        sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
-        fname_data=fname_data_tmp
-
     if ext_in=='.nii' and ext_out=='.mnc':
         nii2mnc(fname_data,fname_out)
+    elif ext_in=='.nii.gz' and ext_out=='.mnc':
+        niigz2mnc(fname_data,fname_out)
     elif ext_in=='.mnc' and ext_out=='.nii':
         mnc2nii(fname_data,fname_out)
+    elif ext_in=='.mnc' and ext_out=='.nii.gz':
+        mnc2niigz(fname_data,fname_out)
     elif ext_in=='.nii' and ext_out=='.header':
         nii2volviewer(fname_data,fname_out)
+    elif ext_in=='.nii.gz' and ext_out=='.header':
+        nii2gzvolviewer(fname_data,fname_out)
     elif ext_in=='.mnc' and ext_out=='.header':
         mnc2volviewer(fname_data,fname_out)
 
@@ -112,23 +111,31 @@ def main():
 # ==========================================================================================
 def nii2mnc(fname_data,fname_out):
     print "Converting from nifti to minc"
-    sct.run("nii2mnc "+fname_data+" "+fname_out)
+    sct.run("nii2mnc "+fname_data_tmp+" "+fname_out)
 
-    
+# Convert file from nifti to minc
+# ==========================================================================================
+def niigz2mnc(fname_data,fname_out):
+    print "Converting from nifti to minc"
+    path_in, file_in, ext_in = sct.extract_fname(fname_data)
+    fname_data_tmp=path_in+"tmp."+file_in+".nii"
+    sct.run("gunzip -c "+fname_data+" >"+fname_data_tmp)
+    sct.run("nii2mnc "+fname_data_tmp+" "+fname_out)
 
 # Convert file from minc to nifti
 # ==========================================================================================
 def mnc2nii(fname_data,fname_out):
     print "Converting from minc to nifti"
     sct.run("mnc2nii "+fname_data+" "+fname_out)
-    # # open minc
-    # mnc = nib.minc.MincFile(netcdf.netcdf_file(fname_data, 'r'))
-    # img = mnc.get_scaled_data()
-    # affine = mnc.get_affine()
-    # # hdr = nib.MincImage()
-    # # save as nifti
-    # nii = nib.Nifti1Image(img, affine)
-    # nib.save(nii, fname_out)
+
+# Convert file from minc to nifti
+# ==========================================================================================
+def mnc2niigz(fname_data,fname_out):
+    print "Converting from minc to nifti"
+    path_out, file_out, ext_out = sct.extract_fname(fname_out)
+    fname_data_tmp=path_out+file_out+".nii"
+    sct.run("mnc2nii "+fname_data+" "+fname_data_tmp)
+    sct.run("gzip "+fname_data_tmp)
 
 # Convert file from nifti to volumeviewer
 # ==========================================================================================
@@ -138,6 +145,16 @@ def nii2volviewer(fname_data,fname_out):
     path_out, file_out, ext_out = sct.extract_fname(fname_out)
     fname_data_nii = path_out+file_out+'.mnc'
     nii2mnc(fname_data,fname_data_nii)
+    mnc2volviewer(fname_data_nii,path_out+file_out)
+
+# Convert file from nifti to volumeviewer
+# ==========================================================================================
+def niigz2volviewer(fname_data,fname_out):
+    print "Converting from nifti to volume viewer"
+    path_in, file_in, ext_in = sct.extract_fname(fname_data)
+    path_out, file_out, ext_out = sct.extract_fname(fname_out)
+    fname_data_mnc = path_out+file_out+'.mnc'
+    niigz2mnc(fname_data,fname_data_mnc)
     mnc2volviewer(fname_data_nii,path_out+file_out)
 
 # Convert file from minc to volumeviewer
