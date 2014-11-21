@@ -81,7 +81,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:r:s:t:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -97,7 +97,7 @@ def main():
                 fname_seg = arg
             elif opt in ("-o"):
                 output_type = int(arg)
-            elif opt in ("-p"):
+            elif opt in ("-t"):
                 path_template = arg
             elif opt in ("-r"):
                 remove_temp_files = int(arg)
