@@ -307,16 +307,17 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN. \nDefault=10,SyN,0.5,MeanSquares
-                     1) number of iterations for last stage.
-                     2) algo: {SyN, BSplineSyN, sliceReg}
-                        N.B. if you use sliceReg, then you should set -z 0. Also, the two input
-                        volumes should have same the same dimensions.
-                        For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
-                     3) gradient step. The larger the more deformation.
-                     4) metric: {MI,MeanSquares}.
-                        If you find very large deformations, switching to MeanSquares can help.
+  -p <param>                   parameters for registration.
+                               ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.
+                               Default=10,SyN,0.5,MeanSquares
+                                 1) number of iterations for last stage.
+                                 2) algo: {SyN, BSplineSyN, sliceReg}
+                                    N.B. if you use sliceReg, then you should set -z 0. Also, the two input
+                                    volumes should have same the same dimensions.
+                                    For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
+                                 3) gradient step. The larger the more deformation.
+                                 4) metric: {MI,MeanSquares}.
+                                    If you find very large deformations, switching to MeanSquares can help.
   -t <path_template>           Specify path to template. Default="""+str(param_default.path_template)+"""
   -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
   -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
