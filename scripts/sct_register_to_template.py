@@ -295,7 +295,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <path_template>           Specify path to template. Default="""+str(param_default.folder_template)+"""
+  -t <path_template>           Specify path to template. Default="""+str(param_default.folder_template)+"""
   -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
   -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -h                           help. Show this message

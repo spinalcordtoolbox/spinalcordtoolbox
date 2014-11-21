@@ -192,7 +192,7 @@ OPTIONAL ARGUMENTS
   -a {0,1}              warp atlas of white matter. Default="""+str(param_default.warp_atlas)+"""
   -s {0,1}              warp spinal levels. Default="""+str(param_default.warp_spinal_levels)+"""
   -o <folder_out>       name of output folder. Default="""+param_default.folder_out+"""
-  -p <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
+  -t <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
   -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 
