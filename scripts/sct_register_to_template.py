@@ -19,6 +19,16 @@
 # TODO: check if destination is axial orientation
 # TODO: set gradient-step-length in mm instead of vox size.
 
+import sys
+import getopt
+import os
+import commands
+import time
+import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
+
+# get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
 # DEFAULT PARAMETERS
 class Param:
@@ -29,20 +39,12 @@ class Param:
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
         self.verbose = 1  # verbose
-        self.folder_template = '/data/template'
+        self.folder_template = path_sct+'/data/template'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
-
-import sys
-import getopt
-import os
-import commands
-import time
-import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
 
 
 # MAIN
@@ -293,7 +295,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param_default.folder_template)+"""
+  -p <path_template>           Specify path to template. Default="""+str(param_default.folder_template)+"""
   -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
   -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -h                           help. Show this message
