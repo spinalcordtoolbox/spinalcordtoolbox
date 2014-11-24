@@ -38,6 +38,7 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
+        self.nb_iterations = '5'
         self.algo = 'SyN'
         self.gradientStep = '0.5'
         self.metric = 'MI'
@@ -63,8 +64,9 @@ def main():
     file_template_label = param.file_template_label
     file_template_seg = param.file_template_seg
     output_type = param.output_type
+    speed = param.speed
     param_reg = ''
-    speed, algo, gradientStep, metric = param.speed, param.algo, param.gradientStep, param.metric
+    nb_iterations, algo, gradientStep, metric = param.nb_iterations, param.algo, param.gradientStep, param.metric
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     smoothing_sigma = param.smoothing_sigma
@@ -307,14 +309,11 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <param>                   parameters for registration.
+  -p <param>                   parameters for registration of the straightened anatomical image to the template.
                                ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.
-                               Default=10,SyN,0.5,MeanSquares
+                               Default="""+param_default.nb_iterations+','+param_default.algo+','+param_default.gradientStep+','+param_default.metric+"""
                                  1) number of iterations for last stage.
-                                 2) algo: {SyN, BSplineSyN, sliceReg}
-                                    N.B. if you use sliceReg, then you should set -z 0. Also, the two input
-                                    volumes should have same the same dimensions.
-                                    For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
+                                 2) algo: {SyN, BSplineSyN}
                                  3) gradient step. The larger the more deformation.
                                  4) metric: {MI,MeanSquares}.
                                     If you find very large deformations, switching to MeanSquares can help.
