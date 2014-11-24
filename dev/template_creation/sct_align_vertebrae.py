@@ -24,6 +24,7 @@ import sys
 import getopt
 import sct_utils as sct
 import os
+import time
 from commands import getstatusoutput
 def main():
     
@@ -63,7 +64,7 @@ def main():
         elif opt in ("-w"):
             final_warp = arg
         elif opt in ("-c"):
-            compose = int(arg)                            
+            compose = int(arg)                          
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -74,7 +75,7 @@ def main():
     if final_warp not in ['','spline','NN']:
         usage()
         
-    if transfo not in ['affine','bspline']:
+    if transfo not in ['affine','bspline','SyN']:
         usage()       
     
     # check existence of input files
@@ -91,18 +92,46 @@ def main():
     print'  Input volume ...................... '+fname
     print'  Verbose ........................... '+str(verbose)
 
+    if transfo == 'affine':
+        print 'Creating cross using input landmarks\n...'
+        sct.run('sct_label_utils -i ' + landmark + ' -o ' + 'cross_native.nii.gz -t cross ' )
     
-    print 'Creating cross using input landmarks\n...'
-    sct.run('sct_label_utils -i ' + landmark + ' -o ' + 'cross_native.nii.gz -t cross ' )
+        print 'Creating cross using template landmarks\n...'
+        sct.run('sct_label_utils -i ' + template_landmark + ' -o ' + 'cross_template.nii.gz -t cross ' )
     
-    print 'Creating cross using template landmarks\n...'
-    sct.run('sct_label_utils -i ' + template_landmark + ' -o ' + 'cross_template.nii.gz -t cross ' )
-    
-    if transfo == 'affine' :
         print 'Computing affine transformation between subject and destination landmarks\n...'
         sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform cross_template.nii.gz cross_native.nii.gz affine n2t.txt')
         warping = 'n2t.txt'
+    elif transfo == 'SyN':
+        warping = 'warp_subject2template.nii.gz'
+        tmp_name = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+        sct.run('mkdir '+tmp_name)
+        os.chdir(tmp_name)
+        sct.run('sct_label_utils -i ../'+template_landmark+' -t plan -o template_landmarks_plan.nii.gz -c 5')
+        sct.run('sct_crop_image -i template_landmarks_plan.nii.gz -o template_landmarks_plan_cropped.nii.gz -start 0.35,0.35 -end 0.65,0.65 -dim 0,1')
+        sct.run('sct_label_utils -i ../'+landmark+' -t plan -o landmarks_plan.nii.gz -c 5')
+        sct.run('sct_crop_image -i landmarks_plan.nii.gz -o landmarks_plan_cropped.nii.gz -start 0.35,0.35 -end 0.65,0.65 -dim 0,1')
+        sct.run('sct_antsRegistration --dimensionality 3 --transform SyN[0.5,3,0] --metric MeanSquares[template_landmarks_plan_cropped.nii.gz,landmarks_plan_cropped.nii.gz,1] --convergence 400x200 --shrink-factors 4x2 --smoothing-sigmas 4x2mm --restrict-deformation 0x0x1 --output [landmarks_reg,landmarks_reg.nii.gz] --interpolation NearestNeighbor --float')
+        sct.run('sct_c3d -mcs landmarks_reg0Warp.nii.gz -oo warp_vecx.nii.gz warp_vecy.nii.gz warp_vecz.nii.gz')
+        sct.run('sct_c3d warp_vecz.nii.gz -resample 200% -o warp_vecz_r.nii.gz')
+        sct.run('sct_c3d warp_vecz_r.nii.gz -smooth 0x0x3mm -o warp_vecz_r_sm.nii.gz')
+        sct.run('sct_crop_image -i warp_vecz_r_sm.nii.gz -o warp_vecz_r_sm_line.nii.gz -start 0.5,0.5 -end 0.5,0.5 -dim 0,1 -b 0')
+        sct.run('sct_label_utils -i warp_vecz_r_sm_line.nii.gz -t plan_ref -o warp_vecz_r_sm_line_extended.nii.gz -c 0 -r ../'+template_landmark)
+        sct.run('sct_c3d ../'+template_landmark+' warp_vecx.nii.gz -reslice-identity -o warp_vecx_res.nii.gz')
+        sct.run('sct_c3d ../'+template_landmark+' warp_vecy.nii.gz -reslice-identity -o warp_vecy_res.nii.gz')
+        sct.run('c3d warp_vecy_res.nii.gz warp_vecy_res.nii.gz warp_vecz_r_sm_line_extended.nii.gz -omc 3 ../'+warping)
         
+        # check results
+        sct.run('sct_apply_transfo -i ../'+landmark+' -o label_moved.nii.gz -d ../'+template_landmark+' -w ../'+warping+' -p nn')
+        sct.run('sct_label_utils -i ../'+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
+        status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t RMS')
+        sct.printv(output,1,'info')
+
+        os.chdir('..')
+        sct.run('rm -rf tmp.*')
+
+
+
     # if transfo == 'bspline' :
     #     print 'Computing bspline transformation between subject and destination landmarks\n...'
     #     sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField cross_template.nii.gz cross_native.nii.gz warp_ntotemp.nii.gz 5x5x5 3 2 0')    
@@ -177,7 +206,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <output_name>          output name. Default : aligned.nii.gz
-  -t {affine,bspline}       type of initial transformation. Default : affine
+  -t {affine,bspline,SyN}   type of initial transformation. Default : affine
   -w {NN,spline}            final warp interpolation. Default : trilinear
   -c {0,1}                  compose affine and bspline transformation. Default="""+str(param.compose)+"""
   -v {0,1}                  verbose. Default="""+str(param.verbose)+"""

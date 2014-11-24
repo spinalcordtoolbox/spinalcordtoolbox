@@ -1,6 +1,10 @@
 
 # CHANGES TO RELEASE
 
+##1.1.1 (2014-11-13)
+
+- FIX: updated ANTs binaries for compatibility with GLIBC_2.13 (issue: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/thread/e00b2aeb/)
+
 ##1.1 (2014-11-04)
 
 - NEW: sct_crop: function to quickly crop an image.
