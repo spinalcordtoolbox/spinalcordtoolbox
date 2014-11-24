@@ -60,7 +60,7 @@ ext_atlas = '.png';
 % corresponds to mid-C4 in the MNI-Poly-AMU template
 z_slice_ref = 387;
 % interpolation factor for the MNI-Poly-AMU template in order to match the hi-res grays atlas
-interp_factor = 12;
+interp_factor = 6;
 
 % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
 label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230];
@@ -151,7 +151,7 @@ disp(cmd)
 [status,result] = unix(cmd);
 if(status), error(result); end
 
-% Get a version of ref slice without geometrical information
+% Extract reference slice
 cmd = ['sct_c3d ' template_cropped_interp ext ' -slice z ' num2str(z_slice_ref) ' -o ' templateci_slice_ref ext];
 % cmd = [fsloutputype 'fslroi ' template_cropped_interp ' ' templateci_slice_ref ' 0 -1 0 -1 ' num2str(z_slice_ref) ' 1 '];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
@@ -159,9 +159,10 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 cmd = [fsloutputype 'fslroi ' templateci_slice_ref ' ' templateci_slice_ref ' 0 -1 0 -1 0 -1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-[sliceref,~,scales] = read_avw(templateci_slice_ref);
-sliceref = m_normalize(sliceref);
-save_avw(sliceref,templateci_sr_nohd,'d',scales);
+% % remove geometrical information -- WHY?
+% [sliceref,~,scales] = read_avw(templateci_slice_ref);
+% sliceref = m_normalize(sliceref);
+% save_avw(sliceref,templateci_sr_nohd,'d',scales);
 
 % Binarization of the reference slice for the registration of the atlas
 cmd = ['sct_c3d ' templateci_slice_ref ext ' -pim r -threshold 0% 60% 0 1 -o ' templateci_slice_ref_thresh ext];
@@ -177,13 +178,16 @@ disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 cmd = [fsloutputype 'fslroi ' templateci_thresh ' ' templateci_thresh ' 0 -1 0 -1 0 -1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
-% Get a version of binarized ref slice without geometrical information.-- WHY???
-[sliceref,~,scales] = read_avw(templateci_slice_ref_thresh);
-sliceref = m_normalize(sliceref);
-save_avw(sliceref,templateci_srt_nohd,'d',scales);
+% % Get a version of binarized ref slice without geometrical information.-- WHY???
+% [sliceref,~,scales] = read_avw(templateci_slice_ref_thresh);
+% sliceref = m_normalize(sliceref);
+% save_avw(sliceref,templateci_srt_nohd,'d',scales);
+
+
 
 % Save the atlas and mask into a nifti with the same scales as the template
-[slice_ref,~,scales] = read_avw(templateci_srt_nohd);
+[slice_ref,~,scales] = read_avw(templateci_slice_ref_thresh);
+% [slice_ref,~,scales] = read_avw(templateci_srt_nohd);
 atlas = imread([path_atlas_data file_atlas ext_atlas]);
 % create one file for each tract
 for label = 1:length(label_values)
@@ -232,24 +236,15 @@ end
 
 
 % estimate affine transformation from atlas to template
-% cmd =['ants 2 -o ' prefix_ants_ref ' ',...
-% '-m MSQ[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,0] ',...
-% '-i 0x0 --rigid-affine true --affine-metric-type MI --number-of-affine-iterations 10x10x10'];
-% to try: sct_antsRegistration --dimensionality 2 -o Affine -m MI[MNI-Poly-AMU_WM_c6v_int12_slice_ref_thresh.nii.gz,mask_grays_cerv_sym_correc_r3con_modif.nii.gz,1,32,Random] -t Affine[0.5] --convergence 100x20x10 -s 4x2x0 -f 8x2x1
-cmd = ['sct_antsRegistration --dimensionality 2 -o Affine -m MI[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,32] -t Affine[0.5] --convergence 100x100 -s 1x0 -f 2x1'];
+% here, using flag -r 0 to initialize transformations based on geometrical center of images
+cmd = ['sct_antsRegistration --dimensionality 2 -m MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] -t Affine[1] --convergence 100x10 -s 1x0 -f 2x1 -r [' templateci_slice_ref_thresh ext ',' mask_nohd ext ', 0] -o [' path_out 'Affine,' mask_nohd '_affine' ext ']'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
-% 
-% % apply affine matrix
-% % NB: CANNOT USE FIELD --initial-moving-transform BECAUSE IT DOES NOT SEEM TO CONCATENATE (MAYBE A BUG IN ANTS?)
-% cmd = ['sct_WarpImageMultiTransform 2 ' mask_nohd ext ' ' mask_nohd '_affine' ext ' Affine0GenericAffine.mat -R ' templateci_slice_ref_thresh ext ' --use-BSpline'];
-% disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
-% fslview MNI-Poly-AMU_WM_c6v_int12_slice_ref_thresh.nii.gz mask_grays_cerv_sym_correc_r3con_reg.nii.gz &
 
 % estimate diffeomorphic transformation
-cmd =['sct_antsRegistration --dimensionality 2 --initial-moving-transform ' affine_atlas ' ',...
-    '--transform SyN[0.2,6,0] --metric CC[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] ',... 
-    '--convergence 200x20 --shrink-factors 4x1 --smoothing-sigmas 0x0mm ',...
-    '--output [' prefix_ants_ref ',grays_syn.nii.gz] --collapse-output-transforms 1'];
+cmd =['sct_antsRegistration --dimensionality 2 --initial-moving-transform ' path_out affine_atlas ' ',...
+    '--transform SyN[0.1,3,0] --metric MeanSquares[' templateci_slice_ref_thresh ext ',' mask_nohd ext ',1,4] ',... 
+    '--convergence 100x10 --shrink-factors 4x1 --smoothing-sigmas 0x0mm ',...
+    '--output [' prefix_ants_ref ',' mask_nohd '_affine_warp' ext '] --collapse-output-transforms 1'];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
 
 % Rename warping field
@@ -274,11 +269,11 @@ cmd = ['sct_c3d ' Warp_tmp 'y' ext ' ' Warp_tmp 'ys' ext ' -copy-transform -o ' 
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the mask
-cmd = ['sct_WarpImageMultiTransform 2 ' mask_nohd ext ' ' mask_nohd suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+cmd = ['sct_antsApplyTransforms -d 2 -i ' mask_nohd ext ' -o ' mask_nohd suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the initial atlas
-cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_nifti suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_nifti suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the tract files and copying geometry and saving
@@ -286,10 +281,10 @@ for label = 1:length(label_values)/2
     tract_atlas_g = [path_out 'tract_atlas_' num2str(label)];
     tract_atlas_d = [path_out 'tract_atlas_' num2str(label+length(label_values)/2)];
     
-    cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
-    cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
 %     cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
@@ -393,8 +388,8 @@ for iz = 1:nb_slices-1
     % ANTs website crashes when using option --transform BSplineSyN. Use
     % the version from github instead.
     cmd =['sct_antsRegistration --dimensionality 2 ',...
-        '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
-        '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
+        '--convergence 100x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 end
@@ -444,8 +439,8 @@ for iz = 1:nb_slices
     % initial transformation
     cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--initial-moving-transform ', warp_slice, ' ',...
-        '--transform BSplineSyN[0.2,3] --metric CC[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
-        '--convergence 200x50 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
+        '--convergence 200x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' prefix_ants, 'concat_', num2str(zslice) ',' templatecit_slice_ref 'to_' num2str(zslice) ext ']' ];
     disp(cmd)
     [status,result] = unix(cmd);
@@ -503,16 +498,16 @@ for iz = 1:nb_slices
     warp_slice = [ prefix_ants, 'concat_sym_', num2str(zslice), ext];
     
     % Apply transform to reference slice as a control
-    cmd = ['sct_WarpImageMultiTransform 2 ' templatecit_slice_ref ext ' ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' templatecit_slice_ref ext ' -o ' templatecit_slice_ref suffix_ants num2str(zslice) ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply transform to the initial atlas as a control
-%     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
-    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+%     cmd = ['sct_WarpImageMultiTransform 2 ' atlas_nifti ext ' ' atlas_slice ext ' ' warp_slice ' ' Warp_atlas ' ' path_out affine_atlas ' -R ' templatecit_slice ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_slice ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     cmd = ['sct_c3d ' templatecit_slice_ref ' ' atlas_slice ext ' -copy-transform -o ' atlas_slice ext];  % copy geom-- added: 2014-08-30
     disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-    cmd = ['sct_WarpImageMultiTransform 2 ' atlas_slice ext ' ' atlas_slice suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_slice ext ' -o ' atlas_slice suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
     
     % Apply tranform to the tract files and constraint to be symmetric
@@ -522,26 +517,26 @@ for iz = 1:nb_slices
         
         % JULIEN: Instead of concatenating all warping fields, do it in two
         % steps, because I noticed issues in geometry information.
-%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
+%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' path_out affine_atlas ' -R ' templatecit_slice ext];
 %         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 %         
-%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' affine_atlas ' -R ' templatecit_slice ext];
+%         cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' ' Warp_atlas ' ' path_out affine_atlas ' -R ' templatecit_slice ext];
 %         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
         % LEFT
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g ext ' ' tract_atlas_g suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext ext];  % copy geom-- added: 2014-08-30
         disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_g suffix_ants ext ' ' tract_atlas_g suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g suffix_ants ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         
         % RIGHT
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d ext ' ' tract_atlas_d suffix_ants ext ' ' Warp_atlas ' ' affine_atlas ' -R ' templateci_slice_ref_thresh ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
         cmd = ['sct_c3d ' templatecit_slice_ref ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext ext];  % copy geom-- added: 2014-08-30
         disp(cmd); [status,result]=unix(cmd); if(status), error(result); end, %disp(result)
-        cmd = ['sct_WarpImageMultiTransform 2 ' tract_atlas_d suffix_ants ext ' ' tract_atlas_d suffix_ants ext ' ' warp_slice ' -R ' templatecit_slice ext];
+        cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d suffix_ants ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' warp_slice ' -r ' templatecit_slice ext];
         disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
         % copy header from template to registered atlas
@@ -616,9 +611,7 @@ end
 
 for label = 1:length(label_values)
     for k = 1:length(z_disks_mid)-1
-    
         tractsHR{label} = m_linear_interp(tractsHR{label},z_disks_mid(k)+1,z_disks_mid(k+1)+1);
-        
     end
 end
 
@@ -632,7 +625,6 @@ for label = 1:length(label_values)
     for zslice = 0:max_indx
         numSlice = zslice+1;
         tracts{label}(:,:,numSlice) = dnsamplelin(tractsHR{label}(:,:,numSlice),interp_factor);
-        
     end
 end
 
@@ -640,10 +632,13 @@ end
 
 %--- Loop on labels to compute partial volume values without HR version ---
 
+% create variable of tract numbering with 2 digits starting at 00
+cell_tract = m_numbering(length(label_values), 2, 0);
+% loop across tracts
 for label = 1:length(label_values)
     
     % Save ML version and copy geometry
-    filetractML = [path_results prefix_out '_' num2str(label)];
+    filetractML = [path_results prefix_out '_' cell_tract{label}];
     save_avw(tracts{label},filetractML,'d',scalesCROP);
     cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
@@ -653,5 +648,11 @@ for label = 1:length(label_values)
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)	 
 end
 
+
+% FINISHED!
+bricon = ' -b 0.2,1 '
+disp 'Done! To see results, type:'
+disp(['cd ',path_results])
+disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz -b 0,4000 WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink &'])
 
 
