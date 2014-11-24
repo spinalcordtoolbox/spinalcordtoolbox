@@ -20,6 +20,7 @@ import sys
 import sct_utils as sct
 import nibabel
 import numpy as np
+import math
 
 
 # DEFAULT PARAMETERS
@@ -112,6 +113,16 @@ def main():
     # switch to process
     if type_process == 'cross':
         data = cross(data, cross_radius, fname_ref, dilate, px, py)
+    if type_process == 'plan':
+        data = plan(data, cross_radius,100,5)
+    if type_process == 'plan_ref':
+        data = plan_ref(data, fname_ref, file_label_output, ext_label_output)
+        output_level = 1
+    if type_process == 'increment':
+        data = increment_z_inverse(data)
+    if type_process == 'RMS':
+        RMS(data,fname_ref)
+        output_level = 1
     elif type_process == 'remove':
         data = remove_label(data, fname_ref)
     elif type_process == 'disk':
@@ -229,6 +240,90 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
     return data
 
 
+# plan
+# ==========================================================================================
+def plan(data, width, offset, gap):
+    X, Y, Z = (data > 0).nonzero()
+
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(X)):
+        value = int(data[X[i]][Y[i]][Z[i]])
+        data[:,:,Z[i]-width:Z[i]+width] = offset+gap*value
+
+    return data
+
+# plan
+# ==========================================================================================
+def plan_ref(data, fname_ref, file_label_output, ext_label_output):
+    X, Y, Z = (data != 0).nonzero()
+
+    img_ref = nibabel.load(fname_ref)
+    # 3d array for each x y z voxel values for the input nifti image
+    data_ref = img_ref.get_data()
+    hdr_ref = img_ref.get_header()
+    data_ref = data_ref*0
+
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(X)):
+        data_ref[:,:,Z[i]] = data[X[i]][Y[i]][Z[i]]
+
+    hdr_ref.set_data_dtype('float32')
+    print '\nWrite NIFTI volumes...'
+    data_ref.astype('float32')
+    img_ref_output = nibabel.Nifti1Image(data_ref, None, hdr_ref)
+    nibabel.save(img_ref_output, 'tmp.'+file_label_output+'.nii.gz')
+    sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
+
+    return data
+
+# increment labels in z direction
+# ==========================================================================================
+def increment_z_inverse(data):
+    X, Y, Z = (data > 0).nonzero()
+
+    X_sort = [X[i] for i in Z.argsort()]
+    X_sort.reverse()
+    Y_sort = [Y[i] for i in Z.argsort()]
+    Y_sort.reverse()
+    Z_sort = [Z[i] for i in Z.argsort()]
+    Z_sort.reverse()
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(Z_sort)):
+        data[X_sort[i],Y_sort[i],Z_sort[i]] = i+1
+
+    return data
+
+# compute the RMS between labels
+# ==========================================================================================
+def RMS(data, fname_ref):
+    X, Y, Z = (data > 0).nonzero()
+    data_labels = [[X[i],Y[i],Z[i],data[X[i],Y[i],Z[i]]] for i in range(0,len(X))]
+
+    img_ref = nibabel.load(fname_ref)
+    data_ref = img_ref.get_data()
+    hdr_ref = img_ref.get_header()
+    X_ref, Y_ref, Z_ref = (data_ref > 0).nonzero()
+    ref_labels = [[X_ref[i],Y_ref[i],Z_ref[i],data_ref[X_ref[i],Y_ref[i],Z_ref[i]]] for i in range(0,len(X_ref))]
+
+    # check if all the labels in both the images match
+    if len(X) != len(X_ref):
+        sct.printv('ERROR: labels mismatch',1,'warning')
+    for value in data_labels:
+        if round(value[3]) not in [round(v[3]) for v in ref_labels]:
+            sct.printv('ERROR: labels mismatch',1,'warning')
+    for value in ref_labels:
+        if round(value[3]) not in [round(v[3]) for v in data_labels]:
+            sct.printv('ERROR: labels mismatch',1,'warning')
+
+    result = 0.0
+    for value in data_labels:
+        for v in ref_labels:
+            if round(v[3]) == round(value[3]):
+                result = result + (value[2]-v[2])*(value[2]-v[2])
+                break
+    result = math.sqrt(result/len(X))
+    sct.printv('RMS error in Z direction = '+str(result)+' mm')
+
 # create_label
 #=======================================================================================================================
 def create_label(data):
@@ -270,7 +365,7 @@ def remove_label(data, fname_ref):
             # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
             #if value_ref == value:
             if abs(value - value_ref) < 0.1:
-                data[X[i]][Y[i]][Z[i]] = value_ref
+                data[X[i]][Y[i]][Z[i]] = int(round(value_ref))
                 isInRef = True
         if isInRef == False:
             data[X[i]][Y[i]][Z[i]] = 0
