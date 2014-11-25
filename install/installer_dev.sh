@@ -121,7 +121,7 @@ if [ -e "$HOME/.bash_profile" ]; then
 fi
 
 # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-source $HOME/.bash_profile
+source ~/.bash_profile
 
 # install required software
 echo
