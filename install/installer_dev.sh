@@ -12,12 +12,6 @@ PATH_INSTALL=$(dirname ${PATH_INSTALL})
 PATH_INSTALL=$(dirname ${PATH_INSTALL})
 ISSUDO="sudo "
 
-PATH_OS="osx"
-if [ "$(uname -s)" == "Linux" ]; then
-  PATH_OS="linux"
-fi
-echo $PATH_OS
-
 function usage()
 {
 cat << EOF
@@ -99,7 +93,11 @@ echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
-echo 'export PATH=${PATH}:$SCT_DIR/bin/${PATH_OS}' >> ~/.bashrc
+if [ "$(uname -s)" == "Linux" ]; then
+  echo 'export PATH=${PATH}:$SCT_DIR/bin/linux' >> ~/.bashrc
+elif [ "$(uname -s)" == "Darwin" ]; then
+  echo 'export PATH=${PATH}:$SCT_DIR/bin/osx' >> ~/.bashrc
+fi
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
@@ -123,7 +121,7 @@ if [ -e "$HOME/.bash_profile" ]; then
 fi
 
 # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-. ~/.bashrc
+source $HOME/.bash_profile
 
 # install required software
 echo
