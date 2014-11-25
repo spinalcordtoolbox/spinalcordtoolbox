@@ -150,10 +150,6 @@ echo
 echo "If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/"
 echo "or contact the developers."
 echo
-echo "You can now delete this folder by typing:"
-echo "> cd .."
-echo "> rm -rf ${path_toolbox_temp}"
-echo
 echo "To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 
 
