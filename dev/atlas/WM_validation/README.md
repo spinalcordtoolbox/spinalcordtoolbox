@@ -2,7 +2,7 @@
 
 ## to run validation:
 ~~~
-./batch_validation.sh
+./validate_atlas.py
 ~~~
 
 ## to compute DICE coefficients using binary ROIs
