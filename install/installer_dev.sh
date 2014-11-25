@@ -106,7 +106,7 @@ echo 'export SCT_DIR PATH' >> ~/.bashrc
 echo 'export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1' >> ~/.bashrc
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
-if [ -e "$HOME/.bash_profile" ]; then
+if [ -e "~/.bash_profile" ]; then
   if grep -q "source ~/.bashrc" ~/.bash_profile; then
     echo
     echo ".bashrc seems to be called in .bash_profile"
