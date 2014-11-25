@@ -70,8 +70,9 @@ def main():
     cmd = 'which mnc2nii'
     status, output = commands.getstatusoutput(cmd)
     if not output:
-        print 'ERROR: minc-toolkit not installed...'
-        sys.exit(2)
+        sct.printv('ERROR: minc-toolkit not installed...',1,'error')
+    if output != '/opt/minc/bin/mnc2nii':
+        sct.printv('ERROR: the minc-toolkit that you use is not the correct one. Please contact SCT administrator.')
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -153,7 +154,7 @@ def niigz2volviewer(fname_data,fname_out):
     print "Converting from nifti to volume viewer"
     path_in, file_in, ext_in = sct.extract_fname(fname_data)
     path_out, file_out, ext_out = sct.extract_fname(fname_out)
-    fname_data_mnc = path_out+file_out+'.mnc'
+    fname_data_mnc = path_out+"tmp."+file_out+'.mnc'
     niigz2mnc(fname_data,fname_data_mnc)
     mnc2volviewer(fname_data_mnc,path_out+file_out)
 
