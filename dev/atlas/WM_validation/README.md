@@ -1,8 +1,8 @@
 # VALIDATION WHITE MATTER ATLAS
 
-## to run bootstrap and validation of all methods
+## to run validation:
 ~~~
-./loop_atlas_validation.sh
+./batch_validation.sh
 ~~~
 
 ## to compute DICE coefficients using binary ROIs
