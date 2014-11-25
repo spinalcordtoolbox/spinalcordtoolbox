@@ -63,7 +63,6 @@ prefix="fsl5.0-"
 cd ${PATHFSL}
 for binary in *
 do
-  echo ${binary}
   prefix_binary=${binary:0:7}
   if [ ${prefix_binary} == ${prefix} ]; then
     echo ${binary}
