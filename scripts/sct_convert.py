@@ -99,7 +99,7 @@ def main():
     elif ext_in=='.nii' and ext_out=='.header':
         nii2volviewer(fname_data,fname_out)
     elif ext_in=='.nii.gz' and ext_out=='.header':
-        nii2gzvolviewer(fname_data,fname_out)
+        niigz2volviewer(fname_data,fname_out)
     elif ext_in=='.mnc' and ext_out=='.header':
         mnc2volviewer(fname_data,fname_out)
 
