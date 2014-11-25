@@ -161,7 +161,7 @@ def niigz2volviewer(fname_data,fname_out):
 # ==========================================================================================
 def mnc2volviewer(fname_data,fname_out):
     print "Converting from minc to volume viewer"
-    sct.run("isct_minc2volume-viewer.py "+fname_data+" -o "+fname_out)
+    sct.run("isct_minc2volume-viewer "+fname_data+" -o "+fname_out)
 
 
 # Print usage
