@@ -64,16 +64,20 @@ cd ${PATHFSL}
 for binary in *
 do
   echo ${binary}
-  cd ${SCT_DIR}/bin
-  scriptname=${binary#$prefix}
-  cmd=
-  if [ "$is_admin" = true ] ; then
-    cmd="sudo ln -s $PATHFSL/${binary} ${SCT_DIR}/bin/${scriptname}"
-  else
-    cmd="ln -s $PATHFSL/${binary} ${SCT_DIR}/bin/${scriptname}"
+  prefix_binary=${binary:0:7}
+  if [ ${prefix_binary} == ${prefix} ]; then
+    echo ${binary}
+    cd ${SCT_DIR}/bin
+    scriptname=${binary#$prefix}
+    cmd=
+    if [ "$is_admin" = true ] ; then
+      cmd="sudo ln -s $PATHFSL/${binary} ${SCT_DIR}/bin/${scriptname}"
+    else
+      cmd="ln -s $PATHFSL/${binary} ${SCT_DIR}/bin/${scriptname}"
+    fi
+    echo ">> $cmd"
+    $cmd
   fi
-  echo ">> $cmd"
-  $cmd
 done
 
 cd ${CURRENT_DIR}
