@@ -93,17 +93,24 @@ echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
+export PATH=${PATH}:$SCT_DIR/bin
 if [ "$(uname -s)" == "Linux" ]; then
   echo 'export PATH=${PATH}:$SCT_DIR/bin/linux' >> ~/.bashrc
+  export PATH=${PATH}:$SCT_DIR/bin/linux
 elif [ "$(uname -s)" == "Darwin" ]; then
   echo 'export PATH=${PATH}:$SCT_DIR/bin/osx' >> ~/.bashrc
+  export PATH=${PATH}:$SCT_DIR/bin/osx
 fi
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
+export PATH=${PATH}:$SCT_DIR/scripts
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
+export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
 echo 'export SCT_DIR PATH' >> ~/.bashrc
+xport SCT_DIR PATH
 # forbid to run several ITK instances in parallel (see issue #201).
 echo 'export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1' >> ~/.bashrc
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 
 # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
 if [ -e "~/.bash_profile" ]; then
