@@ -155,7 +155,7 @@ def niigz2volviewer(fname_data,fname_out):
     path_out, file_out, ext_out = sct.extract_fname(fname_out)
     fname_data_mnc = path_out+file_out+'.mnc'
     niigz2mnc(fname_data,fname_data_mnc)
-    mnc2volviewer(fname_data_nii,path_out+file_out)
+    mnc2volviewer(fname_data_mnc,path_out+file_out)
 
 # Convert file from minc to volumeviewer
 # ==========================================================================================
