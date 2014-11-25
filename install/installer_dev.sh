@@ -99,7 +99,7 @@ echo '' >> ~/.bashrc
 echo "# SPINALCORDTOOLBOX (added on $(date +%Y-%m-%d))" >> ~/.bashrc
 echo "SCT_DIR=\"${SCT_DIR}\"" >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/bin' >> ~/.bashrc
-echo 'export PATH=${PATH}:$SCT_DIR/bin/$PATH_OS' >> ~/.bashrc
+echo 'export PATH=${PATH}:$SCT_DIR/bin/${PATH_OS}' >> ~/.bashrc
 echo 'export PATH=${PATH}:$SCT_DIR/scripts' >> ~/.bashrc
 # add PYTHONPATH variable to allow import of modules
 echo 'export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts' >> ~/.bashrc
