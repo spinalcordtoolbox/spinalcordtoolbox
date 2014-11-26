@@ -1,6 +1,10 @@
 
 # CHANGES TO RELEASE
 
+##1.1.2 (TBD)
+
+- OPT: sct_create_mask: (1) updated usage (size in vox instead of mm), (2) fixed minor issues related to mask size.
+
 ##1.1.1 (2014-11-13)
 
 - FIX: updated ANTs binaries for compatibility with GLIBC_2.13 (issue: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/thread/e00b2aeb/)
