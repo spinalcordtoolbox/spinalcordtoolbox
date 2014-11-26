@@ -163,7 +163,7 @@ string StrPad(string original, size_t charCount, string prefix="")
 
 void help()
 {
-    cout << "sct_propseg - Version 1.0.1 (2014-09-19)" << endl;
+    cout << "sct_propseg - Version 1.0.2 (2014-11-26)" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \nPart of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox> \nAuthor : Benjamin De Leener" << endl << endl;
     
     cout << "DESCRIPTION" << endl;
@@ -205,7 +205,8 @@ void help()
 	cout << StrPad("  -cross",30) << StrPad("output: cross-sectional areas",70,StrPad("",30)) << endl;
     cout << StrPad("  -init-tube",30) << StrPad("output: initial tubular meshes",70,StrPad("",30)) << endl;
     cout << StrPad("  -low-resolution-mesh",30) << StrPad("output: low-resolution mesh",70,StrPad("",30)) << endl;
-    cout << StrPad("  -detect-display",30) << StrPad("output of spinal cord detection as a PNG image",70,StrPad("",30)) << endl;
+    cout << StrPad("  -detect-nii",30) << StrPad("output of spinal cord detection as a nifti image",70,StrPad("",30)) << endl;
+    cout << StrPad("  -detect-png",30) << StrPad("output of spinal cord detection as a PNG image",70,StrPad("",30)) << endl;
 	cout << endl;
 	
 	cout << "Options helping the segmentation" << endl;
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
     double typeImageFactor = 0.0, initialisation = 0.5;
     int downSlice = -10000, upSlice = 10000;
     string suffix;
-	bool input_dicom = false, output_detection = false, output_mesh = false, output_centerline_binary = false, output_centerline_coord = false, output_cross = false, init_with_centerline = false, init_with_mask = false, verbose = false, output_init_tube = false, completeCenterline = false, init_validation = false, low_res_mesh = false, CSF_segmentation = false;
+	bool input_dicom = false, output_detection = false, output_detection_nii = false, output_mesh = false, output_centerline_binary = false, output_centerline_coord = false, output_cross = false, init_with_centerline = false, init_with_mask = false, verbose = false, output_init_tube = false, completeCenterline = false, init_validation = false, low_res_mesh = false, CSF_segmentation = false;
 	int gapInterSlices = 4, nbSlicesInitialisation = 5;
 	double radius = 4.0;
     int numberOfPropagationIteration = 200;
@@ -286,7 +287,10 @@ int main(int argc, char *argv[])
             i++;
             upSlice = atoi(argv[i]);
         }
-		else if (strcmp(argv[i],"-detect-display")==0) {
+        else if (strcmp(argv[i],"-detect-nii")==0) {
+            output_detection_nii = true;
+        }
+		else if (strcmp(argv[i],"-detect-png")==0) {
             output_detection = true;
         }
 		else if (strcmp(argv[i],"-mesh")==0) {
@@ -592,6 +596,9 @@ int main(int argc, char *argv[])
             if(isSpinalCordDetected)
             {
                 if (output_detection) init.savePointAsAxialImage(image,outputPath+"result_detection.png");
+                if (output_detection_nii) init.savePointAsBinaryImage(image,outputPath+inputFilename_nameonly+"_detection"+suffix, orientationFilter.getInitialImageOrientation());
+                cout << "output machin chose" << endl;
+                if (output_detection_nii) cout << "truc" << endl;
                 
                 init.getPoints(point,normal1,normal2,radius,stretchingFactor);
                 if (normal2 == CVector3::ZERO) normal2 = -normal1;
