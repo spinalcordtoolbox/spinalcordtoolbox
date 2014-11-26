@@ -13,15 +13,20 @@ __author__ = 'slevyrosetti'
 
 import getopt
 import sys
-import sct_utils as sct
 import numpy as np
 import nibabel as nib
 import math
 import os
-import scipy
-from sct_extract_metric import extract_metric_within_tract
 import pylab
 import matplotlib.legend_handler as lgd
+import commands
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+import sct_utils as sct
+from sct_extract_metric import extract_metric_within_tract
+
 
 class param:
     def __init__(self):
