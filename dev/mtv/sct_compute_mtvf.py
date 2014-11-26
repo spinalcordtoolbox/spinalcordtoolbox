@@ -17,7 +17,6 @@ import numpy as np
 import nibabel as nib
 import math
 import os
-import scipy
 import pylab
 import matplotlib.legend_handler as lgd
 import commands
@@ -27,6 +26,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 from sct_extract_metric import extract_metric_within_tract
+
 
 class param:
     def __init__(self):
@@ -89,12 +89,12 @@ def main():
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n', type='warning')
         alpha_b1 = 60
         flip_angles = '4,10,20,30'
-        fname_csf_mask = '/home/django/slevy/data/boston/hc_sc_001/mtv/spgr10_crop_csf_mask.nii.gz'
-        fname_b1_smoothed = '' #'/home/django/slevy/data/boston/hc_sc_001/mtv/b1/b1_smoothed_in_spgr10_space_crop.nii.gz' #'/home/django/slevy/data/boston/hc_sc_003/mtv/b1/gre60.nii.gz,/home/django/slevy/data/boston/hc_sc_003/mtv/b1/gre120.nii.gz' #'/home/django/slevy/data/handedness_asymmetries/errsm_31/b1_estimation/ep_fa60.nii.gz,/home/django/slevy/data/handedness_asymmetries/errsm_31/b1_estimation/ep_fa120.nii.gz'
-        fname_spgr_data = '/home/django/slevy/data/boston/hc_sc_001/mtv/spgr4_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_001/mtv/spgr10_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_001/mtv/spgr20_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_001/mtv/spgr30_crop.nii.gz'
+        fname_csf_mask = '/home/django/slevy/data/boston/hc_sc_004/mtv/spgr10_crop_csf_mask.nii.gz'
+        fname_b1_smoothed = '/home/django/slevy/data/boston/hc_sc_004/mtv/b1/b1_smoothed_in_spgr10_space_crop.nii.gz' #'/home/django/slevy/data/boston/hc_sc_003/mtv/b1/gre60.nii.gz,/home/django/slevy/data/boston/hc_sc_003/mtv/b1/gre120.nii.gz' #'/home/django/slevy/data/handedness_asymmetries/errsm_31/b1_estimation/ep_fa60.nii.gz,/home/django/slevy/data/handedness_asymmetries/errsm_31/b1_estimation/ep_fa120.nii.gz'
+        fname_spgr_data = '/home/django/slevy/data/boston/hc_sc_004/mtv/spgr4_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_004/mtv/spgr10_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_004/mtv/spgr20_crop.nii.gz,/home/django/slevy/data/boston/hc_sc_004/mtv/spgr30_crop.nii.gz'
         file_output = 'T1_map,PD_map,MTVF_map'
         method = 'mean-PD-in-CSF-from-mean-SPGR'
-        fname_spgr_seg = '/home/django/slevy/data/boston/hc_sc_001/mtv/spgr10_crop_seg.nii.gz'
+        fname_spgr_seg = '/home/django/slevy/data/boston/hc_sc_004/mtv/spgr10_crop_seg.nii.gz'
         tr = float(0.02)
 
     # Check input parameters
@@ -333,9 +333,10 @@ def estimate_b1_with_double_flip_angle(fname_b1_smoothed, nominal_alpha):
     return b1_map_scale
 
 #=======================================================================================================================
-# Compute the mean PD per slice based on the mean signal in SPGR data per slice in CSF
+# Compute the mean PD per slice based on the mean signal in SPGR data per slice
 #=======================================================================================================================
 def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, flip_angles, tr):
+    """Compute the mean PD per slice based on the mean signal in SPGR data per slice."""
 
     # Record dimensions of data
     (nx, ny, nb_slices, nb_flip_angles) = spgr.shape
