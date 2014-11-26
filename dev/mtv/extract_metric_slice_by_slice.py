@@ -5,22 +5,28 @@ import numpy as np
 import nibabel as nib
 import pylab
 import matplotlib.legend_handler as lgd
+import commands
+import sys
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
 from sct_extract_metric import extract_metric_within_tract
 
-subject='hc_sc_003'
+subject='d_sp_pain_pilot3'
 
-fname_PD_map = '/home/django/slevy/data/boston/'+subject+'/mtv/PD_map.nii.gz'
-fname_T1_map = '/home/django/slevy/data/boston/'+subject+'/mtv/T1_map.nii.gz'
-fname_MTVF_map = '/home/django/slevy/data/boston/'+subject+'/mtv/mtvf_map.nii.gz'
-fname_SPGR10_map = '/home/django/slevy/data/boston/'+subject+'/mtv/spgr10_crop.nii.gz'
-fname_CSF_mask = '/home/django/slevy/data/boston/'+subject+'/mtv/spgr10_crop_csf_mask.nii.gz'
-fname_cord_mask = '/home/django/slevy/data/boston/'+subject+'/mtv/spgr10_crop_seg.nii.gz'
+fname_PD_map = '/home/django/slevy/data/criugm/'+subject+'/mtv/PD_map.nii.gz'
+fname_T1_map = '/home/django/slevy/data/criugm/'+subject+'/mtv/T1_map.nii.gz'
+fname_MTVF_map = '/home/django/slevy/data/criugm/'+subject+'/mtv/mtvf_map.nii.gz'
+fname_SPGR10_map = '/home/django/slevy/data/criugm/'+subject+'/mtv/spgr10_crop.nii.gz'
+fname_CSF_mask = '/home/django/slevy/data/criugm/'+subject+'/mtv/spgr10_crop_csf_mask.nii.gz'
+fname_cord_mask = '/home/django/slevy/data/criugm/'+subject+'/mtv/spgr10_crop_seg.nii.gz'
 
 PD_map = nib.load(fname_PD_map).get_data()
 T1_map = nib.load(fname_T1_map).get_data()
 MTVF_map = nib.load(fname_MTVF_map).get_data()
 SPGR10 = nib.load(fname_SPGR10_map).get_data()
-#SPGR10 = np.float64(SPGR10)
+SPGR10 = np.float64(SPGR10)
 CSF_mask = nib.load(fname_CSF_mask).get_data()
 cord_mask = nib.load(fname_cord_mask).get_data()
 

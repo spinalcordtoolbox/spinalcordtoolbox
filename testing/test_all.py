@@ -99,8 +99,11 @@ def main():
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
+    # check existence of testing data folder
+    sct.check_folder_exist(param.path_data)
+
     # display path to data
-    sct.printv('\nPath to testing data: \n  '+param.path_data, param.verbose)
+    sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
