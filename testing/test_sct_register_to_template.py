@@ -27,7 +27,7 @@ def test(path_data):
           + ' -m ' + path_data + folder_data[0] + file_data[2] \
           + ' -r 0' \
           + ' -s superfast' \
-          + ' -p ' + path_data + folder_data[1]
+          + ' -t ' + path_data + folder_data[1]
 
     '''
     s, output = sct.run(cmd, 0)

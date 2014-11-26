@@ -19,6 +19,16 @@
 # TODO: check if destination is axial orientation
 # TODO: set gradient-step-length in mm instead of vox size.
 
+import sys
+import getopt
+import os
+import commands
+import time
+import sct_utils as sct
+from sct_orientation import get_orientation, set_orientation
+
+# get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
 # DEFAULT PARAMETERS
 class Param:
@@ -28,21 +38,17 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
+        self.nb_iterations = '5'
+        self.algo = 'SyN'
+        self.gradientStep = '0.5'
+        self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.folder_template = '/data/template'
+        self.path_template = path_sct+'/data/template'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
-
-import sys
-import getopt
-import os
-import commands
-import time
-import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
 
 
 # MAIN
@@ -53,12 +59,14 @@ def main():
     fname_data = ''
     fname_landmarks = ''
     fname_seg = ''
-    folder_template = param.folder_template
+    path_template = param.path_template
     file_template = param.file_template
     file_template_label = param.file_template_label
     file_template_seg = param.file_template_seg
     output_type = param.output_type
     speed = param.speed
+    param_reg = ''
+    nb_iterations, algo, gradientStep, metric = param.nb_iterations, param.algo, param.gradientStep, param.metric
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     smoothing_sigma = param.smoothing_sigma
@@ -68,20 +76,18 @@ def main():
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-    # get path of the template
-    path_template = path_sct+folder_template
-
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = path_sct+'/testing/data/errsm_23/t2/t2.nii.gz'
-        fname_landmarks = path_sct+'/testing/data/errsm_23/t2/t2_landmarks_C2_T2_center.nii.gz'
-        fname_seg = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
+        fname_data = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop.nii.gz'
+        fname_landmarks = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_landmarks.nii.gz'
+        fname_seg = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_seg.nii.gz'
         speed = 'superfast'
+        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:t:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -98,11 +104,13 @@ def main():
             elif opt in ("-o"):
                 output_type = int(arg)
             elif opt in ("-p"):
-                path_template = arg
+                param_reg = arg
             elif opt in ("-r"):
                 remove_temp_files = int(arg)
             elif opt in ("-s"):
                 speed = arg
+            elif opt in ("-t"):
+                path_template = arg
 
     # display usage if a mandatory argument is not provided
     if fname_data == '' or fname_landmarks == '' or fname_seg == '':
@@ -136,7 +144,6 @@ def main():
     print '.. Remove temp files:    '+str(remove_temp_files)
 
     # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
-    print('\nAssign number of iterations based on speed...')
     if speed == "slow":
         nb_iterations = "50"
     elif speed == "normal":
@@ -148,7 +155,16 @@ def main():
     else:
         print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
         sys.exit(2)
-    print '.. '+nb_iterations
+
+    # Check registration parameters selected by user
+    if param_reg:
+        nb_iterations, algo, gradientStep, metric = param_reg.split(',')
+
+    sct.printv('\nParameters for registration:')
+    sct.printv('.. Number of iterations..... '+nb_iterations)
+    sct.printv('.. Algorithm................ '+algo)
+    sct.printv('.. Gradient step............ '+gradientStep)
+    sct.printv('.. Metric................... '+metric)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
@@ -226,7 +242,7 @@ def main():
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -p '+nb_iterations+',SyN,0.5,MI -v '+str(verbose)+' -x spline -z 10', verbose)
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -p '+nb_iterations+','+algo+','+gradientStep+','+metric+' -v '+str(verbose)+' -x spline -z 10', verbose)
 
     # Concatenate warping fields: template2anat & anat2template
     print('\nConcatenate transformations: template --> straight --> anat...')
@@ -293,7 +309,15 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <path_template>           Specify path to template. Default=$SCT_DIR/"""+str(param_default.folder_template)+"""
+  -p <param>                   parameters for registration of the straightened anatomical image to the template.
+                               ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.
+                               Default="""+param_default.nb_iterations+','+param_default.algo+','+param_default.gradientStep+','+param_default.metric+"""
+                                 1) number of iterations for last stage.
+                                 2) algo: {SyN, BSplineSyN}
+                                 3) gradient step. The larger the more deformation.
+                                 4) metric: {MI,MeanSquares}.
+                                    If you find very large deformations, switching to MeanSquares can help.
+  -t <path_template>           Specify path to template. Default="""+str(param_default.path_template)+"""
   -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
   -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -h                           help. Show this message

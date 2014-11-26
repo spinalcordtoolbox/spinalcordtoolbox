@@ -70,7 +70,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:p:s:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:w:o:s:t:v:')
         except getopt.GetoptError:
             usage()
         for opt, arg in opts:
@@ -82,7 +82,7 @@ def main():
                 fname_src = arg
             elif opt in ("-o"):
                 folder_out = arg
-            elif opt in ("-p"):
+            elif opt in ("-t"):
                 path_template = arg
             elif opt in ("-s"):
                 warp_spinal_levels = int(arg)
@@ -192,7 +192,7 @@ OPTIONAL ARGUMENTS
   -a {0,1}              warp atlas of white matter. Default="""+str(param_default.warp_atlas)+"""
   -s {0,1}              warp spinal levels. Default="""+str(param_default.warp_spinal_levels)+"""
   -o <folder_out>       name of output folder. Default="""+param_default.folder_out+"""
-  -p <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
+  -t <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
   -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 
