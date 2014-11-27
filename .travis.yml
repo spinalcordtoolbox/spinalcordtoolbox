@@ -41,10 +41,4 @@ install:
 
 script:
   - python ../scripts/sct_check_dependences.py
-  - python test_all.py -d 1
-  #- travis_wait python test_smooth_spinalcord.py
-  #- travis_wait python test_register_to_template.py
-  - cd ../install
-  - python create_package.py -s linux
-  - cd ../spinalcordtoolbox_v*
-  - ./installer.sh
+  - python testing_sct_propseg.py -d 1
