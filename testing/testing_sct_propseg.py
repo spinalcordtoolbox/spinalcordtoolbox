@@ -29,7 +29,7 @@ class param:
         self.download = 0
         self.remove_tmp_file = 0
         self.verbose = 1
-        self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
+        self.url_git = 'https://github.com/benjamindeleener/PropSeg_data.git'
         self.path_data = '/home/django/benjamindeleener/data/PropSeg_data/'
 
 def main():
@@ -55,13 +55,13 @@ def main():
     if param.download:
         sct.printv('\nDownloading testing data...', param.verbose)
         # remove data folder if exist
-        if os.path.exists('sct_testing_data'):
-            sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
-            sct.run('rm -rf sct_testing_data')
+        if os.path.exists('PropSeg_data'):
+            sct.printv('WARNING: PropSeg_data already exists. Removing it...', param.verbose, 'warning')
+            sct.run('rm -rf PropSeg_data')
         # clone git repos
         sct.run('git clone '+param.url_git)
         # update path_data field 
-        param.path_data = 'sct_testing_data'
+        param.path_data = 'PropSeg_data'
 
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
