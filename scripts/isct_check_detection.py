@@ -84,7 +84,7 @@ def main():
     else:
         sct.printv('OK: detected point is in segmentation')
 
-    return status
+    sys.exit(status)
 
 #=======================================================================================================================
 # usage
