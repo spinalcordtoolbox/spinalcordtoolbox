@@ -55,13 +55,13 @@ def main():
     if param.download:
         sct.printv('\nDownloading testing data...', param.verbose)
         # remove data folder if exist
-        if os.path.exists('sct_testing_data_propseg'):
+        if os.path.exists('sct_testing_data'):
             sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
-            sct.run('rm -rf sct_testing_data_propseg')
+            sct.run('rm -rf sct_testing_data')
         # clone git repos
         sct.run('git clone '+param.url_git)
         # update path_data field 
-        param.path_data = 'sct_testing_data_propseg'
+        param.path_data = 'sct_testing_data'
 
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
