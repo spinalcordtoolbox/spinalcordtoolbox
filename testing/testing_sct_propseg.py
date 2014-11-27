@@ -92,7 +92,12 @@ def main():
         sct.printv('\nRemove temporary files...', param.verbose)
         sct.run('rm -rf '+param.path_tmp, param.verbose)
 
-    sys.exit(0)
+    e = 0
+    for i in range(0,len(results_t2)):
+        if (results_t2[i][4] < 0.8 or results_t2[i][4] < results_t2[i][3]):
+            e = e+1
+
+    sys.exit(e)
 
 def segmentation(fname_input, output_dir, image_type):
     # parameters
