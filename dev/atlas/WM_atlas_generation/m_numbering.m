@@ -19,11 +19,11 @@
 % COMMENTS
 % Julien Cohen-Adad 2006-11-26
 % =========================================================================
-function varargout = j_numbering(varargin)
+function varargout = m_numbering(varargin)
 
 
 % initialization
-if (nargin<1) help j_numbering; return; end
+if (nargin<1) help m_numbering; return; end
 max_numbering = varargin{1};
 if (nargin<2)
     nb_digits = length(num2str(max_numbering));
