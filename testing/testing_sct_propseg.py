@@ -119,20 +119,25 @@ def segmentation(fname_input, output_dir, image_type):
         + ' -o ' + output_dir+'old' \
         + ' -t ' + image_type \
         + ' -detect-nii'
+    sct.printv(cmd)
     status_propseg_old, output_propseg_old = commands.getstatusoutput(cmd)
 
     # check if spinal cord is correctly detected with old version of PropSeg
-    status_detection_old, output_detection_old = commands.getstatusoutput("isct_check_detection.py -i "+detection_filename_old+" -t "+manual_segmentation_filename_old)
+    cmd = "isct_check_detection.py -i "+detection_filename_old+" -t "+manual_segmentation_filename_old
+    sct.printv(cmd)
+    status_detection_old, output_detection_old = commands.getstatusoutput(cmd)
     results_detection[0] = status_detection_old
 
     # compute Dice coefficient for old version of PropSeg
     cmd_validation = 'sct_dice_coefficient '+segmentation_filename_old \
                 + ' '+manual_segmentation_filename_old \
                 + ' -bzmax'
+    sct.printv(cmd_validation)
     status_validation_old, output_validation_old = commands.getstatusoutput(cmd_validation)
-    results_segmentation[0] = float(output_validation_old.split()[-1])
-    if math.isnan(results_segmentation[0]):
-        results_segmentation[0] = 0.0
+    print output_validation_old
+    res = output_validation_old.split()[-1]
+    if res != 'nan': results_segmentation[0] = float(res)
+    else: results_segmentation[0] = 0.0
 
     # perform PropSeg new version
     sct.create_folder(output_dir+'new')
@@ -140,20 +145,25 @@ def segmentation(fname_input, output_dir, image_type):
         + ' -o ' + output_dir+'new' \
         + ' -t ' + image_type \
         + ' -detect-nii'
+    sct.printv(cmd)
     status_propseg_new, output_propseg_new = commands.getstatusoutput(cmd)
 
     # check if spinal cord is correctly detected with new version of PropSeg
-    status_detection_new, output_detection_new = commands.getstatusoutput("isct_check_detection.py -i "+detection_filename_new+" -t "+manual_segmentation_filename_new)
+    cmd = "isct_check_detection.py -i "+detection_filename_new+" -t "+manual_segmentation_filename_new
+    sct.printv(cmd)
+    status_detection_new, output_detection_new = commands.getstatusoutput(cmd)
     results_detection[1] = status_detection_new
 
     # compute Dice coefficient for new version of PropSeg
     cmd_validation = 'sct_dice_coefficient '+segmentation_filename_new \
                 + ' '+manual_segmentation_filename_new \
                 + ' -bzmax'
+    sct.printv(cmd_validation)
     status_validation_new, output_validation_new = commands.getstatusoutput(cmd_validation)
-    results_segmentation[1] = float(output_validation_new.split()[-1])
-    if math.isnan(results_segmentation[1]):
-        results_segmentation[1] = 0.0
+    print output_validation_new
+    res = output_validation_new.split()[-1]
+    if res != 'nan': results_segmentation[1] = float(res)
+    else: results_segmentation[1] = 0.0
 
     return results_detection, results_segmentation
 
