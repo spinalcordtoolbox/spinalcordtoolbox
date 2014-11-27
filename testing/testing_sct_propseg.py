@@ -72,6 +72,7 @@ def main():
         if dirname not in ['._.DS_Store','.DS_Store']:
             for filename in os.listdir(param.path_data+"t2/"+dirname):
                 if filename.startswith('t2_') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz'):
+                    print dirname, filename
                     [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t2/"+dirname+"/"+filename,param.path_data+"t2/"+dirname+"/",'t2')
                     if d_old == 0: d_old = 'OK'
                     else: d_old = 'Not In'
