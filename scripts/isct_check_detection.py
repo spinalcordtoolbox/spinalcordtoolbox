@@ -34,19 +34,25 @@ def main():
     fname_input = ''
     fname_segmentation = ''
     
+    if param.debug:
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_input = ''
+        fname_segmentation = path_sct_data+'/t2/t2_seg.nii.gz'
+    else:
     # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:t:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
+        try:
+            opts, args = getopt.getopt(sys.argv[1:],'hi:t:')
+        except getopt.GetoptError as err:
+            print str(err)
             usage()
-        elif opt in ('-i'):
-            fname_input = arg
-        elif opt in ('-t'):
-            fname_segmentation = arg
+        for opt, arg in opts:
+            if opt == '-h':
+                usage()
+            elif opt in ('-i'):
+                fname_input = arg
+            elif opt in ('-t'):
+                fname_segmentation = arg
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or fname_input == '':
