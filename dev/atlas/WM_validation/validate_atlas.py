@@ -70,7 +70,7 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     #bootstrap_iterations = 2  # number of bootstrap iterations. Default=200
     #folder_atlas = '../WM_atlas_generation/WMtracts_outputs/final_results/'  # add / at the end
     folder_cropped_atlas = "cropped_atlas/"
-    crop = 1  # crop atlas, default=1. Only need to do it once (saves time).
+    crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
     zcrop_ind = [10, 110, 210, 310, 410]
     generated_phantom = "WM_phantom.nii.gz"
     generated_phantom_noise = "WM_phantom_noise.nii.gz"
@@ -79,12 +79,12 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     spec_tracts = 2, 17
     metrics_estimation_results = "metric_label.txt"
     dorsal_column_labels = '0,1,15,16'
-    partial_vol_corr = 0
+    # partial_vol_corr = 0
 
     # Parameters for the manual estimation
     # These parameters are associated with the manually created masks
     dorsal_column_mask_index = 30
-    man_mask_index = 2,17,dorsal_column_mask_index
+    man_mask_index = 2, 17, dorsal_column_mask_index
     #mask_prefix = 'mask_tract_'
     mask_prefix = ['charles_tract_', 'julien_tract_', 'tanguy_tract_', 'simon_tract_']
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']
@@ -100,8 +100,6 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
         # Copy the info_label.txt file in the cropped atlas' folder
         # This file needs to be there in order for the sct_extract_metric code to work
         sct.run('cp ../WM_atlas_generation/info_label.txt '+folder_cropped_atlas)
-    else:
-        folder_cropped_atlas = folder_atlas
 
     # Extract the tracts from the atlas' folder
     tracts = get_tracts(folder_cropped_atlas)
@@ -148,15 +146,15 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
         save_3D_nparray_niftii(WM_phantom, generated_phantom)
         save_3D_nparray_niftii(WM_phantom_noise, generated_phantom_noise)
         
-        if partial_vol_corr == 1:
-            save_3D_nparray_niftii(tracts_sum, tracts_sum_img)
-            # Creation of an inverse phantom
-            # Substract 1 from the sum of tracts
-            sct.run('fslmaths ' + tracts_sum_img + ' -sub 1 temp.nii.gz')
-            # Multiply this image by -true_value
-            sct.run('fslmaths temp.nii.gz -mul -' + str(true_value) + ' temp.nii.gz')
-            # Add this image to the phantom with added noise so that the effect of partial volume is lowered
-            sct.run('fslmaths ' + generated_phantom_noise + ' -add temp.nii.gz ' + generated_phantom_noise)
+        # if partial_vol_corr == 1:
+        #     save_3D_nparray_niftii(tracts_sum, tracts_sum_img)
+        #     # Creation of an inverse phantom
+        #     # Substract 1 from the sum of tracts
+        #     sct.run('fslmaths ' + tracts_sum_img + ' -sub 1 temp.nii.gz')
+        #     # Multiply this image by -true_value
+        #     sct.run('fslmaths temp.nii.gz -mul -' + str(true_value) + ' temp.nii.gz')
+        #     # Add this image to the phantom with added noise so that the effect of partial volume is lowered
+        #     sct.run('fslmaths ' + generated_phantom_noise + ' -add temp.nii.gz ' + generated_phantom_noise)
         
         # Get the np.mean of all values in dorsal column in the generated phantom
         dc_val_avg = 0
@@ -215,11 +213,11 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
                 else:
                     header_mask = mask_folder[l] + mask_prefix[l] + str(k) + mask_ext                        
                 status, output = sct.run('sct_average_data_within_mask -i ' + generated_phantom_noise + ' -m ' + header_mask + ' -v 0')
-                X_man[l,k] = float(output)
+                X_man[l, k] = float(output)
                 if k != dorsal_column_mask_index:
-                    D_man[l,k,i] = abs(X_man[l,k] - values_synthetic_data[k])
+                    D_man[l, k, i] = abs(X_man[l, k] - values_synthetic_data[k])
                 else:
-                    D_man_dc[l, 0, i] = abs(X_man[l,k] - dc_val_avg)     
+                    D_man_dc[l, 0, i] = abs(X_man[l, k] - dc_val_avg)
 
     # Calculate elapsed time
     elapsed_time = int(round(time.time() - start_time))
@@ -239,8 +237,7 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
         print >>results_text, '\nFinished! Elapsed time: ' + str(sec) + 's'
 
     # Display parameters used in results_file
-    print >>results_text, '\tsigma noise: ' + str(std_noise) + '% \trange tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)\ttrue_value: ' + str(true_value) + \
-    '\n\tnumber of iterations: ' + str(bootstrap_iterations) + '\t\tpartial volume correction: ' + str(partial_vol_corr)
+    print >>results_text, '\tsigma noise: ' + str(std_noise) + '% \trange tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)\ttrue_value: ' + str(true_value) + '\n\tnumber of iterations: ' + str(bootstrap_iterations)
     # Print the np.mean absolute deviation and its associated standard deviation for each method
 
     print >>results_text,'=================================================================================================='
