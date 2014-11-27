@@ -40,13 +40,13 @@ def main():
     # Parameters
 
     # param for validation
-    bootstrap_iter = 200
+    bootstrap_iter = 1
     folder_atlas = '../WM_atlas_generation/WMtracts_outputs/final_results/'  # path to atlas. add / at the end
     user_tract = 'charles_tract_,julien_tract_,tanguy_tract_,simon_tract_'
-    std_noise_list = [0.00001, 1, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [0, 5, 10, 20, 50]
-    fixed_range = 10
-    fixed_noise = 10
+    std_noise_list = [0]  #[0.00001, 1, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [0, 5, 10, 20, 50]  # in percent
+    fixed_range = 10  # in percent
+    fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
 
     # create output folder
@@ -59,10 +59,10 @@ def main():
         validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, user_tract)
 
     # loop across tract ranges
-    std_noise = fixed_noise
-    for range_tract in range_tract_list:
-        results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
-        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, user_tract)
+#    std_noise = fixed_noise
+#    for range_tract in range_tract_list:
+#        results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
+#        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, user_tract)
 
 
 def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, results_file, user_tract):
@@ -70,19 +70,15 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     #bootstrap_iterations = 2  # number of bootstrap iterations. Default=200
     #folder_atlas = '../WM_atlas_generation/WMtracts_outputs/final_results/'  # add / at the end
     folder_cropped_atlas = "cropped_atlas/"
-    crop = 1  # crop atlas, default=1
-    zcrop_ind = '10,110,210,310,410'
+    crop = 1  # crop atlas, default=1. Only need to do it once (saves time).
+    zcrop_ind = [10, 110, 210, 310, 410]
     generated_phantom = "WM_phantom.nii.gz"
     generated_phantom_noise = "WM_phantom_noise.nii.gz"
     tracts_sum_img = "tracts_sum.nii.gz"
     true_value = 40
-    # np.std_noise = 10
-    #range_tract = 10
-    # spec_tracts = np.arange(30)
     spec_tracts = 2, 17
     metrics_estimation_results = "metric_label.txt"
     dorsal_column_labels = '0,1,15,16'
-    #results_file = "atlas_validation.txt"
     partial_vol_corr = 0
 
     # Parameters for the manual estimation
@@ -95,53 +91,12 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     mask_ext = '.nii.gz'
 
     start_time = time.time() # save start time for duration
-
-    # # check input parameters
-    # try:
-    #     opts, args = getopt.getopt(sys.argv[1:], 'ha:cpt:n:s:f:g:b:l:m:d:r:z:') # define flag
-    # except getopt.GetoptError as err: # check if the arguments are defined
-    #     print str(err) # error
-    #    # usage(label_title, label_name, label_num,fname_tracts) # display usage
-    # for opt, arg in opts: # explore flags
-    #     elif opt in '-a': # path to atlas
-    #         folder_atlas = arg
-    #     elif opt in '-c': # crop atlas
-    #         crop = 1
-    #     if opt == '-h': # help option
-    #         usage(label_title, label_name, label_num,fname_tracts) # display usage
-    #     elif opt in '-t': # Mean true value in the generated phantom
-    #         true_value = float(arg)
-    #     elif opt in '-n': # standard deviation of the noise added to the generated phantom
-    #         np.std_noise = float(arg)
-    #     elif opt in '-s': # range of the random values given to the tracts
-    #         range_tract = float(arg)
-    #     elif opt in '-p': # Correction of the influence of partial volume on the estimations
-    #         partial_vol_corr = 1
-    #     elif opt in '-f': # folder where the WM atlas is located
-    #         folder_cropped_atlas = os.path.abspath(arg)
-    #     elif opt in '-g': # name of the generated phantom
-    #         generated_phantom = str(arg)
-    #     elif opt in '-m': # name of the manual_mask
-    #         mask_prefix = str(arg)
-    #     elif opt in '-d': # name of the different manual_masks
-    #         mask_prefix = str(arg)
-    #         mask_prefix = mask_prefix.split(',')
-    #     elif opt in '-b': # number of bootstrapping iterations
-    #         bootstrap_iterations = int(arg)
-    #     elif opt in '-l': # labels for which results are displayed
-    #         spec_tracts = arg
-    #         spec_tracts = spec_tracts.split(',')
-    #     elif opt in '-r': # name of the text file where all results are saved
-    #         results_file = str(arg)
-    #     elif opt in '-z': # z index for which slices are extract in the atlas to create the cropped atlas
-    #         zcrop_ind = arg
-    #     else: # verify that all entries are correct
-    #         print('\nERROR: Option {} unknown. Exit program.\n'.format(opt))
-    #         sys.exit(2) # exit program
     
     # Crop the atlas
     if (crop == 1):
-        sct.run('./crop_atlas.py -f '+folder_atlas+' -o '+folder_cropped_atlas+' -z '+str(zcrop_ind))
+        create_folder(folder_cropped_atlas)
+        crop_atlas(folder_atlas, folder_cropped_atlas, zcrop_ind)
+        #sct.run('./crop_atlas.py -f '+folder_atlas+' -o '+folder_cropped_atlas+' -z '+str(zcrop_ind))
         # Copy the info_label.txt file in the cropped atlas' folder
         # This file needs to be there in order for the sct_extract_metric code to work
         sct.run('cp ../WM_atlas_generation/info_label.txt '+folder_cropped_atlas)
@@ -355,6 +310,27 @@ def init_values(number_of_tracts, number_of_iterations):
     # Mean absolute error between np.mean estimation and true value in dorsal column
     D_dc = np.zeros([1, number_of_iterations])
     return [X_, X_dc, D_, D_dc]
+
+
+def crop_atlas(folder_atlas, folder_out, zind):
+
+    # get atlas files
+    status, output = sct.run('ls '+folder_atlas+'*.nii.gz', 1)
+    fname_list = output.split()
+
+    # loop across atlas
+    for i in xrange(0, len(fname_list)):
+        path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
+        # crop file and then merge back
+        cmd = 'fslmerge -z '+folder_out+file_list
+        for iz in zind:
+            sct.run('fslroi '+fname_list[i]+' tmpcrop.z'+str(zind.index(iz))+'_'+file_list+' 0 -1 0 -1 '+str(iz)+' 1')
+            cmd = cmd+' tmpcrop.z'+str(zind.index(iz))+'_'+file_list
+        sct.run(cmd)
+
+    # delete tmp file
+    sct.run('rm tmpcrop.*')
+
 
 
 if __name__ == "__main__":
