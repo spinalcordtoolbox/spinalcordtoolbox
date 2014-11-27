@@ -19,7 +19,7 @@ import nibabel
 import numpy as np
 
 # DEFAULT PARAMETERS
-class param:
+class Param:
     ## The constructor
     def __init__(self):
         self.debug               = 0
@@ -108,6 +108,6 @@ def usage():
 #=======================================================================================================================
 if __name__ == "__main__":
     # initialize parameters
-    param = param()
+    param = Param()
     # call main function
     main()
