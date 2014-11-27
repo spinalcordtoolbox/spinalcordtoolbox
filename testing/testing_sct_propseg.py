@@ -109,7 +109,7 @@ def segmentation(fname_input, output_dir, image_type):
     manual_segmentation_filename_new = path_in + 'manual_' + file_in + ext_in
     detection_filename_new = path_in + 'new/' + file_in + '_detection' + ext_in
 
-    # initialize results
+    # initialize results of segmentation and detection
     results_detection = [0,0]
     results_segmentation = [0.0,0.0]
 
