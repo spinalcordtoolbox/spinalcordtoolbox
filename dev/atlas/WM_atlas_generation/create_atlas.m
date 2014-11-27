@@ -639,13 +639,23 @@ for label = 1:length(label_values)
     
     % Save ML version and copy geometry
     filetractML = [path_results prefix_out '_' cell_tract{label}];
-    save_avw(tracts{label},filetractML,'d',scalesCROP);
-    cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+%     save_avw(tracts{label},filetractML,'d',scalesCROP);
+%     cmd = ['sct_c3d ' template_cropped ext ' ' filetractML ext ' -copy-transform -o ' filetractML ext];
+%     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
+%     
+% 	 % Reslice into native template space
+% 	cmd = ['sct_c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
+%     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
     
-	 % Reslice into native template space
-	cmd = ['sct_c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)	 
+    % shift by one pixel on the right because reinterpolation made it shift
+    % on the left.
+    % TODO: fix that in a more proper way!
+    cmd = ['flirt -in ', filetractML, ' -ref ', filetractML, ' -out ', filetractML, ' -init shift_1pix_to_right.mat -applyxfm'];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
+
+    % copy geometry from white matter template
+    cmd = ['fslcpgeom ', path_template, file_template, ' ', filetractML];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 end
 
 
