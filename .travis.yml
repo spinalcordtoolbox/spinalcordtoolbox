@@ -27,7 +27,7 @@ install:
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
-  - wxport PATH=${PATH}:${SCT_DIR}/scripts
+  - export PATH=${PATH}:${SCT_DIR}/scripts
   - export PATH=${PATH}:${SCT_DIR}/bin
   - export PATH=${PATH}:${SCT_DIR}/bin/linux
   - export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
