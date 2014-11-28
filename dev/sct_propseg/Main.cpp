@@ -108,6 +108,7 @@
 #include <itkNiftiImageIO.h>
 #include <itkGradientMagnitudeImageFilter.h>
 #include <itkGradientImageFilter.h>
+#include <itkGradientVectorFlowImageFilter.h>
 #include <itkImageAlgorithm.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkFileTools.h>
@@ -128,6 +129,7 @@ typedef itk::RescaleIntensityImageFilter< ImageType, ImageType > RescaleFilterTy
 typedef itk::CovariantVector< double, 3 > GradientPixelType;
 typedef itk::Image< GradientPixelType, 3 > GradientImageType;
 typedef itk::GradientImageFilter< ImageType, float, double, GradientImageType > VectorGradientFilterType;
+typedef itk::GradientVectorFlowImageFilter< GradientImageType, GradientImageType >  GradientVectorFlowFilterType;
 typedef itk::GradientMagnitudeImageFilter< ImageType, ImageType > GradientMFilterType;
 
 typedef itk::Image< unsigned char, 3 >	BinaryImageType;
@@ -422,6 +424,7 @@ int main(int argc, char *argv[])
 	// typeImageFactor depend of contrast type and is equal to +1 when CSF is brighter than spinal cord and equal to -1 inversely
     ImageType::Pointer initialImage, image = ImageType::New();
     
+    // DICOM reading does not work with new compilation
     if (input_dicom)
     {
         /*ImageIOType::Pointer gdcmIO = ImageIOType::New();
@@ -527,6 +530,56 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
 	}
 	GradientImageType::Pointer imageVectorGradient = gradientMapFilter->GetOutput();
+
+    // Write the image
+    typedef itk::ImageFileWriter< GradientImageType >     GradientWriterType;
+    GradientWriterType::Pointer writerIm1 = GradientWriterType::New();
+    //itk::NiftiImageIO::Pointer ioG = itk::NiftiImageIO::New();
+    //writerIm1->SetImageIO(ioG);
+    writerIm1->SetFileName("gradient_normal.mhd");
+    writerIm1->SetInput(imageVectorGradient);
+    try {
+        writerIm1->Update();
+    }
+    catch( itk::ExceptionObject & e )
+    {
+        cout << "Exception thrown ! " << endl;
+        cout << "An error ocurred during Writing 1" << endl;
+        cout << "Location    = " << e.GetLocation()    << endl;
+        cout << "Description = " << e.GetDescription() << endl;
+    }
+    
+    cout << "computing GVF image" << endl;
+    GradientVectorFlowFilterType::Pointer gradientVectorFlowFilter = GradientVectorFlowFilterType::New();
+    gradientVectorFlowFilter->SetInput(imageVectorGradient);
+    gradientVectorFlowFilter->SetIterationNum( 2 );
+    gradientVectorFlowFilter->SetNoiseLevel( 2000.00 );
+    try {
+		gradientVectorFlowFilter->Update();
+	} catch( itk::ExceptionObject & e ) {
+		cerr << "Exception caught while updating gradientMapFilter " << endl;
+		cerr << e << endl;
+        return EXIT_FAILURE;
+	}
+	imageVectorGradient = gradientVectorFlowFilter->GetOutput();
+    cout << "finished computing GVF image" << endl;
+    
+    // Write the image
+    typedef itk::ImageFileWriter< GradientImageType >     GradientWriterType;
+    GradientWriterType::Pointer writerIm2 = GradientWriterType::New();
+    //writerIm2->SetImageIO(ioG);
+    writerIm2->SetFileName("gradient_GVF.mhd");
+    writerIm2->SetInput(imageVectorGradient);
+    try {
+        writerIm2->Update();
+    }
+    catch( itk::ExceptionObject & e )
+    {
+        cout << "Exception thrown ! " << endl;
+        cout << "An error ocurred during Writing 2" << endl;
+        cout << "Location    = " << e.GetLocation()    << endl;
+        cout << "Description = " << e.GetDescription() << endl;
+    }
     
 	// Creation of 3D image with origin, orientation and scaling, containing original image, gradient image, vector gradient image
 	ImageType::SizeType regionSize = image->GetLargestPossibleRegion().GetSize();
@@ -603,8 +656,6 @@ int main(int argc, char *argv[])
             {
                 if (output_detection) init.savePointAsAxialImage(image,outputPath+"result_detection.png");
                 if (output_detection_nii) init.savePointAsBinaryImage(image,outputPath+inputFilename_nameonly+"_detection"+suffix, orientationFilter.getInitialImageOrientation());
-                cout << "output machin chose" << endl;
-                if (output_detection_nii) cout << "truc" << endl;
                 
                 init.getPoints(point,normal1,normal2,radius,stretchingFactor);
                 if (normal2 == CVector3::ZERO) normal2 = -normal1;
