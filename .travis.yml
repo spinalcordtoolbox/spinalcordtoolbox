@@ -42,4 +42,4 @@ install:
 
 script:
   - python ../scripts/sct_check_dependences.py
-  - python testing_sct_propseg.py -d 1
+  #- python testing_sct_propseg.py -d 1
