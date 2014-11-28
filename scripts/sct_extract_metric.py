@@ -91,13 +91,11 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        # fname_data = path_sct_data+'/mt/mtr.nii.gz'
-        # path_label = path_sct_data+'/mt/label/template'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
-        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'
-        method = 'wath'
-        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '1:4'  #'200:210' #'2:4'
+        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/WMtract__all.nii.gz'
+        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/label_tracts_inv'
+        method = 'ml'
+        labels_of_interest = ''
+        slices_of_interest = ''
         vertebral_levels = ''
         average_all_labels = 0
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
@@ -637,8 +635,12 @@ def check_labels(labels_of_interest, nb_labels):
 # Extract metric within labels
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method, verbose):
+    """
+    :data: (nx,ny,nz) numpy array
+    :labels: nlabel tuple of (nx,ny,nz) array
+    """
 
-    nb_labels = len(labels) # number of labels
+    nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
@@ -653,8 +655,8 @@ def extract_metric_within_tract(data, labels, method, verbose):
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
-    ind_positive_labels = labels_sum > ALMOST_ZERO
-    ind_positive_data = data > 0
+    ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
+    ind_positive_data = data > -9999999999  # data > 0
     ind_positive = ind_positive_labels & ind_positive_data
     data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
@@ -690,9 +692,12 @@ def extract_metric_within_tract(data, labels, method, verbose):
     if method == 'ml':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        beta = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y))
+        beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
+        #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
+        #beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )
+        #print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
-            metric_mean[i_label] = beta[0][i_label]
+            metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std
