@@ -163,7 +163,7 @@ string StrPad(string original, size_t charCount, string prefix="")
 
 void help()
 {
-    cout << "sct_propseg - Version 1.0.2 (2014-11-26)" << endl;
+    cout << "sct_propseg - Version 1.0.3 (2014-11-28)" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \nPart of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox> \nAuthor : Benjamin De Leener" << endl << endl;
     
     cout << "DESCRIPTION" << endl;
@@ -184,7 +184,6 @@ void help()
     cout << "MANDATORY ARGUMENTS" << endl;
     cout << StrPad("  -i <inputfilename>",30) << StrPad("no default",70,StrPad("",30)) << endl;
     //cout << "\t-i-dicom <inputfolderpath> \t (replace -i, read DICOM series, output still in NIFTI)" << endl;
-    cout << StrPad("  -o <outputfolderpath>",30) << StrPad("default is current folder",70,StrPad("",30)) << endl;
     cout << StrPad("  -t {t1,t2}",30) << StrPad("string, type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark, no default",70,StrPad("",30)) << endl;
     cout << endl;
 	
@@ -198,6 +197,7 @@ void help()
 	cout << endl;
     
     cout << "Output options" << endl;
+    cout << StrPad("  -o <outputfolderpath>",30) << StrPad("default is current folder",70,StrPad("",30)) << endl;
     cout << StrPad("  -mesh",30) << StrPad("output: mesh of the spinal cord segmentation",70,StrPad("",30)) << endl;
     cout << StrPad("  -centerline-binary",30) << StrPad("output: centerline as a binary image",70,StrPad("",30)) << endl;
     cout << StrPad("  -CSF",30) << StrPad("output: CSF segmentation",70,StrPad("",30)) << endl;
@@ -235,6 +235,8 @@ int main(int argc, char *argv[])
         help();
         return EXIT_FAILURE;
     }
+    
+    // Initialization of parameters
     string inputFilename = "", outputPath = "", outputFilenameBinary = "", outputFilenameMesh = "", outputFilenameBinaryCSF = "", outputFilenameMeshCSF = "", outputFilenameAreas = "", outputFilenameAreasCSF = "", outputFilenameCenterline = "", outputFilenameCenterlineBinary = "", inputCenterlineFilename = "", initMaskFilename = "";
     double typeImageFactor = 0.0, initialisation = 0.5;
     int downSlice = -10000, upSlice = 10000;
@@ -245,6 +247,8 @@ int main(int argc, char *argv[])
     int numberOfPropagationIteration = 200;
     double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
 	bool tradeoff_d_bool = false;
+    
+    // Reading option parameters from user input
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
             i++;
@@ -370,6 +374,8 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
+    
+    // Checking if user added mandatory arguments
     if (inputFilename == "")
     {
         cerr << "Input filename or folder (if DICOM) not provided" << endl;
@@ -446,7 +452,7 @@ int main(int argc, char *argv[])
         try {
             reader->Update();
         } catch( itk::ExceptionObject & e ) {
-            cerr << "Exception caught while reading input image" << endl;
+            cerr << "ERROR: Exception caught while reading input image (-i option). Are you sure the image exist?" << endl;
             cerr << e << endl;
             return EXIT_FAILURE;
         }
@@ -818,7 +824,7 @@ bool extractPointAndNormalFromMask(string filename, CVector3 &point, CVector3 &n
     try {
         reader->Update();
     } catch( itk::ExceptionObject & e ) {
-        cerr << "Exception caught while reading input image " << endl;
+        cerr << "ERROR: Exception caught while reading input image (-init-mask option). Are you sure the image exist?" << endl;
         cerr << e << endl;
         return false;
     }
@@ -880,7 +886,7 @@ vector<CVector3> extractCenterline(string filename)
         try {
             reader->Update();
         } catch( itk::ExceptionObject & e ) {
-            cerr << "Exception caught while reading centerline input image " << endl;
+            cerr << "ERROR: Exception caught while reading input image (-init-centerline option). Are you sure the image exist?" << endl;
             cerr << e << endl;
         }
         ImageType::Pointer image_centerline = reader->GetOutput();
@@ -919,7 +925,7 @@ vector<CVector3> extractCenterline(string filename)
             ++it;
         }
         
-        /*// spline approximation to produce correct centerline
+        /*// spline approximation to produce correct centerline - Done in orientation computation ?
         
         double range = result.size()/4.0 ;
         const unsigned int ParametricDimension = 1; const unsigned int DataDimension = 3;
