@@ -72,9 +72,9 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
     zcrop_ind = [10, 110, 210, 310, 410]
-    generated_phantom = "WM_phantom.nii.gz"
-    generated_phantom_noise = "WM_phantom_noise.nii.gz"
-    tracts_sum_img = "tracts_sum.nii.gz"
+    file_phantom = "WM_phantom.nii.gz"
+    file_phantom_noise = "WM_phantom_noise.nii.gz"
+    file_tract_sum = "tracts_sum.nii.gz"
     true_value = 40
     spec_tracts = 2, 17
     metrics_estimation_results = "metric_label.txt"
@@ -93,7 +93,7 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     start_time = time.time() # save start time for duration
     
     # Crop the atlas
-    if (crop == 1):
+    if crop == 1:
         create_folder(folder_cropped_atlas)
         crop_atlas(folder_atlas, folder_cropped_atlas, zcrop_ind)
         #sct.run('./crop_atlas.py -f '+folder_atlas+' -o '+folder_cropped_atlas+' -z '+str(zcrop_ind))
@@ -105,6 +105,10 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     tracts = get_tracts(folder_cropped_atlas)
     numtracts = len(tracts)
 
+    # create temporary folder
+    folder_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S/")
+    sct.run('mkdir '+folder_tmp)
+
     # Get ponderation of each tract for dorsal colum average
     # ponderation of each tract of the dorsal column
     pond_dc = np.zeros(numtracts)
@@ -113,7 +117,7 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     for i in dorsal_column_labels.split(','):
         i = int(i)
         # Sum tracts values which are higher than 0 in the tracts
-        pond_dc[i]= sum(tracts[i, 0][tracts[i, 0]>0])
+        pond_dc[i]= sum(tracts[i, 0][tracts[i, 0] > 0])
         pond_sum = pond_sum + pond_dc[i]
     # Normalize the sum of ponderations to 1 
     pond_dc = pond_dc / pond_sum
@@ -124,15 +128,18 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
     [X_bin, X_bin_dc, D_bin, D_bin_dc] = init_values(numtracts, bootstrap_iterations)
     [X_man, X_man_dc, D_man, D_man_dc] = init_values(numtracts, bootstrap_iterations)
     [X_wath, X_wath_dc, D_wath, D_wath_dc] = init_values(numtracts, bootstrap_iterations)
+    fname_phantom = folder_tmp+file_phantom
+    fname_phantom_noise = folder_tmp+file_phantom_noise
+    fname_tract_sum = folder_tmp+file_tract_sum
 
     man_users_number = len(mask_prefix)
-    X_man = np.zeros([man_users_number,numtracts+1])
-    X_man_dc = np.zeros([man_users_number,bootstrap_iterations])
-    D_man = np.zeros([man_users_number,numtracts,bootstrap_iterations])
-    D_man_dc = np.zeros([man_users_number,1,bootstrap_iterations])
+    X_man = np.zeros([man_users_number, numtracts+1])
+    X_man_dc = np.zeros([man_users_number, bootstrap_iterations])
+    D_man = np.zeros([man_users_number, numtracts, bootstrap_iterations])
+    D_man_dc = np.zeros([man_users_number, 1, bootstrap_iterations])
 
     # loop across bootstrap
-    for i in range(0,bootstrap_iterations):
+    for i in range(0, bootstrap_iterations):
         print 'iteration :  ' + str(i+1) + '/' + str(bootstrap_iterations)   
         X_map = np.zeros([numtracts])
         X_wa = np.zeros([numtracts])
@@ -141,65 +148,59 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
         X_man = np.zeros([man_users_number, numtracts+1])
         
         # Generate phantom
-        [WM_phantom, WM_phantom_noise, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value)
+        [WM_phantom, WM_phantom_noise, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value, folder_tmp)
         # Save generated phantoms as nifti image (.nii.gz)
-        save_3D_nparray_niftii(WM_phantom, generated_phantom)
-        save_3D_nparray_niftii(WM_phantom_noise, generated_phantom_noise)
-        
-        # if partial_vol_corr == 1:
-        #     save_3D_nparray_niftii(tracts_sum, tracts_sum_img)
-        #     # Creation of an inverse phantom
-        #     # Substract 1 from the sum of tracts
-        #     sct.run('fslmaths ' + tracts_sum_img + ' -sub 1 temp.nii.gz')
-        #     # Multiply this image by -true_value
-        #     sct.run('fslmaths temp.nii.gz -mul -' + str(true_value) + ' temp.nii.gz')
-        #     # Add this image to the phantom with added noise so that the effect of partial volume is lowered
-        #     sct.run('fslmaths ' + generated_phantom_noise + ' -add temp.nii.gz ' + generated_phantom_noise)
-        
+        save_3D_nparray_niftii(WM_phantom, fname_phantom)
+        save_3D_nparray_niftii(WM_phantom_noise, fname_phantom_noise)
+        save_3D_nparray_niftii(tracts_sum, fname_tract_sum)
+
         # Get the np.mean of all values in dorsal column in the generated phantom
         dc_val_avg = 0
         for j in dorsal_column_labels.split(','):
             j = int(j)
             dc_val_avg = dc_val_avg + values_synthetic_data[j] * pond_dc[j]  
         dc_val_avg = float(dc_val_avg)
-    
+
+        # pause for 1 second, otherwise the temporary file names will have the same name and will be removed by the following function
+        time.sleep(1)
+
         # Perform maximum likelihood estimation in all tracts
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml ')
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml ')
         X_map = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_map[:,i] = abs(X_map.ravel() - values_synthetic_data)
         # Get metrics estimation in dorsal column
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m ml -l '+dorsal_column_labels +' -a' )
         X_map_dc = read_results(metrics_estimation_results)
         # Get the difference between this np.mean and the metrics estimated
         D_map_dc[0, i] = abs(X_map_dc - dc_val_avg)
         
         # Perform binary estimation
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m bin')
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m bin')
         X_bin = read_results(metrics_estimation_results)
         D_bin[:,i] = abs(X_bin.ravel() - values_synthetic_data)
         # Get results in dorsal column
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m bin -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m bin -l '+dorsal_column_labels +' -a' )
         X_bin_dc = read_results(metrics_estimation_results)
         D_bin_dc[0, i] = abs(X_bin_dc - dc_val_avg)
         
         # Perform weighted average estimation
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wa')
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wa')
         X_wa = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_wa[:,i] = abs(X_wa.ravel() - values_synthetic_data)
         # Get results in dorsal column
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wa -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wa -l '+dorsal_column_labels +' -a' )
         X_wa_dc = read_results(metrics_estimation_results)
         D_wa_dc[0, i] = abs(X_wa_dc - dc_val_avg)
         
         # Perform thresholded weighted average estimation
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wath')
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m wath')
         X_wath = read_results(metrics_estimation_results)
         # Get the absolute deviation with the real value in the phantom
         D_wath[:,i] = abs(X_wath.ravel() - values_synthetic_data)
         # Get results in dorsal column
-        sct.run('sct_extract_metric -i ' + generated_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wath -l '+dorsal_column_labels +' -a' )
+        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas+ ' -m wath -l '+dorsal_column_labels +' -a' )
         X_wath_dc = read_results(metrics_estimation_results)
         D_wath_dc[0, i] = abs(X_wath_dc - dc_val_avg)
 
@@ -212,7 +213,7 @@ def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, r
                     header_mask = mask_folder[l] + mask_prefix[l] + '0' + str(k) + mask_ext
                 else:
                     header_mask = mask_folder[l] + mask_prefix[l] + str(k) + mask_ext                        
-                status, output = sct.run('sct_average_data_within_mask -i ' + generated_phantom_noise + ' -m ' + header_mask + ' -v 0')
+                status, output = sct.run('sct_average_data_within_mask -i ' + fname_phantom_noise + ' -m ' + header_mask + ' -v 0')
                 X_man[l, k] = float(output)
                 if k != dorsal_column_mask_index:
                     D_man[l, k, i] = abs(X_man[l, k] - values_synthetic_data[k])
