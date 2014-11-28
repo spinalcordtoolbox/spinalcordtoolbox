@@ -56,7 +56,7 @@ def main():
 # phantom generation
 #=======================================================================================================================
 
-def phantom_generation(tracts, std_noise, range_tract, true_value):
+def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out):
     """
     :param tracts: np array
     :param std_noise: std of noise to generate pseudo-random gaussianly-distributed noise
@@ -65,46 +65,42 @@ def phantom_generation(tracts, std_noise, range_tract, true_value):
     :return: synthetic_vol, synthetic_voln, values_synthetic_data, tracts_sum
     """
 
-    file_phantom = 'phantom_values.txt'
+    fname_phantom = folder_out+'phantom_values.txt'
 
     # Transform std noise and range tract to a percentage of the true value
     range_tract = float(range_tract) / 100 * true_value
     std_noise = float(std_noise) / 100 * true_value
 
     # Generate synthetic Volume  
-    numtracts = len(tracts)  
-    nx = np.zeros(numtracts)
-    ny = np.zeros(numtracts)
-    nz = np.zeros(numtracts)
-
-    for i in range(0, numtracts):
-        [nx[i], ny[i], nz[i]] = (tracts[i, 0]).shape
-    nx = nx[0]
-    ny = ny[0]
-    nz = nz[0]
+    numtracts = len(tracts)
+    nx, ny, nz = tracts[0][0].shape
 
    # open txt file that includes true values per tract
-    fid_file = open(file_phantom, 'w+')
+    fid_file = open(fname_phantom, 'w+')
     print >> fid_file, 'std_noise='+str(std_noise)+', range_tract='+str(range_tract)+', true_value='+str(true_value)
 
     tracts_weighted = np.zeros([numtracts, nx, ny, nz])
     synthetic_vol = np.zeros([nx, ny, nz])
     synthetic_voln = np.zeros([nx, ny, nz])
-    tracts_sum = np.zeros([nx, ny, nz])
     values_synthetic_data = np.zeros([numtracts])
     # create volume of tracts with randomly-assigned values
     for i in range(0, numtracts):
-        tracts_sum = tracts_sum + tracts[i, 0]
         values_synthetic_data[i] = (true_value - range_tract + random.uniform(0, 2*range_tract))  # true_value - range_tract <= values_synthetic_data <= true_value + range_tract
-        print >> fid_file, 'label=' + str(i) + ', value=' + str(round(values_synthetic_data[i], 3))
+        print >> fid_file, 'label=' + str(i) + ', value=' + str(values_synthetic_data[i])
         tracts_weighted[i, :, :, :] = values_synthetic_data[i] * tracts[i, 0]
         # add tract to volume
         synthetic_vol = synthetic_vol + tracts_weighted[i, :, :, :]
+
+    # sum all tracts
+    tracts_sum = np.zeros([nx, ny, nz])
+    for i in range(0, numtracts):
+        tracts_sum = tracts_sum + tracts[i, 0]
+
     # close txt file
     fid_file.close()
 
     # add gaussian noise
-    if not std_noise==0:
+    if not std_noise == 0:
         synthetic_voln = synthetic_vol + np.random.normal(loc=0, scale=std_noise, size=(nx, ny, nz))
     else:
         synthetic_voln = synthetic_vol
