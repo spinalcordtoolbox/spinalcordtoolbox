@@ -108,7 +108,7 @@
 #include <itkNiftiImageIO.h>
 #include <itkGradientMagnitudeImageFilter.h>
 #include <itkGradientImageFilter.h>
-#include <itkGradientVectorFlowImageFilter.h>
+#include "itkGradientVectorFlowImageFilter.h"
 #include <itkImageAlgorithm.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkFileTools.h>
@@ -225,6 +225,8 @@ void help()
     cout << StrPad("  -max-deformation <number>",30) << StrPad("double, in mm, stop condition: maximum deformation per iteration, default is 2.5 mm",70,StrPad("",30)) << endl;
     cout << StrPad("  -min-contrast <number>",30) << StrPad("double, in intensity value, stop condition: minimum local SC/CSF contrast, default is 50",70,StrPad("",30)) << endl;
 	cout << StrPad("  -d <number>",30) << StrPad("double, trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",70,StrPad("",30)) << endl;
+    cout << StrPad("  -K <number>",30) << StrPad("double, trade-off between GGVF field smoothness and gradient conformity. Range of values from 0.01 to 2000.",70,StrPad("",30)) << endl;
+    cout << StrPad("  -iter-GGVF <number>",30) << StrPad("int, Number of iteration for GGVF filter. Default is 2.",70,StrPad("",30)) << endl;
 	cout << endl;
 }
 
@@ -247,8 +249,9 @@ int main(int argc, char *argv[])
 	int gapInterSlices = 4, nbSlicesInitialisation = 5;
 	double radius = 4.0;
     int numberOfPropagationIteration = 200;
-    double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d;
+    double maxDeformation = 0.0, maxArea = 0.0, minContrast = 50.0, tradeoff_d = 25, tradeoff_K = 200;
 	bool tradeoff_d_bool = false;
+    int nbiter_GGVF = 2;
     
     // Reading option parameters from user input
     for (int i = 0; i < argc; ++i) {
@@ -362,6 +365,14 @@ int main(int argc, char *argv[])
             i++;
             tradeoff_d = atof(argv[i]);
 			tradeoff_d_bool = true;
+        }
+        else if (strcmp(argv[i],"-K")==0) {
+            i++;
+            tradeoff_K = atof(argv[i]);
+        }
+        else if (strcmp(argv[i],"-iter-GGVF")==0) {
+            i++;
+            nbiter_GGVF = atoi(argv[i]);
         }
         else if (strcmp(argv[i],"-CSF")==0) {
             CSF_segmentation = true;
@@ -529,7 +540,7 @@ int main(int argc, char *argv[])
 		cerr << e << endl;
         return EXIT_FAILURE;
 	}
-	GradientImageType::Pointer imageVectorGradient = gradientMapFilter->GetOutput();
+	GradientImageType::Pointer imageVectorGradient_temp = gradientMapFilter->GetOutput();
 
     // Write the image
     typedef itk::ImageFileWriter< GradientImageType >     GradientWriterType;
@@ -537,7 +548,7 @@ int main(int argc, char *argv[])
     //itk::NiftiImageIO::Pointer ioG = itk::NiftiImageIO::New();
     //writerIm1->SetImageIO(ioG);
     writerIm1->SetFileName("gradient_normal.mhd");
-    writerIm1->SetInput(imageVectorGradient);
+    writerIm1->SetInput(imageVectorGradient_temp);
     try {
         writerIm1->Update();
     }
@@ -551,9 +562,9 @@ int main(int argc, char *argv[])
     
     cout << "computing GVF image" << endl;
     GradientVectorFlowFilterType::Pointer gradientVectorFlowFilter = GradientVectorFlowFilterType::New();
-    gradientVectorFlowFilter->SetInput(imageVectorGradient);
-    gradientVectorFlowFilter->SetIterationNum( 2 );
-    gradientVectorFlowFilter->SetNoiseLevel( 2000.00 );
+    gradientVectorFlowFilter->SetInput(imageVectorGradient_temp);
+    gradientVectorFlowFilter->SetIterationNum( nbiter_GGVF );
+    gradientVectorFlowFilter->SetNoiseLevel( tradeoff_K );
     try {
 		gradientVectorFlowFilter->Update();
 	} catch( itk::ExceptionObject & e ) {
@@ -561,7 +572,7 @@ int main(int argc, char *argv[])
 		cerr << e << endl;
         return EXIT_FAILURE;
 	}
-	imageVectorGradient = gradientVectorFlowFilter->GetOutput();
+	GradientImageType::Pointer imageVectorGradient = gradientVectorFlowFilter->GetOutput();
     cout << "finished computing GVF image" << endl;
     
     // Write the image
