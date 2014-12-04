@@ -32,9 +32,9 @@ from sct_orientation import get_orientation, set_orientation
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
-
 # constants
 ALMOST_ZERO = 0.000001
+
 
 class Param:
     def __init__(self):
@@ -51,17 +51,6 @@ class Param:
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.threshold = 0.5  # threshold for the estimation methods 'wath' and 'bin'
 
-class color:
-    purple = '\033[95m'
-    cyan = '\033[96m'
-    darkcyan = '\033[36m'
-    blue = '\033[94m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    red = '\033[91m'
-    bold = '\033[1m'
-    underline = '\033[4m'
-    end = '\033[0m'
 
 class Color:
     def __init__(self):
@@ -75,6 +64,7 @@ class Color:
         self.bold = '\033[1m'
         self.underline = '\033[4m'
         self.end = '\033[0m'
+
 
 #=======================================================================================================================
 # main
@@ -102,50 +92,54 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/t2_crop.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_T2.nii.gz' #path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        path_label = '/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/atlas'  #path_sct+'/data/atlas' #path_sct+'/testing/data/errsm_23/label/atlas'
-        method = 'wa'
-        labels_of_interest = '' #'0,1,2,21'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '' #'102:134' #'117:127' #'2:4'
-        vertebral_levels = '4:5'
-        average_all_labels = 1
-        fname_output = '/home/django/slevy/data/handedness_asymmetries/errsm_03/metric_extraction/left_averaged_estimations/atlas/t2'  #path_sct+'/testing/sct_extract_metric/results/quantif_mt_debug.txt'
-        fname_normalizing_label = ''#'/home/django/slevy/data/handedness_asymmetries/errsm_03/t2/template/template/MNI-Poly-AMU_CSF.nii.gz'  #path_sct+'/data/template/MNI-Poly-AMU_CSF.nii.gz'
-        normalization_method = '' #'whole'
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:t:v:w:z:') # define flags
-    except getopt.GetoptError as err: # check if the arguments are defined
-        print str(err) # error
-        usage() # display usage
-    for opt, arg in opts: # explore flags
-        if opt in '-a':
-            average_all_labels = 1
-        elif opt in '-f':
-            path_label = os.path.abspath(arg)  # save path of labels folder
-        elif opt == '-h':  # help option
-            flag_h = 1
-        elif opt in '-i':
-            fname_data = arg
-        elif opt in '-l':
-            labels_of_interest = arg
-        elif opt in '-m':  # method for metric extraction
-            method = arg
-        elif opt in '-n':  # filename of the label by which the user wants to normalize
-            fname_normalizing_label = arg
-        elif opt in '-o': # output option
-            fname_output = arg  # fname of output file
-        elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin' (see flag -m)
-            threshold = float(arg)
-        elif opt in '-v':
-            # vertebral levels option, if the user wants to average the metric across specific vertebral levels
-             vertebral_levels = arg
-        elif opt in '-w':
-            # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
-            normalization_method = arg
-        elif opt in '-z':  # slices numbers option
-            slices_of_interest = arg # save labels numbers
+        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        # fname_data = path_sct_data+'/mt/mtr.nii.gz'
+        # path_label = path_sct_data+'/mt/label/template'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'
+        method = 'wath'
+        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = '1:4'  #'200:210' #'2:4'
+        vertebral_levels = ''
+        average_all_labels = 0
+        fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
+        normalization_method = ''  #'whole'
+    else:
+        # Check input parameters
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+        except getopt.GetoptError as err: # check if the arguments are defined
+            print str(err) # error
+            usage() # display usage
+        if not opts:
+            usage()
+        for opt, arg in opts: # explore flags
+            if opt in '-a':
+                average_all_labels = 1
+            elif opt in '-f':
+                path_label = os.path.abspath(arg)  # save path of labels folder
+            elif opt == '-h':  # help option
+                flag_h = 1
+            elif opt in '-i':
+                fname_data = arg
+            elif opt in '-l':
+                labels_of_interest = arg
+            elif opt in '-m':  # method for metric extraction
+                method = arg
+            elif opt in '-n':  # filename of the label by which the user wants to normalize
+                fname_normalizing_label = arg
+            elif opt in '-o': # output option
+                fname_output = arg  # fname of output file
+            elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin' (see flag -m)
+                threshold = float(arg)
+            elif opt in '-v':
+                # vertebral levels option, if the user wants to average the metric across specific vertebral levels
+                 vertebral_levels = arg
+            elif opt in '-w':
+                # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
+                normalization_method = arg
+            elif opt in '-z':  # slices numbers option
+                slices_of_interest = arg # save labels numbers
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '' or flag_h:
@@ -153,7 +147,7 @@ def main():
         usage()
 
     # Check existence of data file
-    sct.printv('\nCheck data files existence...', verbose)
+    sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_data)
     sct.check_folder_exist(path_label)
     if fname_normalizing_label:
@@ -173,7 +167,7 @@ def main():
                 print color.red + 'ERROR: More than one file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             elif len(fname_vertebral_labeling_list) == 0:
-                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + '\' were found in ' + path_label + '. Exit program.' + color.end
+                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
                 sys.exit(2)
             else:
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
@@ -201,6 +195,7 @@ def main():
 
     # Check if the orientation of the data is RPI
     orientation_data = get_orientation(fname_data)
+    print orientation_data
 
     # we assume here that the orientation of the label files to extract the metric from is the same as the orientation
     # of the metric file (since the labels were registered to the metric)
@@ -527,11 +522,15 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
 #=======================================================================================================================
 def remove_slices(data_to_crop, slices_of_interest):
 
-    # extract slice numbers
-    slices_list = [int(x) for x in slices_of_interest.split(':')] # 2-element list
+   # check if user selected specific slices using delimitor ','
+    if not slices_of_interest.find(',') == -1:
+        slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
+    else:
+        slices_range = [int(x) for x in slices_of_interest.split(':')]  # 2-element list
+        slices_list = [i for i in range(slices_range[0], slices_range[1]+1)]
 
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
-    data_cropped = data_to_crop[..., slices_list[0]:slices_list[1]+1]
+    data_cropped = data_to_crop[..., slices_list]
 
     return data_cropped
 
@@ -573,7 +572,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
     # Write selected slices
     fid_metric.write('\n'+'# Slices (z): ')
     if slices_of_interest != '':
-        fid_metric.write('%s to %s' % (slices_of_interest.split(':')[0], slices_of_interest.split(':')[1]))
+        fid_metric.write(slices_of_interest)
     else:
         fid_metric.write('ALL')
 
@@ -644,8 +643,12 @@ def check_labels(labels_of_interest, nb_labels):
 # Extract metric within labels
 #=======================================================================================================================
 def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
+    """
+    :data: (nx,ny,nz) numpy array
+    :labels: nlabel tuple of (nx,ny,nz) array
+    """
 
-    nb_labels = len(labels) # number of labels
+    nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
@@ -660,8 +663,8 @@ def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
-    ind_positive_labels = labels_sum > ALMOST_ZERO
-    ind_positive_data = data > 0
+    ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
+    ind_positive_data = data > 0  # data > -9999999999
     ind_positive = ind_positive_labels & ind_positive_data
     data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
@@ -697,9 +700,12 @@ def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
     if method == 'ml':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        beta = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y))
+        beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
+        #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
+        #beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )
+        #print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
-            metric_mean[i_label] = beta[0][i_label]
+            metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std

@@ -1,1 +1,0 @@
-3D Dice coefficient = 0.587302
