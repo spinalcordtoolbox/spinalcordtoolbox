@@ -245,15 +245,29 @@ def main():
     # Normalization slice-by-slice by the mean PD in CSF estimated based on mean signal in SPGR data in CSF
     elif method == 'mean-PD-in-CSF-from-mean-SPGR':
         # Estimate mean PD per slice in CSF based on the mean signal in SPGR data in CSF
-        PD_mean_in_CSF_per_slice = estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, flip_angles, tr)
-        polyfit_bias = np.polyfit(range(0, spgr_nz-0), PD_mean_in_CSF_per_slice[0:], 2)
+        PD_mean_in_CSF_per_slice, PD_mean_in_SC_per_slice = estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, flip_angles, tr)
+        polyfit_bias = np.polyfit(range(1, spgr_nz-1), PD_mean_in_CSF_per_slice[1:-1], 2)
         corrected_PD_mean_in_CSF_per_slice = np.array([polyfit_bias[0]*(x**2)+polyfit_bias[1]*x+polyfit_bias[2] for x in range(0, spgr_nz)])
 
-        fig = pylab.figure(20)
-        pylab.plot(range(0, spgr_nz), PD_mean_in_CSF_per_slice, marker='o', color='b')
-        pylab.plot(range(0, spgr_nz), corrected_PD_mean_in_CSF_per_slice, marker='o', color='g')
-        pylab.legend(['mean then PD estimation', 'corrected PD mean (mean then estimation)'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
-        pylab.grid(True)
+        fig_mean_PD_correction = pylab.figure(2)
+
+        fig_mean_PD_correction.suptitle('Estimation from mean SPGR and correction by fitting')
+
+        ax_mean_PD_CSF_correction = fig_mean_PD_correction.add_subplot(121, title='Mean PD estimation in CSF')
+        ax_mean_PD_CSF_correction.plot(range(0, spgr_nz), PD_mean_in_CSF_per_slice, marker='o', color='b')
+        ax_mean_PD_CSF_correction.plot(range(0, spgr_nz), corrected_PD_mean_in_CSF_per_slice, marker='o', color='g')
+        ax_mean_PD_CSF_correction.legend(['No correction', 'Correction by fitting'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+        ax_mean_PD_CSF_correction.grid(True)
+
+        ax_mean_MTV_correction = fig_mean_PD_correction.add_subplot(122, title='Mean MTV estimation in cord and CSF')
+        MTV_mean_in_CSF_per_slice_corrected = 1 - np.divide(corrected_PD_mean_in_CSF_per_slice, corrected_PD_mean_in_CSF_per_slice)
+        MTV_mean_in_SC_per_slice_corrected = 1 - np.divide(PD_mean_in_SC_per_slice, corrected_PD_mean_in_CSF_per_slice)
+        ax_mean_MTV_correction.plot(range(0, spgr_nz), MTV_mean_in_CSF_per_slice_corrected, marker='o', color='b')
+        ax_mean_MTV_correction.plot(range(0, spgr_nz), MTV_mean_in_SC_per_slice_corrected, marker='o', color='r')
+        ax_mean_MTV_correction.legend(['CSF', 'Cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+        ax_mean_MTV_correction.grid(True)
+
+
         pylab.show()
 
         for z in range(0, spgr_nz):
@@ -390,7 +404,7 @@ def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, f
     pylab.show(block=False)
 
 
-    return PD_mean_in_CSF
+    return PD_mean_in_CSF, PD_mean_in_SC
 
 #=======================================================================================================================
 # Estimate the proton density and T1 by Fram's method (1987)
