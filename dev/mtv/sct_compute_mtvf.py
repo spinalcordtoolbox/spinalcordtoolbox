@@ -30,7 +30,7 @@ from sct_extract_metric import extract_metric_within_tract
 
 class param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.verbose = 1
         self.file_output = 'T1_map,PD_map,MTVF_map'  # file name of the PD and MTVF maps to be generated as ouptut
         self.method = 'mean-PD-in-CSF-from-mean-SPGR'  # method used to compute MTVF for the division by the proton density in CSF
@@ -223,7 +223,8 @@ def main():
     if method == 'estimation-in-whole-CSF':
         PD_mean_in_whole_CSF, PD_std_in_csf = extract_metric_within_tract(PD_map, csf_mask, 'wa', 0)
         PD_map_normalized_CSF = PD_map/PD_mean_in_whole_CSF[0]
-    # Normalization by the mean PD in CSF slice-by-slice
+
+    # Normalization slice-by-slice by the mean PD in CSF
     elif method == 'mean-PD-in-CSF-after-estimation-voxel-wize':
         # Estimate the mean +/- std PD in CSF for each slice z
         PD_mean_in_CSF_per_slice_estimate_then_mean = np.empty((spgr_nz))
@@ -241,19 +242,19 @@ def main():
         for z in range(0, spgr_nz):
             PD_map_normalized_CSF[..., z] = PD_map[..., z] / corrected_PD_mean_in_CSF_per_slice[z]  # divide all the slice z by the fitted PD in CSF
 
+    # Normalization slice-by-slice by the mean PD in CSF estimated based on mean signal in SPGR data in CSF
     elif method == 'mean-PD-in-CSF-from-mean-SPGR':
         # Estimate mean PD per slice in CSF based on the mean signal in SPGR data in CSF
         PD_mean_in_CSF_per_slice = estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, flip_angles, tr)
-        polyfit_bias = np.polyfit(range(0, spgr_nz), PD_mean_in_CSF_per_slice, 2)
+        polyfit_bias = np.polyfit(range(0, spgr_nz-0), PD_mean_in_CSF_per_slice[0:], 2)
         corrected_PD_mean_in_CSF_per_slice = np.array([polyfit_bias[0]*(x**2)+polyfit_bias[1]*x+polyfit_bias[2] for x in range(0, spgr_nz)])
 
         fig = pylab.figure(20)
         pylab.plot(range(0, spgr_nz), PD_mean_in_CSF_per_slice, marker='o', color='b')
         pylab.plot(range(0, spgr_nz), corrected_PD_mean_in_CSF_per_slice, marker='o', color='g')
-        #pylab.plot(range(0, spgr_nz), PD_mean_in_CSF_per_slice_estimate_then_mean, marker='o', color='r')
         pylab.legend(['mean then PD estimation', 'corrected PD mean (mean then estimation)'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
         pylab.grid(True)
-        pylab.show(block=False)
+        pylab.show()
 
         for z in range(0, spgr_nz):
             PD_map_normalized_CSF[..., z] = PD_map[..., z] / corrected_PD_mean_in_CSF_per_slice[z]
@@ -364,15 +365,27 @@ def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, f
     PD_mean_in_CSF = np.divide(intercept_CSF, (1 - slope_CSF))
     PD_mean_in_SC = np.divide(intercept_SC, (1 - slope_SC))
 
+    # Compute MTV
+    MTV_mean_in_CSF_per_slice = 1 - np.divide(PD_mean_in_CSF, PD_mean_in_CSF)
+    MTV_mean_in_SC_per_slice = 1 - np.divide(PD_mean_in_SC, PD_mean_in_CSF)
+
     # Plot
-    fig_PD = pylab.figure(1)
-    fig_PD.suptitle('PD mean per slice')
-    pylab.grid(True)
+    fig_PD_mean_CSF = pylab.figure(1)
+    fig_PD_mean_CSF.suptitle('Estimation slice-wise from mean SPGR in cord and CSF')
 
-    pylab.plot(range(0, nb_slices), PD_mean_in_CSF, marker='o', color='b')
-    pylab.plot(range(0, nb_slices), PD_mean_in_SC, marker='o', color='r')
+    ax_PD_mean_CSF = fig_PD_mean_CSF.add_subplot(121, title='Mean PD per slice estimated from mean SPGR in cord and CSF per slice')
+    ax_PD_mean_CSF.grid(True)
+    ax_PD_mean_CSF.plot(range(0, nb_slices), PD_mean_in_CSF, marker='o', color='b')
+    ax_PD_mean_CSF.plot(range(0, nb_slices), PD_mean_in_SC, marker='o', color='r')
+    ax_PD_mean_CSF.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+    ax_PD_mean_CSF.set_xlabel('Slices')
 
-    pylab.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+    ax_MTV_from_mean_SPGR = fig_PD_mean_CSF.add_subplot(122, title='Mean MTV per slice estimated from mean SPGR in cord and CSF per slice')
+    ax_MTV_from_mean_SPGR.grid(True)
+    ax_MTV_from_mean_SPGR.plot(range(0, nb_slices), MTV_mean_in_CSF_per_slice, marker='o', color='b')
+    ax_MTV_from_mean_SPGR.plot(range(0, nb_slices), MTV_mean_in_SC_per_slice, marker='o', color='r')
+    ax_MTV_from_mean_SPGR.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+    ax_MTV_from_mean_SPGR.set_xlabel('Slices')
 
     pylab.show(block=False)
 
