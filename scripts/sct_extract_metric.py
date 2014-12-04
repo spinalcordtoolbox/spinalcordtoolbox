@@ -107,7 +107,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:t:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
