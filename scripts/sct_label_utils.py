@@ -576,7 +576,7 @@ DESCRIPTION
   Utility function for labels.
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -t process <process>
+  """+os.path.basename(__file__)+""" -i <data> -t <process>
 
 MANDATORY ARGUMENTS
   -i <data>        labels or image to create labels on. Must be 3D.
