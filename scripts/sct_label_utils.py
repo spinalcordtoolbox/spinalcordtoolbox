@@ -89,7 +89,7 @@ def main():
                 param.labels = arg
 
     # display usage if a mandatory argument is not provided
-    if fname_label == '' or type_process == '':
+    if fname_label == '' or type_process == '' or fname_label_output == '':
         sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
 
     # check existence of input files
@@ -580,6 +580,7 @@ USAGE
 
 MANDATORY ARGUMENTS
   -i <data>        labels or image to create labels on. Must be 3D.
+  -o <output>      output volume.
   -t <process>     process:
                      cross: create a cross. Must use flag "-c"
                      remove: remove labels. Must use flag "-r".
@@ -592,7 +593,6 @@ OPTIONAL ARGUMENTS
                      y: y-coordinates
                      z: z-coordinates
                      v: value of label
-  -o <output>      output volume
   -r <volume>      reference volume for label removing.
   -c <radius>      cross radius in mm (default=5mm).
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
