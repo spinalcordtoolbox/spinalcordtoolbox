@@ -585,7 +585,7 @@ MANDATORY ARGUMENTS
                      cross: create a cross. Must use flag "-c"
                      remove: remove labels. Must use flag "-r".
                      display-voxel: display all labels in file
-                     create: create labels. Must use flag "-l" to list labels.
+                     create: create labels. Must use flag "-x" to list labels.
 
 OPTIONAL ARGUMENTS
   -x <x,y,z,v>     labels. Use ":" if you have multiple labels.
