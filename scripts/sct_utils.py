@@ -58,11 +58,11 @@ def checkRAM(os,verbose=1):
     if (os == 'linux'):
         status, output = run('grep MemTotal /proc/meminfo', 0)
         print output
-        ram_split = output.split(' ')
+        ram_split = output.split()
         ram_total = float(ram_split[1])
         status, output = run('free -m', 0)
         print output
-        return ram_split/1024
+        return ram_total/1024
 
     elif (os == 'osx'):
         status, output = run('hostinfo | grep memory', 0)
