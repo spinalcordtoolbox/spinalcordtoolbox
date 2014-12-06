@@ -91,8 +91,8 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/WMtract__all.nii.gz'
-        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141127/label_tracts_inv'
+        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/WM_phantom_noise.nii.gz'
+        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/label_tracts'
         method = 'ml'
         labels_of_interest = ''
         slices_of_interest = ''
@@ -663,6 +663,13 @@ def extract_metric_within_tract(data, labels, method, verbose):
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
 
+    # # display labels
+    # import matplotlib.pyplot as plt
+    # plt.imshow(labels_sum[:,:,3])
+    # plt.show()
+    # plt.imshow(data[:,:,3])
+    # plt.show()
+
     # clear memory
     del data, labels
 
@@ -692,9 +699,9 @@ def extract_metric_within_tract(data, labels, method, verbose):
     if method == 'ml':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
+        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
-        #beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )
         #print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
             metric_mean[i_label] = beta[i_label]
