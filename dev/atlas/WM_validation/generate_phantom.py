@@ -24,8 +24,8 @@ from nibabel import *
 
 # Phantom parameters
 true_value = 40
-std_noise = 5
-range_tract = 0
+std_noise = 0
+range_tract = 5
 #folder_atlas = "/home/django/cnaaman/data/data_marc/WMtracts_outputs/final_results/"
 #folder_atlas = "/home/django/cnaaman/code/stage/cropped_atlas"
 #folder_atlas = "/home/django/cnaaman/data/data_marc/WMtracts_outputstest/final_results"
@@ -111,7 +111,7 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out):
 #=======================================================================================================================
 # Save 3D numpy array to a nifti
 #=======================================================================================================================
-def save_3D_nparray_niftii(np_matrix_3d, output_image):
+def save_3D_nparray_niftii(np_matrix_3d, output_image, fname_atlas):
     # Save 3d numpy matrix to niftii image
     # np_matrix_3d is a 3D numpy ndarray
     # output_image is the name of the niftii image created, ex: '3D_matrix.nii.gz'
@@ -119,6 +119,8 @@ def save_3D_nparray_niftii(np_matrix_3d, output_image):
     affine = img.get_affine()
     np_matrix_3d_nii = Nifti1Image(np_matrix_3d,affine)
     nibabel.save(np_matrix_3d_nii, output_image)
+    # copy geometric information
+    sct.run('fslcpgeom '+fname_atlas+' '+output_image)
     return None
 
 
