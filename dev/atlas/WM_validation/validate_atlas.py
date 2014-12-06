@@ -38,7 +38,7 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 
 def main():
     # Parameters
-    bootstrap_iter = 5
+    bootstrap_iter = 50
     folder_atlas = '../WM_atlas_generation/WMtracts_outputs/final_results/'  # path to atlas. add / at the end
     user_tract = 'charles_tract_,julien_tract_,tanguy_tract_,simon_tract_'
     std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
@@ -66,7 +66,7 @@ def main():
 def validate_atlas(folder_atlas, bootstrap_iterations, std_noise, range_tract, results_file, user_tract):
     # Parameters
     folder_cropped_atlas = "cropped_atlas/"
-    crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
+    crop = 1  # crop atlas, default=1. Only need to do it once (saves time).
     zcrop_ind = [10, 110, 210, 310, 410]
     file_phantom = "WM_phantom.nii.gz"
     file_phantom_noise = "WM_phantom_noise.nii.gz"
