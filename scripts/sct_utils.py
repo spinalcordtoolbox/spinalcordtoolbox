@@ -15,6 +15,8 @@ import os
 import errno
 import sys
 import commands
+import subprocess
+import re
 
 # TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -47,6 +49,61 @@ def run(cmd, verbose=1):
         sys.exit(2)
     else:
         return status, output
+
+#==============e=========================================================================================================
+# check RAM usage
+# work only on Mac OSX
+#=======================================================================================================================
+def checkRAM(os,verbose=1):
+    if (os == 'linux'):
+        status, output = run('grep MemTotal /proc/meminfo', 0)
+        print output
+        ram_split = output.split()
+        ram_total = float(ram_split[1])
+        status, output = run('free -m', 0)
+        print output
+        return ram_total/1024
+
+    elif (os == 'osx'):
+        status, output = run('hostinfo | grep memory', 0)
+        print output
+        ram_split = output.split(' ')
+        ram_total = float(ram_split[3])
+
+        # Get process info
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0]
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0]
+
+        # Iterate processes
+        processLines = ps.split('\n')
+        sep = re.compile('[\s]+')
+        rssTotal = 0 # kB
+        for row in range(1,len(processLines)):
+            rowText = processLines[row].strip()
+            rowElements = sep.split(rowText)
+            try:
+                rss = float(rowElements[0]) * 1024
+            except:
+                rss = 0 # ignore...
+            rssTotal += rss
+
+        # Process vm_stat
+        vmLines = vm.split('\n')
+        sep = re.compile(':[\s]+')
+        vmStats = {}
+        for row in range(1,len(vmLines)-2):
+            rowText = vmLines[row].strip()
+            rowElements = sep.split(rowText)
+            vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
+        
+        if verbose:
+            print 'Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
+            print 'Active Memory:\t\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
+            print 'Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
+            print 'Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
+            #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
+
+        return ram_total
 
 
 #=======================================================================================================================
