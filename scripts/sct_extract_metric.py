@@ -267,7 +267,7 @@ def main():
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
         sum_labels_user = np.sum(labels[label_id_user])  # sum the labels selected by user
-        if method == 'ml' or method == 'mlwa':  # in case the maximum likelihood and the average across different labels are wanted
+        if method == 'ml' or method == 'mlwa' or method == 'mlwath':  # in case the maximum likelihood and the average across different labels are wanted
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
             labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp
