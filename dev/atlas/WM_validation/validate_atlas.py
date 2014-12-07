@@ -34,7 +34,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
-from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_niftii
+from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nifti
 
 def main():
     # Parameters
@@ -143,9 +143,9 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
         # Generate phantom
         [WM_phantom, WM_phantom_noise, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value, folder_tmp)
         # Save generated phantoms as nifti image (.nii.gz)
-        save_3D_nparray_niftii(WM_phantom, fname_phantom, fname_atlas)
-        save_3D_nparray_niftii(WM_phantom_noise, fname_phantom_noise, fname_atlas)
-        save_3D_nparray_niftii(tracts_sum, fname_tract_sum, fname_atlas)
+        save_3D_nparray_nifti(WM_phantom, fname_phantom, fname_atlas)
+        save_3D_nparray_nifti(WM_phantom_noise, fname_phantom_noise, fname_atlas)
+        save_3D_nparray_nifti(tracts_sum, fname_tract_sum, fname_atlas)
 
         # Get the np.mean of all values in dorsal column in the generated phantom
         dc_val_avg = 0
