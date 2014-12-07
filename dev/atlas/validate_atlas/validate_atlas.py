@@ -17,10 +17,10 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO : Make a function for which the estimation is made from a particular method(remove code duplication in bootstrap loop and parameters initialization)
-# TODO : Make a function to print results depending on which methods are used
-# TODO : Add usage 
-# TODO : Add class initialization of default parameters (not working for some reason)
+# TODO: Also quantify the error for all tracts (to evaluate estimation methods)
+# TODO: Make a function for which the estimation is made from a particular method(remove code duplication in bootstrap loop and parameters initialization)
+# TODO: Make a function to print results depending on which methods are used
+# TODO: Add class initialization of default parameters (not working for some reason)
 
 
 # Import common Python libraries
@@ -41,8 +41,8 @@ def main():
     bootstrap_iter = 1
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
-    std_noise_list = [0, 20] #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [0] #[0, 5, 10, 20, 50]  # in percent
+    std_noise_list = [0, 20, 50] #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [0, 10] #[0, 5, 10, 20, 50]  # in percent
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
@@ -76,7 +76,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     list_tracts = ['2', '17', '0,1,15,16']
     list_tracts_txt = ['csl', 'csr', 'dc']
     index_dorsalcolumn = 2  # index of dorsal column in list_tracts
-    list_methods = ['ml', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
+    list_methods = ['ml', 'mlwa', 'mlwath', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
     zero_last_tract = 1  # if last tract correspond to CSF, zero it
