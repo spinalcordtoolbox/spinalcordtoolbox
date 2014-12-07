@@ -55,7 +55,7 @@ def main():
 # phantom generation
 #=======================================================================================================================
 
-def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, zero_last_tract=0):
+def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, folder_out, zero_last_tract=0):
     """
     :param tracts: np array
     :param std_noise: std of noise to generate pseudo-random gaussianly-distributed noise
@@ -70,8 +70,8 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, z
     value_last_tract = 0
 
     # Transform std noise and range tract to a percentage of the true value
-    range_tract = float(range_tract) / 100 * true_value
-    std_noise = float(std_noise) / 100 * true_value
+    range_tract = float(range_tract_perc) / 100 * true_value
+    std_noise = float(std_noise_perc) / 100 * true_value
 
     # Generate synthetic Volume  
     numtracts = len(tracts)
@@ -79,7 +79,7 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, z
 
    # open txt file that includes true values per tract
     fid_file = open(fname_phantom, 'w+')
-    print >> fid_file, 'std_noise='+str(std_noise)+', range_tract='+str(range_tract)+', true_value='+str(true_value)
+    print >> fid_file, 'std_noise='+str(std_noise_perc)+'%, range_tract='+str(range_tract_perc)+'%, true_value='+str(true_value)
 
     tracts_weighted = np.zeros([numtracts, nx, ny, nz])
     synthetic_vol = np.zeros([nx, ny, nz])
