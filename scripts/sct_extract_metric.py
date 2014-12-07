@@ -586,7 +586,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 # Check the consistency of the methods asked by the user
 #=======================================================================================================================
 def check_method(method, fname_normalizing_label, normalization_method):
-    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'mlwa'):
+    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'mlwa') & (method != 'mlwath'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
