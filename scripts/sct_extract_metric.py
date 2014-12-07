@@ -13,6 +13,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
+# TODO: for mlwa: do not hard-code position of CSF
+# TODO: for mlwa: add GM
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
@@ -91,13 +94,13 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/WM_phantom_noise.nii.gz'
-        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/label_tracts'
-        method = 'ml'
-        labels_of_interest = ''
+        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207163613/WM_phantom_noise.nii.gz'
+        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
+        method = 'mlwa'
+        labels_of_interest = '0,1'
         slices_of_interest = ''
         vertebral_levels = ''
-        average_all_labels = 0
+        average_all_labels = 1
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
     else:
@@ -263,20 +266,17 @@ def main():
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
-        sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
-        if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
-            # TODO: make the below code cleaner (no use of tmp variable)
+        sum_labels_user = np.sum(labels[label_id_user])  # sum the labels selected by user
+        if method == 'ml' or method == 'mlwa':  # in case the maximum likelihood and the average across different labels are wanted
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp
+            labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp
             # variable
             for i_label in range(1, len(labels_tmp)):
-                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected
-                # labels
+                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected labels
             labels = labels_tmp  # replace the initial labels value by the updated ones (with the summed labels)
             del labels_tmp  # delete the temporary labels
-        else:  # in other cases than the maximum likelihood, we don't need to keep the other labels than those that were
-        # selected
+        else:  # in other cases than the maximum likelihood, we can remove other labels (not needed for estimation)
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
@@ -586,7 +586,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 # Check the consistency of the methods asked by the user
 #=======================================================================================================================
 def check_method(method, fname_normalizing_label, normalization_method):
-    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath'):
+    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'mlwa'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
@@ -680,8 +680,28 @@ def extract_metric_within_tract(data, labels, method, verbose):
     metric_mean = np.empty([nb_labels], dtype=object)
     metric_std = np.empty([nb_labels], dtype=object)
 
+    # Estimation with 3-class maximum likelihood combined with wa (mlwa)
+    if method == 'mlwa':
+        y = data1d  # [nb_vox x 1]
+        x = labels2d.T  # [nb_vox x nb_labels]
+        # make three classes with labels: csf, wm and gm
+        index_last_label = int(x.shape[1]-1)
+        x_csf = x[:, index_last_label]
+        x_wm = x[:, 0:index_last_label-1].sum(axis=1)
+        x = np.vstack([x_wm, x_csf]).T
+        # estimate values using ML
+        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        # correct data using PVE information
+        y_new = y + x_csf*(beta[0]-beta[1])
+        # import matplotlib.pyplot as plt
+        # plt.plot(y)
+        # plt.plot(y_new)
+        # plt.show()
+        # put the data back into variable data1d
+        data1d = y_new
+
     # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin' or method == 'wath':
+    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'mlwa':
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
