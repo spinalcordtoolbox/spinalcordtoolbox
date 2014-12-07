@@ -16,8 +16,7 @@ import sct_utils as sct
 import numpy as np
 # import math
 import random
-import nibabel
-from nibabel import *
+import nibabel as nib
 # from numpy import mean, asarray, std, zeros, sum, ones, dot, eye, sqrt, empty, size, linspace, abs, amin, argmin, concatenate, array
 # from numpy.linalg import solve,pinv
 
@@ -42,11 +41,11 @@ def main():
     # Generate the phantom
     [synthetic_vol, synthetic_voln, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value)
     # Save the phantom without added noise to niftii image
-    save_3D_nparray_niftii(synthetic_vol, WM_phantom)
+    save_3D_nparray_nifti(synthetic_vol, WM_phantom)
     # Save the phantom with added noise to niftii image
-    save_3D_nparray_niftii(synthetic_voln, WM_phantom_noise)
+    save_3D_nparray_nifti(synthetic_voln, WM_phantom_noise)
     # Save the sum of the tracts to nifti image
-    save_3D_nparray_niftii(tracts_sum, tracts_sum_img)
+    save_3D_nparray_nifti(tracts_sum, tracts_sum_img)
     # adjust geometry between saved images and tracts
     fname_tract = glob.glob(folder_atlas + '/*' + '.nii.gz')
     sct.run('fslcpgeom ' + fname_tract[0] + ' ' + WM_phantom)
@@ -56,16 +55,19 @@ def main():
 # phantom generation
 #=======================================================================================================================
 
-def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out):
+def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, zero_last_tract=0):
     """
     :param tracts: np array
     :param std_noise: std of noise to generate pseudo-random gaussianly-distributed noise
     :param range_tract: range of value to generate pseudo-random uniformly-distributed tract value
     :param true_value: true value of the tract
+    :param folder_out: output folder
+    :param zero_last_tract: assign value 0 to last tract (corresponds to CSF)
     :return: synthetic_vol, synthetic_voln, values_synthetic_data, tracts_sum
     """
 
     fname_phantom = folder_out+'phantom_values.txt'
+    value_last_tract = 0
 
     # Transform std noise and range tract to a percentage of the true value
     range_tract = float(range_tract) / 100 * true_value
@@ -85,7 +87,11 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out):
     values_synthetic_data = np.zeros([numtracts])
     # create volume of tracts with randomly-assigned values
     for i in range(0, numtracts):
-        values_synthetic_data[i] = (true_value - range_tract + random.uniform(0, 2*range_tract))  # true_value - range_tract <= values_synthetic_data <= true_value + range_tract
+
+        if i == numtracts-1 and zero_last_tract:
+            values_synthetic_data[i] = value_last_tract
+        else:
+            values_synthetic_data[i] = (true_value - range_tract + random.uniform(0, 2*range_tract))  # true_value - range_tract <= values_synthetic_data <= true_value + range_tract
         print >> fid_file, 'label=' + str(i) + ', value=' + str(values_synthetic_data[i])
         tracts_weighted[i, :, :, :] = values_synthetic_data[i] * tracts[i, 0]
         # add tract to volume
@@ -111,14 +117,18 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out):
 #=======================================================================================================================
 # Save 3D numpy array to a nifti
 #=======================================================================================================================
-def save_3D_nparray_niftii(np_matrix_3d, output_image, fname_atlas):
-    # Save 3d numpy matrix to niftii image
-    # np_matrix_3d is a 3D numpy ndarray
-    # output_image is the name of the niftii image created, ex: '3D_matrix.nii.gz'
-    img = Nifti1Image(np_matrix_3d, np.eye(4))
+def save_3D_nparray_nifti(np_matrix_3d, output_image, fname_atlas):
+    """
+    Save 3d numpy matrix to niftii image
+    :param np_matrix_3d: 3d numpy array
+    :param output_image:  name of the created nifti file. e.g.; 3d_matrix.nii.gz
+    :param fname_atlas: name of the file to copy nifti header from
+    :return: nonw
+    """
+    img = nib.Nifti1Image(np_matrix_3d, np.eye(4))
     affine = img.get_affine()
-    np_matrix_3d_nii = Nifti1Image(np_matrix_3d,affine)
-    nibabel.save(np_matrix_3d_nii, output_image)
+    np_matrix_3d_nii = nib.Nifti1Image(np_matrix_3d,affine)
+    nib.save(np_matrix_3d_nii, output_image)
     # copy geometric information
     sct.run('fslcpgeom '+fname_atlas+' '+output_image, verbose=0)
     return None
@@ -138,7 +148,7 @@ def get_tracts(tracts_folder):
     
     #Load each partial volumes of each tracts
     for label in range(0, len(fname_tract)):
-       tracts[label, 0] = load(fname_tract[label]).get_data()
+       tracts[label, 0] = nib.load(fname_tract[label]).get_data()
     
     #Reshape tracts if it is the 2D image instead of 3D
     for label in range(0, len(fname_tract)):
