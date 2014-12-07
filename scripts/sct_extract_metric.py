@@ -649,7 +649,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
             labels[i][labels[i] >= 0.5] = 1
 
     # if user asks for thresholded weighted-average, threshold atlas
-    if method == 'wath':
+    if method == 'wath' or method == 'mlwath':
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
 
@@ -681,7 +681,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
     metric_std = np.empty([nb_labels], dtype=object)
 
     # Estimation with 3-class maximum likelihood combined with wa (mlwa)
-    if method == 'mlwa':
+    if method == 'mlwa' or method == 'mlwath':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         # make three classes with labels: csf, wm and gm
@@ -701,7 +701,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
         data1d = y_new
 
     # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'mlwa':
+    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'mlwa' or method == 'mlwath':
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
