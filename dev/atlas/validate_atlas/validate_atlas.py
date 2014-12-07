@@ -39,10 +39,10 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 def main():
     # Parameters
     bootstrap_iter = 1
-    folder_atlas = '../WM_atlas_generation/final_results/'  # path to atlas. add / at the end
+    folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
-    std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [0, 5, 10, 20, 50]  # in percent
+    std_noise_list = [0, 20] #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [0] #[0, 5, 10, 20, 50]  # in percent
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
@@ -56,11 +56,11 @@ def main():
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
         validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
 
-    # loop across tract ranges
-    std_noise = fixed_noise
-    for range_tract in range_tract_list:
-        results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
-        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
+    # # loop across tract ranges
+    # std_noise = fixed_noise
+    # for range_tract in range_tract_list:
+    #     results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
+    #     validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
 
 
 def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder):
