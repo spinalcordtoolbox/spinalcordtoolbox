@@ -120,7 +120,7 @@ def save_3D_nparray_niftii(np_matrix_3d, output_image, fname_atlas):
     np_matrix_3d_nii = Nifti1Image(np_matrix_3d,affine)
     nibabel.save(np_matrix_3d_nii, output_image)
     # copy geometric information
-    sct.run('fslcpgeom '+fname_atlas+' '+output_image)
+    sct.run('fslcpgeom '+fname_atlas+' '+output_image, verbose=0)
     return None
 
 
