@@ -13,6 +13,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: for mlwath: threshold AFTER estimating ml in 3 classes
 # TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
 # TODO: for mlwa: do not hard-code position of CSF
 # TODO: for mlwa: add GM
