@@ -30,3 +30,4 @@
 27, right tectospinal tract, WMtract__27.nii.gz
 28, right medial reticulospinal tract, WMtract__28.nii.gz
 29, right medial longitudinal fasciculus, WMtract__29.nii.gz
+30, CSF, WMtract__csf.nii.gz
