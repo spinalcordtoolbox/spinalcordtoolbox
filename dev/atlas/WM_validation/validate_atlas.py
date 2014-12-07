@@ -38,9 +38,9 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 
 def main():
     # Parameters
-    bootstrap_iter = 10
+    bootstrap_iter = 1
     folder_atlas = '../WM_atlas_generation/final_results/'  # path to atlas. add / at the end
-    user_tract = 'charles_tract_,julien_tract_,tanguy_tract_,simon_tract_'
+    mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
     std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
     range_tract_list = [0, 5, 10, 20, 50]  # in percent
     fixed_range = 10  # in percent
@@ -54,19 +54,19 @@ def main():
     range_tract = fixed_range
     for std_noise in std_noise_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
-        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, user_tract)
+        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
 
     # loop across tract ranges
     std_noise = fixed_noise
     for range_tract in range_tract_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)+'.txt'
-        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, user_tract)
+        validate_atlas(folder_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
 
 
-def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_file, user_tract):
+def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder):
     # Parameters
     folder_cropped_atlas = "cropped_atlas/"
-    crop = 1  # crop atlas, default=1. Only need to do it once (saves time).
+    crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
     zcrop_ind = [10, 110, 210, 310, 410]
     file_phantom = "WM_phantom.nii.gz"
     file_phantom_noise = "WM_phantom_noise.nii.gz"
@@ -79,12 +79,12 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     list_methods = ['ml', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
+    zero_last_tract = 1  # if last tract correspond to CSF, zero it
 
     # Parameters for the manual estimation
     # man_mask_index = 2, 17, 30  # 30 corresponds to the dorsal column mask
     #mask_prefix = 'mask_tract_'
     mask_prefix = 'manual_'
-    mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']
     mask_ext = '.nii.gz'
 
     # initialization
@@ -141,7 +141,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
         sct.printv('Iteration:  ' + str(i_bootstrap+1) + '/' + str(nb_bootstraps), 1, 'warning')
 
         # Generate phantom
-        [WM_phantom, WM_phantom_noise, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value, folder_tmp)
+        [WM_phantom, WM_phantom_noise, values_synthetic_data, tracts_sum] = phantom_generation(tracts, std_noise, range_tract, true_value, folder_tmp, zero_last_tract)
         # Save generated phantoms as nifti image (.nii.gz)
         save_3D_nparray_nifti(WM_phantom, fname_phantom, fname_atlas)
         save_3D_nparray_nifti(WM_phantom_noise, fname_phantom_noise, fname_atlas)
