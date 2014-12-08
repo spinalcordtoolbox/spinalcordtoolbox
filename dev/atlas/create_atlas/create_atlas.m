@@ -52,9 +52,9 @@ file_template = 'MNI-Poly-AMU_WM';
 % path to the image file that contains the drawing of the WM atlas from Grays anatomy.
 path_atlas_data = strcat(path_sct, '/dev/atlas/raw_data/');
 % file name of the full atlas
-file_atlas = 'atlas_grays_cerv_sym_correc_r3con';
+file_atlas = 'atlas_grays_cerv_sym_correc_r4';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
-file_mask = 'mask_grays_cerv_sym_correc_r3con';
+file_mask = 'mask_grays_cerv_sym_correc_r4';
 ext_atlas = '.png';
 
 % corresponds to mid-C4 in the MNI-Poly-AMU template
@@ -389,36 +389,50 @@ for iz = 1:nb_slices-1
     % the version from github instead.
     cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
-        '--convergence 100x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
-        '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
+        '--convergence 100x1 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--output [' [prefix_ants num2str(zslicenext) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
+%     cmd =['sct_antsRegistration --dimensionality 2 ',...
+%         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slicenext ext ',1,4] ',... 
+%         '--convergence 100x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+%         '--output [' [prefix_ants num2str(zslice) '_'] ',' prefix_ants 'slicenext_to_slice.nii.gz]'];    
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 end
 
 disp('*** Concatenate warping fields for each slice ***')
+% at this point
+% reg_476_0Warp.nii.gz is the warping field for 476 --> 483
+% reg_476_0InverseWarp.nii.gz is the warping field for 483 --> 476
+% the goal now, is to concatenate warping fields, to obtain "reg_concat_483": 387 (ref) --> 483 
+% and so on...
+% so the concatenation should be done like that:
+% for zslice > zref:
+%   reg_concat_483 = reg_476_0Warp + ... + reg_406_0Warp + reg_387_0Warp
+% for zslice < zref:
+%   reg_concat_356 = reg_371_0InverseWarp + reg_356_0InverseWarp
+% find index for zslice ref
+izref = find(z_disks_mid == z_slice_ref);
 nb_slices = length(z_disks_mid_noC4);
 for iz = 1:nb_slices
     
-    templatecit_slice = [templateci_thresh '_slice' num2str(zslice)];
+%     templatecit_slice = [templateci_thresh '_slice' num2str(zslice)];
     zslice = z_disks_mid_noC4(iz);
-    
-    % find index for zslice ref
-    izref = find(z_disks_mid == z_slice_ref);
-
-    % output concatenated field is: reg_concat_zslice
+    templatecit_slice = [templateci_thresh '_slice' num2str(z_disks_mid(izref))];
+   
+    % output concatenated field is: reg_concat_"zslice"
     cmd = ['sct_ComposeMultiTransform 2 ', prefix_ants, 'concat_', num2str(zslice), ext, ' -R ', templatecit_slice, ext];
-    
+
     if zslice > z_slice_ref
         % if zslice is superior to ref slice, then concatenate forward warping
         % fields, from the zref to zslice.
         % concatenated warping field: warp_temp = reg_0Warp
         for izconcat = iz:izref-1
-            cmd = [cmd, ' ', prefix_ants num2str(z_disks_mid(izconcat)), '_0Warp', ext];
+            cmd = [cmd, ' ', prefix_ants num2str(z_disks_mid(izconcat+1)), '_0Warp', ext];
         end
     else
         % if zslice is inferior to ref slice, then concatenate backward warping
         % fields, from the zref to zslice.
-        for izconcat = izref:iz-1
-            cmd = [cmd, ' ', prefix_ants num2str(z_disks_mid(izconcat)), '_0InverseWarp', ext];
+        for izconcat = izref:iz
+            cmd = [cmd, ' ', prefix_ants num2str(z_disks_mid(izconcat+1)), '_0InverseWarp', ext];
         end
     end
     disp(cmd)
@@ -440,10 +454,11 @@ for iz = 1:nb_slices
     cmd =['sct_antsRegistration --dimensionality 2 ',...
         '--initial-moving-transform ', warp_slice, ' ',...
         '--transform BSplineSyN[0.2,3] --metric MeanSquares[' templatecit_slice ext ',' templatecit_slice_ref ext ',1,4] ',... 
-        '--convergence 200x20 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
+        '--convergence 200x1 --shrink-factors 2x1 --smoothing-sigmas 0x0vox ',...
         '--output [' prefix_ants, 'concat_', num2str(zslice) ',' templatecit_slice_ref 'to_' num2str(zslice) ext ']' ];
     disp(cmd)
     [status,result] = unix(cmd);
+%     disp(result)
     if(status),error(result);end 
     
     % Replace the concatenated warping field with the new warping field 
