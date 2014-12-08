@@ -650,7 +650,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
             labels[i][labels[i] >= 0.5] = 1
 
     # if user asks for thresholded weighted-average, threshold atlas
-    if method == 'wath' or method == 'mlwath':
+    if method == 'wath':
         for i in range(0, nb_labels):
             labels[i][labels[i] < 0.5] = 0
 
@@ -700,6 +700,11 @@ def extract_metric_within_tract(data, labels, method, verbose):
         # plt.show()
         # put the data back into variable data1d
         data1d = y_new
+
+    # if user asks for thresholded weighted-average, threshold atlas
+    if method == 'mlwath':
+        for i in range(0, nb_labels):
+            labels2d[i][labels2d[i] < 0.5] = 0
 
     # Estimation with weighted average (also works for binary)
     if method == 'wa' or method == 'bin' or method == 'wath' or method == 'mlwa' or method == 'mlwath':
