@@ -28,6 +28,11 @@
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
+# TODO: make three possibilities:
+# - one-step registration, using only image registration (by sliceReg or antsRegistration)
+# - two-step registration, using first segmentation-based registration (based on sliceReg or antsRegistration) and second the image registration (and allow the choice of algo, metric, etc.)
+# - two-step registration, using only segmentation-based registration
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -65,7 +70,7 @@ def main():
     fname_mask = ''
     padding = param.padding
     param_user = ''
-    algo_first = 'BSplineSyn'
+    algo_first = 'SliceReg'
     # numberIterations = param.numberIterations
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
@@ -308,7 +313,7 @@ def main():
                    '--transform '+algo_first+'[0.5,3,0] '
                    '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
                    '--convergence 10x3 '
-                   '--shrink-factors 4x1 '
+                   '--shrink-factors 2x1 '
                    '--smoothing-sigmas 1x1mm '
                    '--restrict-deformation 1x1x0 '
                    '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsRegistration add "0Warp"
@@ -406,7 +411,7 @@ OPTIONAL ARGUMENTS
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
                      1) number of iterations for last stage.
-                     2) algo: {SyN, BSplineSyN, sliceReg}
+                     2) algo: {SyN, BSplineSyN, SliceReg}
                         N.B. if you use sliceReg, then you should set -z 0. Also, the two input
                         volumes should have same the same dimensions.
                         For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
