@@ -19,22 +19,25 @@
 # * optional arguments : description, mandatory (boolean), example
 # parser.add_option("-test","int")
 # parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
-# parser.add_option("-test2") # this is a option without
+# parser.add_option("-test2") # this is a option without argument
 #
 # Usage are available as follow:
 # string_usage = parser.usage.generate()
 #
 # Arguments are available directly:
 # arguments = parser.parse(sys.argv[1:])
+# for mandatory arguments :
 # if "-input" in arguments:
 #     fname_input = arguments["-input"]
 # if "-dim" in arguments:
 #     dim = arguments["-dim"]
 # else:
 #     print string_usage
+# exit(1)
+# for non mandatory arguments :
+# if "-output" in arguments:
+#     fname_output = arguments["-input"]
 #
-# TO DO:
-# - generate the usage based on the option list
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -63,7 +66,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example,default_value, help, parser):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -144,6 +147,10 @@ class Parser:
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self)
 
     def parse(self, arguments):
+        # if no arguments, print usage and quit
+        if len(arguments) == 0:
+            self.usage.error()
+
         # initialize results
         dictionary = dict()
 
@@ -262,8 +269,12 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         else:
             return usage
 
-    def error(self, error):
-        self.generate(error)
+    def error(self, error=None):
+        if error:
+            self.generate(error)
+        else:
+            print self.generate()
+            sys.exit(0)
 
 ########################################################################################################################
 ####### SPELLING CHECKER
@@ -331,7 +342,8 @@ def tab(strings):
         if len(string) < 20:
             spaces = ' '*(20 - len(string))
             string += spaces
-            tab += string
+        tab += string
+
     return tab
 
 
