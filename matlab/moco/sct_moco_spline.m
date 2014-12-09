@@ -1,14 +1,15 @@
 function sct_moco_spline(fname_mat, varargin)
-% ind_abrupt=sct_moco_spline(fname_mat, fname_log(optional) )
+% sct_moco_spline(fname_mat, fname_log(optional) )
+% sct_moco_spline('mat.*')
+dbstop if error
 if ~isempty(varargin), log_spline = varargin{1}; else log_spline = 'log_sct_moco_spline'; end
 if length(varargin)>1, ind_ab = varargin{2}; else ind_ab = []; end
 installPottslab
 
 j_disp(log_spline,['\nSmoothing Patient Motion...'])
 % LOAD MATRIX
-list=dir(fname_mat);
-path=[fileparts(fname_mat) filesep];
-list=sort_nat({list.name});
+[list, path]=sct_tools_ls(fname_mat);
+
 Z_index=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%*u%*[_Z]%u%*[.txt]')),list);
 T=cellfun(@(x) cell2mat(textscan(x,'%*[mat.T]%u%*[_Z]%*u%*[.txt]')),list); T=single(T);
 j_progress('loading matrix...')
@@ -24,9 +25,9 @@ for iZ=unique(Z_index)
     
     TZ=T(Z_index==iZ);
     % abrupt motion detection
-    u=minL1Potts(Y(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
-    v=minL1Potts(X(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
-    ind_ab=[ind_ab TZ(find(diff(u))) TZ(find(diff(v)))];
+%     u=minL1Potts(Y(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
+%     v=minL1Potts(X(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
+    ind_ab=[]; %[ind_ab TZ(find(diff(u))) TZ(find(diff(v)))];
 end
 ind_ab=sort(ind_ab); ind_ab=ind_ab(~(diff(ind_ab)<15));
 

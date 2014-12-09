@@ -105,6 +105,10 @@ def main():
         os_running = 'linux'
     print '  '+os_running+' ('+platform.platform()+')'
 
+    # check RAM
+    print 'Check RAM... '
+    sct.checkRAM(os_running)
+
     # check installation packages
     print 'Check which Python is running ... '
     print '  '+sys.executable

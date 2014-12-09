@@ -671,6 +671,13 @@ def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
 
+    # # display labels
+    # import matplotlib.pyplot as plt
+    # plt.imshow(labels_sum[:,:,3])
+    # plt.show()
+    # plt.imshow(data[:,:,3])
+    # plt.show()
+
     # clear memory
     del data, labels
 
@@ -700,6 +707,7 @@ def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
     if method == 'ml':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
+        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
         beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
         #beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )

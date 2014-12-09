@@ -1,14 +1,27 @@
+function sct_register2template(file_reg,file_src,levels)
+% sct_register2template(file_reg,file_src,levels)
+%-------------------------- FILES TO REGISTER -----------------------------------
+% file_reg = {'data_highQ_mean_masked'}; % file to register
+%--------------------------------------------------------------------------
+%----------------------------OR--------------------------------------------
+% file_src = 'data_highQ_mean_masked';
+%--------------------------------------------------------------------------
+% %-----------------------------REFERENCE (DESTINATION)------------------------------------
+% ref_fname = '/Volumes/users_hd2/tanguy/data/Boston/2014-07/Connectome/template/PD_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
+% levels_fname='/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
+% %--------------------------------------------------------------------------
+
 log='log_applytransfo';
 uppest_level = 1;
-levels=5:-1:2;
+% levels=5:-1:2;
 warp_transfo = 1;
 
 %-------------------------- FILES TO REGISTER -----------------------------------
-file_reg = {'data_highQ_mean_masked'}; % file to register
+% file_reg = {'data_highQ_mean_masked'}; % file to register
 %--------------------------------------------------------------------------
 
 %-----------------------------REFERENCE (DESTINATION)------------------------------------
-ref_fname = 'fulltemplate';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
+ref_fname = '/Volumes/users_hd2/tanguy/data/Boston/2014-07/Connectome/template/diffusion_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
 levels_fname='/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
 %--------------------------------------------------------------------------
 
@@ -30,7 +43,7 @@ levels_fname='/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Pol
 % if ~exist('data_highQ_mean_masked.nii'), unix(['fslmaths data_highQ_mean -mul ' param.maskname ' data_highQ_mean_masked']), end
 % file_src = 'data_highQ_mean_masked';
 %----------------------------OR--------------------------------------------
-file_src = 'data_highQ_mean_masked';
+% file_src = 'data_highQ_mean_masked';
 %--------------------------------------------------------------------------
 
 
@@ -61,9 +74,9 @@ ext = '.nii.gz'; % do not change
     save_avw_v2(template_roi(:,end:-1:1,:),'template_roi','f',[0.5 0.5 0.5 1])
     ref_fname = 'template_roi';
 
-    % apply sqrt
-    unix('fslmaths template_roi -sqrt -sqrt template_roi_sqrt');
-    ref_fname = 'template_roi_sqrt';
+%     % apply sqrt
+%     unix('fslmaths template_roi -sqrt -sqrt template_roi_sqrt');
+%     ref_fname = 'template_roi_sqrt';
     
 files_ref = sct_sliceandrename(ref_fname);
 
@@ -106,23 +119,23 @@ for level = 1:dim(3)
         cmd = ['WarpImageMultiTransform 2 ' files_tmp{iT} ext ' ' files_tmp{iT} '_reg.nii.gz  -R ' files_ref{level} ' ' warp_mat  mat_folder{level} '/reg_Affine.txt --use-BSpline'];
         j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
     end
-    cmd = ['fslmerge -t ' files_reg{level} '_reg.nii.gz ' file_reg{i_file_reg} '*T*_reg*'];
+    
+    cmd = ['fslmerge -t ' files_reg{level} '_reg.nii.gz ' sct_tool_remove_extension(file_reg{i_file_reg},0) '*T*_reg*'];
     j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-    unix(['rm ' file_reg{i_file_reg} '*T*']);
+    unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) '*T*']);
     unix(['rm ' files_reg{level} ext]);
 end
 
 % merge files
-    %reg
-cmd = ['fslmerge -z ' file_reg{i_file_reg} '_reg ' file_reg{i_file_reg} 'C*_reg*'];
+%reg
+mergelist='';
+for iZ=dim(3):-1:1
+    mergelist=[mergelist sct_tool_remove_extension(file_reg{i_file_reg},0) 'C' num2str(iZ) '_reg '];
+end
+cmd = ['fslmerge -z ' sct_tool_remove_extension(file_reg{i_file_reg},0) '_reg ' mergelist];
 j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-unix(['rm ' file_reg{i_file_reg} 'C*_reg*']);
+unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) 'C*_reg*']);
 
-
-% swap
-    %reg
-cmd = ['fslswapdim ' file_reg{i_file_reg} '_reg x y -z ' file_reg{i_file_reg} '_reg' ];
-j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
 
 end
 
