@@ -49,6 +49,7 @@ class Param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
+        self.threshold = 0.5  # threshold for the estimation methods 'wath' and 'bin'
 
 
 class Color:
@@ -83,6 +84,7 @@ def main():
     normalization_method = ''  # optional then default is empty
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
+    threshold = param.threshold  # default defined in class "param"
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
     flag_h = 0
@@ -91,11 +93,13 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/WM_phantom_noise.nii.gz'
-        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/WM_validation/partial_volume/20141205_matlab/label_tracts'
-        method = 'ml'
-        labels_of_interest = ''
-        slices_of_interest = ''
+        # fname_data = path_sct_data+'/mt/mtr.nii.gz'
+        # path_label = path_sct_data+'/mt/label/template'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'
+        method = 'wath'
+        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
+        slices_of_interest = '1:4'  #'200:210' #'2:4'
         vertebral_levels = ''
         average_all_labels = 0
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
@@ -103,7 +107,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:t:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
@@ -126,6 +130,8 @@ def main():
                 fname_normalizing_label = arg
             elif opt in '-o': # output option
                 fname_output = arg  # fname of output file
+            elif opt in '-t':  # threshold for the estimation methods 'wath' and 'bin' (see flag -m)
+                threshold = float(arg)
             elif opt in '-v':
                 # vertebral levels option, if the user wants to average the metric across specific vertebral levels
                  vertebral_levels = arg
@@ -191,7 +197,8 @@ def main():
     orientation_data = get_orientation(fname_data)
     print orientation_data
 
-    # If orientation is not RPI, change to RPI
+    # we assume here that the orientation of the label files to extract the metric from is the same as the orientation
+    # of the metric file (since the labels were registered to the metric)
     if orientation_data != 'RPI':
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
         path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -210,9 +217,10 @@ def main():
             normalizing_label[0] = nib.load(set_orientation(fname_normalizing_label, 'RPI', path_tmp+'orient_normalizing_volume.nii')).get_data()
         if vertebral_levels:  # if vertebral levels were selected,
             data_vertebral_labeling = nib.load(set_orientation(fname_vertebral_labeling, 'RPI', path_tmp+'orient_vertebral_labeling.nii.gz')).get_data()
+
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
-        status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
+        commands.getstatusoutput('rm -rf ' + path_tmp)
     else:
         # Load image
         sct.printv('\nLoad image...', verbose)
@@ -287,18 +295,18 @@ def main():
                 normalizing_label_slice = np.empty([1], dtype=object)  # in order to keep compatibility with the function
                 # 'extract_metric_within_tract', define a new array for the slice z of the normalizing labels
                 normalizing_label_slice[0] = normalizing_label[0][..., z]
-                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0)
+                metric_normalizing_label = extract_metric_within_tract(data[..., z], normalizing_label_slice, method, 0, threshold)
                 # estimate the metric mean in the normalizing label for the slice z
                 if metric_normalizing_label[0][0] != 0:
                     data[..., z] = data[..., z]/metric_normalizing_label[0][0]  # divide all the slice z by this value
 
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
-            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
+            metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose, threshold)  # mean and std are lists
 
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, threshold)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
@@ -634,7 +642,7 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose):
+def extract_metric_within_tract(data, labels, method, verbose, threshold=0.5):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
@@ -645,18 +653,18 @@ def extract_metric_within_tract(data, labels, method, verbose):
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
         for i in range(0, nb_labels):
-            labels[i][labels[i] < 0.5] = 0
-            labels[i][labels[i] >= 0.5] = 1
+            labels[i][labels[i] < threshold] = 0
+            labels[i][labels[i] >= threshold] = 1
 
     # if user asks for thresholded weighted-average, threshold atlas
     if method == 'wath':
         for i in range(0, nb_labels):
-            labels[i][labels[i] < 0.5] = 0
+            labels[i][labels[i] < threshold] = 0
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
     ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
-    ind_positive_data = data > -9999999999  # data > 0
+    ind_positive_data = data > 0  # data > -9999999999
     ind_positive = ind_positive_labels & ind_positive_data
     data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
@@ -700,8 +708,9 @@ def extract_metric_within_tract(data, labels, method, verbose):
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
-        #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
+        beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
         #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
+        #beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )
         #print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
             metric_mean[i_label] = beta[i_label]
