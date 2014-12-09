@@ -220,7 +220,7 @@ def main():
 
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
-        status, output = commands.getstatusoutput('rm -rf ' + path_tmp)
+        commands.getstatusoutput('rm -rf ' + path_tmp)
     else:
         # Load image
         sct.printv('\nLoad image...', verbose)
