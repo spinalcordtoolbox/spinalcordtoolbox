@@ -28,7 +28,7 @@ while strcmp(info{1},'no')
         img_buffer=m_volume(:,:,i);
         if param.close, close all; end
         f = figure(i+1-1);
-        set(f,'Position',[1 1 scrsz(3) scrsz(4)]), imagesc(img_buffer'), colormap jet, axis normal
+        set(f,'Position',[1 1 scrsz(3) scrsz(4)]), imagesc(img_buffer'), colormap gray, axis image
         ylabel('y')
         xlabel('x')
         % --------------------
@@ -60,7 +60,7 @@ while strcmp(info{1},'no')
         img_buffer=m_volume(:,:,size(m_volume,3));
         close all;
         f=figure(size(m_volume,3)+1-1);
-        set(f,'Position',[1 1 scrsz(3) scrsz(4)]), imagesc(img_buffer'), colormap gray, axis normal
+        set(f,'Position',[1 1 scrsz(3) scrsz(4)]), imagesc(img_buffer'), colormap gray, axis image
         ylabel('y')
         xlabel('x')
         %title('Spinal Cord Center Line Initialization')
@@ -83,7 +83,7 @@ while strcmp(info{1},'no')
         y = interp1(z, y, 1:size(m_volume,3),'spline');
         z = 1:size(m_volume,3);
     end
-    m_center_line=[x' y(end:-1:1)' z'];
+    m_center_line=[x(end:-1:1)' y(end:-1:1)' z'];
     
     % Display of the initial center_line
     f=figure('color','w');
@@ -122,7 +122,7 @@ while strcmp(info{1},'no')
     % xy slice
     subplot(2,3,[1,2])
     img_buffer=squeeze(m_volume(:,:,round(mean(m_center_line(:,3)))));
-    imagesc(img_buffer'); colormap gray, axis normal
+    imagesc(img_buffer'); colormap gray, axis image
     hold on
     plot(m_center_line(:,1),m_center_line(:,2),'r')
     title('axial view')
