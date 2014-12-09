@@ -31,6 +31,7 @@ if not(isreal(f))
     error('Data must be real-valued.')
 end
 
+f=f(:);
 ip = inputParser;
 addParamValue(ip, 'samples', []);
 addParamValue(ip, 'weights', []);

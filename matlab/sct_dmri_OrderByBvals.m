@@ -22,6 +22,7 @@ function sct_dmri_OrderByBvals(fname_data,fname_orderingfile,opt)
 % 
 % =========================================================================
 
+dbstop if error
 % INITIALIZATION
 if nargin<2, help sct_dmri_OrderByBvals, return, end
 % dbstop if error; % debug if error
@@ -91,7 +92,7 @@ end
 
 
 
-
+fname_data=sct_tool_remove_extension(fname_data,1);
 
 
 
@@ -111,10 +112,8 @@ if ~isempty(strfind(fname_orderingfile,'.scheme'))
     
     % Create index
     % load scheme files
-    fid = fopen(fname_orderingfile,'r');
-    fgetl(fid);fgetl(fid);fgetl(fid); % skip first 3 lines
-    scheme = fscanf(fid,'%f %f %f %f %f %f %f',[7,Inf]); scheme = scheme';
-    bvals = (2*pi*42.57*10^6*scheme(:,6).*scheme(:,4).*sqrt(scheme(:,1).^2+scheme(:,2).^2+scheme(:,3).^2)).^2.*(scheme(:,5) - scheme(:,6)/3)*10^-6; %s/mm^2
+    scheme=scd_schemefile_read(fname_orderingfile);
+    bvals = (2*pi*scheme(:,8)).^2.*(scheme(:,5) - scheme(:,6)/3)*10^3; %s/mm^2
     
     
 else
