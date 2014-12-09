@@ -138,6 +138,10 @@ def main():
         # TODO: check integrity of input
     numberIterations, algo, gradientStep, metric = param.param
 
+    # if sliceReg is used, we can't pad in the image...
+    if algo.lower() == 'slicereg':
+      padding = 0
+
     # print arguments
     print '\nInput parameters:'
     print '  Source .............. '+fname_src
