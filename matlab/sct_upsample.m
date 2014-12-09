@@ -17,3 +17,19 @@ function sct_upsample(data_file)
     % change the default data file name
     data_file = [data_file '_interp'];
     disp(['... File created: ',data_file])
+    
+    
+    
+%     function sct_upsample(data_file)
+% % sct_upsample(data_file)
+% % sct_upsample qspace_crop_eddy_moco_norm
+%      disp(['Interpolate data by a factor of 2 ...'])
+%     unix(['sct_resample -i ' data_file ' -f 2x2x1']);
+%      
+%     data_file=sct_tool_remove_extension(data_file,1);
+%     
+%     unix(['mv -f ' data_file 'r.nii* ' data_file '_interp.nii']);
+%     
+%     % change the default data file name
+%     data_file = [data_file '_interp'];
+%     disp(['... File created: ',data_file])
