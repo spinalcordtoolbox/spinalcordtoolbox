@@ -102,9 +102,10 @@ def main():
 
     # Parameters for debug mode
     if param.debug == 1:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_sct+'testing/data/errsm_23/t2/t2_crop.nii.gz'
-        fname_point = path_sct+'testing/data/errsm_23/t2/t2_centerline_init.nii.gz'
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\t\tCurrent working directory: '+os.getcwd(), 'warning')
+        status, path_sct_testing_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+        fname_anat = path_sct_testing_data+'/t2/t2.nii.gz'
+        fname_point = path_sct_testing_data+'/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
         import matplotlib.pyplot as plt
     else:
@@ -159,20 +160,29 @@ def main():
     print '  Gaussian kernel:      '+str(gaussian_kernel)
     print '  Degree of polynomial: '+str(param.deg_poly)
 
-    # convert to nii
+    # create temporary folder
+    print('\nCreate temporary folder...')
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.create_folder(path_tmp)
     print '\nCopy input data...'
-    sct.run('cp ' + fname_anat + ' tmp.anat'+ext_anat)
+    sct.run('cp '+fname_anat+ ' '+path_tmp+'/tmp.anat'+ext_anat)
+    sct.run('cp '+fname_point+ ' '+path_tmp+'/tmp.point'+ext_point)
+
+    # go to temporary folder
+    os.chdir(path_tmp)
+
+    # convert to nii
     sct.run('fslchfiletype NIFTI tmp.anat')
-    sct.run('cp ' + fname_point + ' tmp.point'+ext_point)
     sct.run('fslchfiletype NIFTI tmp.point')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
-    sct.run(sct.fsloutput + 'fslswapdim tmp.anat RL PA IS tmp.anat_orient')
-
+    #sct.run(sct.fsloutput + 'fslswapdim tmp.anat RL PA IS tmp.anat_orient')
+    set_orientation('tmp.anat.nii', 'RPI', 'tmp.anat_orient.nii')
     # Reorient binary point into RL PA IS orientation
     print '\nReorient binary point into RL PA IS orientation...'
     sct.run(sct.fsloutput + 'fslswapdim tmp.point RL PA IS tmp.point_orient')
+    set_orientation('tmp.point.nii', 'RPI', 'tmp.point_orient')
 
     # Get image dimensions
     print '\nGet image dimensions...'
@@ -425,25 +435,26 @@ def main():
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
+    os.chdir('..')  # come back to parent folder
     #sct.generate_output_file('tmp.centerline_polycoeffs_x.txt','./','centerline_polycoeffs_x','.txt')
     #sct.generate_output_file('tmp.centerline_polycoeffs_y.txt','./','centerline_polycoeffs_y','.txt')
     #sct.generate_output_file('tmp.centerline_coordinates.txt','./','centerline_coordinates','.txt')
     #sct.generate_output_file('tmp.anat_orient.nii','./',file_anat+'_rpi',ext_anat)
-    sct.generate_output_file('tmp.anat_orient_fit.nii', file_anat+'_rpi_align'+ext_anat)
-    sct.generate_output_file('tmp.mask_orient_fit.nii', file_anat+'_mask'+ext_anat)
-    fname_output_centerline = sct.generate_output_file('tmp.point_orient_fit.nii', file_anat+'_centerline'+ext_anat)
+    #sct.generate_output_file('tmp.anat_orient_fit.nii', file_anat+'_rpi_align'+ext_anat)
+    #sct.generate_output_file('tmp.mask_orient_fit.nii', file_anat+'_mask'+ext_anat)
+    fname_output_centerline = sct.generate_output_file(path_tmp+'/tmp.point_orient_fit.nii', file_anat+'_centerline'+ext_anat)
 
     # Delete temporary files
     if remove_tmp_files == 1:
-        print '\nDelete temporary files...'
-        sct.run('rm tmp.*')
+        print '\nRemove temporary files...'
+        sct.run('rm -rf '+path_tmp)
 
     # print number of warnings
     print '\nNumber of warnings: '+str(warning_count)+' (if >10, you should probably reduce the gap and/or increase the kernel size'
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
+    print '\nFinished! \n\tGenerated file: '+fname_output_centerline+'\n\tElapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
 
 #=======================================================================================================================
