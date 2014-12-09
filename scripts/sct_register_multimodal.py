@@ -238,7 +238,7 @@ def main():
         # Estimate transformation using ANTS
         sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
-        if algo == 'sliceReg':
+        if algo.lower() == 'slicereg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
                    '-m '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
@@ -286,7 +286,7 @@ def main():
         #        '-s 5 '
         #        '-o [stage1,regSeg.nii]')
         # status, output = sct.run(cmd)
-        if algo == 'sliceReg':
+        if algo.lower() == 'slicereg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
                    '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
