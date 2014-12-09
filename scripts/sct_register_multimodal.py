@@ -65,6 +65,7 @@ def main():
     fname_mask = ''
     padding = param.padding
     param_user = ''
+    algo_first = 'BSplineSyn'
     # numberIterations = param.numberIterations
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
@@ -90,7 +91,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -120,6 +121,8 @@ def main():
                 param.interp = arg
             elif opt in ('-z'):
                 padding = arg
+            elif opt in ('-a'):
+                algo_first = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -290,7 +293,7 @@ def main():
         #        '-s 5 '
         #        '-o [stage1,regSeg.nii]')
         # status, output = sct.run(cmd)
-        if algo.lower() == 'slicereg':
+        if algo_first.lower() == 'slicereg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
                    '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
@@ -302,7 +305,7 @@ def main():
         else:
             cmd = ('sct_antsRegistration '
                    '--dimensionality 3 '
-                   '--transform BSplineSyn[0.5,3,0] '
+                   '--transform '+algo_first+'[0.5,3,0] '
                    '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
                    '--convergence 10x3 '
                    '--shrink-factors 4x1 '
