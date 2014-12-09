@@ -86,7 +86,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n', type='warning')
+        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\t\tCurrent working directory: '+os.getcwd(), 'warning')
         alpha_b1 = 60
         flip_angles = '4,10,20,30'
         fname_csf_mask = '/home/django/slevy/data/boston/hc_sc_004/mtv/spgr10_crop_csf_mask.nii.gz'
