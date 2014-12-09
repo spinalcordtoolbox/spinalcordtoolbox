@@ -257,7 +257,7 @@ def main():
                    '--shrink-factors 2x1 '
                    '--smoothing-sigmas 2x0mm '
                    '--restrict-deformation 1x1x0 '
-                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsSliceReg add "0Warp"
+                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because sct_antsRegistration add "0Warp"
                    '--interpolation BSpline[3] '
                    +masking)
         status, output = sct.run(cmd)
@@ -277,21 +277,42 @@ def main():
         # Estimate transformation using ANTS
         sct.printv('\nStep #1: Estimate large-scale deformation using segmentations...', verbose)
 
-        cmd = ('sct_antsSliceRegularizedRegistration '
-               '-t Translation[0.5] '
-               '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
-               '-p 5 '
-               '-i 5 '
-               '-f 1 '
-               '-s 5 '
-               '-o [stage1,regSeg.nii]')
+        # cmd = ('sct_antsSliceRegularizedRegistration '
+        #        '-t Translation[0.5] '
+        #        '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
+        #        '-p 5 '
+        #        '-i 5 '
+        #        '-f 1 '
+        #        '-s 5 '
+        #        '-o [stage1,regSeg.nii]')
+        # status, output = sct.run(cmd)
+        if algo == 'sliceReg':
+            cmd = ('sct_antsSliceRegularizedRegistration '
+                   '-t Translation[0.5] '
+                   '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
+                   '-p 5 '
+                   '-i 5 '
+                   '-f 1 '
+                   '-s 5 '
+                   '-o [stage10,regSeg.nii] ' )
+        else:
+            cmd = ('sct_antsRegistration '
+                   '--dimensionality 3 '
+                   '--transform BSplineSyn[0.5,3,0] '
+                   '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
+                   '--convergence 10x3 '
+                   '--shrink-factors 4x1 '
+                   '--smoothing-sigmas 1x1mm '
+                   '--restrict-deformation 1x1x0 '
+                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsRegistration add "0Warp"
+                   '--interpolation BSpline[3] ' )
         status, output = sct.run(cmd)
 
         # 2nd stage registration
         sct.printv('\nStep #2: Estimate small-scale deformations using images...', verbose)
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
-               '--initial-moving-transform stage1Warp.nii.gz '
+               '--initial-moving-transform stage10Warp.nii.gz '
                '--transform '+algo+'['+gradientStep+',3,0] '
                '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
                '--convergence '+numberIterations+' '
@@ -306,8 +327,8 @@ def main():
 
         # Concatenate multi-stage transformations
         sct.printv('\nConcatenate multi-stage transformations...', verbose)
-        sct.run('sct_concat_transfo -w stage1Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
-        sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage1InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
+        sct.run('sct_concat_transfo -w stage10Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
+        sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage10InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
 
         # Concatenate transformations
         sct.printv('\nConcatenate affine and local transformations...', verbose)
