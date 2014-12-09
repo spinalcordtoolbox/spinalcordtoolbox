@@ -13,6 +13,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
+from msct_parser import *
 
 class Param:
     def __init__(self):
@@ -23,12 +24,6 @@ class Param:
 # main
 #=======================================================================================================================
 def main():
-
-    # Initialization of variables
-    fname_spgr10 = ''
-    epi_fnames = ''
-    file_fname_output = param.file_fname_output
-
     # Parameters for debug mode
     if param.debug:
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n', type='warning')
@@ -37,19 +32,19 @@ def main():
         file_fname_output = 'b1_smoothed'
 
     # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'd:i:o:') # define flags
-    except getopt.GetoptError as err: # check if the arguments are defined
-        print str(err) # error
-        #usage() # display usage
-    for opt, arg in opts: # explore flags
-        if opt in '-d':
-            fname_spgr10 = arg # e.g.: spgr10.nii.gz
-        if opt in '-i':
-            epi_fnames = arg  # e.g.: ep_fa60.nii.gz,ep_fa120.nii.gz (!!!BECAREFUL!!!: first image = flip angle of alpha, second image =flip angle of 2*alpha)
-        if opt in '-o':
-            file_fname_output = arg  # e.g.: b1_smoothed
+    parser = Parser(__file__)
+    parser.usage.set_description('compute Ialpha/I2*alpha')
+    parser.add_option("-d", "file", "image you want to crop", True, "t2.nii.gz")
+    parser.add_option("-i", "str", "Two NIFTI : flip angle alpha and 2*alpha", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
+    parser.add_option("-o", "str", "output file name", False, "t2_segin_cropped_over_mask.nii.gz")
+    usage = parser.usage.generate()
 
+    arguments = parser.parse(sys.argv[1:])
+
+    # Initialization of variables
+    fname_spgr10 = arguments["-d"]
+    epi_fnames   = arguments["-i"]
+    file_fname_output = arguments["-o"]
 
     # Parse inputs to get the actual data
     epi_fname_list = epi_fnames.split(',')
@@ -63,8 +58,8 @@ def main():
     sct.create_folder(path_tmp)
     os.chdir(path_tmp)
 
-    # Compute the half ratio of the 2 epi
-    fname_half_ratio = 'epi_half_ratio.nii.gz'
+    # Compute the half ratio of the 2 epi (Saturated Double-Angle Method for Rapid B1 Mapping - Cunningham)
+    fname_half_ratio = '../'+path_epi+'epi_half_ratio.nii.gz'
     sct.run('fslmaths -dt double ../'+epi_fname_list[0]+' -div 2 -div ../'+epi_fname_list[1]+' '+fname_half_ratio)
 
     # Smooth this half ratio slice-by-slice
