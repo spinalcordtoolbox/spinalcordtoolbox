@@ -283,9 +283,11 @@ cmd = ['sct_antsApplyTransforms -d 2 -i ' atlas_nifti ext ' -o ' atlas_nifti suf
 disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(result)
 
 % Applying tranform to the tract files and copying geometry and saving
-for label = 1:length(label_values)/2
-    tract_atlas_g = [path_out 'tract_atlas_' num2str(label)];
-    tract_atlas_d = [path_out 'tract_atlas_' num2str(label+length(label_values)/2)];
+for label = 1:length(label_left)
+    label_l = label;
+    label_r = label+length(label_left);
+    tract_atlas_g = [path_out 'tract_atlas_' num2str(label_l)];
+    tract_atlas_d = [path_out 'tract_atlas_' num2str(label_r)];
     
     cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_g ext ' -o ' tract_atlas_g suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
@@ -293,16 +295,10 @@ for label = 1:length(label_values)/2
     cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas_d ext ' -o ' tract_atlas_d suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
     
-%     cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_g suffix_ants ext ' -copy-transform -o ' tract_atlas_g suffix_ants ext];
-%     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
-%     
-%     cmd = ['sct_c3d ' templateci_slice_ref ext ' ' tract_atlas_d suffix_ants ext ' -copy-transform -o ' tract_atlas_d suffix_ants ext];
-%     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
-    
-    tract_reg_g = [path_out 'tract_atlas_' num2str(label) suffix_ants];
+    tract_reg_g = [path_out 'tract_atlas_' num2str(label_l) suffix_ants];
     temp_g = read_avw(tract_reg_g);
     
-    tract_reg_d = [path_out 'tract_atlas_' num2str(label+length(label_values)/2) suffix_ants];
+    tract_reg_d = [path_out 'tract_atlas_' num2str(label_r) suffix_ants];
     temp_d = read_avw(tract_reg_d);
     
     % Replace isolated values with the mean of the adjacent values
@@ -324,7 +320,6 @@ for label = 1:length(label_values)/2
         end
     end
     
-    
     % Symmetry constraint for left and right tracts
     temp_sum = temp_g + temp_d;
     temp_sum_flip = temp_sum(end:-1:1,:);
@@ -335,11 +330,32 @@ for label = 1:length(label_values)/2
     temp_d(1:end/2,:) = temp_sym(1:end/2,:);
     temp_d(1+end/2:end,:) = 0;
     
-    tractsHR{label}(:,:,num_slice_ref) = temp_g;
-    tractsHR{label+length(label_values)/2}(:,:,num_slice_ref) = temp_d;
-    
+    tractsHR{label_l}(:,:,num_slice_ref) = temp_g;
+    tractsHR{label_r}(:,:,num_slice_ref) = temp_d;
 end
 
+% Apply tranform to the PVE tract files
+for label = length([label_left, label_right])+1:length(label_values)
+    tract_atlas = [path_out 'tract_atlas_' num2str(label)];
+    
+    cmd = ['sct_antsApplyTransforms -d 2 -i ' tract_atlas ext ' -o ' tract_atlas suffix_ants ext ' -t ' Warp_atlas ' ' path_out affine_atlas ' -r ' templateci_slice_ref_thresh ext];
+    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, disp(result)
+    
+    tract_reg_g = [path_out 'tract_atlas_' num2str(label) suffix_ants];
+    temp_g = read_avw(tract_reg_g);
+    
+    % Replace isolated values with the mean of the adjacent values
+    for i = 2:size(temp_g,1)-1
+        for j = 2:size(temp_g,2)-1
+            test = (temp_g(i,j)==temp_g(i-1,j)) || (temp_g(i,j)==temp_g(i,j-1)) || (temp_g(i,j)==temp_g(i+1,j)) || (temp_g(i,j)==temp_g(i,j+1));
+            if(~test)
+                temp_g(i,j) = (temp_g(i-1,j) + temp_g(i+1,j) + temp_g(i,j+1) + temp_g(i,j-1))/4;
+            end
+        end
+    end
+    
+    tractsHR{label}(:,:,num_slice_ref) = temp_g;
+end
 
 
 %--------------------------------------------------------------------------
@@ -669,7 +685,7 @@ end
 
 % create variable of tract numbering with 2 digits starting at 00
 cell_tract = m_numbering(length(label_values), 2, 0);
-% loop acr oss tracts
+% loop across tracts
 for label = 1:length(label_values)
     
     % Save ML version and copy geometry
@@ -681,12 +697,6 @@ for label = 1:length(label_values)
 	 % Reslice into native template space
 	cmd = ['sct_c3d ' path_template file_template ext ' ' filetractML ext ' -reslice-identity -o ' filetractML ext];
     disp(cmd); [status,result] = unix(cmd); if(status), error(result); end, %disp(resul)
-    
-    % shift by one pixel on the right because reinterpolation made it shift
-    % on the left.
-    % TODO: fix that in a more proper way!
-    cmd = ['flirt -in ', filetractML, ' -ref ', filetractML, ' -out ', filetractML, ' -init shift_1pix_to_right.mat -applyxfm'];
-    disp(cmd); [status,result] = unix(cmd); if(status), error(result); end
 
     % copy geometry from white matter template
     cmd = ['fslcpgeom ', path_template, file_template, ' ', filetractML];
@@ -698,6 +708,6 @@ end
 bricon = ' -b 0.2,1 '
 disp 'Done! To see results, type:'
 disp(['cd ',path_results])
-disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz -b 0,4000 WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink &'])
+disp(['fslview ',path_template,'MNI-Poly-AMU_T2.nii.gz -b 0,5000 ',path_template,'MNI-Poly-AMU_WM.nii.gz -b 0.2,1 WMtract__00.nii.gz -l Red',bricon,'WMtract__01.nii.gz -l Green',bricon,'WMtract__02.nii.gz -l Blue',bricon,'WMtract__03.nii.gz -l Yellow',bricon,'WMtract__04.nii.gz -l Pink ',bricon,'WMtract__30.nii.gz -l Cool ',bricon,'WMtract__31.nii.gz -l Copper ',bricon,' &'])
 
 
