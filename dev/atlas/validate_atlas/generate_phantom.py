@@ -55,7 +55,7 @@ def main():
 # phantom generation
 #=======================================================================================================================
 
-def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, folder_out, zero_last_tract=0):
+def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, folder_out, set_gm=0, set_csf=0):
     """
     :param tracts: np array
     :param std_noise: std of noise to generate pseudo-random gaussianly-distributed noise
@@ -67,7 +67,8 @@ def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, fol
     """
 
     fname_phantom = folder_out+'phantom_values.txt'
-    value_last_tract = 0
+    value_gm = 30
+    value_csf = 0
 
     # Transform std noise and range tract to a percentage of the true value
     range_tract = float(range_tract_perc) / 100 * true_value
@@ -88,8 +89,10 @@ def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, fol
     # create volume of tracts with randomly-assigned values
     for i in range(0, numtracts):
 
-        if i == numtracts-1 and zero_last_tract:
-            values_synthetic_data[i] = value_last_tract
+        if i == numtracts-2 and set_gm:
+            values_synthetic_data[i] = value_gm
+        if i == numtracts-1 and set_csf:
+            values_synthetic_data[i] = value_csf
         else:
             values_synthetic_data[i] = (true_value - range_tract + random.uniform(0, 2*range_tract))  # true_value - range_tract <= values_synthetic_data <= true_value + range_tract
         print >> fid_file, 'label=' + str(i) + ', value=' + str(values_synthetic_data[i])
