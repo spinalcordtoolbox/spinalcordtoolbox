@@ -28,6 +28,11 @@
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
+# TODO: make three possibilities:
+# - one-step registration, using only image registration (by sliceReg or antsRegistration)
+# - two-step registration, using first segmentation-based registration (based on sliceReg or antsRegistration) and second the image registration (and allow the choice of algo, metric, etc.)
+# - two-step registration, using only segmentation-based registration
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -65,6 +70,7 @@ def main():
     fname_mask = ''
     padding = param.padding
     param_user = ''
+    algo_first = 'SliceReg'
     # numberIterations = param.numberIterations
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
@@ -90,7 +96,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -120,6 +126,8 @@ def main():
                 param.interp = arg
             elif opt in ('-z'):
                 padding = arg
+            elif opt in ('-a'):
+                algo_first = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -290,7 +298,7 @@ def main():
         #        '-s 5 '
         #        '-o [stage1,regSeg.nii]')
         # status, output = sct.run(cmd)
-        if algo.lower() == 'slicereg':
+        if algo_first.lower() == 'slicereg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
                    '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
@@ -302,10 +310,10 @@ def main():
         else:
             cmd = ('sct_antsRegistration '
                    '--dimensionality 3 '
-                   '--transform BSplineSyn[0.5,3,0] '
+                   '--transform '+algo_first+'[0.5,3,0] '
                    '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
                    '--convergence 10x3 '
-                   '--shrink-factors 4x1 '
+                   '--shrink-factors 2x1 '
                    '--smoothing-sigmas 1x1mm '
                    '--restrict-deformation 1x1x0 '
                    '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsRegistration add "0Warp"
@@ -403,7 +411,7 @@ OPTIONAL ARGUMENTS
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
                      1) number of iterations for last stage.
-                     2) algo: {SyN, BSplineSyN, sliceReg}
+                     2) algo: {SyN, BSplineSyN, SliceReg}
                         N.B. if you use sliceReg, then you should set -z 0. Also, the two input
                         volumes should have same the same dimensions.
                         For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
