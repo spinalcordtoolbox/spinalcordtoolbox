@@ -177,7 +177,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
                     # read in txt file
                     x_estim_i = read_results(fname_extract_metrics)
                 # Get the percent absolute deviation with the true value
-                perc_error[i_tract, i_method, i_bootstrap] = 100 * abs(x_estim_i - x_true_i[i_tract]) / float(x_true_i[i_tract])
+                perc_error[i_tract, i_method, i_bootstrap] = 100 * (x_true_i[i_tract] - x_estim_i) / float(x_true_i[i_tract])
 
         # calculate percentage error for all tracts (only for automatic methods)
         # loop across methods
