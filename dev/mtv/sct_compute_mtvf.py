@@ -25,6 +25,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
+from msct_parser import *
 from sct_extract_metric import extract_metric_within_tract
 
 
@@ -100,28 +101,28 @@ def main():
         tr = float(0.01)
 
     # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'a:b:c:f:i:o:p:s:t:') # define flags
-    except getopt.GetoptError as err: # check if the arguments are defined
-        print str(err) # error
-        #usage() # display usage
-    for opt, arg in opts: # explore flags
-        if opt in '-a':
-            alpha_b1 = int(arg)  # e.g.: 60
+    parser = Parser(__file__)
+    parser.usage.set_description('compute MTV')
+    parser.add_option("-a", "int", "image you want to crop", True, "60")
+    parser.add_option("-i", "str", "Two NIFTI : flip angle alpha and 2*alpha", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
+    parser.add_option("-o", "str", "output file name", False, "t2_segin_cropped_over_mask.nii.gz")
+    usage = parser.usage.generate()
+
+    alpha_b1 = arguments["-a"]  # e.g.: 60
         if opt in '-b':
-            fname_b1_smoothed = arg  # e.g.: b1/b1_smoothed_in_spgr10_space_crop.nii.gz
+            fname_b1_smoothed = arguments["-b"]  # e.g.: b1/b1_smoothed_in_spgr10_space_crop.nii.gz
         if opt in '-c':
-            fname_csf_mask = arg  # e.g.: spgr_10_csf_mask.nii.gz
+            fname_csf_mask = arguments["-b"]  # e.g.: spgr_10_csf_mask.nii.gz
         if opt in '-f':
-            flip_angles = arg  # e.g.: 4,10,20,30
+            flip_angles = arguments["-b"]  # e.g.: 4,10,20,30
         if opt in '-i':
-            fname_spgr_data = arg  # e.g.: file_1.nii.gz,file_2.nii.gz,file_3.nii.gz,file_4.nii.gz
+            fname_spgr_data = arguments["-b"]  # e.g.: file_1.nii.gz,file_2.nii.gz,file_3.nii.gz,file_4.nii.gz
         if opt in '-o':
-            file_output = arg  # e.g.: PD_map,mtvf_map
+            file_output = arguments["-b"]  # e.g.: PD_map,mtvf_map
         if opt in '-p':
-            method = arg  # e.g.: sbs
+            method = arguments["-b"]  # e.g.: sbs
         if opt in '-s':
-            fname_spgr_seg = arg  # e.g.: spgr_10_crop_seg.nii.gz
+            fname_spgr_seg = arguments["-b"]  # e.g.: spgr_10_crop_seg.nii.gz
         if opt in '-t':
             tr = float(arg)  # TR (in s) of the SPGR scans. e.g.: 0.01
 
