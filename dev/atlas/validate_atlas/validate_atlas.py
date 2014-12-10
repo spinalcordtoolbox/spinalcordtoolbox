@@ -281,6 +281,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     status, output = sct.run('cat ' + fname_results)
     print output
 
+
 def create_folder(folder):
     """create folder-- delete if already exists"""
     if os.path.exists(folder):
