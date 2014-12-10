@@ -8,19 +8,15 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Eddie Magnide, Simon Levy, Charles Naaman, Julien Cohen-Adad
-# Modified: 2014-07-30
+# Created: 2014-07-30
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: for map: threshold AFTER estimating ml in 3 classes
 # TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
-# TODO: for mlwa: do not hard-code position of CSF
-# TODO: for mlwa: add GM
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
-# TODO: rename fname_vertebral_labeling
 
 # Import common Python libraries
 import os
@@ -42,8 +38,8 @@ ALMOST_ZERO = 0.000001
 
 class Param:
     def __init__(self):
-        self.debug = 1
-        self.method = 'wath'
+        self.debug = 0
+        self.method = 'mlwa'
         self.path_label = ''
         self.verbose = 1
         self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
@@ -53,6 +49,7 @@ class Param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
+        self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
 
 
 class Color:
@@ -90,6 +87,7 @@ def main():
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
     flag_h = 0
+    ml_clusters = param.ml_clusters
 
     # Parameters for debug mode
     if param.debug:
@@ -97,17 +95,18 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207185647/WM_phantom_noise.nii.gz'
         path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
-        method = 'map'
-        labels_of_interest = ''
+        method = 'mlwa'
+        ml_clusters = '0:29,30,31'
+        labels_of_interest = '0,1,15,16'
         slices_of_interest = ''
         vertebral_levels = ''
-        average_all_labels = 0
+        average_all_labels = 1
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'hac:f:i:l:m:n:o:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
@@ -116,6 +115,8 @@ def main():
         for opt, arg in opts: # explore flags
             if opt in '-a':
                 average_all_labels = 1
+            if opt in '-c':
+                ml_clusters = arg
             elif opt in '-f':
                 path_label = os.path.abspath(arg)  # save path of labels folder
             elif opt == '-h':  # help option
@@ -193,7 +194,6 @@ def main():
 
     # Check if the orientation of the data is RPI
     orientation_data = get_orientation(fname_data)
-    print orientation_data
 
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
@@ -296,10 +296,12 @@ def main():
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
             metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
 
+    # identify cluster for each tract (for use with robust ML)
+    ml_clusters_array = get_clusters(ml_clusters, labels)
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, ml_clusters_array)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
@@ -635,11 +637,15 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
     """
+
+    perc_var_label = 25  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+    var_noise = 25  # variance of the gaussian-distributed noise
+
 
     nb_labels = len(labels)  # number of labels
 
@@ -680,21 +686,37 @@ def extract_metric_within_tract(data, labels, method, verbose):
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
     metric_std = np.empty([nb_labels], dtype=object)
+    nb_vox = len(data1d)
 
     # Estimation with 3-class maximum likelihood combined with wa (mlwa)
     if method == 'mlwa' or method == 'map':
+        sct.printv('Estimation maximum likelihood within clustered labels...', verbose=verbose)
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        # make three classes with labels: csf, wm and gm
-        index_last_label = int(x.shape[1]-1)
-        x_csf = x[:, index_last_label]
-        x_wm = x[:, 0:index_last_label-1].sum(axis=1)
-        x = np.vstack([x_wm, x_csf]).T
+        # construct matrix with clusters of tracts
+        ml_clusters_unique = np.unique(np.sort(ml_clusters))
+        nb_clusters = len(ml_clusters_unique)
+        sct.printv('  Number of clusters: '+str(nb_clusters), verbose=verbose)
+        # initialize cluster matrix
+        x_cluster = np.zeros([nb_vox, nb_clusters])
+        # loop across clusters
+        for i_cluster in ml_clusters_unique:
+            # find tracts belonging to cluster
+            index_tracts_in_cluster = np.where(ml_clusters == i_cluster)[0]
+            # sum tracts and append to matrix
+            x_cluster[:, i_cluster] = x[:, index_tracts_in_cluster].sum(axis=1)
+        x = x_cluster
         # estimate values using ML
         beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        # display results
+        sct.printv('  Estimated beta per cluster: '+str(beta), verbose=verbose)
         if method == 'mlwa':
             # correct data using PVE information
-            y_new = y + x_csf*(beta[0]-beta[1])
+            sct.printv(' Correct data using partial volume information...', verbose=verbose)
+            y_new = y
+            for i_cluster in range(1, nb_clusters):
+                y_new = y_new + x[:, i_cluster]*(beta[0]-beta[i_cluster])
+            # update data
             data1d = y_new
 
     # Estimation with weighted average (also works for binary)
@@ -709,8 +731,7 @@ def extract_metric_within_tract(data, labels, method, verbose):
                 # estimate the weighted average
                 metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
                 # estimate the biased weighted standard deviation
-                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) /
-                                               sum(labels2d[i_label, :]))
+                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) / sum(labels2d[i_label, :]))
 
     # Estimation with maximum likelihood
     if method == 'ml':
@@ -728,15 +749,17 @@ def extract_metric_within_tract(data, labels, method, verbose):
     if method == 'map':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        beta0 = np.append(np.ones(nb_labels-1)*beta[0], beta[1])  # values a priori, calculated using ML [1 x nb_labels]
-        sigma_wm = 1
-        sigma_csf = 0
-        Stract = np.append(np.ones(nb_labels-1)*sigma_wm, sigma_csf)  # values a priori, calculated using ML [1 x nb_labels]
-        Rx =  np.diag(Stract)  # covariance matrix  [nb_labels x nb_labels]
-        Snoise =  np.diag(np.ones(nb_labels)*1)  # lambda noise
-        # beta = beta0 + (Xt . X + lambda . Rx^-1)^-1 . Xt . ( y - X . beta0 )
+        # construct beta0
+        beta0 = np.zeros(nb_labels)
+        for i_cluster in range(nb_clusters):
+            beta0[np.where(ml_clusters == i_cluster)[0]] = beta[i_cluster]
+        # construct covariance matrix (variance between tracts)
+        Vlabel =  np.diag(beta0 * perc_var_label * 0.01)  # [nb_labels x nb_labels]
+        # construct noise matrix
+        Vnoise = np.diag(np.ones(nb_labels) * var_noise)
+        # beta = beta0 + (Xt . X + Vnoise . Vlabel^-1)^-1 . Xt . ( y - X . beta0 )
         # beta = beta0 +            A                 . B  .         C
-        A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Snoise, np.linalg.pinv(Rx) ))
+        A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Vnoise, np.linalg.pinv(Vlabel) ))
         B = x.T
         C = y - np.dot(x, beta0)
         beta = beta0 + np.dot(A, np.dot(B, C))
@@ -745,6 +768,27 @@ def extract_metric_within_tract(data, labels, method, verbose):
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std
+
+
+#=======================================================================================================================
+def get_clusters(ml_clusters, labels):
+    """
+    identify cluster for each tract (for use with robust ML)
+    :ml_clusters: clusters in form: 0:29,30,31
+    :labels: effective labels (can be less than nb_labels if user asked to group some labels)
+    :return: ml_clusters_array: tracts in form [0, 0, 0, ... 1, 2]
+    """
+    all_clusters = ml_clusters.split(',')
+    nb_labels = len(labels)
+    ml_clusters_array = np.zeros(nb_labels)
+    nb_clusters = len(all_clusters)
+    index_label = 0
+    for i_cluster in range(nb_clusters-1, 0, -1):
+        ml_clusters_array[nb_labels-index_label-1] = i_cluster
+        index_label = index_label + 1
+
+    return ml_clusters_array
+
 
 
 #=======================================================================================================================
@@ -783,11 +827,20 @@ OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
-  -m {ml,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
+  -m {ml,mlwa,map,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
+                          mlwa: robust maximum likelihood (computed within clusters, as defined
+                                by flag -c), followed by weighted average
+                          map: robust maximum likelihood (computed within clusters, as defined
+                               by flag -c), followed by maximum a posteriori.
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
+  -c <clusters>         clusters of labels to estimate robust maximum likelihood from. Clusters are
+                          separated by ','. Labels are separated by ':'. Default = """+param.ml_clusters+"""
+                          N.B. only use this flag with methods mlwa or map.
+  -p <param>            advanced parameters used with map method:
+
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param.fname_output+"""
