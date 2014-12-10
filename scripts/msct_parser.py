@@ -27,10 +27,8 @@
 # Arguments are available directly:
 # arguments = parser.parse(sys.argv[1:])
 # for mandatory arguments :
-# if "-input" in arguments:
-#     fname_input = arguments["-input"]
-# if "-dim" in arguments:
-#     dim = arguments["-dim"]
+# fname_input = arguments["-input"]
+# dim = arguments["-dim"]
 # else:
 #     print string_usage
 # exit(1)
