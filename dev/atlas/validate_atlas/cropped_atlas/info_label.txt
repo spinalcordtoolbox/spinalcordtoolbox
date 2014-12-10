@@ -1,4 +1,4 @@
-# White matter atlas
+# White matter atlas - generated on 2014-12-09 by Julien Cohen-Adad
 # ID, name, file
 0, left fasciculus gracilis, WMtract__00.nii.gz
 1, left fasciculus cuneatus, WMtract__01.nii.gz
@@ -30,4 +30,5 @@
 27, right tectospinal tract, WMtract__27.nii.gz
 28, right medial reticulospinal tract, WMtract__28.nii.gz
 29, right medial longitudinal fasciculus, WMtract__29.nii.gz
-30, CSF contour, WMtract__csf.nii.gz
+30, gray matter, WMtract__30.nii.gz
+31, CSF contour (used for partial volume effect estimation), WMtract__31.nii.gz

@@ -41,8 +41,8 @@ def main():
     bootstrap_iter = 1
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
-    std_noise_list = [0, 20, 50]  #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [0]  #[0, 5, 10, 20, 50]  # in percent
+    std_noise_list = [50]  #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [10]  #[0, 5, 10, 20, 50]  # in percent
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
@@ -76,16 +76,12 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     list_tracts = ['2', '17', '0,1,15,16']
     list_tracts_txt = ['csl', 'csr', 'dc']
     index_dorsalcolumn = 2  # index of dorsal column in list_tracts
-    nb_tracts_all = 30  # total number of tracts in atlas (do not include CSF tracts)
-    list_methods = ['ml', 'mlwa', 'mlwath', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
+    nb_tracts_all = 32  # total number of tracts in atlas (do not include CSF tracts)
+    list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
     zero_last_tract = 1  # if last tract correspond to CSF, zero it
     nb_digits_results = 2  # number of digits to display for result file
-
-    # Parameters for the manual estimation
-    # man_mask_index = 2, 17, 30  # 30 corresponds to the dorsal column mask
-    #mask_prefix = 'mask_tract_'
     mask_prefix = 'manual_'
     mask_ext = '.nii.gz'
 
@@ -108,7 +104,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
         #sct.run('./crop_atlas.py -f '+folder_atlas+' -o '+folder_cropped_atlas+' -z '+str(zcrop_ind))
         # Copy the info_label.txt file in the cropped atlas' folder
         # This file needs to be there in order for the sct_extract_metric code to work
-        sct.run('cp ../WM_atlas_generation/info_label.txt '+folder_cropped_atlas)
+        sct.run('cp '+folder_atlas+'info_label.txt '+folder_cropped_atlas)
 
     # Extract the tracts from the atlas' folder
     tracts = get_tracts(folder_cropped_atlas)
