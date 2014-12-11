@@ -10,11 +10,11 @@ function param = j_mri_moco_v8(param)
 % param				structure
 %
 % MANDATORY
-%   todo				string		'estimate' || 'apply' || 'estimate_and_apply'. NB: 'apply' requires input matrix. Default = 'estimate_and_apply'.
 %   fname_data			string
 %   fname_target		string      if ~apply
 %
 % FACULTATIVE
+%   todo				string		'estimate' || 'apply' || 'estimate_and_apply'. NB: 'apply' requires input matrix. Default = 'estimate_and_apply'.
 %   fname_data_moco		string
 %   folder_mat			cell		ONLY IF todo=apply. Contains a cell of strings with file name of mat file used by FLIRT to apply correction.
 %   output_path         sting       Default='tmp_moco/'
