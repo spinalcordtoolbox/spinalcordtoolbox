@@ -540,15 +540,15 @@ int main(int argc, char *argv[])
 		cerr << e << endl;
         return EXIT_FAILURE;
 	}
-	GradientImageType::Pointer imageVectorGradient_temp = gradientMapFilter->GetOutput();
+	GradientImageType::Pointer imageVectorGradient = gradientMapFilter->GetOutput();
 
-    // Write the image
+    /*// Write the image
     typedef itk::ImageFileWriter< GradientImageType >     GradientWriterType;
     GradientWriterType::Pointer writerIm1 = GradientWriterType::New();
     //itk::NiftiImageIO::Pointer ioG = itk::NiftiImageIO::New();
     //writerIm1->SetImageIO(ioG);
     writerIm1->SetFileName("gradient_normal.mhd");
-    writerIm1->SetInput(imageVectorGradient_temp);
+    writerIm1->SetInput(imageVectorGradient);
     try {
         writerIm1->Update();
     }
@@ -560,6 +560,7 @@ int main(int argc, char *argv[])
         cout << "Description = " << e.GetDescription() << endl;
     }
     
+    // The application of GGVF is not good enough to improve segmentation.
     cout << "computing GVF image" << endl;
     GradientVectorFlowFilterType::Pointer gradientVectorFlowFilter = GradientVectorFlowFilterType::New();
     gradientVectorFlowFilter->SetInput(imageVectorGradient_temp);
@@ -590,7 +591,7 @@ int main(int argc, char *argv[])
         cout << "An error ocurred during Writing 2" << endl;
         cout << "Location    = " << e.GetLocation()    << endl;
         cout << "Description = " << e.GetDescription() << endl;
-    }
+    }*/
     
 	// Creation of 3D image with origin, orientation and scaling, containing original image, gradient image, vector gradient image
 	ImageType::SizeType regionSize = image->GetLargestPossibleRegion().GetSize();
@@ -666,7 +667,7 @@ int main(int argc, char *argv[])
             if(isSpinalCordDetected)
             {
                 if (output_detection) init.savePointAsAxialImage(image,outputPath+"result_detection.png");
-                if (output_detection_nii) init.savePointAsBinaryImage(image,outputPath+inputFilename_nameonly+"_detection"+suffix, orientationFilter.getInitialImageOrientation());
+                if (output_detection_nii) init.savePointAsBinaryImage(initialImage,outputPath+inputFilename_nameonly+"_detection"+suffix, orientationFilter.getInitialImageOrientation());
                 
                 init.getPoints(point,normal1,normal2,radius,stretchingFactor);
                 if (normal2 == CVector3::ZERO) normal2 = -normal1;

@@ -31,11 +31,12 @@ class param:
         self.verbose = 1
         self.url_git = 'https://github.com/benjamindeleener/PropSeg_data.git'
         self.path_data = '/home/django/benjamindeleener/data/PropSeg_data/'
+        param.data = ['t1','t2','dmri']
 
 def main():
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'h:d:p:f:r:a:')
+        opts, args = getopt.getopt(sys.argv[1:],'h:d:p:r:t:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -46,8 +47,15 @@ def main():
             param.download = int(arg)
         if opt == '-p':
             param.path_data = arg
+        if opt == '-t':
+            if ',' in arg:
+                param.data = arg.split(',')
+            else:
+                param.data = arg
         if opt == '-r':
             param.remove_tmp_file = int(arg)
+
+    print param.data
 
     start_time = time.time()
 
@@ -66,23 +74,86 @@ def main():
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
+    # segment all data in t1 folder
+    results_t1 = []
+    sum_old,sum_new = 0,0
+    if 't1' in param.data:
+        for dirname in os.listdir(param.path_data+"t1/"):
+            if dirname not in ['._.DS_Store','.DS_Store']:
+                for filename in os.listdir(param.path_data+"t1/"+dirname):
+                    if filename.startswith('t1') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
+                        print dirname, filename
+                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t1/"+dirname+"/"+filename,param.path_data+"t1/"+dirname+"/",'t1')
+                        if d_old == 0:
+                            d_old = 'OK'
+                            sum_old = sum_old+1
+                        else: d_old = 'Not In'
+                        if d_new == 0:
+                            d_new = 'OK'
+                            sum_new = sum_new+1
+                        else: d_new = 'Not In'
+                        results_t1.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+        # compute average
+        results_t1.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_t1]),np.mean([line[4] for line in results_t1])])
+
+
     # segment all data in t2 folder
     results_t2 = []
-    for dirname in os.listdir(param.path_data+"t2/"):
-        if dirname not in ['._.DS_Store','.DS_Store']:
-            for filename in os.listdir(param.path_data+"t2/"+dirname):
-                if filename.startswith('t2_') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz'):
-                    print dirname, filename
-                    [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t2/"+dirname+"/"+filename,param.path_data+"t2/"+dirname+"/",'t2')
-                    if d_old == 0: d_old = 'OK'
-                    else: d_old = 'Not In'
-                    if d_new == 0: d_new = 'OK'
-                    else: d_new = 'Not In'
-                    results_t2.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+    sum_old,sum_new = 0,0
+    if 't2' in param.data:
+        for dirname in os.listdir(param.path_data+"t2/"):
+            if dirname not in ['._.DS_Store','.DS_Store']:
+                for filename in os.listdir(param.path_data+"t2/"+dirname):
+                    if filename.startswith('t2_') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
+                        print dirname, filename
+                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"t2/"+dirname+"/"+filename,param.path_data+"t2/"+dirname+"/",'t2')
+                        if d_old == 0:
+                            d_old = 'OK'
+                            sum_old = sum_old+1
+                        else: d_old = 'Not In'
+                        if d_new == 0:
+                            d_new = 'OK'
+                            sum_new = sum_new+1
+                        else: d_new = 'Not In'
+                        results_t2.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+        # compute average
+        results_t2.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_t2]),np.mean([line[4] for line in results_t2])])
 
-    # Print results
-    print ''
-    print tabulate(results_t2, headers=["Subject-T2","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+
+    results_dmri = []
+    sum_old,sum_new = 0,0
+    if 'dmri' in param.data:
+        for dirname in os.listdir(param.path_data+"dmri/"):
+            if dirname not in ['._.DS_Store','.DS_Store']:
+                for filename in os.listdir(param.path_data+"dmri/"+dirname):
+                    if filename.startswith('dmri') and not filename.endswith('_seg.nii.gz') and not filename.endswith('_detection.nii.gz') and not filename.endswith('.vtk'):
+                        print dirname, filename
+                        [d_old,d_new],[r_old,r_new] = segmentation(param.path_data+"dmri/"+dirname+"/"+filename,param.path_data+"dmri/"+dirname+"/",'t1')
+                        if d_old == 0:
+                            d_old = 'OK'
+                            sum_old = sum_old+1
+                        else: d_old = 'Not In'
+                        if d_new == 0:
+                            d_new = 'OK'
+                            sum_new = sum_new+1
+                        else: d_new = 'Not In'
+                        results_dmri.append([dirname,d_old,d_new,round(r_old,2),round(r_new,2)])
+
+        # compute average
+        results_dmri.append(['average',sum_old,sum_new,np.mean([line[3] for line in results_dmri]),np.mean([line[4] for line in results_dmri])])
+
+    if 't1' in param.data:
+        print ''
+        print tabulate(results_t1, headers=["Subject-T1","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+
+    if 't2' in param.data:
+        print ''
+        print tabulate(results_t2, headers=["Subject-T2","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+
+    if 'dmri' in param.data:
+        print ''
+        print tabulate(results_dmri, headers=["Subject-dmri","Detect-old","Detect-new","DC-old", "DC-new"], floatfmt=".2f")
+
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -115,6 +186,7 @@ def segmentation(fname_input, output_dir, image_type):
     results_segmentation = [0.0,0.0]
 
     # perform PropSeg old version
+    sct.run('rm -rf '+output_dir+'old')
     sct.create_folder(output_dir+'old')
     cmd = 'sct_propseg_old -i ' + fname_input \
         + ' -o ' + output_dir+'old' \
@@ -143,6 +215,7 @@ def segmentation(fname_input, output_dir, image_type):
     else: results_segmentation[0] = 0.0
 
     # perform PropSeg new version
+    sct.run('rm -rf '+output_dir+'new')
     sct.create_folder(output_dir+'new')
     cmd = 'sct_propseg -i ' + fname_input \
         + ' -o ' + output_dir+'new' \

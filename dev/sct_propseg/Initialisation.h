@@ -51,8 +51,11 @@ public:
     bool getVerbose() { return verbose_; };
     
 private:
-	void searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ);
-	unsigned int houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, double valPrint=255);
+	void searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ, ImageType::Pointer imageVesselness);
+	unsigned int houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, ImageType::Pointer VeselnessImage, float slice, double valPrint=255);
+    ImageType::Pointer vesselnessFilter(ImageType::Pointer im);
+    int symmetryDetection(ImageType2D::Pointer im, double cropWidth_, double bandWidth_);
+    int symmetryDetection3D(ImageType::Pointer im, double cropWidth_, double bandWidth_);
     
     vector<CVector3> points_;
 	CVector3 initialPoint_, initialNormal1_, initialNormal2_;
