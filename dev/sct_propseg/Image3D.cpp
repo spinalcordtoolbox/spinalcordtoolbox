@@ -221,12 +221,13 @@ void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationTy
         mesh->SetCell((int)(i+1)/3,triangle);
     }
     
-    CastFilterType::Pointer castFilter = CastFilterType::New();
-    castFilter->SetInput(imageOriginale_);
-    
     MeshFilterType::Pointer meshFilter = MeshFilterType::New();
     meshFilter->SetInput(mesh);
-    meshFilter->SetInfoImage(castFilter->GetOutput());
+    meshFilter->SetOrigin(imageOriginale_->GetOrigin());
+    meshFilter->SetSpacing(imageOriginale_->GetSpacing());
+    meshFilter->SetSize(imageOriginale_->GetLargestPossibleRegion().GetSize());
+    meshFilter->SetDirection(imageOriginale_->GetDirection());
+    meshFilter->SetIndex(imageOriginale_->GetLargestPossibleRegion().GetIndex());
     //meshFilter->SetTolerance(1.0);
     meshFilter->SetInsideValue(1.0);
     meshFilter->SetOutsideValue(0.0);

@@ -29,6 +29,24 @@
 #include <itkDiscreteGaussianImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkRGBPixel.h>
+#include <itkMedianImageFilter.h>
+#include <itkFlipImageFilter.h>
+#include <itkNearestNeighborInterpolateImageFunction.h>
+#include <itkMattesMutualInformationImageToImageMetric.h>
+#include <itkMeanReciprocalSquareDifferenceImageToImageMetric.h>
+#include <itkNormalizedCorrelationImageToImageMetric.h>
+#include <itkIdentityTransform.h>
+#include <itkHessianRecursiveGaussianImageFilter.h>
+//#include <itkGradientImageFilter.h>
+#include "itkGradientVectorFlowImageFilter.h" // local version
+#include <itkGradientVectorFlowImageFilter.h> // ITK version
+#include "itkRecursiveGaussianImageFilter.h"
+#include "itkImageRegionIterator.h"
+#include <itkSymmetricSecondRankTensor.h>
+#include "itkHessian3DToVesselnessMeasureImageFilter.h"
+#include <itkStatisticsImageFilter.h>
+#include "itkTileImageFilter.h"
+#include "itkPermuteAxesImageFilter.h"
 using namespace std;
 
 typedef itk::Image< double, 3 >	ImageType;
@@ -49,6 +67,7 @@ typedef itk::ResampleImageFilter<ImageType2D, ImageType2D> ResampleImageFilterTy
 typedef itk::DiscreteGaussianImageFilter<ImageType2D, ImageType2D> SmoothFilterType;
 typedef itk::ImageRegionConstIterator<BinaryImageType> ImageIterator;
 typedef itk::RescaleIntensityImageFilter< ImageType, ImageType > RescaleFilterType;
+typedef itk::ImageFileWriter< ImageType >     WriterType;
 
 double round(double number)
 {
@@ -208,6 +227,9 @@ bool Initialisation::computeInitialParameters(float startFactor)
     // Creation of a matrix of potential spinal cord centers
 	vector<vector <vector <Node*> > > centers;
     
+    // Apply vesselness filter on the image
+    ImageType::Pointer vesselnessImage = vesselnessFilter(inputImage_);
+    
     // Start of the detection of circles and ellipses. For each axial slices, a Hough transform is performed to detect circles. Each axial image is stretched in the antero-posterior direction in order to detect the spinal cord as a ellipse as well as a circle.
 	for (int i=round(-((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i<=round(((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i+=round(gap_/spacing[1]))
 	{
@@ -217,7 +239,8 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		ImageType::RegionType desiredRegion(desiredStart, desiredSize);
 		FilterType::Pointer filter = FilterType::New();
 		filter->SetExtractionRegion(desiredRegion);
-		filter->SetInput(inputImage_);
+		//filter->SetInput(vesselnessImage);
+        filter->SetInput(inputImage_);
         #if ITK_VERSION_MAJOR >= 4
 		filter->SetDirectionCollapseToIdentity(); // This is required.
         #endif
@@ -232,11 +255,18 @@ bool Initialisation::computeInitialParameters(float startFactor)
         
         // The image is duplicated to allow multiple processing on the image.
 		ImageType2D::Pointer im = filter->GetOutput();
+        ImageType2D::DirectionType directionIm = im->GetDirection();
+		ImageType::DirectionType imageDirection = inputImage_->GetDirection();
+		directionIm[0][0] = imageDirection[0][0];
+		directionIm[0][1] = imageDirection[0][2];
+		directionIm[1][0] = imageDirection[1][0];
+		directionIm[1][1] = imageDirection[1][2];
+		im->SetDirection(directionIm);
+        
 		DuplicatorType::Pointer duplicator = DuplicatorType::New();
 		duplicator->SetInputImage(im);
 		duplicator->Update();
 		ImageType2D::Pointer clonedImage = duplicator->GetOutput();
-		ImageType::DirectionType imageDirection = inputImage_->GetDirection();
 		ImageType2D::DirectionType clonedImageDirection;
 		clonedImageDirection[0][0] = imageDirection[0][0];
 		clonedImageDirection[0][1] = imageDirection[0][2];
@@ -275,18 +305,21 @@ bool Initialisation::computeInitialParameters(float startFactor)
 				im = resample->GetOutput();
 			}
             
+            // Search for symmetry in image
+            //cout << "Symmetry = " << symmetryDetection3D(inputImage_, 40, 40) << endl;
+            
             // Searching the circles in the image using circular Hough transform, adapted from ITK
             // The list of radii and accumulator values are then extracted for analyses
 			vector<CVector3> vecCenter;
 			vector<double> vecRadii, vecAccumulator;
-			searchCenters(im,vecCenter,vecRadii,vecAccumulator,startZ+i);
+			searchCenters(im,vecCenter,vecRadii,vecAccumulator,startZ+i, vesselnessImage);
 			
             // Reformating of the detected circles in the image. Each detected circle is push in a Node with all its information.
             // The radii are transformed in mm using mean axial resolution
 			vector<Node*> vecNodeTemp;
 			for (unsigned int k=0; k<vecCenter.size(); k++) {
 				if (vecRadii[k] != 0.0) {
-					CVector3 center = vecCenter[k]; center[0] /= stretchingFactor;
+					CVector3 center = vecCenter[k];// center[0] /= stretchingFactor;
 					vecNodeTemp.push_back(new Node(center,mean_resolution_*vecRadii[k]/stretchingFactor,vecAccumulator[k],vecCenter[k],mean_resolution_*vecRadii[k],stretchingFactor));
 				}
 			}
@@ -321,7 +354,8 @@ bool Initialisation::computeInitialParameters(float startFactor)
 					{
                         // Compute the distance between two adjacent centers (in mm)
                         // If this distance is less or equal to the limit distance, the two centers are attached to each others
-						double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
+						//double currentDistance = sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
+                        double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
 						if (currentDistance <= limitDistance)
 							listNeighbors[currentDistance] = centers[k-1][i][j];
 					}
@@ -342,7 +376,8 @@ bool Initialisation::computeInitialParameters(float startFactor)
 					map<double,Node*> listNeighbors;
 					for (unsigned int j=0; j<centers[k+1][i].size(); j++)
 					{
-						double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k+1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k+1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k+1][i][j]->getPosition()[2],2));
+						//double currentDistance = sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k+1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k+1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k+1][i][j]->getPosition()[2],2));
+                        double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k+1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k+1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k+1][i][j]->getPosition()[2],2));
 						if (currentDistance <= limitDistance)
 							listNeighbors[currentDistance] = centers[k+1][i][j];
 					}
@@ -379,13 +414,32 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		}
 		chains.push_back(temp);
 	}
-	// And search for the longest and with larger accumulation value and small angle between normals 
+    
+    
+    // Search for the longest chain that is not far from the the center of the image (detected as the symmetry in the image) and with the largest accumulation value
+    // metric used to compute the best chain : accumulation_value * (exp(1/(average_distance_to_center_of_image+(1/log(2))))-1)
+    // metric accumulation_value * tanh(2.5-0.5*average_distance_to_center_of_image)/2+0.5
 	unsigned int maxLenght = 0, max = 0;
-	double maxAccumulator = 0.0, angleMax = 15.0;
+	double maxMetric = 0.0, angleMax = 30.0;
+    
+    map<double, int, greater<double> > map_metric;
+    
 	for (unsigned int j=0; j<chains.size(); j++)
 	{
 		unsigned int length = chains[j].size();
         double angle = 0.0;
+        int middle_slice = inputImage_->GetLargestPossibleRegion().GetSize()[2]/2;
+        double average_distance_to_center_of_image = 0.0;
+        for (int k=0; k<length; k++)
+            average_distance_to_center_of_image += abs(chains[j][k]->getPosition()[2]-middle_slice);
+        average_distance_to_center_of_image /= (double)length;
+        //cout << j << " " << average_distance_to_center_of_image << endl;
+        
+        //average_distance_to_center_of_image = abs(chains[j][length/2]->getPosition()[2]-middle_slice);
+        //double weighted_distance = (exp(1/(average_distance_to_center_of_image+(1/log(2))))-1);
+        double weighted_distance = tanh(2.5-0.5*average_distance_to_center_of_image)/2+0.5;
+        //double weighted_distance = 1;
+        
         if (length >= 3)
         {
             CVector3 vector1 = chains[j][0]->getPosition()-chains[j][length/2]->getPosition(), vector2 = (chains[j][length/2]->getPosition()-chains[j][length-1]->getPosition());
@@ -395,38 +449,40 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		{
 			maxLenght = chains[j].size();
 			max = j;
-			maxAccumulator = 0.0;
+			maxMetric = 0.0;
 			for (unsigned int k=0; k<length; k++)
-				maxAccumulator += chains[j][k]->getAccumulator();
+				maxMetric += chains[j][k]->getAccumulator() * weighted_distance * maxLenght;
+            map_metric[maxMetric] = max;
 		}
 		else if (length == maxLenght && angle <= angleMax)
 		{
-			double accumulator = 0.0;
+			double metric = 0.0;
 			for (unsigned int k=0; k<length; k++)
-				accumulator += chains[j][k]->getAccumulator();
-			if (accumulator > maxAccumulator) {
+				metric += chains[j][k]->getAccumulator() * weighted_distance * length;
+			if (metric > maxMetric) {
 				maxLenght = chains[j].size();
 				max = j;
-				maxAccumulator = accumulator;
+				maxMetric = metric;
+                map_metric[maxMetric] = max;
 			}
 		}
 	}
     
 	if (chains.size() > 1)
 	{
-		unsigned int sizeMaxChain = chains[max].size();
+		unsigned int sizeMaxChain = chains[map_metric.begin()->second].size();
 		//cout << "Results : " << endl;
         points_.clear();
 		for (unsigned int j=0; j<sizeMaxChain; j++) {
-            points_.push_back(chains[max][j]->getPosition());
+            points_.push_back(chains[map_metric.begin()->second][j]->getPosition());
 			//cout << chains[max][j]->getPosition() << " " << chains[max][j]->getRadius() << endl;
         }
-        if (verbose_) cout << "Stretching factor of circle found = " << chains[max][0]->getStretchingFactor() << endl;
+        if (verbose_) cout << "Stretching factor of circle found = " << chains[map_metric.begin()->second][0]->getStretchingFactor() << endl;
 		if (sizeMaxChain < numberOfSlices_) {
 			if (verbose_) cout << "Warning: Number of center found on slices (" << sizeMaxChain << ") doesn't correspond to number of analyzed slices. An error may occur. To improve results, you can increase the number of analyzed slices (option -n must be impair)" << endl;
             
 			// we have to transform pixel points to physical points
-			CVector3 finalPoint, initPointT = chains[max][0]->getPosition(), finalPointT = chains[max][sizeMaxChain-1]->getPosition();
+			CVector3 finalPoint, initPointT = chains[map_metric.begin()->second][0]->getPosition(), finalPointT = chains[map_metric.begin()->second][sizeMaxChain-1]->getPosition();
 			ContinuousIndex initPointIndex, finalPointIndex;
 			initPointIndex[0] = initPointT[0]; initPointIndex[1] = initPointT[1]; initPointIndex[2] = initPointT[2];
 			finalPointIndex[0] = finalPointT[0]; finalPointIndex[1] = finalPointT[1]; finalPointIndex[2] = finalPointT[2];
@@ -438,14 +494,14 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			initialNormal1_ = (finalPoint-initialPoint_).Normalize();
 			initialRadius_ = 0.0;
 			for (unsigned int j=0; j<sizeMaxChain; j++)
-				initialRadius_ += chains[max][j]->getRadiusStretch();
+				initialRadius_ += chains[map_metric.begin()->second][j]->getRadiusStretch();
 			initialRadius_ /= sizeMaxChain;
-            stretchingFactor_ = chains[max][0]->getStretchingFactor();
+            stretchingFactor_ = chains[map_metric.begin()->second][0]->getStretchingFactor();
 		}
 		else
 		{
 			// we have to transform pixel points to physical points
-			CVector3 finalPoint1, finalPoint2, initPointT = chains[max][(int)(sizeMaxChain/2)]->getPosition(), finalPointT1 = chains[max][0]->getPosition(), finalPointT2 = chains[max][sizeMaxChain-1]->getPosition();
+			CVector3 finalPoint1, finalPoint2, initPointT = chains[map_metric.begin()->second][(int)(sizeMaxChain/2)]->getPosition(), finalPointT1 = chains[map_metric.begin()->second][0]->getPosition(), finalPointT2 = chains[map_metric.begin()->second][sizeMaxChain-1]->getPosition();
 			ContinuousIndex initPointIndex, finalPoint1Index, finalPoint2Index;
 			initPointIndex[0] = initPointT[0]; initPointIndex[1] = initPointT[1]; initPointIndex[2] = initPointT[2];
 			finalPoint1Index[0] = finalPointT1[0]; finalPoint1Index[1] = finalPointT1[1]; finalPoint1Index[2] = finalPointT1[2];
@@ -461,9 +517,9 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			initialNormal2_ = (finalPoint2-initialPoint_).Normalize();
 			initialRadius_ = 0.0;
 			for (unsigned int j=0; j<sizeMaxChain; j++)
-				initialRadius_ += chains[max][j]->getRadiusStretch();
+				initialRadius_ += chains[map_metric.begin()->second][j]->getRadiusStretch();
 			initialRadius_ /= sizeMaxChain;
-            stretchingFactor_ = chains[max][0]->getStretchingFactor();
+            stretchingFactor_ = chains[map_metric.begin()->second][0]->getStretchingFactor();
 		}
 		return true;
 	}
@@ -473,8 +529,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	}
 }
 
-
-void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ)
+void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ, ImageType::Pointer imageVesselness)
 {
 	DuplicatorType::Pointer duplicator = DuplicatorType::New();
 	duplicator->SetInputImage(im);
@@ -486,13 +541,13 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 	unsigned int numberOfCircles = 20;
 	double **center_result_small = new double*[numberOfCircles], **center_result_large = new double*[numberOfCircles];
 	for (unsigned int k=0; k<numberOfCircles; k++) {
-		center_result_small[k] = new double[2];
-		center_result_large[k] = new double[2];
+		center_result_small[k] = new double[3]; // Detected centers are in mm
+		center_result_large[k] = new double[3];
 	}
-	double *radius_result_small = new double[numberOfCircles], *radius_result_large = new double[numberOfCircles];
+	double *radius_result_small = new double[numberOfCircles], *radius_result_large = new double[numberOfCircles]; // radius is in pixel
 	double *accumulator_result_small = new double[numberOfCircles], *accumulator_result_large = new double[numberOfCircles];
-	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_/mean_resolution_,-1.0);
-	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_/mean_resolution_+6.0,1.0);
+	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_/mean_resolution_,imageVesselness,startZ,-1.0);
+	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_/mean_resolution_+4.0,imageVesselness,startZ,1.0);
     
 	// search along results for nested circles
 	vector<unsigned int> listMostPromisingCenters;
@@ -503,23 +558,39 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 		for (unsigned int j=0; j<numLarge; j++)
 		{
 			// distance between center + small_radius must be smaller than large_radius
-			distance = sqrt(pow(center_result_small[i][0]-center_result_large[j][0],2)+pow(center_result_small[i][1]-center_result_large[j][1],2));
-			if ((distance+radius_result_small[i])*0.8 <= radius_result_large[j]) {
+			distance = sqrt(pow(center_result_small[i][0]-center_result_large[j][0],2)+pow(center_result_small[i][2]-center_result_large[j][2],2));
+			if ((distance+radius_result_small[i])*0.7 <= radius_result_large[j]) {
 				listMostPromisingCenters.push_back(i);
 				listMostPromisingCentersLarge.push_back(j);
 			}
 		}
 	}
-	for (unsigned int i=0; i<listMostPromisingCenters.size(); i++)
-	{
-		vecCenter.push_back(CVector3(center_result_small[listMostPromisingCenters[i]][0],startZ,center_result_small[listMostPromisingCenters[i]][1]));
-		vecRadii.push_back(radius_result_small[listMostPromisingCenters[i]]);
-		vecAccumulator.push_back(accumulator_result_small[listMostPromisingCenters[i]]);
-	}
+    
+    // If circular structure surrounded by other circular shapes were detected, we add them in the list of promising circles
+    if (listMostPromisingCenters.size() > 0)
+    {
+        for (unsigned int i=0; i<listMostPromisingCenters.size(); i++)
+        {
+            vecCenter.push_back(CVector3(center_result_small[listMostPromisingCenters[i]][0],center_result_small[listMostPromisingCenters[i]][1],center_result_small[listMostPromisingCenters[i]][2]));
+            vecRadii.push_back(radius_result_small[listMostPromisingCenters[i]]);
+            vecAccumulator.push_back(accumulator_result_small[listMostPromisingCenters[i]]);
+        }
+    }
+    // If no double circular shapes were detected, spinal cord may not be surrounded by another circular shape. Therefore, we add the 5 (chosen arbitrarely) most promising points (in terms of accumulator values) to the vector.
+    else
+    {
+        // center_result_small are already sorted by accumulator values
+        for (unsigned int i=0; i<5; i++)
+        {
+            vecCenter.push_back(CVector3(center_result_small[i][0],center_result_small[i][2],center_result_small[i][2]));
+            vecRadii.push_back(radius_result_small[i]);
+            vecAccumulator.push_back(accumulator_result_small[i]);
+        }
+    }
 }
 
 
-unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, double valPrint)
+unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, ImageType::Pointer VesselnessImage, float slice, double valPrint)
 {
 	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
 	minMaxCalculator->SetImage(im);
@@ -528,13 +599,23 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 	ImageType2D::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
 	double val_Print = maxIm;
     
-    double min_radius = meanRadius-3.0;
+    double min_radius = meanRadius-3.0/mean_resolution_;
     if (min_radius < 0) min_radius = 0;
+    
+    /*// Application of a median filter to reduce noise and improve circle detection
+    typedef itk::MedianImageFilter<ImageType2D, ImageType2D > MedianFilterType;
+    MedianFilterType::Pointer medianFilter = MedianFilterType::New();
+    MedianFilterType::InputSizeType radius;
+    radius.Fill(1);
+    medianFilter->SetRadius(radius);
+    medianFilter->SetInput( im );
+    medianFilter->Update();
+    im = medianFilter->GetOutput();*/
 	
 	HoughCirclesFilter::Pointer houghfilter = HoughCirclesFilter::New();
 	houghfilter->SetInput(im);
 	houghfilter->SetMinimumRadius(min_radius);
-	houghfilter->SetMaximumRadius(meanRadius+3.0);
+	houghfilter->SetMaximumRadius(meanRadius+3.0/mean_resolution_);
 	houghfilter->SetSigmaGradient(2);
 	houghfilter->SetGradientFactor(valPrint*typeImageFactor_);
 	houghfilter->SetSweepAngle(M_PI/180.0*5.0);
@@ -566,6 +647,68 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 	itk::ImageRegionIterator<ImageType2D> it_output(im,im->GetLargestPossibleRegion());
 	itk::ImageRegionIterator<ImageType2D> it_input(m_PostProcessImage,m_PostProcessImage->GetLargestPossibleRegion());
     
+    typedef itk::Point< double, 2 > PointType2D;
+    PointType2D point2d;
+    PointType point3d;
+    ImageType::IndexType index3d;
+    for(it_input.GoToBegin();!it_input.IsAtEnd();++it_input)
+    {
+        im->TransformIndexToPhysicalPoint(it_input.GetIndex(),point2d);
+        point3d[0] = point2d[0]; point3d[1] = point2d[1]; point3d[2] = 0;
+        VesselnessImage->TransformPhysicalPointToIndex(point3d, index3d);
+        index3d[1] = slice;
+        it_input.Set(it_input.Get()*VesselnessImage->GetPixel(index3d));
+    }
+    VesselnessImage->TransformIndexToPhysicalPoint(index3d, point3d);
+    
+    typedef itk::TileImageFilter< ImageType2D, ImageType > TilerType;
+    TilerType::Pointer resample = TilerType::New();
+    
+    TilerType::Pointer tiler = TilerType::New();
+    
+    itk::FixedArray< unsigned int, 3 > layout;
+    layout[0] = 1; layout[1] = 1; layout[2] = 0;
+    tiler->SetLayout( layout );
+    tiler->SetInput( 0, m_PostProcessImage );
+    ImageType::PixelType filler = 0;
+    tiler->SetDefaultPixelValue( filler );
+    tiler->Update();
+    ImageType::Pointer m_PostProcessImage3D = tiler->GetOutput();
+    
+    typedef itk::PermuteAxesImageFilter <ImageType> PermuteAxesImageFilterType;
+    itk::FixedArray<unsigned int, 3> order;
+    order[0] = 0; order[1] = 2; order[2] = 1;
+    PermuteAxesImageFilterType::Pointer permuteAxesFilter = PermuteAxesImageFilterType::New();
+    permuteAxesFilter->SetInput(m_PostProcessImage3D);
+    permuteAxesFilter->SetOrder(order);
+    permuteAxesFilter->Update();
+    m_PostProcessImage3D = permuteAxesFilter->GetOutput();
+    
+    
+    PointType origin_im = inputImage_->GetOrigin();
+    origin_im[0] = m_PostProcessImage3D->GetOrigin()[0];
+    origin_im[1] = m_PostProcessImage3D->GetOrigin()[1];
+    origin_im[2] = point3d[2];
+    m_PostProcessImage3D->SetOrigin(origin_im);
+    m_PostProcessImage3D->SetDirection(inputImage_->GetDirection());
+    m_PostProcessImage3D->SetSpacing(inputImage_->GetSpacing());
+    
+    typedef itk::ImageFileWriter< ImageType > WriterTypeP;
+    WriterTypeP::Pointer writerVesselNess = WriterTypeP::New();
+    itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
+    writerVesselNess->SetImageIO(ioV);
+    writerVesselNess->SetInput( m_PostProcessImage3D );
+    writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/im_proc.nii.gz");
+    try {
+        writerVesselNess->Update();
+    }
+    catch( itk::ExceptionObject & e )
+    {
+        cout << "Exception thrown ! " << endl;
+        cout << "An error ocurred during Writing 1" << endl;
+        cout << "Location    = " << e.GetLocation()    << endl;
+        cout << "Description = " << e.GetDescription() << endl;
+    }
     
 	/** Set the disc ratio */
 	double discRatio = 1.1;
@@ -581,15 +724,24 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 		it_output.GoToBegin();
 		for(it_input.GoToBegin();!it_input.IsAtEnd();++it_input)
 		{
-			if(it_input.Get() == max)
+            if(it_input.Get() == max)
 			{
-				it_output.Set(val_Print);
+                it_output.Set(val_Print);
 				index = it_output.GetIndex();
 				double radius2 = m_RadiusImage->GetPixel(index);
 				if (index[0]!=0 && index[0]!=bound[0]-1 && index[1]!=0 && index[1]!=bound[1]-1)
 				{
-					center_result[circles][0] = it_output.GetIndex()[0];
-					center_result[circles][1] = it_output.GetIndex()[1];
+                    typedef itk::Point< double, 2 > PointType2D;
+                    PointType2D point2d;
+                    im->TransformIndexToPhysicalPoint(it_output.GetIndex(),point2d);
+                    PointType point3d;
+                    point3d[0] = point2d[0]; point3d[1] = point2d[1]; point3d[2] = 0;
+                    ImageType::IndexType index3d;
+                    VesselnessImage->TransformPhysicalPointToIndex(point3d, index3d);
+                    index3d[1] = slice;
+                    center_result[circles][0] = index3d[0];
+                    center_result[circles][1] = index3d[1];
+                    center_result[circles][2] = index3d[2];
 					radius_result[circles] = radius2;
 					accumulator_result[circles] = m_PostProcessImage->GetPixel(index);
                     
@@ -796,4 +948,813 @@ void Initialisation::savePointAsAxialImage(ImageType::Pointer initialImage, stri
 		}
     }
     else cout << "Error: Spinal cord center not detected" << endl;
+}
+
+ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
+{
+        
+    typedef itk::SymmetricSecondRankTensor< double, 3 > MatrixType;
+    typedef itk::Image< MatrixType, 3> HessianImageType;
+    typedef itk::ImageRegionIterator< HessianImageType > HessianImageIterator;
+        
+    typedef itk::HessianRecursiveGaussianImageFilter< ImageType >     HessianFilterType;
+    typedef itk::Hessian3DToVesselnessMeasureImageFilter< double > VesselnessMeasureFilterType;
+    HessianFilterType::Pointer hessianFilter = HessianFilterType::New();
+    VesselnessMeasureFilterType::Pointer vesselnessFilter = VesselnessMeasureFilterType::New();
+    hessianFilter->SetInput( im );
+    hessianFilter->SetSigma( 3.0 );
+    hessianFilter->Update();
+        
+    vesselnessFilter->SetInput( hessianFilter->GetOutput() );
+    vesselnessFilter->SetAlpha1( 0.5 );
+    vesselnessFilter->SetAlpha2( 2.0 );
+    vesselnessFilter->Update();
+        
+    ImageType::Pointer vesselnessImage = vesselnessFilter->GetOutput();
+        
+    // Normalization of the vesselness image
+    typedef itk::StatisticsImageFilter<ImageType> StatisticsImageFilterType;
+    StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New();
+    statisticsImageFilter->SetInput(vesselnessImage);
+    statisticsImageFilter->Update();
+    double meanIm = statisticsImageFilter->GetMean();
+    double sigmaIm = statisticsImageFilter->GetSigma();
+    double minIm = statisticsImageFilter->GetMinimum();
+    double maxIm = statisticsImageFilter->GetMaximum();
+    
+    typedef itk::ImageRegionIterator< ImageType > ImageIterator;
+    ImageIterator vIt( vesselnessImage, vesselnessImage->GetBufferedRegion() );
+    vIt.GoToBegin();
+    double newMin = 0, newMax = 1;
+    minIm = meanIm-sigmaIm;
+    maxIm = meanIm+sigmaIm;
+    // normalization that remove extrema
+    while ( !vIt.IsAtEnd() )
+    {
+        vIt.Set((vIt.Get()-minIm)*(newMax-newMin)/(maxIm-minIm)+newMin);
+        ++vIt;
+    }
+    //double newMin = 0, newMax = 1; // normalization
+    /*while ( !vIt.IsAtEnd() )
+    {
+        vIt.Set((vIt.Get()-minIm)*(newMax-newMin)/(maxIm-minIm)+newMin);
+        ++vIt;
+    }*/
+    
+    WriterType::Pointer writerVesselNess = WriterType::New();
+    itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
+    writerVesselNess->SetImageIO(ioV);
+    writerVesselNess->SetInput( vesselnessImage );
+    writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageVesselNessFilter.nii.gz");
+    try {
+        writerVesselNess->Update();
+    }
+    catch( itk::ExceptionObject & e )
+    {
+        cout << "Exception thrown ! " << endl;
+        cout << "An error ocurred during Writing 1" << endl;
+        cout << "Location    = " << e.GetLocation()    << endl;
+        cout << "Description = " << e.GetDescription() << endl;
+    }
+    
+    
+    return vesselnessImage;
+}
+
+
+/**************************************************/
+// Non used methods
+/**************************************************/
+
+int Initialisation::symmetryDetection3D(ImageType::Pointer im, double cropWidth_, double bandWidth_)
+{
+    
+    
+    ImageType::SpacingType spacingIm = im->GetSpacing();
+    int cropSize = cropWidth_/spacingIm[0];
+    ImageType::SizeType desiredSize = im->GetLargestPossibleRegion().GetSize();
+    
+    ImageType::SizeType desiredSizeInitial = im->GetLargestPossibleRegion().GetSize();
+    
+    map<double,int> mutualInformation;
+    //int startSlice = desiredSizeInitial[0]/4, endSlice = desiredSizeInitial[0]/4*3;
+    //int startSlice = 160, endSlice = 161;
+    int startSlice = 127, endSlice = 128;
+    if (desiredSizeInitial[0] < cropSize*2) {
+        startSlice = cropSize/2;
+        endSlice = desiredSizeInitial[0]-cropSize/2;
+    }
+    
+	typedef itk::MinimumMaximumImageCalculator<ImageType> MinMaxCalculatorType;
+	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
+	minMaxCalculator->SetImage(im);
+	minMaxCalculator->ComputeMaximum();
+	minMaxCalculator->ComputeMinimum();
+	ImageType::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
+	if (maxIm == minIm) {
+		cerr << "ERROR: The image where the symmetry will be detected is full of constant value (" << maxIm << "). You can change it using -init parameter." << endl;
+		return -1;
+	}
+    
+    
+    for (int i=startSlice; i<endSlice; i++)
+    {
+        float startCrop = i, size;
+        if (startCrop < desiredSizeInitial[0]/2 && startCrop <= bandWidth_+1) size = startCrop-1;
+        else if (startCrop >= desiredSizeInitial[0]/2 && startCrop >= desiredSizeInitial[0]-bandWidth_-1) size = desiredSizeInitial[0]-startCrop-1;
+        else size = bandWidth_;
+        ImageType::IndexType desiredStart;
+        ImageType::SizeType desiredSize = desiredSizeInitial;
+        desiredStart[0] = startCrop;
+        desiredStart[1] = 0;
+        desiredStart[2] = desiredSizeInitial[2]/2-(cropSize+5)/2;
+        desiredSize[0] = size;
+        desiredSize[2] = cropSize+5;
+        
+        typedef itk::ExtractImageFilter< ImageType, ImageType > CropFilterType;
+        
+        // middle image
+        desiredStart[0] = startCrop-size;
+        if (desiredStart[0] < 0) desiredStart[0] = 0;
+        desiredSize[0] = size*2;
+        ImageType::RegionType desiredRegionImage(desiredStart, desiredSize);
+        CropFilterType::Pointer cropFilter = CropFilterType::New();
+        cropFilter->SetExtractionRegion(desiredRegionImage);
+        cropFilter->SetInput(im);
+#if ITK_VERSION_MAJOR >= 4
+        cropFilter->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+        try {
+            cropFilter->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while updating cropFilter " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        ImageType::Pointer imageMiddle = cropFilter->GetOutput();
+        
+        WriterType::Pointer writer = WriterType::New();
+        itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
+        writer->SetImageIO(io);
+        writer->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageMiddle.nii.gz");
+        writer->SetInput(imageMiddle);
+        try {
+            writer->Update();
+        }
+        catch( itk::ExceptionObject & e )
+        {
+            cout << "Exception thrown ! " << endl;
+            cout << "An error ocurred during Writing" << endl;
+            cout << "Location    = " << e.GetLocation()    << endl;
+            cout << "Description = " << e.GetDescription() << endl;
+        }
+        
+        /*// Computation of Hessian matrix based on the GGVF of the image
+         typedef itk::CovariantVector< double, 3 > GradientPixelType;
+         typedef itk::Image< GradientPixelType, 3 > GradientImageType;
+         typedef itk::GradientImageFilter< ImageType, float, double, GradientImageType > VectorGradientFilterType;
+         typedef itk::GradientRecursiveGaussianImageFilter< ImageType, GradientImageType > RVectorGradientFilterType;
+         
+         RVectorGradientFilterType::Pointer gradientMapFilter = RVectorGradientFilterType::New();
+         gradientMapFilter->SetInput( imageMiddle );
+         gradientMapFilter->SetSigma(2.0);
+         try {
+         gradientMapFilter->Update();
+         } catch( itk::ExceptionObject & e ) {
+         cerr << "Exception caught while updating gradientMapFilter " << endl;
+         cerr << e << endl;
+         return EXIT_FAILURE;
+         }
+         GradientImageType::Pointer imageVectorGradient_temp = gradientMapFilter->GetOutput();
+         
+         typedef itk::ImageRegionIterator< GradientImageType > GradientImageIterator;
+         typedef itk::ImageRegionIterator< ImageType > ImageIterator;
+         GradientImageIterator GradientIt( imageVectorGradient_temp, imageVectorGradient_temp->GetBufferedRegion() );
+         ImageType::Pointer magnitudeGradientInit = ImageType::New();
+         magnitudeGradientInit->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         magnitudeGradientInit->SetRequestedRegionToLargestPossibleRegion();
+         magnitudeGradientInit->SetBufferedRegion( magnitudeGradientInit->GetRequestedRegion() );
+         magnitudeGradientInit->SetOrigin(imageMiddle->GetOrigin());
+         magnitudeGradientInit->SetDirection(imageMiddle->GetDirection());
+         magnitudeGradientInit->SetSpacing(imageMiddle->GetSpacing());
+         magnitudeGradientInit->Allocate();
+         ImageIterator gradientMagnInitIt( magnitudeGradientInit, magnitudeGradientInit->GetBufferedRegion() );
+         gradientMagnInitIt.GoToBegin();
+         GradientIt.GoToBegin();
+         while ( !GradientIt.IsAtEnd() )
+         {
+         //cout << GradientIt.GetIndex() << " " << GradientIt.Get() << endl;
+         //cout << sqrt(GradientIt.Get()[0]*GradientIt.Get()[0]+GradientIt.Get()[1]*GradientIt.Get()[1]+GradientIt.Get()[2]*GradientIt.Get()[2]) << endl;
+         gradientMagnInitIt.Set(sqrt(GradientIt.Get()[0]*GradientIt.Get()[0]+GradientIt.Get()[1]*GradientIt.Get()[1]+GradientIt.Get()[2]*GradientIt.Get()[2]));
+         ++GradientIt;
+         ++gradientMagnInitIt;
+         }
+         WriterType::Pointer writerImM = WriterType::New();
+         itk::NiftiImageIO::Pointer ioM = itk::NiftiImageIO::New();
+         writerImM->SetImageIO(ioM);
+         writerImM->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageMagnInit.nii.gz");
+         writerImM->SetInput(magnitudeGradientInit);
+         try {
+         writerImM->Update();
+         }
+         catch( itk::ExceptionObject & e )
+         {
+         cout << "Exception thrown ! " << endl;
+         cout << "An error ocurred during Writing M" << endl;
+         cout << "Location    = " << e.GetLocation()    << endl;
+         cout << "Description = " << e.GetDescription() << endl;
+         }
+         
+         typedef itk::GradientVectorFlowImageFilter< GradientImageType, GradientImageType >  GradientVectorFlowFilterType;
+         GradientVectorFlowFilterType::Pointer gradientVectorFlowFilter = GradientVectorFlowFilterType::New();
+         gradientVectorFlowFilter->SetInput(imageVectorGradient_temp);
+         gradientVectorFlowFilter->SetIterationNum( 500 );
+         gradientVectorFlowFilter->SetNoiseLevel( 200 );
+         gradientVectorFlowFilter->SetNormalize(false);
+         try {
+         gradientVectorFlowFilter->Update();
+         } catch( itk::ExceptionObject & e ) {
+         cerr << "Exception caught while updating gradientMapFilter " << endl;
+         cerr << e << endl;
+         return EXIT_FAILURE;
+         }
+         GradientImageType::Pointer imageVectorGradient = gradientVectorFlowFilter->GetOutput();
+         GradientImageIterator GradientGVFIt( imageVectorGradient, imageVectorGradient->GetBufferedRegion() );
+         ImageType::Pointer magnitudeGVFInit = ImageType::New();
+         magnitudeGVFInit->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         magnitudeGVFInit->SetRequestedRegionToLargestPossibleRegion();
+         magnitudeGVFInit->SetBufferedRegion( magnitudeGVFInit->GetRequestedRegion() );
+         magnitudeGVFInit->SetOrigin(imageMiddle->GetOrigin());
+         magnitudeGVFInit->SetDirection(imageMiddle->GetDirection());
+         magnitudeGVFInit->SetSpacing(imageMiddle->GetSpacing());
+         magnitudeGVFInit->Allocate();
+         ImageIterator gradientMagnGVFIt( magnitudeGVFInit, magnitudeGVFInit->GetBufferedRegion() );
+         gradientMagnInitIt.GoToBegin();
+         GradientGVFIt.GoToBegin();
+         while ( !GradientGVFIt.IsAtEnd() )
+         {
+         //cout << sqrt(outputIt.Get()[0]*outputIt.Get()[0]+outputIt.Get()[1]*outputIt.Get()[1]+outputIt.Get()[2]*outputIt.Get()[2]) << endl;
+         gradientMagnGVFIt.Set(sqrt(GradientGVFIt.Get()[0]*GradientGVFIt.Get()[0]+GradientGVFIt.Get()[1]*GradientGVFIt.Get()[1]+GradientGVFIt.Get()[2]*GradientGVFIt.Get()[2]));
+         //gradientMagnGVFIt.Set(GradientGVFIt.Get()[2]);
+         ++GradientGVFIt;
+         ++gradientMagnGVFIt;
+         }
+         WriterType::Pointer writerImMGVF = WriterType::New();
+         writerImMGVF->SetImageIO(ioM);
+         writerImMGVF->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageMagnGVFInit.nii.gz");
+         writerImMGVF->SetInput(magnitudeGVFInit);
+         try {
+         writerImMGVF->Update();
+         }
+         catch( itk::ExceptionObject & e )
+         {
+         cout << "Exception thrown ! " << endl;
+         cout << "An error ocurred during Writing M" << endl;
+         cout << "Location    = " << e.GetLocation()    << endl;
+         cout << "Description = " << e.GetDescription() << endl;
+         }
+         
+         // Construction of three image from gradient image
+         
+         ImageType::Pointer gradientX = ImageType::New();
+         gradientX->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         gradientX->SetRequestedRegionToLargestPossibleRegion();
+         gradientX->SetBufferedRegion( gradientX->GetRequestedRegion() );
+         gradientX->SetOrigin(imageMiddle->GetOrigin());
+         gradientX->SetDirection(imageMiddle->GetDirection());
+         gradientX->SetSpacing(imageMiddle->GetSpacing());
+         gradientX->Allocate();
+         ImageType::Pointer gradientY = ImageType::New();
+         gradientY->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         gradientY->SetRequestedRegionToLargestPossibleRegion();
+         gradientY->SetBufferedRegion( gradientY->GetRequestedRegion() );
+         gradientY->SetOrigin(imageMiddle->GetOrigin());
+         gradientY->SetDirection(imageMiddle->GetDirection());
+         gradientY->SetSpacing(imageMiddle->GetSpacing());
+         gradientY->Allocate();
+         ImageType::Pointer gradientZ = ImageType::New();
+         gradientZ->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         gradientZ->SetRequestedRegionToLargestPossibleRegion();
+         gradientZ->SetBufferedRegion( gradientZ->GetRequestedRegion() );
+         gradientZ->SetOrigin(imageMiddle->GetOrigin());
+         gradientZ->SetDirection(imageMiddle->GetDirection());
+         gradientZ->SetSpacing(imageMiddle->GetSpacing());
+         gradientZ->Allocate();
+         GradientImageIterator outputIt( imageVectorGradient, imageVectorGradient->GetBufferedRegion() );
+         ImageIterator gradientXIt( gradientX, gradientX->GetBufferedRegion() );
+         ImageIterator gradientYIt( gradientY, gradientY->GetBufferedRegion() );
+         ImageIterator gradientZIt( gradientZ, gradientZ->GetBufferedRegion() );
+         outputIt.GoToBegin();
+         gradientXIt.GoToBegin();
+         gradientYIt.GoToBegin();
+         gradientZIt.GoToBegin();
+         
+         ImageType::Pointer magnitudeGradientIm = ImageType::New();
+         magnitudeGradientIm->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         magnitudeGradientIm->SetRequestedRegionToLargestPossibleRegion();
+         magnitudeGradientIm->SetBufferedRegion( magnitudeGradientIm->GetRequestedRegion() );
+         magnitudeGradientIm->SetOrigin(imageMiddle->GetOrigin());
+         magnitudeGradientIm->SetDirection(imageMiddle->GetDirection());
+         magnitudeGradientIm->SetSpacing(imageMiddle->GetSpacing());
+         magnitudeGradientIm->Allocate();
+         ImageIterator gradientMagnIt( magnitudeGradientIm, magnitudeGradientIm->GetBufferedRegion() );
+         gradientMagnIt.GoToBegin();
+         
+         bool normalize = true;
+         
+         while ( !outputIt.IsAtEnd() )
+         {
+         if (normalize)
+         {
+         double norm = sqrt(outputIt.Get()[0]*outputIt.Get()[0]+outputIt.Get()[1]*outputIt.Get()[1]+outputIt.Get()[2]*outputIt.Get()[2]);
+         gradientXIt.Set(outputIt.Get()[0]/norm);
+         gradientYIt.Set(outputIt.Get()[1]/norm);
+         gradientZIt.Set(outputIt.Get()[2]/norm);
+         }
+         else
+         {
+         gradientXIt.Set(outputIt.Get()[0]);
+         gradientYIt.Set(outputIt.Get()[1]);
+         gradientZIt.Set(outputIt.Get()[2]);
+         }
+         
+         //cout << sqrt(outputIt.Get()[0]*outputIt.Get()[0]+outputIt.Get()[1]*outputIt.Get()[1]+outputIt.Get()[2]*outputIt.Get()[2]) << endl;
+         gradientMagnIt.Set(sqrt(outputIt.Get()[0]*outputIt.Get()[0]+outputIt.Get()[1]*outputIt.Get()[1]+outputIt.Get()[2]*outputIt.Get()[2]));
+         
+         ++outputIt;
+         ++gradientXIt;
+         ++gradientYIt;
+         ++gradientZIt;
+         ++gradientMagnIt;
+         }
+         
+         WriterType::Pointer writerImMM = WriterType::New();
+         writerImMM->SetImageIO(ioM);
+         writerImMM->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageMagn.nii.gz");
+         writerImMM->SetInput(magnitudeGradientIm);
+         try {
+         writerImMM->Update();
+         }
+         catch( itk::ExceptionObject & e )
+         {
+         cout << "Exception thrown ! " << endl;
+         cout << "An error ocurred during Writing M" << endl;
+         cout << "Location    = " << e.GetLocation()    << endl;
+         cout << "Description = " << e.GetDescription() << endl;
+         }
+         
+         
+         // Computation of the Hessian matrix
+         //typedef itk::GradientImageFilter< ImageType, float, double, GradientImageType > VectorGradientFilterType;
+         typedef itk::GradientRecursiveGaussianImageFilter< ImageType, GradientImageType > VectorRGradientFilterType;
+         
+         VectorGradientFilterType::Pointer gradientMapFilterX = VectorGradientFilterType::New();
+         gradientMapFilterX->SetInput( gradientX );
+         try {
+         gradientMapFilterX->Update();
+         } catch( itk::ExceptionObject & e ) {
+         cerr << "Exception caught while updating gradientMapFilter " << endl;
+         cerr << e << endl;
+         return EXIT_FAILURE;
+         }
+         GradientImageType::Pointer gradientX_gradient = gradientMapFilterX->GetOutput();
+         VectorGradientFilterType::Pointer gradientMapFilterY = VectorGradientFilterType::New();
+         gradientMapFilterY->SetInput( gradientY );
+         try {
+         gradientMapFilterY->Update();
+         } catch( itk::ExceptionObject & e ) {
+         cerr << "Exception caught while updating gradientMapFilter " << endl;
+         cerr << e << endl;
+         return EXIT_FAILURE;
+         }
+         GradientImageType::Pointer gradientY_gradient = gradientMapFilterY->GetOutput();
+         VectorGradientFilterType::Pointer gradientMapFilterZ = VectorGradientFilterType::New();
+         gradientMapFilterZ->SetInput( gradientZ );
+         try {
+         gradientMapFilterZ->Update();
+         } catch( itk::ExceptionObject & e ) {
+         cerr << "Exception caught while updating gradientMapFilter " << endl;
+         cerr << e << endl;
+         return EXIT_FAILURE;
+         }
+         GradientImageType::Pointer gradientZ_gradient = gradientMapFilterZ->GetOutput();
+         
+         
+         ImageType::Pointer imageT = ImageType::New();
+         imageT->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         imageT->SetRequestedRegionToLargestPossibleRegion();
+         imageT->SetBufferedRegion( imageT->GetRequestedRegion() );
+         imageT->SetOrigin(imageMiddle->GetOrigin());
+         imageT->SetDirection(imageMiddle->GetDirection());
+         imageT->SetSpacing(imageMiddle->GetSpacing());
+         imageT->Allocate();
+         ImageIterator imageTIt( imageT, imageT->GetBufferedRegion() );
+         GradientImageIterator gradientX_gradientIt( gradientX_gradient, gradientX_gradient->GetBufferedRegion() );
+         GradientImageIterator gradientY_gradientIt( gradientY_gradient, gradientY_gradient->GetBufferedRegion() );
+         GradientImageIterator gradientZ_gradientIt( gradientZ_gradient, gradientZ_gradient->GetBufferedRegion() );
+         imageTIt.GoToBegin();
+         gradientX_gradientIt.GoToBegin();
+         gradientY_gradientIt.GoToBegin();
+         gradientZ_gradientIt.GoToBegin();
+         
+         double alpha = 0.5, beta = 0.5, gamma = 100;*/
+        
+        typedef itk::SymmetricSecondRankTensor< double, 3 > MatrixType;
+        typedef itk::Image< MatrixType, 3> HessianImageType;
+        typedef itk::ImageRegionIterator< HessianImageType > HessianImageIterator;
+        /*HessianImageType::Pointer imageHessian = HessianImageType::New();
+         imageHessian->SetLargestPossibleRegion( imageMiddle->GetLargestPossibleRegion() );
+         imageHessian->SetRequestedRegionToLargestPossibleRegion();
+         imageHessian->SetBufferedRegion( imageHessian->GetRequestedRegion() );
+         imageHessian->SetOrigin(imageMiddle->GetOrigin());
+         imageHessian->SetDirection(imageMiddle->GetDirection());
+         imageHessian->SetSpacing(imageMiddle->GetSpacing());
+         imageHessian->Allocate();
+         HessianImageIterator hessianImageIt( imageHessian, imageHessian->GetBufferedRegion() );
+         hessianImageIt.GoToBegin();
+         
+         double max_T = 0.0;
+         while ( !hessianImageIt.IsAtEnd() )
+         {
+         MatrixType hessianMatrix;
+         hessianMatrix(0,0) = gradientX_gradientIt.Get()[0];
+         hessianMatrix(1,0) = gradientX_gradientIt.Get()[1];
+         hessianMatrix(2,0) = gradientX_gradientIt.Get()[2];
+         hessianMatrix(1,1) = gradientY_gradientIt.Get()[1];
+         hessianMatrix(2,1) = gradientY_gradientIt.Get()[2];
+         hessianMatrix(2,2) = gradientZ_gradientIt.Get()[2];
+         
+         
+         hessianImageIt.Set(hessianMatrix);
+         
+         ++gradientX_gradientIt;
+         ++gradientY_gradientIt;
+         ++gradientZ_gradientIt;
+         ++hessianImageIt;
+         }*/
+        
+        
+        
+        typedef itk::HessianRecursiveGaussianImageFilter< ImageType >     HessianFilterType;
+        typedef itk::Hessian3DToVesselnessMeasureImageFilter< double > VesselnessMeasureFilterType;
+        HessianFilterType::Pointer hessianFilter = HessianFilterType::New();
+        VesselnessMeasureFilterType::Pointer vesselnessFilter = VesselnessMeasureFilterType::New();
+        hessianFilter->SetInput( imageMiddle );
+        hessianFilter->SetSigma( 3.0 );
+        hessianFilter->Update();
+        HessianImageType::Pointer imageHessianITK = hessianFilter->GetOutput();
+        
+        
+        //HessianImageIterator hessianImageUseIt( imageHessianITK, imageHessianITK->GetBufferedRegion() ); // Use ITK hessian image
+        /*HessianImageIterator hessianImageUseIt( imageHessian, imageHessian->GetBufferedRegion() ); // Use my Hessian image
+         hessianImageUseIt.GoToBegin();
+         while ( !imageTIt.IsAtEnd() )
+         {
+         MatrixType hessianMatrix = hessianImageUseIt.Get();
+         MatrixType::EigenValuesArrayType eigenValues;
+         hessianMatrix.ComputeEigenValues(eigenValues);
+         vector<double> temp = vector<double>(3); temp[0] = eigenValues[0]; temp[1] = eigenValues[1]; temp[2] = eigenValues[2];
+         sort(temp.begin(), temp.end(),[](double a, double b){ return abs(a)<abs(b); });
+         eigenValues[0] = temp[0]; eigenValues[1] = temp[1]; eigenValues[2] = temp[2];
+         
+         if (eigenValues[1] > 0 || eigenValues[2] > 0)
+         {
+         imageTIt.Set(0.0);
+         }
+         else
+         {
+         double Ra = abs(eigenValues[0])/(sqrt(abs(eigenValues[1])*abs(eigenValues[2])));
+         double Rb = abs(eigenValues[1])/abs(eigenValues[2]);
+         double S = sqrt(eigenValues[0]*eigenValues[0]+eigenValues[1]*eigenValues[1]+eigenValues[2]*eigenValues[2]);
+         double T = (1-exp(-(Ra*Ra)/(2*alpha*alpha)))*exp(-(Rb*Rb)/(2*beta*beta))*(1-exp(-(S*S)/(2*gamma*gamma)));
+         imageTIt.Set(T);
+         cout << imageTIt.GetIndex() << " " << eigenValues << " " << Ra << " " << Rb << " " << S << " " << T << endl;
+         if (T > max_T) max_T = T;
+         }
+         
+         ++imageTIt;
+         ++hessianImageUseIt;
+         }
+         cout << "Maximum T = " << max_T << endl;
+         imageTIt.GoToBegin();
+         while ( !imageTIt.IsAtEnd() )
+         {
+         imageTIt.Set(imageTIt.Get()/max_T);
+         ++imageTIt;
+         }
+         
+         WriterType::Pointer writerIm1 = WriterType::New();
+         writerIm1->SetImageIO(io);
+         writerIm1->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageT.nii.gz");
+         writerIm1->SetInput(imageT);
+         try {
+         writerIm1->Update();
+         }
+         catch( itk::ExceptionObject & e )
+         {
+         cout << "Exception thrown ! " << endl;
+         cout << "An error ocurred during Writing T" << endl;
+         cout << "Location    = " << e.GetLocation()    << endl;
+         cout << "Description = " << e.GetDescription() << endl;
+         }*/
+        
+        
+        
+        
+        
+        vesselnessFilter->SetInput( imageHessianITK ); // output of the itk hessian image*/
+        //vesselnessFilter->SetInput( imageHessian ); // output of the my hessian image
+        vesselnessFilter->SetAlpha1( 0.5 );
+        vesselnessFilter->SetAlpha2( 2.0 );
+        vesselnessFilter->Update();
+        WriterType::Pointer writerVesselNess = WriterType::New();
+        itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
+        writerVesselNess->SetImageIO(ioV);
+        writerVesselNess->SetInput( vesselnessFilter->GetOutput() );
+        writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageVesselNessFilter.nii.gz");
+        try {
+            writerVesselNess->Update();
+        }
+        catch( itk::ExceptionObject & e )
+        {
+            cout << "Exception thrown ! " << endl;
+            cout << "An error ocurred during Writing 1" << endl;
+            cout << "Location    = " << e.GetLocation()    << endl;
+            cout << "Description = " << e.GetDescription() << endl;
+        }
+        
+        
+        //mutualInformation[value] = startCrop;
+    }
+    return 0;
+}
+
+
+
+
+
+int Initialisation::symmetryDetection(ImageType2D::Pointer im, double cropWidth_, double bandWidth_)
+{
+    
+    
+    ImageType2D::SpacingType spacingIm = im->GetSpacing();
+    int cropSize = cropWidth_/spacingIm[0];
+    ImageType2D::SizeType desiredSize = im->GetLargestPossibleRegion().GetSize();
+    
+    ImageType2D::SizeType desiredSizeInitial = im->GetLargestPossibleRegion().GetSize();
+    
+    map<double,int> mutualInformation;
+    int startSlice = desiredSizeInitial[0]/4, endSlice = desiredSizeInitial[0]/4*3;
+    if (desiredSizeInitial[0] < cropSize*2) {
+        startSlice = cropSize/2;
+        endSlice = desiredSizeInitial[0]-cropSize/2;
+    }
+    
+	typedef itk::MinimumMaximumImageCalculator<ImageType2D> MinMaxCalculatorType;
+	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
+	minMaxCalculator->SetImage(im);
+	minMaxCalculator->ComputeMaximum();
+	minMaxCalculator->ComputeMinimum();
+	ImageType2D::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
+	if (maxIm == minIm) {
+		cerr << "ERROR: The image where the symmetry will be detected is full of constant value (" << maxIm << "). You can change it using -init parameter." << endl;
+		return -1;
+	}
+    
+    
+    for (int i=startSlice; i<endSlice; i++)
+    {
+        float startCrop = i, size;
+        if (startCrop < desiredSizeInitial[0]/2 && startCrop <= bandWidth_+1) size = startCrop-1;
+        else if (startCrop >= desiredSizeInitial[0]/2 && startCrop >= desiredSizeInitial[0]-bandWidth_-1) size = desiredSizeInitial[0]-startCrop-1;
+        else size = bandWidth_;
+        ImageType2D::IndexType desiredStart;
+        ImageType2D::SizeType desiredSize = desiredSizeInitial;
+        desiredStart[0] = startCrop;
+        desiredStart[1] = desiredSizeInitial[1]/2-(cropSize+5)/2;
+        desiredSize[0] = size;
+        desiredSize[1] = cropSize+5;
+        
+        // Right Image
+        ImageType2D::RegionType desiredRegionImageRight(desiredStart, desiredSize);
+        typedef itk::ExtractImageFilter< ImageType2D, ImageType2D > Crop2DFilterType;
+        Crop2DFilterType::Pointer cropFilterRight = Crop2DFilterType::New();
+        cropFilterRight->SetInput(im);
+        cropFilterRight->SetExtractionRegion(desiredRegionImageRight);
+#if ITK_VERSION_MAJOR >= 4
+        cropFilterRight->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+        try {
+            cropFilterRight->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while updating cropFilter " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        ImageType2D::Pointer imageRight = cropFilterRight->GetOutput();
+        
+        // middle image
+        desiredStart[0] = startCrop-size;
+        if (desiredStart[0] < 0) desiredStart[0] = 0;
+        desiredSize[0] = size*2;
+        ImageType2D::RegionType desiredRegionImage(desiredStart, desiredSize);
+        Crop2DFilterType::Pointer cropFilter = Crop2DFilterType::New();
+        cropFilter->SetExtractionRegion(desiredRegionImage);
+        cropFilter->SetInput(im);
+#if ITK_VERSION_MAJOR >= 4
+        cropFilter->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+        try {
+            cropFilter->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while updating cropFilter " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        ImageType2D::Pointer imageMiddle = cropFilter->GetOutput();
+        
+        // Computation of Hessian matrix based on the GGVF of the image
+        typedef itk::CovariantVector< double, 2 > Gradient2DPixelType;
+        typedef itk::Image< Gradient2DPixelType, 2 > Gradient2DImageType;
+        typedef itk::GradientImageFilter< ImageType2D, float, double, Gradient2DImageType > VectorGradient2DFilterType;
+        VectorGradient2DFilterType::Pointer gradientMapFilter = VectorGradient2DFilterType::New();
+        gradientMapFilter->SetInput( imageMiddle );
+        try {
+            gradientMapFilter->Update();
+        } catch( itk::ExceptionObject & e ) {
+            cerr << "Exception caught while updating gradientMapFilter " << endl;
+            cerr << e << endl;
+            return EXIT_FAILURE;
+        }
+        Gradient2DImageType::Pointer imageVectorGradient_temp = gradientMapFilter->GetOutput();
+        
+        typedef itk::GradientVectorFlowImageFilter< Gradient2DImageType, Gradient2DImageType >  GradientVectorFlowFilterType;
+        GradientVectorFlowFilterType::Pointer gradientVectorFlowFilter = GradientVectorFlowFilterType::New();
+        gradientVectorFlowFilter->SetInput(imageVectorGradient_temp);
+        gradientVectorFlowFilter->SetIterationNum( 100 );
+        gradientVectorFlowFilter->SetNoiseLevel( 1 );
+        //gradientVectorFlowFilter->SetNormalize(true);
+        try {
+            gradientVectorFlowFilter->Update();
+        } catch( itk::ExceptionObject & e ) {
+            cerr << "Exception caught while updating gradientMapFilter " << endl;
+            cerr << e << endl;
+            return EXIT_FAILURE;
+        }
+        Gradient2DImageType::Pointer imageVectorGradient = gradientVectorFlowFilter->GetOutput();
+        
+        
+        // Computation of the Hessian matrix
+        typedef itk::RecursiveGaussianImageFilter<Gradient2DImageType,Gradient2DImageType> DerivativeFilterType;
+        DerivativeFilterType::Pointer m_DerivativeFilter = DerivativeFilterType::New();
+        m_DerivativeFilter->SetOrder(DerivativeFilterType::FirstOrder);
+        m_DerivativeFilter->SetInput( imageVectorGradient );
+        
+        
+        // Left Image
+        desiredStart[0] = startCrop-size;
+        if (desiredStart[0] < 0) desiredStart[0] = 0;
+        desiredSize[0] = size;
+        ImageType2D::RegionType desiredRegionImageLeft(desiredStart, desiredSize);
+        Crop2DFilterType::Pointer cropFilterLeft = Crop2DFilterType::New();
+        cropFilterLeft->SetExtractionRegion(desiredRegionImageLeft);
+        cropFilterLeft->SetInput(im);
+#if ITK_VERSION_MAJOR >= 4
+        
+        cropFilterLeft->SetDirectionCollapseToIdentity(); // This is required.
+#endif
+        try {
+            cropFilterLeft->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while updating cropFilter " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        ImageType2D::Pointer imageLeft = cropFilterLeft->GetOutput();
+        
+        ImageType2D::IndexType desIndex; desIndex.Fill(0);
+        ImageType2D::SizeType desSize; desSize[0] = desiredSize[0]; desSize[1] = desiredSize[1];
+        ImageType2D::RegionType desired2DRegionImageRight(desIndex, desSize);
+        ImageType2D::RegionType desired2DRegionImageLeft(desIndex, desSize);
+        imageRight->SetLargestPossibleRegion(desired2DRegionImageRight);
+        imageRight->SetRequestedRegion(desired2DRegionImageRight);
+        imageRight->SetRegions(desired2DRegionImageRight);
+        imageLeft->SetLargestPossibleRegion(desired2DRegionImageLeft);
+        imageLeft->SetRequestedRegion(desired2DRegionImageLeft);
+        imageLeft->SetRegions(desired2DRegionImageLeft);
+        
+        
+        itk::FixedArray<bool, 2> flipAxes;
+        flipAxes[0] = true;
+        flipAxes[1] = false;
+        typedef itk::FlipImageFilter <ImageType2D> FlipImageFilterType;
+        FlipImageFilterType::Pointer flipFilter = FlipImageFilterType::New ();
+        flipFilter->SetInput(imageRight);
+        flipFilter->SetFlipAxes(flipAxes);
+        flipFilter->Update();
+        imageRight = flipFilter->GetOutput();
+        
+        ImageType2D::PointType origin = imageLeft->GetOrigin();
+        imageRight->SetOrigin(origin);
+        
+        typedef itk::Image< unsigned short, 2 >	ImageType2DUI;
+        typedef itk::ResampleImageFilter<ImageType2D, ImageType2DUI> ResampleImageFilterTypeunsignedint;
+        ResampleImageFilterTypeunsignedint::Pointer resfilter = ResampleImageFilterTypeunsignedint::New();
+        resfilter->SetInput(imageRight);
+        resfilter->SetSize(imageRight->GetLargestPossibleRegion().GetSize());
+        resfilter->SetOutputDirection(imageRight->GetDirection());
+        resfilter->SetOutputOrigin(imageRight->GetOrigin());
+        resfilter->SetOutputSpacing(imageRight->GetSpacing());
+        resfilter->SetTransform(TransformType::New());
+        resfilter->Update();
+        typedef itk::ImageFileWriter< ImageType2DUI > WriterRGBType;
+		itk::PNGImageIO::Pointer ioPNG = itk::PNGImageIO::New();
+		WriterRGBType::Pointer writerPNG = WriterRGBType::New();
+		writerPNG->SetInput(resfilter->GetOutput());
+		writerPNG->SetImageIO(ioPNG);
+        stringstream ss;
+        ss << i;
+        string str = ss.str();
+		writerPNG->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t2star/errsm_01/imageRight"+ss.str()+".png");
+		try {
+		    writerPNG->Update();
+		}
+		catch( itk::ExceptionObject & e )
+		{
+			cout << "Exception thrown ! " << endl;
+			cout << "An error ocurred during Writing PNG" << endl;
+			cout << "Location    = " << e.GetLocation()    << endl;
+			cout << "Description = " << e.GetDescription() << endl;
+		}
+        ResampleImageFilterTypeunsignedint::Pointer resfilter2 = ResampleImageFilterTypeunsignedint::New();
+        resfilter2->SetInput(imageLeft);
+        resfilter2->SetSize(imageLeft->GetLargestPossibleRegion().GetSize());
+        resfilter2->SetOutputDirection(imageLeft->GetDirection());
+        resfilter2->SetOutputOrigin(imageLeft->GetOrigin());
+        resfilter2->SetOutputSpacing(imageLeft->GetSpacing());
+        resfilter2->SetTransform(TransformType::New());
+        resfilter2->Update();
+        WriterRGBType::Pointer writerPNG2 = WriterRGBType::New();
+		writerPNG2->SetInput(resfilter2->GetOutput());
+		writerPNG2->SetImageIO(ioPNG);
+		writerPNG2->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t2star/errsm_01/imageLeft"+ss.str()+".png");
+		try {
+		    writerPNG2->Update();
+		}
+		catch( itk::ExceptionObject & e )
+		{
+			cout << "Exception thrown ! " << endl;
+			cout << "An error ocurred during Writing PNG" << endl;
+			cout << "Location    = " << e.GetLocation()    << endl;
+			cout << "Description = " << e.GetDescription() << endl;
+		}
+        
+        MinMaxCalculatorType::Pointer minMaxCalculatorLeft = MinMaxCalculatorType::New();
+        minMaxCalculatorLeft->SetImage(imageLeft);
+        minMaxCalculatorLeft->ComputeMaximum();
+        minMaxCalculatorLeft->ComputeMinimum();
+        ImageType2D::PixelType maxImLeft = minMaxCalculatorLeft->GetMaximum(), minImLeft = minMaxCalculatorLeft->GetMinimum();
+        //if (maxImLeft-minImLeft <200) cout << "ATTENTION!! " << i << " " << maxImLeft-minImLeft << endl;
+        MinMaxCalculatorType::Pointer minMaxCalculatorRight = MinMaxCalculatorType::New();
+        minMaxCalculatorRight->SetImage(imageRight);
+        minMaxCalculatorRight->ComputeMaximum();
+        minMaxCalculatorRight->ComputeMinimum();
+        ImageType2D::PixelType maxImRight = minMaxCalculatorRight->GetMaximum(), minImRight = minMaxCalculatorRight->GetMinimum();
+        //if (maxImRight-minImRight <200) cout << "ATTENTION!! " << i << " " << maxImRight-minImRight << endl;
+        
+        if (maxImLeft-minImLeft > 250 && maxImRight-minImRight > 250)
+        {
+            // Better value is minimum
+            //typedef itk::MattesMutualInformationImageToImageMetric< ImageType2D, ImageType2D > SimilarityFilter;
+            typedef itk::MeanReciprocalSquareDifferenceImageToImageMetric< ImageType2D, ImageType2D > SimilarityFilter;
+            //typedef itk::NormalizedCorrelationImageToImageMetric< ImageType2D, ImageType2D > SimilarityFilter;
+            SimilarityFilter::Pointer correlationFilter = SimilarityFilter::New();
+            typedef itk::IdentityTransform< double,2 > IdentityTransform;
+            IdentityTransform::Pointer transform = IdentityTransform::New();
+            correlationFilter->SetTransform(transform);
+            typedef itk::NearestNeighborInterpolateImageFunction< ImageType2D, double > InterpolatorType;
+            InterpolatorType::Pointer interpolator = InterpolatorType::New();
+            interpolator->SetInputImage(imageRight);
+            correlationFilter->SetInterpolator(interpolator);
+            correlationFilter->SetFixedImage(imageLeft);
+            correlationFilter->SetMovingImage(imageRight);
+            correlationFilter->SetFixedImageRegion(imageLeft->GetLargestPossibleRegion());
+            correlationFilter->UseAllPixelsOn();
+            correlationFilter->Initialize();
+            SimilarityFilter::TransformParametersType id(2);
+            
+            id[0] = 0; id[1] = 0;
+            double value = 0.0;
+            try {
+                value = correlationFilter->GetValue( id );
+            } catch( itk::ExceptionObject & e ) {
+                std::cerr << "Exception caught while getting value " << std::endl;
+                std::cerr << e << std::endl;
+            }
+            mutualInformation[value] = startCrop;
+        }
+    }
+    //cout << "Cropping around slice = " << mutualInformation.begin()->second << endl;
+    int middleSlice_ = mutualInformation.begin()->second;
+    for (map<double,int>::iterator it=mutualInformation.begin(); it!=mutualInformation.end(); it++)
+        cout << it->first << " " << it->second << endl;
+    int k;
+    cin >> k;
+    return middleSlice_;
 }

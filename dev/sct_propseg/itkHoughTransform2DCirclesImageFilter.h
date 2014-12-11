@@ -198,6 +198,8 @@ private:
   double m_SigmaGradient;
   double m_GradientFactor; // modif
 
+  OutputImagePointer    m_InternalImage;
+    
   OutputImagePointer    m_RadiusImage;
   CirclesListType       m_CirclesList;
   CirclesListSizeType   m_NumberOfCircles;
