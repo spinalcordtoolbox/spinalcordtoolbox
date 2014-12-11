@@ -23,6 +23,8 @@
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkGaussianDerivativeImageFunction.h"
 #include "itkMinimumMaximumImageCalculator.h"
+#include "itkImageDuplicator.h"
+#include <iostream>
 
 namespace itk
 {
@@ -83,6 +85,14 @@ HoughTransform2DCirclesImageFilter< TInputPixelType, TOutputPixelType >
   // Get the input and output pointers
   InputImageConstPointer inputImage = this->GetInput(0);
   OutputImagePointer     outputImage = this->GetOutput(0);
+    
+    m_InternalImage = OutputImageType::New();
+    m_InternalImage->SetRegions( outputImage->GetLargestPossibleRegion() );
+    m_InternalImage->SetOrigin( inputImage->GetOrigin() );
+    m_InternalImage->SetSpacing( inputImage->GetSpacing() );
+    m_InternalImage->SetDirection( inputImage->GetDirection() );
+    m_InternalImage->Allocate();
+    m_InternalImage->FillBuffer(0);
 
   // Allocate the output
   this->AllocateOutputs();
@@ -140,10 +150,15 @@ HoughTransform2DCirclesImageFilter< TInputPixelType, TOutputPixelType >
                                  + ( index[0] - point[0] ) * ( index[0] - point[0] ) );
 
             if ( outputImage->GetRequestedRegion().IsInside(index) )
-              {
-              outputImage->SetPixel(index, outputImage->GetPixel(index) + 1);
-              m_RadiusImage->SetPixel( index, ( m_RadiusImage->GetPixel(index) + distance ) );
-              }
+            {
+                // In the basic implementation of the Hough transform, the accumulator map add the value 1 every time the voxel is encounter. To improve the robustness towards noise, we can add the norm of the gradient instead of 1. However, we need image with accumulation of 1 for averaging the radii
+                //std::cout << norm << std::endl;
+                if (norm > 0.1) {
+                m_InternalImage->SetPixel(index, m_InternalImage->GetPixel(index) + 1);
+                outputImage->SetPixel(index, outputImage->GetPixel(index) + 1);
+                m_RadiusImage->SetPixel( index, ( m_RadiusImage->GetPixel(index) + distance ) );
+                }
+            }
 
             i = i + 1;
             }
@@ -156,18 +171,19 @@ HoughTransform2DCirclesImageFilter< TInputPixelType, TOutputPixelType >
     }
 
   // Compute the average radius
-  ImageRegionConstIterator< OutputImageType > output_it( outputImage, outputImage->GetLargestPossibleRegion() );
+  //ImageRegionConstIterator< OutputImageType > output_it( outputImage, outputImage->GetLargestPossibleRegion() );
+    ImageRegionConstIterator< OutputImageType > internal_it( m_InternalImage, m_InternalImage->GetLargestPossibleRegion() );
   ImageRegionIterator< OutputImageType >      radius_it( m_RadiusImage, m_RadiusImage->GetLargestPossibleRegion() );
-  output_it.GoToBegin();
   radius_it.GoToBegin();
-  while ( !output_it.IsAtEnd() )
+    internal_it.GoToBegin();
+  while ( !internal_it.IsAtEnd() )
     {
-    if ( output_it.Get() > 0 )
+    if ( internal_it.Get() > 0 )
       {
-      radius_it.Set( radius_it.Get() / output_it.Get() );
+      radius_it.Set( radius_it.Get() / internal_it.Get() );
       }
-    ++output_it;
     ++radius_it;
+    ++internal_it;
     }
 }
 
