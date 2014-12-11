@@ -655,8 +655,8 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
     :labels: nlabel tuple of (nx,ny,nz) array
     """
 
-    perc_var_label = adv_param[0]  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = adv_param[1]  # variance of the gaussian-distributed noise
+    perc_var_label = int(adv_param[0])  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+    var_noise = int(adv_param[1])  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
