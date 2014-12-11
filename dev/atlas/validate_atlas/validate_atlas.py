@@ -38,11 +38,11 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 
 def main():
     # Parameters
-    bootstrap_iter = 1
+    bootstrap_iter = 200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
-    std_noise_list = [50]  #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [10]  #[0, 5, 10, 20, 50]  # in percent
+    std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [0, 5, 10, 20, 50]  # in percent
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
@@ -78,6 +78,7 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     index_dorsalcolumn = 2  # index of dorsal column in list_tracts
     nb_tracts_all = 32  # total number of tracts in atlas (do not include CSF tracts)
     list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
+    param_map = ['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
     zero_last_tract = 1  # if last tract correspond to CSF, zero it
@@ -92,6 +93,8 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
     nb_tracts = len(list_tracts)
     perc_error = np.zeros(shape=(nb_tracts, nb_methods, nb_bootstraps))  # percent error within single tract (for comparison with manual labeling)
     perc_error_all = np.zeros(shape=(nb_tracts_all, nb_methods, nb_bootstraps))  # percent error for all tracts (for comparing automatic methods)
+    stat_perc_error_all = np.zeros(shape=(nb_methods, nb_bootstraps, 4))  # statistics
+    list_stat = ['MSE', 'median', 'min', 'max']
     x_true_i = np.zeros(shape=(nb_tracts))
     fname_phantom = folder_tmp+file_phantom
     fname_phantom_noise = folder_tmp+file_phantom_noise
@@ -192,7 +195,12 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
                 x_estim_i_all = read_results(fname_extract_metrics)
                 # get nonzero values
                 index_nonzero = np.nonzero(values_synthetic_data)
-                perc_error_all[:, i_method, i_bootstrap] = 100 * (x_estim_i_all[index_nonzero] - values_synthetic_data[index_nonzero]) / values_synthetic_data[index_nonzero]  # will be used to display boxcar
+                perc_error_all[0:nb_tracts_all, i_method, i_bootstrap] = 100 * (x_estim_i_all[index_nonzero] - values_synthetic_data[index_nonzero]) / values_synthetic_data[index_nonzero]  # will be used to display boxcar
+                # compute mean squared error
+                stat_perc_error_all[i_method, i_bootstrap, 0] = (perc_error_all[:, i_method, i_bootstrap] ** 2).mean()  # mean squared error
+                stat_perc_error_all[i_method, i_bootstrap, 1] = np.median(perc_error_all[:, i_method, i_bootstrap])  # median
+                stat_perc_error_all[i_method, i_bootstrap, 2] = min(perc_error_all[:, i_method, i_bootstrap])
+                stat_perc_error_all[i_method, i_bootstrap, 3] = max(perc_error_all[:, i_method, i_bootstrap])
 
     # Calculate elapsed time
     elapsed_time = int(round(time.time() - start_time))
@@ -268,6 +276,17 @@ def validate_atlas(folder_atlas, nb_bootstraps, std_noise, range_tract, results_
             # check if method is automatic
             if list_methods[i_method].find('man') == -1:
                 text_results = text_results + ', ' + str(round(np.mean(perc_error_all[i_tract, i_method, :]), ndigits=nb_digits_results))+'('+str(round(np.std(perc_error_all[i_tract, i_method, :]), ndigits=nb_digits_results))+')'
+        print >>results_text, text_results
+
+    # loop across statistics
+    nb_stats = len(list_stat)
+    for i_stat in range(nb_stats):
+        text_results = list_stat[i_stat]
+        # loop across methods
+        for i_method in range(len(list_methods)):
+            # check if method is automatic
+            if list_methods[i_method].find('man') == -1:
+                text_results = text_results + ', ' + str(round(np.mean(stat_perc_error_all[i_method, :, i_stat]), ndigits=nb_digits_results))+'('+str(round(np.std(stat_perc_error_all[i_method, :, i_stat]), ndigits=nb_digits_results))+')'
         print >>results_text, text_results
 
     # close file
