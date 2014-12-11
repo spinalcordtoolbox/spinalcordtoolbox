@@ -202,7 +202,7 @@ def main():
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
-    print '  advanced parameters ....... '+adv_param
+    print '  advanced parameters ....... '+str(adv_param)
 
     # Check if the orientation of the data is RPI
     orientation_data = get_orientation(fname_data)
