@@ -50,7 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-
+        self.adv_param = ['25',  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '25'] # variance of the gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -88,6 +89,8 @@ def main():
     verbose = param.verbose
     flag_h = 0
     ml_clusters = param.ml_clusters
+    adv_param = param.adv_param
+    adv_param_user = ''
 
     # Parameters for debug mode
     if param.debug:
@@ -106,7 +109,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hac:f:i:l:m:n:o:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'hac:f:i:l:m:n:o:p:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
@@ -131,6 +134,8 @@ def main():
                 fname_normalizing_label = arg
             elif opt in '-o': # output option
                 fname_output = arg  # fname of output file
+            elif opt in '-p':
+                adv_param_user = arg
             elif opt in '-v':
                 # vertebral levels option, if the user wants to average the metric across specific vertebral levels
                  vertebral_levels = arg
@@ -174,6 +179,12 @@ def main():
     # Check input parameters
     check_method(method, fname_normalizing_label, normalization_method)
 
+    # parse argument for param
+    if not adv_param_user == '':
+        adv_param = adv_param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        del adv_param_user  # clean variable
+        # TODO: check integrity of input
+
     # Extract label info
     label_id, label_name, label_file = read_label_file(path_label)
     nb_labels_total = len(label_id)
@@ -191,6 +202,7 @@ def main():
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
+    print '  advanced parameters ....... '+adv_param
 
     # Check if the orientation of the data is RPI
     orientation_data = get_orientation(fname_data)
@@ -301,7 +313,7 @@ def main():
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, ml_clusters_array)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, ml_clusters_array, adv_param)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
@@ -637,14 +649,14 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose, ml_clusters):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_param):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
     """
 
-    perc_var_label = 25  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = 25  # variance of the gaussian-distributed noise
+    perc_var_label = adv_param[0]  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+    var_noise = adv_param[1]  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
@@ -663,8 +675,8 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters):
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
     ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
-    ind_positive_data = data > -9999999999  # data > 0
-    ind_positive = ind_positive_labels & ind_positive_data
+    # ind_positive_data = data > -9999999999  # data > 0
+    ind_positive = ind_positive_labels  # & ind_positive_data
     data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
     for i in range(0, nb_labels):
@@ -827,7 +839,7 @@ OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
-  -m {ml,mlwa,map,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
+  -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                           mlwa: robust maximum likelihood (computed within clusters, as defined
                                 by flag -c), followed by weighted average
@@ -837,13 +849,15 @@ OPTIONAL ARGUMENTS
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
   -c <clusters>         clusters of labels to estimate robust maximum likelihood from. Clusters are
-                          separated by ','. Labels are separated by ':'. Default = """+param.ml_clusters+"""
+                          separated by ','. Labels are separated by ':'. Default = """+param_default.ml_clusters+"""
                           N.B. only use this flag with methods mlwa or map.
-  -p <param>            advanced parameters used with map method:
-
+  -p <param>            advanced parameters.
+                          All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
+                          #1: variance across labels, in percentage of the mean (used for map)
+                          #2: variance of the Gaussian noise (used for map)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
-                        Default = """+param.fname_output+"""
+                        Default = """+param_default.fname_output+"""
   -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
   -z <zmin:zmax>        Slice range to estimate the metric from. First slice is 0. Example: 5:23
                         You can also select specific slices using commas. Example: 0,2,3,5,12
@@ -876,6 +890,7 @@ List of labels in: """+file_label+""":
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    param_default = Param()
     param = Param()
     color = Color()
     # call main function
