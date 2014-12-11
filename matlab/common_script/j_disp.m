@@ -1,7 +1,5 @@
 function j_disp(fname,txt)
 
-
-
 % open log file
 fid = fopen(fname,'a');
 

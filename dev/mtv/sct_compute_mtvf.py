@@ -85,6 +85,16 @@ def main():
     box_mask = None
     verbose = param.verbose
 
+    # Check input parameters
+    parser = Parser(__file__)
+    parser.usage.set_description('compute MTV')
+    parser.add_option("-a", "int", "Flip angle", True,'60')
+    parser.add_option("-b", "str", "alpha_b1map_smooth", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
+    parser.add_option("-c", "str", "CSF mask", True, "PD_map,mtvf_map")
+    parser.add_option("-f", "str", "Flip angles", True, "t2_segin_cropped_over_mask.nii.gz")
+    parser.add_option("-o", "str", "output file name", True, "t2_segin_cropped_over_mask.nii.gz")
+    usage = parser.usage.generate()
+
     # Parameters for debug mode
     if param.debug:
         working_dir = '/Volumes/users_hd2-1/slevy/data/criugm/d_sp_pain_pilot2/mtv'
@@ -99,32 +109,16 @@ def main():
         method = 'mean-PD-in-CSF-from-mean-SPGR'
         fname_spgr_seg = 'spgr10_crop_seg_modif.nii.gz'
         tr = float(0.01)
-
-    # Check input parameters
-    parser = Parser(__file__)
-    parser.usage.set_description('compute MTV')
-    parser.add_option("-a", "int", "image you want to crop", True, "60")
-    parser.add_option("-i", "str", "Two NIFTI : flip angle alpha and 2*alpha", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
-    parser.add_option("-o", "str", "output file name", False, "t2_segin_cropped_over_mask.nii.gz")
-    usage = parser.usage.generate()
-
-    alpha_b1 = arguments["-a"]  # e.g.: 60
-        if opt in '-b':
-            fname_b1_smoothed = arguments["-b"]  # e.g.: b1/b1_smoothed_in_spgr10_space_crop.nii.gz
-        if opt in '-c':
-            fname_csf_mask = arguments["-b"]  # e.g.: spgr_10_csf_mask.nii.gz
-        if opt in '-f':
-            flip_angles = arguments["-b"]  # e.g.: 4,10,20,30
-        if opt in '-i':
-            fname_spgr_data = arguments["-b"]  # e.g.: file_1.nii.gz,file_2.nii.gz,file_3.nii.gz,file_4.nii.gz
-        if opt in '-o':
-            file_output = arguments["-b"]  # e.g.: PD_map,mtvf_map
-        if opt in '-p':
-            method = arguments["-b"]  # e.g.: sbs
-        if opt in '-s':
-            fname_spgr_seg = arguments["-b"]  # e.g.: spgr_10_crop_seg.nii.gz
-        if opt in '-t':
-            tr = float(arg)  # TR (in s) of the SPGR scans. e.g.: 0.01
+    else:
+        alpha_b1          = arguments["-a"]  # e.g.: 60
+        fname_b1_smoothed = arguments["-b"]  # e.g.: b1/b1_smoothed_in_spgr10_space_crop.nii.gz
+        fname_csf_mask = arguments["-c"]  # e.g.: spgr_10_csf_mask.nii.gz
+        flip_angles = arguments["-f"]  # e.g.: 4,10,20,30
+        fname_spgr_data = arguments["-i"]  # e.g.: file_1.nii.gz,file_2.nii.gz,file_3.nii.gz,file_4.nii.gz
+        file_output = arguments["-o"]  # e.g.: PD_map,mtvf_map
+        method = arguments["-p"]  # e.g.: sbs
+        fname_spgr_seg = arguments["-s"]  # e.g.: spgr_10_crop_seg.nii.gz
+        tr = float(arguments["-t"])  # TR (in s) of the SPGR scans. e.g.: 0.01
 
     # Check existence of input mandatory parameters
     if not fname_spgr_data or not flip_angles or not tr or not fname_csf_mask:
