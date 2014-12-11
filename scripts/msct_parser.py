@@ -64,13 +64,13 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser):
+    def __init__(self, name, type_value, description, mandatory, example, default, help, parser):
         self.name = name
         self.type_value = type_value
         self.description = description
         self.mandatory = mandatory
         self.example = example
-        self.default_value = default_value
+        self.default = default
         self.help = help
         self.parser = parser
 
@@ -141,8 +141,8 @@ class Parser:
         self.errors = ''
         self.usage = Usage(self, __file__)
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self)
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default=None):
+        self.options[name] = Option(name, type_value, description, mandatory, example, default, help, self)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
