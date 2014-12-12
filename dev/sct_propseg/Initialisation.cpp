@@ -451,7 +451,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			max = j;
 			maxMetric = 0.0;
 			for (unsigned int k=0; k<length; k++)
-				maxMetric += chains[j][k]->getAccumulator() * weighted_distance * maxLenght;
+				maxMetric += chains[j][k]->getAccumulator() * weighted_distance * length;
             map_metric[maxMetric] = max;
 		}
 		else if (length == maxLenght && angle <= angleMax)
