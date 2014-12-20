@@ -228,6 +228,10 @@ def main():
     # handles, labels = fig1_ax.get_legend_handles_labels()
     # fig1_ax.legend(handles, labels, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)}, fontsize=16)
 
+    # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
+    nb_method -= 1
+    methods_name[0].remove('mlwa')
+    # ******************************************************************************************************************
 
     # Plot A
     ind_tracts_std_10 = numpy.where(tracts_std == 10)  # indexes where TRACTS STD=10
@@ -235,20 +239,21 @@ def main():
     ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
 
     fig2 = plt.figure(2)
-    ind_fig2 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))
-    width = 1.0/nb_method
-    plt.ylabel('Absolute error')
+    ind_fig2 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
+    width = 1.0/(nb_method+1)
+    plt.ylabel('Absolute error (%)')
     plt.xlabel('Noise std')
     plt.title('Absolute error within all tracts as a function of noise std')
-    plt.xticks(ind_fig2, snr[ind_snr_sort_tracts_std_10])
+    plt.xticks(ind_fig2+0.5, snr[ind_snr_sort_tracts_std_10])
+    plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     bar_plots = []
     for meth, color in zip(methods_name[0], colors):
         i_meth = methods_name[0].index(meth)
 
-        plot_i = plt.bar(ind_fig2+i_meth*width, max_results[ind_snr_sort_tracts_std_10, i_meth]-min_results[ind_snr_sort_tracts_std_10, i_meth], width, min_results[ind_snr_sort_tracts_std_10, i_meth], edgecolor=color, color='white', linewidth=2)
-        plt.plot(ind_fig2+i_meth*width+width/2, median_results[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=30.0, markeredgewidth=2)
+        plot_i = plt.bar(ind_fig2+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_results[ind_snr_sort_tracts_std_10, i_meth]-min_results[ind_snr_sort_tracts_std_10, i_meth], width, min_results[ind_snr_sort_tracts_std_10, i_meth], edgecolor=color, color='white', linewidth=3)
+        plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         bar_plots.append(plot_i[0])
 
     plt.legend(bar_plots, methods_name[0], loc='best')
@@ -259,20 +264,21 @@ def main():
     ind_tracts_std_sort_snr_10 = ind_snr_10[0][ind_ind_tracts_std_sort_snr_10]  # indexes where SNR=10 sorted according to tracts_std values (in ascending order)
 
     fig3 = plt.figure(3)
-    ind_fig3 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))
-    width = 1.0/nb_method
-    plt.ylabel('Absolute error')
-    plt.xlabel('Tracts std')
+    ind_fig3 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
+    width = 1.0/(nb_method+1)
+    plt.ylabel('Absolute error (%)')
+    plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
     plt.title('Absolute error within all tracts as a function of tracts std')
-    plt.xticks(ind_fig3, tracts_std[ind_tracts_std_sort_snr_10])
+    plt.xticks(ind_fig3+0.5, tracts_std[ind_tracts_std_sort_snr_10])
+    plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     bar_plots = []
     for meth, color in zip(methods_name[0], colors):
         i_meth = methods_name[0].index(meth)
 
-        plot_i = plt.bar(ind_fig3+i_meth*width, max_results[ind_tracts_std_sort_snr_10, i_meth]-min_results[ind_tracts_std_sort_snr_10, i_meth], width, min_results[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=2)
-        plt.plot(ind_fig2+i_meth*width+width/2, median_results[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=30.0, markeredgewidth=2)
+        plot_i = plt.bar(ind_fig3+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_results[ind_tracts_std_sort_snr_10, i_meth]-min_results[ind_tracts_std_sort_snr_10, i_meth], width, min_results[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=3)
+        plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         bar_plots.append(plot_i[0])
 
     plt.legend(bar_plots, methods_name[0], loc='best')
