@@ -158,6 +158,14 @@ def main():
         sct.printv('ERROR: All the generated files in folder '+results_folder+' have not been generated with the same number of methods. Exit program.', 'error')
         sys.exit(1)
 
+    # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
+    ind_mlwa = methods_name[0].index('mlwa')
+    methods_name[0].remove('mlwa')
+    median_results = numpy.delete(median_results, ind_mlwa, 1)
+    min_results = numpy.delete(min_results, ind_mlwa, 1)
+    max_results = numpy.delete(max_results, ind_mlwa, 1)
+    # ******************************************************************************************************************
+
 
     nb_method = len(methods_name[0])
 
@@ -228,11 +236,6 @@ def main():
     # handles, labels = fig1_ax.get_legend_handles_labels()
     # fig1_ax.legend(handles, labels, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)}, fontsize=16)
 
-    # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
-    nb_method -= 1
-    methods_name[0].remove('mlwa')
-    # ******************************************************************************************************************
-
     # Plot A
     ind_tracts_std_10 = numpy.where(tracts_std == 10)  # indexes where TRACTS STD=10
     ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
@@ -245,6 +248,7 @@ def main():
     plt.xlabel('Noise std')
     plt.title('Absolute error within all tracts as a function of noise std')
     plt.xticks(ind_fig2+0.5, snr[ind_snr_sort_tracts_std_10])
+    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig2)+1])
     plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -256,7 +260,7 @@ def main():
         plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         bar_plots.append(plot_i[0])
 
-    plt.legend(bar_plots, methods_name[0], loc='best')
+    plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
     # Plot B
     ind_snr_10 = numpy.where(snr == 10)  # indexes where SNR=10
@@ -270,6 +274,7 @@ def main():
     plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
     plt.title('Absolute error within all tracts as a function of tracts std')
     plt.xticks(ind_fig3+0.5, tracts_std[ind_tracts_std_sort_snr_10])
+    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig2)+1])
     plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -281,7 +286,7 @@ def main():
         plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         bar_plots.append(plot_i[0])
 
-    plt.legend(bar_plots, methods_name[0], loc='best')
+    plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
 
     plt.show()
