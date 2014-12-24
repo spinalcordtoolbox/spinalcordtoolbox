@@ -1,8 +1,9 @@
 
 # CHANGES TO RELEASE
 
-##1.1.2 (TBD)
+##1.1.2 (2014-12-20)
 
+- BUG: sct_dmri_moco: fixed crash when using mask (issue # 245)
 - OPT: sct_create_mask: (1) updated usage (size in vox instead of mm), (2) fixed minor issues related to mask size.
 
 ##1.1.1 (2014-11-13)
