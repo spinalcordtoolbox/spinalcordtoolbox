@@ -66,32 +66,16 @@ do
   scriptname=${script%$suffix_py}
   cmd=
   if [ "$is_admin" = true ] ; then
-    cmd="sudo ln -s ../scripts/${script} ${scriptname}"
+    cmd="sudo ln -sf ../scripts/${script} ${scriptname}"
   else
-    cmd="ln -s ../scripts/${script} ${scriptname}"
+    cmd="ln -sf ../scripts/${script} ${scriptname}"
   fi
   echo ">> $cmd"
   $cmd
 done
 
 #removing internal stuff or stuff under development
-cmd="rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct"
+cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct"
 $cmd
-
-suffix_sh='.sh'
-for script in *.sh
-do
-  echo ${script}
-  cd ${SCT_DIR}/bin
-  scriptname=${script%$suffix_sh}
-  cmd=
-  if [ "$is_admin" = true ] ; then
-    cmd="sudo ln -s ../scripts/${script} ${scriptname}"
-  else
-    cmd="ln -s ../scripts/${script} ${scriptname}"
-  fi
-  echo ">> $cmd"
-  $cmd
-done
 
 cd ${CURRENT_DIR}
