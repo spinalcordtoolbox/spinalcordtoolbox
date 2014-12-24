@@ -55,7 +55,7 @@ done
 CURRENT_DIR=$PWD
 
 # create soft link to each script in SCT_DIR/script
-echo "Create soft link to each script in $SCT_DIR/script"
+echo "Create soft link for each python script located in $SCT_DIR/script"
 suffix_py='.py'
 cd $SCT_DIR/scripts
 
