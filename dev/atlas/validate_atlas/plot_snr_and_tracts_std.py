@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
 
 #=======================================================================================================================
 # main
@@ -58,7 +58,7 @@ def main():
     sct.printv("Working directory: "+os.getcwd())
 
     sct.printv('\n\nData will be extracted from folder '+results_folder+' .', 'warning')
-    sct.printv('\n\t\tCheck existence...')
+    sct.printv('\t\tCheck existence...')
     sct.check_folder_exist(results_folder)
 
     fname_results = glob.glob(results_folder + '/*.txt')
@@ -73,6 +73,9 @@ def main():
     tracts_std = numpy.zeros((nb_results_file))
     # methods' name
     methods_name = [] #numpy.empty((nb_results_file, nb_method), dtype=object)
+    # labels
+    error_per_labels = []
+    labels_id = []
     # median
     median_results = numpy.zeros((nb_results_file, 6))
     # min
@@ -150,6 +153,16 @@ def main():
             # result_array[i_file, i_file, 1] = [float(m.split('(')[0]) for m in max]
             max_results[i_file, :] = numpy.array([float(m.split('(')[0]) for m in max])
 
+        # extract error for each label
+        error_per_label_for_file_i = []
+        labels_id_for_file_i = []
+        for i_line in range(ind_line_label[0]+1, ind_line_median[0]-1):
+            errors_label_i = lines[i_line].strip().split(',')
+            error_per_label_for_file_i.append([float(error.split('(')[0]) for error in errors_label_i[1:]])
+            labels_id_for_file_i.append(int(errors_label_i[0]))
+        error_per_labels.append(error_per_label_for_file_i)
+        labels_id.append(labels_id_for_file_i)
+
         # close file
         f.close()
 
@@ -157,6 +170,13 @@ def main():
     if not all(x == methods_name[0] for x in methods_name):
         sct.printv('ERROR: All the generated files in folder '+results_folder+' have not been generated with the same number of methods. Exit program.', 'error')
         sys.exit(1)
+    # check if all the files in the result folder were generated with the same labels
+    if not all(x == labels_id[0] for x in labels_id):
+        sct.printv('ERROR: All the generated files in folder '+results_folder+' have not been generated with the same labels. Exit program.', 'error')
+        sys.exit(1)
+
+    # convert the list "error_per_labels" into a numpy array to ease further manipulations
+    error_per_labels = numpy.array(error_per_labels)
 
     # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
     ind_mlwa = methods_name[0].index('mlwa')
@@ -164,6 +184,7 @@ def main():
     median_results = numpy.delete(median_results, ind_mlwa, 1)
     min_results = numpy.delete(min_results, ind_mlwa, 1)
     max_results = numpy.delete(max_results, ind_mlwa, 1)
+    error_per_labels = numpy.delete(error_per_labels, ind_mlwa, -1)
     # ******************************************************************************************************************
 
 
@@ -244,9 +265,9 @@ def main():
     fig2 = plt.figure(2)
     ind_fig2 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
     width = 1.0/(nb_method+1)
-    plt.ylabel('Absolute error (%)')
+    plt.ylabel('Error (%)')
     plt.xlabel('Noise std')
-    plt.title('Absolute error within all tracts as a function of noise std')
+    plt.title('Error within all tracts as a function of noise std')
     plt.xticks(ind_fig2+0.5, snr[ind_snr_sort_tracts_std_10])
     plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig2)+1])
     plt.gca().yaxis.grid(True)
@@ -270,11 +291,11 @@ def main():
     fig3 = plt.figure(3)
     ind_fig3 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
     width = 1.0/(nb_method+1)
-    plt.ylabel('Absolute error (%)')
+    plt.ylabel('Error (%)')
     plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
-    plt.title('Absolute error within all tracts as a function of tracts std')
+    plt.title('Error within all tracts as a function of tracts std')
     plt.xticks(ind_fig3+0.5, tracts_std[ind_tracts_std_sort_snr_10])
-    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig2)+1])
+    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig3)+1])
     plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -284,6 +305,57 @@ def main():
 
         plot_i = plt.bar(ind_fig3+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_results[ind_tracts_std_sort_snr_10, i_meth]-min_results[ind_tracts_std_sort_snr_10, i_meth], width, min_results[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=3)
         plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
+        bar_plots.append(plot_i[0])
+
+    plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+
+
+    # Plot A -- v2: Absolute error (min, max, mean)
+    abs_error_per_labels = numpy.absolute(error_per_labels)
+    max_abs_error_per_meth = numpy.amax(abs_error_per_labels, axis=1)
+    min_abs_error_per_meth = numpy.amin(abs_error_per_labels, axis=1)
+    mean_abs_error_per_meth = numpy.mean(abs_error_per_labels, axis=1)
+    std_abs_error_per_meth = numpy.std(abs_error_per_labels, axis=1)
+
+    fig4 = plt.figure(4)
+    ind_fig4 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
+    width = 1.0/(nb_method+1)
+    plt.ylabel('Absolute error (%)')
+    plt.xlabel('Noise std')
+    plt.title('Absolute error within all tracts as a function of noise std')
+    plt.xticks(ind_fig4+0.5, snr[ind_snr_sort_tracts_std_10])
+    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig4)+1])
+    plt.gca().yaxis.grid(True)
+
+    colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    bar_plots = []
+    for meth, color in zip(methods_name[0], colors):
+        i_meth = methods_name[0].index(meth)
+
+        plot_i = plt.bar(ind_fig2+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth]-min_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], width, min_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], edgecolor=color, color='white', linewidth=3)
+        plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
+        bar_plots.append(plot_i[0])
+
+    plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+
+    # Plot B -- v2: Absolute error (min, max, mean)
+    fig5 = plt.figure(5)
+    ind_fig5 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
+    width = 1.0/(nb_method+1)
+    plt.ylabel('Absolute error (%)')
+    plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
+    plt.title('Absolute error within all tracts as a function of tracts std')
+    plt.xticks(ind_fig5+0.5, tracts_std[ind_tracts_std_sort_snr_10])
+    plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig5)+1])
+    plt.gca().yaxis.grid(True)
+
+    colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    bar_plots = []
+    for meth, color in zip(methods_name[0], colors):
+        i_meth = methods_name[0].index(meth)
+
+        plot_i = plt.bar(ind_fig5+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth]-min_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], width, min_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=3)
+        plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         bar_plots.append(plot_i[0])
 
     plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
