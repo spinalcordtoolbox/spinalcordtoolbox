@@ -28,6 +28,11 @@
 
 # Note for the developer: DO NOT use --collapse-output-transforms 1, otherwise inverse warping field is not output
 
+# TODO: make three possibilities:
+# - one-step registration, using only image registration (by sliceReg or antsRegistration)
+# - two-step registration, using first segmentation-based registration (based on sliceReg or antsRegistration) and second the image registration (and allow the choice of algo, metric, etc.)
+# - two-step registration, using only segmentation-based registration
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -65,6 +70,7 @@ def main():
     fname_mask = ''
     padding = param.padding
     param_user = ''
+    algo_first = 'SliceReg'
     # numberIterations = param.numberIterations
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
@@ -90,7 +96,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -120,6 +126,8 @@ def main():
                 param.interp = arg
             elif opt in ('-z'):
                 padding = arg
+            elif opt in ('-a'):
+                algo_first = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
@@ -137,6 +145,10 @@ def main():
         del param_user
         # TODO: check integrity of input
     numberIterations, algo, gradientStep, metric = param.param
+
+    # if sliceReg is used, we can't pad in the image...
+    if algo.lower() == 'slicereg':
+      padding = 0
 
     # print arguments
     print '\nInput parameters:'
@@ -238,7 +250,7 @@ def main():
         # Estimate transformation using ANTS
         sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
-        if algo == 'sliceReg':
+        if algo.lower() == 'slicereg':
             cmd = ('sct_antsSliceRegularizedRegistration '
                    '-t Translation[0.5] '
                    '-m '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
@@ -257,7 +269,7 @@ def main():
                    '--shrink-factors 2x1 '
                    '--smoothing-sigmas 2x0mm '
                    '--restrict-deformation 1x1x0 '
-                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsSliceReg add "0Warp"
+                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because sct_antsRegistration add "0Warp"
                    '--interpolation BSpline[3] '
                    +masking)
         status, output = sct.run(cmd)
@@ -277,21 +289,42 @@ def main():
         # Estimate transformation using ANTS
         sct.printv('\nStep #1: Estimate large-scale deformation using segmentations...', verbose)
 
-        cmd = ('sct_antsSliceRegularizedRegistration '
-               '-t Translation[0.5] '
-               '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
-               '-p 5 '
-               '-i 5 '
-               '-f 1 '
-               '-s 5 '
-               '-o [stage1,regSeg.nii]')
+        # cmd = ('sct_antsSliceRegularizedRegistration '
+        #        '-t Translation[0.5] '
+        #        '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
+        #        '-p 5 '
+        #        '-i 5 '
+        #        '-f 1 '
+        #        '-s 5 '
+        #        '-o [stage1,regSeg.nii]')
+        # status, output = sct.run(cmd)
+        if algo_first.lower() == 'slicereg':
+            cmd = ('sct_antsSliceRegularizedRegistration '
+                   '-t Translation[0.5] '
+                   '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
+                   '-p 5 '
+                   '-i 5 '
+                   '-f 1 '
+                   '-s 5 '
+                   '-o [stage10,regSeg.nii] ' )
+        else:
+            cmd = ('sct_antsRegistration '
+                   '--dimensionality 3 '
+                   '--transform '+algo_first+'[0.5,3,0] '
+                   '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
+                   '--convergence 10x3 '
+                   '--shrink-factors 2x1 '
+                   '--smoothing-sigmas 1x1mm '
+                   '--restrict-deformation 1x1x0 '
+                   '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsRegistration add "0Warp"
+                   '--interpolation BSpline[3] ' )
         status, output = sct.run(cmd)
 
         # 2nd stage registration
         sct.printv('\nStep #2: Estimate small-scale deformations using images...', verbose)
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
-               '--initial-moving-transform stage1Warp.nii.gz '
+               '--initial-moving-transform stage10Warp.nii.gz '
                '--transform '+algo+'['+gradientStep+',3,0] '
                '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
                '--convergence '+numberIterations+' '
@@ -306,8 +339,8 @@ def main():
 
         # Concatenate multi-stage transformations
         sct.printv('\nConcatenate multi-stage transformations...', verbose)
-        sct.run('sct_concat_transfo -w stage1Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
-        sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage1InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
+        sct.run('sct_concat_transfo -w stage10Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
+        sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage10InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
 
         # Concatenate transformations
         sct.printv('\nConcatenate affine and local transformations...', verbose)
@@ -316,9 +349,9 @@ def main():
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2destFinal.nii.gz -p '+param.interp)
+    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2destFinal.nii.gz -x '+param.interp)
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2srcFinal.nii.gz -p '+param.interp)
+    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2srcFinal.nii.gz -x '+param.interp)
 
     # come back to parent folder
     os.chdir('..')
@@ -378,7 +411,7 @@ OPTIONAL ARGUMENTS
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
                      1) number of iterations for last stage.
-                     2) algo: {SyN, BSplineSyN, sliceReg}
+                     2) algo: {SyN, BSplineSyN, SliceReg}
                         N.B. if you use sliceReg, then you should set -z 0. Also, the two input
                         volumes should have same the same dimensions.
                         For more info about sliceReg, type: sct_antsSliceRegularizedRegistration

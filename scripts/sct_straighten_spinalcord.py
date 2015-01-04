@@ -531,7 +531,7 @@ def main():
     
     # Apply rigid transformation
     print '\nApply rigid transformation to curved landmarks...'
-    sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -p nn')
+    sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -x nn')
 
     # This stands to avoid overlapping between landmarks
     #print('\nMake sure all labels between landmark_curved and landmark_curved match...')
@@ -577,7 +577,7 @@ def main():
     
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    c = sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -p '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+    c = sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
