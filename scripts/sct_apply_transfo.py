@@ -55,7 +55,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:p:v:w:x:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:x:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -69,14 +69,12 @@ def main():
                 fname_dest = arg
             elif opt in ('-o'):
                 fname_src_reg = arg
-            elif opt in ('-p'):
+            elif opt in ('-x'):
                 param.interp = arg
             elif opt in ('-v'):
                 verbose = int(arg)
             elif opt in ('-w'):
                 fname_warp_list = arg
-            elif opt in ('-x'):
-                dim = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
@@ -198,7 +196,7 @@ MANDATORY ARGUMENTS
 
 OPTIONAL ARGUMENTS
   -o <source_reg>       registered source. Default=source_reg
-  -p {nn,linear,spline}  interpolation method. Default="""+str(param_default.interp)+"""
+  -x {nn,linear,spline}  interpolation method. Default="""+str(param_default.interp)+"""
   -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
 
