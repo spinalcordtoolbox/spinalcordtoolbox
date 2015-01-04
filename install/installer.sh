@@ -149,7 +149,13 @@ echo "Check if other dependent software are installed..."
 cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
 echo ">> $cmd"; $cmd
 
+# Create links to python scripts
+echo
+echo "Create links to python scripts..."
+${SCT_DIR}/install/create_links.sh
+
 # get current path
+# WHAT IS THAT???  (julien 2015-01-04)
 path_toolbox_temp=`pwd`
 
 # display stuff
