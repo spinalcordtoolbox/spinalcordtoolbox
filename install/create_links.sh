@@ -75,7 +75,7 @@ do
 done
 
 #removing internal stuff or stuff under development
-cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct"
+cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct isct_check_detection sct_change_image_type sct_invert_image"
 $cmd
 
 cd ${CURRENT_DIR}
