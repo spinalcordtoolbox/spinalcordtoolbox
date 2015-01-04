@@ -75,23 +75,24 @@ sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../batch_processing.sh '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
+
+# install
+sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
+sct.run('cp -r ../install/create_links.sh '+folder_sct+'spinalcordtoolbox/install/')
+
+# bin
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
-sct.run('cp -r ../bin/sct_* '+folder_sct+'spinalcordtoolbox/bin/')
-sct.run('cp -r ../bin/isct_* '+folder_sct+'spinalcordtoolbox/bin/')
 if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
 elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
-# copy data
+# data
 sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 
 # testing
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
 sct.run('cp ../testing/*.py '+folder_sct+'spinalcordtoolbox/testing/')
-
-# remove unwanted files for user
-sct.run('rm '+folder_sct+'spinalcordtoolbox/bin/sct_convert')
 
 # remove .DS_Store files
 sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')

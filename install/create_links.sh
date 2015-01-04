@@ -55,7 +55,7 @@ done
 CURRENT_DIR=$PWD
 
 # create soft link to each script in SCT_DIR/script
-echo "Create soft link to each script in $SCT_DIR/script"
+echo "Create soft link for each python script located in $SCT_DIR/script"
 suffix_py='.py'
 cd $SCT_DIR/scripts
 
@@ -66,32 +66,16 @@ do
   scriptname=${script%$suffix_py}
   cmd=
   if [ "$is_admin" = true ] ; then
-    cmd="sudo ln -s ../scripts/${script} ${scriptname}"
+    cmd="sudo ln -sf ../scripts/${script} ${scriptname}"
   else
-    cmd="ln -s ../scripts/${script} ${scriptname}"
+    cmd="ln -sf ../scripts/${script} ${scriptname}"
   fi
   echo ">> $cmd"
   $cmd
 done
 
 #removing internal stuff or stuff under development
-cmd="rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct"
+cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct isct_check_detection sct_change_image_type sct_invert_image sct_convert"
 $cmd
-
-suffix_sh='.sh'
-for script in *.sh
-do
-  echo ${script}
-  cd ${SCT_DIR}/bin
-  scriptname=${script%$suffix_sh}
-  cmd=
-  if [ "$is_admin" = true ] ; then
-    cmd="sudo ln -s ../scripts/${script} ${scriptname}"
-  else
-    cmd="ln -s ../scripts/${script} ${scriptname}"
-  fi
-  echo ">> $cmd"
-  $cmd
-done
 
 cd ${CURRENT_DIR}
