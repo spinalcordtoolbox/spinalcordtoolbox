@@ -1,4 +1,4 @@
-function sct_smoothhist(data,varargin)
+function [n_smooth, xout]=sct_smoothhist(data,varargin)
 % sct_smoothhist(nifti, ([xmin xmax], smoothness) )
 if length(varargin)>1
     smoothness=varargin{2};
@@ -30,6 +30,7 @@ disp(['mean: ' num2str(xmean)]) %int(f(x)*x)
 [~,I] = min(abs(cumsum(n_smooth/sum(n_smooth))-0.5)); %int(f(x))=0.5
 disp(['median: ' num2str(xout(I))])
 disp(['std: ' num2str(sqrt(sum(n_smooth'.*(xout-xmean).^2/sum(n_smooth))))])
+n_smooth=n_smooth(:); xout=xout(:);
 
 
 
