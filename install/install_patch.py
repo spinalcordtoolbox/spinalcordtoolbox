@@ -22,7 +22,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad
-# Modified: 2014-07-03
+# Created: 2014-07-03
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -95,7 +95,16 @@ def main():
             # print path_name[2:]+' ++ '+file_name+' ++ '+ext_name
             file_src = path_name+file_name+ext_name
             file_dest = path_sct+path_name[1:]+file_name+ext_name
+            # if destination folder does no exist, create it
+            if not os.path.exists(path_sct+path_name[1:]):
+                sct.run('sudo mkdir '+path_sct+path_name[1:])
+            # copy file
             sct.run('sudo cp '+file_src+' '+file_dest)
+
+    # re-create links
+    print 'Update links...'
+    status, output = sct.run('${SCT_DIR}/install/create_links.sh')
+    print output
 
     print "Done!\n"
 

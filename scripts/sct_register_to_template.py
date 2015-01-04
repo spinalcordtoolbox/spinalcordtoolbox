@@ -221,7 +221,7 @@ def main():
 
     # Push the input labels in the template space
     print('\nPush the input labels to the straight space...')
-    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -p nn')
+    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -x nn')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
