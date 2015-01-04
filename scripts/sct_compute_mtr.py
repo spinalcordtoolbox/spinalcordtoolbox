@@ -153,7 +153,7 @@ OPTIONAL ARGUMENTS
   -h               help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i mt0.nii.gz -j mt1.nii.gz -x 1\n"""
+  """+os.path.basename(__file__)+""" -i mt0.nii.gz -j mt1.nii.gz\n"""
 
     # exit program
     sys.exit(2)
