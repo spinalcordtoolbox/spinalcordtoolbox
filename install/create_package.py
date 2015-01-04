@@ -94,9 +94,6 @@ sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/testing')
 sct.run('cp ../testing/*.py '+folder_sct+'spinalcordtoolbox/testing/')
 
-# remove unwanted files for user
-sct.run('rm '+folder_sct+'spinalcordtoolbox/bin/sct_convert')
-
 # remove .DS_Store files
 sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
 
