@@ -14,6 +14,7 @@
 import os
 import errno
 import sys
+import traceback
 import commands
 import subprocess
 import re
@@ -46,7 +47,6 @@ def run(cmd, verbose=1):
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
-        sys.exit(2)
     else:
         return status, output
 
@@ -335,7 +335,7 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit prohram
     if type == 'error':
-        sys.exit(2)
+        raise NameError('Error!')
 
 
 #=======================================================================================================================

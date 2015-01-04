@@ -92,6 +92,7 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/dmri/dmri.nii.gz'
         param.fname_bvecs = path_sct_data+'/dmri/bvecs.txt'
+        param.fname_mask = path_sct_data+'/dmri/dmri.nii.gz'
         param.remove_tmp_files = 0
         param.verbose = 1
         param.run_eddy = 0
@@ -152,6 +153,7 @@ def main():
     sct.printv('  input file ............'+param.fname_data, param.verbose)
     sct.printv('  bvecs file ............'+param.fname_bvecs, param.verbose)
     sct.printv('  bvals file ............'+param.fname_bvals, param.verbose)
+    sct.printv('  mask file .............'+param.fname_mask, param.verbose)
 
     # check existence of input files
     sct.printv('\nCheck file existence...', param.verbose)
@@ -172,17 +174,20 @@ def main():
 
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
+    path_mask, file_mask, ext_mask = sct.extract_fname(param.fname_mask)
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
-    # Copying input data to tmp folder and convert to nii
+    # Copying input data to tmp folder
     # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'dmri'+ext_data, param.verbose)
     sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
+    if param.fname_mask != '':
+        sct.run('cp '+param.fname_mask+' '+path_tmp+'mask'+ext_mask, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -190,13 +195,10 @@ def main():
     # convert dmri to nii format
     sct.run('fslchfiletype NIFTI dmri', param.verbose)
 
-    # EDDY CURRENT CORRECTION
-    # TODO: MAKE SURE path_out IS CORRECT WITH EDDY BEFORE ACTIVATING EDDY
-    # if param.run_eddy:
-    #     param.path_out = ''
-    #     param.slicewise = 1
-    #     eddy_correct(param)
-    #     param.fname_data = file_data + '_eddy.nii'
+    # update field in param (because used later).
+    # TODO: make this cleaner...
+    if param.fname_mask != '':
+        param.fname_mask = 'mask'+ext_mask
 
     # run moco
     dmri_moco(param)
@@ -458,10 +460,6 @@ OPTIONAL ARGUMENTS
                         If you find very large deformations, switching to MeanSquares can help.
   -t <int>         segment DW data using OTSU algorithm. Value corresponds to OTSU threshold. Default="""+str(param_default.otsu)+"""
                    For no segmentation set to 0.
-  -a <bvals>       bvals file. Used to identify low b-values (in case different from 0).
-  -e {0,1}         Eddy Correction using opposite gradient directions.  Default="""+str(param_default.run_eddy)+"""
-                   N.B. Only use this option if pairs of opposite gradient images were adjacent
-                   in time
   -o <path_out>    Output path.
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
