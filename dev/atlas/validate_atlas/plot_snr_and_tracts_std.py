@@ -78,6 +78,8 @@ def main():
     labels_id = []
     # median
     median_results = numpy.zeros((nb_results_file, 6))
+    # median std across bootstraps
+    median_std = numpy.zeros((nb_results_file, 6))
     # min
     min_results = numpy.zeros((nb_results_file, 6))
     # max
@@ -132,6 +134,7 @@ def main():
             median = lines[ind_line_median[0]].strip().split(',')[1:]
             # result_array[i_file, i_file, 0] = [float(m.split('(')[0]) for m in median]
             median_results[i_file, :] = numpy.array([float(m.split('(')[0]) for m in median])
+            median_std[i_file, :] = numpy.array([float(m.split('(')[1][:-1]) for m in median])
 
         # extract min
         ind_line_min = [lines.index(line_min) for line_min in lines if "min," in line_min]
@@ -182,6 +185,7 @@ def main():
     ind_mlwa = methods_name[0].index('mlwa')
     methods_name[0].remove('mlwa')
     median_results = numpy.delete(median_results, ind_mlwa, 1)
+    median_std = numpy.delete(median_std, ind_mlwa, 1)
     min_results = numpy.delete(min_results, ind_mlwa, 1)
     max_results = numpy.delete(max_results, ind_mlwa, 1)
     error_per_labels = numpy.delete(error_per_labels, ind_mlwa, -1)
@@ -387,9 +391,10 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
+    plt.legend(box_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.xticks(ind_fig6+0.5, snr[ind_snr_sort_tracts_std_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig4)+1])
-    plt.legend(box_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.gca().set_ylim([0, 3])
 
     # Plot B -- v3: Box plots absolute error
     fig7 = plt.figure(7)
@@ -416,9 +421,10 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
-    plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.legend(box_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.xticks(ind_fig7+0.5, tracts_std[ind_tracts_std_sort_snr_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig7)+1])
+    plt.gca().set_ylim([0, 3])
 
 
 
