@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0  
+        self.debug = 0
 
 #=======================================================================================================================
 # main
@@ -29,18 +29,20 @@ class Param:
 def main():
 
     results_folder = ''
+    methods_to_display = ''
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "C:\cygwin64\home\Simon_2\data_simon"
         path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
+        methods_to_display = 'bin,wa,wath,ml,map'
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'i:')  # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'i:m:')  # define flags
         except getopt.GetoptError as err:  # check if the arguments are defined
             print str(err)  # error
             # usage() # display usage
@@ -50,6 +52,8 @@ def main():
         for opt, arg in opts:  # explore flags
             if opt in '-i':
                 results_folder = arg
+            if opt in '-m':
+                methods_to_display = arg
 
     # Append path that contains scripts, to be able to load modules
     sys.path.append(path_sct + '/scripts')
@@ -60,6 +64,9 @@ def main():
     sct.printv('\n\nData will be extracted from folder '+results_folder+' .', 'warning')
     sct.printv('\t\tCheck existence...')
     sct.check_folder_exist(results_folder)
+
+    # Extract methods to display
+    methods_to_display = methods_to_display.strip().split(',')
 
     fname_results = glob.glob(results_folder + '/*.txt')
 
@@ -181,18 +188,18 @@ def main():
     # convert the list "error_per_labels" into a numpy array to ease further manipulations
     error_per_labels = numpy.array(error_per_labels)
 
-    # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
-    ind_mlwa = methods_name[0].index('mlwa')
-    methods_name[0].remove('mlwa')
-    median_results = numpy.delete(median_results, ind_mlwa, 1)
-    median_std = numpy.delete(median_std, ind_mlwa, 1)
-    min_results = numpy.delete(min_results, ind_mlwa, 1)
-    max_results = numpy.delete(max_results, ind_mlwa, 1)
-    error_per_labels = numpy.delete(error_per_labels, ind_mlwa, -1)
-    # ******************************************************************************************************************
+    # # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
+    # ind_mlwa = methods_name[0].index('mlwa')
+    # methods_name[0].remove('mlwa')
+    # median_results = numpy.delete(median_results, ind_mlwa, 1)
+    # median_std = numpy.delete(median_std, ind_mlwa, 1)
+    # min_results = numpy.delete(min_results, ind_mlwa, 1)
+    # max_results = numpy.delete(max_results, ind_mlwa, 1)
+    # error_per_labels = numpy.delete(error_per_labels, ind_mlwa, -1)
+    # # ******************************************************************************************************************
 
 
-    nb_method = len(methods_name[0])
+    nb_method = len(methods_to_display)
 
     sct.printv('Noise std of the '+str(nb_results_file)+' generated files:')
     print snr
@@ -368,63 +375,67 @@ def main():
     # Plot A -- v3: Box plots absolute error
 
     fig6 = plt.figure(6)
-    ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
     width = 1.0/(nb_method+1)
+    ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*(1.0+width)
     plt.ylabel('Absolute error (%)')
     plt.xlabel('Noise std')
     plt.title('Absolute error within all tracts as a function of noise std')
-    plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     box_plots = []
-    for meth, color in zip(methods_name[0], colors):
+    for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
+        i_meth_to_display = methods_to_display.index(meth)
 
         boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.5, markersize=5, marker='.')
+        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
         whiskerprops = dict(color=color, linewidth=2)
         capprops = dict(color=color, linewidth=2)
         medianprops = dict(linewidth=3, color=color)
         meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
         meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-        plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_snr_sort_tracts_std_10, :, i_meth]), positions=ind_fig6+i_meth*width+(float(i_meth)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
+        plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_snr_sort_tracts_std_10, :, i_meth]), positions=ind_fig6+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
-    plt.legend(box_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.xticks(ind_fig6+0.5, snr[ind_snr_sort_tracts_std_10])
-    plt.gca().set_xlim([-width, numpy.max(ind_fig4)+1])
-    plt.gca().set_ylim([0, 3])
+    plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.xticks(ind_fig6+width*(float(nb_method)/2), snr[ind_snr_sort_tracts_std_10])
+    plt.gca().set_xlim([-width, numpy.max(ind_fig6)+(nb_method+0.5)*width])
+    plt.gca().set_ylim([0, 2])
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
+    plt.grid(b=True, axis='y')
 
     # Plot B -- v3: Box plots absolute error
     fig7 = plt.figure(7)
-    ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
     width = 1.0/(nb_method+1)
+    ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*(1.0+width)
     plt.ylabel('Absolute error (%)')
     plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
     plt.title('Absolute error within all tracts as a function of tracts std')
-    plt.gca().yaxis.grid(True)
 
     colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     box_plots = []
-    for meth, color in zip(methods_name[0], colors):
+    for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
+        i_meth_to_display = methods_to_display.index(meth)
 
         boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.5, markersize=5, marker='.')
+        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
         whiskerprops = dict(color=color, linewidth=2)
         capprops = dict(color=color, linewidth=2)
         medianprops = dict(linewidth=3, color=color)
         meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
         meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-        plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_tracts_std_sort_snr_10, :, i_meth]), positions=ind_fig7+i_meth*width+(float(i_meth)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
+        plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_tracts_std_sort_snr_10, :, i_meth]), positions=ind_fig7+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
-    plt.legend(box_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.xticks(ind_fig7+0.5, tracts_std[ind_tracts_std_sort_snr_10])
-    plt.gca().set_xlim([-width, numpy.max(ind_fig7)+1])
-    plt.gca().set_ylim([0, 3])
+    plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.xticks(ind_fig7+width*(float(nb_method)/2), tracts_std[ind_tracts_std_sort_snr_10])
+    plt.gca().set_xlim([-width, numpy.max(ind_fig7)+(nb_method+0.5)*width])
+    plt.gca().set_ylim([0, 2])
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
+    plt.grid(b=True, axis='y')
 
 
 
