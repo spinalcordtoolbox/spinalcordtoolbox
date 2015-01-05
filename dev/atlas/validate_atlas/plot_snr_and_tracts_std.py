@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0  
 
 #=======================================================================================================================
 # main
