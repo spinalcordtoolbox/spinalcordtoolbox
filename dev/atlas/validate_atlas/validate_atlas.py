@@ -222,7 +222,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
         results_text = open(fname_results, 'w+')
 
         # print header
-        print >>results_text, '# Mean(std) percentage of absolute error within single tracts.'
+        print >>results_text, '# Mean(std) percentage of error within single tracts.'
         print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
         print >>results_text, '# sigma noise: ' + str(std_noise) + '%'
         print >>results_text, '# range tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)'
@@ -259,7 +259,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     results_text = open(fname_results, 'w+')
 
     # print header
-    print >>results_text, '# Mean(std) percentage of absolute error within all tracts (only for automatic methods).'
+    print >>results_text, '# Mean(std) percentage of error within all tracts (only for automatic methods).'
     print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
     print >>results_text, '# sigma noise: ' + str(std_noise) + '%'
     print >>results_text, '# range tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)'
