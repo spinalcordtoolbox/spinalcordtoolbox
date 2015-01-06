@@ -14,6 +14,7 @@ sct_utils.pyc
 
 # Can also ignore all directories and files in a directory.
 bin/sct*
+bin/isct*
 bin/msct*
 tmp/**/*
 testing/sct_crop/results
