@@ -27,6 +27,7 @@
 import os
 import sys
 import time
+import datetime
 import commands
 import shutil
 import numpy as np
@@ -38,7 +39,7 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 
 def main():
     # Parameters
-    bootstrap_iter = 200
+    bootstrap_iter = 1  #200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
@@ -46,6 +47,7 @@ def main():
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
     std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
     range_tract_list = [0, 5, 10, 20, 50]  # in percent
+    param_map_list = ['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
@@ -72,6 +74,13 @@ def main():
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)
         validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
 
+    # loop across params for MAP estimation
+    std_noise = fixed_noise
+    range_tract = fixed_range
+    for param_map in param_map_list:
+        results_file = 'results_map'+str(param_map)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
+
 
 def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder):
     # Parameters
@@ -85,7 +94,6 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     index_dorsalcolumn = 2  # index of dorsal column in list_tracts
     nb_tracts_all = 32  # total number of tracts in atlas (do not include CSF tracts)
     list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
-    param_map = ['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
     value_gm = 20  # value in gray matter
@@ -96,7 +104,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
 
     # initialization
     start_time = time.time()  # save start time for duration
-    folder_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S/")
+    folder_tmp = 'tmp.'+datetime.datetime.now().strftime("%y%m%d%H%M%S%f/")
     nb_methods = len(list_methods)
     nb_tracts = len(list_tracts)
     perc_error = np.zeros(shape=(nb_tracts, nb_methods, nb_bootstraps))  # percent error within single tract (for comparison with manual labeling)
@@ -155,7 +163,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
         x_true_i[2] = dc_val_avg
 
         # pause for 0.5 second, otherwise the temporary file names will have the same name and will be removed by the following function
-        time.sleep(0.5)
+        #time.sleep(0.5)
 
         fname_extract_metrics = folder_tmp + file_extract_metrics
 
