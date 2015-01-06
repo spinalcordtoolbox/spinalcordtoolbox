@@ -39,7 +39,7 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 
 def main():
     # Parameters
-    bootstrap_iter = 1  #200
+    bootstrap_iter = 50  #200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
@@ -47,6 +47,7 @@ def main():
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
     std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
     range_tract_list = [0, 5, 10, 20, 50]  # in percent
+    list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
     param_map_list = ['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
@@ -66,23 +67,23 @@ def main():
     range_tract = fixed_range
     for std_noise in std_noise_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, list_methods)
 
     # loop across tract ranges
     std_noise = fixed_noise
     for range_tract in range_tract_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, list_methods)
 
     # loop across params for MAP estimation
     std_noise = fixed_noise
     range_tract = fixed_range
     for param_map in param_map_list:
         results_file = 'results_map'+str(param_map)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, ['map'], 1, param_map)
 
 
-def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder):
+def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder, list_methods, test_map=0, param_map='25,25'):
     # Parameters
     file_phantom = "WM_phantom.nii.gz"
     file_phantom_noise = "WM_phantom_noise.nii.gz"
@@ -93,7 +94,6 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     list_tracts_txt = ['csl', 'csr', 'dc']
     index_dorsalcolumn = 2  # index of dorsal column in list_tracts
     nb_tracts_all = 32  # total number of tracts in atlas (do not include CSF tracts)
-    list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
     # dorsal_column_labels = '0,1,15,16'
     # nb_tracts_dorsalcolumn = 4
     value_gm = 20  # value in gray matter
@@ -162,32 +162,30 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
         x_true_i[1] = values_synthetic_data[int(list_tracts[1])]
         x_true_i[2] = dc_val_avg
 
-        # pause for 0.5 second, otherwise the temporary file names will have the same name and will be removed by the following function
-        #time.sleep(0.5)
-
         fname_extract_metrics = folder_tmp + file_extract_metrics
 
-        # loop across tracts
-        for i_tract in range(len(list_tracts)):
-            # loop across methods
-            for i_method in range(len(list_methods)):
-                # display stuff
-                print 'Tract: '+list_tracts[i_tract]+', Method: '+list_methods[i_method]
-                # check if method is manual
-                if not list_methods[i_method].find('man') == -1:
-                    # find index of manual mask
-                    index_manual = int(list_methods[i_method][list_methods[i_method].find('man')+3])
-                    fname_mask = mask_folder[index_manual] + mask_prefix + list_tracts_txt[i_tract] + mask_ext
-                    # manual extraction
-                    status, output = sct.run('sct_average_data_within_mask -i ' + fname_phantom_noise + ' -m ' + fname_mask + ' -v 0')
-                    x_estim_i = float(output)
-                else:
-                    # automatic extraction
-                    sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m '+list_methods[i_method]+' -l '+list_tracts[i_tract]+' -a -o '+fname_extract_metrics)
-                    # read in txt file
-                    x_estim_i = read_results(fname_extract_metrics)
-                # Get the percent absolute deviation with the true value
-                perc_error[i_tract, i_method, i_bootstrap] = 100 * (x_true_i[i_tract] - x_estim_i) / float(x_true_i[i_tract])
+        if not test_map:
+            # loop across tracts
+            for i_tract in range(len(list_tracts)):
+                # loop across methods
+                for i_method in range(len(list_methods)):
+                    # display stuff
+                    print 'Tract: '+list_tracts[i_tract]+', Method: '+list_methods[i_method]
+                    # check if method is manual
+                    if not list_methods[i_method].find('man') == -1:
+                        # find index of manual mask
+                        index_manual = int(list_methods[i_method][list_methods[i_method].find('man')+3])
+                        fname_mask = mask_folder[index_manual] + mask_prefix + list_tracts_txt[i_tract] + mask_ext
+                        # manual extraction
+                        status, output = sct.run('sct_average_data_within_mask -i ' + fname_phantom_noise + ' -m ' + fname_mask + ' -v 0')
+                        x_estim_i = float(output)
+                    else:
+                        # automatic extraction
+                        sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m '+list_methods[i_method]+' -l '+list_tracts[i_tract]+' -a -o '+fname_extract_metrics)
+                        # read in txt file
+                        x_estim_i = read_results(fname_extract_metrics)
+                    # Get the percent absolute deviation with the true value
+                    perc_error[i_tract, i_method, i_bootstrap] = 100 * (x_true_i[i_tract] - x_estim_i) / float(x_true_i[i_tract])
 
         # calculate percentage error for all tracts (only for automatic methods)
         # loop across methods
@@ -197,7 +195,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
                 # display stuff
                 print 'Tract: ALL, Method: '+list_methods[i_method]
                 # automatic extraction in all tracts
-                sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m '+list_methods[i_method] + ' -o '+fname_extract_metrics)
+                sct.run('sct_extract_metric -i ' + fname_phantom_noise + ' -f ' + folder_cropped_atlas + ' -m '+list_methods[i_method] + ' -o '+fname_extract_metrics + ' -p '+param_map)
                 # read results in txt file
                 x_estim_i_all = read_results(fname_extract_metrics)
                 # get nonzero values
@@ -218,39 +216,41 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
 
     # PRINT RESULTS FOR SINGLE TRACTS
     # ===============================
-    # Open text file where results are printed
-    fname_results = results_file+'.txt'
-    results_text = open(fname_results, 'w+')
+    if not test_map:
+        # Open text file where results are printed
+        fname_results = results_file+'.txt'
+        results_text = open(fname_results, 'w+')
 
-    # print header
-    print >>results_text, '# Mean(std) percentage of absolute error within single tracts.'
-    print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
-    print >>results_text, '# sigma noise: ' + str(std_noise) + '%'
-    print >>results_text, '# range tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)'
-    print >>results_text, '# true_value: ' + str(true_value)
-    print >>results_text, '# number of iterations: ' + str(nb_bootstraps)
-    print >>results_text, '# elapsed time: ' + str(mte) + 'min' + str(sec) + 's'
-    text_methods = 'Label'
-    # loop across methods
-    for i_method in range(len(list_methods)):
-        text_methods = text_methods + ', ' + list_methods[i_method]
-    print >>results_text, text_methods
-
-    # print results
-    # loop across tracts
-    for i_tract in range(len(list_tracts)):
-        text_results = list_tracts_txt[i_tract]
+        # print header
+        print >>results_text, '# Mean(std) percentage of absolute error within single tracts.'
+        print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
+        print >>results_text, '# sigma noise: ' + str(std_noise) + '%'
+        print >>results_text, '# range tracts: (-' + str(range_tract) + '%:+' + str(range_tract) + '%)'
+        print >>results_text, '# true_value: ' + str(true_value)
+        print >>results_text, '# number of iterations: ' + str(nb_bootstraps)
+        print >>results_text, '# elapsed time: ' + str(mte) + 'min' + str(sec) + 's'
+        text_methods = 'Label'
         # loop across methods
         for i_method in range(len(list_methods)):
-            text_results = text_results + ', ' + str(round(np.mean(perc_error[i_tract, i_method, :]), ndigits=nb_digits_results))+'('+str(round(np.std(perc_error[i_tract, i_method, :]), ndigits=nb_digits_results))+')'
-        print >>results_text, text_results
+            text_methods = text_methods + ', ' + list_methods[i_method]
+        print >>results_text, text_methods
 
-    # close file
-    results_text.close()
+        # print results
+        # loop across tracts
+        for i_tract in range(len(list_tracts)):
+            text_results = list_tracts_txt[i_tract]
+            # loop across methods
+            for i_method in range(len(list_methods)):
+                text_results = text_results + ', ' + str(round(np.mean(perc_error[i_tract, i_method, :]), ndigits=nb_digits_results))+'('+str(round(np.std(perc_error[i_tract, i_method, :]), ndigits=nb_digits_results))+')'
+            print >>results_text, text_results
 
-    # display results
-    status, output = sct.run('cat ' + fname_results)
-    print output
+        # close file
+        results_text.close()
+
+        # display results
+        status, output = sct.run('cat ' + fname_results)
+        print output
+
 
     # PRINT RESULTS FOR ALL TRACTS
     # ============================
