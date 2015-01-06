@@ -48,10 +48,10 @@ def main():
         except getopt.GetoptError as err:  # check if the arguments are defined
             print str(err)  # error
             # usage() # display usage
-        if not opts:
-            print 'Please enter the path to the result folder. Exit program.'
-            sys.exit(1)
-            # usage()
+        # if not opts:
+        #     print 'Please enter the path to the result folder. Exit program.'
+        #     sys.exit(1)
+        #     # usage()
         for opt, arg in opts:  # explore flags
             if opt in '-i':
                 results_folder = arg
