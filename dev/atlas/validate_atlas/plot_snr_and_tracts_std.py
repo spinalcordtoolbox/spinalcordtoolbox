@@ -22,6 +22,7 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 0
+        self.methods_to_display = 'bin,wa,wath,ml,map'
 
 #=======================================================================================================================
 # main
@@ -29,7 +30,7 @@ class Param:
 def main():
 
     results_folder = ''
-    methods_to_display = ''
+    methods_to_display = param_default.methods_to_display
 
     # Parameters for debug mode
     if param.debug:
@@ -381,7 +382,8 @@ def main():
     plt.xlabel('Noise std')
     plt.title('Absolute error within all tracts as a function of noise std')
 
-    colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     box_plots = []
     for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
@@ -399,7 +401,7 @@ def main():
         box_plots.append(plot_i['boxes'][0])
 
     plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.xticks(ind_fig6+width*(float(nb_method)/2), snr[ind_snr_sort_tracts_std_10])
+    plt.xticks(ind_fig6+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), snr[ind_snr_sort_tracts_std_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig6)+(nb_method+0.5)*width])
     plt.gca().set_ylim([0, 2])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
@@ -413,7 +415,8 @@ def main():
     plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
     plt.title('Absolute error within all tracts as a function of tracts std')
 
-    colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     box_plots = []
     for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
@@ -431,7 +434,7 @@ def main():
         box_plots.append(plot_i['boxes'][0])
 
     plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.xticks(ind_fig7+width*(float(nb_method)/2), tracts_std[ind_tracts_std_sort_snr_10])
+    plt.xticks(ind_fig7+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), tracts_std[ind_tracts_std_sort_snr_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig7)+(nb_method+0.5)*width])
     plt.gca().set_ylim([0, 2])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
