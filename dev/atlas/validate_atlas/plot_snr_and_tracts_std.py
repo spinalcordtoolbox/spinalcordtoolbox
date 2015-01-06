@@ -22,6 +22,7 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 0
+        self.results_folder = 'data_simon'
         self.methods_to_display = 'bin,wa,wath,ml,map'
 
 #=======================================================================================================================
@@ -29,7 +30,7 @@ class Param:
 #=======================================================================================================================
 def main():
 
-    results_folder = ''
+    results_folder = param_default.results_folder
     methods_to_display = param_default.methods_to_display
 
     # Parameters for debug mode
@@ -48,7 +49,8 @@ def main():
             print str(err)  # error
             # usage() # display usage
         if not opts:
-            sct.printv('Please enter the path to the result folder.', 'error')
+            print 'Please enter the path to the result folder. Exit program.'
+            sys.exit(1)
             # usage()
         for opt, arg in opts:  # explore flags
             if opt in '-i':
