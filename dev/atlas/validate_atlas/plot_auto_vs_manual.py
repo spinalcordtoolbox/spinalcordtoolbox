@@ -37,8 +37,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "C:/cygwin64/home/Simon_2/data_auto_vs_manual"
+        results_folder = "/Volumes/users_hd2-3/slevy/data/validate_atlas/data_auto_vs_manual"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
         path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
+        path_sct = '/Users/slevy_local/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -254,7 +255,8 @@ def main():
         plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[0, :, i_meth], std_per_label[0, :, i_meth], color=color, linestyle='None', marker='o')
         plots.append(plot[0])
 
-    plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
+    # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
+    plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.xticks(ind_fig0+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=16)
     plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
     # plt.gca().set_ylim([0, 2])
