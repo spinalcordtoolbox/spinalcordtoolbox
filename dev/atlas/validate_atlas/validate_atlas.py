@@ -37,53 +37,57 @@ sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nifti
 
+
+# main function
 def main():
     # Parameters
-    bootstrap_iter = 50  #200
+    bootstrap_iter = 2  #200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
     zcrop_ind = [10, 110, 210, 310, 410]
     mask_folder = ['manual_masks/charles/', 'manual_masks/julien/', 'manual_masks/tanguy/', 'manual_masks/simon/']  # folder of manual masks
-    std_noise_list = [0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
-    range_tract_list = [0, 5, 10, 20, 50]  # in percent
+    std_noise_list = [5]  #[0, 5, 10, 20, 50]  # standard deviation of the noise added to the generated phantom
+    range_tract_list = [0, 5]  #[0, 5, 10, 20, 50]  # in percent
     list_methods = ['ml', 'mlwa', 'map', 'wa', 'wath', 'bin', 'man0', 'man1', 'man2', 'man3']
-    param_map_list = ['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
+    param_map_list = ['0,25', '1,25']  #['0,25', '1,25', '10,25', '25,25', '100,25', '25,0', '25,1', '25,10', '25,100']
     fixed_range = 10  # in percent
     fixed_noise = 10  # in percent
     results_folder = 'results/'  # add / at the end
 
     # Crop the atlas
     if crop == 1:
-        create_folder(folder_cropped_atlas)
+        create_folder(folder_cropped_atlas, 1)
         crop_atlas(folder_atlas, folder_cropped_atlas, zcrop_ind)
         # Copy the info_label.txt file in the cropped atlas' folder. This file needs to be there in order for the sct_extract_metric code to work
         sct.run('cp '+folder_atlas+'info_label.txt '+folder_cropped_atlas)
 
     # create output folder
-    create_folder(results_folder)
+    create_folder(results_folder, 1)
 
     # loop across noise levels
     range_tract = fixed_range
     for std_noise in std_noise_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, list_methods)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+'noise/', results_file, mask_folder, list_methods)
 
     # loop across tract ranges
     std_noise = fixed_noise
     for range_tract in range_tract_list:
         results_file = 'results_noise'+str(std_noise)+'_range'+str(range_tract)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, list_methods)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+'tracts/', results_file, mask_folder, list_methods)
 
     # loop across params for MAP estimation
     std_noise = fixed_noise
     range_tract = fixed_range
     for param_map in param_map_list:
         results_file = 'results_map'+str(param_map)
-        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+results_file, mask_folder, ['map'], 1, param_map)
+        validate_atlas(folder_cropped_atlas, bootstrap_iter, std_noise, range_tract, results_folder+'map/', results_file, mask_folder, ['map'], 1, param_map)
 
 
-def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, results_file, mask_folder, list_methods, test_map=0, param_map='25,25'):
+
+# validate atlas
+def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, results_folder, results_file, mask_folder, list_methods, test_map=0, param_map='25,25'):
     # Parameters
     file_phantom = "WM_phantom.nii.gz"
     file_phantom_noise = "WM_phantom_noise.nii.gz"
@@ -115,6 +119,9 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     fname_phantom = folder_tmp+file_phantom
     fname_phantom_noise = folder_tmp+file_phantom_noise
     fname_tract_sum = folder_tmp+file_tract_sum
+
+    # create output folder
+    create_folder(results_folder, 0)
 
     # Extract the tracts from the atlas' folder
     tracts = get_tracts(folder_cropped_atlas)
@@ -217,8 +224,12 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     # PRINT RESULTS FOR SINGLE TRACTS
     # ===============================
     if not test_map:
+
+        # create output folder
+        create_folder(results_folder+'sub/', 0)
+
         # Open text file where results are printed
-        fname_results = results_file+'.txt'
+        fname_results = results_folder+'sub/'+results_file+'.txt'
         results_text = open(fname_results, 'w+')
 
         # print header
@@ -255,7 +266,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     # PRINT RESULTS FOR ALL TRACTS
     # ============================
     # Open text file where results are printed
-    fname_results = results_file+'_all.txt'
+    fname_results = results_folder+results_file+'_all.txt'
     results_text = open(fname_results, 'w+')
 
     # print header
@@ -304,13 +315,18 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     print output
 
 
-def create_folder(folder):
-    """create folder-- delete if already exists"""
+
+def create_folder(folder, delete=0):
+    """create folder-- can delete if already exists"""
     if os.path.exists(folder):
-        shutil.rmtree(folder)
-    os.mkdir(folder)
+        if delete:
+            shutil.rmtree(folder)
+            os.mkdir(folder)
+    else:
+        os.mkdir(folder)
 
 
+# read results
 def read_results(fname_metrics):
     # Read file
     f = open(fname_metrics)
@@ -332,6 +348,8 @@ def read_results(fname_metrics):
     return metrics_results
 
 
+
+# crop atlas
 def crop_atlas(folder_atlas, folder_out, zind):
 
     # get atlas files
@@ -353,5 +371,6 @@ def crop_atlas(folder_atlas, folder_out, zind):
 
 
 
+# main
 if __name__ == "__main__":
     main()
