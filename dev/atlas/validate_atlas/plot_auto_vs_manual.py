@@ -22,7 +22,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = 'data_auto_vs_manual'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
 
