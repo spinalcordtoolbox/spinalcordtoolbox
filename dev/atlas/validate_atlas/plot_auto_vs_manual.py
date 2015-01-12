@@ -23,7 +23,7 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 0
-        self.results_folder = 'data_auto_vs_manual'
+        self.results_folder = 'results'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
 
 #=======================================================================================================================
@@ -37,9 +37,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Volumes/users_hd2-3/slevy/data/validate_atlas/data_auto_vs_manual"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
-        path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-        path_sct = '/Users/slevy_local/spinalcordtoolbox'
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
+        path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -66,14 +65,17 @@ def main():
 
     sct.printv("Working directory: "+os.getcwd())
 
-    sct.printv('\n\nData will be extracted from folder '+results_folder+' .', 'warning')
+    # Folder including data "automatic vs manual"
+    folder_auto_vs_manual = results_folder+'/noise/sub'
+
+    sct.printv('\n\nData will be extracted from folder '+folder_auto_vs_manual+' .', 'warning')
     sct.printv('\t\tCheck existence...')
-    sct.check_folder_exist(results_folder)
+    sct.check_folder_exist(folder_auto_vs_manual)
 
     # Extract methods to display
     methods_to_display = methods_to_display.strip().split(',')
 
-    fname_results = glob.glob(results_folder + '/*.txt')
+    fname_results = glob.glob(folder_auto_vs_manual + '/*.txt')
 
     nb_results_file = len(fname_results)
 
@@ -238,6 +240,9 @@ def main():
 
     # ********************************** START PLOTTING HERE ***********************************************************
 
+    # find file
+    ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
+
     fig0 = plt.figure(0)
     width = 0.5/(nb_method+1)
     ind_fig0 = numpy.arange(len(labels_id[0]))
@@ -252,7 +257,7 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[0, :, i_meth], std_per_label[0, :, i_meth], color=color, linestyle='None', marker='o')
+        plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o')
         plots.append(plot[0])
 
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
