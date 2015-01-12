@@ -21,9 +21,9 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
-        self.results_folder = 'data_simon'
-        self.methods_to_display = 'bin,wa,wath,ml,map'
+        self.debug = 0
+        self.results_folder = 'data_map'
+        self.methods_to_display = 'map'
 
 #=======================================================================================================================
 # main
@@ -36,7 +36,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "C:/cygwin64/home/Simon_2/data_auto_vs_manual"
+        results_folder = "C:/cygwin64/home/Simon_2/data_map"
         path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:

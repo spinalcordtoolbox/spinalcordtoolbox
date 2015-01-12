@@ -21,8 +21,8 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
-        self.results_folder = 'data_simon'
+        self.debug = 0
+        self.results_folder = "data_methods_comparison"
         self.methods_to_display = 'bin,wa,wath,ml,map'
 
 
@@ -36,7 +36,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Volumes/users_hd2-3/slevy/data/validate_atlas/data_simon"#"C:/cygwin64/home/Simon_2/data_simon"
+        results_folder = "/Volumes/users_hd2-3/slevy/data/validate_atlas/data_methods_comparison"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         path_sct = '/Users/slevy_local/spinalcordtoolbox'
         methods_to_display = 'bin,wa,wath,ml,map'
