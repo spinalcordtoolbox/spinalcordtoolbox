@@ -240,7 +240,7 @@ def main():
 
     # ********************************** START PLOTTING HERE ***********************************************************
 
-    # find file
+    # find index of the file generated with sigma noise = 10 and range tracts = -10:+10
     ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
 
     fig0 = plt.figure(0)
