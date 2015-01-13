@@ -36,9 +36,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Volumes/users_hd2-3/slevy/data/validate_atlas/data_methods_comparison"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
-        path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-        path_sct = '/Users/slevy_local/spinalcordtoolbox'
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
+        path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,wa,wath,ml,map'
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -65,14 +64,35 @@ def main():
 
     sct.printv("Working directory: " + os.getcwd())
 
-    sct.printv('\n\nData will be extracted from folder ' + results_folder + ' .', 'warning')
+    results_folder_noise = results_folder + '/noise'
+    results_folder_tracts = results_folder + '/tracts'
+
+    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' and ' + results_folder_tracts + '.', 'warning')
     sct.printv('\t\tCheck existence...')
-    sct.check_folder_exist(results_folder)
+    sct.check_folder_exist(results_folder_noise)
+    sct.check_folder_exist(results_folder_tracts)
+
 
     # Extract methods to display
     methods_to_display = methods_to_display.strip().split(',')
 
-    fname_results = glob.glob(results_folder + '/*.txt')
+    # Extract file names of the results files
+    fname_results_noise = glob.glob(results_folder_noise + '/*.txt')
+    fname_results_tracts = glob.glob(results_folder_tracts + '/*.txt')
+    fname_results = fname_results_noise + fname_results_tracts
+    # Remove doublons (due to the two folders)
+    # for i_fname in range(0, len(fname_results)):
+    #     for j_fname in range(0, len(fname_results)):
+    #         if (i_fname != j_fname) & (os.path.basename(fname_results[i_fname]) == os.path.basename(fname_results[j_fname])):
+    #             fname_results.remove(fname_results[j_fname])
+    file_results = []
+    for fname in fname_results:
+        file_results.append(os.path.basename(fname))
+    for file in file_results:
+        if file_results.count(file) > 1:
+            ind = file_results.index(file)
+            fname_results.remove(fname_results[ind])
+            file_results.remove(file)
 
     nb_results_file = len(fname_results)
 
@@ -294,7 +314,7 @@ def main():
     # fig1_ax.legend(handles, labels, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)}, fontsize=16)
 
     # Plot A
-    ind_tracts_std_10 = numpy.where(tracts_std == 10)  # indexes where TRACTS STD=10
+    ind_tracts_std_10 = numpy.where((tracts_std == 10) & (snr != 50))  # indexes where TRACTS STD=10
     ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[
         ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
     ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][
@@ -327,7 +347,7 @@ def main():
     plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
     # Plot B
-    ind_snr_10 = numpy.where(snr == 10)  # indexes where SNR=10
+    ind_snr_10 = numpy.where((snr == 10) & (tracts_std != 50))  # indexes where SNR=10
     ind_ind_tracts_std_sort_snr_10 = numpy.argsort(tracts_std[
         ind_snr_10])  # indexes of indexes where SNR=10 sorted according to tracts_std values (in ascending order)
     ind_tracts_std_sort_snr_10 = ind_snr_10[0][
@@ -450,11 +470,12 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
-    plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.legend(box_plots, methods_to_display, loc='best')
     plt.xticks(ind_fig6 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)),
                snr[ind_snr_sort_tracts_std_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig6) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 2])
+    plt.gca().set_ylim([0, 15])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y')
 
@@ -487,11 +508,12 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
-    plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.legend(box_plots, methods_to_display, loc='best')
     plt.xticks(ind_fig7 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)),
                tracts_std[ind_tracts_std_sort_snr_10])
     plt.gca().set_xlim([-width, numpy.max(ind_fig7) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 2])
+    plt.gca().set_ylim([0, 15])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y')
 
