@@ -21,8 +21,8 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0
-        self.results_folder = 'data_map'
+        self.debug = 1
+        self.results_folder = 'results/map'
         self.methods_to_display = 'map'
 
 #=======================================================================================================================
@@ -36,9 +36,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "C:/cygwin64/home/Simon_2/data_map"
-        path_sct = 'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-        methods_to_display = 'bin,man0,man1,man2,man3'
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150112/map" #"C:/cygwin64/home/Simon_2/data_map"
+        path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
+        methods_to_display = 'map'
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -96,7 +96,18 @@ def main():
     # max
     max_results = numpy.zeros((nb_results_file, 6))
 
-    #
+    # Extract variance within labels and variance of noise
+    map_var_params = numpy.zeros((nb_results_file, 2))
+    for i_file in range(0, nb_results_file):
+
+        fname = fname_results[i_file].strip()
+        ind_start, ind_end = fname.index('results_map')+11, fname.index('_all.txt')
+        var = fname[ind_start:ind_end]
+        map_var_params[i_file, 0] = float(var.split(",")[0])
+        map_var_params[i_file, 1] = float(var.split(",")[1])
+
+
+    # Read each file and extract data
     for i_file in range(0, nb_results_file):
 
         # Open file
@@ -205,15 +216,6 @@ def main():
     mean_abs_error_per_meth = numpy.mean(abs_error_per_labels, axis=1)
     std_abs_error_per_meth = numpy.std(abs_error_per_labels, axis=1)
 
-    # # ** TEMPORARY UPDATE NOT TO PLOT METHOD "mlwa" (will be useless when data will be generated without method "mlwa")*
-    # ind_mlwa = methods_name[0].index('mlwa')
-    # methods_name[0].remove('mlwa')
-    # median_results = numpy.delete(median_results, ind_mlwa, 1)
-    # median_std = numpy.delete(median_std, ind_mlwa, 1)
-    # min_results = numpy.delete(min_results, ind_mlwa, 1)
-    # max_results = numpy.delete(max_results, ind_mlwa, 1)
-    # error_per_label = numpy.delete(error_per_label, ind_mlwa, -1)
-    # # ******************************************************************************************************************
 
 
     nb_method = len(methods_to_display)
@@ -243,251 +245,29 @@ def main():
     print error_per_label
 
 
-    # First sequence of plots
-    if ind_line_min:
-        # # plot A
-        # fig0 = plt.figure(0)
-        # fig0.suptitle('Absolute error within all tracts as a function of noise std')
-        #
-        # fig0_ax = fig0.add_subplot(111)
-        # fig0_ax.grid(True)
-        # fig0_ax.set_xlabel('Noise std')
-        # fig0_ax.set_ylabel('Absolute error')
-        # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        #
-        # for meth, color in zip(methods_name[0], colors):
-        #     if meth != 'mlwa':
-        #         i_meth = methods_name[0].index(meth)
-        #
-        #         # median
-        #         plt.plot(snr[ind_tracts_std_10], median_results[ind_tracts_std_10, i_meth][0], label='median '+meth, color=color, marker='o', linestyle='None', markersize=5.0, linewidth=2.0)
-        #         # min
-        #         plt.plot(snr[ind_tracts_std_10], min_results[ind_tracts_std_10, i_meth][0], label='min '+meth, color=color, marker='_', linestyle='None', markersize=10.0, linewidth=20.0)
-        #         # max
-        #         plt.plot(snr[ind_tracts_std_10], max_results[ind_tracts_std_10, i_meth][0], label='max '+meth, color=color, marker='+', linestyle='None', markersize=10.0, linewidth=20.0)
-        #
-        # handles, labels = fig0_ax.get_legend_handles_labels()
-        # fig0_ax.legend(handles, labels, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)}, fontsize=16)
-        #
-        #
-        # # plot B
-        # fig1 = plt.figure(1)
-        # fig1.suptitle('Absolute error within all tracts as a function of tract std')
-        #
-        # fig1_ax = fig1.add_subplot(111)
-        # fig1_ax.grid(True)
-        # fig1_ax.set_xlabel('Tract std (percentage of the true value in tract)')
-        # fig1_ax.set_ylabel('Absolute error')
-        # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        #
-        # for meth, color in zip(methods_name[0], colors):
-        #     if meth != 'mlwa':
-        #         i_meth = methods_name[0].index(meth)
-        #
-        #         # median
-        #         plt.plot(tracts_std[ind_snr_10], median_results[ind_snr_10, i_meth][0], label='median '+meth, color=color, marker='o', linestyle='None', markersize=5.0, linewidth=2.0)
-        #         # min
-        #         plt.plot(tracts_std[ind_snr_10], min_results[ind_snr_10, i_meth][0], label='min '+meth, color=color, marker='_', linestyle='None', markersize=10.0, linewidth=20.0)
-        #         # max
-        #         plt.plot(tracts_std[ind_snr_10], max_results[ind_snr_10, i_meth][0], label='max '+meth, color=color, marker='+', linestyle='None', markersize=10.0, linewidth=20.0)
-        #
-        # handles, labels = fig1_ax.get_legend_handles_labels()
-        # fig1_ax.legend(handles, labels, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)}, fontsize=16)
+    # ********************************** START PLOTTING HERE ***********************************************************
 
-        # Plot A
-        ind_tracts_std_10 = numpy.where(tracts_std == 10)  # indexes where TRACTS STD=10
-        ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
-        ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
+    # find indexes of files to be plotted
+    ind_var_noise20 = numpy.where(map_var_params[:, 1] == 20)  # indexes where noise variance = 20
+    # ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[
+    #     ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
+    # ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][
+    #     ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
 
-        fig2 = plt.figure(2)
-        ind_fig2 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
-        width = 1.0/(nb_method+1)
-        plt.ylabel('Error (%)')
-        plt.xlabel('Noise std')
-        plt.title('Error within all tracts as a function of noise std')
-        plt.xticks(ind_fig2+0.5, snr[ind_snr_sort_tracts_std_10])
-        plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig2)+1])
-        plt.gca().yaxis.grid(True)
+    fig0 = plt.figure(0)
+    plt.ylabel('Absolute error (%)', fontsize=18)
+    plt.xlabel('Variance within labels (in percentage of the mean)', fontsize=18)
+    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR', fontsize=20)
 
-        colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        bar_plots = []
-        for meth, color in zip(methods_name[0], colors):
-            i_meth = methods_name[0].index(meth)
+    plt.errorbar(map_var_params[ind_var_noise20, 0], mean_abs_error_per_meth[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o')
 
-            plot_i = plt.bar(ind_fig2+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_results[ind_snr_sort_tracts_std_10, i_meth]-min_results[ind_snr_sort_tracts_std_10, i_meth], width, min_results[ind_snr_sort_tracts_std_10, i_meth], edgecolor=color, color='white', linewidth=3)
-            plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            bar_plots.append(plot_i[0])
-
-        plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-
-        # Plot B
-        ind_snr_10 = numpy.where(snr == 10)  # indexes where SNR=10
-        ind_ind_tracts_std_sort_snr_10 = numpy.argsort(tracts_std[ind_snr_10])  # indexes of indexes where SNR=10 sorted according to tracts_std values (in ascending order)
-        ind_tracts_std_sort_snr_10 = ind_snr_10[0][ind_ind_tracts_std_sort_snr_10]  # indexes where SNR=10 sorted according to tracts_std values (in ascending order)
-
-        fig3 = plt.figure(3)
-        ind_fig3 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
-        width = 1.0/(nb_method+1)
-        plt.ylabel('Error (%)')
-        plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
-        plt.title('Error within all tracts as a function of tracts std')
-        plt.xticks(ind_fig3+0.5, tracts_std[ind_tracts_std_sort_snr_10])
-        plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig3)+1])
-        plt.gca().yaxis.grid(True)
-
-        colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        bar_plots = []
-        for meth, color in zip(methods_name[0], colors):
-            i_meth = methods_name[0].index(meth)
-
-            plot_i = plt.bar(ind_fig3+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_results[ind_tracts_std_sort_snr_10, i_meth]-min_results[ind_tracts_std_sort_snr_10, i_meth], width, min_results[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=3)
-            plt.plot(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), median_results[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            bar_plots.append(plot_i[0])
-
-        plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-
-
-        # Plot A -- v2: Absolute error (min, max, mean)
-
-        fig4 = plt.figure(4)
-        ind_fig4 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*1.2
-        width = 1.0/(nb_method+1)
-        plt.ylabel('Absolute error (%)')
-        plt.xlabel('Noise std')
-        plt.title('Absolute error within all tracts as a function of noise std')
-        plt.xticks(ind_fig4+0.5, snr[ind_snr_sort_tracts_std_10])
-        plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig4)+1])
-        plt.gca().yaxis.grid(True)
-
-        colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        bar_plots = []
-        for meth, color in zip(methods_name[0], colors):
-            i_meth = methods_name[0].index(meth)
-
-            plot_i = plt.bar(ind_fig4+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth]-min_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], width, min_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], edgecolor=color, color='white', linewidth=3)
-            plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            bar_plots.append(plot_i[0])
-
-        plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-
-        # Plot B -- v2: Absolute error (min, max, mean)
-        fig5 = plt.figure(5)
-        ind_fig5 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*1.2
-        width = 1.0/(nb_method+1)
-        plt.ylabel('Absolute error (%)')
-        plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
-        plt.title('Absolute error within all tracts as a function of tracts std')
-        plt.xticks(ind_fig5+0.5, tracts_std[ind_tracts_std_sort_snr_10])
-        plt.gca().set_xlim([-width/(nb_method+1), numpy.max(ind_fig5)+1])
-        plt.gca().yaxis.grid(True)
-
-        colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        bar_plots = []
-        for meth, color in zip(methods_name[0], colors):
-            i_meth = methods_name[0].index(meth)
-
-            plot_i = plt.bar(ind_fig5+i_meth*width+(float(i_meth)*width)/(nb_method+1), max_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth]-min_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], width, min_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], edgecolor=color, color='white', linewidth=3)
-            plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            bar_plots.append(plot_i[0])
-
-        plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-
-
-        # Plot A -- v3: Box plots absolute error
-
-        fig6 = plt.figure(6)
-        width = 1.0/(nb_method+1)
-        ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10]))*(1.0+width)
-        plt.ylabel('Absolute error (%)')
-        plt.xlabel('Noise std')
-        plt.title('Absolute error within all tracts as a function of noise std')
-
-        # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        box_plots = []
-        for meth, color in zip(methods_to_display, colors):
-            i_meth = methods_name[0].index(meth)
-            i_meth_to_display = methods_to_display.index(meth)
-
-            boxprops = dict(linewidth=3, color=color)
-            flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-            whiskerprops = dict(color=color, linewidth=2)
-            capprops = dict(color=color, linewidth=2)
-            medianprops = dict(linewidth=3, color=color)
-            meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
-            meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-            plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_snr_sort_tracts_std_10, :, i_meth]), positions=ind_fig6+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
-            # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            box_plots.append(plot_i['boxes'][0])
-
-        plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-        plt.xticks(ind_fig6+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), snr[ind_snr_sort_tracts_std_10])
-        plt.gca().set_xlim([-width, numpy.max(ind_fig6)+(nb_method+0.5)*width])
-        plt.gca().set_ylim([0, 2])
-        plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
-        plt.grid(b=True, axis='y')
-
-        # Plot B -- v3: Box plots absolute error
-        fig7 = plt.figure(7)
-        width = 1.0/(nb_method+1)
-        ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10]))*(1.0+width)
-        plt.ylabel('Absolute error (%)')
-        plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
-        plt.title('Absolute error within all tracts as a function of tracts std')
-
-        # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        box_plots = []
-        for meth, color in zip(methods_to_display, colors):
-            i_meth = methods_name[0].index(meth)
-            i_meth_to_display = methods_to_display.index(meth)
-
-            boxprops = dict(linewidth=3, color=color)
-            flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-            whiskerprops = dict(color=color, linewidth=2)
-            capprops = dict(color=color, linewidth=2)
-            medianprops = dict(linewidth=3, color=color)
-            meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
-            meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
-            plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_tracts_std_sort_snr_10, :, i_meth]), positions=ind_fig7+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
-            # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-            box_plots.append(plot_i['boxes'][0])
-
-        plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-        plt.xticks(ind_fig7+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), tracts_std[ind_tracts_std_sort_snr_10])
-        plt.gca().set_xlim([-width, numpy.max(ind_fig7)+(nb_method+0.5)*width])
-        plt.gca().set_ylim([0, 2])
-        plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
-        plt.grid(b=True, axis='y')
-
-    # Second sequence of plots
-    elif not ind_line_min:
-
-        fig0 = plt.figure(0)
-        width = 1.0/(nb_method+1)
-        ind_fig0 = numpy.arange(len(labels_id[0]))*(1.0+width)
-        plt.ylabel('Absolute error (%)')
-        plt.xlabel('Labels')
-        plt.title('Automatic extraction vs. manual extraction')
-
-        # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        plots = []
-        for meth, color in zip(methods_to_display, colors):
-            i_meth = methods_name[0].index(meth)
-            i_meth_to_display = methods_to_display.index(meth)
-
-            # plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-        #     box_plots.append(plot_i['boxes'][0])
-        #
-        # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-        # plt.xticks(ind_fig7+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), tracts_std[ind_tracts_std_sort_snr_10])
-        # plt.gca().set_xlim([-width, numpy.max(ind_fig7)+(nb_method+0.5)*width])
-        # plt.gca().set_ylim([0, 2])
-        # plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
-        # plt.grid(b=True, axis='y')
-
-
+    # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
+    plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
+    plt.xticks(ind_fig0+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=16)
+    plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
+    # plt.gca().set_ylim([0, 2])
+    plt.grid(b=True, axis='y')
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
 
 
     plt.show()
