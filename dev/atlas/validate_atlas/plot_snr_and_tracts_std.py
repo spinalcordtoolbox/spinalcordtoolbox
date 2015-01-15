@@ -36,7 +36,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150112"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,wa,wath,ml,map'
     else:
@@ -109,13 +109,13 @@ def main():
     std_per_label = []
     labels_id = []
     # median
-    median_results = numpy.zeros((nb_results_file, 6))
+    median_results = numpy.zeros((nb_results_file, 5))
     # median std across bootstraps
-    median_std = numpy.zeros((nb_results_file, 6))
+    median_std = numpy.zeros((nb_results_file, 5))
     # min
-    min_results = numpy.zeros((nb_results_file, 6))
+    min_results = numpy.zeros((nb_results_file, 5))
     # max
-    max_results = numpy.zeros((nb_results_file, 6))
+    max_results = numpy.zeros((nb_results_file, 5))
 
     #
     for i_file in range(0, nb_results_file):
@@ -315,10 +315,8 @@ def main():
 
     # Plot A
     ind_tracts_std_10 = numpy.where((tracts_std == 10) & (snr != 50))  # indexes where TRACTS STD=10
-    ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[
-        ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
-    ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][
-        ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
+    ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
+    ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
 
     fig2 = plt.figure(2)
     ind_fig2 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * 1.2
