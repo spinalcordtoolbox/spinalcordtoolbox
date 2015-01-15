@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.results_folder = 'results/map'
         self.methods_to_display = 'map'
 
@@ -259,19 +259,53 @@ def main():
 
     plt.close('all')
 
+    # Errorbar plot
     fig0 = plt.figure(0)
     plt.ylabel('Mean absolute error (%)', fontsize=18)
     plt.xlabel('Variance within labels (in percentage of the mean)', fontsize=18)
     plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=20)
 
-    plt.errorbar(map_var_params[ind_var_label_sort_var_noise20, 0], mean_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], std_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
-    plt.errorbar(map_var_params[ind_var_noise_sort_var_label20, 1], mean_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], std_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
+    plt.errorbar(map_var_params[ind_var_label_sort_var_noise20, 0], mean_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], std_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], color='blue', marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
+    plt.errorbar(map_var_params[ind_var_noise_sort_var_label20, 1], mean_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], std_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], color='red', marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
 
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.legend(['noise variance = 20', 'variance within labels = 20% of the mean'], loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.gca().set_xlim([numpy.min(map_var_params[ind_var_label_sort_var_noise20, 0]) - 1, numpy.max(map_var_params[ind_var_label_sort_var_noise20, 0]) + 1])
     plt.grid(b=True, axis='both')
     # plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
+
+
+    # Box-and-whisker plots
+    fig1 = plt.figure(1)
+    width = 1.0 / (nb_method + 1)
+    ind_fig1 = numpy.arange(len(map_var_params[ind_var_label_sort_var_noise20, 0])) * (1.0 + width)
+    plt.ylabel('Absolute error (%)')
+    plt.xlabel('Variance')
+    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n')
+
+    # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+
+    boxprops = dict(linewidth=3)
+    flierprops = dict(markeredgewidth=0.7, markersize=7, marker='.')
+    whiskerprops = dict(linewidth=2)
+    capprops = dict(linewidth=2)
+    medianprops = dict(linewidth=3)
+    meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
+    meanlineprops = dict(linestyle='--', linewidth=2.5)
+    plt.boxplot(numpy.transpose(abs_error_per_labels[ind_var_label_sort_var_noise20, :, 0]),
+                         positions=ind_fig1, widths=width, boxprops=boxprops, medianprops=medianprops,
+                         flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
+    plt.boxplot(numpy.transpose(abs_error_per_labels[ind_var_noise_sort_var_label20, :, 0]),
+                         positions=ind_fig1 + width + width / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops,
+                         flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
+
+    # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+    plt.legend(['noise variance = 20', 'variance within labels = 20% of the mean'], loc='best')
+    plt.xticks(ind_fig1 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), map_var_params[ind_var_label_sort_var_noise20, 0])
+    plt.gca().set_xlim([-width, numpy.max(ind_fig1) + (nb_method + 0.5) * width])
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
+    plt.grid(b=True, axis='y')
 
 
     plt.show()

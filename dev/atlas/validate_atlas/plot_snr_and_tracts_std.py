@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.results_folder = "data_methods_comparison"
         self.methods_to_display = 'bin,wa,wath,ml,map'
 
@@ -102,6 +102,8 @@ def main():
     snr = numpy.zeros((nb_results_file))
     # Tracts std
     tracts_std = numpy.zeros((nb_results_file))
+    # CSF value
+    csf_values = numpy.zeros((nb_results_file))
     # methods' name
     methods_name = []  #numpy.empty((nb_results_file, nb_method), dtype=object)
     # labels
@@ -147,6 +149,19 @@ def main():
             # match = regex.search(lines[ind_line_tract_std[0]])
             # result_array[:, i_file, :, :] = match.group(1)  # le groupe 1 correspond a '.*'
             tracts_std[i_file] = int(''.join(c for c in lines[ind_line_tract_std[0]].split(':')[1] if c.isdigit()))
+
+        # extract CSF value
+        ind_line_csf_value = [lines.index(line_csf_value) for line_csf_value in lines if
+                              "# value CSF" in line_csf_value]
+        if len(ind_line_csf_value) != 1:
+            sct.printv("ERROR: number of lines including \"range tracts\" is different from 1. Exit program.", 'error')
+            sys.exit(1)
+        else:
+            # result_array[i_file, i_file, :] = int(''.join(c for c in lines[ind_line_tract_std[0]].split(':')[1] if c.isdigit()))
+            # regex = re.compile(''('(.*)':)  # re.I permet d'ignorer la case (majuscule/minuscule)
+            # match = regex.search(lines[ind_line_tract_std[0]])
+            # result_array[:, i_file, :, :] = match.group(1)  # le groupe 1 correspond a '.*'
+            csf_values[i_file] = int(''.join(c for c in lines[ind_line_csf_value[0]].split(':')[1] if c.isdigit()))
 
 
         # extract method name
@@ -238,6 +253,9 @@ def main():
     print '----------------------------------------------------------------------------------------------------------------'
     sct.printv('Tracts std of the ' + str(nb_results_file) + ' generated files:')
     print tracts_std
+    print '----------------------------------------------------------------------------------------------------------------'
+    sct.printv('CSF value of the ' + str(nb_results_file) + ' generated files:')
+    print csf_values
     print '----------------------------------------------------------------------------------------------------------------'
     sct.printv('Methods used to generate results for the ' + str(nb_results_file) + ' generated files:')
     print methods_name
