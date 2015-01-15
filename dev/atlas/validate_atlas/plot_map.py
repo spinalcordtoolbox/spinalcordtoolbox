@@ -21,7 +21,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = 'results/map'
         self.methods_to_display = 'map'
 
@@ -249,25 +249,29 @@ def main():
 
     # find indexes of files to be plotted
     ind_var_noise20 = numpy.where(map_var_params[:, 1] == 20)  # indexes where noise variance = 20
-    # ind_ind_snr_sort_tracts_std_10 = numpy.argsort(snr[
-    #     ind_tracts_std_10])  # indexes of indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
-    # ind_snr_sort_tracts_std_10 = ind_tracts_std_10[0][
-    #     ind_ind_snr_sort_tracts_std_10]  # indexes where TRACTS STD=10 sorted according to SNR values (in ascending order)
+    ind_ind_var_label_sort_var_noise20 = numpy.argsort(map_var_params[ind_var_noise20, 0])  # indexes of indexes where noise variance=20 sorted according to values of variance within labels (in ascending order)
+    ind_var_label_sort_var_noise20 = ind_var_noise20[0][ind_ind_var_label_sort_var_noise20][0]  # indexes where noise variance=20 sorted according to values of variance within labels (in ascending order)
+
+
+    ind_var_label20 = numpy.where(map_var_params[:, 0] == 20)  # indexes where variance within labels = 20
+    ind_ind_var_noise_sort_var_label20 = numpy.argsort(map_var_params[ind_var_label20, 1])  # indexes of indexes where label variance=20 sorted according to values of noise variance (in ascending order)
+    ind_var_noise_sort_var_label20 = ind_var_label20[0][ind_ind_var_noise_sort_var_label20][0]  # indexes where noise variance=20 sorted according to values of variance within labels (in ascending order)
+
+    plt.close('all')
 
     fig0 = plt.figure(0)
-    plt.ylabel('Absolute error (%)', fontsize=18)
+    plt.ylabel('Mean absolute error (%)', fontsize=18)
     plt.xlabel('Variance within labels (in percentage of the mean)', fontsize=18)
-    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR', fontsize=20)
+    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=20)
 
-    plt.errorbar(map_var_params[ind_var_noise20, 0], mean_abs_error_per_meth[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o')
+    plt.errorbar(map_var_params[ind_var_label_sort_var_noise20, 0], mean_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], std_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
+    plt.errorbar(map_var_params[ind_var_noise_sort_var_label20, 1], mean_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], std_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
 
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
-    plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
-    plt.xticks(ind_fig0+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=16)
-    plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
-    # plt.gca().set_ylim([0, 2])
-    plt.grid(b=True, axis='y')
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
+    plt.legend(['noise variance = 20', 'variance within labels = 20% of the mean'], loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
+    plt.gca().set_xlim([numpy.min(map_var_params[ind_var_label_sort_var_noise20, 0]) - 1, numpy.max(map_var_params[ind_var_label_sort_var_noise20, 0]) + 1])
+    plt.grid(b=True, axis='both')
+    # plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
 
 
     plt.show()
