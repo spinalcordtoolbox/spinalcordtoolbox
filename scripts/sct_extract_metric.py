@@ -39,7 +39,7 @@ ALMOST_ZERO = 0.000001
 class Param:
     def __init__(self):
         self.debug = 0
-        self.method = 'mlwa'
+        self.method = 'wath'
         self.path_label = ''
         self.verbose = 1
         self.labels_of_interest = ''  # list. Example: '1,3,4'. . For all labels, leave empty.
@@ -50,8 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['25',  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '25'] # variance of the gaussian-distributed noise
+        self.adv_param = ['20',  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '20'] # variance of the gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -98,7 +98,7 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207185647/WM_phantom_noise.nii.gz'
         path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
-        method = 'mlwa'
+        method = 'map'
         ml_clusters = '0:29,30,31'
         labels_of_interest = '0,1,15,16'
         slices_of_interest = ''
@@ -109,7 +109,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hac:f:i:l:m:n:o:p:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:p:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
@@ -118,8 +118,6 @@ def main():
         for opt, arg in opts: # explore flags
             if opt in '-a':
                 average_all_labels = 1
-            if opt in '-c':
-                ml_clusters = arg
             elif opt in '-f':
                 path_label = os.path.abspath(arg)  # save path of labels folder
             elif opt == '-h':  # help option
@@ -280,7 +278,7 @@ def main():
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
         sum_labels_user = np.sum(labels[label_id_user])  # sum the labels selected by user
-        if method == 'ml' or method == 'mlwa' or method == 'map':  # in case the maximum likelihood and the average across different labels are wanted
+        if method == 'ml' or method == 'map':  # in case the maximum likelihood and the average across different labels are wanted
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
             labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp
@@ -601,7 +599,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 # Check the consistency of the methods asked by the user
 #=======================================================================================================================
 def check_method(method, fname_normalizing_label, normalization_method):
-    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'mlwa') & (method != 'map'):
+    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
@@ -700,8 +698,8 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
     metric_std = np.empty([nb_labels], dtype=object)
     nb_vox = len(data1d)
 
-    # Estimation with 3-class maximum likelihood combined with wa (mlwa)
-    if method == 'mlwa' or method == 'map':
+    # Estimation with 3-class maximum likelihood
+    if method == 'map':
         sct.printv('Estimation maximum likelihood within clustered labels...', verbose=verbose)
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
@@ -722,17 +720,9 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
         beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
         # display results
         sct.printv('  Estimated beta per cluster: '+str(beta), verbose=verbose)
-        if method == 'mlwa':
-            # correct data using PVE information
-            sct.printv(' Correct data using partial volume information...', verbose=verbose)
-            y_new = y
-            for i_cluster in range(1, nb_clusters):
-                y_new = y_new + x[:, i_cluster]*(beta[0]-beta[i_cluster])
-            # update data
-            data1d = y_new
 
     # Estimation with weighted average (also works for binary)
-    if method == 'wa' or method == 'bin' or method == 'wath' or method == 'mlwa':
+    if method == 'wa' or method == 'bin' or method == 'wath':
         for i_label in range(0, nb_labels):
             # check if all labels are equal to zero
             if sum(labels2d[i_label, :]) == 0:
@@ -841,17 +831,15 @@ OPTIONAL ARGUMENTS
                         Default = all labels.
   -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
-                          mlwa: robust maximum likelihood (computed within clusters, as defined
-                                by flag -c), followed by weighted average
-                          map: robust maximum likelihood (computed within clusters, as defined
-                               by flag -c), followed by maximum a posteriori.
+                              N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+                          map: maximum a posteriori. Mean priors are estimated by maximum likelihood
+                               within three clusters defined by the flag -c (white matter, gray 
+                               matter and CSF). Tract and noise variance are set with flag -p.
+                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
-  -c <clusters>         clusters of labels to estimate robust maximum likelihood from. Clusters are
-                          separated by ','. Labels are separated by ':'. Default = """+param_default.ml_clusters+"""
-                          N.B. only use this flag with methods mlwa or map.
-  -p <param>            advanced parameters.
+  -p <param>            advanced parameters for method map.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
                           #1: variance across labels, in percentage of the mean (used for map)
                           #2: variance of the Gaussian noise (used for map)
