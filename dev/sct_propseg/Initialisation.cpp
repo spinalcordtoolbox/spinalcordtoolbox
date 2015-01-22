@@ -698,7 +698,7 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
     itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
     writerVesselNess->SetImageIO(ioV);
     writerVesselNess->SetInput( m_PostProcessImage3D );
-    writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/im_proc.nii.gz");
+    writerVesselNess->SetFileName("im_proc.nii.gz");
     try {
         writerVesselNess->Update();
     }
@@ -956,15 +956,37 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     typedef itk::SymmetricSecondRankTensor< double, 3 > MatrixType;
     typedef itk::Image< MatrixType, 3> HessianImageType;
     typedef itk::ImageRegionIterator< HessianImageType > HessianImageIterator;
-        
+    
+    typedef itk::InvertIntensityImageFilter <ImageType> InvertIntensityImageFilterType;
+    typedef itk::StatisticsImageFilter<ImageType> StatisticsImageFilterType;
+    
+    typedef itk::ImageDuplicator< ImageType > DuplicatorTypeIm;
+    DuplicatorTypeIm::Pointer duplicator = DuplicatorTypeIm::New();
+    duplicator->SetInputImage(im);
+    duplicator->Update();
+    ImageType::Pointer clonedImage = duplicator->GetOutput();
+    
+    if (typeImageFactor_ == 1.0)
+    {
+        StatisticsImageFilterType::Pointer statisticsImageFilterInput = StatisticsImageFilterType::New();
+        statisticsImageFilterInput->SetInput(clonedImage);
+        statisticsImageFilterInput->Update();
+        double maxIm = statisticsImageFilterInput->GetMaximum();
+        InvertIntensityImageFilterType::Pointer invertIntensityFilter = InvertIntensityImageFilterType::New();
+        invertIntensityFilter->SetInput(clonedImage);
+        invertIntensityFilter->SetMaximum(maxIm);
+        invertIntensityFilter->Update();
+        clonedImage = invertIntensityFilter->GetOutput();
+    }
+    
     typedef itk::HessianRecursiveGaussianImageFilter< ImageType >     HessianFilterType;
     typedef itk::Hessian3DToVesselnessMeasureImageFilter< double > VesselnessMeasureFilterType;
     HessianFilterType::Pointer hessianFilter = HessianFilterType::New();
     VesselnessMeasureFilterType::Pointer vesselnessFilter = VesselnessMeasureFilterType::New();
-    hessianFilter->SetInput( im );
+    hessianFilter->SetInput( clonedImage );
     hessianFilter->SetSigma( 3.0 );
     hessianFilter->Update();
-        
+    
     vesselnessFilter->SetInput( hessianFilter->GetOutput() );
     vesselnessFilter->SetAlpha1( 0.5 );
     vesselnessFilter->SetAlpha2( 2.0 );
@@ -973,7 +995,6 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     ImageType::Pointer vesselnessImage = vesselnessFilter->GetOutput();
         
     // Normalization of the vesselness image
-    typedef itk::StatisticsImageFilter<ImageType> StatisticsImageFilterType;
     StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New();
     statisticsImageFilter->SetInput(vesselnessImage);
     statisticsImageFilter->Update();
@@ -1005,7 +1026,7 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
     writerVesselNess->SetImageIO(ioV);
     writerVesselNess->SetInput( vesselnessImage );
-    writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageVesselNessFilter.nii.gz");
+    writerVesselNess->SetFileName("imageVesselNessFilter.nii.gz");
     try {
         writerVesselNess->Update();
     }
@@ -1095,7 +1116,7 @@ int Initialisation::symmetryDetection3D(ImageType::Pointer im, double cropWidth_
         WriterType::Pointer writer = WriterType::New();
         itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
         writer->SetImageIO(io);
-        writer->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageMiddle.nii.gz");
+        writer->SetFileName("imageMiddle.nii.gz");
         writer->SetInput(imageMiddle);
         try {
             writer->Update();
@@ -1470,7 +1491,7 @@ int Initialisation::symmetryDetection3D(ImageType::Pointer im, double cropWidth_
         itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
         writerVesselNess->SetImageIO(ioV);
         writerVesselNess->SetInput( vesselnessFilter->GetOutput() );
-        writerVesselNess->SetFileName("/home/django/benjamindeleener/data/PropSeg_data/t1/errsm_11/imageVesselNessFilter.nii.gz");
+        writerVesselNess->SetFileName("imageVesselNessFilter.nii.gz");
         try {
             writerVesselNess->Update();
         }
