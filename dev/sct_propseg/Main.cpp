@@ -830,8 +830,8 @@ int main(int argc, char *argv[])
         prop_CSF->setImage3D(image3DGrad);
         if (init_with_centerline) {
             prop_CSF->propagationWithCenterline();
-            for (unsigned int k=0; k<centerline.size(); k++) prop->addPointToCenterline(centerline[k]);
-            if (initialisation <= 1) prop->setInitPosition(initialisation);
+            for (unsigned int k=0; k<centerline.size(); k++) prop_CSF->addPointToCenterline(centerline[k]);
+            if (initialisation <= 1) prop_CSF->setInitPosition(initialisation);
         }
         prop_CSF->setVerbose(verbose);
         prop_CSF->computeMeshInitial();
