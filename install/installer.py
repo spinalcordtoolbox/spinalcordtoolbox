@@ -20,7 +20,7 @@ import sys
 import commands
 import getopt
 from datetime import date
-import utllib2
+import urllib
 import platform
 
 
@@ -94,15 +94,13 @@ class Installer:
         version_sct_split = version_sct.split('.')
 
         # fetch version of the toolbox online
-        url_version = "http://github.com/neuropoly/spinalcordtoolbox/blob/master/version.txt"
+        url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
         file_name = url_version.split('/')[-1]
-        u = urllib2.urlopen(url_version)
-        f = open(file_name, 'w')
-        meta = u.info()
-        file_size = int(meta.getheaders("Content-Length")[0])
-        print "Downloading: %s Bytes: %s" % (file_name, file_size)
+        download_file = urllib.URLopener()
+        download_file.retrieve(url_version, file_name)
+
         with open (file_name, "r") as myfile:
-            version_sct_online = myfile.read().replace('\n', '')
+            version_sct_online = myfile.read()
         print "  latest available version: "+version_sct_online
         version_sct_online_split = version_sct_online.split('.')
 
@@ -110,7 +108,7 @@ class Installer:
             print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
             install_new = ""
             while install_new not in ["yes","no"]:
-                install_new = input("[yes|no]: ")
+                install_new = raw_input("[yes|no]: ")
             if install_new == "yes":
                 print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
 
@@ -187,6 +185,8 @@ class Installer:
         status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
+        else:
+            print output
         os.chdir("..")
 
         # Create links to python scripts
@@ -200,18 +200,19 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # Checking if patches are available. If so, install them. Patches installation is available from release 1.1
+        # version number may have 1, 2 or 3 parts. It needs to be completed sometimes.
+        if len(version_sct_split) < 2: version_sct_split.append('0')
+        if len(version_sct_split) < 3: version_sct_split.append('0')
+        if len(version_sct_online_split) < 2: version_sct_split.append('0')
+        if len(version_sct_online_split) < 3: version_sct_split.append('0')
         if version_sct_split[0] == version_sct_online_split[0] and version_sct_split[1] == version_sct_online_split[1] and version_sct_split[2] != version_sct_online_split[2]:
             # check if a new release is available
-            url_versions = "http://github.com/neuropoly/spinalcordtoolbox/blob/master/versions.txt"
+            url_versions = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/versions.txt"
             file_name = url_versions.split('/')[-1]
-            u = urllib2.urlopen(url_versions)
-            f = open(file_name, 'w')
-            meta = u.info()
-            file_size = int(meta.getheaders("Content-Length")[0])
-            print "Downloading: %s Bytes: %s" % (file_name, file_size)
-            versions_old = list
+            download_file = urllib.URLopener()
+            download_file.retrieve(url_version, file_name)
             with open (file_name, "r") as versions_file:
-                versions_old.append(versions_file.readlines())
+                versions_old = versions_file.readlines()
             for version_sct in versions_old:
                 ver = version_sct.split('.')
                 # As the versions are ordered from the newest to the latest, the first one with [0] and [1] term that will be found is either a new one or the same that is installed.
@@ -219,7 +220,7 @@ class Installer:
                     ver_patch_split = ver[2].split('-')
                     # check if the patch is for linux, osx or both. If the patch is for both os, we install it. If not, we check.
                     install_patch = True
-                    name_folder_patch = ver[2]
+                    name_folder_patch = version_sct
                     if len(ver_patch_split) > 1:
                         # check which platform is running
                         platform_running = sys.platform
@@ -234,13 +235,13 @@ class Installer:
 
                     # If a patch needs to be installed, install it.
                     if install_patch:
-                        url_patch = "http://github.com/neuropoly/spinalcordtoolbox/blob/master/patches/patch_"+version_sct+".zip"
+                        print "\nInstalling patch_"+version_sct+"..."
+
+                        url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+version_sct+".zip"
+                        #url_patch = "https://github.com/neuropoly/spinalcordtoolbox/blob/master/patches/patch_"+version_sct+".zip?raw=true"
                         file_name = url_patch.split('/')[-1]
-                        u = urllib2.urlopen(url_patch)
-                        f = open(file_name, 'w')
-                        meta = u.info()
-                        file_size = int(meta.getheaders("Content-Length")[0])
-                        print "Downloading: %s Bytes: %s" % (file_name, file_size)
+                        download_file = urllib.URLopener()
+                        download_file.retrieve(url_patch, file_name)
 
                         # unzip patch
                         cmd = "unzip "+file_name
@@ -249,12 +250,16 @@ class Installer:
                         if status != 0:
                             print '\nERROR! \n' + output + '\nExit program.\n'
 
+                        os.chdir(name_folder_patch)
                         # launch patch installation
-                        cmd = "python "+name_folder_patch+"/install_patch.py"
+                        cmd = "python install_patch.py"
                         print ">> " + cmd
                         status, output = commands.getstatusoutput(cmd)
                         if status != 0:
                             print '\nERROR! \n' + output + '\nExit program.\n'
+                        else:
+                            print output
+                        os.chdir("..")
 
                         # Once the patch is installed, we do not check for other patches
                         break
