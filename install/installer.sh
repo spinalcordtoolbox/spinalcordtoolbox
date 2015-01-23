@@ -143,6 +143,8 @@ cmd="./requirements.sh"
 echo ">> $cmd"; $cmd
 cd ..
 
+
+
 # Create links to python scripts
 echo
 echo "Create links to python scripts..."
@@ -154,9 +156,8 @@ echo "Check if other dependent software are installed..."
 cmd="sct_check_dependences"
 echo ">> $cmd"; $cmd
 
-# get current path
-# WHAT IS THAT???  (julien 2015-01-04)
-path_toolbox_temp=`pwd`
+# get current path in order to propose removal to the user
+path_current_path=`pwd`
 
 # display stuff
 echo ""
@@ -170,7 +171,7 @@ echo "or contact the developers."
 echo
 echo "You can now delete this folder by typing:"
 echo "> cd .."
-echo "> rm -rf ${path_toolbox_temp}"
+echo "> rm -rf ${path_current_path}"
 echo
 echo "To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 
