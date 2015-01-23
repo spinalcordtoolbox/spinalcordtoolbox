@@ -75,7 +75,12 @@ do
 done
 
 #removing internal stuff or stuff under development
-cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct isct_check_detection sct_change_image_type sct_invert_image sct_convert"
+if [ "$is_admin" = true ] ; then
+  cmd="sudo rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct isct_check_detection sct_change_image_type sct_invert_image sct_convert"
+else
+  cmd="rm sct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct isct_check_detection sct_change_image_type sct_invert_image sct_convert"
+fi
+echo ">> $cmd"
 $cmd
 
 cd ${CURRENT_DIR}
