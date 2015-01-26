@@ -23,6 +23,437 @@ from datetime import date
 import urllib
 import platform
 
+### Version is a class that contains three levels of versioning
+# Inspired by FSL installer
+class Version(object):
+    def __init__(self,version_sct):
+        self.version_sct = version_sct
+
+        if not isinstance(version_sct,basestring):
+            print version_sct
+            raise Exception('Version is not a string.')
+
+        # detect os, if it exist
+        version_sct_os = version_sct.split('-')
+        try:
+            self.os = version_sct_os[1]
+            version_sct_main = version_sct_os[0]
+        except IndexError:
+            self.os = ""
+            version_sct_main = version_sct
+
+        # detect beta, if it exist
+        version_sct_beta = version_sct_main.split('_')
+        try:
+            self.beta = version_sct_beta[1]
+            version_sct_main = version_sct_beta[0]
+            self.isbeta = True
+        except IndexError:
+            self.beta = ""
+            version_sct_main = version_sct
+            self.isbeta = False
+
+        version_sct_split = version_sct_main.split('.')
+
+        for v in version_sct_split:
+            if not v.isdigit():
+                raise ValueError('Bad version string.')
+        self.major = int(version_sct_split[0])
+        try:
+            self.minor = int(version_sct_split[1])
+        except IndexError:
+            self.minor = 0
+        try:
+            self.patch = int(version_sct_split[2])
+        except IndexError:
+            self.patch = 0
+        try:
+            self.hotfix = int(version_sct_split[3])
+        except IndexError:
+            self.hotfix = 0
+
+    def __repr__(self):
+        return "Version(%s,%s,%s,%s,%r,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta, self.os)
+
+    def __str__(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        if self.beta != "":
+            result = result+"_"+self.beta
+        if self.os != "":
+            result = result+"-"+self.os
+        return result
+
+    def __ge__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self > other or self == other:
+            return True
+        return False
+    def __le__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self < other or self == other:
+            return True
+        return False
+    def __cmp__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__lt__(other):
+            return -1
+        if self.__gt__(other):
+            return 1
+        return 0
+    def __lt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        if self.minor > other.minor:
+            return False
+        if self.patch < other.patch:
+            return True
+        if self.patch > other.patch:
+            return False
+        if self.hotfix < other.hotfix:
+            return True
+        if self.hotfix > other.hotfix:
+            return False
+        if self.isbeta and not other.isbeta:
+            return True
+        if not self.isbeta and other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False
+    
+    def __gt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor > other.minor:
+            return True
+        if self.minor < other.minor:
+            return False
+        if self.patch > other.patch:
+            return True
+        if self.patch < other.patch:
+            return False
+        if self.hotfix > other.hotfix:
+            return True
+        if self.hotfix < other.hotfix:
+            return False
+        if not self.isbeta and other.isbeta:
+            return True
+        if self.isbeta and not other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False 
+    
+    def __eq__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta and self.os == other.os:
+            return True
+        return False
+    
+    def __ne__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__eq__(other):
+            return False
+        return True
+
+    def isLessThan_MajorMinor(self, other):
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        else:
+            return False
+
+    def isEqualTo_MajorMinor(self, other):
+        return self.major == other.major and self.minor == other.minor
+
+    def isLessPatchThan_MajorMinor(self, other):
+        if self.isEqualTo_MajorMinor(other):
+            if self.patch < other.patch:
+                return True
+        return False
+
+    def getFolderName(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        result = result+"_"+self.beta
+        return result
+
+class shell_colours(object):
+    default = '\033[0m'
+    rfg_kbg = '\033[91m'
+    gfg_kbg = '\033[92m'
+    yfg_kbg = '\033[93m'
+    mfg_kbg = '\033[95m'
+    yfg_bbg = '\033[104;93m'
+    bfg_kbg = '\033[34m'
+    bold = '\033[1m'
+
+class InstallationResult(object):
+    SUCCESS = 0
+    WARN = 1
+    ERROR = 2
+    def __init__(self,result,status,message):
+        self.result = result
+        self.status = status
+        self.message = message
+    def __nonzero__(self):
+        self.status
+
+class MsgUser(object): 
+    __debug = False
+    __quiet = False
+    
+    @classmethod
+    def debugOn(cls):
+        cls.__debug = True
+    @classmethod
+    def debugOff(cls):
+        cls.__debug = False
+    @classmethod
+    def quietOn(cls):
+        cls.__quiet = True
+    @classmethod
+    def quietOff(cls):
+        cls.__quiet = False
+
+    @classmethod
+    def isquiet(cls):
+        return cls.__quiet
+    
+    @classmethod
+    def isdebug(cls):
+        return cls.__debug
+    
+    @classmethod    
+    def debug(cls, message, newline=True):
+        if cls.__debug:
+            from sys import stderr
+            mess = str(message)
+            if newline:
+                mess += "\n"
+            stderr.write(mess)
+    
+    @classmethod
+    def message(cls, msg):
+        if cls.__quiet:
+            return
+        print msg
+    
+    @classmethod
+    def question(cls, msg):
+        print msg,
+                  
+    @classmethod
+    def skipped(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+
+    @classmethod
+    def ok(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def failed(cls, msg):
+        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def warning(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
+
+class Progress_bar(object):
+    def __init__(self, x=0, y=0, mx=1, numeric=False):
+        self.x = x
+        self.y = y
+        self.width = 50
+        self.current = 0
+        self.max = mx
+        self.numeric = numeric
+
+    def update(self, reading):
+        from sys import stdout
+        if MsgUser.isquiet():
+            return
+        percent = reading * 100 / self.max
+        cr = '\r'
+
+        if not self.numeric:
+            bar = '#' * int(percent)
+        else:
+            bar = "/".join((str(reading), str(self.max))) + ' - ' + str(percent) + "%\033[K"
+        stdout.write(cr)
+        stdout.write(bar)
+        stdout.flush()
+        self.current = percent
+
+        if percent == 100:
+            stdout.write(cr)
+            if not self.numeric:
+                stdout.write(" " * int(percent))
+                stdout.write(cr)
+                stdout.flush()
+            else:
+                stdout.write(" " * ( len(str(self.max))*2 + 8))
+                stdout.write(cr)
+                stdout.flush()
+
+class InstallFailed(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class UnsupportedOs(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Os(object):
+    '''Work out which platform we are running on'''
+
+    def __init__(self):
+        import os
+        if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
+        import platform
+        self.os = platform.system().lower()
+        self.arch = platform.machine()
+        self.applever = ''
+        
+        if self.os == 'darwin':
+            self.vendor = 'apple'
+            self.version = Version(platform.release())
+            (self.applever,_,_) = platform.mac_ver()
+            if self.arch == 'Power Macintosh': raise UnsupportedOs('We do not support PowerPC')
+            self.glibc = ''
+            self.bits = ''
+        elif self.os == 'linux':
+            if hasattr(platform, 'linux_distribution'):
+                # We have a modern python (>2.4)
+                (self.vendor, version, _) = platform.linux_distribution(full_distribution_name=0)
+            else:
+                (self.vendor, version, _) = platform.dist()
+            self.vendor = self.vendor.lower()
+            self.version = Version(version)
+            self.glibc = platform.libc_ver()
+            if self.arch == 'x86_64':
+                self.bits = '64'
+            else:
+                self.bits = '32'
+                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
+        else:
+            raise UnsupportedOs("We do not support this OS.")
+
+def open_url(url, start=0, timeout=20):
+    import urllib2
+    import socket
+    socket.setdefaulttimeout(timeout)
+    MsgUser.debug("Attempting to download %s." % (url))
+    
+    try:
+        req = urllib2.Request(url)
+        if start != 0:
+            req.headers['Range'] = 'bytes=%s-' % (start)
+        rf = urllib2.urlopen(req)
+    except urllib2.HTTPError, e:
+        MsgUser.debug("%s %s" % (url, e.msg))
+        return InstallationResult(False, InstallationResult.ERROR, "Cannot find file %s on server (%s). Try again later." % (url, e.msg))
+    except urllib2.URLError, e:
+        errno = e.reason.args[0]
+        message = e.reason.args[1]
+        if errno == 8:
+            # Bad host name
+            MsgUser.debug("%s %s" % (url, 'Unable to find FSL download server in the DNS'))
+        else:
+            # Other error
+            MsgUser.debug("%s %s" % (url, message))
+        return InstallationResult(False, InstallationResult.ERROR, "Cannot find %s (%s). Try again later." % (url, message))
+    except socket.timeout, e:
+        MsgUser.debug(e.value)
+        return InstallationResult(False, InstallationResult.ERROR, "Failed to contact FSL web site. Try again later.")    
+    return InstallationResult(rf, InstallationResult.SUCCESS,'')
+    
+def download_file(url, localf, timeout=20):
+    '''Get a file from the url given storing it in the local file specified'''
+    import socket, time
+    
+    result = open_url(url, 0, timeout)
+
+    if result.status == InstallationResult.SUCCESS:
+        rf = result.result
+    else:
+        return result
+    
+    metadata = rf.info()
+    rf_size = int(metadata.getheaders("Content-Length")[0])
+    
+    dl_size = 0
+    block = 16384
+    x = 0
+    y= 0
+    pb = Progress_bar( x, y, rf_size, numeric=True)
+
+    for attempt in range(1,6):
+        # Attempt download 5 times before giving up
+        pause = timeout
+        try:  
+            try:
+                lf = open(localf, 'ab')    
+            except:
+                return InstallationResult(False, InstallationResult.ERROR, "Failed to create temporary file.")
+
+            while True:
+                buf = rf.read(block)
+                if not buf:
+                    break
+                dl_size += len(buf)
+                lf.write(buf)
+                pb.update( dl_size )
+            lf.close()
+        except (IOError, socket.timeout), e:
+            MsgUser.debug(e.strerror)
+            MsgUser.message("\nDownload failed re-trying (%s)..." % attempt)
+            pause = 0
+        if dl_size != rf_size:
+            time.sleep(pause)
+            MsgUser.message("\nDownload failed re-trying (%s)..." % attempt)
+            result = open_url(url, dl_size, timeout)
+            if result.status == InstallationResult.ERROR:
+                MsgUser.debug(result.message)
+            else:
+                rf = result.result
+        else:
+            break      
+    if dl_size != rf_size:
+        return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
+    return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
 class Installer:
     def __init__(self):
@@ -35,7 +466,6 @@ class Installer:
             sys.exit(2)
 
         # Check input parameters
-
         try:
             opts, args = getopt.getopt(sys.argv[1:], 'hp:')
         except getopt.GetoptError:
@@ -50,7 +480,14 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
+        print "Installer version "+str(Version("1.1"))
         print "============================="
+
+        try:
+            this_computer = Os()
+        except UnsupportedOs, e:
+            MsgUser.debug(str(e))
+            raise InstallFailed(str(e))
 
         if not os.path.isdir(self.path_install):
             print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
@@ -87,30 +524,36 @@ class Installer:
         # Checking if a new version of the toolbox is available. If so, change it.
         # Check the version on GitHub Master branch. If a new release is available, ask the user if he want to install it.
         # fetch version of the toolbox
-        print 'Fetch version of the Spinal Cord Toolbox... '
+        print 'Fetch version of the Spinal Cord Toolbox...'
         with open ("spinalcordtoolbox/version.txt", "r") as myfile:
-            version_sct = myfile.read().replace('\n', '')
-        print "  version: "+version_sct
-        version_sct_split = version_sct.split('.')
+            version_sct_str = myfile.read().replace('\n','')
+            version_sct = Version(version_sct_str)
+        print "  Version: "+str(version_sct)
 
         # fetch version of the toolbox online
         url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
-        file_name = url_version.split('/')[-1]
-        download_file = urllib.URLopener()
-        download_file.retrieve(url_version, file_name)
+        file_name = "tmp.version_online.txt"
+        version_result = download_file(url_version, file_name)
+        if version_result.status == InstallationResult.SUCCESS:
+            isAble2Connect = True
+            with open (file_name, "r") as myfile:
+                try:
+                    version_sct_online_str = myfile.read().replace('\n','')
+                    version_sct_online = Version(version_sct_online_str)
+                except ValueError:
+                    MsgUser.warning("The extraction of online SCT version seemed to have failed. Please contact SCT administrator with this error: "+version_sct_online_str)
+                    version_sct_online = version_sct
 
-        with open (file_name, "r") as myfile:
-            version_sct_online = myfile.read()
-        print "  latest available version: "+version_sct_online
-        version_sct_online_split = version_sct_online.split('.')
-
-        if version_sct_split[0] != version_sct_online_split[0] or version_sct_split[1] != version_sct_online_split[1]:
-            print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
-            install_new = ""
-            while install_new not in ["yes","no"]:
-                install_new = raw_input("[yes|no]: ")
-            if install_new == "yes":
-                print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
+            if version_sct.isLessThan_MajorMinor(version_sct_online):
+                print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
+                install_new = ""
+                while install_new not in ["yes","no"]:
+                    install_new = raw_input("[yes|no]: ")
+                if install_new == "yes":
+                    print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
+        else:
+            isAble2Connect = False
+            MsgUser.warning("Failed to connect to SCT github website. Please check your connexion. %s." % (version_result.message))
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
@@ -199,73 +642,68 @@ class Installer:
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
-        # Checking if patches are available. If so, install them. Patches installation is available from release 1.1
-        # version number may have 1, 2 or 3 parts. It needs to be completed sometimes.
-        if len(version_sct_split) < 2: version_sct_split.append('0')
-        if len(version_sct_split) < 3: version_sct_split.append('0')
-        if len(version_sct_online_split) < 2: version_sct_split.append('0')
-        if len(version_sct_online_split) < 3: version_sct_split.append('0')
-        if version_sct_split[0] == version_sct_online_split[0] and version_sct_split[1] == version_sct_online_split[1] and version_sct_split[2] != version_sct_online_split[2]:
-            # check if a new release is available
-            url_versions = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/versions.txt"
-            file_name = url_versions.split('/')[-1]
-            download_file = urllib.URLopener()
-            download_file.retrieve(url_version, file_name)
-            with open (file_name, "r") as versions_file:
-                versions_old = versions_file.readlines()
-            for version_sct in versions_old:
-                ver = version_sct.split('.')
-                # As the versions are ordered from the newest to the latest, the first one with [0] and [1] term that will be found is either a new one or the same that is installed.
-                if ver[0] == version_sct_split[0] and ver[1] == version_sct_split[1] and ver[2] != version_sct_split[2]:
-                    ver_patch_split = ver[2].split('-')
-                    # check if the patch is for linux, osx or both. If the patch is for both os, we install it. If not, we check.
-                    install_patch = True
-                    name_folder_patch = version_sct
-                    if len(ver_patch_split) > 1:
-                        # check which platform is running
-                        platform_running = sys.platform
-                        if (platform_running.find('darwin') != -1):
-                            os_running = 'osx'
-                        elif (platform_running.find('linux') != -1):
-                            os_running = 'linux'
-                        if ver_patch_split[1] != os_running:
-                            install_patch = False
-                        else:
-                            name_folder_patch = ver_patch_split[0] # keep only folder name, without os
-
-                    # If a patch needs to be installed, install it.
-                    if install_patch:
-                        print "\nInstalling patch_"+version_sct+"..."
-
-                        url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+version_sct+".zip"
-                        #url_patch = "https://github.com/neuropoly/spinalcordtoolbox/blob/master/patches/patch_"+version_sct+".zip?raw=true"
-                        file_name = url_patch.split('/')[-1]
-                        download_file = urllib.URLopener()
-                        download_file.retrieve(url_patch, file_name)
-
-                        # unzip patch
-                        cmd = "unzip "+file_name
-                        print ">> " + cmd
-                        status, output = commands.getstatusoutput(cmd)
-                        if status != 0:
-                            print '\nERROR! \n' + output + '\nExit program.\n'
-
-                        os.chdir(name_folder_patch)
-                        # launch patch installation
-                        cmd = "python install_patch.py"
-                        print ">> " + cmd
-                        status, output = commands.getstatusoutput(cmd)
-                        if status != 0:
-                            print '\nERROR! \n' + output + '\nExit program.\n'
-                        else:
-                            print output
-                        os.chdir("..")
-
-                        # Once the patch is installed, we do not check for other patches
+        # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1
+        print "\nChecking for available patches..."
+        if version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
+            # check if a new patch is available
+            url_version_patches = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patches.txt"
+            file_name = "tmp.patches.txt"
+            version_patches_result = download_file(url_version_patches, file_name)
+            install_patch = False
+            if version_patches_result.status == InstallationResult.SUCCESS:
+                with open (file_name, "r") as versions_file:
+                    versions_patches = versions_file.readlines()
+                for ver in versions_patches:
+                    version_patch = Version(ver.replace('\n',''))
+                    # As the versions are ordered from the newest to the latest, the first one with [0] and [1] term that will be found is either a new one or the same that is installed.
+                    if version_sct.isEqualTo_MajorMinor(version_patch) and version_sct.isLessPatchThan_MajorMinor(version_patch):
+                        # check if the patch is for linux, osx or both. If the patch is for both os, we install it. If not, we check.
+                        name_folder_patch = version_patch.getFolderName()
+                        if version_patch.os == "" or version_patch.os == this_computer.os:
+                            install_patch = True
                         break
+
+            # If a patch needs to be installed, install it.
+            if install_patch:
+                print "\nInstalling patch_"+str(version_patch)+"..."
+
+                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+str(version_patch)+".zip"
+                file_name_patch = "patch_"+str(version_patch)+".zip"
+                patch_download_result = download_file(url_patch, file_name_patch)
+
+                if patch_download_result.status == InstallationResult.SUCCESS:
+                    # unzip patch
+                    cmd = "unzip "+file_name_patch
+                    print ">> " + cmd
+                    status, output = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print '\nERROR! \n' + output + '\nExit program.\n'
+
+                    os.chdir(name_folder_patch)
+                    # launch patch installation
+                    cmd = "python install_patch.py"
+                    print ">> " + cmd
+                    status, output = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print '\nERROR! \n' + output + '\nExit program.\n'
+                    else:
+                        print output
+                    os.chdir("..")
+
+                    MsgUser.message("Removing patch-related files...")
+                    cmd = "rm -rf "+file_name_patch+" "+name_folder_patch
+                    print ">> " + cmd
+                    status, output = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print '\nERROR while removing patch-related files \n' + output + '\nExit program.\n'
+                    else:
+                        print output
                 else:
-                    # No new patch
-                    break
+                    MsgUser.warning(patch_download_result.message)
+            else:
+                print "  No patch available."
+        else:
+            print "  No connexion or no patch available for this version of the toolbox."
 
 
         # check if other dependent software are installed
@@ -275,6 +713,15 @@ class Installer:
         status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
+        else:
+            print output
+
+        # deleting temporary files
+        cmd = "rm -rf tmp.*"
+        print ">> " + cmd
+        status, output = commands.getstatusoutput(cmd)
+        if status != 0:
+            print '\nERROR while removing temporary files \n' + output + '\nExit program.\n'
         else:
             print output
 
@@ -318,5 +765,14 @@ MANDATORY ARGUMENTS
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # call main function
-    Installer()
+    try:
+        Installer()
+    except InstallFailed, e:
+        MsgUser.failed(e.value)
+        exit(1)
+    except UnsupportedOs, e:
+        MsgUser.failed(e.value)
+        exit(1)
+    except KeyboardInterrupt, e:
+        MsgUser.failed("Install aborted by the user.")
+        exit(1)
