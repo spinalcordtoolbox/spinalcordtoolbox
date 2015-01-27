@@ -12,6 +12,7 @@
 #     spinalcordtoolbox_patch_1.0.2/scripts/sct_dmri_moco.py
 #     spinalcordtoolbox_patch_1.0.2/version.txt
 #     spinalcordtoolbox_patch_1.0.2/install_patch.py
+#   Each patch must contains all the previous patches (e.g., patch_1.0.3 must contains files from patch_1.0.1 and patch_1.0.2)
 # - create zip file (easier than tar.gz) and rename the file patch_1.0.2
 # - upload patch on sourceforge and github
 # - update patches/patches.txt file with the new patch version
