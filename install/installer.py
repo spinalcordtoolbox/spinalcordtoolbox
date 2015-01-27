@@ -20,7 +20,6 @@ import sys
 import commands
 import getopt
 from datetime import date
-import urllib
 import platform
 
 ### Version is a class that contains three levels of versioning
@@ -33,17 +32,8 @@ class Version(object):
             print version_sct
             raise Exception('Version is not a string.')
 
-        # detect os, if it exist
-        version_sct_os = version_sct.split('-')
-        try:
-            self.os = version_sct_os[1]
-            version_sct_main = version_sct_os[0]
-        except IndexError:
-            self.os = ""
-            version_sct_main = version_sct
-
         # detect beta, if it exist
-        version_sct_beta = version_sct_main.split('_')
+        version_sct_beta = self.version_sct.split('_')
         try:
             self.beta = version_sct_beta[1]
             version_sct_main = version_sct_beta[0]
@@ -73,7 +63,7 @@ class Version(object):
             self.hotfix = 0
 
     def __repr__(self):
-        return "Version(%s,%s,%s,%s,%r,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta, self.os)
+        return "Version(%s,%s,%s,%s,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta)
 
     def __str__(self):
         result = str(self.major)+"."+str(self.minor)
@@ -83,8 +73,6 @@ class Version(object):
             result = result+"."+str(self.hotfix)
         if self.beta != "":
             result = result+"_"+self.beta
-        if self.os != "":
-            result = result+"-"+self.os
         return result
 
     def __ge__(self, other):
@@ -162,7 +150,7 @@ class Version(object):
     def __eq__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
-        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta and self.os == other.os:
+        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
             return True
         return False
     
@@ -179,6 +167,16 @@ class Version(object):
         if self.major > other.major:
             return False
         if self.minor < other.minor:
+            return True
+        else:
+            return False
+
+    def isGreaterOrEqualThan_MajorMinor(self, other):
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor >= other.minor:
             return True
         else:
             return False
@@ -348,6 +346,7 @@ class Os(object):
         self.applever = ''
         
         if self.os == 'darwin':
+            self.os = 'osx'
             self.vendor = 'apple'
             self.version = Version(platform.release())
             (self.applever,_,_) = platform.mac_ver()
@@ -475,7 +474,7 @@ class Installer:
                 usage()
             elif opt in ('-p'):
                 self.path_install = arg
-            self.issudo = ""
+        
 
         print ""
         print "============================="
@@ -493,6 +492,15 @@ class Installer:
             print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
             sys.exit(2)
 
+        # check if sudo is needed to write in installation folder
+        MsgUser.message("Checking if administrator rights are needed for installation...")
+        if os.access(self.path_install, os.W_OK):
+            MsgUser.message("  No sudo needed for adding elements.")
+            self.issudo = ""
+        else:
+            MsgUser.message("  sudo needed for adding elements.")
+            self.issudo = "sudo "
+
         # check if last character is "/". If so, remove it.
         if self.path_install[-1:] == '/':
             self.path_install = self.path_install[:-1]
@@ -506,7 +514,15 @@ class Installer:
         print ""
         print "Check if spinalcordtoolbox is already installed (if so, delete it)..."
         if os.path.isdir(self.SCT_DIR):
-            cmd = self.issudo+"rm -rf "+self.SCT_DIR
+            # check if sudo is required for removing SCT
+            if os.access(self.path_install+"spinalcordtoolbox", os.W_OK):
+                MsgUser.message("  No sudo needed for removing SCT.")
+                self.issudo_remove = ""
+            else:
+                MsgUser.message("  sudo needed for removing SCT.")
+                self.issudo_remove = "sudo "
+
+            cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
             print ">> " + cmd
             status, output = commands.getstatusoutput(cmd)
             if status != 0:
@@ -642,56 +658,41 @@ class Installer:
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
-        # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1
+        # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1 (need to be changed to 1.2)
         print "\nChecking for available patches..."
-        if version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
+        if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
             # check if a new patch is available
-            url_version_patches = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patches.txt"
-            file_name = "tmp.patches.txt"
-            version_patches_result = download_file(url_version_patches, file_name)
-            install_patch = False
-            if version_patches_result.status == InstallationResult.SUCCESS:
-                with open (file_name, "r") as versions_file:
-                    versions_patches = versions_file.readlines()
-                for ver in versions_patches:
-                    version_patch = Version(ver.replace('\n',''))
-                    # As the versions are ordered from the newest to the latest, the first one with [0] and [1] term that will be found is either a new one or the same that is installed.
-                    if version_sct.isEqualTo_MajorMinor(version_patch) and version_sct.isLessPatchThan_MajorMinor(version_patch):
-                        # check if the patch is for linux, osx or both. If the patch is for both os, we install it. If not, we check.
-                        name_folder_patch = version_patch.getFolderName()
-                        if version_patch.os == "" or version_patch.os == this_computer.os:
-                            install_patch = True
-                        break
+            if version_sct_online > version_sct:
+                print "\nInstalling patch_"+str(version_sct_online)+"..."
 
-            # If a patch needs to be installed, install it.
-            if install_patch:
-                print "\nInstalling patch_"+str(version_patch)+"..."
-
-                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+str(version_patch)+".zip"
-                file_name_patch = "patch_"+str(version_patch)+".zip"
+                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+str(version_sct_online)+".zip"
+                file_name_patch = "patch_"+str(version_sct_online)+".zip"
+                name_folder_patch = str(version_sct_online)
                 patch_download_result = download_file(url_patch, file_name_patch)
 
                 if patch_download_result.status == InstallationResult.SUCCESS:
                     # unzip patch
-                    cmd = "unzip "+file_name_patch
+                    cmd = "unzip -d temp_patch "+file_name_patch
                     print ">> " + cmd
                     status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
-                    os.chdir(name_folder_patch)
+                    os.chdir("temp_patch/"+name_folder_patch)
                     # launch patch installation
                     cmd = "python install_patch.py"
+                    if self.issudo == "":
+                        cmd = cmd + " -a"
                     print ">> " + cmd
                     status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
                     else:
                         print output
-                    os.chdir("..")
+                    os.chdir("../..")
 
                     MsgUser.message("Removing patch-related files...")
-                    cmd = "rm -rf "+file_name_patch+" "+name_folder_patch
+                    cmd = "rm -rf "+file_name_patch+" temp_patch"
                     print ">> " + cmd
                     status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -756,6 +757,7 @@ USAGE
 
 MANDATORY ARGUMENTS
 -p <path>                   installation path. Do not add "/" at the end!
+-
 -h                          display this help
   """
 
