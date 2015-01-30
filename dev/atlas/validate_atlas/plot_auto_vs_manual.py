@@ -22,7 +22,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.results_folder = 'results'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
 
@@ -37,7 +37,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150112"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
@@ -66,7 +66,7 @@ def main():
     sct.printv("Working directory: "+os.getcwd())
 
     # Folder including data "automatic vs manual"
-    folder_auto_vs_manual = results_folder+'/noise/sub'
+    folder_auto_vs_manual = results_folder+'/manual_mask/sub'
 
     sct.printv('\n\nData will be extracted from folder '+folder_auto_vs_manual+' .', 'warning')
     sct.printv('\t\tCheck existence...')
@@ -243,7 +243,7 @@ def main():
     # find index of the file generated with sigma noise = 10 and range tracts = -10:+10
     ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
 
-    fig0 = plt.figure(0)
+    fig0 = plt.figure(0, figsize=(20, 10))
     width = 0.5/(nb_method+1)
     ind_fig0 = numpy.arange(len(labels_id[0]))
     plt.ylabel('Relative error (%)', fontsize=18)
@@ -268,6 +268,7 @@ def main():
     plt.grid(b=True, axis='y')
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
 
+    plt.savefig(results_folder+'/automatic_method_vs_manual_methods')
 
 
     plt.show()
