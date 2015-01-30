@@ -281,7 +281,7 @@ def main():
     ind_files_csf_sort = numpy.argsort(csf_values)
 
     matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    plt.figure()
+    plt.figure(figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(ind_files_csf_sort)) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=22)
@@ -315,6 +315,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
+    plt.savefig(results_folder+'/absolute_error_vs_csf_values')
 
     plt.show()
 
