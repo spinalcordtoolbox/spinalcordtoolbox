@@ -458,7 +458,7 @@ def main():
 
     # Plot A -- v3: Box plots absolute error
 
-    fig6 = plt.figure(6)
+    fig6 = plt.figure(6, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * (1.0 + width)
     plt.ylabel('Absolute error (%)')
@@ -495,8 +495,11 @@ def main():
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y')
 
+    plt.savefig(results_folder+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
+
+
     # Plot B -- v3: Box plots absolute error
-    fig7 = plt.figure(7)
+    fig7 = plt.figure(7, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10])) * (1.0 + width)
     plt.ylabel('Absolute error (%)')
@@ -532,6 +535,9 @@ def main():
     plt.gca().set_ylim([0, 15])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y')
+
+    plt.savefig(results_folder+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
+
 
     plt.show()
 

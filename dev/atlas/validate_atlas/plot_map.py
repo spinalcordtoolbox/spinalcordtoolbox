@@ -284,7 +284,7 @@ def main():
 
     # Box-and-whisker plots
     nb_box = 2
-    plt.figure()
+    plt.figure(figsize=(20, 10))
     width = 1.0 / (nb_box + 1)
     ind_fig = numpy.arange(len(map_var_params[ind_var_label_sort_var_noise20, 0])) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=22)
@@ -325,8 +325,11 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
+    plt.savefig(results_folder+'/../absolute_error_as_a_function_of_MAP_parameters')
+
 
     plt.show()
+
 
 #=======================================================================================================================
 # Start program
