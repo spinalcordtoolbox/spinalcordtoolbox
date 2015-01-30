@@ -83,7 +83,7 @@ def main():
 
     # Apply rigid transformation
     printv('\nApply rigid transformation to curved landmarks...', verbose)
-    sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
+    sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -x nn', verbose)
 
     # Estimate b-spline transformation curve --> straight
     printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
@@ -97,7 +97,7 @@ def main():
 
     # Apply deformation to input image
     printv('\nApply transformation to input image...', verbose)
-    sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
+    sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -x nn', verbose)
 
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
