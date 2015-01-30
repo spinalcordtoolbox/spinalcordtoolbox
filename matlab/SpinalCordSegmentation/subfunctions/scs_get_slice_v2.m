@@ -44,8 +44,9 @@ function scs_get_slice_v2(varargin)
     
     %Display sagittal view
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
     imagesc(img_buffer'); colormap gray, axis image;
+    set(gca,'YDir','normal')
     set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
@@ -70,6 +71,7 @@ function scs_get_slice_v2(varargin)
     img_buffer=nifti_img(:,:,current_slice);
     imagesc(img_buffer')
     colormap gray, axis image;
+    set(gca,'YDir','normal')
     set(hax2,'XTick',[],'YTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
@@ -114,7 +116,7 @@ function sliderZ_callback(hObj,event, nifti_img)
     hax2 = subplot(3,3,[2 3 5 6]);
     img_buffer=nifti_img(:,:,round(current_slice));
     imagesc(img_buffer')
-    colormap gray, axis image;
+    colormap gray, axis image;     set(gca,'YDir','normal');
     set(hax2,'XTick',[],'YTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim'); 
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
@@ -124,8 +126,8 @@ function sliderZ_callback(hObj,event, nifti_img)
 
     % Plotting current position
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
-    imagesc(img_buffer'); colormap gray, axis image; set(hax1,'XTick',[]);
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
+    imagesc(img_buffer'); colormap gray, axis image; set(gca,'YDir','normal'); set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
     text(xlim(2),(ylim(1)+ylim(2))/2, 'A', 'VerticalAlignment','bottom','HorizontalAlignment','right','Color',[1 1 1], 'Fontsize',14)
@@ -159,8 +161,8 @@ function topOK_callback(hObj,event,nifti_img)
 
     % Plot the selected top position
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
-    imagesc(img_buffer'); colormap gray, axis image; set(hax1,'XTick',[]);
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
+    imagesc(img_buffer'); colormap gray, axis image;    set(gca,'YDir','normal'); set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
     text(xlim(2),(ylim(1)+ylim(2))/2, 'A', 'VerticalAlignment','bottom','HorizontalAlignment','right','Color',[1 1 1], 'Fontsize',14)
@@ -186,8 +188,8 @@ function bottomOK_callback(hObj,event,nifti_img)
     
     % Plot the selected bottom position
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
-    imagesc(img_buffer'); colormap gray, axis image; set(hax1,'XTick',[]);
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
+    imagesc(img_buffer'); colormap gray, axis image;     set(gca,'YDir','normal'); set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
     text(xlim(2),(ylim(1)+ylim(2))/2, 'A', 'VerticalAlignment','bottom','HorizontalAlignment','right','Color',[1 1 1], 'Fontsize',14)
@@ -214,8 +216,8 @@ function topCANCEL_callback(hObj,event,nifti_img)
 
     % Erase the selected top position
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
-    imagesc(img_buffer'); colormap gray, axis image; set(hax1,'XTick',[]);
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
+    imagesc(img_buffer'); colormap gray, axis image; set(gca,'YDir','normal'); set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
     text(xlim(2),(ylim(1)+ylim(2))/2, 'A', 'VerticalAlignment','bottom','HorizontalAlignment','right','Color',[1 1 1], 'Fontsize',14)
@@ -242,8 +244,8 @@ function bottomCANCEL_callback(hObj,event,nifti_img)
     
     % Erase the selected bottom position
     hax1 = subplot(3,3,[1 4 7]);
-    img_buffer=squeeze(nifti_img(:,round(size(nifti_img,2)/2),:));
-    imagesc(img_buffer'); colormap gray, axis image; set(hax1,'XTick',[]);
+    img_buffer=squeeze(nifti_img(round(end/2),:,:));
+    imagesc(img_buffer'); colormap gray, axis image; set(gca,'YDir','normal'); set(hax1,'XTick',[]);
     ylim=get(gca,'YLim');xlim=get(gca,'XLim');
     text(xlim(1),(ylim(1)+ylim(2))/2, 'P', 'VerticalAlignment','bottom','HorizontalAlignment','left','Color',[1 1 1], 'Fontsize',14)
     text(xlim(2),(ylim(1)+ylim(2))/2, 'A', 'VerticalAlignment','bottom','HorizontalAlignment','right','Color',[1 1 1], 'Fontsize',14)

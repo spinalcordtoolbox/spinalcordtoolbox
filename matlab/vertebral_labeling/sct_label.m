@@ -88,7 +88,7 @@ if ~isfield(label.segmentation,'max_coeff_vertical'), label.segmentation.max_coe
 
             % Creates the scs_results folder
             warning off MATLAB:MKDIR:DirectoryExists            
-            input{1,1} =  [label.input_path,label.input_anat];
+            input{1,1} =  [label.input_path,label.input_anat,label.ext];
             output{1,1} = [label.output_path,'label_mat'];  % all matrices in .mat
             output{1,2} = [label.output_path,label.segmentation.centerline];                        % centerline in .nii
             output{1,3} = [label.output_path,label.segmentation.surface];
@@ -97,23 +97,24 @@ if ~isfield(label.segmentation,'max_coeff_vertical'), label.segmentation.max_coe
 
             %% Parameters of the algorithm
 
-            param{1}.image_type             = label.segmentation.image_type;            % 1=T1; 2=T2
-            param{1}.interval               = label.segmentation.interval;             % Interval in mm between two slices for the initialization
+            param.image_type             = label.segmentation.image_type;            % 1=T1; 2=T2
+            param.interval               = label.segmentation.interval;             % Interval in mm between two slices for the initialization
 
-            param{1}.nom_radius             = label.segmentation.nom_radius;            % Nominal radius in mm that reprensents the initial estimate
-            param{1}.tolerance              = label.segmentation.tolerance;          % Percentage of the nominal radius that is used as the criterion to determine convergence
-            param{1}.ratio_criteria         = label.segmentation.ratio_criteria;     % Percentage of radius that must meet the tolerance factor to increment the coefficients
+            param.nom_radius             = label.segmentation.nom_radius;            % Nominal radius in mm that reprensents the initial estimate
+            param.tolerance              = label.segmentation.tolerance;          % Percentage of the nominal radius that is used as the criterion to determine convergence
+            param.ratio_criteria         = label.segmentation.ratio_criteria;     % Percentage of radius that must meet the tolerance factor to increment the coefficients
 
-            param{1}.num_angles             = label.segmentation.num_angles;           % Number of angles used
-            param{1}.update_multiplier      = label.segmentation.update_multiplier;   % Multiplies the force applied to deform the radius
-            param{1}.shear_force_multiplier = label.segmentation.shear_force_multiplier;  % Multiplies the shear force used to stay near the user defined center line. 
-            param{1}.max_coeff_horizontal   = label.segmentation.max_coeff_horizontal; % Maximal coefficient used to smooth the radius in the horizontal plane
-            param{1}.max_coeff_vertical     = label.segmentation.max_coeff_vertical;   % Maximal coefficient used to smooth the radius in the vertical direction (depends on the number of slices)
+            param.num_angles             = label.segmentation.num_angles;           % Number of angles used
+            param.update_multiplier      = label.segmentation.update_multiplier;   % Multiplies the force applied to deform the radius
+            param.shear_force_multiplier = label.segmentation.shear_force_multiplier;  % Multiplies the shear force used to stay near the user defined center line. 
+            param.max_coeff_horizontal   = label.segmentation.max_coeff_horizontal; % Maximal coefficient used to smooth the radius in the horizontal plane
+            param.max_coeff_vertical     = label.segmentation.max_coeff_vertical;   % Maximal coefficient used to smooth the radius in the vertical direction (depends on the number of slices)
 
-            param{1}.file_type = input{1,1}(end-2:end);
-            param{1}.nbIterMax = 30;            % Maximal number of iterations for each coefficients (if there is no convergence)
-            param{1}.resampling = 1;            % Resampling of the image
-            param{1}.language = 'English';      % Defines the language of the error display. Only 'English' and 'Français' are currently supported
+            param.ext   = label.ext;
+            param.file_type = input{1,1}(end-2:end);
+            param.nbIterMax = 30;            % Maximal number of iterations for each coefficients (if there is no convergence)
+            param.resampling = 1;            % Resampling of the image
+            param.language = 'English';      % Defines the language of the error display. Only 'English' and 'Français' are currently supported
 
 
 
@@ -121,7 +122,7 @@ if ~isfield(label.segmentation,'max_coeff_vertical'), label.segmentation.max_coe
 
             if exist([input{1,1} '.nii']) == 2 || exist([input{1,1} '.nii.gz']) == 2 || exist(input{1,1}) == 2
                 %try
-                    spinal_cord_segmentation_horsfield(input{1,1},output{1,1},param{1});
+                    spinal_cord_segmentation_horsfield(input{1,1},output{1,1},param);
 
             else
                 error(['File ' input{1,1} ' doesn''t exist'])
@@ -130,7 +131,7 @@ if ~isfield(label.segmentation,'max_coeff_vertical'), label.segmentation.max_coe
                         %% Straigthening of the image
             scs_straightening(output{1,1},output{1,4});
             %% Saving the centerline and the segmented cord surface in NIfTI
-            scs_nifti_save_v4(input{1,1},output{1,1},output{1,2},output{1,3},output{1,4},param);
+            scs_nifti_save_v4(output{1,1},output{1,2},output{1,3},output{1,4},param);
 
             j_disp(label.log,['... File created: ',output{1,2},output{1,3}])
 end
