@@ -7,7 +7,7 @@
 # Installation location: /usr/local/spinalcordtoolbox/
 
 # parameters
-PATH_INSTALL="/usr/local/"
+PATH_INSTALL="/usr/local"
 ISSUDO="sudo "
 
 function usage()
@@ -25,7 +25,7 @@ USAGE
 `basename ${0}` -p <path>
 
 MANDATORY ARGUMENTS
--p <path>                   installation path
+-p <path>                   installation path. Do not add "/" at the end!
 -h                          display this help
 
 EOF
@@ -66,14 +66,14 @@ if [[ ! -d $PATH_INSTALL ]]; then
   exit
 fi
 
-# check if last character is /. If not, add it.
-LEN=${#PATH_INSTALL}-1
-if [ "${PATH_INSTALL}" != "/" ]; then
-  PATH_INSTALL=$PATH_INSTALL"/"
-fi
+# check if last character is "/". If not, add it.
+#LEN=${#PATH_INSTALL}-1
+#if [ "${PATH_INSTALL}" != "/" ]; then
+#  PATH_INSTALL=$PATH_INSTALL"/"
+#fi
 
 # Set toolbox installation path
-SCT_DIR="${PATH_INSTALL}spinalcordtoolbox"
+SCT_DIR="${PATH_INSTALL}/spinalcordtoolbox"
 
 
 # check if folder already exists - if so, delete it
@@ -86,7 +86,7 @@ fi
 
 # create folder
 echo
-echo "Create folder: ${PATH_INSTALL}spinalcordtoolbox..."
+echo "Create folder: ${SCT_DIR}..."
 cmd="${ISSUDO}mkdir ${SCT_DIR}"
 echo ">> $cmd"; $cmd
 
@@ -143,14 +143,21 @@ cmd="./requirements.sh"
 echo ">> $cmd"; $cmd
 cd ..
 
+
+
+# Create links to python scripts
+echo
+echo "Create links to python scripts..."
+${SCT_DIR}/install/create_links.sh
+
 # check if other dependent software are installed
 echo
 echo "Check if other dependent software are installed..."
-cmd="python ${SCT_DIR}/scripts/sct_check_dependences.py"
+cmd="sct_check_dependences"
 echo ">> $cmd"; $cmd
 
-# get current path
-path_toolbox_temp=`pwd`
+# get current path in order to propose removal to the user
+path_current_path=`pwd`
 
 # display stuff
 echo ""
@@ -164,7 +171,7 @@ echo "or contact the developers."
 echo
 echo "You can now delete this folder by typing:"
 echo "> cd .."
-echo "> rm -rf ${path_toolbox_temp}"
+echo "> rm -rf ${path_current_path}"
 echo
 echo "To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/"
 
