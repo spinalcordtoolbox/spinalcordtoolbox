@@ -7,6 +7,7 @@ import getopt
 import sys
 import commands
 import time
+import math
 import os
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -18,19 +19,16 @@ from msct_parser import *
 class Param:
     def __init__(self):
         self.debug = 0
-        self.file_fname_output = 'b1_smoothed'
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
 def main():
 
-
-
     # Check input parameters
     parser = Parser(__file__)
     parser.usage.set_description('compute Ialpha/I2*alpha')
-    parser.add_option("-d", "file", "image you want to crop", True, "t2.nii.gz")
+    parser.add_option("-d", "float", "angle alpha", True, 60)
     parser.add_option("-i", "str", "Two NIFTI : flip angle alpha and 2*alpha", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
     usage = parser.usage.generate()
 
@@ -38,12 +36,12 @@ def main():
         # Parameters for debug mode
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n', type='warning')
         os.chdir('/Volumes/users_hd2/tanguy/data/Boston/2014-07/Connectome/MS_SC_002/MTV')
-        fname_spgr10 = 'spgr10.nii.gz'
+        alpha = 60
         epi_fnames = 'b1/ep60.nii.gz,b1/ep120.nii.gz'
     else:
         arguments = parser.parse(sys.argv[1:])
         # Initialization of variables
-        fname_spgr10 = arguments["-d"]
+        alpha = arguments["-d"]
         epi_fnames   = arguments["-i"]
 
 
@@ -58,36 +56,34 @@ def main():
     sct.printv('Create temporary folder...')
     path_tmp = 'tmp_'+time.strftime("%y%m%d%H%M%S")
     sct.create_folder(path_tmp)
-    os.chdir(path_tmp)
-    fname_spgr10='../'+fname_spgr10
+    path_tmp=path_tmp+'/'
 
     # Compute the half ratio of the 2 epi (Saturated Double-Angle Method for Rapid B1 Mapping - Cunningham)
-    fname_half_ratio = '../'+path_epi+'epi_half_ratio'
-    sct.run('fslmaths -dt double ../'+epi_fname_list[0]+' -div 2 -div ../'+epi_fname_list[1]+' '+fname_half_ratio)
+    fname_half_ratio = path_tmp+'epi_half_ratio'
+    sct.run('fslmaths -dt double '+epi_fname_list[1]+' -div 2 -div '+epi_fname_list[0]+' '+fname_half_ratio)
 
 
 
     # Smooth this half ratio slice-by-slice
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('../'+epi_fname_list[0])
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(epi_fname_list[0])
     # split slices
-    sct.run('fslsplit '+fname_half_ratio+' -z')
+    sct.run('fslsplit '+fname_half_ratio+' '+path_tmp+'vol -z')
     # 2D median filtering of each slice
     vol_list=''
     for slice in range(0, nz):
-        sct.run('fslmaths vol'+str(slice).zfill(4)+' -kernel boxv 7x7x1 -fmedian vol'+str(slice).zfill(4)+'_median_smoothed')
-        vol_list += 'vol'+str(slice).zfill(4)+'_median_smoothed '
+        sct.run('fslmaths '+path_tmp+'vol'+str(slice).zfill(4)+' -kernel boxv 7x7x1 -fmedian '+path_tmp+'vol'+str(slice).zfill(4)+'_median_smoothed')
+        vol_list += path_tmp+'vol'+str(slice).zfill(4)+'_median_smoothed '
 
     # merge volumes
     fname_half_ratio_smoothed = fname_half_ratio+'_smooth'
     sct.run('fslmerge -z '+fname_half_ratio_smoothed+' '+vol_list)
 
     # compute angle
-    sct.run('fslmaths '+fname_half_ratio_smoothed+' -acos ../'+path_epi+'B1angle')
+    sct.run('fslmaths '+fname_half_ratio_smoothed+' -acos -div '+str(alpha*math.pi/180)+' '+path_epi+'B1angle')
 
     sct.printv('\tDone.')
 
     # Remove temporary folder
-    os.chdir('..')
     sct.run('rm -rf '+path_tmp)
 
 #=======================================================================================================================

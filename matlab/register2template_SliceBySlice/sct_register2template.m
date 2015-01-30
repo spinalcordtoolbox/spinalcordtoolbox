@@ -12,7 +12,6 @@ function sct_register2template(file_reg,file_src,levels)
 % %--------------------------------------------------------------------------
 
 log='log_applytransfo';
-uppest_level = 1;
 % levels=5:-1:2;
 warp_transfo = 1;
 
@@ -22,7 +21,7 @@ warp_transfo = 1;
 
 %-----------------------------REFERENCE (DESTINATION)------------------------------------
 ref_fname = '/Volumes/users_hd2/tanguy/data/Boston/2014-07/Connectome/template/diffusion_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
-levels_fname='/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
+levels_fname='/Volumes/hd2_local/users_local/tanguy/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
 %--------------------------------------------------------------------------
 
 

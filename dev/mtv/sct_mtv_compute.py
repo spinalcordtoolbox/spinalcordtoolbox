@@ -17,8 +17,6 @@ import numpy as np
 import nibabel as nib
 import math
 import os
-import pylab
-import matplotlib.legend_handler as lgd
 import commands
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -29,7 +27,7 @@ from msct_parser import *
 from sct_extract_metric import extract_metric_within_tract
 
 
-class param:
+class Param:
     def __init__(self):
         self.debug = 0
         self.verbose = 1
@@ -78,49 +76,50 @@ def main():
     flip_angles = ''
     fname_csf_mask = ''
     fname_b1_smoothed = ''
-    file_output = param.file_output
-    method = param.method
+    file_output = Param.file_output
+    method = Param.method
     fname_spgr_seg = ''
     tr = ''
     box_mask = None
-    verbose = param.verbose
+    verbose = Param.verbose
 
-    # Check input parameters
+    # Check input Parameters
     parser = Parser(__file__)
     parser.usage.set_description('compute MTV')
-    parser.add_option("-a", "int", "Flip angle", True,'60')
-    parser.add_option("-b", "str", "alpha_b1map_smooth", True, "ep_fa60.nii.gz,ep_fa120.nii.gz")
-    parser.add_option("-c", "str", "CSF mask", True, "PD_map,mtvf_map")
-    parser.add_option("-f", "str", "Flip angles", True, "t2_segin_cropped_over_mask.nii.gz")
-    parser.add_option("-o", "str", "output file name", True, "t2_segin_cropped_over_mask.nii.gz")
+    parser.add_option("-b", "file", "alpha_b1map_smooth", True, "b1/b1_smoothed_in_spgr10_space_crop.nii.gz")
+    parser.add_option("-c", "file", "CSF mask", False, "spgr10_crop_csf_mask.nii.gz")
+    parser.add_option("-f", "str", "Flip angles", True, "4,10,20,30")
+    parser.add_option("-o", "str", "output file name", True, "T1_map,PD_map,MTVF_map")
+    parser.add_option("-i", "str", "fname_spgr_data", True, "spgr5to10.nii.gz,spgr10_crop.nii.gz,spgr20to10.nii.gz,spgr30to10.nii.gz")
+    parser.add_option("-t", "float", "TR (in s) of the SPGR scans", True, 0.01)
+    parser.add_option("-s", "file", "segmentation", True, 0.01)
     usage = parser.usage.generate()
 
     # Parameters for debug mode
-    if param.debug:
-        working_dir = '/Volumes/users_hd2-1/slevy/data/criugm/d_sp_pain_pilot2/mtv'
+    if Param.debug:
+        working_dir = '/Volumes/users_hd2/tanguy/data/Boston/2014-07/Connectome/MS_SC_002/MTV'
         os.chdir(working_dir)
         sct.printv('\n*** WARNING: DEBUG MODE ON ***\n\t\tWorking directory: '+working_dir, type='warning')
-        alpha_b1 = None #60
-        flip_angles = '5,10,20,30'
-        fname_csf_mask = 'spgr10_crop_csf_mask.nii.gz'
-        fname_b1_smoothed = '' #'b1/b1_smoothed_in_spgr10_space_crop.nii.gz'
-        fname_spgr_data = 'spgr5to10.nii.gz,spgr10_crop.nii.gz,spgr20to10.nii.gz,spgr30to10.nii.gz'
+        flip_angles = '4,10,30'
+        fname_csf_mask = 'spgr10-csf.nii.gz'
+        fname_b1_smoothed = 'B1angle_reg.nii'
+        fname_spgr_data = 'spgr4.nii.gz,spgr10.nii.gz,spgr30.nii.gz'
         file_output = 'T1_map,PD_map,MTVF_map'
         method = 'mean-PD-in-CSF-from-mean-SPGR'
-        fname_spgr_seg = 'spgr10_crop_seg_modif.nii.gz'
+        fname_spgr_seg = 'spgr10_seg.nii.gz'
         tr = float(0.01)
     else:
-        alpha_b1          = arguments["-a"]  # e.g.: 60
+        arguments = parser.parse(sys.argv[1:])
         fname_b1_smoothed = arguments["-b"]  # e.g.: b1/b1_smoothed_in_spgr10_space_crop.nii.gz
         fname_csf_mask = arguments["-c"]  # e.g.: spgr_10_csf_mask.nii.gz
         flip_angles = arguments["-f"]  # e.g.: 4,10,20,30
         fname_spgr_data = arguments["-i"]  # e.g.: file_1.nii.gz,file_2.nii.gz,file_3.nii.gz,file_4.nii.gz
         file_output = arguments["-o"]  # e.g.: PD_map,mtvf_map
-        method = arguments["-p"]  # e.g.: sbs
+        method = 'mean-PD-in-CSF-from-mean-SPGR'  # e.g.: sbs
         fname_spgr_seg = arguments["-s"]  # e.g.: spgr_10_crop_seg.nii.gz
         tr = float(arguments["-t"])  # TR (in s) of the SPGR scans. e.g.: 0.01
 
-    # Check existence of input mandatory parameters
+    # Check existence of input mandatory Parameters
     if not fname_spgr_data or not flip_angles or not tr or not fname_csf_mask:
         sct.printv('ERROR: mandatory input(s) are missing. See help below.', type='error')
         #usage()
@@ -132,19 +131,6 @@ def main():
     fname_spgr_data = fname_spgr_data.split(',')
     file_output = file_output.split(',')
 
-    # Check data files existence
-    sct.printv('\nCheck data files existence...', verbose)
-    for fname in fname_spgr_data:
-        sct.check_file_exist(fname)
-    sct.check_file_exist(fname_csf_mask)
-    # if b1_maps != ['']:
-    #     for fname in b1_maps:
-    #         sct.check_file_exist(fname)
-    if fname_b1_smoothed:
-        sct.check_file_exist(fname_b1_smoothed)
-    if fname_spgr_seg:
-        sct.check_file_exist(fname_spgr_seg)
-    sct.printv('\tDone.')
 
     # Check if a flip angle was given as input for each SPGR image
     nb_flip_angles = len(flip_angles)
@@ -179,16 +165,15 @@ def main():
     sc_mask[0] = nib.load(fname_spgr_seg).get_data()
 
     # Compute B1 scaling map
-    if not fname_b1_smoothed or not alpha_b1:
+    if not fname_b1_smoothed:
         # If no GRE images are given to estimate B1, then set the B1 scaling map to 1 at every voxel:
         sct.printv('No GRE images or no flip angle were specified to estimate the B1 scaling map so B1 will be assumed homogeneous and the B1 scaling map will be set to 1.', 'warning')
         b1_map_scale = np.ones((spgr_nx, spgr_ny, spgr_nz))
     else:
         # If GRE images are given, estimate the B1 scaling map with the method of double flip angle
         sct.printv('\nB1 scaling map will be estimated using the double flip angle method.\n')
-        b1_map_scale = estimate_b1_with_double_flip_angle(fname_b1_smoothed, alpha_b1)  # estimate_b1_with_double_flip_angle(b1_maps, spgr_nx, spgr_ny, spgr_nz, alpha_b1, fname_spgr_data[1])
+        b1_map_scale = nib.load(fname_b1_smoothed).get_data() # estimate_b1_with_double_flip_angle(b1_maps, spgr_nx, spgr_ny, spgr_nz, alpha_b1, fname_spgr_data[1])
 
-    # COMMENTED BECAUSE sct_create_mask DOESN'T WARN THE USER WHEN THE MASK WANTED GOES FURTHER THAN THE IMAGE EXTENT
     # # If segmentation of the cord is provided, create a box mask of data surrounding cord and CSF from the segmentation of the cord to reduce the computational time
     # if fname_spgr_seg:
     #     path_spgr, file_first_flip_angle_spgr, ext_spgr = sct.extract_fname(fname_spgr_data[0])
@@ -199,6 +184,18 @@ def main():
     #     # Load this box mask
     #     box_mask = nib.load(fname_box_max).get_data()
     #     sct.printv('\tDone.')
+
+
+
+
+
+
+
+
+
+    #===================================================================================================================
+    # SCRIPT START HERE
+    #===================================================================================================================
 
     # Estimate PD and T1
     sct.printv('\nCompute PD and T1 maps...')
@@ -244,7 +241,7 @@ def main():
         polyfit_bias = np.polyfit(range(1, spgr_nz-1), PD_mean_in_CSF_per_slice[1:-1], 2)
         corrected_PD_mean_in_CSF_per_slice = np.array([polyfit_bias[0]*(x**2)+polyfit_bias[1]*x+polyfit_bias[2] for x in range(0, spgr_nz)])
 
-        fig_mean_PD_correction = pylab.figure(2)
+        fig_mean_PD_correction = plt.figure(2)
 
         fig_mean_PD_correction.suptitle('Estimation from mean SPGR and correction by fitting')
 
@@ -263,7 +260,6 @@ def main():
         ax_mean_MTV_correction.grid(True)
 
 
-        pylab.show()
 
         for z in range(0, spgr_nz):
             PD_map_normalized_CSF[..., z] = PD_map[..., z] / corrected_PD_mean_in_CSF_per_slice[z]
@@ -289,45 +285,6 @@ def main():
     sct.printv('\tFile created:\n\t\t\t\t'+fname_T1_output+'\n\t\t\t\t'+fname_PD_output+'\n\t\t\t\t'+fname_MTVF_output)
 
 
-#=======================================================================================================================
-# Compute B1 field estimation
-#=======================================================================================================================
-def estimate_b1_with_double_flip_angle(fname_b1_smoothed, nominal_alpha):
-    """Compute B1 field estimation."""
-
-    #def estimate_b1_with_double_flip_angle(b1_maps_list, spgr_nx, spgr_ny, spgr_nz, nominal_alpha, fname_spgr10):
-    # # Check if user indeed gave 2 images to estimate B1 field
-    # if len(b1_maps_list) != 2:
-    #     sct.printv('ERROR: You didn\'t provide exactly 2 images to estimate B1 field. Exit program.', type='error')
-    #     sys.exit(2)
-    #
-    # # Check if the 2 images have the same dimensions
-    # b1_nx, b1_ny, b1_nz, b1_nt, b1_px, b1_py, b1_pz, b1_pt = sct.get_dimension(b1_maps_list[0])
-    # b1_nx2, b1_ny2, b1_nz2, b1_nt2, b1_px2, b1_py2, b1_pz2, b1_pt2 = sct.get_dimension(b1_maps_list[1])
-    # if (b1_nx, b1_ny, b1_nz) != (b1_nx2, b1_ny2, b1_nz2):
-    #     sct.printv('ERROR: The 2 images to estimate B1 field have not the same dimensions. Exit program.', type='error')
-    #     sys.exit(2)
-    #
-    # # Compute half-ratio of the two images
-    # sct.printv('\nCompute the half ratio of the 2 images given as input to estimate B1 field...')
-    # path_b1_map, file_b1_map, ext_b1_map = sct.extract_fname(b1_maps_list[0])
-    # fname_ratio = path_b1_map + 'b1_maps_half_ratio' + ext_b1_map
-    # sct.run('fslmaths -dt double ' + b1_maps_list[0] + ' -div 2 -div ' + b1_maps_list[1] + ' ' + fname_ratio)
-    # sct.printv('\tDone.--> ' + fname_ratio)
-
-    # Load image
-    half_ratio = nib.load(fname_b1_smoothed).get_data()
-
-    # Smooth B1 profile
-    #half_ratio_smoothed = scipy.ndimage.gaussian_filter(half_ratio, sigma=1.0, order=0)
-
-    # Estimate flip angle (alpha)
-    measured_alpha = (180/np.pi)*np.arccos(half_ratio)  # some values are out of the definition field of arccos
-
-    # Divide the measured fip angle by the nominal flip angle to get a kind of B1 scale
-    b1_map_scale = measured_alpha/nominal_alpha
-
-    return b1_map_scale
 
 #=======================================================================================================================
 # Compute the mean PD per slice based on the mean signal in SPGR data per slice
@@ -379,7 +336,7 @@ def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, f
     MTV_mean_in_SC_per_slice = 1 - np.divide(PD_mean_in_SC, PD_mean_in_CSF)
 
     # Plot
-    fig_PD_mean_CSF = pylab.figure(1)
+    fig_PD_mean_CSF = plt.figure(1)
     fig_PD_mean_CSF.suptitle('Estimation slice-wise from mean SPGR in cord and CSF')
 
     ax_PD_mean_CSF = fig_PD_mean_CSF.add_subplot(121, title='Mean PD per slice estimated from mean SPGR in cord and CSF per slice')
@@ -396,8 +353,6 @@ def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, f
     ax_MTV_from_mean_SPGR.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
     ax_MTV_from_mean_SPGR.set_xlabel('Slices')
 
-    pylab.show(block=False)
-
 
     return PD_mean_in_CSF, PD_mean_in_SC
 
@@ -413,11 +368,12 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz, box_mask
 
     # Compute PD and T1 voxel-wize
     recorder_vox_out = 0  # recorder of the number of voxels with values out of range
-    for k in range(0, nz):
-        for j in range(0, ny):
-            for i in range(0, nx):
 
-                if (((box_mask is not None) and (box_mask[i, j, k] == 1)) or (box_mask is None)):
+    for k in range(1, nz):
+        for j in range(1, ny):
+            for i in range(1, nx):
+
+                if (((box_mask is not None) and (box_mask[i, j, k] == 1)) or (box_mask is None)) and not (b1_map_scale[i, j, k] == 0) and not (np.max(spgr[i, j, k, :]) == 0):
 
                     y = np.divide(spgr[i, j, k, :], np.sin(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
                     x = np.divide(spgr[i, j, k, :], np.tan(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
@@ -428,8 +384,6 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz, box_mask
 
                     if slope > 0:
                         t1 = -tr/math.log(slope)
-                        if t1 > 20:
-                            t1 = 20
                     else:  # due to noise or bad fitting
                         t1 = 0.000000000000001
                         recorder_vox_out += 1
@@ -476,8 +430,8 @@ def create_CSF_mask_based_on_t1_map(t1_map, hdr, fname_spgr_seg, fname_spgr):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    # Construct object fro class 'param'
-    param = param()
+    # Construct object fro class 'Param'
+    Param = Param()
     # Call main function
     main()
 

@@ -1,3 +1,4 @@
+function sct_vertebral_labelling(nifti, centerline, varargin)
 
 % BATCH_LABELING 
 %
@@ -38,28 +39,32 @@
 % THE SOFTWARE.
 
 
+dbstop if error
 
+p=inputParser;
 
-clear all
-close all
+addRequired(p,'nifti',@isstr);
+addRequired(p,'centerline',@isstr);
+addOptional(p,'contrast', 'T1', @(x) any(validatestring(x,{'T1', 'T2'})));
 
-contrast='T1';
+parse(p,nifti,centerline, varargin{:})
+
+contrast=p.Results.contrast;
 
  
 % PATH AND FILE NAME FOR ANATOMICAL IMAGE
-label.input_path='/home/django/benjamindeleener/data/TMI_special_issue/errsm_25/t1/';
-label.input_anat= 't1';
+[label.input_anat, label.input_path, label.ext] = sct_tool_remove_extension(p.Results.nifti, 0);
 
 % PATH FOR OUTPUT
-label.output_path='/home/django/benjamindeleener/data/TMI_special_issue/errsm_25/t1/labelling/';
-label.output_labeled_centerline='t1_centerline';
-label.output_labeled_surface='t1_surface'; % optional
+label.output_path=label.input_anat;
+label.output_labeled_centerline=[contrast '_centerline'];
+label.output_labeled_surface=[contrast '_surface']; % optional
 
 
 % =======================================================
 % OTHER PARAMETERS
 % =======================================================
-label.surface_do=1;
+label.surface_do=0;
 
 % =======================================================
 % Spinal Cord Segmentation Parameters 
@@ -76,15 +81,15 @@ label.segmentation.update_multiplier = 0.8;   % Multiplies the force applied to 
 label.segmentation.shear_force_multiplier= 0.5;  % Multiplies the shear force used to stay near the user defined center line. 
 label.segmentation.max_coeff_horizontal = 10; % Maximal coefficient used to smooth the radius in the horizontal plane
 label.segmentation.max_coeff_vertical = 10;   % Maximal coefficient used to smooth the radius in the vertical direction (depends on the number of slices)
-label.segmentation.centerline='T2_errsm08_centerline';
-label.segmentation.surface='T2_errsm08_surface';
-label.segmentation.straightened='T2_errsm08_straightened';
+label.segmentation.centerline='centerline';
+label.segmentation.surface='surface';
+label.segmentation.straightened='straightened';
 label.log = 'log_segmentation';
 
 % OR
 
 % Spinal Cord labeling Parameters 
-label.input_centerline='segmentation_centerline_binary'; % optional
+label.input_centerline=p.Results.centerline; % optional
 label.input_surface='segmentation_binary'; % optional  
 % =======================================================
 
