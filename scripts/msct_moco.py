@@ -96,7 +96,7 @@ def moco(param):
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-        if param.iterative_averaging and failed_transfo[it] == 0:
+        if param.iterative_averaging and indice_index<10 and failed_transfo[it] == 0:
             sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one

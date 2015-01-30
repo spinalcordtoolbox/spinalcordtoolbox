@@ -53,84 +53,11 @@ fsloutput = ['export FSLOUTPUTTYPE=NIFTI;'];
 
 
 if strcmp(input(end-3:end),'.mat') == 0
-
-    % Read and store the raw image in m_nifti
     
-    [status result] = unix(['fslhd ' input]); if status, error(result); end
+    param.nii=load_nii(input);
+    m_nifti=double(param.nii.img); 
+    dims=param.nii.dims; scales=param.nii.scales;
     
-    %Plane view
-    % Read the orientation of the image
-    orientation{1} = strtrim(result(findstr(result,'qform_xorient')+13:findstr(result,'qform_yorient')-1));
-    orientation{2} = strtrim(result(findstr(result,'qform_yorient')+13:findstr(result,'qform_zorient')-1));
-    orientation{3} = strtrim(result(findstr(result,'qform_zorient')+13:findstr(result,'sform_name')-1));
-    
-    % Only keeps the first letter of the orient structure
-    %   where each letter corresponds to :
-    % R: Right-to-Left         L: Left-to-Right
-    % P: Posterior-to-Anterior A: Anterior-to-Posterior
-    % I: Inferior-to-Superior  S: Superior-to-Inferior
-    orientation{1} = orientation{1}(1);
-    orientation{2} = orientation{2}(1);
-    orientation{3} = orientation{3}(1);
-    
-    % Save initial orientation
-    param.orient_init = cell2mat(orientation);
-    
-    [m_nifti,dims,scales,bpp,endian] = scs_read_avw(input); 
-
-    
-    % Copy data 
-    input_reorient=[input,'_reorient'];        
-    cmd=['cp ',input,'.nii',' ',input_reorient,'.nii'];
-    [status result] = unix(cmd); if status, error(result); end
-    
-    % Force radiological orientation
-    qform=spm_get_space([input_reorient,'.nii']);    
-    param.det_qform=det(qform);
-    
-    if param.det_qform>0
-       cmd=['fslorient -forceradiological ',input_reorient];
-       [status result] = unix(cmd); if status, error(result); end
-    end
-    
-    % reorient data top get PSL orientation
-    cmd=[fsloutput,' fslswapdim ',input_reorient,' PA SI LR ',input_reorient];
-    [status result]=unix(cmd); if status, error(result); end
-    
-     % Check the new orientation of the image
-    [status result] = unix(['fslhd ' input_reorient]); if status, error(result); end
-    
-    %Plane view
-    % Read the orientation of the image
-    orientation{1} = strtrim(result(findstr(result,'qform_xorient')+13:findstr(result,'qform_yorient')-1));
-    orientation{2} = strtrim(result(findstr(result,'qform_yorient')+13:findstr(result,'qform_zorient')-1));
-    orientation{3} = strtrim(result(findstr(result,'qform_zorient')+13:findstr(result,'sform_name')-1));
-    
-    % Only keeps the first letter of the orient structure
-    %   where each letter corresponds to :
-    % R: Right-to-Left         L: Left-to-Right
-    % P: Posterior-to-Anterior A: Anterior-to-Posterior
-    % I: Inferior-to-Superior  S: Superior-to-Inferior
-    orientation{1} = orientation{1}(1);
-    orientation{2} = orientation{2}(1);
-    orientation{3} = orientation{3}(1);
-     % Save final orientation 
-    param.orient_new = cell2mat(orientation);
-    
-    if ~strcmp(param.orient_new,'PSL'), error('Wrong orientation'); end
-    
-    [m_nifti,dims,scales,bpp,endian] = scs_read_avw(input_reorient);
-
-    
-    
-    
-    m_nifti=permute(m_nifti, [1 3 2]);
-        dims([1 2 3]) = dims([1 3 2]);
-    scales([1 2 3]) = scales([1 3 2]);
- 
-    %Extension verification
-    ext = strtrim(result(findstr(result,'filename')+8:findstr(result,'sizeof_hdr')-1));
-    param.file_type = strrep(ext, input,'');
 else
     load(input);
     m_nifti=m_phantom;
