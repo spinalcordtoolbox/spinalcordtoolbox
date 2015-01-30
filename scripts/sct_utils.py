@@ -393,3 +393,296 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program
+
+class UnsupportedOs(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Os(object):
+    '''Work out which platform we are running on'''
+
+    def __init__(self):
+        import os
+        if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
+        import platform
+        self.os = platform.system().lower()
+        self.arch = platform.machine()
+        self.applever = ''
+        
+        if self.os == 'darwin':
+            self.os = 'osx'
+            self.vendor = 'apple'
+            self.version = Version(platform.release())
+            (self.applever,_,_) = platform.mac_ver()
+            if self.arch == 'Power Macintosh': raise UnsupportedOs('We do not support PowerPC')
+            self.glibc = ''
+            self.bits = ''
+        elif self.os == 'linux':
+            if hasattr(platform, 'linux_distribution'):
+                # We have a modern python (>2.4)
+                (self.vendor, version, _) = platform.linux_distribution(full_distribution_name=0)
+            else:
+                (self.vendor, version, _) = platform.dist()
+            self.vendor = self.vendor.lower()
+            self.version = Version(version)
+            self.glibc = platform.libc_ver()
+            if self.arch == 'x86_64':
+                self.bits = '64'
+            else:
+                self.bits = '32'
+                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
+        else:
+            raise UnsupportedOs("We do not support this OS.")
+
+class Version(object):
+    def __init__(self,version_sct):
+        self.version_sct = version_sct
+
+        if not isinstance(version_sct,basestring):
+            print version_sct
+            raise Exception('Version is not a string.')
+
+        # detect beta, if it exist
+        version_sct_beta = version_sct.split('_')
+        try:
+            self.beta = version_sct_beta[1]
+            version_sct_main = version_sct_beta[0]
+            self.isbeta = True
+        except IndexError:
+            self.beta = ""
+            version_sct_main = version_sct
+            self.isbeta = False
+
+        version_sct_split = version_sct_main.split('.')
+
+        for v in version_sct_split:
+            if not v.isdigit():
+                raise ValueError('Bad version string.')
+        self.major = int(version_sct_split[0])
+        try:
+            self.minor = int(version_sct_split[1])
+        except IndexError:
+            self.minor = 0
+        try:
+            self.patch = int(version_sct_split[2])
+        except IndexError:
+            self.patch = 0
+        try:
+            self.hotfix = int(version_sct_split[3])
+        except IndexError:
+            self.hotfix = 0
+
+    def __repr__(self):
+        return "Version(%s,%s,%s,%s,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta)
+
+    def __str__(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        if self.beta != "":
+            result = result+"_"+self.beta
+        return result
+
+    def __ge__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self > other or self == other:
+            return True
+        return False
+    def __le__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self < other or self == other:
+            return True
+        return False
+    def __cmp__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__lt__(other):
+            return -1
+        if self.__gt__(other):
+            return 1
+        return 0
+    def __lt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        if self.minor > other.minor:
+            return False
+        if self.patch < other.patch:
+            return True
+        if self.patch > other.patch:
+            return False
+        if self.hotfix < other.hotfix:
+            return True
+        if self.hotfix > other.hotfix:
+            return False
+        if self.isbeta and not other.isbeta:
+            return True
+        if not self.isbeta and other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False
+    
+    def __gt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor > other.minor:
+            return True
+        if self.minor < other.minor:
+            return False
+        if self.patch > other.patch:
+            return True
+        if self.patch < other.patch:
+            return False
+        if self.hotfix > other.hotfix:
+            return True
+        if self.hotfix < other.hotfix:
+            return False
+        if not self.isbeta and other.isbeta:
+            return True
+        if self.isbeta and not other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False 
+    
+    def __eq__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
+            return True
+        return False
+    
+    def __ne__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__eq__(other):
+            return False
+        return True
+
+    def isLessThan_MajorMinor(self, other):
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        else:
+            return False
+
+    def isGreaterOrEqualThan_MajorMinor(self, other):
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor >= other.minor:
+            return True
+        else:
+            return False
+
+    def isEqualTo_MajorMinor(self, other):
+        return self.major == other.major and self.minor == other.minor
+
+    def isLessPatchThan_MajorMinor(self, other):
+        if self.isEqualTo_MajorMinor(other):
+            if self.patch < other.patch:
+                return True
+        return False
+
+    def getFolderName(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        result = result+"_"+self.beta
+        return result
+
+class shell_colours(object):
+    default = '\033[0m'
+    rfg_kbg = '\033[91m'
+    gfg_kbg = '\033[92m'
+    yfg_kbg = '\033[93m'
+    mfg_kbg = '\033[95m'
+    yfg_bbg = '\033[104;93m'
+    bfg_kbg = '\033[34m'
+    bold = '\033[1m'
+
+class MsgUser(object): 
+    __debug = False
+    __quiet = False
+    
+    @classmethod
+    def debugOn(cls):
+        cls.__debug = True
+    @classmethod
+    def debugOff(cls):
+        cls.__debug = False
+    @classmethod
+    def quietOn(cls):
+        cls.__quiet = True
+    @classmethod
+    def quietOff(cls):
+        cls.__quiet = False
+
+    @classmethod
+    def isquiet(cls):
+        return cls.__quiet
+    
+    @classmethod
+    def isdebug(cls):
+        return cls.__debug
+    
+    @classmethod    
+    def debug(cls, message, newline=True):
+        if cls.__debug:
+            from sys import stderr
+            mess = str(message)
+            if newline:
+                mess += "\n"
+            stderr.write(mess)
+    
+    @classmethod
+    def message(cls, msg):
+        if cls.__quiet:
+            return
+        print msg
+    
+    @classmethod
+    def question(cls, msg):
+        print msg,
+                  
+    @classmethod
+    def skipped(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+
+    @classmethod
+    def ok(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def failed(cls, msg):
+        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def warning(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )

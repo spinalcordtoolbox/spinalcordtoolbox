@@ -4,8 +4,18 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Touati
+# Author: Julien Touati, Benjamin De Leener
 # Created: 2014-08-11
+# Modified: 2015-01-16
+# 
+# This script aligns the vertabral levels from the input image on the template space.
+# The tempalte space has fixed vertebral levels.
+# The script uses ANTs registration with SyN transformation and is restricted to
+# axial deformation (in the z direction).
+# 
+# Exemple: template generation
+# Requirements are an image with incremental labels (using fslview, label=1, then use sct_label_utils with -t increment) at the center of each vertebral body
+# You may start at PMJ then C3 to avoid unprecision of C1 and C2 vertebral bodies.
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -122,9 +132,9 @@ def main():
         sct.run('c3d warp_vecy_res.nii.gz warp_vecy_res.nii.gz warp_vecz_r_sm_line_extended.nii.gz -omc 3 ../'+warping)
         
         # check results
-        sct.run('sct_apply_transfo -i ../'+landmark+' -o label_moved.nii.gz -d ../'+template_landmark+' -w ../'+warping+' -p nn')
+        sct.run('sct_apply_transfo -i ../'+landmark+' -o label_moved.nii.gz -d ../'+template_landmark+' -w ../'+warping+' -x nn')
         sct.run('sct_label_utils -i ../'+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
-        status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t RMS')
+        status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t MSE')
         sct.printv(output,1,'info')
 
         os.chdir('..')
@@ -146,7 +156,7 @@ def main():
     #     sct.run('sct_antsApplyTransforms 3 ' + fname + ' ' + output_name + ' -r ' + template_landmark + ' -t ' + warping + ' -n NearestNeighbor')
     if final_warp == 'spline':
         print 'Apply transfo to input image\n...'
-        sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + template_landmark + ' -w ' + warping + ' -p spline')
+        sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + template_landmark + ' -w ' + warping + ' -x spline')
             
     
     # if compose :

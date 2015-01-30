@@ -120,8 +120,12 @@ def main():
         output_level = 1
     if type_process == 'increment':
         data = increment_z_inverse(data)
-    if type_process == 'RMS':
-        RMS(data,fname_ref)
+    if type_process == 'MSE':
+        mse_labels = MSE(data,fname_ref)
+        if mse_labels > 0:
+            f = open(path_label+'error_log_'+fname_label+'.txt', 'w')
+            f.write('The labels error (MSE) between '+fname_label+' and '+fname_ref+' is: '+str(mse_labels))
+            f.close()
         output_level = 1
     elif type_process == 'remove':
         data = remove_label(data, fname_ref)
@@ -143,6 +147,12 @@ def main():
         output_level = 1
     elif type_process == 'create':
         data = create_label(data)
+        output_level = 0
+    elif type_process == 'diff':
+        data = diff(data,fname_ref)
+        output_level = 1
+    elif type_process == 'round':
+        data = round_image(data)
         output_level = 0
 
     # write nifti file
@@ -166,7 +176,7 @@ def cross(data, cross_radius, fname_ref, dilate, px, py):
 
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i in range(0,a):
-        value = int(data[X[i]][Y[i]][Z[i]])
+        value = int(np.round(data[X[i]][Y[i]][Z[i]]))
         data[X[i]][Y[i]][Z[i]] = 0 # remove point on the center of the spinal cord
         if fname_ref == '':
             data[X[i]][Y[i]+dy][Z[i]] = value*10+1 # add point at distance from center of spinal cord
@@ -295,7 +305,7 @@ def increment_z_inverse(data):
 
 # compute the RMS between labels
 # ==========================================================================================
-def RMS(data, fname_ref):
+def MSE(data, fname_ref):
     X, Y, Z = (data > 0).nonzero()
     data_labels = [[X[i],Y[i],Z[i],data[X[i],Y[i],Z[i]]] for i in range(0,len(X))]
 
@@ -322,7 +332,9 @@ def RMS(data, fname_ref):
                 result = result + (value[2]-v[2])*(value[2]-v[2])
                 break
     result = math.sqrt(result/len(X))
-    sct.printv('RMS error in Z direction = '+str(result)+' mm')
+    sct.printv('MSE error in Z direction = '+str(result)+' mm')
+
+    return result
 
 # create_label
 #=======================================================================================================================
@@ -562,6 +574,41 @@ def display_voxel(data):
     for k in range(0,len(X)):
         print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k],Y[k],Z[k]])
 
+def diff(data, fname_ref):
+    X, Y, Z = (data > 0).nonzero()
+    data_labels = [[X[i],Y[i],Z[i],data[X[i],Y[i],Z[i]]] for i in range(0,len(X))]
+
+    img_ref = nibabel.load(fname_ref)
+    data_ref = img_ref.get_data()
+    hdr_ref = img_ref.get_header()
+    X_ref, Y_ref, Z_ref = (data_ref > 0).nonzero()
+    ref_labels = [[X_ref[i],Y_ref[i],Z_ref[i],data_ref[X_ref[i],Y_ref[i],Z_ref[i]]] for i in range(0,len(X_ref))]
+
+    print "Label in input image that are not in ref image:"
+    for i in range(0,len(data_labels)):
+        isIn = False
+        for j in range(0,len(ref_labels)):
+            if data_labels[i][3] == ref_labels[j][3]:
+                isIn = True
+        if not isIn:
+            print data_labels[i][3]
+
+    print "Label in ref image that are not in input image:"
+    for i in range(0,len(ref_labels)):
+        isIn = False
+        for j in range(0,len(data_labels)):
+            if ref_labels[i][3] == data_labels[j][3]:
+                isIn = True
+        if not isIn:
+            print ref_labels[i][3]
+
+#=======================================================================================================================
+def round_image(data):
+    # the Z image is assume to be in second dimension
+    X, Y, Z = (data > 0).nonzero()
+    for k in range(0,len(X)):
+        data[X[k]][Y[k]][Z[k]] = int(np.round(data[X[k]][Y[k]][Z[k]]))
+    return data
 
 #=======================================================================================================================
 # usage
