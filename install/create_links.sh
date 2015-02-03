@@ -83,14 +83,16 @@ echo "Remove python modules and stuff under development..."
 if [ "$is_admin" = true ] ; then
   for filename in $FILES_TO_REMOVE; do
     cmd="sudo rm $filename"
+    echo ">> $cmd"
+    $cmd
   done
 else
   for filename in $FILES_TO_REMOVE; do
     cmd="rm $filename"
+    echo ">> $cmd"
+    $cmd
   done
 fi
-echo ">> $cmd"
-$cmd
 
 echo "done!"
 cd ${CURRENT_DIR}
