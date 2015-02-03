@@ -55,7 +55,7 @@ def main():
 # phantom generation
 #=======================================================================================================================
 
-def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, zero_last_tract=0):
+def phantom_generation(tracts, std_noise_perc, range_tract_perc, true_value, folder_out, value_gm, value_csf):
     """
     :param tracts: np array
     :param std_noise: std of noise to generate pseudo-random gaussianly-distributed noise
@@ -67,11 +67,12 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, z
     """
 
     fname_phantom = folder_out+'phantom_values.txt'
-    value_last_tract = 0
+    #value_gm = 30
+    #value_csf = 0
 
     # Transform std noise and range tract to a percentage of the true value
-    range_tract = float(range_tract) / 100 * true_value
-    std_noise = float(std_noise) / 100 * true_value
+    range_tract = float(range_tract_perc) / 100 * true_value
+    std_noise = float(std_noise_perc) / 100 * true_value
 
     # Generate synthetic Volume  
     numtracts = len(tracts)
@@ -79,17 +80,18 @@ def phantom_generation(tracts, std_noise, range_tract, true_value, folder_out, z
 
    # open txt file that includes true values per tract
     fid_file = open(fname_phantom, 'w+')
-    print >> fid_file, 'std_noise='+str(std_noise)+', range_tract='+str(range_tract)+', true_value='+str(true_value)
+    print >> fid_file, 'std_noise='+str(std_noise_perc)+'%, range_tract='+str(range_tract_perc)+'%, true_value='+str(true_value)
 
+    # create volume of tracts with randomly-assigned values
     tracts_weighted = np.zeros([numtracts, nx, ny, nz])
     synthetic_vol = np.zeros([nx, ny, nz])
     synthetic_voln = np.zeros([nx, ny, nz])
     values_synthetic_data = np.zeros([numtracts])
-    # create volume of tracts with randomly-assigned values
     for i in range(0, numtracts):
-
-        if i == numtracts-1 and zero_last_tract:
-            values_synthetic_data[i] = value_last_tract
+        if i == numtracts-2:
+            values_synthetic_data[i] = value_gm
+        elif i == numtracts-1:
+            values_synthetic_data[i] = value_csf
         else:
             values_synthetic_data[i] = (true_value - range_tract + random.uniform(0, 2*range_tract))  # true_value - range_tract <= values_synthetic_data <= true_value + range_tract
         print >> fid_file, 'label=' + str(i) + ', value=' + str(values_synthetic_data[i])
