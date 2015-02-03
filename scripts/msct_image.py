@@ -19,19 +19,13 @@ import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
 
 
-class Image:
+class Image(object):
+    """
 
+    """
     def __init__(self, path=None, verbose=0, np_array=None, split=False):
         if path is not None:
-            sct.check_file_exist(path, verbose=verbose)
-            try:
-                im_file = nib.load(path)
-            except nib.spatialimages.ImageFileError:
-                sct.printv('Error: make sure ' + path + ' is an image.')
-            self.orientation = get_orientation(path)
-            self.data = im_file.get_data()
-            self.hdr = im_file.get_header()
-            self.path, self.file_name, self.ext = sct.extract_fname(path)
+            self.loadFromPath(path, verbose)
         elif np_array is not None:
             self.data = np_array
             self.path = None
@@ -41,6 +35,22 @@ class Image:
         if split:
             self.data = self.split_data()
         self.dim = self.data.shape
+
+    def loadFromPath(self, path, verbose):
+        """
+        This function load an image from an absolute path using nibabel library
+        :param path:
+        :return:
+        """
+        sct.check_file_exist(path, verbose=verbose)
+        try:
+            im_file = nib.load(path)
+        except nib.spatialimages.ImageFileError:
+            sct.printv('Error: make sure ' + path + ' is an image.')
+        self.orientation = get_orientation(path)
+        self.data = im_file.get_data()
+        self.hdr = im_file.get_header()
+        self.path, self.file_name, self.ext = sct.extract_fname(path)
 
     def save(self):
         #hdr.set_data_dtype(img_type) # set imagetype to uint8 #TODO: maybe use int32
@@ -53,7 +63,7 @@ class Image:
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
     def flatten(self):
-#        return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
+        #return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
         return self.data.flatten()
 
     # return a list of the image slices flattened
@@ -120,6 +130,7 @@ class Image:
         imgplot.set_interpolation('nearest')
         plt.show()
 
+    """
     def split_data(self):
         from sct_asman import split
         new_data = []
@@ -129,3 +140,4 @@ class Image:
             new_data.append(right)
         new_data = np.asarray(new_data)
         return new_data
+    """
