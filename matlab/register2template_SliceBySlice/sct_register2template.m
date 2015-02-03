@@ -46,8 +46,6 @@ levels_fname='/Volumes/hd2_local/users_local/tanguy/spinalcordtoolbox/data/templ
 %--------------------------------------------------------------------------
 
 
-ants_param = ' -r Gauss[3,1] -o reg_ -i 1x50 --number-of-affine-iterations 1000x1000x1000 --rigid-affine true --ignore-void-origin true';
-
 %--------------------------------------------------------------------------
 %---------------------------DON'T CHANGE BELOW-----------------------------
 %--------------------------------------------------------------------------
@@ -68,9 +66,10 @@ ext = '.nii.gz'; % do not change
     end
         
     % choose only good slices of the template
-    template=read_avw(ref_fname);
-    template_roi=template(:,:,z_lev);
-    save_avw_v2(template_roi(:,end:-1:1,:),'template_roi','f',[0.5 0.5 0.5 1])
+	template=load_nii(ref_fname);
+    template_roi=template.img(:,:,z_lev);
+    template_roi=make_nii(double(template_roi),[0.5 0.5 0.5],[],[]);
+    save_nii(template_roi,'template_roi')
     ref_fname = 'template_roi';
 
 %     % apply sqrt
@@ -87,7 +86,7 @@ files_src = sct_sliceandrename(file_src);
 %--------------------------------------------------------------------------
 
 for level = 1:dim(3)
-    cmd = ['ants 2 -m CC[' files_ref{level} ',' files_src{level} ext ',1,4] -t SyN ' ants_param];
+    cmd = ['ants 2 -m CC[' files_ref{level} ',' files_src{level} ext ',1,4] -t SyN -r Gauss[3,1] -o reg_ -i 1x50 --number-of-affine-iterations 1000x1000x1000 --rigid-affine true --ignore-void-origin true -r 0'];
     j_disp(log,['>> ',cmd]); [status result] = unix(cmd);
     
      % copy and rename matrix
@@ -131,16 +130,17 @@ mergelist='';
 for iZ=dim(3):-1:1
     mergelist=[mergelist sct_tool_remove_extension(file_reg{i_file_reg},0) 'C' num2str(iZ) '_reg '];
 end
-cmd = ['fslmerge -z ' sct_tool_remove_extension(file_reg{i_file_reg},0) '_reg ' mergelist];
+cmd = ['fslmerge -z ' sct_tool_remove_extension(file_reg{i_file_reg},1) '_reg ' mergelist];
 j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
 unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) 'C*_reg*']);
 
 
 end
 
-
 % remove matrix
 unix('rm -rf mat_level*');
 % remove template
 for level = 1:dim(3), delete([files_ref{level} '*']); end
 %delete([ref_fname '*']);
+% display
+unix('fslview template_roi data_highQ_mean_masked_reg')
