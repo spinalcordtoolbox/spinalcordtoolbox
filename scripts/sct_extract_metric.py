@@ -184,7 +184,7 @@ def main():
         # TODO: check integrity of input
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label)
+    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
@@ -342,10 +342,10 @@ def main():
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_info_label):
+def read_label_file(path_info_label, file_info_label):
 
     # file name of info_label.txt
-    fname_label = path_info_label+param.file_info_label
+    fname_label = path_info_label+file_info_label
 
     # Check info_label.txt existence
     sct.check_file_exist(fname_label)
@@ -377,7 +377,7 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
+    print '\nCheck existence of all files listed in '+file_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
@@ -385,7 +385,7 @@ def read_label_file(path_info_label):
             pass
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
-                  +param.file_info_label+'.\n')
+                  +file_info_label+'.\n')
 
     # Close file.txt
     f.close()
