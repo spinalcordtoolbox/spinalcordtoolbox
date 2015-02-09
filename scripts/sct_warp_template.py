@@ -62,8 +62,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_src = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        fname_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2mt.nii.gz'
+        fname_src = path_sct+'/testing/sct_testing_data/data/mt/mtr.nii.gz'
+        fname_transfo = path_sct+'/testing/sct_testing_data/data/mt/warp_template2mt.nii.gz'
         warp_atlas = 1
         warp_spinal_levels = 1
         verbose = 1
