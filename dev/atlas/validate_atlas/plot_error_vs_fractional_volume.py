@@ -67,32 +67,37 @@ def main():
 
     sct.printv("Working directory: " + os.getcwd())
 
-    results_folder_csf = results_folder + '/csf'
+    results_folder_noise = results_folder + '/noise'
+    results_folder_tracts = results_folder + '/tracts'
 
-    sct.printv('\n\nData will be extracted from folder ' + results_folder_csf + '.', 'warning')
+    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' and ' + results_folder_tracts + '.', 'warning')
     sct.printv('\t\tCheck existence...')
-    sct.check_folder_exist(results_folder_csf)
+    sct.check_folder_exist(results_folder_noise)
+    sct.check_folder_exist(results_folder_tracts)
+
 
     # Extract methods to display
     methods_to_display = methods_to_display.strip().split(',')
 
     # Extract file names of the results files
-    fname_results_csf = glob.glob(results_folder_csf + '/*.txt')
+    fname_results_noise = glob.glob(results_folder_noise + '/*.txt')
+    fname_results_tracts = glob.glob(results_folder_tracts + '/*.txt')
+    fname_results = fname_results_noise + fname_results_tracts
     # Remove doublons (due to the two folders)
     # for i_fname in range(0, len(fname_results)):
     #     for j_fname in range(0, len(fname_results)):
     #         if (i_fname != j_fname) & (os.path.basename(fname_results[i_fname]) == os.path.basename(fname_results[j_fname])):
     #             fname_results.remove(fname_results[j_fname])
     file_results = []
-    for fname in fname_results_csf:
+    for fname in fname_results:
         file_results.append(os.path.basename(fname))
     for file in file_results:
         if file_results.count(file) > 1:
             ind = file_results.index(file)
-            fname_results_csf.remove(fname_results_csf[ind])
+            fname_results.remove(fname_results[ind])
             file_results.remove(file)
 
-    nb_results_file = len(fname_results_csf)
+    nb_results_file = len(fname_results)
 
     # 1st dim: SNR, 2nd dim: tract std, 3rd dim: mean abs error, 4th dim: std abs error
     # result_array = numpy.empty((nb_results_file, nb_results_file, 3), dtype=object)
@@ -121,7 +126,7 @@ def main():
     for i_file in range(0, nb_results_file):
 
         # Open file
-        f = open(fname_results_csf[i_file])  # open file
+        f = open(fname_results[i_file])  # open file
         # Extract all lines in .txt file
         lines = [line for line in f.readlines() if line.strip()]
 
@@ -213,7 +218,7 @@ def main():
             line_label_i = lines[i_line].strip().split(',')
             error_per_label_for_file_i.append([float(error.strip().split('(')[0]) for error in line_label_i[1:]])
             std_per_label_for_file_i.append([float(error.strip().split('(')[1][:-1]) for error in line_label_i[1:]])
-            labels_id_for_file_i.append(line_label_i[0])
+            labels_id_for_file_i.append(int(line_label_i[0]))
         error_per_label.append(error_per_label_for_file_i)
         std_per_label.append(std_per_label_for_file_i)
         labels_id.append(labels_id_for_file_i)
@@ -278,40 +283,45 @@ def main():
     print error_per_label
 
 
+    # Compute fractional volume per label
+    labels_id_FV, labels_name_FV, fract_vol_per_lab = compute_fract_vol_per_lab('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
+
+    # Find index of the file generated with noise variance = 10 and tracts std = 10
+    ind_file_10_10 = numpy.where((snr == 10) & (tracts_std == 10))
+
+    # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
+    if labels_id_FV != labels_id[0]:
+        sct.printv('\n\nERROR: the labels IDs returned by the function \'i_sct_get_fractional_volume\' are different from the labels IDs of the results files\n\n', 'error')
+
+    # indexes of labels sort according to the fractional volume
+    ind_labels_sort = numpy.argsort(fract_vol_per_lab)
+
+    # sort arrays in this order
+    error_per_label_sort = error_per_label[ind_file_10_10[0], ind_labels_sort, :]
+    labels_name_sort = numpy.array(labels_name_FV)[ind_labels_sort]
+
     # *********************************************** START PLOTTING HERE **********************************************
-
-
-
-
-    ind_files_csf_sort = numpy.argsort(csf_values)
-
-
 
     matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
     plt.figure(figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
-    ind_fig = numpy.arange(len(ind_files_csf_sort)) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('\nCSF values (in percentage of true value in tracts)', fontsize=22)
-    plt.title('Absolute error within all tracts as a function of CSF values\n', fontsize=24)
+    ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
+    plt.ylabel('Relative error (%)\n', fontsize=22)
+    plt.xlabel('\nFractional volume', fontsize=22)
+    plt.title('Error per tracts as a function of their fractional volume\n', fontsize=24)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-    box_plots = []
+    errorbar_plots = []
     for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-        whiskerprops = dict(color=color, linewidth=2)
-        capprops = dict(color=color, linewidth=2)
-        medianprops = dict(linewidth=3, color=color)
-        meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
-        meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
+        plt.errorbar(ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), error_per_label_sort, color=color)
+
         plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-        box_plots.append(plot_i['boxes'][0])
+        errorbar_plots.append(plot_i['boxes'][0])
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
@@ -322,9 +332,35 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(results_folder+'/absolute_error_vs_csf_values')
+    plt.savefig(results_folder+'/relative_error_vs_fractional_volume')
 
     plt.show()
+
+
+def compute_fract_vol_per_lab(atlas_folder, file_label):
+
+    import sct_extract_metric
+    import nibabel
+
+
+    [label_id, label_name, label_file] = sct_extract_metric.read_label_file(atlas_folder, file_label)
+    nb_label = len(label_file)
+
+    fract_volume_per_lab = numpy.zeros((nb_label))
+
+    # compute fractional volume for each label
+    for i_label in range(0, nb_label):
+        fract_volume_per_lab[i_label] = numpy.sum(nibabel.load(atlas_folder + label_file[i_label]).get_data())
+
+    # print 'Labels\'name:'
+    # print label_name
+    # print '\nCorresponding fractional volume:'
+    # print fract_volume_per_lab
+
+    return label_id, label_name, fract_volume_per_lab
+
+
+
 
 #=======================================================================================================================
 # Start program
