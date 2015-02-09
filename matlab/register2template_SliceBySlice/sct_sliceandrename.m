@@ -1,5 +1,5 @@
-function files = sct_sliceandrename(fname, varargin)
-% files = splitandrename(fname, (uppest_level) )
+function files = sct_sliceandrename(fname, dir, varargin)
+% files = splitandrename(fname, 'x'/'y'/'z' or 't',(uppest_level) )
 %
 % fname : ./../file.nii.gz
 % files = {'fileC1', 'fileC2'...}
@@ -11,27 +11,24 @@ function files = sct_sliceandrename(fname, varargin)
 log = 'log';
 if ~isempty(varargin), uppest_level = varargin{1}; else uppest_level=1; end
 % read file parts
-[path, file, ext] = fileparts(fname);
-[~,file,ext2] = fileparts(file);
-ext = [ext2 ext]; % .nii.gz has two extension!
-if isempty(path), path = '.'; end
-if isempty(ext), ext = '.nii.gz'; end
-ext = '.nii.gz';
-path = [path filesep];
+[file, path, ext]=sct_tool_remove_extension(fname,0);
 
 
 [~,dim] = read_avw(fname);
 % split by Z
-cmd = ['fslsplit ' fname ' ' path file 'C -z'];
-j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+cmd = ['fslsplit ' fname ' ' path file '_' dir ' -' dir];
+j_disp(log,['>> ',cmd]); [status, result] = unix(cmd); if status, error(result); end
 
 %rename
-numT = j_numbering(dim(3),4,0);
-for i_slice = 1:dim(3)
-    files{i_slice} = [file 'C' num2str(i_slice)];
-    cmd = ['mv ' path file 'C' numT{dim(3)+1 - i_slice} ext ' ' file 'C' num2str(uppest_level+i_slice-1) ext ];
-    j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-    
+if strcmp(dir,'x'), dirn=1; end
+if strcmp(dir,'y'), dirn=2; end
+if strcmp(dir,'z'), dirn=3; end
+if strcmp(dir,'t'), dirn=4; end
+
+numT = j_numbering(dim(dirn),4,0);
+outputext='.nii.gz';
+for i_slice = 1:dim(dirn)
+    files{i_slice} = [path file '_' dir numT{i_slice} outputext];    
 end
 
 end

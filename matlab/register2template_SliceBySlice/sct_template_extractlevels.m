@@ -1,5 +1,6 @@
 function sct_template_extractlevels(levels)
 % sct_template_extractlevels(4:-1:1)
+% put everything in a folder ./template_roi
 [~, SCT_DIR]=unix('echo $SCT_DIR'); SCT_DIR=SCT_DIR(1:end-1);
 levels_fname=[SCT_DIR '/data/template/MNI-Poly-AMU_level.nii.gz'];
 
