@@ -41,7 +41,7 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 # main function
 def main():
     # Parameters
-    bootstrap_iter = 2  #200
+    bootstrap_iter = 5  #200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
@@ -213,8 +213,8 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
                             # read in txt file
                             x_estim_i = read_results(fname_extract_metrics)
                         # Get the percent absolute deviation with the true value
-                        perc_error[i_tract, i_method, i_bootstrap] = 100 * (x_true_i[i_tract] - x_estim_i) / float(x_true_i[i_tract])
-                        #perc_error[i_tract, i_method, i_bootstrap] = 100 * abs(x_estim_i - x_true_i[i_tract]) / float(x_true_i[i_tract])
+                        #perc_error[i_tract, i_method, i_bootstrap] = 100 * (x_true_i[i_tract] - x_estim_i) / float(x_true_i[i_tract])
+                        perc_error[i_tract, i_method, i_bootstrap] = 100 * abs(x_estim_i - x_true_i[i_tract]) / float(x_true_i[i_tract])
 
         # calculate percentage error for all tracts (only for automatic methods)
         # loop across methods
@@ -229,8 +229,8 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
                 x_estim_i_all = read_results(fname_extract_metrics)
                 # get nonzero values
                 index_nonzero = np.nonzero(values_synthetic_data)
-                perc_error_all[0:nb_tracts_all, i_method, i_bootstrap] = 100 * (x_estim_i_all[index_nonzero] - values_synthetic_data[index_nonzero]) / values_synthetic_data[index_nonzero]  # will be used to display boxcar
-                # perc_error_all[0:nb_tracts_all, i_method, i_bootstrap] = 100 * (x_estim_i_all - values_synthetic_data) / values_synthetic_data  # will be used to display boxcar
+                perc_error_all[0:nb_tracts_all, i_method, i_bootstrap] = 100 * abs(x_estim_i_all[index_nonzero] - values_synthetic_data[index_nonzero]) / values_synthetic_data[index_nonzero]  # will be used to display boxcar
+                # perc_error_all[0:nb_tracts_all, i_method, i_bootstrap] = 100 * (x_estim_i_all[index_nonzero] - values_synthetic_data[index_nonzero]) / values_synthetic_data[index_nonzero]  # will be used to display boxcar
                 # compute mean squared error
                 stat_perc_error_all[i_method, i_bootstrap, 0] = (perc_error_all[:, i_method, i_bootstrap] ** 2).mean()  # mean squared error
                 stat_perc_error_all[i_method, i_bootstrap, 1] = np.median(perc_error_all[:, i_method, i_bootstrap])  # median
@@ -256,7 +256,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
         results_text = open(fname_results, 'w+')
 
         # print header
-        print >>results_text, '# Mean(std) percentage of error within single tracts.'
+        print >>results_text, '# Mean(std) percentage of absolute error within single tracts.'
         print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
         print >>results_text, '# true_value: ' + str(true_value)
         print >>results_text, '# sigma noise (in percentage of true value): ' + str(std_noise) + '%'
@@ -294,7 +294,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
     results_text = open(fname_results, 'w+')
 
     # print header
-    print >>results_text, '# Mean(std) percentage of error within all tracts (only for automatic methods).'
+    print >>results_text, '# Mean(std) percentage of absolute error within all tracts (only for automatic methods).'
     print >>results_text, '# Generated on: ' + time.strftime('%Y-%m-%d %H:%M:%S')
     print >>results_text, '# true_value: ' + str(true_value)
     print >>results_text, '# sigma noise (in percentage of true value): ' + str(std_noise) + '%'
