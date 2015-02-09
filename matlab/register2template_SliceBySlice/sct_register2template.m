@@ -50,7 +50,6 @@ levels_fname='/Volumes/hd2_local/users_local/tanguy/spinalcordtoolbox/data/templ
 %---------------------------DON'T CHANGE BELOW-----------------------------
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
-ext = '.nii.gz'; % do not change
 
 % read file_reg dim
 [~,dim] = read_avw(file_reg{1});
@@ -69,24 +68,24 @@ ext = '.nii.gz'; % do not change
 	template=load_nii(ref_fname);
     template_roi=template.img(:,:,z_lev);
     template_roi=make_nii(double(template_roi),[0.5 0.5 0.5],[],[]);
-    save_nii(template_roi,'template_roi')
+    save_nii(template_roi,'template_roi.nii')
     ref_fname = 'template_roi';
 
 %     % apply sqrt
 %     unix('fslmaths template_roi -sqrt -sqrt template_roi_sqrt');
 %     ref_fname = 'template_roi_sqrt';
     
-files_ref = sct_sliceandrename(ref_fname);
+files_ref = sct_sliceandrename(ref_fname, 'z');
 
 % splitZ source
-files_src = sct_sliceandrename(file_src);
+files_src = sct_sliceandrename(file_src, 'z');
 
 %--------------------------------------------------------------------------
 % Estimate transfo between source and GW template
 %--------------------------------------------------------------------------
 
 for level = 1:dim(3)
-    cmd = ['ants 2 -m CC[' files_ref{level} ',' files_src{level} ext ',1,4] -t SyN -r Gauss[3,1] -o reg_ -i 1x50 --number-of-affine-iterations 1000x1000x1000 --rigid-affine true --ignore-void-origin true -r 0'];
+    cmd = ['ants 2 -m CC[' files_ref{level} ',' files_src{level} ',1,4] -t SyN -r Gauss[3,1] -o reg_ -i 1x50 --number-of-affine-iterations 1000x1000x1000 --rigid-affine true --ignore-void-origin true -r 0'];
     j_disp(log,['>> ',cmd]); [status result] = unix(cmd);
     
      % copy and rename matrix
@@ -95,7 +94,7 @@ for level = 1:dim(3)
      unix(['mv reg_Warp.nii.gz ' mat_folder{level} '/reg_Warp.nii.gz']);
      unix(['mv reg_InverseWarp.nii.gz ' mat_folder{level} '/reg_InverseWarp.nii.gz']);
      unix(['mv reg_Affine.txt ' mat_folder{level} '/reg_Affine.txt']);
-     unix(['rm ' files_src{level} ext]);
+     unix(['rm ' files_src{level}]);
 
 end
 
@@ -107,32 +106,32 @@ end
 %--------------------------------------------------------------------------
 
 for i_file_reg = 1:length(file_reg)
-files_reg = sct_sliceandrename(file_reg{i_file_reg});
+files_reg = sct_sliceandrename(file_reg{i_file_reg}, 'z');
 for level = 1:dim(3)
     if warp_transfo, warp_mat = [mat_folder{level} '/reg_Warp.nii.gz ']; else warp_mat = ' '; end
     % split
-    files_tmp = sct_splitTandrename(files_reg{level});
+    files_tmp = sct_sliceandrename(files_reg{level}, 't');
     for iT=1:dim(4)
         % register reg file
-        cmd = ['WarpImageMultiTransform 2 ' files_tmp{iT} ext ' ' files_tmp{iT} '_reg.nii.gz  -R ' files_ref{level} ' ' warp_mat  mat_folder{level} '/reg_Affine.txt --use-BSpline'];
+        cmd = ['WarpImageMultiTransform 2 ' files_tmp{iT} ' ' files_tmp{iT} '_reg.nii.gz  -R ' files_ref{level} ' ' warp_mat  mat_folder{level} '/reg_Affine.txt --use-BSpline'];
         j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
     end
     
-    cmd = ['fslmerge -t ' files_reg{level} '_reg.nii.gz ' sct_tool_remove_extension(file_reg{i_file_reg},0) '*T*_reg*'];
+    cmd = ['fslmerge -t ' sct_tool_remove_extension(files_reg{level},0) '_reg.nii.gz ' sct_tool_remove_extension(file_reg{i_file_reg},1) '*t*_reg*'];
     j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-    unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) '*T*']);
-    unix(['rm ' files_reg{level} ext]);
+    unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},1) '*t*']);
+    unix(['rm ' files_reg{level}]);
 end
 
 % merge files
 %reg
 mergelist='';
-for iZ=dim(3):-1:1
-    mergelist=[mergelist sct_tool_remove_extension(file_reg{i_file_reg},0) 'C' num2str(iZ) '_reg '];
+for iZ=1:dim(3)
+    mergelist=[mergelist sct_tool_remove_extension(files_reg{iZ},0) '_reg '];
 end
 cmd = ['fslmerge -z ' sct_tool_remove_extension(file_reg{i_file_reg},1) '_reg ' mergelist];
 j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
-unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) 'C*_reg*']);
+unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},0) '_z*_reg*']);
 
 
 end
