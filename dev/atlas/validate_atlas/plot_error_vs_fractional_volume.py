@@ -317,17 +317,15 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plt.errorbar(ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), error_per_label_sort, color=color)
-
-        plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
-        # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
-        errorbar_plots.append(plot_i['boxes'][0])
+        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), error_per_label_sort, color=color)
+        # plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
+        errorbar_plots.append(plot_i)
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
-    plt.xticks(ind_fig + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), csf_values[ind_files_csf_sort])
+    plt.legend(errorbar_plots, methods_to_display, loc='best', fontsize=22)
+    plt.xticks(ind_fig + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), labels_name_sort)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 20])
+    # plt.gca().set_ylim([0, 20])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
