@@ -37,9 +37,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150112"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150209"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-        methods_to_display = 'bin,wa,wath,ml,map'
+        methods_to_display = 'wath,ml,map'
         noise_std = 10
         tracts_std = 10
     else:
@@ -286,29 +286,34 @@ def main():
     # Compute fractional volume per label
     labels_id_FV, labels_name_FV, fract_vol_per_lab = compute_fract_vol_per_lab('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
 
-    # Find index of the file generated with noise variance = 10 and tracts std = 10
-    ind_file_10_10 = numpy.where((snr == 10) & (tracts_std == 10))
-
     # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
     if labels_id_FV != labels_id[0]:
         sct.printv('\n\nERROR: the labels IDs returned by the function \'i_sct_get_fractional_volume\' are different from the labels IDs of the results files\n\n', 'error')
 
+    # Remove labels #30 and #31
+    labels_id_FV_29, labels_name_FV_29, fract_vol_per_lab_29 = labels_id_FV[:-2], labels_name_FV[:-2], fract_vol_per_lab[:-2]
+
     # indexes of labels sort according to the fractional volume
-    ind_labels_sort = numpy.argsort(fract_vol_per_lab)
+    ind_labels_sort = numpy.argsort(fract_vol_per_lab_29)
+
+    # Find index of the file generated with noise variance = 10 and tracts std = 10
+    ind_file_10_10 = numpy.where((snr == 10) & (tracts_std == 10))
 
     # sort arrays in this order
     error_per_label_sort = error_per_label[ind_file_10_10[0], ind_labels_sort, :]
-    labels_name_sort = numpy.array(labels_name_FV)[ind_labels_sort]
+    std_per_label_sort = std_per_label[ind_file_10_10[0], ind_labels_sort, :]
+    labels_name_sort = numpy.array(labels_name_FV_29)[ind_labels_sort]
 
     # *********************************************** START PLOTTING HERE **********************************************
 
     matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    plt.figure(figsize=(30, 15))
+    fig = plt.figure(figsize=(37, 25))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
-    plt.ylabel('Relative error (%)\n', fontsize=22)
-    plt.xlabel('\nFractional volume', fontsize=22)
+    plt.ylabel('Absolute error (%)\n', fontsize=22)
+    plt.xlabel('Fractional volume', fontsize=22)
     plt.title('Error per tracts as a function of their fractional volume\n', fontsize=24)
+    plt.suptitle('\n(Noise std='+str(snr[ind_file_10_10[0]][0])+', Tracts std='+str(tracts_std[ind_file_10_10[0]][0])+', CSF value='+str(csf_values[ind_file_10_10[0]][0])+')', fontsize=18)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -317,18 +322,21 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), error_per_label_sort, color=color)
+        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width, error_per_label_sort[:, i_meth], std_per_label_sort[:, i_meth], color=color, marker='o', markersize=10)
         # plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         errorbar_plots.append(plot_i)
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(errorbar_plots, methods_to_display, loc='best', fontsize=22)
-    plt.xticks(ind_fig + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), labels_name_sort)
+    plt.legend(errorbar_plots, methods_to_display, loc='best', fontsize=22, numpoints=1)
+    plt.xticks(ind_fig + (numpy.floor(float(nb_method-1)/2)) * width, labels_name_sort, fontsize=18)
+    # Tweak spacing to prevent clipping of tick-labels
+    plt.subplots_adjust(bottom=0, top=0.95, right=0.96)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
-    # plt.gca().set_ylim([0, 20])
+    plt.gca().set_ylim([0, 20])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
-    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
+    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
+    fig.autofmt_xdate()
 
     plt.savefig(results_folder+'/relative_error_vs_fractional_volume')
 
