@@ -64,6 +64,7 @@ def main():
     # Append path that contains scripts, to be able to load modules
     sys.path.append(path_sct + '/scripts')
     import sct_utils as sct
+    import isct_get_fractional_volume
 
     sct.printv("Working directory: " + os.getcwd())
 
@@ -284,7 +285,7 @@ def main():
 
 
     # Compute fractional volume per label
-    labels_id_FV, labels_name_FV, fract_vol_per_lab = compute_fract_vol_per_lab('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
+    labels_id_FV, labels_name_FV, fract_vol_per_lab = isct_get_fractional_volume.get_fractional_volume_per_label('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
 
     # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
     if labels_id_FV != labels_id[0]:
@@ -312,7 +313,7 @@ def main():
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=22)
     plt.xlabel('Ascending fractional volume', fontsize=22)
-    plt.title('Error per tracts as a function of their fractional volume\n', fontsize=24)
+    plt.title('Absolute error per tract as a function of their fractional volume\n', fontsize=24)
     plt.suptitle('\n(Noise std='+str(snr[ind_file_10_10[0]][0])+', Tracts std='+str(tracts_std[ind_file_10_10[0]][0])+', CSF value='+str(csf_values[ind_file_10_10[0]][0])+')', fontsize=18)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -338,34 +339,9 @@ def main():
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig(results_folder+'/relative_error_vs_fractional_volume')
+    plt.savefig(results_folder+'/absolute_error_vs_fractional_volume')
 
     plt.show()
-
-
-def compute_fract_vol_per_lab(atlas_folder, file_label):
-
-    import sct_extract_metric
-    import nibabel
-
-
-    [label_id, label_name, label_file] = sct_extract_metric.read_label_file(atlas_folder, file_label)
-    nb_label = len(label_file)
-
-    fract_volume_per_lab = numpy.zeros((nb_label))
-
-    # compute fractional volume for each label
-    for i_label in range(0, nb_label):
-        fract_volume_per_lab[i_label] = numpy.sum(nibabel.load(atlas_folder + label_file[i_label]).get_data())
-
-    # print 'Labels\'name:'
-    # print label_name
-    # print '\nCorresponding fractional volume:'
-    # print fract_volume_per_lab
-
-    return label_id, label_name, fract_volume_per_lab
-
-
 
 
 #=======================================================================================================================
