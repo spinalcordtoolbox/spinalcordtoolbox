@@ -58,6 +58,7 @@ class Image(object):
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
                         if 'minimize', image space is minimize
+                        if 'minimize_int', image space is minimize and values are approximated to integers
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
                         (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
@@ -77,7 +78,7 @@ class Image(object):
         if type == '':
             type = self.hdr.get_data_dtype()
 
-        if type == 'minimize':
+        if type == 'minimize' or type == 'minimize_int':
             # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
             # warning: does not take intensity resolution into account, neither complex voxels
             max_vox = np.nanmax(self.data)
@@ -85,10 +86,11 @@ class Image(object):
 
             # check if voxel values are real or integer
             isInteger = True
-            for vox in self.data.flatten():
-                if int(vox)!=vox:
-                    isInteger = False
-                    break
+            if type == 'minimize':
+                for vox in self.data.flatten():
+                    if int(vox)!=vox:
+                        isInteger = False
+                        break
 
             if isInteger:
                 if min_vox >= 0: # unsigned
@@ -153,7 +155,6 @@ class Image(object):
         self.hdr.set_data_shape(self.data.shape)
         img = nib.Nifti1Image(self.data, None, self.hdr)
         print 'saving ' + self.path + self.file_name + self.ext + '\n'
-        print self.hdr.get_data_shape()
         nib.save(img, self.path + self.file_name + self.ext)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
