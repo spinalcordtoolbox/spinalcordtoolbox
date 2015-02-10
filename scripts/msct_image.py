@@ -53,7 +53,7 @@ class Image(object):
         self.path, self.file_name, self.ext = sct.extract_fname(path)
 
     def changeType(self, type=''):
-        from numpy import bool_, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64
+        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -114,9 +114,9 @@ class Image(object):
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
-                if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
-                    type = 'float16'
-                elif max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
+                #if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                #    type = 'np.float16' # not supported by nibabel
+                if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
                     type = 'float32'
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
