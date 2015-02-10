@@ -123,8 +123,8 @@ def main():
     if type_process == 'MSE':
         mse_labels = MSE(data,fname_ref)
         if mse_labels > 0:
-            f = open(path_label+'error_log_'+fname_label+'.txt', 'w')
-            f.write('The labels error (MSE) between '+fname_label+' and '+fname_ref+' is: '+str(mse_labels))
+            f = open(path_label+'error_log_'+file_label+'.txt', 'w')
+            f.write('The labels error (MSE) between '+file_label+' and '+fname_ref+' is: '+str(mse_labels))
             f.close()
         output_level = 1
     elif type_process == 'remove':
@@ -154,15 +154,18 @@ def main():
     elif type_process == 'round':
         data = round_image(data)
         output_level = 0
+    elif type_process == 'dist-inter': # second argument is in pixel distance
+        distance_interlabels(data,5)
+        output_level = 1
 
     # write nifti file
     if (output_level == 0):
         hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32.
         print '\nWrite NIFTI volumes...'
-        data.astype('int')
+        data = np.int_(data)
         img = nibabel.Nifti1Image(data, None, hdr)
         nibabel.save(img, 'tmp.'+file_label_output+'.nii.gz')
-        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
+        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', path_label_output+file_label_output+ext_label_output)
 
 
 # cross
@@ -342,6 +345,7 @@ def create_label(data):
 
     # create labels volume (all zeros)
     data_label = data*0
+    data_label.astype('int')
 
     # parse argument for labels
     list_labels = param.labels.split(':')  # parse with space
@@ -571,8 +575,16 @@ def write_vertebral_levels(data,fname_vert_level_input):
 def display_voxel(data):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
+    useful_notation = ''
     for k in range(0,len(X)):
-        print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k],Y[k],Z[k]])
+        print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k]][Y[k]][Z[k]])
+        if useful_notation != '':
+            useful_notation = useful_notation+':'
+        useful_notation = useful_notation+str(X[k])+','+str(Y[k])+','+str(Z[k])+','+str(int(data[X[k]][Y[k]][Z[k]]))
+
+    print 'Useful notation:'
+    print useful_notation
+
 
 def diff(data, fname_ref):
     X, Y, Z = (data > 0).nonzero()
@@ -609,6 +621,17 @@ def round_image(data):
     for k in range(0,len(X)):
         data[X[k]][Y[k]][Z[k]] = int(np.round(data[X[k]][Y[k]][Z[k]]))
     return data
+
+# distance between labels must be less than the second arguments
+# ==========================================================================================
+def distance_interlabels(data, max_dist):
+    X, Y, Z = (data > 0).nonzero()
+
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0,len(X)-1):
+        dist = math.sqrt((X[i]-X[i+1])**2+(Y[i]-Y[i+1])**2+(Z[i]-Z[i+1])**2)
+        if dist < max_dist:
+            print 'Warning: the distance between label '+str(i)+'['+str(X[i])+','+str(Y[i])+','+str(Z[i])+']='+str(data[X[i]][Y[i]][Z[i]])+' and label '+str(i+1)+'['+str(X[i+1])+','+str(Y[i+1])+','+str(Z[i+1])+']='+str(data[X[i+1]][Y[i+1]][Z[i+1]])+' is larger than '+str(max_dist)+'. Distance='+str(dist)
 
 #=======================================================================================================================
 # usage
