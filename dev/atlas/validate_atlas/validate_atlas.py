@@ -41,7 +41,7 @@ from generate_phantom import phantom_generation, get_tracts, save_3D_nparray_nif
 # main function
 def main():
     # Parameters
-    bootstrap_iter = 5  #200
+    bootstrap_iter = 200
     folder_atlas = '../create_atlas/final_results/'  # path to atlas. add / at the end
     folder_cropped_atlas = "cropped_atlas/"
     crop = 0  # crop atlas, default=1. Only need to do it once (saves time).
