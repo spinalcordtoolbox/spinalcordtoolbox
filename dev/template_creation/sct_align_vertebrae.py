@@ -117,6 +117,7 @@ def main():
         tmp_name = 'tmp.'+time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir '+tmp_name)
         os.chdir(tmp_name)
+        sct.run('sct_label_utils -i ../'+landmark+' -t dist-inter')
         sct.run('sct_label_utils -i ../'+template_landmark+' -t plan -o template_landmarks_plan.nii.gz -c 5')
         sct.run('sct_crop_image -i template_landmarks_plan.nii.gz -o template_landmarks_plan_cropped.nii.gz -start 0.35,0.35 -end 0.65,0.65 -dim 0,1')
         sct.run('sct_label_utils -i ../'+landmark+' -t plan -o landmarks_plan.nii.gz -c 5')
@@ -136,9 +137,15 @@ def main():
         sct.run('sct_label_utils -i ../'+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
         status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t MSE')
         sct.printv(output,1,'info')
+        remove_temp_files = True
+        if os.path.isfile('error_log_label_moved.txt'):
+            remove_temp_files = False
+            with open('../log.txt', 'a') as log_file:
+                log_file.write('Error for '+fname+'\n')
 
         os.chdir('..')
-        sct.run('rm -rf tmp.*')
+        if remove_temp_files:
+            sct.run('rm -rf '+tmp_name)
 
 
 
