@@ -39,7 +39,7 @@ class Image(object):
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
-        :param path:
+        :param path: path of the file from which the image will be loaded
         :return:
         """
         sct.check_file_exist(path, verbose=verbose)
@@ -52,8 +52,104 @@ class Image(object):
         self.hdr = im_file.get_header()
         self.path, self.file_name, self.ext = sct.extract_fname(path)
 
-    def save(self):
-        #hdr.set_data_dtype(img_type) # set imagetype to uint8 #TODO: maybe use int32
+    def changeType(self, type=''):
+        from numpy import bool_, uint8, uint16, uint32, uint64, int8, int16, int32, int64, float16, float32, float64
+        """
+        Change the voxel type of the image
+        :param type:    if not set, the image is saved in standard type
+                        if 'minimize', image space is minimize
+                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
+                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
+                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
+                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
+                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
+                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
+                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
+                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
+                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
+                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
+                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
+                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
+                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+                        (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+        :return:
+        """
+        if type == '':
+            type = self.hdr.get_data_dtype()
+
+        if type == 'minimize':
+            # compute max value in the image and choose the best pixel type to represent all the pixels within smallest memory space
+            # warning: does not take intensity resolution into account, neither complex voxels
+            max_vox = np.nanmax(self.data)
+            min_vox = np.nanmin(self.data)
+
+            # check if voxel values are real or integer
+            isInteger = True
+            for vox in self.data.flatten():
+                if int(vox)!=vox:
+                    isInteger = False
+                    break
+
+            if isInteger:
+                if min_vox >= 0: # unsigned
+                    if max_vox <= np.iinfo(np.uint8).max:
+                        type = 'uint8'
+                    elif max_vox <= np.iinfo(np.uint16):
+                        type = 'uint16'
+                    elif max_vox <= np.iinfo(np.uint32).max:
+                        type = 'uint32'
+                    elif max_vox <= np.iinfo(np.uint64).max:
+                        type = 'uint64'
+                    else:
+                        raise ValueError("Maximum value of the image is to big to be represented.")
+                else:
+                    if max_vox <= np.iinfo(np.int8).max and min_vox >= np.iinfo(np.int8).min:
+                        type = 'int8'
+                    elif max_vox <= np.iinfo(np.int16).max and min_vox >= np.iinfo(np.int16).min:
+                        type = 'int16'
+                    elif max_vox <= np.iinfo(np.int32).max and min_vox >= np.iinfo(np.int32).min:
+                        type = 'int32'
+                    elif max_vox <= np.iinfo(np.int64).max and min_vox >= np.iinfo(np.int64).min:
+                        type = 'int64'
+                    else:
+                        raise ValueError("Maximum value of the image is to big to be represented.")
+            else:
+                if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                    type = 'float16'
+                elif max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
+                    type = 'float32'
+                elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
+                    type = 'float64'
+
+        print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        # change type of data in both numpy array and nifti header
+        type_build = eval(type)
+        self.data = type_build(self.data)
+        self.hdr.set_data_dtype(type)
+
+    def save(self, type=''):
+        """
+        Write an image in a nifti file
+        :param type:    if not set, the image is saved in standard type
+                        if 'minimize', image space is minimize
+                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
+                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
+                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
+                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
+                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
+                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
+                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
+                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
+                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
+                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
+                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
+                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
+                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+                        (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
+        """
+        if type != '':
+            self.changeType(type)
+
         self.hdr.set_data_shape(self.data.shape)
         img = nib.Nifti1Image(self.data, None, self.hdr)
         print 'saving ' + self.path + self.file_name + self.ext + '\n'
@@ -141,3 +237,18 @@ class Image(object):
         new_data = np.asarray(new_data)
         return new_data
     """
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    from msct_parser import Parser
+    import sys
+    parser = Parser(__file__)
+    parser.usage.set_description('Image')
+    parser.add_option("-i", "file", "file", True)
+    arguments = parser.parse(sys.argv[1:])
+
+    image = Image(arguments["-i"])
+    image.changeType('minimize')
