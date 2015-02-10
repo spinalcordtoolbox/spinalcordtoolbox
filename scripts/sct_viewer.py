@@ -174,9 +174,9 @@ class VolViewer(object):
         trio = TrioPlot(self.im_plot_axial, self.im_plot_frontal, self.im_plot_sagittal, self.image)
         trio.connect()
 
-        slider_ax = self.fig.add_axes([0.15, 0.05, 0.75, 0.03])
-        slider_axial = Slider(slider_ax, 'Axial slices', 0, self.im_size[1], valinit=int(self.im_size[1]/2))
-        slider_axial.on_changed(self.updateAxial)
+        #slider_ax = self.fig.add_axes([0.15, 0.05, 0.75, 0.03])
+        #slider_axial = Slider(slider_ax, 'Axial slices', 0, self.im_size[1], valinit=int(self.im_size[1]/2))
+        #slider_axial.on_changed(self.updateAxial)
 
         plt.show()
 
