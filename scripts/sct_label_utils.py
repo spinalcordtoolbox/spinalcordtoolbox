@@ -524,7 +524,7 @@ if __name__ == "__main__":
                       description="cross radius in mm (default=5mm).",
                       mandatory=False)
     parser.add_option(name="-d",
-                      type_value="bool",
+                      type_value=None,
                       description="dilatation bool for cross generation ('-c' option).",
                       mandatory=False)
     parser.add_option(name="-v",
