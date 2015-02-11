@@ -23,9 +23,12 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 1
-        self.results_folder = "data_methods_comparison"
-        self.methods_to_display = 'bin,wa,wath,ml,map'
-
+        self.results_folder = "results_20150210_200iter"
+        self.methods_to_display = 'wath,ml,map'
+        self.noise_std_to_display = 10
+        self.tracts_std_to_display = 10
+        self.csf_value_to_display = 5
+        self.nb_RL_labels = 15
 
 # =======================================================================================================================
 # main
@@ -33,15 +36,16 @@ class Param:
 def main():
     results_folder = param_default.results_folder
     methods_to_display = param_default.methods_to_display
+    noise_std_to_display = param_default.noise_std_to_display
+    tracts_std_to_display = param_default.tracts_std_to_display
+    csf_value_to_display = param_default.csf_value_to_display
+    nb_RL_labels = param_default.nb_RL_labels
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150209"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
-        methods_to_display = 'wath,ml,map'
-        noise_std = 10
-        tracts_std = 10
     else:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -70,12 +74,13 @@ def main():
 
     results_folder_noise = results_folder + '/noise'
     results_folder_tracts = results_folder + '/tracts'
+    results_folder_csf = results_folder + '/csf'
 
-    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' and ' + results_folder_tracts + '.', 'warning')
+    sct.printv('\n\nData will be extracted from folder ' + results_folder_noise + ' , ' + results_folder_tracts + ' and ' + results_folder_csf + '.', 'warning')
     sct.printv('\t\tCheck existence...')
     sct.check_folder_exist(results_folder_noise)
     sct.check_folder_exist(results_folder_tracts)
-
+    sct.check_folder_exist(results_folder_csf)
 
     # Extract methods to display
     methods_to_display = methods_to_display.strip().split(',')
@@ -83,7 +88,8 @@ def main():
     # Extract file names of the results files
     fname_results_noise = glob.glob(results_folder_noise + '/*.txt')
     fname_results_tracts = glob.glob(results_folder_tracts + '/*.txt')
-    fname_results = fname_results_noise + fname_results_tracts
+    fname_results_csf = glob.glob(results_folder_csf + '/*.txt')
+    fname_results = fname_results_noise + fname_results_tracts + fname_results_csf
     # Remove doublons (due to the two folders)
     # for i_fname in range(0, len(fname_results)):
     #     for j_fname in range(0, len(fname_results)):
@@ -250,6 +256,17 @@ def main():
     mean_abs_error_per_meth = numpy.mean(abs_error_per_labels, axis=1)
     std_abs_error_per_meth = numpy.std(abs_error_per_labels, axis=1)
 
+    # average error across sides
+    meanRL_abs_error_per_labels = numpy.zeros((error_per_label.shape[0], nb_RL_labels, error_per_label.shape[2]))
+    for i_file in range(0, nb_results_file):
+        for i_meth in range(0, len(methods_name[i_file])):
+            for i_label in range(0, nb_RL_labels):
+                # find indexes of corresponding labels
+                ind_ID_first_side = labels_id[i_file].index(i_label)
+                ind_ID_other_side = labels_id[i_file].index(i_label + nb_RL_labels)
+                # compute mean across 2 sides
+                meanRL_abs_error_per_labels[i_file, i_label, i_meth] = float(error_per_label[i_file, ind_ID_first_side, i_meth] + error_per_label[i_file, ind_ID_other_side, i_meth]) / 2
+
     nb_method = len(methods_to_display)
 
     sct.printv('Noise std of the ' + str(nb_results_file) + ' generated files:')
@@ -264,8 +281,7 @@ def main():
     sct.printv('Methods used to generate results for the ' + str(nb_results_file) + ' generated files:')
     print methods_name
     print '----------------------------------------------------------------------------------------------------------------'
-    sct.printv(
-        'Median obtained with each method (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
+    sct.printv('Median obtained with each method (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
     print median_results
     print '----------------------------------------------------------------------------------------------------------------'
     sct.printv('Minimum obtained with each method (in colons) for the ' + str(
@@ -279,13 +295,15 @@ def main():
     sct.printv('Labels\' ID (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
     print labels_id
     print '----------------------------------------------------------------------------------------------------------------'
-    sct.printv(
-        'Errors obtained with each method (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
+    sct.printv('Errors obtained with each method (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
     print error_per_label
+    print '----------------------------------------------------------------------------------------------------------------'
+    sct.printv('Mean errors across both sides obtained with each method (in colons) for the ' + str(nb_results_file) + ' generated files (in lines):')
+    print meanRL_abs_error_per_labels
 
 
     # Compute fractional volume per label
-    labels_id_FV, labels_name_FV, fract_vol_per_lab = isct_get_fractional_volume.get_fractional_volume_per_label('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
+    labels_id_FV, labels_name_FV, fract_vol_per_lab, labels_name_FV_RL_gathered, fract_vol_per_lab_RL_gathered = isct_get_fractional_volume.get_fractional_volume_per_label('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
 
     # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
     if labels_id_FV != labels_id[0]:
@@ -298,11 +316,11 @@ def main():
     ind_labels_sort = numpy.argsort(fract_vol_per_lab_29)
 
     # Find index of the file generated with noise variance = 10 and tracts std = 10
-    ind_file_10_10 = numpy.where((snr == 10) & (tracts_std == 10))
+    ind_file_to_display = numpy.where((snr == noise_std_to_display) & (tracts_std == tracts_std_to_display) & (csf_values == csf_value_to_display))
 
     # sort arrays in this order
-    error_per_label_sort = error_per_label[ind_file_10_10[0], ind_labels_sort, :]
-    std_per_label_sort = std_per_label[ind_file_10_10[0], ind_labels_sort, :]
+    error_per_label_sort = error_per_label[ind_file_to_display[0], ind_labels_sort, :]
+    std_per_label_sort = std_per_label[ind_file_to_display[0], ind_labels_sort, :]
     labels_name_sort = numpy.array(labels_name_FV_29)[ind_labels_sort]
 
     # *********************************************** START PLOTTING HERE **********************************************
@@ -314,7 +332,7 @@ def main():
     plt.ylabel('Absolute error (%)\n', fontsize=22)
     plt.xlabel('Ascending fractional volume', fontsize=22)
     plt.title('Absolute error per tract as a function of their fractional volume\n', fontsize=24)
-    plt.suptitle('\n(Noise std='+str(snr[ind_file_10_10[0]][0])+', Tracts std='+str(tracts_std[ind_file_10_10[0]][0])+', CSF value='+str(csf_values[ind_file_10_10[0]][0])+')', fontsize=18)
+    plt.suptitle('\n(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=18)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -323,7 +341,7 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width, error_per_label_sort[:, i_meth], std_per_label_sort[:, i_meth], color=color, marker='o', markersize=10)
+        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width, error_per_label_sort[:, i_meth], color=color, marker='o', markersize=10)
         # plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         errorbar_plots.append(plot_i)
 
