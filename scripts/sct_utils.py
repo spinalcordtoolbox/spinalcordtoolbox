@@ -173,7 +173,7 @@ def check_write_permission(fname, verbose=1):
         else:
             printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
     else:
-        path_fname, file_fname, ext_fname = extract_fname(fname)
+        path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
         return os.access(path_fname, os.W_OK)
 
 
