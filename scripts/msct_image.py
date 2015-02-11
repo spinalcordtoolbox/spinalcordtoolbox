@@ -23,12 +23,36 @@ class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, split=False):
+    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_ref=None, im_ref_zero=None, split=False):
+        # initialization
+        self.absolutepath = ""
+        self.path = ""
+        self.file_name = ""
+        self.ext = ""
+
+        # load an image from file
         if path is not None:
             self.loadFromPath(path, verbose)
+        # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
+        elif shape is not None:
+            self.data = np.zeros(shape)
+        # create a copy of im_ref
+        elif im_ref is not None:
+            self.data = im_ref.data
+            self.hdr = im_ref.hdr
+            self.orientation = im_ref.orientation
+            self.absolutepath = im_ref.absolutepath
+            self.path = im_ref.path
+            self.file_name = im_ref.file_name
+            self.ext = im_ref.ext
+        # create an empty image (full of zero) with the same header than ref. Ref is an Image.
+        elif im_ref_zero is not None:
+            self.data = np.zeros(im_ref_zero.data.shape)
+            self.hdr = im_ref_zero.hdr
+            self.orientation = im_ref_zero.orientation
+        # create an image from an array. No header.
         elif np_array is not None:
             self.data = np_array
-            self.path = None
             self.orientation = None
         else:
             raise TypeError(' Image constructor takes at least one argument.')
@@ -50,7 +74,12 @@ class Image(object):
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.absolutepath = path
         self.path, self.file_name, self.ext = sct.extract_fname(path)
+
+    def setFileName(self, filename):
+        self.absolutepath = filename
+        self.path, self.file_name, self.ext = sct.extract_fname(filename)
 
     def changeType(self, type=''):
         from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
@@ -123,7 +152,7 @@ class Image(object):
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
 
-        print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        #print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
         self.data = type_build(self.data)

@@ -3,15 +3,17 @@
 #
 # Parser
 # Add option with name, type, short description, mandatory or not, example using add_option method.
+# usage: add_option(name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None)
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 # Type of options are:
 # - file, folder (check existence)
-# - folder_creation (check existence and if does not exist, create it)
+# - folder_creation (check existence and if does not exist, create it if writing permission)
+# - file_output (check writing permission)
 # - str, int, float, long, complex (check if input is the correct type)
 # - multiple_choice
 # - coordinate [x, y, z, value]
 # - lists, for example list of coordinate: [[','],'Coordinate']
-# - None, return True when detected
+# - None, return True when detected (example of boolean)
 #
 # Usage:
 # from msct_parser import *
@@ -97,6 +99,11 @@ class Option:
 
         elif type_option == "file":
             return self.checkFile(param)
+
+        elif type_option == "file_output": # check if permission are required
+            if not sct.check_write_permission(param):
+                self.parser.usage.error("Error of writing permissions on file: "+param)
+            return param
 
         elif type_option == "folder":
             return self.checkFolder(param)
