@@ -15,7 +15,7 @@
 #########################################################################################
 
 class Coordinate(object):
-    def __init__(self, coord=None):#x=0, y=0, z=0, value=0):
+    def __init__(self, coord=None):
         if coord is None:
             self.x = 0
             self.y = 0
@@ -23,7 +23,14 @@ class Coordinate(object):
             self.value = 0
             return
 
-        if not isinstance(coord, list) or len(coord) not in [3,4]:
+        if not isinstance(coord, list) and not isinstance(coord, str):
+            raise TypeError("Coordinates parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a string with coordinates delimited by commas.")
+
+        if isinstance(coord, str):
+            # coordinate as a string. Values delimited by a comma.
+            coord = coord.split(',')
+
+        if len(coord) not in [3,4]:
             raise TypeError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
 
         self.x = coord[0]
