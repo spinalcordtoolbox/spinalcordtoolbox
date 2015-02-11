@@ -15,6 +15,7 @@ import commands
 import sys
 import numpy
 import re
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import *
 # import subprocess
@@ -254,13 +255,15 @@ def main():
     # find index of the file generated with sigma noise = 10 and range tracts = -10:+10
     ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
 
+    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
+
     fig0 = plt.figure(0, figsize=(20, 10))
     width = 0.5/(nb_method+1)
     ind_fig0 = numpy.arange(len(labels_id[0]))
-    plt.ylabel('Relative error (%)', fontsize=18)
-    plt.xlabel('Labels', fontsize=18)
-    plt.suptitle('Automatic estimation vs. manual estimation', fontsize=20)
-    plt.title('(Noise std='+str(snr[0])+', Tracts std='+str(tracts_std[0])+', CSF value='+str(csf_values[0])+')\n', fontsize=18)
+    plt.ylabel('Absolute error (%)', fontsize=26)
+    plt.xlabel('Labels', fontsize=26)
+    plt.suptitle('Automatic estimation vs. manual estimation', fontsize=30)
+    plt.title('(Noise std='+str(snr[0])+', Tracts std='+str(tracts_std[0])+', CSF value='+str(csf_values[0])+')\n', fontsize=28)
 
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -273,13 +276,21 @@ def main():
         plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o')
         plots.append(plot[0])
 
+    # add alternated vertical background colored bars
+    for i_xtick in range(0, len(ind_fig0), 2):
+        plt.axvspan(ind_fig0[i_xtick] - 3*width, ind_fig0[i_xtick] + (nb_method + 1) * width + 2*width, facecolor='grey', alpha=0.3)
+
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
-    plt.xticks(ind_fig0+(numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=16)
+    plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=22)
     plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
     # plt.gca().set_ylim([0, 2])
-    plt.grid(b=True, axis='y')
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
+    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
+    plt.grid(b=True, axis='y', which='both')
+    # adjust the size of the frame
+    plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
+
 
     plt.savefig(results_folder+'/automatic_method_vs_manual_methods')
 
