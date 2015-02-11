@@ -306,6 +306,10 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
+    # add alternated vertical background colored bars
+    for i_xtick in range(0, len(ind_fig), 2):
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.3)
+
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
     # convert xtick labels into integers
@@ -314,7 +318,7 @@ def main():
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
     plt.gca().set_ylim([0, 20])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
-    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
+    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
     plt.savefig(results_folder+'/absolute_error_vs_csf_values')
