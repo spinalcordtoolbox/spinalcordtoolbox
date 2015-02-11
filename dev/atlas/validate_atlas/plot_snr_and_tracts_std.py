@@ -14,6 +14,7 @@ import getopt
 import commands
 import sys
 import numpy
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import *
 # import subprocess
@@ -455,15 +456,15 @@ def main():
     #
     # plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
+    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
 
     # Plot A -- v3: Box plots absolute error
-
     fig6 = plt.figure(6, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)')
-    plt.xlabel('Noise std')
-    plt.title('Absolute error within all tracts as a function of noise std')
+    plt.ylabel('Absolute error (%)', fontsize=26)
+    plt.xlabel('Noise std', fontsize=26)
+    plt.title('Absolute error within all tracts as a function of noise std\n', fontsize=30)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -486,15 +487,20 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], std_abs_error_per_meth[ind_snr_sort_tracts_std_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
+    # add alternated vertical background colored bars
+    for i_xtick in range(0, len(ind_fig6), 2):
+        plt.axvspan(ind_fig6[i_xtick] - width - width / 4, ind_fig6[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.3)
+
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(box_plots, methods_to_display, loc='best')
+    # plt.legend(box_plots, methods_to_display, loc='best')
     # convert xtick labels into integers
     xtick_labels = [int(xtick) for xtick in snr[ind_snr_sort_tracts_std_10]]
     plt.xticks(ind_fig6 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig6) + (nb_method + 0.5) * width])
     plt.gca().set_ylim([0, 15])
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
-    plt.grid(b=True, axis='y')
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
+    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
+    plt.grid(b=True, axis='y', which='both')
 
     plt.savefig(results_folder+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
 
@@ -503,9 +509,9 @@ def main():
     fig7 = plt.figure(7, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)')
-    plt.xlabel('Tracts std (in percentage of the mean value of the tracts)')
-    plt.title('Absolute error within all tracts as a function of tracts std')
+    plt.ylabel('Absolute error (%)', fontsize=26)
+    plt.xlabel('Tracts std (in percentage of the mean value of the tracts)', fontsize=26)
+    plt.title('Absolute error within all tracts as a function of tracts std\n', fontsize=30)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -528,15 +534,21 @@ def main():
         # plt.errorbar(ind_fig2+i_meth*width+width/2+(float(i_meth)*width)/(nb_method+1), mean_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], std_abs_error_per_meth[ind_tracts_std_sort_snr_10, i_meth], color=color, marker='_', linestyle='None', markersize=200*width, markeredgewidth=3)
         box_plots.append(plot_i['boxes'][0])
 
+    # add alternated vertical background colored bars
+    for i_xtick in range(0, len(ind_fig7), 2):
+        plt.axvspan(ind_fig7[i_xtick] - width - width / 4, ind_fig7[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.3)
+
+
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(box_plots, methods_to_display, loc='best')
+    # plt.legend(box_plots, methods_to_display, loc='best')
     # convert xtick labels into integers
     xtick_labels = [int(xtick) for xtick in tracts_std[ind_tracts_std_sort_snr_10]]
     plt.xticks(ind_fig7 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig7) + (nb_method + 0.5) * width])
     plt.gca().set_ylim([0, 15])
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(0.25))
-    plt.grid(b=True, axis='y')
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
+    plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
+    plt.grid(b=True, axis='y', which='both')
 
     plt.savefig(results_folder+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
 

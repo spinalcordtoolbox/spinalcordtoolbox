@@ -316,6 +316,11 @@ def main():
     plot_constant_label_var = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_var_noise_sort_var_label20, :, 0]), positions=ind_fig + width + width / (nb_box + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
     box_plots.append(plot_constant_label_var['boxes'][0])
 
+    # add alternated vertical background colored bars
+    for i_xtick in range(0, len(ind_fig), 2):
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_box+1) * width - width / 4, facecolor='grey', alpha=0.3)
+
+
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ pixels^2?}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean}}$'], loc='best', handletextpad=-2)
     color_legend_texts(leg)
