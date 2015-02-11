@@ -13,6 +13,9 @@
 
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
+from msct_parser import Parser
+from msct_image import Image
+
 import os, sys
 import getopt
 import commands
@@ -33,11 +36,210 @@ class Param:
         self.verbose = 1
 
 
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-def main():
+class ProcessLabels(object):
+    def __init__(self, fname_label, type_process, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
+                 coordinates=None, verbose='1'):
+        self.image_input = Image(fname_label)
 
+        if fname_ref is not None:
+            self.image_ref = Image(fname_ref)
+
+        self.type_process = type_process
+
+        self.fname_output = fname_output
+        self.cross_radius = cross_radius
+        self.dilate = dilate
+        self.coordinates = coordinates
+        self.verbose = verbose
+
+    def process(self):
+        if self.type_process == 'cross':
+            self.output_image = self.cross()
+        elif self.type_process == 'plan':
+            self.output_image = plan(self.cross_radius, 100, 5)
+        elif self.type_process == 'plan_ref':
+            self.output_image = plan_ref()
+        elif self.type_process == 'increment':
+            self.output_image = increment_z_inverse()
+        elif self.type_process == 'MSE':
+            MSE()
+        elif self.type_process == 'remove':
+            data = remove_label(data, fname_ref)
+        elif self.type_process == 'disk':
+            extract_disk_position(data, fname_ref, output_level, fname_label_output)
+        elif self.type_process == 'centerline':
+            extract_centerline(data, fname_label_output)
+            output_level = 1
+        elif self.type_process == 'segmentation':
+            extract_segmentation(data, fname_label_output)
+            output_level = 1
+        elif self.type_process == 'fraction-volume':
+            fraction_volume(data, fname_ref, fname_label_output)
+            output_level = 1
+        elif self.type_process == 'write-vert-levels':
+            write_vertebral_levels(data, fname_ref)
+        elif self.type_process == 'display-voxel':
+            display_voxel(data)
+            output_level = 1
+        elif self.type_process == 'create':
+            data = create_label(data)
+            output_level = 0
+        elif self.type_process == 'diff':
+            data = diff(data, fname_ref)
+            output_level = 1
+        elif self.type_process == 'round':
+            data = round_image(data)
+            output_level = 0
+        elif self.type_process == 'dist-inter':  # second argument is in pixel distance
+            distance_interlabels(data, 5)
+            output_level = 1
+
+        # save the output image as minimized integers
+        if self.output_image is not None:
+            self.output_image.setFileName(self.fname_output)
+            self.output_image.save('minimize_int')
+
+    # cross
+    # ==========================================================================================
+    def cross(self):
+        image_output = Image(im_ref=self.image_input)
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
+
+        X, Y, Z = (self.image_input.data > 0).nonzero()
+        number_of_labels = len(X)
+        d = self.cross_radius  # cross radius in pixel
+        dx = d / px  # cross radius in mm
+        dy = d / py
+
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i in range(0, number_of_labels):
+            value = int(np.round(image_output.data[X[i]][Y[i]][Z[i]]))
+            image_output.data[X[i]][Y[i]][Z[i]] = 0  # remove point on the center of the spinal cord
+            image_output.data[X[i]][Y[i] + dy][
+                Z[i]] = value * 10 + 1  # add point at distance from center of spinal cord
+            image_output.data[X[i] + dx][Y[i]][Z[i]] = value * 10 + 2
+            image_output.data[X[i]][Y[i] - dy][Z[i]] = value * 10 + 3
+            image_output.data[X[i] - dx][Y[i]][Z[i]] = value * 10 + 4
+
+            # dilate cross to 3x3
+            if self.dilate:
+                image_output.data[X[i] - 1][Y[i] + dy - 1][Z[i]] = image_output.data[X[i]][Y[i] + dy - 1][Z[i]] = \
+                    image_output.data[X[i] + 1][Y[i] + dy - 1][Z[i]] = image_output.data[X[i] + 1][Y[i] + dy][Z[i]] = \
+                    image_output.data[X[i] + 1][Y[i] + dy + 1][Z[i]] = image_output.data[X[i]][Y[i] + dy + 1][Z[i]] = \
+                    image_output.data[X[i] - 1][Y[i] + dy + 1][Z[i]] = image_output.data[X[i] - 1][Y[i] + dy][Z[i]] = \
+                    image_output.data[X[i]][Y[i] + dy][Z[i]]
+                image_output.data[X[i] + dx - 1][Y[i] - 1][Z[i]] = image_output.data[X[i] + dx][Y[i] - 1][Z[i]] = \
+                    image_output.data[X[i] + dx + 1][Y[i] - 1][Z[i]] = image_output.data[X[i] + dx + 1][Y[i]][Z[i]] = \
+                    image_output.data[X[i] + dx + 1][Y[i] + 1][Z[i]] = image_output.data[X[i] + dx][Y[i] + 1][Z[i]] = \
+                    image_output.data[X[i] + dx - 1][Y[i] + 1][Z[i]] = image_output.data[X[i] + dx - 1][Y[i]][Z[i]] = \
+                    image_output.data[X[i] + dx][Y[i]][Z[i]]
+                image_output.data[X[i] - 1][Y[i] - dy - 1][Z[i]] = image_output.data[X[i]][Y[i] - dy - 1][Z[i]] = \
+                    image_output.data[X[i] + 1][Y[i] - dy - 1][Z[i]] = image_output.data[X[i] + 1][Y[i] - dy][Z[i]] = \
+                    image_output.data[X[i] + 1][Y[i] - dy + 1][Z[i]] = image_output.data[X[i]][Y[i] - dy + 1][Z[i]] = \
+                    image_output.data[X[i] - 1][Y[i] - dy + 1][Z[i]] = image_output.data[X[i] - 1][Y[i] - dy][Z[i]] = \
+                    image_output.data[X[i]][Y[i] - dy][Z[i]]
+                image_output.data[X[i] - dx - 1][Y[i] - 1][Z[i]] = image_output.data[X[i] - dx][Y[i] - 1][Z[i]] = \
+                    image_output.data[X[i] - dx + 1][Y[i] - 1][Z[i]] = image_output.data[X[i] - dx + 1][Y[i]][Z[i]] = \
+                    image_output.data[X[i] - dx + 1][Y[i] + 1][Z[i]] = image_output.data[X[i] - dx][Y[i] + 1][Z[i]] = \
+                    image_output.data[X[i] - dx - 1][Y[i] + 1][Z[i]] = image_output.data[X[i] - dx - 1][Y[i]][Z[i]] = \
+                    image_output.data[X[i] - dx][Y[i]][Z[i]]
+
+        return image_output
+
+    def plan(self, width, offset=0, gap=1):
+        """
+        This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
+        """
+        image_output = Image(im_ref_zero=self.image_input)
+        X, Y, Z = (self.image_input.data > 0).nonzero()
+
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i in range(0, len(X)):
+            value = int(image_output.data[X[i]][Y[i]][Z[i]])
+            image_output.data[:, :, Z[i] - width:Z[i] + width] = offset + gap * value
+
+        return image_output
+
+    def plan_ref(self):
+        """
+        This function generate a plan in the reference space for each label present in the input image
+        """
+        image_output = Image(im_ref_zero=self.image_ref)
+        X, Y, Z = (self.image_input.data != 0).nonzero()
+
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i in range(0, len(X)):
+            image_output.data[:, :, Z[i]] = self.image_input.data[X[i]][Y[i]][Z[i]]
+
+        return image_output
+
+    def increment_z_inverse(self):
+        """
+        This function increments all the labels present in the input image, inversely ordered by Z.
+        Therefore, labels are incremented from top to bottom, assuming a RPI orientation
+        Labels are assumed to be non-zero.
+        """
+        image_output = Image(im_ref_zero=self.image_input)
+        X, Y, Z = (self.image_input.data > 0).nonzero()
+
+        X_sort = [X[i] for i in Z.argsort()]
+        X_sort.reverse()
+        Y_sort = [Y[i] for i in Z.argsort()]
+        Y_sort.reverse()
+        Z_sort = [Z[i] for i in Z.argsort()]
+        Z_sort.reverse()
+        # for all points with non-zeros neighbors, force the neighbors to 0
+        for i in range(0, len(Z_sort)):
+            image_output.data[X_sort[i], Y_sort[i], Z_sort[i]] = i + 1
+
+        return image_output
+
+    def MSE(self, threshold_mse=0):
+        """
+        This function computes the Mean Square Distance Error between two sets of labels (input and ref).
+        Moreover, a warning is generated for each label mismatch.
+        If the MSE is above the threshold provided (by default = 0mm), a log is reported with the filenames considered here.
+        """
+        X, Y, Z = (self.image_input.data > 0).nonzero()
+        data_labels = [[X[i], Y[i], Z[i], self.image_input.data[X[i], Y[i], Z[i]]] for i in range(0, len(X))]
+
+        X_ref, Y_ref, Z_ref = (self.image_ref.data > 0).nonzero()
+        ref_labels = [[X_ref[i], Y_ref[i], Z_ref[i], self.image_ref.data[X_ref[i], Y_ref[i], Z_ref[i]]] for i in
+                      range(0, len(X_ref))]
+
+        # check if all the labels in both the images match
+        if len(X) != len(X_ref):
+            sct.printv('ERROR: labels mismatch', 1, 'warning')
+        for value in data_labels:
+            if round(value[3]) not in [round(v[3]) for v in ref_labels]:
+                sct.printv('ERROR: labels mismatch', 1, 'warning')
+        for value in ref_labels:
+            if round(value[3]) not in [round(v[3]) for v in data_labels]:
+                sct.printv('ERROR: labels mismatch', 1, 'warning')
+
+        result = 0.0
+        for value in data_labels:
+            for v in ref_labels:
+                if round(v[3]) == round(value[3]):
+                    result = result + (value[2] - v[2]) * (value[2] - v[2])
+                    break
+        result = math.sqrt(result / len(X))
+        sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
+
+        if result > threshold_mse:
+            f = open(self.image_input.path + 'error_log_' + self.image_input.file_name + '.txt', 'w')
+            f.write(
+                'The labels error (MSE) between ' + self.image_input.file_name + ' and ' + self.image_ref.file_name + ' is: ' + str(
+                    result))
+            f.close()
+
+        return result
+
+
+# =======================================================================================================================
+# main
+# =======================================================================================================================
+def main():
     # Initialization
     fname_label = ''
     fname_label_output = param.fname_label_output
@@ -54,7 +256,7 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_label = path_sct_data+'/mt/mt1.nii.gz'
+        fname_label = path_sct_data + '/mt/mt1.nii.gz'
         param.labels = '5,5,2,1:5,7,2,3'
         type_process = 'create'
         cross_radius = 5
@@ -96,7 +298,7 @@ def main():
     sct.check_file_exist(fname_label)
     if fname_ref != '':
         sct.check_file_exist(fname_ref)
-    
+
     # extract path/file/extension
     path_label, file_label, ext_label = sct.extract_fname(fname_label)
     path_label_output, file_label_output, ext_label_output = sct.extract_fname(fname_label_output)
@@ -114,17 +316,17 @@ def main():
     if type_process == 'cross':
         data = cross(data, cross_radius, fname_ref, dilate, px, py)
     if type_process == 'plan':
-        data = plan(data, cross_radius,100,5)
+        data = plan(data, cross_radius, 100, 5)
     if type_process == 'plan_ref':
         data = plan_ref(data, fname_ref, file_label_output, ext_label_output)
         output_level = 1
     if type_process == 'increment':
         data = increment_z_inverse(data)
     if type_process == 'MSE':
-        mse_labels = MSE(data,fname_ref)
+        mse_labels = MSE(data, fname_ref)
         if mse_labels > 0:
-            f = open(path_label+'error_log_'+file_label+'.txt', 'w')
-            f.write('The labels error (MSE) between '+file_label+' and '+fname_ref+' is: '+str(mse_labels))
+            f = open(path_label + 'error_log_' + file_label + '.txt', 'w')
+            f.write('The labels error (MSE) between ' + file_label + ' and ' + fname_ref + ' is: ' + str(mse_labels))
             f.close()
         output_level = 1
     elif type_process == 'remove':
@@ -138,10 +340,10 @@ def main():
         extract_segmentation(data, fname_label_output)
         output_level = 1
     elif type_process == 'fraction-volume':
-        fraction_volume(data,fname_ref,fname_label_output)
+        fraction_volume(data, fname_ref, fname_label_output)
         output_level = 1
     elif type_process == 'write-vert-levels':
-        write_vertebral_levels(data,fname_ref)
+        write_vertebral_levels(data, fname_ref)
     elif type_process == 'display-voxel':
         display_voxel(data)
         output_level = 1
@@ -149,23 +351,24 @@ def main():
         data = create_label(data)
         output_level = 0
     elif type_process == 'diff':
-        data = diff(data,fname_ref)
+        data = diff(data, fname_ref)
         output_level = 1
     elif type_process == 'round':
         data = round_image(data)
         output_level = 0
-    elif type_process == 'dist-inter': # second argument is in pixel distance
-        distance_interlabels(data,5)
+    elif type_process == 'dist-inter':  # second argument is in pixel distance
+        distance_interlabels(data, 5)
         output_level = 1
 
     # write nifti file
     if (output_level == 0):
-        hdr.set_data_dtype('int32') # set imagetype to uint8, previous: int32.
+        hdr.set_data_dtype('int32')  # set imagetype to uint8, previous: int32.
         print '\nWrite NIFTI volumes...'
         data = np.int_(data)
         img = nibabel.Nifti1Image(data, None, hdr)
-        nibabel.save(img, 'tmp.'+file_label_output+'.nii.gz')
-        sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', path_label_output+file_label_output+ext_label_output)
+        nibabel.save(img, 'tmp.' + file_label_output + '.nii.gz')
+        sct.generate_output_file('tmp.' + file_label_output + '.nii.gz',
+                                 path_label_output + file_label_output + ext_label_output)
 
 
 # cross
@@ -173,82 +376,114 @@ def main():
 def cross(data, cross_radius, fname_ref, dilate, px, py):
     X, Y, Z = (data > 0).nonzero()
     a = len(X)
-    d = cross_radius # cross radius in pixel
-    dx = d/px # cross radius in mm
-    dy = d/py
+    d = cross_radius  # cross radius in pixel
+    dx = d / px  # cross radius in mm
+    dy = d / py
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0,a):
+    for i in range(0, a):
         value = int(np.round(data[X[i]][Y[i]][Z[i]]))
-        data[X[i]][Y[i]][Z[i]] = 0 # remove point on the center of the spinal cord
+        data[X[i]][Y[i]][Z[i]] = 0  # remove point on the center of the spinal cord
         if fname_ref == '':
-            data[X[i]][Y[i]+dy][Z[i]] = value*10+1 # add point at distance from center of spinal cord
-            data[X[i]+dx][Y[i]][Z[i]] = value*10+2
-            data[X[i]][Y[i]-dy][Z[i]] = value*10+3
-            data[X[i]-dx][Y[i]][Z[i]] = value*10+4
+            data[X[i]][Y[i] + dy][Z[i]] = value * 10 + 1  # add point at distance from center of spinal cord
+            data[X[i] + dx][Y[i]][Z[i]] = value * 10 + 2
+            data[X[i]][Y[i] - dy][Z[i]] = value * 10 + 3
+            data[X[i] - dx][Y[i]][Z[i]] = value * 10 + 4
 
             # dilate cross to 3x3
             if dilate:
-                data[X[i]-1][Y[i]+dy-1][Z[i]] = data[X[i]][Y[i]+dy-1][Z[i]] = data[X[i]+1][Y[i]+dy-1][Z[i]] = data[X[i]+1][Y[i]+dy][Z[i]] = data[X[i]+1][Y[i]+dy+1][Z[i]] = data[X[i]][Y[i]+dy+1][Z[i]] = data[X[i]-1][Y[i]+dy+1][Z[i]] = data[X[i]-1][Y[i]+dy][Z[i]] = data[X[i]][Y[i]+dy][Z[i]]
-                data[X[i]+dx-1][Y[i]-1][Z[i]] = data[X[i]+dx][Y[i]-1][Z[i]] = data[X[i]+dx+1][Y[i]-1][Z[i]] = data[X[i]+dx+1][Y[i]][Z[i]] = data[X[i]+dx+1][Y[i]+1][Z[i]] = data[X[i]+dx][Y[i]+1][Z[i]] = data[X[i]+dx-1][Y[i]+1][Z[i]] = data[X[i]+dx-1][Y[i]][Z[i]] = data[X[i]+dx][Y[i]][Z[i]]
-                data[X[i]-1][Y[i]-dy-1][Z[i]] = data[X[i]][Y[i]-dy-1][Z[i]] = data[X[i]+1][Y[i]-dy-1][Z[i]] = data[X[i]+1][Y[i]-dy][Z[i]] = data[X[i]+1][Y[i]-dy+1][Z[i]] = data[X[i]][Y[i]-dy+1][Z[i]] = data[X[i]-1][Y[i]-dy+1][Z[i]] = data[X[i]-1][Y[i]-dy][Z[i]] = data[X[i]][Y[i]-dy][Z[i]]
-                data[X[i]-dx-1][Y[i]-1][Z[i]] = data[X[i]-dx][Y[i]-1][Z[i]] = data[X[i]-dx+1][Y[i]-1][Z[i]] = data[X[i]-dx+1][Y[i]][Z[i]] = data[X[i]-dx+1][Y[i]+1][Z[i]] = data[X[i]-dx][Y[i]+1][Z[i]] = data[X[i]-dx-1][Y[i]+1][Z[i]] = data[X[i]-dx-1][Y[i]][Z[i]] = data[X[i]-dx][Y[i]][Z[i]]
+                data[X[i] - 1][Y[i] + dy - 1][Z[i]] = data[X[i]][Y[i] + dy - 1][Z[i]] = data[X[i] + 1][Y[i] + dy - 1][
+                    Z[i]] = data[X[i] + 1][Y[i] + dy][Z[i]] = data[X[i] + 1][Y[i] + dy + 1][Z[i]] = \
+                    data[X[i]][Y[i] + dy + 1][Z[i]] = data[X[i] - 1][Y[i] + dy + 1][Z[i]] = data[X[i] - 1][Y[i] + dy][
+                    Z[i]] = data[X[i]][Y[i] + dy][Z[i]]
+                data[X[i] + dx - 1][Y[i] - 1][Z[i]] = data[X[i] + dx][Y[i] - 1][Z[i]] = data[X[i] + dx + 1][Y[i] - 1][
+                    Z[i]] = data[X[i] + dx + 1][Y[i]][Z[i]] = data[X[i] + dx + 1][Y[i] + 1][Z[i]] = \
+                    data[X[i] + dx][Y[i] + 1][Z[i]] = data[X[i] + dx - 1][Y[i] + 1][Z[i]] = data[X[i] + dx - 1][Y[i]][
+                    Z[i]] = data[X[i] + dx][Y[i]][Z[i]]
+                data[X[i] - 1][Y[i] - dy - 1][Z[i]] = data[X[i]][Y[i] - dy - 1][Z[i]] = data[X[i] + 1][Y[i] - dy - 1][
+                    Z[i]] = data[X[i] + 1][Y[i] - dy][Z[i]] = data[X[i] + 1][Y[i] - dy + 1][Z[i]] = \
+                    data[X[i]][Y[i] - dy + 1][Z[i]] = data[X[i] - 1][Y[i] - dy + 1][Z[i]] = data[X[i] - 1][Y[i] - dy][
+                    Z[i]] = data[X[i]][Y[i] - dy][Z[i]]
+                data[X[i] - dx - 1][Y[i] - 1][Z[i]] = data[X[i] - dx][Y[i] - 1][Z[i]] = data[X[i] - dx + 1][Y[i] - 1][
+                    Z[i]] = data[X[i] - dx + 1][Y[i]][Z[i]] = data[X[i] - dx + 1][Y[i] + 1][Z[i]] = \
+                    data[X[i] - dx][Y[i] + 1][Z[i]] = data[X[i] - dx - 1][Y[i] + 1][Z[i]] = data[X[i] - dx - 1][Y[i]][
+                    Z[i]] = data[X[i] - dx][Y[i]][Z[i]]
         else:
             # read nifti input file
             img_ref = nibabel.load(fname_ref)
             # 3d array for each x y z voxel values for the input nifti image
             data_ref = img_ref.get_data()
-            profile = []; p_median = []; p_gradient = []
-            for j in range(0,d+1):
-                profile.append(data_ref[X[i]][Y[i]+j][Z[i]])
-            for k in range(1,d):
-                a = np.array([profile[k-1],profile[k],profile[k+1]])
+            profile = [];
+            p_median = [];
+            p_gradient = []
+            for j in range(0, d + 1):
+                profile.append(data_ref[X[i]][Y[i] + j][Z[i]])
+            for k in range(1, d):
+                a = np.array([profile[k - 1], profile[k], profile[k + 1]])
                 p_median.append(np.median(a))
-            for l in range(0,d-2):
-                p_gradient.append(p_median[l+1]-p_median[l])
+            for l in range(0, d - 2):
+                p_gradient.append(p_median[l + 1] - p_median[l])
             d1 = p_gradient.index(max(p_gradient))
 
-            profile = []; p_median = []; p_gradient = []
-            for j in range(0,d+1):
-                profile.append(data_ref[X[i]+j][Y[i]][Z[i]])
-            for k in range(1,d):
-                a = np.array([profile[k-1],profile[k],profile[k+1]])
+            profile = [];
+            p_median = [];
+            p_gradient = []
+            for j in range(0, d + 1):
+                profile.append(data_ref[X[i] + j][Y[i]][Z[i]])
+            for k in range(1, d):
+                a = np.array([profile[k - 1], profile[k], profile[k + 1]])
                 p_median.append(np.median(a))
-            for l in range(0,d-2):
-                p_gradient.append(p_median[l+1]-p_median[l])
+            for l in range(0, d - 2):
+                p_gradient.append(p_median[l + 1] - p_median[l])
             d2 = p_gradient.index(max(p_gradient))
 
-            profile = []; p_median = []; p_gradient = []
-            for j in range(0,d+1):
-                profile.append(data_ref[X[i]][Y[i]-j][Z[i]])
-            for k in range(1,d):
-                a = np.array([profile[k-1],profile[k],profile[k+1]])
+            profile = [];
+            p_median = [];
+            p_gradient = []
+            for j in range(0, d + 1):
+                profile.append(data_ref[X[i]][Y[i] - j][Z[i]])
+            for k in range(1, d):
+                a = np.array([profile[k - 1], profile[k], profile[k + 1]])
                 p_median.append(np.median(a))
-            for l in range(0,d-2):
-                p_gradient.append(p_median[l+1]-p_median[l])
+            for l in range(0, d - 2):
+                p_gradient.append(p_median[l + 1] - p_median[l])
             d3 = p_gradient.index(max(p_gradient))
 
-            profile = []; p_median = []; p_gradient = []
-            for j in range(0,d+1):
-                profile.append(data_ref[X[i]-j][Y[i]][Z[i]])
-            for k in range(1,d):
-                a = np.array([profile[k-1],profile[k],profile[k+1]])
+            profile = [];
+            p_median = [];
+            p_gradient = []
+            for j in range(0, d + 1):
+                profile.append(data_ref[X[i] - j][Y[i]][Z[i]])
+            for k in range(1, d):
+                a = np.array([profile[k - 1], profile[k], profile[k + 1]])
                 p_median.append(np.median(a))
-            for l in range(0,d-2):
-                p_gradient.append(p_median[l+1]-p_median[l])
+            for l in range(0, d - 2):
+                p_gradient.append(p_median[l + 1] - p_median[l])
             d4 = p_gradient.index(max(p_gradient))
 
-            data[X[i]][Y[i]+d1][Z[i]] = value*10+1 # add point at distance from center of spinal cord
-            data[X[i]+d2][Y[i]][Z[i]] = value*10+2
-            data[X[i]][Y[i]-d3][Z[i]] = value*10+3
-            data[X[i]-d4][Y[i]][Z[i]] = value*10+4
+            data[X[i]][Y[i] + d1][Z[i]] = value * 10 + 1  # add point at distance from center of spinal cord
+            data[X[i] + d2][Y[i]][Z[i]] = value * 10 + 2
+            data[X[i]][Y[i] - d3][Z[i]] = value * 10 + 3
+            data[X[i] - d4][Y[i]][Z[i]] = value * 10 + 4
 
             # dilate cross to 3x3
             if dilate:
-                data[X[i]-1][Y[i]+d1-1][Z[i]] = data[X[i]][Y[i]+d1-1][Z[i]] = data[X[i]+1][Y[i]+d1-1][Z[i]] = data[X[i]+1][Y[i]+d1][Z[i]] = data[X[i]+1][Y[i]+d1+1][Z[i]] = data[X[i]][Y[i]+d1+1][Z[i]] = data[X[i]-1][Y[i]+d1+1][Z[i]] = data[X[i]-1][Y[i]+d1][Z[i]] = data[X[i]][Y[i]+d1][Z[i]]
-                data[X[i]+d2-1][Y[i]-1][Z[i]] = data[X[i]+d2][Y[i]-1][Z[i]] = data[X[i]+d2+1][Y[i]-1][Z[i]] = data[X[i]+d2+1][Y[i]][Z[i]] = data[X[i]+d2+1][Y[i]+1][Z[i]] = data[X[i]+d2][Y[i]+1][Z[i]] = data[X[i]+d2-1][Y[i]+1][Z[i]] = data[X[i]+d2-1][Y[i]][Z[i]] = data[X[i]+d2][Y[i]][Z[i]]
-                data[X[i]-1][Y[i]-d3-1][Z[i]] = data[X[i]][Y[i]-d3-1][Z[i]] = data[X[i]+1][Y[i]-d3-1][Z[i]] = data[X[i]+1][Y[i]-d3][Z[i]] = data[X[i]+1][Y[i]-d3+1][Z[i]] = data[X[i]][Y[i]-d3+1][Z[i]] = data[X[i]-1][Y[i]-d3+1][Z[i]] = data[X[i]-1][Y[i]-d3][Z[i]] = data[X[i]][Y[i]-d3][Z[i]]
-                data[X[i]-d4-1][Y[i]-1][Z[i]] = data[X[i]-d4][Y[i]-1][Z[i]] = data[X[i]-d4+1][Y[i]-1][Z[i]] = data[X[i]-d4+1][Y[i]][Z[i]] = data[X[i]-d4+1][Y[i]+1][Z[i]] = data[X[i]-d4][Y[i]+1][Z[i]] = data[X[i]-d4-1][Y[i]+1][Z[i]] = data[X[i]-d4-1][Y[i]][Z[i]] = data[X[i]-d4][Y[i]][Z[i]]
+                data[X[i] - 1][Y[i] + d1 - 1][Z[i]] = data[X[i]][Y[i] + d1 - 1][Z[i]] = data[X[i] + 1][Y[i] + d1 - 1][
+                    Z[i]] = data[X[i] + 1][Y[i] + d1][Z[i]] = data[X[i] + 1][Y[i] + d1 + 1][Z[i]] = \
+                    data[X[i]][Y[i] + d1 + 1][Z[i]] = data[X[i] - 1][Y[i] + d1 + 1][Z[i]] = data[X[i] - 1][Y[i] + d1][
+                    Z[i]] = data[X[i]][Y[i] + d1][Z[i]]
+                data[X[i] + d2 - 1][Y[i] - 1][Z[i]] = data[X[i] + d2][Y[i] - 1][Z[i]] = data[X[i] + d2 + 1][Y[i] - 1][
+                    Z[i]] = data[X[i] + d2 + 1][Y[i]][Z[i]] = data[X[i] + d2 + 1][Y[i] + 1][Z[i]] = \
+                    data[X[i] + d2][Y[i] + 1][Z[i]] = data[X[i] + d2 - 1][Y[i] + 1][Z[i]] = data[X[i] + d2 - 1][Y[i]][
+                    Z[i]] = data[X[i] + d2][Y[i]][Z[i]]
+                data[X[i] - 1][Y[i] - d3 - 1][Z[i]] = data[X[i]][Y[i] - d3 - 1][Z[i]] = data[X[i] + 1][Y[i] - d3 - 1][
+                    Z[i]] = data[X[i] + 1][Y[i] - d3][Z[i]] = data[X[i] + 1][Y[i] - d3 + 1][Z[i]] = \
+                    data[X[i]][Y[i] - d3 + 1][Z[i]] = data[X[i] - 1][Y[i] - d3 + 1][Z[i]] = data[X[i] - 1][Y[i] - d3][
+                    Z[i]] = data[X[i]][Y[i] - d3][Z[i]]
+                data[X[i] - d4 - 1][Y[i] - 1][Z[i]] = data[X[i] - d4][Y[i] - 1][Z[i]] = data[X[i] - d4 + 1][Y[i] - 1][
+                    Z[i]] = data[X[i] - d4 + 1][Y[i]][Z[i]] = data[X[i] - d4 + 1][Y[i] + 1][Z[i]] = \
+                    data[X[i] - d4][Y[i] + 1][Z[i]] = data[X[i] - d4 - 1][Y[i] + 1][Z[i]] = data[X[i] - d4 - 1][Y[i]][
+                    Z[i]] = data[X[i] - d4][Y[i]][Z[i]]
 
     return data
 
@@ -259,11 +494,12 @@ def plan(data, width, offset, gap):
     X, Y, Z = (data > 0).nonzero()
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0,len(X)):
+    for i in range(0, len(X)):
         value = int(data[X[i]][Y[i]][Z[i]])
-        data[:,:,Z[i]-width:Z[i]+width] = offset+gap*value
+        data[:, :, Z[i] - width:Z[i] + width] = offset + gap * value
 
     return data
+
 
 # plan
 # ==========================================================================================
@@ -274,20 +510,21 @@ def plan_ref(data, fname_ref, file_label_output, ext_label_output):
     # 3d array for each x y z voxel values for the input nifti image
     data_ref = img_ref.get_data()
     hdr_ref = img_ref.get_header()
-    data_ref = data_ref*0
+    data_ref = data_ref * 0
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0,len(X)):
-        data_ref[:,:,Z[i]] = data[X[i]][Y[i]][Z[i]]
+    for i in range(0, len(X)):
+        data_ref[:, :, Z[i]] = data[X[i]][Y[i]][Z[i]]
 
     hdr_ref.set_data_dtype('float32')
     print '\nWrite NIFTI volumes...'
     data_ref.astype('float32')
     img_ref_output = nibabel.Nifti1Image(data_ref, None, hdr_ref)
-    nibabel.save(img_ref_output, 'tmp.'+file_label_output+'.nii.gz')
-    sct.generate_output_file('tmp.'+file_label_output+'.nii.gz', file_label_output+ext_label_output)
+    nibabel.save(img_ref_output, 'tmp.' + file_label_output + '.nii.gz')
+    sct.generate_output_file('tmp.' + file_label_output + '.nii.gz', file_label_output + ext_label_output)
 
     return data
+
 
 # increment labels in z direction
 # ==========================================================================================
@@ -301,50 +538,51 @@ def increment_z_inverse(data):
     Z_sort = [Z[i] for i in Z.argsort()]
     Z_sort.reverse()
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0,len(Z_sort)):
-        data[X_sort[i],Y_sort[i],Z_sort[i]] = i+1
+    for i in range(0, len(Z_sort)):
+        data[X_sort[i], Y_sort[i], Z_sort[i]] = i + 1
 
     return data
+
 
 # compute the RMS between labels
 # ==========================================================================================
 def MSE(data, fname_ref):
     X, Y, Z = (data > 0).nonzero()
-    data_labels = [[X[i],Y[i],Z[i],data[X[i],Y[i],Z[i]]] for i in range(0,len(X))]
+    data_labels = [[X[i], Y[i], Z[i], data[X[i], Y[i], Z[i]]] for i in range(0, len(X))]
 
     img_ref = nibabel.load(fname_ref)
     data_ref = img_ref.get_data()
     hdr_ref = img_ref.get_header()
     X_ref, Y_ref, Z_ref = (data_ref > 0).nonzero()
-    ref_labels = [[X_ref[i],Y_ref[i],Z_ref[i],data_ref[X_ref[i],Y_ref[i],Z_ref[i]]] for i in range(0,len(X_ref))]
+    ref_labels = [[X_ref[i], Y_ref[i], Z_ref[i], data_ref[X_ref[i], Y_ref[i], Z_ref[i]]] for i in range(0, len(X_ref))]
 
     # check if all the labels in both the images match
     if len(X) != len(X_ref):
-        sct.printv('ERROR: labels mismatch',1,'warning')
+        sct.printv('ERROR: labels mismatch', 1, 'warning')
     for value in data_labels:
         if round(value[3]) not in [round(v[3]) for v in ref_labels]:
-            sct.printv('ERROR: labels mismatch',1,'warning')
+            sct.printv('ERROR: labels mismatch', 1, 'warning')
     for value in ref_labels:
         if round(value[3]) not in [round(v[3]) for v in data_labels]:
-            sct.printv('ERROR: labels mismatch',1,'warning')
+            sct.printv('ERROR: labels mismatch', 1, 'warning')
 
     result = 0.0
     for value in data_labels:
         for v in ref_labels:
             if round(v[3]) == round(value[3]):
-                result = result + (value[2]-v[2])*(value[2]-v[2])
+                result = result + (value[2] - v[2]) * (value[2] - v[2])
                 break
-    result = math.sqrt(result/len(X))
-    sct.printv('MSE error in Z direction = '+str(result)+' mm')
+    result = math.sqrt(result / len(X))
+    sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
 
     return result
+
 
 # create_label
 #=======================================================================================================================
 def create_label(data):
-
     # create labels volume (all zeros)
-    data_label = data*0
+    data_label = data * 0
     data_label.astype('int')
 
     # parse argument for labels
@@ -355,7 +593,7 @@ def create_label(data):
         # get labels coordinates and value
         x, y, z, v = list_labels[i].split(',')
         # display info
-        sct.printv('Label #'+str(i)+': '+str(x)+','+str(y)+','+str(z)+' --> '+str(v), 1)
+        sct.printv('Label #' + str(i) + ': ' + str(x) + ',' + str(y) + ',' + str(z) + ' --> ' + str(v), 1)
         # assing value
         data_label[x, y, z] = int(v)
 
@@ -373,10 +611,10 @@ def remove_label(data, fname_ref):
 
     nbLabel = len(X)
     nbLabel_ref = len(X_ref)
-    for i in range(0,nbLabel):
+    for i in range(0, nbLabel):
         value = data[X[i]][Y[i]][Z[i]]
         isInRef = False
-        for j in range(0,nbLabel_ref):
+        for j in range(0, nbLabel_ref):
             value_ref = data_ref[X_ref[j]][Y_ref[j]][Z_ref[j]]
             # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
             #if value_ref == value:
@@ -393,7 +631,7 @@ def remove_label(data, fname_ref):
 #=======================================================================================================================
 def extract_disk_position(data_level, fname_centerline, output_level, fname_label_output):
     X, Y, Z = (data_level > 0).nonzero()
-    
+
     img_centerline = nibabel.load(fname_centerline)
     # 3d array for each x y z voxel values for the input nifti image
     data_centerline = img_centerline.get_data()
@@ -403,117 +641,125 @@ def extract_disk_position(data_level, fname_centerline, output_level, fname_labe
     # sort Xc, Yc, and Zc depending on Yc
     cent = [Xc, Yc, Zc]
     indices = range(nbLabel_centerline)
-    indices.sort(key = cent[1].__getitem__)
+    indices.sort(key=cent[1].__getitem__)
     for i, sublist in enumerate(cent):
         cent[i] = [sublist[j] for j in indices]
     Xc = []
     Yc = []
     Zc = []
     # remove double values
-    for i in range(0,len(cent[1])):
-        if Yc.count(cent[1][i])==0:
+    for i in range(0, len(cent[1])):
+        if Yc.count(cent[1][i]) == 0:
             Xc.append(cent[0][i])
             Yc.append(cent[1][i])
             Zc.append(cent[2][i])
     nbLabel_centerline = len(Xc)
-    
+
     centerline_level = [0 for a in range(nbLabel_centerline)]
-    for i in range(0,nbLabel_centerline):
+    for i in range(0, nbLabel_centerline):
         centerline_level[i] = data_level[Xc[i]][Yc[i]][Zc[i]]
         data_centerline[Xc[i]][Yc[i]][Zc[i]] = 0
-    for i in range(0,nbLabel_centerline-1):
-        centerline_level[i] = abs(centerline_level[i+1]-centerline_level[i])
+    for i in range(0, nbLabel_centerline - 1):
+        centerline_level[i] = abs(centerline_level[i + 1] - centerline_level[i])
     centerline_level[-1] = 0
 
     C = [i for i, e in enumerate(centerline_level) if e != 0]
     nb_disks = len(C)
-    
-    if output_level==0:
-        for i in range(0,nb_disks):
+
+    if output_level == 0:
+        for i in range(0, nb_disks):
             data_centerline[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]] = data_level[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]]
-    elif output_level==1:
+    elif output_level == 1:
         fo = open(fname_label_output, "wb")
-        for i in range(0,nb_disks):
-            line = (data_level[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]],Xc[C[i]],Yc[C[i]],Zc[C[i]])
-            fo.write("%i %i %i %i\n" %line)
+        for i in range(0, nb_disks):
+            line = (data_level[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]], Xc[C[i]], Yc[C[i]], Zc[C[i]])
+            fo.write("%i %i %i %i\n" % line)
         fo.close()
 
     return data_centerline
 
 
 #=======================================================================================================================
-def extract_centerline(data,fname_label_output):
+def extract_centerline(data, fname_label_output):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
     cent = [X, Y, Z]
-    indices = range(0,len(X))
-    indices.sort(key = cent[1].__getitem__)
+    indices = range(0, len(X))
+    indices.sort(key=cent[1].__getitem__)
     for i, sublist in enumerate(cent):
         cent[i] = [sublist[j] for j in indices]
-    X = []; Y = []; Z = []
+    X = [];
+    Y = [];
+    Z = []
     # remove double values
-    for i in range(0,len(cent[1])):
-        if Y.count(cent[1][i])==0:
+    for i in range(0, len(cent[1])):
+        if Y.count(cent[1][i]) == 0:
             X.append(cent[0][i])
             Y.append(cent[1][i])
             Z.append(cent[2][i])
-    
+
     fo = open(fname_label_output, "wb")
-    for i in range(0,len(X)):
-        line = (X[i],Y[i],Z[i])
-        fo.write("%i %i %i\n" %line)
+    for i in range(0, len(X)):
+        line = (X[i], Y[i], Z[i])
+        fo.write("%i %i %i\n" % line)
     fo.close()
 
 
 #=======================================================================================================================
-def extract_segmentation(data,fname_label_output):
+def extract_segmentation(data, fname_label_output):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
     cent = [X, Y, Z]
-    indices = range(0,len(X))
-    indices.sort(key = cent[1].__getitem__)
+    indices = range(0, len(X))
+    indices.sort(key=cent[1].__getitem__)
     for i, sublist in enumerate(cent):
         cent[i] = [sublist[j] for j in indices]
-    X = []; Y = []; Z = []
+    X = [];
+    Y = [];
+    Z = []
     # remove double values
-    for i in range(0,len(cent[1])):
+    for i in range(0, len(cent[1])):
         X.append(cent[0][i])
         Y.append(cent[1][i])
         Z.append(cent[2][i])
-    
+
     fo = open(fname_label_output, "wb")
-    for i in range(0,len(X)):
-        line = (X[i],Y[i],Z[i])
-        fo.write("%i %i %i\n" %line)
+    for i in range(0, len(X)):
+        line = (X[i], Y[i], Z[i])
+        fo.write("%i %i %i\n" % line)
     fo.close()
 
 
 #=======================================================================================================================
-def fraction_volume(data,fname_ref,fname_label_output):
+def fraction_volume(data, fname_ref, fname_label_output):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_ref)
     img_ref = nibabel.load(fname_ref)
     # 3d array for each x y z voxel values for the input nifti image
     data_ref = img_ref.get_data()
     Xr, Yr, Zr = (data_ref > 0).nonzero()
     ref_matrix = [Xr, Yr, Zr]
-    indices = range(0,len(Xr))
-    indices.sort(key = ref_matrix[1].__getitem__)
+    indices = range(0, len(Xr))
+    indices.sort(key=ref_matrix[1].__getitem__)
     for i, sublist in enumerate(ref_matrix):
         ref_matrix[i] = [sublist[j] for j in indices]
-    Xr = []; Yr = []; Zr = []
-    for i in range(0,len(ref_matrix[1])):
+    Xr = [];
+    Yr = [];
+    Zr = []
+    for i in range(0, len(ref_matrix[1])):
         Xr.append(ref_matrix[0][i])
         Yr.append(ref_matrix[1][i])
         Zr.append(ref_matrix[2][i])
-    
+
     X, Y, Z = (data > 0).nonzero()
     data_matrix = [X, Y, Z]
-    indices = range(0,len(X))
-    indices.sort(key = data_matrix[1].__getitem__)
+    indices = range(0, len(X))
+    indices.sort(key=data_matrix[1].__getitem__)
     for i, sublist in enumerate(data_matrix):
         data_matrix[i] = [sublist[j] for j in indices]
-    X = []; Y = []; Z = []
-    for i in range(0,len(data_matrix[1])):
+    X = [];
+    Y = [];
+    Z = []
+    for i in range(0, len(data_matrix[1])):
         X.append(data_matrix[0][i])
         Y.append(data_matrix[1][i])
         Z.append(data_matrix[2][i])
@@ -521,54 +767,54 @@ def fraction_volume(data,fname_ref,fname_label_output):
     volume_fraction = []
     for i in range(ny):
         r = []
-        for j,p in enumerate(Yr):
+        for j, p in enumerate(Yr):
             if p == i:
                 r.append(j)
         d = []
-        for j,p in enumerate(Y):
+        for j, p in enumerate(Y):
             if p == i:
                 d.append(j)
         volume_ref = 0.0
         for k in range(len(r)):
             value = data_ref[Xr[r[k]]][Yr[r[k]]][Zr[r[k]]]
             if value > 0.5:
-                volume_ref = volume_ref + value #suppose 1mm isotropic resolution
+                volume_ref = volume_ref + value  #suppose 1mm isotropic resolution
         volume_data = 0.0
         for k in range(len(d)):
             value = data[X[d[k]]][Y[d[k]]][Z[d[k]]]
             if value > 0.5:
-                volume_data = volume_data + value #suppose 1mm isotropic resolution
-        if volume_ref!=0:
-            volume_fraction.append(volume_data/volume_ref)
+                volume_data = volume_data + value  #suppose 1mm isotropic resolution
+        if volume_ref != 0:
+            volume_fraction.append(volume_data / volume_ref)
         else:
             volume_fraction.append(0)
 
     fo = open(fname_label_output, "wb")
     for i in range(ny):
-        fo.write("%i %f\n" %(i,volume_fraction[i]))
+        fo.write("%i %f\n" % (i, volume_fraction[i]))
     fo.close()
 
 
 #=======================================================================================================================
-def write_vertebral_levels(data,fname_vert_level_input):
+def write_vertebral_levels(data, fname_vert_level_input):
     fo = open(fname_vert_level_input)
     vertebral_levels = fo.readlines()
     vert = [int(n[2]) for n in [line.strip().split() for line in vertebral_levels]]
     vert.reverse()
     fo.close()
-    
+
     X, Y, Z = (data > 0).nonzero()
     length_points = len(X)
-    
-    for i in range(0,length_points):
+
+    for i in range(0, length_points):
         if Y[i] > vert[0]:
             data[X[i]][Y[i]][Z[i]] = 0
         elif Y[i] < vert[-1]:
             data[X[i]][Y[i]][Z[i]] = 0
         else:
-            for k in range(0,len(vert)-1):
-                if vert[k+1] < Y[i] <= vert[k]:
-                    data[X[i]][Y[i]][Z[i]] = k+1
+            for k in range(0, len(vert) - 1):
+                if vert[k + 1] < Y[i] <= vert[k]:
+                    data[X[i]][Y[i]][Z[i]] = k + 1
 
 
 #=======================================================================================================================
@@ -576,11 +822,13 @@ def display_voxel(data):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
     useful_notation = ''
-    for k in range(0,len(X)):
-        print 'Position=('+str(X[k])+','+str(Y[k])+','+str(Z[k])+') -- Value= '+str(data[X[k]][Y[k]][Z[k]])
+    for k in range(0, len(X)):
+        print 'Position=(' + str(X[k]) + ',' + str(Y[k]) + ',' + str(Z[k]) + ') -- Value= ' + str(
+            data[X[k]][Y[k]][Z[k]])
         if useful_notation != '':
-            useful_notation = useful_notation+':'
-        useful_notation = useful_notation+str(X[k])+','+str(Y[k])+','+str(Z[k])+','+str(int(data[X[k]][Y[k]][Z[k]]))
+            useful_notation = useful_notation + ':'
+        useful_notation = useful_notation + str(X[k]) + ',' + str(Y[k]) + ',' + str(Z[k]) + ',' + str(
+            int(data[X[k]][Y[k]][Z[k]]))
 
     print 'Useful notation:'
     print useful_notation
@@ -588,39 +836,41 @@ def display_voxel(data):
 
 def diff(data, fname_ref):
     X, Y, Z = (data > 0).nonzero()
-    data_labels = [[X[i],Y[i],Z[i],data[X[i],Y[i],Z[i]]] for i in range(0,len(X))]
+    data_labels = [[X[i], Y[i], Z[i], data[X[i], Y[i], Z[i]]] for i in range(0, len(X))]
 
     img_ref = nibabel.load(fname_ref)
     data_ref = img_ref.get_data()
     hdr_ref = img_ref.get_header()
     X_ref, Y_ref, Z_ref = (data_ref > 0).nonzero()
-    ref_labels = [[X_ref[i],Y_ref[i],Z_ref[i],data_ref[X_ref[i],Y_ref[i],Z_ref[i]]] for i in range(0,len(X_ref))]
+    ref_labels = [[X_ref[i], Y_ref[i], Z_ref[i], data_ref[X_ref[i], Y_ref[i], Z_ref[i]]] for i in range(0, len(X_ref))]
 
     print "Label in input image that are not in ref image:"
-    for i in range(0,len(data_labels)):
+    for i in range(0, len(data_labels)):
         isIn = False
-        for j in range(0,len(ref_labels)):
+        for j in range(0, len(ref_labels)):
             if data_labels[i][3] == ref_labels[j][3]:
                 isIn = True
         if not isIn:
             print data_labels[i][3]
 
     print "Label in ref image that are not in input image:"
-    for i in range(0,len(ref_labels)):
+    for i in range(0, len(ref_labels)):
         isIn = False
-        for j in range(0,len(data_labels)):
+        for j in range(0, len(data_labels)):
             if ref_labels[i][3] == data_labels[j][3]:
                 isIn = True
         if not isIn:
             print ref_labels[i][3]
 
+
 #=======================================================================================================================
 def round_image(data):
     # the Z image is assume to be in second dimension
     X, Y, Z = (data > 0).nonzero()
-    for k in range(0,len(X)):
+    for k in range(0, len(X)):
         data[X[k]][Y[k]][Z[k]] = int(np.round(data[X[k]][Y[k]][Z[k]]))
     return data
+
 
 # distance between labels must be less than the second arguments
 # ==========================================================================================
@@ -628,17 +878,21 @@ def distance_interlabels(data, max_dist):
     X, Y, Z = (data > 0).nonzero()
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0,len(X)-1):
-        dist = math.sqrt((X[i]-X[i+1])**2+(Y[i]-Y[i+1])**2+(Z[i]-Z[i+1])**2)
+    for i in range(0, len(X) - 1):
+        dist = math.sqrt((X[i] - X[i + 1]) ** 2 + (Y[i] - Y[i + 1]) ** 2 + (Z[i] - Z[i + 1]) ** 2)
         if dist < max_dist:
-            print 'Warning: the distance between label '+str(i)+'['+str(X[i])+','+str(Y[i])+','+str(Z[i])+']='+str(data[X[i]][Y[i]][Z[i]])+' and label '+str(i+1)+'['+str(X[i+1])+','+str(Y[i+1])+','+str(Z[i+1])+']='+str(data[X[i+1]][Y[i+1]][Z[i+1]])+' is larger than '+str(max_dist)+'. Distance='+str(dist)
+            print 'Warning: the distance between label ' + str(i) + '[' + str(X[i]) + ',' + str(Y[i]) + ',' + str(
+                Z[i]) + ']=' + str(data[X[i]][Y[i]][Z[i]]) + ' and label ' + str(i + 1) + '[' + str(
+                X[i + 1]) + ',' + str(Y[i + 1]) + ',' + str(Z[i + 1]) + ']=' + str(
+                data[X[i + 1]][Y[i + 1]][Z[i + 1]]) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+
 
 #=======================================================================================================================
 # usage
 #=======================================================================================================================
 def usage():
     print """
-"""+os.path.basename(__file__)+"""
+""" + os.path.basename(__file__) + """
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
@@ -646,7 +900,7 @@ DESCRIPTION
   Utility function for labels.
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -t <process>
+  """ + os.path.basename(__file__) + """ -i <data> -t <process>
 
 MANDATORY ARGUMENTS
   -i <data>        labels or image to create labels on. Must be 3D.
@@ -665,17 +919,17 @@ OPTIONAL ARGUMENTS
                      v: value of label
   -r <volume>      reference volume for label removing.
   -c <radius>      cross radius in mm (default=5mm).
-  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
+  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
   -d               dilate.
   -h               help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i t2.nii.gz -c 5\n"""
+  """ + os.path.basename(__file__) + """ -i t2.nii.gz -c 5\n"""
 
     # exit program
     sys.exit(2)
 
-    
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
@@ -683,5 +937,60 @@ if __name__ == "__main__":
     # initialize parameters
     param = Param()
     param_default = Param()
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Utility function for labels.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="labels or image to create labels on. Must be 3D.",
+                      mandatory=True,
+                      example="t2_labels.nii.gz")
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="output volume.",
+                      mandatory=False,
+                      example="t2_labels_cross.nii.gz",
+                      default_value="labels.nii.gz")
+    parser.add_option(name="-t",
+                      type_value="str",
+                      description="""process:
+                            cross: create a cross. Must use flag "-c"
+                            remove: remove labels. Must use flag "-r"
+                            display-voxel: display all labels in file
+                            create: create labels. Must use flag "-x" to list labels
+                            increment: increment labels from top to bottom (in z direction, suppose RPI orientation)
+                            MSE: compute Mean Square Error between labels input and reference input "-r"
+                            """,
+                      mandatory=True,
+                      example="cross")
+    parser.add_option(name="-x",
+                      type_value=[[':'], 'Coordinate'],
+                      description="""labels x,y,z,v. Use ":" if you have multiple labels.
+                            x: x-coordinates
+                            y: y-coordinates
+                            z: z-coordinates
+                            v: value of label""",
+                      mandatory=False,
+                      example="1,5,2,6:3,7,2,1:3,7,9,32")
+    parser.add_option(name="-r",
+                      type_value="file",
+                      description="reference volume for label removing.",
+                      mandatory=False)
+    parser.add_option(name="-c",
+                      type_value="int",
+                      description="cross radius in mm (default=5mm).",
+                      mandatory=False)
+    parser.add_option(name="-d",
+                      type_value="bool",
+                      description="dilatation bool for cross generation ('-c' option).",
+                      mandatory=False)
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="verbose. Default=" + str(param_default.verbose),
+                      mandatory=False,
+                      example=['0', '1'])
+    arguments = parser.parse(sys.argv[1:])
+
     # call main function
     main()
