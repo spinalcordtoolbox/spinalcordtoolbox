@@ -23,7 +23,7 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 1
-        self.results_folder = 'results'
+        self.results_folder = 'results_20150210_200iter'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
 
 #=======================================================================================================================
@@ -37,7 +37,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150209"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'bin,man0,man1,man2,man3'
     else:
@@ -85,6 +85,8 @@ def main():
     snr = numpy.zeros((nb_results_file))
     # Tracts std
     tracts_std = numpy.zeros((nb_results_file))
+    # CSF value
+    csf_values = numpy.zeros((nb_results_file))
     # methods' name
     methods_name = [] #numpy.empty((nb_results_file, nb_method), dtype=object)
     # labels
@@ -129,6 +131,15 @@ def main():
             # match = regex.search(lines[ind_line_tract_std[0]])
             # result_array[:, i_file, :, :] = match.group(1)  # le groupe 1 correspond a '.*'
             tracts_std[i_file] = int(''.join(c for c in lines[ind_line_tract_std[0]].split(':')[1] if c.isdigit()))
+
+        # extract CSF value
+        ind_line_csf_value = [lines.index(line_csf_value) for line_csf_value in lines if
+                              "# value CSF" in line_csf_value]
+        if len(ind_line_csf_value) != 1:
+            sct.printv("ERROR: number of lines including \"range tracts\" is different from 1. Exit program.", 'error')
+            sys.exit(1)
+        else:
+            csf_values[i_file] = int(''.join(c for c in lines[ind_line_csf_value[0]].split(':')[1] if c.isdigit()))
 
 
         # extract method name
@@ -248,7 +259,9 @@ def main():
     ind_fig0 = numpy.arange(len(labels_id[0]))
     plt.ylabel('Relative error (%)', fontsize=18)
     plt.xlabel('Labels', fontsize=18)
-    plt.title('Automatic estimation vs. manual estimation', fontsize=20)
+    plt.suptitle('Automatic estimation vs. manual estimation', fontsize=20)
+    plt.title('(Noise std='+str(snr[0])+', Tracts std='+str(tracts_std[0])+', CSF value='+str(csf_values[0])+')\n', fontsize=18)
+
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
