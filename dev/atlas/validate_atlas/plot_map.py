@@ -23,7 +23,7 @@ from matplotlib.legend_handler import *
 class Param:
     def __init__(self):
         self.debug = 1
-        self.results_folder = 'results/map'
+        self.results_folder = 'results_20150210_200iter/map'
         self.methods_to_display = 'map'
 
 def color_legend_texts(leg):
@@ -43,7 +43,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150209/map" #"C:/cygwin64/home/Simon_2/data_map"
+        results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter/map" #"C:/cygwin64/home/Simon_2/data_map"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
         methods_to_display = 'map'
     else:
@@ -319,7 +319,9 @@ def main():
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ pixels^2?}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean}}$'], loc='best', handletextpad=-2)
     color_legend_texts(leg)
-    plt.xticks(ind_fig + (numpy.floor(nb_box / 2)) * (width/2) * (1.0 + 1.0 / (nb_box + 1)), map_var_params[ind_var_label_sort_var_noise20, 0])
+    # convert xtick labels into int
+    xtick_labels = [int(xtick) for xtick in map_var_params[ind_var_label_sort_var_noise20, 0]]
+    plt.xticks(ind_fig + (numpy.floor(nb_box / 2)) * (width/2) * (1.0 + 1.0 / (nb_box + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_box + 0.5) * width])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
