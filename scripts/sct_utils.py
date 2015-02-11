@@ -162,6 +162,21 @@ def check_folder_exist(fname, verbose=1):
     else:
         printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
+#=======================================================================================================================
+# check_write_permission:  Check existence of a folder.
+#   Does not create it. If you want to create a folder, use create_folder
+#=======================================================================================================================
+def check_write_permission(fname, verbose=1):
+    if os.path.isdir(fname):
+        if os.path.isdir(fname):
+            return os.access(fname, os.W_OK)
+        else:
+            printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+    else:
+        path_fname, file_fname, ext_fname = extract_fname(fname)
+        return os.access(path_fname, os.W_OK)
+
+
 
 #=======================================================================================================================
 # create_folder:  create folder (check if exists before creating it)
