@@ -13,7 +13,7 @@
 # - multiple_choice
 # - coordinate [x, y, z, value]
 # - lists, for example list of coordinate: [[','],'Coordinate']
-# - None, return True when detected
+# - None, return True when detected (example of boolean)
 #
 # Usage:
 # from msct_parser import *
@@ -102,7 +102,7 @@ class Option:
 
         elif type_option == "file_output": # check if permission are required
             if not sct.check_write_permission(param):
-                self.parser.usage.error("Error of writing permissions.")
+                self.parser.usage.error("Error of writing permissions on file: "+param)
             return param
 
         elif type_option == "folder":
