@@ -36,7 +36,7 @@ class Image(object):
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
         elif shape is not None:
             self.data = np.zeros(shape)
-            # create a copy of im_ref
+        # create a copy of im_ref
         elif im_ref is not None:
             self.data = im_ref.data
             self.hdr = im_ref.hdr
