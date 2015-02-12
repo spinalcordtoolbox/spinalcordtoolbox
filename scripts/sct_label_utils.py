@@ -311,48 +311,6 @@ class ProcessLabels(object):
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print """
-""" + os.path.basename(__file__) + """
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Utility function for labels.
-
-USAGE
-  """ + os.path.basename(__file__) + """ -i <data> -t <process>
-
-MANDATORY ARGUMENTS
-  -i <data>        labels or image to create labels on. Must be 3D.
-  -o <output>      output volume.
-  -t <process>     process:
-                     cross: create a cross. Must use flag "-c"
-                     remove: remove labels. Must use flag "-r".
-                     display-voxel: display all labels in file
-                     create: create labels. Must use flag "-x" to list labels.
-
-OPTIONAL ARGUMENTS
-  -x <x,y,z,v>     labels. Use ":" if you have multiple labels.
-                     x: x-coordinates
-                     y: y-coordinates
-                     z: z-coordinates
-                     v: value of label
-  -r <volume>      reference volume for label removing.
-  -c <radius>      cross radius in mm (default=5mm).
-  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
-  -d               dilate.
-  -h               help. Show this message
-
-EXAMPLE
-  """ + os.path.basename(__file__) + """ -i t2.nii.gz -c 5\n"""
-
-    # exit program
-    sys.exit(2)
-
 
 #=======================================================================================================================
 # Start program
