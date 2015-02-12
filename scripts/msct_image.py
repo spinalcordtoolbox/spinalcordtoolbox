@@ -18,13 +18,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
 from msct_types import Coordinate
+import copy
 
 
 class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_ref=None, im_ref_zero=None, split=False):
+    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_copy=None, im_ref_zero=None, split=False):
         # initialization
         self.absolutepath = ""
         self.path = ""
@@ -38,14 +39,15 @@ class Image(object):
         elif shape is not None:
             self.data = np.zeros(shape)
         # create a copy of im_ref
-        elif im_ref is not None:
-            self.data = im_ref.data
-            self.hdr = im_ref.hdr
-            self.orientation = im_ref.orientation
-            self.absolutepath = im_ref.absolutepath
-            self.path = im_ref.path
-            self.file_name = im_ref.file_name
-            self.ext = im_ref.ext
+        elif im_copy is not None:
+            self = copy.copy(im_copy)
+            """self.data = im_copy.data
+            self.hdr = im_copy.hdr
+            self.orientation = im_copy.orientation
+            self.absolutepath = im_copy.absolutepath
+            self.path = im_copy.path
+            self.file_name = im_copy.file_name
+            self.ext = im_copy.ext"""
         # create an empty image (full of zero) with the same header than ref. Ref is an Image.
         elif im_ref_zero is not None:
             self.data = np.zeros(im_ref_zero.data.shape)
@@ -202,7 +204,6 @@ class Image(object):
 
     # return an empty image of the same size as the image self
     def empty_image(self):
-        import copy
         im_buf = copy.copy(self)
         im_buf.data *= 0
         return im_buf
@@ -213,7 +214,7 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        X, Y, Z = (self.data > 0).nonzero()
         list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
 
         if sorting is not None:
