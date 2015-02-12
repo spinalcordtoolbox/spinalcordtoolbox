@@ -23,6 +23,7 @@
 using namespace std;
 
 typedef itk::Image< double, 3 > ImageType;
+typedef itk::Image< unsigned char, 3 > BinaryImageType;
 typedef itk::CovariantVector<double,3> PixelType;
 typedef itk::Image< PixelType, 3 > ImageVectorType;
 typedef ImageVectorType::IndexType IndexType;
@@ -74,7 +75,7 @@ public:
 	void NormalizeByMaximum();
 	void DeleteHighVector();
 
-	void TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient);
+	void TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient, bool sub_segmentation=false);
 
 	void setImageOriginale(ImageType::Pointer i);
 	ImageType::Pointer getImageOriginale() { return imageOriginale_; };
@@ -95,6 +96,7 @@ public:
 
 private:
 	ImageType::Pointer imageOriginale_, croppedOriginalImage_, imageMagnitudeGradient_;
+    BinaryImageType::Pointer imageSegmentation_;
 	ImageVectorType::Pointer image_, laplacianImage_;
 	bool boolImageOriginale_, boolCroppedOriginalImage_, boolImageMagnitudeGradient_, boolImage_, boolLaplacianImage_;
 	int hauteur_, largeur_, profondeur_;

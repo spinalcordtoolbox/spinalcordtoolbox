@@ -151,7 +151,8 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	// Adapt radius to the image spacing to provide a radius in pixels - use average spacing of axial slice
     ImageType::SpacingType spacing = inputImage_->GetSpacing();
     mean_resolution_ = (spacing[0]+spacing[2])/2;
-
+    
+    
     // Adapt the gap between detection axial slices to the spacing
 	if (round(spacing[1]) != 0 && (int)gap_ % (int)round(spacing[1]) != 0)
 	{
