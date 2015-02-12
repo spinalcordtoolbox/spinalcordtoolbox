@@ -31,7 +31,7 @@ def test(path_data):
         ' -a 1 '+ \
         ' -s 1 '+ \
         ' -o label'+ \
-        ' -p '+path_data+folder_data[1]+ \
+        ' -t '+path_data+folder_data[1]+ \
         ' -v 1'
 
     # return

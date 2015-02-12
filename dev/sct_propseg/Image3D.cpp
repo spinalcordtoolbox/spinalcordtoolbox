@@ -15,6 +15,7 @@ typedef itk::Image< unsigned char, 3 > BinaryImageType;
 typedef itk::CovariantVector<double,3> PixelType;
 typedef itk::Image< PixelType, 3 > ImageVectorType;
 typedef ImageVectorType::IndexType IndexType;
+typedef BinaryImageType::IndexType BinaryIndexType;
 typedef itk::Point< double, 3 > PointType;
 
 typedef itk::CastImageFilter< ImageType, BinaryImageType > CastFilterType;
@@ -195,7 +196,7 @@ void Image3D::DeleteHighVector()
     }
 }
 
-void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient)
+void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationType orient, bool sub_segmentation)
 {
     //m->subdivision(2);
     
@@ -240,7 +241,28 @@ void Image3D::TransformMeshToBinaryImage(Mesh* m, string filename, OrientationTy
         cout << "Description = " << e.GetDescription() << endl;
     }
     
-    MeshFilterType::OutputImageType::Pointer im = meshFilter->GetOutput();
+    BinaryImageType::Pointer im = meshFilter->GetOutput();
+    
+    if (!sub_segmentation)
+    {
+        imageSegmentation_ = im;
+    }
+    else
+    {
+        BinaryImageType::RegionType region = im->GetLargestPossibleRegion();
+        itk::ImageRegionConstIterator<BinaryImageType> imageIterator(im,region);
+        unsigned char pixel, pixel_seg;
+        BinaryIndexType index;
+        while(!imageIterator.IsAtEnd())
+        {
+            index = imageIterator.GetIndex();
+            pixel = imageIterator.Get();
+            
+            pixel_seg = imageSegmentation_->GetPixel(index);
+            im->SetPixel(index,pixel && !pixel_seg);
+            ++imageIterator;
+        }
+    }
     
     OrientImage<BinaryImageType> orientationFilter;
     orientationFilter.setInputImage(im);
