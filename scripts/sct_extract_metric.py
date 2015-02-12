@@ -50,8 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['20',  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '20'] # variance of the gaussian-distributed noise
+        self.adv_param = ['5',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '5'] # STD of the gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -653,8 +653,8 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
     :labels: nlabel tuple of (nx,ny,nz) array
     """
 
-    perc_var_label = int(adv_param[0])  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = int(adv_param[1])  # variance of the gaussian-distributed noise
+    perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+    var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
@@ -839,10 +839,10 @@ OPTIONAL ARGUMENTS
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
-  -p <param>            advanced parameters for method map.
+  -p <param>            advanced parameters for the 'map' method.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: variance across labels, in percentage of the mean (used for map)
-                          #2: variance of the Gaussian noise (used for map)
+                          #1: standard deviation across labels, in percentage of the mean
+                          #2: standard deviation of the Gaussian noise
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param_default.fname_output+"""
