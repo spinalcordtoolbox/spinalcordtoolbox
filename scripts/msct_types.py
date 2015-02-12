@@ -41,8 +41,10 @@ class Coordinate(object):
         else:
             self.value = 0
         # coordinates and value must be digits:
-        if not (isinstance(self.x, (int, long, float)) and isinstance(self.y, (int, long, float)) and isinstance(self.z, (int, long, float)) and isinstance(self.value, (int, long, float))):
-            raise TypeError("All coordinates and value must be digits.")
+        try:
+            int(self.x),int(self.y),int(self.z),int(self.value)
+        except ValueError:
+            raise TypeError("All coordinates and value must be digits. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
 
     def __eq__(self, other):

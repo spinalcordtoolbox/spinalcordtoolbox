@@ -62,16 +62,12 @@ class ProcessLabels(object):
             self.MSE()
         elif self.type_process == 'remove':
             self.output_image = self.remove_label()
-        elif self.type_process == 'disk':
-            self.output_image = self.extract_disk_position(self.fname_output)
         elif self.type_process == 'centerline':
             self.extract_centerline()
-        elif self.type_process == 'segmentation':
-            self.extract_segmentation()
         elif self.type_process == 'display-voxel':
             self.display_voxel()
         elif self.type_process == 'create':
-            self.output_image = self.create_label()
+            self.output_image = self.create_label
         elif self.type_process == 'diff':
             self.diff()
         elif self.type_process == 'dist-inter':  # second argument is in pixel distance
@@ -84,47 +80,45 @@ class ProcessLabels(object):
 
 
     def cross(self):
-        image_output = Image(im_ref=self.image_input)
+        image_output = Image(im_copy=self.image_input)
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
 
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        number_of_labels = len(X)
+        coordinates_input = self.image_input.getNonZeroCoordinates()
         d = self.cross_radius  # cross radius in pixel
         dx = d / px  # cross radius in mm
         dy = d / py
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i in range(0, number_of_labels):
-            value = int(np.round(image_output.data[X[i]][Y[i]][Z[i]]))
-            image_output.data[X[i]][Y[i]][Z[i]] = 0  # remove point on the center of the spinal cord
-            image_output.data[X[i]][Y[i] + dy][
-                Z[i]] = value * 10 + 1  # add point at distance from center of spinal cord
-            image_output.data[X[i] + dx][Y[i]][Z[i]] = value * 10 + 2
-            image_output.data[X[i]][Y[i] - dy][Z[i]] = value * 10 + 3
-            image_output.data[X[i] - dx][Y[i]][Z[i]] = value * 10 + 4
+        for coord in coordinates_input:
+            image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
+            image_output.data[coord.x][coord.y + dy][
+                coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
+            image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
+            image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
+            image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
 
             # dilate cross to 3x3
             if self.dilate:
-                image_output.data[X[i] - 1][Y[i] + dy - 1][Z[i]] = image_output.data[X[i]][Y[i] + dy - 1][Z[i]] = \
-                    image_output.data[X[i] + 1][Y[i] + dy - 1][Z[i]] = image_output.data[X[i] + 1][Y[i] + dy][Z[i]] = \
-                    image_output.data[X[i] + 1][Y[i] + dy + 1][Z[i]] = image_output.data[X[i]][Y[i] + dy + 1][Z[i]] = \
-                    image_output.data[X[i] - 1][Y[i] + dy + 1][Z[i]] = image_output.data[X[i] - 1][Y[i] + dy][Z[i]] = \
-                    image_output.data[X[i]][Y[i] + dy][Z[i]]
-                image_output.data[X[i] + dx - 1][Y[i] - 1][Z[i]] = image_output.data[X[i] + dx][Y[i] - 1][Z[i]] = \
-                    image_output.data[X[i] + dx + 1][Y[i] - 1][Z[i]] = image_output.data[X[i] + dx + 1][Y[i]][Z[i]] = \
-                    image_output.data[X[i] + dx + 1][Y[i] + 1][Z[i]] = image_output.data[X[i] + dx][Y[i] + 1][Z[i]] = \
-                    image_output.data[X[i] + dx - 1][Y[i] + 1][Z[i]] = image_output.data[X[i] + dx - 1][Y[i]][Z[i]] = \
-                    image_output.data[X[i] + dx][Y[i]][Z[i]]
-                image_output.data[X[i] - 1][Y[i] - dy - 1][Z[i]] = image_output.data[X[i]][Y[i] - dy - 1][Z[i]] = \
-                    image_output.data[X[i] + 1][Y[i] - dy - 1][Z[i]] = image_output.data[X[i] + 1][Y[i] - dy][Z[i]] = \
-                    image_output.data[X[i] + 1][Y[i] - dy + 1][Z[i]] = image_output.data[X[i]][Y[i] - dy + 1][Z[i]] = \
-                    image_output.data[X[i] - 1][Y[i] - dy + 1][Z[i]] = image_output.data[X[i] - 1][Y[i] - dy][Z[i]] = \
-                    image_output.data[X[i]][Y[i] - dy][Z[i]]
-                image_output.data[X[i] - dx - 1][Y[i] - 1][Z[i]] = image_output.data[X[i] - dx][Y[i] - 1][Z[i]] = \
-                    image_output.data[X[i] - dx + 1][Y[i] - 1][Z[i]] = image_output.data[X[i] - dx + 1][Y[i]][Z[i]] = \
-                    image_output.data[X[i] - dx + 1][Y[i] + 1][Z[i]] = image_output.data[X[i] - dx][Y[i] + 1][Z[i]] = \
-                    image_output.data[X[i] - dx - 1][Y[i] + 1][Z[i]] = image_output.data[X[i] - dx - 1][Y[i]][Z[i]] = \
-                    image_output.data[X[i] - dx][Y[i]][Z[i]]
+                image_output.data[coord.x - 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x][coord.y + dy - 1][coord.z] = \
+                    image_output.data[coord.x + 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y + dy][coord.z] = \
+                    image_output.data[coord.x + 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x][coord.y + dy + 1][coord.z] = \
+                    image_output.data[coord.x - 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y + dy][coord.z] = \
+                    image_output.data[coord.x][coord.y + dy][coord.z]
+                image_output.data[coord.x + dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx][coord.y - 1][coord.z] = \
+                    image_output.data[coord.x + dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx + 1][coord.y][coord.z] = \
+                    image_output.data[coord.x + dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx][coord.y + 1][coord.z] = \
+                    image_output.data[coord.x + dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx - 1][coord.y][coord.z] = \
+                    image_output.data[coord.x + dx][coord.y][coord.z]
+                image_output.data[coord.x - 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x][coord.y - dy - 1][coord.z] = \
+                    image_output.data[coord.x + 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y - dy][coord.z] = \
+                    image_output.data[coord.x + 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x][coord.y - dy + 1][coord.z] = \
+                    image_output.data[coord.x - 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y - dy][coord.z] = \
+                    image_output.data[coord.x][coord.y - dy][coord.z]
+                image_output.data[coord.x - dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx][coord.y - 1][coord.z] = \
+                    image_output.data[coord.x - dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx + 1][coord.y][coord.z] = \
+                    image_output.data[coord.x - dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx][coord.y + 1][coord.z] = \
+                    image_output.data[coord.x - dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx - 1][coord.y][coord.z] = \
+                    image_output.data[coord.x - dx][coord.y][coord.z]
 
         return image_output
 
@@ -133,12 +127,11 @@ class ProcessLabels(object):
         This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
         """
         image_output = Image(im_ref_zero=self.image_input)
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i in range(0, len(X)):
-            value = int(image_output.data[X[i]][Y[i]][Z[i]])
-            image_output.data[:, :, Z[i] - width:Z[i] + width] = offset + gap * value
+        for coord in coordinates_input:
+            image_output.data[:,:,coord.z-width:coord.z+width] = offset + gap * coord.value
 
         return image_output
 
@@ -147,11 +140,11 @@ class ProcessLabels(object):
         This function generate a plan in the reference space for each label present in the input image
         """
         image_output = Image(im_ref_zero=self.image_ref)
-        X, Y, Z = (self.image_input.data != 0).nonzero()
+        coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i in range(0, len(X)):
-            image_output.data[:, :, Z[i]] = self.image_input.data[X[i]][Y[i]][Z[i]]
+        for coord in coordinates_input:
+            image_output.data[:, :, coord.z] = coord.value
 
         return image_output
 
@@ -162,17 +155,11 @@ class ProcessLabels(object):
         Labels are assumed to be non-zero.
         """
         image_output = Image(im_ref_zero=self.image_input)
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorted='z',reverse_coord=True)
 
-        X_sort = [X[i] for i in Z.argsort()]
-        X_sort.reverse()
-        Y_sort = [Y[i] for i in Z.argsort()]
-        Y_sort.reverse()
-        Z_sort = [Z[i] for i in Z.argsort()]
-        Z_sort.reverse()
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i in range(0, len(Z_sort)):
-            image_output.data[X_sort[i], Y_sort[i], Z_sort[i]] = i + 1
+        for i,coord in enumerate(coordinates_input):
+            image_output.data[coord.x, coord.y, coord.z] = i + 1
 
         return image_output
 
@@ -182,30 +169,26 @@ class ProcessLabels(object):
         Moreover, a warning is generated for each label mismatch.
         If the MSE is above the threshold provided (by default = 0mm), a log is reported with the filenames considered here.
         """
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        data_labels = [[X[i], Y[i], Z[i], self.image_input.data[X[i], Y[i], Z[i]]] for i in range(0, len(X))]
-
-        X_ref, Y_ref, Z_ref = (self.image_ref.data > 0).nonzero()
-        ref_labels = [[X_ref[i], Y_ref[i], Z_ref[i], self.image_ref.data[X_ref[i], Y_ref[i], Z_ref[i]]] for i in
-                      range(0, len(X_ref))]
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
         # check if all the labels in both the images match
-        if len(X) != len(X_ref):
+        if len(coordinates_input) != len(coordinates_ref):
             sct.printv('ERROR: labels mismatch', 1, 'warning')
-        for value in data_labels:
-            if round(value[3]) not in [round(v[3]) for v in ref_labels]:
+        for coord in coordinates_input:
+            if round(coord.value) not in [round(coord_ref.value) for coord_ref in coordinates_ref]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
-        for value in ref_labels:
-            if round(value[3]) not in [round(v[3]) for v in data_labels]:
+        for coord_ref in coordinates_ref:
+            if round(coord_ref.value) not in [round(coord.value) for coord in coordinates_input]:
                 sct.printv('ERROR: labels mismatch', 1, 'warning')
 
         result = 0.0
-        for value in data_labels:
-            for v in ref_labels:
-                if round(v[3]) == round(value[3]):
-                    result = result + (value[2] - v[2]) * (value[2] - v[2])
+        for coord in coordinates_input:
+            for coord_ref in coordinates_ref:
+                if round(coord_ref.value) == round(coord.value):
+                    result += (coord_ref.z - coord.z) ** 2
                     break
-        result = math.sqrt(result / len(X))
+        result = math.sqrt(result / len(coordinates_input))
         sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
 
         if result > threshold_mse:
@@ -217,6 +200,7 @@ class ProcessLabels(object):
 
         return result
 
+    @property
     def create_label(self):
         """
         This function create an image with labels listed by the user.
@@ -228,10 +212,10 @@ class ProcessLabels(object):
         image_output = Image(im_ref_zero=self.image_input)
 
         # loop across labels
-        for i,coordinate in enumerate(self.coordinates):
+        for i,coord in enumerate(self.coordinates):
             # display info
-            sct.printv('Label #' + str(i) + ': ' + str(coordinate.x) + ',' + str(coordinate.y) + ',' + str(coordinate.z) + ' --> ' + str(coordinate.value), 1)
-            image_output.data[coordinate.x, coordinate.y, coordinate.z] = int(coordinate.value)
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' + str(coord.value), 1)
+            image_output.data[coord.x, coord.y, coord.z] = int(coord.value)
 
         return image_output
 
@@ -239,149 +223,48 @@ class ProcessLabels(object):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
         """
-        image_output = Image(im_ref=self.image_input)
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        image_output = Image(im_copy=self.image_input)
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
-        X_ref, Y_ref, Z_ref = (self.image_ref.data > 0).nonzero()
-
-        nbLabel = len(X)
-        nbLabel_ref = len(X_ref)
-        for i in range(0, nbLabel):
-            value = self.image_input.data[X[i]][Y[i]][Z[i]]
+        for coord in coordinates_input:
+            value = self.image_input.data[coord.x, coord.y, coord.z]
             isInRef = False
-            for j in range(0, nbLabel_ref):
-                value_ref = self.image_ref.data[X_ref[j]][Y_ref[j]][Z_ref[j]]
+            for coord_ref in coordinates_ref:
                 # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
-                #if value_ref == value:
-                if abs(value - value_ref) < 0.1:
-                    image_output.data[X[i]][Y[i]][Z[i]] = int(round(value_ref))
+                if abs(coord.value - coord_ref.value) < 0.1:
+                    image_output.data[coord.x, coord.y, coord.z] = int(round(coord_ref.value))
                     isInRef = True
             if isInRef == False:
-                image_output.data[X[i]][Y[i]][Z[i]] = 0
+                image_output.data[coord.x, coord.y, coord.z] = 0
 
         return image_output
 
-    def extract_disk_position(self, output_filename):
-        """
-        This function extracts the intervertebral disks position based on the vertebral level labeled image and an image of the centerline (input as the reference image)
-        if output_filename is .txt, a text file is created with the location of each intervertebral disk. If the filename is a nifti file, the function create a file with label located at intervertebral disk positions.
-        """
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        Xc, Yc, Zc = (self.image_ref.data > 0).nonzero() # position of the centerline
-
-        image_output = Image(im_ref=self.image_ref)
-
-        nbLabel = len(X)
-        nbLabel_centerline = len(Xc)
-        # sort Xc, Yc, and Zc depending on Yc
-        cent = [Xc, Yc, Zc]
-        indices = range(nbLabel_centerline)
-        indices.sort(key=cent[1].__getitem__)
-        for i, sublist in enumerate(cent):
-            cent[i] = [sublist[j] for j in indices]
-        Xc = []
-        Yc = []
-        Zc = []
-        # remove double values
-        for i in range(0, len(cent[1])):
-            if Yc.count(cent[1][i]) == 0:
-                Xc.append(cent[0][i])
-                Yc.append(cent[1][i])
-                Zc.append(cent[2][i])
-        nbLabel_centerline = len(Xc)
-
-        centerline_level = [0 for a in range(nbLabel_centerline)]
-        for i in range(0, nbLabel_centerline):
-            centerline_level[i] = self.image_input.data[Xc[i]][Yc[i]][Zc[i]]
-            image_output.data[Xc[i]][Yc[i]][Zc[i]] = 0
-        for i in range(0, nbLabel_centerline - 1):
-            centerline_level[i] = abs(centerline_level[i + 1] - centerline_level[i])
-        centerline_level[-1] = 0
-
-        C = [i for i, e in enumerate(centerline_level) if e != 0]
-        nb_disks = len(C)
-
-        path, file_name, ext = sct.extract_fname(output_filename)
-        if ext == '.txt':
-            fo = open(output_filename, "wb")
-            for i in range(0, nb_disks):
-                line = (self.image_input.data[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]], Xc[C[i]], Yc[C[i]], Zc[C[i]])
-                fo.write("%i %i %i %i\n" % line)
-            fo.close()
-            return None
-        else:
-            for i in range(0, nb_disks):
-                image_output.data[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]] = self.image_input.data[Xc[C[i]]][Yc[C[i]]][Zc[C[i]]]
-            return image_output
-
     def extract_centerline(self):
         """
-        This function
+        This function write a text file with the coordinates of the centerline.
+        The image is suppose to be RPI
         """
-        # the Z image is assume to be in second dimension
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        cent = [X, Y, Z]
-        indices = range(0, len(X))
-        indices.sort(key=cent[1].__getitem__)
-        for i, sublist in enumerate(cent):
-            cent[i] = [sublist[j] for j in indices]
-        X = [];
-        Y = [];
-        Z = []
-        # remove double values
-        for i in range(0, len(cent[1])):
-            if Y.count(cent[1][i]) == 0:
-                X.append(cent[0][i])
-                Y.append(cent[1][i])
-                Z.append(cent[2][i])
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
 
         fo = open(self.fname_output, "wb")
-        for i in range(0, len(X)):
-            line = (X[i], Y[i], Z[i])
-            fo.write("%i %i %i\n" % line)
-        fo.close()
-
-    def extract_segmentation(self):
-        """
-        This function
-        """
-        # the Z image is assume to be in second dimension
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        cent = [X, Y, Z]
-        indices = range(0, len(X))
-        indices.sort(key=cent[1].__getitem__)
-        for i, sublist in enumerate(cent):
-            cent[i] = [sublist[j] for j in indices]
-        X = [];
-        Y = [];
-        Z = []
-        # remove double values
-        for i in range(0, len(cent[1])):
-            X.append(cent[0][i])
-            Y.append(cent[1][i])
-            Z.append(cent[2][i])
-
-        fo = open(self.fname_output, "wb")
-        for i in range(0, len(X)):
-            line = (X[i], Y[i], Z[i])
+        for coord in coordinates_input:
+            line = (coord.x,coord.y, coord.z)
             fo.write("%i %i %i\n" % line)
         fo.close()
 
     def display_voxel(self):
         """
         This function displays all the labels that are contained in the input image.
+        The image is suppose to be RPI to display voxels. But works also for other orientations
         """
-        # the Z image is assume to be in second dimension
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z')
         useful_notation = ''
-        for k in range(0, len(X)):
-            print 'Position=(' + str(X[k]) + ',' + str(Y[k]) + ',' + str(Z[k]) + ') -- Value= ' + str(
-                self.image_input.data[X[k]][Y[k]][Z[k]])
+        for coord in coordinates_input:
+            print 'Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value)
             if useful_notation != '':
                 useful_notation = useful_notation + ':'
-            useful_notation = useful_notation + str(X[k]) + ',' + str(Y[k]) + ',' + str(Z[k]) + ',' + str(
-                int(self.image_input.data[X[k]][Y[k]][Z[k]]))
-
+            useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         print 'Useful notation:'
         print useful_notation
 
@@ -389,45 +272,44 @@ class ProcessLabels(object):
         """
         This function detects any label mismatch between input image and reference image
         """
-        X, Y, Z = (self.image_input.data > 0).nonzero()
-        data_labels = [[X[i], Y[i], Z[i], self.image_input.data[X[i], Y[i], Z[i]]] for i in range(0, len(X))]
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
-        X_ref, Y_ref, Z_ref = (self.image_ref.data > 0).nonzero()
-        ref_labels = [[X_ref[i], Y_ref[i], Z_ref[i], self.image_ref.data[X_ref[i], Y_ref[i], Z_ref[i]]] for i in range(0, len(X_ref))]
-
-        print "Label in input image that are not in ref image:"
-        for i in range(0, len(data_labels)):
+        print "Label in input image that are not in reference image:"
+        for coord in coordinates_input:
             isIn = False
-            for j in range(0, len(ref_labels)):
-                if data_labels[i][3] == ref_labels[j][3]:
+            for coord_ref in coordinates_ref:
+                if coord.value == coord_ref.value:
                     isIn = True
+                    break
             if not isIn:
-                print data_labels[i][3]
+                print coord.value
 
         print "Label in ref image that are not in input image:"
-        for i in range(0, len(ref_labels)):
+        for coord_ref in coordinates_ref:
             isIn = False
-            for j in range(0, len(data_labels)):
-                if ref_labels[i][3] == data_labels[j][3]:
+            for coord in coordinates_input:
+                if coord.value == coord_ref.value:
                     isIn = True
+                    break
             if not isIn:
-                print ref_labels[i][3]
+                print coord_ref.value
 
     def distance_interlabels(self, max_dist):
         """
         This function calculates the distances between each label in the input image.
         If a distance is larger than max_dist, a warning message is displayed.
         """
-        X, Y, Z = (self.image_input.data > 0).nonzero()
+        coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i in range(0, len(X) - 1):
-            dist = math.sqrt((X[i] - X[i + 1]) ** 2 + (Y[i] - Y[i + 1]) ** 2 + (Z[i] - Z[i + 1]) ** 2)
+        for i in range(0, len(coordinates_input) - 1):
+            dist = math.sqrt((coordinates_input[i].x - coordinates_input[i+1].x)**2 + (coordinates_input[i].y - coordinates_input[i+1].y)**2 + (coordinates_input[i].z - coordinates_input[i+1].z)**2)
             if dist < max_dist:
-                print 'Warning: the distance between label ' + str(i) + '[' + str(X[i]) + ',' + str(Y[i]) + ',' + str(
-                    Z[i]) + ']=' + str(self.image_input.data[X[i]][Y[i]][Z[i]]) + ' and label ' + str(i + 1) + '[' + str(
-                    X[i + 1]) + ',' + str(Y[i + 1]) + ',' + str(Z[i + 1]) + ']=' + str(
-                    self.image_input.data[X[i + 1]][Y[i + 1]][Z[i + 1]]) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
+                print 'Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
+                    coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i+1) + '[' + str(
+                    coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
+                    coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
 #=======================================================================================================================
 # usage
@@ -497,22 +379,22 @@ if __name__ == "__main__":
     parser.add_option(name="-t",
                       type_value="str",
                       description="""process:
-                            cross: create a cross. Must use flag "-c"
-                            remove: remove labels. Must use flag "-r"
-                            display-voxel: display all labels in file
-                            create: create labels. Must use flag "-x" to list labels
-                            increment: increment labels from top to bottom (in z direction, suppose RPI orientation)
-                            MSE: compute Mean Square Error between labels input and reference input "-r"
-                            """,
+                                            cross: create a cross. Must use flag "-c"
+                                            remove: remove labels. Must use flag "-r"
+                                            display-voxel: display all labels in file
+                                            create: create labels. Must use flag "-x" to list labels
+                                            increment: increment labels from top to bottom (in z direction, suppose RPI orientation)
+                                            MSE: compute Mean Square Error between labels input and reference input "-r"
+                                            """,
                       mandatory=True,
-                      example="cross")
+                      example="create")
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
                       description="""labels x,y,z,v. Use ":" if you have multiple labels.
-                            x: x-coordinates
-                            y: y-coordinates
-                            z: z-coordinates
-                            v: value of label""",
+                                            x: x-coordinates
+                                            y: y-coordinates
+                                            z: z-coordinates
+                                            v: value of label""",
                       mandatory=False,
                       example="1,5,2,6:3,7,2,1:3,7,9,32")
     parser.add_option(name="-r",
