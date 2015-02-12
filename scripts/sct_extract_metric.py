@@ -8,15 +8,15 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Eddie Magnide, Simon Levy, Charles Naaman, Julien Cohen-Adad
-# Modified: 2014-07-30
+# Created: 2014-07-30
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: find another method to update label in case average_all_labels == 1. E.g., recreate tmp label file.
 # TODO: remove class color and use sct_printv
 # TODO: add documentation for new features
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where two different vertebral levels coexist (and not the whole slice)
-# TODO: rename fname_vertebral_labeling
 
 # Import common Python libraries
 import os
@@ -49,7 +49,9 @@ class Param:
         self.fname_output = 'metric_label.txt'
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
-
+        self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
+        self.adv_param = ['5',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '5'] # STD of the gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -86,26 +88,28 @@ def main():
     start_time = time.time()  # save start time for duration
     verbose = param.verbose
     flag_h = 0
+    ml_clusters = param.ml_clusters
+    adv_param = param.adv_param
+    adv_param_user = ''
 
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        # fname_data = path_sct_data+'/mt/mtr.nii.gz'
-        # path_label = path_sct_data+'/mt/label/template'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
-        path_label = '/Users/julien/data/temp/sct_example_data/t2/label/template'
-        method = 'wath'
-        labels_of_interest = '0'  #'0, 2, 5, 7, 15, 22, 27, 29'
-        slices_of_interest = '1:4'  #'200:210' #'2:4'
+        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207185647/WM_phantom_noise.nii.gz'
+        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
+        method = 'map'
+        ml_clusters = '0:29,30,31'
+        labels_of_interest = '0,1,15,16'
+        slices_of_interest = ''
         vertebral_levels = ''
-        average_all_labels = 0
+        average_all_labels = 1
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:v:w:z:') # define flags
+            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:p:v:w:z:') # define flags
         except getopt.GetoptError as err: # check if the arguments are defined
             print str(err) # error
             usage() # display usage
@@ -128,6 +132,8 @@ def main():
                 fname_normalizing_label = arg
             elif opt in '-o': # output option
                 fname_output = arg  # fname of output file
+            elif opt in '-p':
+                adv_param_user = arg
             elif opt in '-v':
                 # vertebral levels option, if the user wants to average the metric across specific vertebral levels
                  vertebral_levels = arg
@@ -145,9 +151,9 @@ def main():
     # Check existence of data file
     sct.printv('\ncheck existence of input files...', verbose)
     sct.check_file_exist(fname_data)
-    sct.check_file_exist(path_label)
+    sct.check_folder_exist(path_label)
     if fname_normalizing_label:
-        sct.check_file_exist(fname_normalizing_label)
+        sct.check_folder_exist(fname_normalizing_label)
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
@@ -171,8 +177,14 @@ def main():
     # Check input parameters
     check_method(method, fname_normalizing_label, normalization_method)
 
+    # parse argument for param
+    if not adv_param_user == '':
+        adv_param = adv_param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+        del adv_param_user  # clean variable
+        # TODO: check integrity of input
+
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label)
+    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
@@ -188,10 +200,10 @@ def main():
     print '  slices of interest ........ '+slices_of_interest
     print '  vertebral levels .......... '+vertebral_levels
     print '  vertebral labeling file.... '+fname_vertebral_labeling
+    print '  advanced parameters ....... '+str(adv_param)
 
     # Check if the orientation of the data is RPI
     orientation_data = get_orientation(fname_data)
-    print orientation_data
 
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
@@ -265,20 +277,17 @@ def main():
 
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
-        sum_labels_user = np.sum(labels[label_id_user]) # sum the labels selected by user
-        if method == 'ml':  # in case the maximum likelihood and the average across different labels are wanted
-            # TODO: make the below code cleaner (no use of tmp variable)
+        sum_labels_user = np.sum(labels[label_id_user])  # sum the labels selected by user
+        if method == 'ml' or method == 'map':  # in case the maximum likelihood and the average across different labels are wanted
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user # put the sum of the labels selected by user in first position of the tmp
+            labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp
             # variable
             for i_label in range(1, len(labels_tmp)):
-                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected
-                # labels
+                labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected labels
             labels = labels_tmp  # replace the initial labels value by the updated ones (with the summed labels)
             del labels_tmp  # delete the temporary labels
-        else:  # in other cases than the maximum likelihood, we don't need to keep the other labels than those that were
-        # selected
+        else:  # in other cases than the maximum likelihood, we can remove other labels (not needed for estimation)
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
 
@@ -297,10 +306,12 @@ def main():
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
             metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
 
+    # identify cluster for each tract (for use with robust ML)
+    ml_clusters_array = get_clusters(ml_clusters, labels)
 
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, ml_clusters_array, adv_param)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
@@ -331,10 +342,10 @@ def main():
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_info_label):
+def read_label_file(path_info_label, file_info_label):
 
     # file name of info_label.txt
-    fname_label = path_info_label+param.file_info_label
+    fname_label = path_info_label+file_info_label
 
     # Check info_label.txt existence
     sct.check_file_exist(fname_label)
@@ -366,7 +377,7 @@ def read_label_file(path_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in '+param.file_info_label+' ...'
+    print '\nCheck existence of all files listed in '+file_info_label+' ...'
     for fname in label_file:
         if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
                 os.path.isfile(path_info_label+fname + '.nii.gz'):
@@ -374,7 +385,7 @@ def read_label_file(path_info_label):
             pass
         else:
             print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
-                  +param.file_info_label+'.\n')
+                  +file_info_label+'.\n')
 
     # Close file.txt
     f.close()
@@ -588,7 +599,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 # Check the consistency of the methods asked by the user
 #=======================================================================================================================
 def check_method(method, fname_normalizing_label, normalization_method):
-    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath'):
+    if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
         print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
         sys.exit(2)
 
@@ -636,9 +647,17 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_param):
+    """
+    :data: (nx,ny,nz) numpy array
+    :labels: nlabel tuple of (nx,ny,nz) array
+    """
 
-    nb_labels = len(labels) # number of labels
+    perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+    var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
+
+
+    nb_labels = len(labels)  # number of labels
 
     # if user asks for binary regions, binarize atlas
     if method == 'bin':
@@ -653,13 +672,20 @@ def extract_metric_within_tract(data, labels, method, verbose):
 
     #  Select non-zero values in the union of all labels
     labels_sum = np.sum(labels)
-    ind_positive_labels = labels_sum > ALMOST_ZERO
-    ind_positive_data = data > 0
-    ind_positive = ind_positive_labels & ind_positive_data
+    ind_positive_labels = labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
+    # ind_positive_data = data > -9999999999  # data > 0
+    ind_positive = ind_positive_labels  # & ind_positive_data
     data1d = data[ind_positive]
     labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
+
+    # # display labels
+    # import matplotlib.pyplot as plt
+    # plt.imshow(labels_sum[:,:,3])
+    # plt.show()
+    # plt.imshow(data[:,:,3])
+    # plt.show()
 
     # clear memory
     del data, labels
@@ -670,6 +696,30 @@ def extract_metric_within_tract(data, labels, method, verbose):
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
     metric_std = np.empty([nb_labels], dtype=object)
+    nb_vox = len(data1d)
+
+    # Estimation with 3-class maximum likelihood
+    if method == 'map':
+        sct.printv('Estimation maximum likelihood within clustered labels...', verbose=verbose)
+        y = data1d  # [nb_vox x 1]
+        x = labels2d.T  # [nb_vox x nb_labels]
+        # construct matrix with clusters of tracts
+        ml_clusters_unique = np.unique(np.sort(ml_clusters))
+        nb_clusters = len(ml_clusters_unique)
+        sct.printv('  Number of clusters: '+str(nb_clusters), verbose=verbose)
+        # initialize cluster matrix
+        x_cluster = np.zeros([nb_vox, nb_clusters])
+        # loop across clusters
+        for i_cluster in ml_clusters_unique:
+            # find tracts belonging to cluster
+            index_tracts_in_cluster = np.where(ml_clusters == i_cluster)[0]
+            # sum tracts and append to matrix
+            x_cluster[:, i_cluster] = x[:, index_tracts_in_cluster].sum(axis=1)
+        x = x_cluster
+        # estimate values using ML
+        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        # display results
+        sct.printv('  Estimated beta per cluster: '+str(beta), verbose=verbose)
 
     # Estimation with weighted average (also works for binary)
     if method == 'wa' or method == 'bin' or method == 'wath':
@@ -683,19 +733,64 @@ def extract_metric_within_tract(data, labels, method, verbose):
                 # estimate the weighted average
                 metric_mean[i_label] = sum(data1d * labels2d[i_label, :]) / sum(labels2d[i_label, :])
                 # estimate the biased weighted standard deviation
-                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) /
-                                               sum(labels2d[i_label, :]))
+                metric_std[i_label] = np.sqrt(sum(labels2d[i_label, :] * (data1d - metric_mean[i_label])**2 ) / sum(labels2d[i_label, :]))
 
     # Estimation with maximum likelihood
     if method == 'ml':
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
-        beta = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y))
+        beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
+        #beta, residuals, rank, singular_value = np.linalg.lstsq(np.dot(x.T, x), np.dot(x.T, y), rcond=-1)
+        #beta, residuals, rank, singular_value = np.linalg.lstsq(x, y)
+        #print beta, residuals, rank, singular_value
         for i_label in range(0, nb_labels):
-            metric_mean[i_label] = beta[0][i_label]
+            metric_mean[i_label] = beta[i_label]
+            metric_std[i_label] = 0  # need to assign a value for writing output file
+
+    # Estimation with maximum a posteriori (map)
+    if method == 'map':
+        y = data1d  # [nb_vox x 1]
+        x = labels2d.T  # [nb_vox x nb_labels]
+        # construct beta0
+        beta0 = np.zeros(nb_labels)
+        for i_cluster in range(nb_clusters):
+            beta0[np.where(ml_clusters == i_cluster)[0]] = beta[i_cluster]
+        # construct covariance matrix (variance between tracts)
+        Vlabel =  np.diag(beta0 * perc_var_label * 0.01)  # [nb_labels x nb_labels]
+        # construct noise matrix
+        Vnoise = np.diag(np.ones(nb_labels) * var_noise)
+        # beta = beta0 + (Xt . X + Vnoise . Vlabel^-1)^-1 . Xt . ( y - X . beta0 )
+        # beta = beta0 +            A                 . B  .         C
+        A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Vnoise, np.linalg.pinv(Vlabel) ))
+        B = x.T
+        C = y - np.dot(x, beta0)
+        beta = beta0 + np.dot(A, np.dot(B, C))
+        for i_label in range(0, nb_labels):
+            metric_mean[i_label] = beta[i_label]
             metric_std[i_label] = 0  # need to assign a value for writing output file
 
     return metric_mean, metric_std
+
+
+#=======================================================================================================================
+def get_clusters(ml_clusters, labels):
+    """
+    identify cluster for each tract (for use with robust ML)
+    :ml_clusters: clusters in form: 0:29,30,31
+    :labels: effective labels (can be less than nb_labels if user asked to group some labels)
+    :return: ml_clusters_array: tracts in form [0, 0, 0, ... 1, 2]
+    """
+    all_clusters = ml_clusters.split(',')
+    nb_labels = len(labels)
+    ml_clusters_array = np.zeros(nb_labels)
+    nb_clusters = len(all_clusters)
+    index_label = 0
+    for i_cluster in range(nb_clusters-1, 0, -1):
+        ml_clusters_array[nb_labels-index_label-1] = i_cluster
+        index_label = index_label + 1
+
+    return ml_clusters_array
+
 
 
 #=======================================================================================================================
@@ -734,14 +829,23 @@ OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
-  -m {ml,wa,wath,bin}   method to extract metrics. Default = """+param.method+"""
+  -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
+                              N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+                          map: maximum a posteriori. Mean priors are estimated by maximum likelihood
+                               within three clusters defined by the flag -c (white matter, gray 
+                               matter and CSF). Tract and noise variance are set with flag -p.
+                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
+  -p <param>            advanced parameters for the 'map' method.
+                          All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
+                          #1: standard deviation across labels, in percentage of the mean
+                          #2: standard deviation of the Gaussian noise
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
-                        Default = """+param.fname_output+"""
+                        Default = """+param_default.fname_output+"""
   -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
   -z <zmin:zmax>        Slice range to estimate the metric from. First slice is 0. Example: 5:23
                         You can also select specific slices using commas. Example: 0,2,3,5,12
@@ -774,6 +878,7 @@ List of labels in: """+file_label+""":
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    param_default = Param()
     param = Param()
     color = Color()
     # call main function

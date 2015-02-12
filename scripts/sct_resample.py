@@ -202,7 +202,7 @@ DESCRIPTION
   Anisotropic resampling of 3D or 4D data.
 
 USAGE
-  """+os.path.basename(__file__)+""" -i <data> -r <factor>
+  """+os.path.basename(__file__)+""" -i <data> -f <factor>
 
 MANDATORY ARGUMENTS
   -i <data>        image to segment. Can be 2D, 3D or 4D.

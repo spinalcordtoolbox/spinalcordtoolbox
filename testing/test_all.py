@@ -99,8 +99,11 @@ def main():
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
+    # check existence of testing data folder
+    sct.check_folder_exist(param.path_data)
+
     # display path to data
-    sct.printv('\nPath to testing data: \n  '+param.path_data, param.verbose)
+    sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -140,16 +143,25 @@ def main():
 def fill_functions():
     functions = []
     functions.append('test_debug')
+    functions.append('sct_apply_transfo')
+    functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
+    functions.append('sct_concat_transfo')
+    #functions.append('sct_convert')
     functions.append('sct_convert_binary_to_trilinear')
     functions.append('sct_create_mask')
     functions.append('sct_detect_spinalcord')
+    functions.append('sct_dmri_get_bvalue')
+    functions.append('sct_dmri_transpose_bvecs')
+    #functions.append('sct_label_utils')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
-    #functions.append('sct_flatten_sagittal')
+    functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline')
+    functions.append('sct_orientation')
+    functions.append('sct_otsu')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_multimodal')

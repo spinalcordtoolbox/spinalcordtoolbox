@@ -84,6 +84,7 @@ fsloutput = ['export FSLOUTPUTTYPE=NIFTI;'];
 % check fields
 if ~isfield(label,'input_path'), error('no input path given'); end
 if ~isfield(label,'input_anat'), error('no input file given'); end
+if ~isfield(label,'ext'), ext='.nii'; else ext=label.ext; end
 if ~isfield(label,'output_path'), label.output_path='./'; end
 if ~isfield(label,'output_labeled_centerline'), label.output_labeled_centerline='centerline_labeled'; end
 if ~isfield(label,'surface_do'), label.surface_do=0; end
@@ -104,7 +105,7 @@ if ~isfield(label.segmentation,'shear_force_multiplier'), label.segmentation.she
 if ~isfield(label.segmentation,'max_coeff_horizontal'), label.segmentation.max_coeff_horizontal=10; end
 if ~isfield(label.segmentation,'max_coeff_vertical'), label.segmentation.max_coeff_vertical=10; end
 
-input_anat=[label.input_path,label.input_anat];
+input_anat=[label.input_path,label.input_anat, label.ext];
 if label.segmentation.do
     input_centerline=[label.output_path,label.segmentation.centerline];
     input_surface=[label.output_path,label.segmentation.surface];
@@ -121,96 +122,15 @@ input_anat_reorient='';
 input_centerline_reorient='';
 input_surface_reorient='';
 
-%==================================================
-% Reorientation of the data if needed
-%==================================================
+% load images
+nii=load_nii(input_anat);
+anat_ini=permute(nii.img,[1 3 2]);
 
 
-
-% Read and store the raw image in m_nifti
-
-[status result] = unix(['fslhd ' input_anat]); if status, error(result); end
-
-%Plane view
-% Read the orientation of the image
-orientation{1} = strtrim(result(findstr(result,'qform_xorient')+13:findstr(result,'qform_yorient')-1));
-orientation{2} = strtrim(result(findstr(result,'qform_yorient')+13:findstr(result,'qform_zorient')-1));
-orientation{3} = strtrim(result(findstr(result,'qform_zorient')+13:findstr(result,'sform_name')-1));
-
-% Only keeps the first letter of the orient structure
-%   where each letter corresponds to :
-% R: Right-to-Left         L: Left-to-Right
-% P: Posterior-to-Anterior A: Anterior-to-Posterior
-% I: Inferior-to-Superior  S: Superior-to-Inferior
-orientation{1} = orientation{1}(1);
-orientation{2} = orientation{2}(1);
-orientation{3} = orientation{3}(1);
-
-% Save initial orientation
-orient_init = cell2mat(orientation);
-
-if ~strcmp(orient_init, 'ASR')
-    
-    % Copy data
-    input_anat_reorient=[input_anat,'_reorient'];
-    cmd=['cp ',input_anat,'.nii',' ',input_anat_reorient,'.nii'];
-    [status result] = unix(cmd); if status, error(result); end
-    
-    input_centerline_reorient=[input_centerline,'_reorient'];
-    cmd=['cp ',input_centerline,'.nii',' ',input_centerline_reorient,'.nii'];
-    [status result] = unix(cmd); if status, error(result); end
-    
-    if surface_do
-        input_surface_reorient=[input_surface,'_reorient'];
-        cmd=['cp ',input_surface,'.nii',' ',input_surface_reorient,'.nii'];
-        [status result] = unix(cmd); if status, error(result); end
-    end
-    
-    
-    % Force radiological orientation
-    qform=spm_get_space([input_anat_reorient,'.nii']);
-    
-    if det(qform)>0
-        cmd=['fslorient -forceradiological ',input_anat_reorient];
-        [status result] = unix(cmd); if status, error(result); end
-        
-        cmd=['fslorient -forceradiological ',input_centerline_reorient];
-        [status result] = unix(cmd); if status, error(result); end
-        
-        if surface_do
-            cmd=['fslorient -forceradiological ',input_surface_reorient];
-            [status result] = unix(cmd); if status, error(result); end
-        end
-        
-    end
-    
-    % reorient data top get PSL orientation
-    cmd=[fsloutput,' fslswapdim ',input_anat_reorient,' AP SI RL ',input_anat_reorient];
-    [status result]=unix(cmd); if status, error(result); end
-    
-    cmd=[fsloutput,' fslswapdim ',input_centerline_reorient,' AP SI RL ',input_centerline_reorient];
-    [status result]=unix(cmd); if status, error(result); end
-    
-    if surface_do
-        cmd=[fsloutput,' fslswapdim ',input_surface_reorient,' AP SI RL ',input_surface_reorient];
-        [status result]=unix(cmd); if status, error(result); end
-    end
-    
-    
-    % load images
-    [anat_ini,dims,scales,bpp,endian] = read_avw(input_anat_reorient);
-    centerline = read_avw(input_centerline_reorient);
-    if surface_do
-        surface=read_avw(input_surface_reorient);
-    end
-    
-else
-    % load images
-    [anat_ini,dims,scales,bpp,endian] = read_avw(input_anat);
-    centerline = read_avw(input_centerline);
-    if surface_do
-        surface= read_avw(input_surface);
-    end
+CL = load_nii(input_centerline);
+centerline=CL.img;
+if surface_do
+    surface= read_avw(input_surface);
 end
 
 
@@ -219,9 +139,9 @@ end
 % Calculation of the profile intensity
 %==================================================
 
-shift_AP=label.shift_AP*scales(1);% shift the centerline on the spine in mm default : 17 mm
-size_AP=label.size_AP*scales(1);% mean around the centerline in the anterior-posterior direction in mm
-size_RL=label.size_RL*scales(3);% mean around the centerline in the right-left direction in mm
+shift_AP=label.shift_AP*nii.scales(1);% shift the centerline on the spine in mm default : 17 mm
+size_AP=label.size_AP*nii.scales(1);% mean around the centerline in the anterior-posterior direction in mm
+size_RL=label.size_RL*nii.scales(3);% mean around the centerline in the right-left direction in mm
 
 anat=anat_ini;
 
@@ -254,7 +174,7 @@ x(index_double)=[];
 z(index_double)=[];
 
 % shift the centerline to the spine of shift_AP
-x1=round(x-shift_AP/scales(1));
+x1=round(x-shift_AP/nii.scales(1));
 
 % build intensity profile along the centerline
 I=zeros(length(y),1);
@@ -275,8 +195,8 @@ for index=1:length(y)
     d=Vx*x1(index)+Vy*y(index)+Vz*z(index);
     
     % average 
-    for i_slice_RL=1:2*round(size_RL/scales(3))
-        for i_slice_AP=1:2*round(size_AP/scales(1))
+    for i_slice_RL=1:2*round(size_RL/nii.scales(3))
+        for i_slice_AP=1:2*round(size_AP/nii.scales(1))
             result=(d-Vx*(x1(index)+i_slice_AP-size_AP-1)-Vz*z(index))/Vy;
             if result>size(anat,2), result=size(anat,2); end
             I(index)=I(index)+anat(round(x1(index)+i_slice_AP-size_AP-1),round(result),round(z(index)+i_slice_RL-size_RL-1));
@@ -300,7 +220,7 @@ end
 
 % detrend intensity, detrending different if centerline longer is smaller
 % than 300 mm
-if length(I)*scales(2)<300/scales(2)
+if length(I)*nii.scales(2)<300/nii.scales(2)
     I_detrend=j_detrend_new_v2(I',5,'cos',1);
     
     % basic normalisation of the intensity profile
@@ -342,7 +262,7 @@ mean_distance=mean_distance(:,level_start+1:end);
 
 
 % pattern
-space=linspace(-5/scales(2),5/scales(2),round(11/scales(2)));pattern=-sinc(space*scales(2)/15).^20;
+space=linspace(-5/nii.scales(2),5/nii.scales(2),round(11/nii.scales(2)));pattern=-sinc(space*nii.scales(2)/15).^20;
 [~,xmax_pattern]=min(pattern); % position of the peak in the pattern
 pixend=length(pattern)-xmax_pattern; % number of pixel after the peaks in the pattern
 %==================================================
@@ -380,7 +300,7 @@ if label.verbose
 end
 
 % smooth the intensity curve
-if length(I)*scales(2)<300
+if length(I)*nii.scales(2)<300
     I_detrend=smooth(I_detrend);
     
 else
@@ -392,7 +312,7 @@ end
 %normalisation of the peaks to get an unbiased correlation
 
 %found roughly maxima
-[value,loc_peak_I]=findpeaks(-I_detrend,'MINPEAKDISTANCE',round(10/scales(2)));
+[value,loc_peak_I]=findpeaks(-I_detrend,'MINPEAKDISTANCE',round(10/nii.scales(2)));
 value=-value;
 loc_peak_I(value>-0.05)=[];
 value(value>-0.05)=[];
@@ -616,9 +536,9 @@ end
 %save modified centerline and oreint the final modified centerline with the
 %same orientation than the raw image
 
-save_avw_v2(center_disk,output_centerline_vertebra,'s',scales(1:3));
+save_avw_v2(center_disk,output_centerline_vertebra,'s',nii.scales(1:3));
 if surface_do
-    save_avw_v2(labeled_surface,output_surface_vertebra,'s',scales(1:3));
+    save_avw_v2(labeled_surface,output_surface_vertebra,'s',nii.scales(1:3));
 end
 
 if ~strcmp(orient_init, 'ASR')
@@ -718,9 +638,9 @@ else
 end
 
 % delete file
-delete([input_anat_reorient,'.nii']);
-delete([input_centerline_reorient,'.nii']);
-delete([input_surface_reorient,'.nii']);
+delete([input_anat_reorient,ext]);
+delete([input_centerline_reorient,ext]);
+delete([input_surface_reorient,ext]);
 
 
 

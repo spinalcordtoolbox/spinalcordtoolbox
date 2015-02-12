@@ -57,52 +57,56 @@ def main():
     # check existence of input files
     print'\nCheck if file exists ...\n'
     sct.check_file_exist(fname_template)
-    
-    if os.path.isdir(directory) == False :
-        print 'Directory does not exists\n '
-        usage()
+    sct.check_folder_exist(directory)
+
+    path_template, file_template, ext_template = sct.extract_fname(fname_template)
+    template_absolute_path = sct.get_absolute_path(fname_template)
    
     os.chdir(directory)
    
-    n_i = len([name for name in os.listdir('.') if os.path.isfile(name)])  # number of landmark images
+    n_i = len([name for name in os.listdir('.') if (os.path.isfile(name) and name.endswith(".nii.gz") and name!='template_landmarks.nii.gz')])  # number of landmark images
 
     average = zeros((n_i,n_l))
     compteur = 0
     
-    for file in os.listdir(directory):
-        if file.endswith(".nii.gz"):
+    for file in os.listdir('.'):
+        if file.endswith(".nii.gz") and file != 'template_landmarks.nii.gz':
             print file
             img = nibabel.load(file)
             data = img.get_data()
             X,Y,Z = (data>0).nonzero()
-            Z = sort(Z)
+            Z = [Z[i] for i in Z.argsort()]
+            Z.reverse()
             
             for i in xrange(n_l):
-                average[compteur][i] = Z[i]
+                if i < len(Z):
+                    average[compteur][i] = Z[i]
             
             compteur = compteur + 1
-            
-    average = array([int(round(mean([average[:,i]]))) for i in xrange(n_l)]) 
+
+    average = array([int(round(mean([average[average[:,i]>0,i]]))) for i in xrange(n_l)]) 
       
-    print average     
+    #print average     
     
-    
+    print template_absolute_path
     print '\nGet dimensions of template...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_template)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(template_absolute_path)
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
-    img = nibabel.load(fname_template)
+    img = nibabel.load(template_absolute_path)
     data = img.get_data()
     hdr = img.get_header()
-    compteur = 0
-    for i in average :
-        data[int(round(nx/2.0)),int(round(ny/2.0)),i] = n_l - compteur
+    data[:,:,:] = 0
+    compteur = 1
+    for i in average:
+        print int(round(nx/2.0)),int(round(ny/2.0)),int(round(i)),int(round(compteur))
+        data[int(round(nx/2.0)),int(round(ny/2.0)),int(round(i))] = int(round(compteur))
         compteur = compteur + 1
         
     
     print '\nSave volume ...'
-    hdr.set_data_dtype('float32') # set imagetype to uint8
+    #hdr.set_data_dtype('float32') # set imagetype to uint8
     # save volume
     #data = data.astype(float32, copy =False)
     img = nibabel.Nifti1Image(data, None, hdr)
