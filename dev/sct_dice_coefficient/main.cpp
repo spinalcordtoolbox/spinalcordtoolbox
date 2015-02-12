@@ -12,14 +12,18 @@
 #include <itkExtractImageFilter.h>
 #include <itkLabelOverlapMeasuresImageFilter.h>
 #include <itkImageRegionIterator.h>
+#include <itkBinaryThresholdImageFilter.h>
 
 #include <iostream>
 #include <string>
 using namespace std;
 
+typedef itk::Image< double, 3 >	ImageType;
 typedef itk::Image< unsigned char, 3 >	BinaryImageType;
 typedef itk::Image< unsigned char, 2 >	BinaryImageType2D;
-typedef itk::ImageFileReader<BinaryImageType> ReaderType;
+typedef itk::BinaryThresholdImageFilter< ImageType, BinaryImageType > ThresholdType;
+typedef itk::ImageFileReader<ImageType> ReaderType;
+typedef itk::ImageFileReader<BinaryImageType> BinaryReaderType;
 typedef itk::ExtractImageFilter< BinaryImageType, BinaryImageType > FilterType3D;
 typedef itk::ExtractImageFilter< BinaryImageType, BinaryImageType2D > FilterType2D;
 typedef itk::LabelOverlapMeasuresImageFilter< BinaryImageType > DiceFilter3D;
@@ -37,7 +41,9 @@ void help()
     
     cout << "Available options : " << endl;
     cout << "\t-b <xindex> <xsize> <yindex> <ysize> <zindex> <zsize> \t (int, bounding box [origin(x,y,z) ; size(x,y,z)])" << endl;
-    cout << "\t-bmax \t (use maximum bounding box of of the images union to compute Dice coefficient)" << endl;
+    cout << "\t-bmax \t (use maximum bounding box of of the images union to compute DC)" << endl;
+    cout << "\t-bzmax \t (use maximum bounding box of of the images union in the 'z' direction)" << endl;
+    cout << "\t-bin \t (binarize the image before computing DC, put non-zero voxels to 1)" << endl;
     cout << "\t-o <filename> \t (output file .txt with Dice coefficient result)" << endl;
     cout << "\t-2d-slices <dim> \t (int, performs Dice coefficient on 2D slices in dimensions 'dim' {0,1,2})" << endl;
     cout << "\t-v \t (hide display)" << endl;
@@ -45,11 +51,22 @@ void help()
     cout << endl << "Note: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a size will set it to the full image extent for that dimension." << endl;
 }
 
+vector<string> split(const string &s, char delim) {
+    vector<string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
 int main(int argc, const char * argv[])
 {
     string filename_target, filename_source, filename_output;
-    bool boundingBox = false, maxBoundingBox = false, maxZBoundingBox = false, verbose = true, slices = false;
+    bool boundingBox = false, maxBoundingBox = false, maxZBoundingBox = false, verbose = true, slices = false, need2binarize = false;
     int boundingBoxIndex[3], boundingBoxSize[3], dimension = -1;
+    double threshold_target = 0.0001, threshold_source = 0.0001;
     
     if (argc < 3)
     {
@@ -81,9 +98,18 @@ int main(int argc, const char * argv[])
         {
             maxBoundingBox = true;
         }
-	else if (strcmp(argv[i],"-bzmax")==0)
+        else if (strcmp(argv[i],"-bzmax")==0)
         {
             maxZBoundingBox = true;
+        }
+        else if (strcmp(argv[i],"-bin")==0)
+        {
+            i++;
+            need2binarize = true;
+            string thr = argv[i];
+            vector<string> thresholds = split(thr,',');
+            threshold_target = atof(thresholds[0].c_str());
+            threshold_source = atof(thresholds[1].c_str());
         }
         else if (strcmp(argv[i],"-o")==0)
         {
@@ -107,22 +133,60 @@ int main(int argc, const char * argv[])
         }
     }
 
-    ReaderType::Pointer readerRef = ReaderType::New();
+    BinaryImageType::Pointer imageTarget;
+    BinaryImageType::Pointer imageSource;
     itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
-	readerRef->SetImageIO(io);
-	readerRef->SetFileName(filename_target);
-	readerRef->Update();
-	BinaryImageType::Pointer imageTarget = readerRef->GetOutput();
+    
+    if (need2binarize)
+    {
+        ReaderType::Pointer reader_target = ReaderType::New();
+        reader_target->SetImageIO(io);
+        reader_target->SetFileName(filename_target);
+        reader_target->Update();
+        
+        ThresholdType::Pointer thresholdFilter_target = ThresholdType::New();
+        thresholdFilter_target->SetInput(reader_target->GetOutput());
+        thresholdFilter_target->SetLowerThreshold(threshold_target);
+        //thresholdFilter_target->SetUpperThreshold(1);
+        thresholdFilter_target->SetInsideValue(1);
+        thresholdFilter_target->SetOutsideValue(0);
+        thresholdFilter_target->Update();
+        
+        imageTarget = thresholdFilter_target->GetOutput();
+        
+        ReaderType::Pointer reader_source = ReaderType::New();
+        reader_source->SetImageIO(io);
+        reader_source->SetFileName(filename_source);
+        reader_source->Update();
+        
+        ThresholdType::Pointer thresholdFilter_source = ThresholdType::New();
+        thresholdFilter_source->SetInput(reader_source->GetOutput());
+        thresholdFilter_source->SetLowerThreshold(threshold_source);
+        //thresholdFilter_source->SetUpperThreshold(1);
+        thresholdFilter_source->SetInsideValue(1);
+        thresholdFilter_source->SetOutsideValue(0);
+        thresholdFilter_source->Update();
+        
+        imageSource = thresholdFilter_source->GetOutput();
+    }
+    else
+    {
+        BinaryReaderType::Pointer readerRef = BinaryReaderType::New();
+        readerRef->SetImageIO(io);
+        readerRef->SetFileName(filename_target);
+        readerRef->Update();
+        imageTarget = readerRef->GetOutput();
+        
+        BinaryReaderType::Pointer readerSeg = BinaryReaderType::New();
+        readerSeg->SetImageIO(io);
+        readerSeg->SetFileName(filename_source);
+        readerSeg->Update();
+        imageSource = readerSeg->GetOutput();
+    }
     
 	BinaryImageType::PointType origin = imageTarget->GetOrigin();
-    
-    
-	ReaderType::Pointer readerSeg = ReaderType::New();
-	readerSeg->SetImageIO(io);
-	readerSeg->SetFileName(filename_source);
-	readerSeg->Update();
-	BinaryImageType::Pointer imageSource = readerSeg->GetOutput();
 	BinaryImageType::PointType originSource = imageSource->GetOrigin();
+    
 	double dist = sqrt((origin[0]-originSource[0])*(origin[0]-originSource[0])+(origin[1]-originSource[1])*(origin[1]-originSource[1])+(origin[2]-originSource[2])*(origin[2]-originSource[2]));
 	if (dist >= 0.00001 && dist < 0.001)
 		imageSource->SetOrigin(origin);

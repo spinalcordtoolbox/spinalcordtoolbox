@@ -36,7 +36,7 @@ class Param:
         self.method = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
-        self.size = '40'  # in mm. if gaussian, size corresponds to sigma.
+        self.size = '41'  # in voxel. if gaussian, size corresponds to sigma.
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -270,10 +270,10 @@ def create_mask2d(center, shape, size, nx, ny):
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    radius = round(float(size)/2)
+    radius = round(float(size+1)/2)  # add 1 because the radius includes the center.
 
     if shape == 'box':
-        mask2d[xc-radius:xc+radius, yc-radius:yc+radius] = 1
+        mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
@@ -311,7 +311,8 @@ OPTIONAL ARGUMENTS
                      point: volume that contains a single point. E.g.: point,label.nii.gz
                      center: mask is created at center of FOV. In that case, "val" is not required.
                      centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
-  -s <size>        size in mm. if shape=gaussian, size corresponds to "sigma". Default="""+str(param_default.size)+"""
+  -s <size>        size in voxel. Odd values are better (for mask to be symmetrical). Default="""+str(param_default.size)+"""
+                   If shape=gaussian, size corresponds to "sigma". 
   -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param_default.shape)+"""
   -o <output>      name of output mask. Default is "mask_INPUTFILE".
   -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""

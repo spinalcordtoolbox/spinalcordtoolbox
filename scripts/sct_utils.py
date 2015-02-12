@@ -12,8 +12,12 @@
 #########################################################################################
 
 import os
+import errno
 import sys
+import traceback
 import commands
+import subprocess
+import re
 
 # TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -43,9 +47,63 @@ def run(cmd, verbose=1):
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
-        sys.exit(2)
     else:
         return status, output
+
+#==============e=========================================================================================================
+# check RAM usage
+# work only on Mac OSX
+#=======================================================================================================================
+def checkRAM(os,verbose=1):
+    if (os == 'linux'):
+        status, output = run('grep MemTotal /proc/meminfo', 0)
+        print output
+        ram_split = output.split()
+        ram_total = float(ram_split[1])
+        status, output = run('free -m', 0)
+        print output
+        return ram_total/1024
+
+    elif (os == 'osx'):
+        status, output = run('hostinfo | grep memory', 0)
+        print output
+        ram_split = output.split(' ')
+        ram_total = float(ram_split[3])
+
+        # Get process info
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0]
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0]
+
+        # Iterate processes
+        processLines = ps.split('\n')
+        sep = re.compile('[\s]+')
+        rssTotal = 0 # kB
+        for row in range(1,len(processLines)):
+            rowText = processLines[row].strip()
+            rowElements = sep.split(rowText)
+            try:
+                rss = float(rowElements[0]) * 1024
+            except:
+                rss = 0 # ignore...
+            rssTotal += rss
+
+        # Process vm_stat
+        vmLines = vm.split('\n')
+        sep = re.compile(':[\s]+')
+        vmStats = {}
+        for row in range(1,len(vmLines)-2):
+            rowText = vmLines[row].strip()
+            rowElements = sep.split(rowText)
+            vmStats[(rowElements[0])] = int(rowElements[1].strip('\.')) * 4096
+        
+        if verbose:
+            print 'Wired Memory:\t\t%d MB' % ( vmStats["Pages wired down"]/1024/1024 )
+            print 'Active Memory:\t\t%d MB' % ( vmStats["Pages active"]/1024/1024 )
+            print 'Inactive Memory:\t%d MB' % ( vmStats["Pages inactive"]/1024/1024 )
+            print 'Free Memory:\t\t%d MB' % ( vmStats["Pages free"]/1024/1024 )
+            #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
+
+        return ram_total
 
 
 #=======================================================================================================================
@@ -70,18 +128,72 @@ def extract_fname(fname):
 
     return path_fname, file_fname, ext_fname
 
+#=======================================================================================================================
+# get_absolute_path
+#=======================================================================================================================
+# Return the absolute path of a file or a directory
+def get_absolute_path(fname):
+    if os.path.isfile(fname) or os.path.isdir(fname):
+        return os.path.realpath(fname)
+    else:
+        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
 #=======================================================================================================================
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
 def check_file_exist(fname, verbose=1):
-    if os.path.isfile(fname) or os.path.isdir(fname):
+    if os.path.isfile(fname):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The file ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
+
+#=======================================================================================================================
+# check_folder_exist:  Check existence of a folder.
+#   Does not create it. If you want to create a folder, use create_folder
+#=======================================================================================================================
+def check_folder_exist(fname, verbose=1):
+    if os.path.isdir(fname):
+        if verbose:
+            printv('  OK: '+fname, verbose, 'normal')
+        pass
+    else:
+        printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+
+#=======================================================================================================================
+# check_write_permission:  Check existence of a folder.
+#   Does not create it. If you want to create a folder, use create_folder
+#=======================================================================================================================
+def check_write_permission(fname, verbose=1):
+    if os.path.isdir(fname):
+        if os.path.isdir(fname):
+            return os.access(fname, os.W_OK)
+        else:
+            printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+    else:
+        path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
+        return os.access(path_fname, os.W_OK)
+
+
+
+#=======================================================================================================================
+# create_folder:  create folder (check if exists before creating it)
+#   output: 0 -> folder created
+#           1 -> folder already exist
+#           2 -> permission denied
+#=======================================================================================================================
+def create_folder(folder):
+    if not os.path.exists(folder):
+        try:
+            os.makedirs(folder)
+            return 0
+        except OSError, e:
+            if e.errno != errno.EEXIST:
+                return 2
+    else:
+        return 1
 
 #=======================================================================================================================
 # check_if_3d
@@ -127,16 +239,20 @@ def get_dimension(fname):
     status, output = commands.getstatusoutput(cmd)
     # split output according to \n field
     output_split = output.split()
-    # extract dimensions as integer
-    nx = int(output_split[1])
-    ny = int(output_split[3])
-    nz = int(output_split[5])
-    nt = int(output_split[7])
-    px = float(output_split[9])
-    py = float(output_split[11])
-    pz = float(output_split[13])
-    pt = float(output_split[15])
-    return nx, ny, nz, nt, px, py, pz, pt
+
+    if output_split[0] == 'ERROR:':
+        printv('\n'+output,1,'error')
+    else:
+        # extract dimensions as integer
+        nx = int(output_split[1])
+        ny = int(output_split[3])
+        nz = int(output_split[5])
+        nt = int(output_split[7])
+        px = float(output_split[9])
+        py = float(output_split[11])
+        pz = float(output_split[13])
+        pt = float(output_split[15])
+        return nx, ny, nz, nt, px, py, pz, pt
 
 
 #=======================================================================================================================
@@ -234,7 +350,7 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit prohram
     if type == 'error':
-        sys.exit(2)
+        raise NameError('Error!')
 
 
 #=======================================================================================================================
@@ -265,14 +381,6 @@ def delete_nifti(fname_in):
 
 
 #=======================================================================================================================
-# create_folder:  create folder (check if exists before creating it)
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-#=======================================================================================================================
 # get_interpolation: get correct interpolation field depending on program used. Supported programs: ants, flirt, WarpImageMultiTransform
 #=======================================================================================================================
 def get_interpolation(program, interp):
@@ -300,3 +408,296 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program
+
+class UnsupportedOs(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class Os(object):
+    '''Work out which platform we are running on'''
+
+    def __init__(self):
+        import os
+        if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
+        import platform
+        self.os = platform.system().lower()
+        self.arch = platform.machine()
+        self.applever = ''
+        
+        if self.os == 'darwin':
+            self.os = 'osx'
+            self.vendor = 'apple'
+            self.version = Version(platform.release())
+            (self.applever,_,_) = platform.mac_ver()
+            if self.arch == 'Power Macintosh': raise UnsupportedOs('We do not support PowerPC')
+            self.glibc = ''
+            self.bits = ''
+        elif self.os == 'linux':
+            if hasattr(platform, 'linux_distribution'):
+                # We have a modern python (>2.4)
+                (self.vendor, version, _) = platform.linux_distribution(full_distribution_name=0)
+            else:
+                (self.vendor, version, _) = platform.dist()
+            self.vendor = self.vendor.lower()
+            self.version = Version(version)
+            self.glibc = platform.libc_ver()
+            if self.arch == 'x86_64':
+                self.bits = '64'
+            else:
+                self.bits = '32'
+                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
+        else:
+            raise UnsupportedOs("We do not support this OS.")
+
+class Version(object):
+    def __init__(self,version_sct):
+        self.version_sct = version_sct
+
+        if not isinstance(version_sct,basestring):
+            print version_sct
+            raise Exception('Version is not a string.')
+
+        # detect beta, if it exist
+        version_sct_beta = version_sct.split('_')
+        try:
+            self.beta = version_sct_beta[1]
+            version_sct_main = version_sct_beta[0]
+            self.isbeta = True
+        except IndexError:
+            self.beta = ""
+            version_sct_main = version_sct
+            self.isbeta = False
+
+        version_sct_split = version_sct_main.split('.')
+
+        for v in version_sct_split:
+            if not v.isdigit():
+                raise ValueError('Bad version string.')
+        self.major = int(version_sct_split[0])
+        try:
+            self.minor = int(version_sct_split[1])
+        except IndexError:
+            self.minor = 0
+        try:
+            self.patch = int(version_sct_split[2])
+        except IndexError:
+            self.patch = 0
+        try:
+            self.hotfix = int(version_sct_split[3])
+        except IndexError:
+            self.hotfix = 0
+
+    def __repr__(self):
+        return "Version(%s,%s,%s,%s,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta)
+
+    def __str__(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        if self.beta != "":
+            result = result+"_"+self.beta
+        return result
+
+    def __ge__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self > other or self == other:
+            return True
+        return False
+    def __le__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self < other or self == other:
+            return True
+        return False
+    def __cmp__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__lt__(other):
+            return -1
+        if self.__gt__(other):
+            return 1
+        return 0
+    def __lt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        if self.minor > other.minor:
+            return False
+        if self.patch < other.patch:
+            return True
+        if self.patch > other.patch:
+            return False
+        if self.hotfix < other.hotfix:
+            return True
+        if self.hotfix > other.hotfix:
+            return False
+        if self.isbeta and not other.isbeta:
+            return True
+        if not self.isbeta and other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False
+    
+    def __gt__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor > other.minor:
+            return True
+        if self.minor < other.minor:
+            return False
+        if self.patch > other.patch:
+            return True
+        if self.patch < other.patch:
+            return False
+        if self.hotfix > other.hotfix:
+            return True
+        if self.hotfix < other.hotfix:
+            return False
+        if not self.isbeta and other.isbeta:
+            return True
+        if self.isbeta and not other.isbeta:
+            return False
+        # major, minor and patch all match so this is not less than
+        return False 
+    
+    def __eq__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
+            return True
+        return False
+    
+    def __ne__(self, other):
+        if not isinstance(other, Version):
+            return NotImplemented
+        if self.__eq__(other):
+            return False
+        return True
+
+    def isLessThan_MajorMinor(self, other):
+        if self.major < other.major:
+            return True
+        if self.major > other.major:
+            return False
+        if self.minor < other.minor:
+            return True
+        else:
+            return False
+
+    def isGreaterOrEqualThan_MajorMinor(self, other):
+        if self.major > other.major:
+            return True
+        if self.major < other.major:
+            return False
+        if self.minor >= other.minor:
+            return True
+        else:
+            return False
+
+    def isEqualTo_MajorMinor(self, other):
+        return self.major == other.major and self.minor == other.minor
+
+    def isLessPatchThan_MajorMinor(self, other):
+        if self.isEqualTo_MajorMinor(other):
+            if self.patch < other.patch:
+                return True
+        return False
+
+    def getFolderName(self):
+        result = str(self.major)+"."+str(self.minor)
+        if self.patch != 0:
+            result = result+"."+str(self.patch)
+        if self.hotfix != 0:
+            result = result+"."+str(self.hotfix)
+        result = result+"_"+self.beta
+        return result
+
+class shell_colours(object):
+    default = '\033[0m'
+    rfg_kbg = '\033[91m'
+    gfg_kbg = '\033[92m'
+    yfg_kbg = '\033[93m'
+    mfg_kbg = '\033[95m'
+    yfg_bbg = '\033[104;93m'
+    bfg_kbg = '\033[34m'
+    bold = '\033[1m'
+
+class MsgUser(object): 
+    __debug = False
+    __quiet = False
+    
+    @classmethod
+    def debugOn(cls):
+        cls.__debug = True
+    @classmethod
+    def debugOff(cls):
+        cls.__debug = False
+    @classmethod
+    def quietOn(cls):
+        cls.__quiet = True
+    @classmethod
+    def quietOff(cls):
+        cls.__quiet = False
+
+    @classmethod
+    def isquiet(cls):
+        return cls.__quiet
+    
+    @classmethod
+    def isdebug(cls):
+        return cls.__debug
+    
+    @classmethod    
+    def debug(cls, message, newline=True):
+        if cls.__debug:
+            from sys import stderr
+            mess = str(message)
+            if newline:
+                mess += "\n"
+            stderr.write(mess)
+    
+    @classmethod
+    def message(cls, msg):
+        if cls.__quiet:
+            return
+        print msg
+    
+    @classmethod
+    def question(cls, msg):
+        print msg,
+                  
+    @classmethod
+    def skipped(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+
+    @classmethod
+    def ok(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def failed(cls, msg):
+        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+    
+    @classmethod
+    def warning(cls, msg):
+        if cls.__quiet:
+            return
+        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
