@@ -40,14 +40,13 @@ class Image(object):
             self.data = np.zeros(shape)
         # create a copy of im_ref
         elif im_copy is not None:
-            self = copy.copy(im_copy)
-            """self.data = im_copy.data
+            self.data = copy.copy(im_copy.data)
             self.hdr = im_copy.hdr
             self.orientation = im_copy.orientation
             self.absolutepath = im_copy.absolutepath
             self.path = im_copy.path
             self.file_name = im_copy.file_name
-            self.ext = im_copy.ext"""
+            self.ext = im_copy.ext
         # create an empty image (full of zero) with the same header than ref. Ref is an Image.
         elif im_ref_zero is not None:
             self.data = np.zeros(im_ref_zero.data.shape)
@@ -218,17 +217,17 @@ class Image(object):
         list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
 
         if sorting is not None:
-            if reverse_coord is not [True, False]:
+            if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
 
             if sorting == 'x':
-                sorted(list_coordinates, key=Coordinate.x, reverse=reverse_coord)
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
             elif sorting == 'y':
-                sorted(list_coordinates, key=Coordinate.y, reverse=reverse_coord)
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
             elif sorting == 'z':
-                sorted(list_coordinates, key=Coordinate.z, reverse=reverse_coord)
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
             elif sorting == 'value':
-                sorted(list_coordinates, key=Coordinate.value, reverse=reverse_coord)
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
             else:
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
