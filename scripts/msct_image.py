@@ -17,6 +17,7 @@ import sct_utils as sct
 import numpy as np
 import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
+from msct_types import Coordinate
 
 
 class Image(object):
@@ -205,6 +206,32 @@ class Image(object):
         im_buf = copy.copy(self)
         im_buf.data *= 0
         return im_buf
+
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
+        """
+        This function return all the non-zero coordinates that the image contains.
+        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
+        If reverse_coord is True, coordinate are sorted from larger to smaller.
+        """
+        X, Y, Z = (self.image_input.data > 0).nonzero()
+        list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+
+        if sorting is not None:
+            if reverse_coord is not [True, False]:
+                raise ValueError('reverse_coord parameter must be a boolean')
+
+            if sorting == 'x':
+                sorted(list_coordinates, key=Coordinate.x, reverse=reverse_coord)
+            elif sorting == 'y':
+                sorted(list_coordinates, key=Coordinate.y, reverse=reverse_coord)
+            elif sorting == 'z':
+                sorted(list_coordinates, key=Coordinate.z, reverse=reverse_coord)
+            elif sorting == 'value':
+                sorted(list_coordinates, key=Coordinate.value, reverse=reverse_coord)
+            else:
+                raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
+
+        return list_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
