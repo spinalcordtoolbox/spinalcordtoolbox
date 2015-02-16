@@ -118,7 +118,7 @@ class Option:
             if param not in self.example:
                 self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
         
-        elif type_option is list:
+        elif isinstance(type_option, list):
             """
             This option is defined as a list delimited by a delimiter (that cannot be a space)
             For now, only one-layer list are available
@@ -135,7 +135,7 @@ class Option:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
         else:
-            self.parser.usage.error("ERROR: Type of option \"" + self.type_value +"\" is not supported by the parser.")
+            self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
 
     def checkStandardType(self,param,type=None):
         # check if a int is really a int (same for str, float, long and complex)
