@@ -196,6 +196,29 @@ class Parser:
         # initialize the spelling checker
         self.spelling.setWordsAsList([name for name in self.options])
 
+        # checking if some file names or folder names contains spaces.
+        # We suppose here that the user provides correct structure of arguments (i.e., one "-something", one "argument value", one "-somethingelse", one "another argument value", etc.)
+        # We also suppose that multiple spaces can be present
+        arguments_temp = []
+        index_next = 0
+        for index in range(0,len(arguments)):
+            if index == index_next:
+                if arguments[index][0] == '-':
+                    arguments_temp.append(arguments[index])
+                    index_next = index+1
+                else:
+                    temp_str = arguments[index]
+                    index_temp = index
+                    if index_temp < len(arguments)-1:
+                        while arguments[index_temp+1][0] != '-': # check if a space is present. If so, concatenation of strings.
+                            temp_str += ' '+arguments[index_temp+1]
+                            index_temp += 1
+                            if index_temp >= len(arguments)-1:
+                                break
+                    index_next = index_temp+1
+                    arguments_temp.append(temp_str)
+        arguments = arguments_temp
+
         skip = False
         for index,arg in enumerate(arguments):
             if skip: # if argument need to be skipped, we pass

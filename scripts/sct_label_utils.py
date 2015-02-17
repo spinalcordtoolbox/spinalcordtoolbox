@@ -16,10 +16,8 @@
 from msct_parser import Parser
 from msct_image import Image
 
-import os
 import sys
 import sct_utils as sct
-import numpy as np
 import math
 
 
@@ -34,14 +32,12 @@ class Param:
 
 
 class ProcessLabels(object):
-    def __init__(self, fname_label, type_process, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
+    def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
                  coordinates=None, verbose='1'):
         self.image_input = Image(fname_label)
 
         if fname_ref is not None:
             self.image_ref = Image(fname_ref)
-
-        self.type_process = type_process
 
         self.fname_output = fname_output
         self.cross_radius = cross_radius
@@ -49,29 +45,31 @@ class ProcessLabels(object):
         self.coordinates = coordinates
         self.verbose = verbose
 
-    def process(self):
-        if self.type_process == 'cross':
+    def process(self, type_process):
+        if type_process == 'cross':
             self.output_image = self.cross()
-        elif self.type_process == 'plan':
+        elif type_process == 'plan':
             self.output_image = self.plan(self.cross_radius, 100, 5)
-        elif self.type_process == 'plan_ref':
+        elif type_process == 'plan_ref':
             self.output_image = self.plan_ref()
-        elif self.type_process == 'increment':
+        elif type_process == 'increment':
             self.output_image = self.increment_z_inverse()
-        elif self.type_process == 'MSE':
+        elif type_process == 'MSE':
             self.MSE()
-        elif self.type_process == 'remove':
+        elif type_process == 'remove':
             self.output_image = self.remove_label()
-        elif self.type_process == 'centerline':
+        elif type_process == 'centerline':
             self.extract_centerline()
-        elif self.type_process == 'display-voxel':
+        elif type_process == 'display-voxel':
             self.display_voxel()
-        elif self.type_process == 'create':
+        elif type_process == 'create':
             self.output_image = self.create_label
-        elif self.type_process == 'diff':
+        elif type_process == 'diff':
             self.diff()
-        elif self.type_process == 'dist-inter':  # second argument is in pixel distance
+        elif type_process == 'dist-inter':  # second argument is in pixel distance
             self.distance_interlabels(5)
+        else:
+            sct.printv('Error: The chosen process is not available.',1,'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -394,5 +392,5 @@ if __name__ == "__main__":
         input_dilate = arguments["-d"]
     if "-v" in arguments:
         input_verbose = arguments["-v"]
-    processor = ProcessLabels(input_filename, process_type, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
-    processor.process()
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
+    processor.process(process_type)
