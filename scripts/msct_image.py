@@ -17,18 +17,44 @@ import sct_utils as sct
 import numpy as np
 import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
+from msct_types import Coordinate
+import copy
 
 
 class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, split=False):
+    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_copy=None, im_ref_zero=None, split=False):
+        # initialization
+        self.absolutepath = ""
+        self.path = ""
+        self.file_name = ""
+        self.ext = ""
+
+        # load an image from file
         if path is not None:
             self.loadFromPath(path, verbose)
+        # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
+        elif shape is not None:
+            self.data = np.zeros(shape)
+        # create a copy of im_ref
+        elif im_copy is not None:
+            self.data = copy.copy(im_copy.data)
+            self.hdr = im_copy.hdr
+            self.orientation = im_copy.orientation
+            self.absolutepath = im_copy.absolutepath
+            self.path = im_copy.path
+            self.file_name = im_copy.file_name
+            self.ext = im_copy.ext
+        # create an empty image (full of zero) with the same header than ref. Ref is an Image.
+        elif im_ref_zero is not None:
+            self.data = np.zeros(im_ref_zero.data.shape)
+            self.hdr = im_ref_zero.hdr
+            self.orientation = im_ref_zero.orientation
+        # create an image from an array. No header.
         elif np_array is not None:
             self.data = np_array
-            self.path = None
             self.orientation = None
         else:
             raise TypeError(' Image constructor takes at least one argument.')
@@ -50,7 +76,12 @@ class Image(object):
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.absolutepath = path
         self.path, self.file_name, self.ext = sct.extract_fname(path)
+
+    def setFileName(self, filename):
+        self.absolutepath = filename
+        self.path, self.file_name, self.ext = sct.extract_fname(filename)
 
     def changeType(self, type=''):
         from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
@@ -123,7 +154,7 @@ class Image(object):
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
 
-        print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        #print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
         self.data = type_build(self.data)
@@ -172,10 +203,35 @@ class Image(object):
 
     # return an empty image of the same size as the image self
     def empty_image(self):
-        import copy
         im_buf = copy.copy(self)
         im_buf.data *= 0
         return im_buf
+
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
+        """
+        This function return all the non-zero coordinates that the image contains.
+        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
+        If reverse_coord is True, coordinate are sorted from larger to smaller.
+        """
+        X, Y, Z = (self.data > 0).nonzero()
+        list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+
+        if sorting is not None:
+            if reverse_coord not in [True, False]:
+                raise ValueError('reverse_coord parameter must be a boolean')
+
+            if sorting == 'x':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'y':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'z':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'value':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            else:
+                raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
+
+        return list_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
