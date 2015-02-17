@@ -160,7 +160,7 @@ def check_folder_exist(fname, verbose=1):
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The directory ' + str(fname) + ' does not exist. Exit program.\n', 1, 'error')
 
 #=======================================================================================================================
 # check_write_permission:  Check existence of a folder.
@@ -354,7 +354,8 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit prohram
     if type == 'error':
-        raise NameError('Error!')
+        #raise NameError('Error!')
+        sys.exit(2)
 
 
 #=======================================================================================================================
