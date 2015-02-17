@@ -3,15 +3,17 @@
 #
 # Parser
 # Add option with name, type, short description, mandatory or not, example using add_option method.
+# usage: add_option(name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None)
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
 # Type of options are:
 # - file, folder (check existence)
-# - folder_creation (check existence and if does not exist, create it)
+# - folder_creation (check existence and if does not exist, create it if writing permission)
+# - file_output (check writing permission)
 # - str, int, float, long, complex (check if input is the correct type)
 # - multiple_choice
 # - coordinate [x, y, z, value]
 # - lists, for example list of coordinate: [[','],'Coordinate']
-# - None, return True when detected
+# - None, return True when detected (example of boolean)
 #
 # Usage:
 # from msct_parser import *
@@ -98,6 +100,11 @@ class Option:
         elif type_option == "file":
             return self.checkFile(param)
 
+        elif type_option == "file_output": # check if permission are required
+            if not sct.check_write_permission(param):
+                self.parser.usage.error("Error of writing permissions on file: "+param)
+            return param
+
         elif type_option == "folder":
             return self.checkFolder(param)
 
@@ -111,7 +118,7 @@ class Option:
             if param not in self.example:
                 self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
         
-        elif type_option is list:
+        elif isinstance(type_option, list):
             """
             This option is defined as a list delimited by a delimiter (that cannot be a space)
             For now, only one-layer list are available
@@ -128,7 +135,7 @@ class Option:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
         else:
-            self.parser.usage.error("ERROR: Type of option \"" + self.type_value +"\" is not supported by the parser.")
+            self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
 
     def checkStandardType(self,param,type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -254,16 +261,17 @@ class Usage:
 """+os.path.basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
+Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
 
     def set_description(self, description):
-        self.description = '\n\n    DESCRIPTION\n' + self.align(description)
+        self.description = '\n\nDESCRIPTION\n' + self.align(description)
 
     def set_usage(self):
-        self.usage = '\n\n    USAGE\n' + os.path.basename(self.file)
-                     #+ str([arg for arg in self.arguments])
-        for opt in self.arguments:
-            self.usage += '     ' + opt + ' ' + str(self.arguments[opt].type_value)
+        self.usage = '\n\nUSAGE\n' + os.path.basename(self.file)
+        mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
+        for opt in mandatory:
+            self.usage += ' ' + opt + ' ' + str(self.arguments[opt].type_value)
+        self.usage += '\n'
 
     def set_arguments(self):
         mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
@@ -271,29 +279,33 @@ last modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(crea
         #optional = self.arguments
         #optional = mandatory
         if mandatory:
-            self.arguments_string = '\n\n    MANDATORY ARGUMENTS\n'
+            self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
                 type_value = self.refactor_type_value(opt)
                 line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += self.tab(line) + '\n'
+                self.arguments_string += '  ' + self.tab(line) + '\n'
         if optional:
-            self.arguments_string += '\n\n    OPTIONAL ARGUMENTS\n'
+            self.arguments_string += '\n\nOPTIONAL ARGUMENTS\n'
             for opt in optional:
                 type_value = self.refactor_type_value(opt)
                 line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += self.tab(line) + '\n'
+                self.arguments_string += '  ' + self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
-        if type(self.arguments[opt].type_value) is not list:
-            type_value = '<' + self.arguments[opt].type_value + '>'
+        if self.arguments[opt].type_value is None:
+            type_value = ''
+        elif self.arguments[opt].type_value == 'multiple_choice':
+            type_value = '<multiple choice: ' + self.print_list_with_brackets(self.arguments[opt].example)
+        elif type(self.arguments[opt].type_value) is list:
+            type_value = '<list: ' + str(self.arguments[opt].type_value) + '>'
         else:
-            type_value = self.print_list_with_brackets(self.arguments[opt].type_value)
+            type_value = '<' + self.arguments[opt].type_value + '>'
         return type_value
 
     def set_example(self):
-        self.example = '\n\n    EXAMPLE\n' + \
+        self.example = '\n\nEXAMPLE\n' + \
             os.path.basename(self.file)
-        for opt in [opt for opt in self.arguments if self.arguments[opt].example]:
+        for opt in [opt for opt in self.arguments if (self.arguments[opt].example and type(self.arguments[opt].example) is not list)]:
             self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
 
     def generate(self, error=None):

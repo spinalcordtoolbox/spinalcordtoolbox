@@ -162,6 +162,21 @@ def check_folder_exist(fname, verbose=1):
     else:
         printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
+#=======================================================================================================================
+# check_write_permission:  Check existence of a folder.
+#   Does not create it. If you want to create a folder, use create_folder
+#=======================================================================================================================
+def check_write_permission(fname, verbose=1):
+    if os.path.isdir(fname):
+        if os.path.isdir(fname):
+            return os.access(fname, os.W_OK)
+        else:
+            printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+    else:
+        path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
+        return os.access(path_fname, os.W_OK)
+
+
 
 #=======================================================================================================================
 # create_folder:  create folder (check if exists before creating it)
@@ -265,15 +280,19 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
             printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+'.nii')
+            os.remove(path_out+file_out+'.nii')
+#            os.system('rm '+path_out+file_out+'.nii')  # 
+            # use remove instead of rm because: https://github.com/neuropoly/spinalcordtoolbox/issues/259
         if os.path.isfile(path_out+file_out+'.nii.gz'):
             printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+'.nii.gz')
+            os.remove(path_out+file_out+'.nii.gz')
+#            os.system('rm '+path_out+file_out+'.nii.gz')
     # if path_in the same as path_out, only delete fname_out with specific ext_out extension
     else:
         if os.path.isfile(path_out+file_out+ext_out):
             printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+ext_out)
+            os.remove(path_out+file_out+ext_out)
+            #os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
