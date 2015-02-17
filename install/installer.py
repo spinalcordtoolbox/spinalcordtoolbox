@@ -639,7 +639,7 @@ class Installer:
         # install required software
         print "\nInstall required software... "
         os.chdir("requirements")
-        cmd = "./requirements.sh"
+        cmd = "sudo ./requirements.sh"
         print ">> " + cmd
         status, output = commands.getstatusoutput(cmd)
         if status != 0:
