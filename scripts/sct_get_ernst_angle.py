@@ -33,7 +33,7 @@ class ErnstAngle:
         self.t1=t1
         self.tr=tr
         self.fname_output = fname_output
-        return self.getErnstAngle(self.tr)
+
 
     #compute and return the Ernst Angle
     def getErnstAngle(self,tr):
