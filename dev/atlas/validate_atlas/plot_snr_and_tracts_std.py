@@ -456,15 +456,15 @@ def main():
     #
     # plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
 
     # Plot A -- v3: Box plots absolute error
     fig6 = plt.figure(6, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)', fontsize=26)
-    plt.xlabel('Noise std', fontsize=26)
-    plt.title('Absolute error within all tracts as a function of noise std\n', fontsize=30)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
+    plt.xlabel('Noise std (% of the mean value WM value)', fontsize=55)
+    plt.title('Absolute error within all tracts as a function of noise std\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -502,16 +502,16 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(results_folder+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
+    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
 
 
     # Plot B -- v3: Box plots absolute error
     fig7 = plt.figure(7, figsize=(30, 15))
     width = 1.0 / (nb_method + 1)
     ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)', fontsize=26)
-    plt.xlabel('Tracts std (in percentage of the mean value of the tracts)', fontsize=26)
-    plt.title('Absolute error within all tracts as a function of tracts std\n', fontsize=30)
+    plt.ylabel('Absolute error (%)', fontsize=55)
+    plt.xlabel('Tracts std (% of the mean value WM value)', fontsize=55)
+    plt.title('Absolute error within all tracts as a function of tracts std\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -550,7 +550,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(results_folder+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
+    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
 
 
     plt.show()
