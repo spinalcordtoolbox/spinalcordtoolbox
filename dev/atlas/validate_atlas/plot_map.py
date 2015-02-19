@@ -250,7 +250,7 @@ def main():
 
 
     # ********************************** START PLOTTING HERE ***********************************************************
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'Trebuchet'})
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'Trebuchet'})
     # matplotlib.rcParams['legend.handlelength'] = 0
 
 
@@ -268,9 +268,9 @@ def main():
 
     # Errorbar plot
     plt.figure()
-    plt.ylabel('Mean absolute error (%)', fontsize=18)
-    plt.xlabel('Variance within labels (in percentage of the mean)', fontsize=18)
-    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=20)
+    plt.ylabel('Mean absolute error (%)', fontsize=55)
+    plt.xlabel('Variance within labels (in percentage of the mean)', fontsize=55)
+    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=65)
 
     plt.errorbar(map_var_params[ind_var_label_sort_var_noise20, 0], mean_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], std_abs_error_per_meth[ind_var_label_sort_var_noise20, 0], color='blue', marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
     plt.errorbar(map_var_params[ind_var_noise_sort_var_label20, 1], mean_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], std_abs_error_per_meth[ind_var_noise_sort_var_label20, 0], color='red', marker='o', linestyle='--', markersize=8, elinewidth=2, capthick=2, capsize=10)
@@ -284,12 +284,12 @@ def main():
 
     # Box-and-whisker plots
     nb_box = 2
-    plt.figure(figsize=(20, 10))
+    plt.figure(figsize=(30, 15))
     width = 1.0 / (nb_box + 1)
     ind_fig = numpy.arange(len(map_var_params[ind_var_label_sort_var_noise20, 0])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('\nVariance', fontsize=22)
-    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=24)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
+    plt.xlabel('Variance', fontsize=55)
+    plt.title('Sensitivity of the method \"MAP\" to the variance within labels and to the SNR\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_box))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -322,7 +322,7 @@ def main():
 
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ pixels^2?}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean}}$'], loc='best', handletextpad=-2)
+    leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ voxels^2}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean\ value}}$'], loc=1, handletextpad=-2)
     color_legend_texts(leg)
     # convert xtick labels into int
     xtick_labels = [int(xtick) for xtick in map_var_params[ind_var_label_sort_var_noise20, 0]]
@@ -332,7 +332,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(results_folder+'/../absolute_error_as_a_function_of_MAP_parameters')
+    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_as_a_function_of_MAP_parameters')
 
 
     plt.show()
