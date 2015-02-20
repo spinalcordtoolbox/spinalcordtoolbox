@@ -30,6 +30,19 @@ class Param:
         self.csf_value_to_display = 5
         self.nb_RL_labels = 15
 
+class Color:
+    def __init__(self):
+        self.purple = '\033[95m'
+        self.cyan = '\033[96m'
+        self.darkcyan = '\033[36m'
+        self.blue = '\033[94m'
+        self.green = '\033[92m'
+        self.yellow = '\033[93m'
+        self.red = '\033[91m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.end = '\033[0m'
+
 # =======================================================================================================================
 # main
 # =======================================================================================================================
@@ -326,14 +339,15 @@ def main():
 
     # *********************************************** START PLOTTING HERE **********************************************
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    fig = plt.figure(figsize=(37, 25))
+    # stringColor = Color()
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
+    fig = plt.figure(figsize=(60, 37))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('Ascending fractional volume', fontsize=22)
-    plt.title('Absolute error per tract as a function of their fractional volume\n', fontsize=24)
-    plt.suptitle('\n(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=18)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
+    plt.xlabel('Fractional volume', fontsize=55)
+    plt.title('Absolute error per tract as a function of their fractional volume\n', fontsize=65)
+    plt.suptitle('(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=60)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -349,14 +363,16 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.5)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.2)
 
     # concatenate value of fractional volume to labels'name
-    xtick_labels = [labels_name_sort[i_lab]+'\n('+str(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab])+')' for i_lab in range(0, len(labels_name_sort))]
+    xtick_labels = [labels_name_sort[i_lab]+'\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab], 2))+']}$' for i_lab in range(0, len(labels_name_sort))]
+    ind_lemniscus = numpy.where(labels_name_sort == 'spinal lemniscus (spinothalamic and spinoreticular tracts)')[0][0]
+    xtick_labels[ind_lemniscus] = 'spinal lemniscus\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][ind_lemniscus], 2))+']}$'
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(errorbar_plots, methods_to_display, loc=1, fontsize=22, numpoints=1)
-    plt.xticks(ind_fig + (numpy.floor(float(nb_method-1)/2)) * width, xtick_labels, fontsize=18)
+    plt.legend(errorbar_plots, methods_to_display, loc=1, fontsize=45, numpoints=1)
+    plt.xticks(ind_fig + (numpy.floor(float(nb_method-1)/2)) * width, xtick_labels, fontsize=45)
     # Tweak spacing to prevent clipping of tick-labels
     plt.subplots_adjust(bottom=0, top=0.95, right=0.96)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
@@ -366,7 +382,7 @@ def main():
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig(results_folder+'/absolute_error_vs_fractional_volume')
+    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_fractional_volume')
 
     plt.show()
 
