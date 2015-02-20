@@ -255,25 +255,31 @@ def main():
     # find index of the file generated with sigma noise = 10 and range tracts = -10:+10
     ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
 
-    fig0 = plt.figure(0, figsize=(20, 10))
+    fig0 = plt.figure(0, figsize=(34, 17))
     width = 0.5/(nb_method+1)
     ind_fig0 = numpy.arange(len(labels_id[0]))
-    plt.ylabel('Absolute error (%)', fontsize=26)
-    plt.xlabel('Labels', fontsize=26)
-    plt.suptitle('Automatic estimation vs. manual estimation', fontsize=30)
-    plt.title('(Noise std='+str(snr[0])+', Tracts std='+str(tracts_std[0])+', CSF value='+str(csf_values[0])+')\n', fontsize=28)
+    plt.ylabel('Absolute error (%)', fontsize=55)
+    plt.xlabel('Labels', fontsize=55)
+    plt.suptitle('Automatic estimation vs. manual estimation', fontsize=65)
+    plt.title('(Noise std='+str(snr[0])+', Tracts std='+str(tracts_std[0])+', CSF value='+str(csf_values[0])+')\n', fontsize=65)
 
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     plots = []
+
+    marker_size = 30
+    line_width = 3.0
+    cap_size = 15
+    eline_width = 7.0
+    cap_thick = 5.0
     for meth, color in zip(methods_to_display, colors):
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o')
+        plot = plt.errorbar(ind_fig0+i_meth_to_display*width+(float(i_meth_to_display)*width)/(nb_method+1), error_per_label[ind_file_noise10_tracts_std10, :, i_meth], std_per_label[ind_file_noise10_tracts_std10, :, i_meth], color=color, linestyle='None', marker='o', ms=marker_size, lw=line_width, capsize=cap_size, capthick=cap_thick, elinewidth=eline_width)
         plots.append(plot[0])
 
     # add alternated vertical background colored bars
@@ -282,17 +288,17 @@ def main():
 
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
-    plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=22)
+    plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=45)
     plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
     # plt.gca().set_ylim([0, 2])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
     # adjust the size of the frame
-    plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
+    # plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
 
 
-    plt.savefig(results_folder+'/automatic_method_vs_manual_methods')
+    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/automatic_method_vs_manual_methods')
 
 
     plt.show()
