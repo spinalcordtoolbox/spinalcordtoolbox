@@ -52,14 +52,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
-import time
-import sys
-import commands
 import sct_utils as sct
-import re, collections
-import datetime
-from itertools import *
 from msct_types import *
 
 ########################################################################################################################
@@ -265,7 +258,6 @@ class Parser:
 ########################################################################################################################
 
 class Usage:
-
     # Constructor
     def __init__(self, parser, file):
         self.file = (file)
@@ -279,9 +271,11 @@ class Usage:
         self.arguments_string = ''
 
     def set_header(self):
-        creation = time.gmtime(os.path.getmtime(__file__))
+        from time import gmtime
+        from os.path import basename, getmtime
+        creation = gmtime(getmtime(__file__))
         self.header = """
-"""+os.path.basename(self.file)+"""
+"""+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
@@ -290,7 +284,8 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         self.description = '\n\nDESCRIPTION\n' + self.align(description)
 
     def set_usage(self):
-        self.usage = '\n\nUSAGE\n' + os.path.basename(self.file)
+        from os.path import basename
+        self.usage = '\n\nUSAGE\n' + basename(self.file)
         mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
         for opt in mandatory:
             self.usage += ' ' + opt + ' ' + str(self.arguments[opt].type_value)
@@ -326,8 +321,9 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         return type_value
 
     def set_example(self):
+        from os.path import basename
         self.example = '\n\nEXAMPLE\n' + \
-            os.path.basename(self.file)
+            basename(self.file)
         for opt in [opt for opt in self.arguments if (self.arguments[opt].example and type(self.arguments[opt].example) is not list)]:
             self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
 
@@ -350,7 +346,8 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
             self.generate(error)
         else:
             print self.generate()
-            sys.exit(0)
+            from sys import exit
+            exit(0)
 
     def print_list_with_brackets(self, l):
         type_value = '{'
@@ -420,10 +417,13 @@ class SpellingChecker:
     def setWordsAsFile(self, fname):
         self.NWORDS = self.train(self.words(file(fname).read()))
 
-    def words(self, text): return re.findall('[a-z]+', text.lower())
+    def words(self, text):
+        from re import findall
+        return findall('[a-z]+', text.lower())
 
     def train(self, features):
-        model = collections.defaultdict(lambda: 1)
+        from collections import defaultdict
+        model = defaultdict(lambda: 1)
         for f in features:
             model[f] += 1
         return model
