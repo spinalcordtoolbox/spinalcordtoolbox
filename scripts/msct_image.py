@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Augustin Roux, Benjamin De Leener
-# Modified: 2015-02-10
+# Modified: 2015-02-20
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -40,18 +40,18 @@ class Image(object):
             self.data = np.zeros(shape)
         # create a copy of im_ref
         elif im_copy is not None:
-            self.data = copy.copy(im_copy.data)
-            self.hdr = im_copy.hdr
-            self.orientation = im_copy.orientation
-            self.absolutepath = im_copy.absolutepath
-            self.path = im_copy.path
-            self.file_name = im_copy.file_name
-            self.ext = im_copy.ext
+            self.data[:] = im_copy.data
+            self.hdr = copy.deepcopy(im_copy.hdr)
+            self.orientation = copy.deepcopy(im_copy.orientation)
+            self.absolutepath = copy.deepcopy(im_copy.absolutepath)
+            self.path = copy.deepcopy(im_copy.path)
+            self.file_name = copy.deepcopy(im_copy.file_name)
+            self.ext = copy.deepcopy(im_copy.ext)
         # create an empty image (full of zero) with the same header than ref. Ref is an Image.
         elif im_ref_zero is not None:
             self.data = np.zeros(im_ref_zero.data.shape)
-            self.hdr = im_ref_zero.hdr
-            self.orientation = im_ref_zero.orientation
+            self.hdr = copy.deepcopy(im_ref_zero.hdr)
+            self.orientation = copy.deepcopy(im_ref_zero.orientation)
         # create an image from an array. No header.
         elif np_array is not None:
             self.data = np_array
@@ -203,9 +203,13 @@ class Image(object):
 
     # return an empty image of the same size as the image self
     def empty_image(self):
-        im_buf = copy.copy(self)
+        im_buf = copy.deepcopy(self)
         im_buf.data *= 0
         return im_buf
+
+    # return an empty image of the same size as the image self
+    def deepcopy(self):
+        return copy.deepcopy(self)
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
@@ -276,6 +280,10 @@ class Image(object):
         #print data_mask
         print 'SHAPE ', new_data.shape
         self.data = new_data
+
+    def invert(self):
+        self.data = self.data.max()-self.data
+        return self
 
     def show(self):
         imgplot = plt.imshow(self.data)
