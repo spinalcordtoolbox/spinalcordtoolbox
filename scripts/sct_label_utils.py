@@ -78,7 +78,7 @@ class ProcessLabels(object):
 
 
     def cross(self):
-        image_output = Image(im_copy=self.image_input)
+        image_output = Image(self.image_input)
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -124,7 +124,8 @@ class ProcessLabels(object):
         """
         This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -137,7 +138,8 @@ class ProcessLabels(object):
         """
         This function generate a plan in the reference space for each label present in the input image
         """
-        image_output = Image(im_ref_zero=self.image_ref)
+        image_output = Image(self.image_ref)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -152,7 +154,8 @@ class ProcessLabels(object):
         Therefore, labels are incremented from top to bottom, assuming a RPI orientation
         Labels are assumed to be non-zero.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates(sorted='z',reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -207,7 +210,8 @@ class ProcessLabels(object):
         self.coordinates is a list of coordinates (class in msct_types).
         a Coordinate contains x, y, z and value.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
 
         # loop across labels
         for i,coord in enumerate(self.coordinates):
@@ -221,7 +225,7 @@ class ProcessLabels(object):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
         """
-        image_output = Image(im_copy=self.image_input)
+        image_output = Image(self.image_input)
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
