@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Augustin Roux, Benjamin De Leener
-# Modified: 2015-02-10
+# Modified: 2015-02-20
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -18,49 +18,69 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
 from msct_types import Coordinate
-import copy
 
 
 class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_copy=None, im_ref_zero=None, split=False):
-        # initialization
+
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1, split=False):
+        # initialization of all parameters
+        self.data = None
+        self.hdr = None
+        self.orientation = None
         self.absolutepath = ""
         self.path = ""
         self.file_name = ""
         self.ext = ""
+        self.dim = None
 
         # load an image from file
-        if path is not None:
-            self.loadFromPath(path, verbose)
+        if type(param) is str:
+            self.loadFromPath(param, verbose)
+        # copy constructor
+        elif isinstance(param, type(self)):
+            self.copy(param)
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
-        elif shape is not None:
-            self.data = np.zeros(shape)
+        elif type(param) is list:
+            self.data = np.zeros(param)
+            self.dim = param
+            self.hdr = hdr
+            self.orientation = orientation
+            self.absolutepath = absolutepath
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         # create a copy of im_ref
-        elif im_copy is not None:
-            self.data = copy.copy(im_copy.data)
-            self.hdr = im_copy.hdr
-            self.orientation = im_copy.orientation
-            self.absolutepath = im_copy.absolutepath
-            self.path = im_copy.path
-            self.file_name = im_copy.file_name
-            self.ext = im_copy.ext
-        # create an empty image (full of zero) with the same header than ref. Ref is an Image.
-        elif im_ref_zero is not None:
-            self.data = np.zeros(im_ref_zero.data.shape)
-            self.hdr = im_ref_zero.hdr
-            self.orientation = im_ref_zero.orientation
-        # create an image from an array. No header.
-        elif np_array is not None:
-            self.data = np_array
-            self.orientation = None
+        elif isinstance(param, (np.ndarray, np.generic)):
+            self.data = param
+            self.dim = self.data.shape
+            self.hdr = hdr
+            self.orientation = orientation
+            self.absolutepath = absolutepath
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError(' Image constructor takes at least one argument.')
+
+        """
         if split:
             self.data = self.split_data()
-        self.dim = self.data.shape
+        """
+
+    def __deepcopy__(self, memo):
+        from copy import deepcopy
+        return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+
+    def copy(self, image=None):
+        from copy import deepcopy
+        if image is not None:
+            self.data = deepcopy(image.data)
+            self.dim = deepcopy(image.dim)
+            self.hdr = deepcopy(image.hdr)
+            self.orientation = deepcopy(image.orientation)
+            self.absolutepath = deepcopy(image.absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
+        else:
+            return deepcopy(self)
 
     def loadFromPath(self, path, verbose):
         """
@@ -85,6 +105,7 @@ class Image(object):
 
     def changeType(self, type=''):
         from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
+
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -119,12 +140,12 @@ class Image(object):
             isInteger = True
             if type == 'minimize':
                 for vox in self.data.flatten():
-                    if int(vox)!=vox:
+                    if int(vox) != vox:
                         isInteger = False
                         break
 
             if isInteger:
-                if min_vox >= 0: # unsigned
+                if min_vox >= 0:  # unsigned
                     if max_vox <= np.iinfo(np.uint8).max:
                         type = 'uint8'
                     elif max_vox <= np.iinfo(np.uint16):
@@ -147,14 +168,14 @@ class Image(object):
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
-                #if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
                 if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
                     type = 'float32'
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
 
-        #print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
         self.data = type_build(self.data)
@@ -191,7 +212,7 @@ class Image(object):
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
     def flatten(self):
-        #return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
+        # return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
         return self.data.flatten()
 
     # return a list of the image slices flattened
@@ -200,12 +221,6 @@ class Image(object):
         for slc in self.data:
             slices.append(slc.flatten())
         return slices
-
-    # return an empty image of the same size as the image self
-    def empty_image(self):
-        im_buf = copy.copy(self)
-        im_buf.data *= 0
-        return im_buf
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
@@ -249,7 +264,7 @@ class Image(object):
         r = 0
         ok = 0
         for slice in data_mask:
-            #print 'SLICE ', s, slice
+            # print 'SLICE ', s, slice
             for row in slice:
                 if sum(row) > 0:
                     buffer_mask.append(row)
@@ -273,9 +288,13 @@ class Image(object):
             new_data.append(new_slice)
             s += 1
         new_data = np.asarray(new_data)
-        #print data_mask
+        # print data_mask
         print 'SHAPE ', new_data.shape
         self.data = new_data
+
+    def invert(self):
+        self.data = self.data.max() - self.data
+        return self
 
     def show(self):
         imgplot = plt.imshow(self.data)
@@ -283,8 +302,7 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         plt.show()
 
-    """
-    def split_data(self):
+    """def split_data(self):
         from sct_asman import split
         new_data = []
         for slice in self.data:
@@ -295,13 +313,13 @@ class Image(object):
         return new_data
     """
 
-
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     from msct_parser import Parser
     import sys
+
     parser = Parser(__file__)
     parser.usage.set_description('Image')
     parser.add_option("-i", "file", "file", True)
