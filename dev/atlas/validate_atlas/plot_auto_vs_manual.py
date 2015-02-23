@@ -23,7 +23,7 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = 'results_20150210_200iter'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
 
@@ -36,7 +36,7 @@ def main():
     methods_to_display = param_default.methods_to_display
 
     # Parameters for debug mode
-    if param.debug:
+    if param_default.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_auto_vs_manual"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
@@ -308,6 +308,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     param_default = Param()
-    param = Param()
     # call main function
     main()
