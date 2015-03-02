@@ -25,6 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = 'results_20150210_200iter/map'
         self.methods_to_display = 'map'
+        self.fname_folder_to_save_fig = '/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 def color_legend_texts(leg):
     """Color legend texts based on color of corresponding lines"""
@@ -332,7 +333,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_as_a_function_of_MAP_parameters')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters')
 
 
     plt.show()
