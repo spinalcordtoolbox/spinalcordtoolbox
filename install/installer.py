@@ -84,7 +84,7 @@ class Version(object):
         return False
     def __le__(self, other):
         if not isinstance(other, Version):
-            resultturn NotImplemented
+            return NotImplemented
         if self < other or self == other:
             return True
         return False
