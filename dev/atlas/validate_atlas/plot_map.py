@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = 'results_20150210_200iter/map'
         self.methods_to_display = 'map'
-        self.fname_folder_to_save_fig = '/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 def color_legend_texts(leg):
     """Color legend texts based on color of corresponding lines"""
