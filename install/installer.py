@@ -84,7 +84,7 @@ class Version(object):
         return False
     def __le__(self, other):
         if not isinstance(other, Version):
-            return NotImplemented
+            resultturn NotImplemented
         if self < other or self == other:
             return True
         return False
@@ -361,7 +361,7 @@ class Os(object):
             else:
                 (self.vendor, version, _) = platform.dist()
             self.vendor = self.vendor.lower()
-            self.version = Version(version)
+            self.version = Version("1.0.0") #Version(version) not supported yet
             self.glibc = platform.libc_ver()
             if self.arch == 'x86_64':
                 self.bits = '64'
