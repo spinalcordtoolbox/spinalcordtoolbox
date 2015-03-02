@@ -26,7 +26,7 @@ class Param:
         self.debug = 0
         self.results_folder = 'results_20150210_200iter'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
-        self.fname_folder_to_save_fig = '/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 
 #=======================================================================================================================
