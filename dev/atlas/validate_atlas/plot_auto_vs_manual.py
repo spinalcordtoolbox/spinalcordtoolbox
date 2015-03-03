@@ -26,6 +26,8 @@ class Param:
         self.debug = 0
         self.results_folder = 'results_20150210_200iter'
         self.methods_to_display = 'bin,man0,man1,man2,man3'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+
 
 #=======================================================================================================================
 # main
@@ -298,7 +300,7 @@ def main():
     # plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
 
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/automatic_method_vs_manual_methods')
+    plt.savefig(param_default.fname_folder_to_save_fig +'/automatic_method_vs_manual_methods')
 
 
     plt.show()
