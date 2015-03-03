@@ -22,13 +22,27 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = "results_20150210_200iter"
-        self.methods_to_display = 'wa,wath,ml,map'
+        self.methods_to_display = 'wath,ml,map'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
         self.noise_std_to_display = 10
         self.tracts_std_to_display = 10
         self.csf_value_to_display = 5
         self.nb_RL_labels = 15
+
+class Color:
+    def __init__(self):
+        self.purple = '\033[95m'
+        self.cyan = '\033[96m'
+        self.darkcyan = '\033[36m'
+        self.blue = '\033[94m'
+        self.green = '\033[92m'
+        self.yellow = '\033[93m'
+        self.red = '\033[91m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.end = '\033[0m'
 
 # =======================================================================================================================
 # main
@@ -42,7 +56,7 @@ def main():
     nb_RL_labels = param_default.nb_RL_labels
 
     # Parameters for debug mode
-    if param.debug:
+    if param_default.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
@@ -256,8 +270,9 @@ def main():
     mean_abs_error_per_meth = numpy.mean(abs_error_per_labels, axis=1)
     std_abs_error_per_meth = numpy.std(abs_error_per_labels, axis=1)
 
-    # average error across sides
+    # average error and std across sides
     meanRL_abs_error_per_labels = numpy.zeros((error_per_label.shape[0], nb_RL_labels, error_per_label.shape[2]))
+    meanRL_std_abs_error_per_labels = numpy.zeros((std_per_label.shape[0], nb_RL_labels, std_per_label.shape[2]))
     for i_file in range(0, nb_results_file):
         for i_meth in range(0, len(methods_name[i_file])):
             for i_label in range(0, nb_RL_labels):
@@ -266,6 +281,7 @@ def main():
                 ind_ID_other_side = labels_id[i_file].index(i_label + nb_RL_labels)
                 # compute mean across 2 sides
                 meanRL_abs_error_per_labels[i_file, i_label, i_meth] = float(error_per_label[i_file, ind_ID_first_side, i_meth] + error_per_label[i_file, ind_ID_other_side, i_meth]) / 2
+                meanRL_std_abs_error_per_labels[i_file, i_label, i_meth] = float(std_per_label[i_file, ind_ID_first_side, i_meth] + std_per_label[i_file, ind_ID_other_side, i_meth]) / 2
 
     nb_method = len(methods_to_display)
 
@@ -321,19 +337,20 @@ def main():
 
     # sort arrays in this order
     meanRL_abs_error_per_labels_sort = meanRL_abs_error_per_labels[ind_file_to_display[0], ind_labels_sort, :]
-    # std_per_label_sort = std_per_label[ind_file_to_display[0], ind_labels_sort, :]
+    meanRL_std_abs_error_per_labels_sort = meanRL_std_abs_error_per_labels[ind_file_to_display[0], ind_labels_sort, :]
     labels_name_sort = numpy.array(labels_name_FV_RL_gathered)[ind_labels_sort]
 
     # *********************************************** START PLOTTING HERE **********************************************
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    fig = plt.figure(figsize=(37, 25))
+    # stringColor = Color()
+    matplotlib.rcParams.update({'font.size': 50, 'font.family': 'trebuchet'})
+    fig = plt.figure(figsize=(60, 37))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('Ascending fractional volume', fontsize=22)
-    plt.title('Absolute error per tract as a function of their fractional volume\n', fontsize=24)
-    plt.suptitle('\n(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=18)
+    plt.ylabel('Absolute error (%)\n', fontsize=65)
+    plt.xlabel('Fractional volume', fontsize=65)
+    plt.title('Absolute error per tract as a function of their fractional volume\n\n', fontsize=30)
+    plt.suptitle('(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=30)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -343,30 +360,32 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width, meanRL_abs_error_per_labels_sort[:, i_meth], color=color, marker=marker, markersize=15)
+        plot_i = plt.errorbar(ind_fig + i_meth_to_display * width, meanRL_abs_error_per_labels_sort[:, i_meth], meanRL_std_abs_error_per_labels_sort[:, i_meth], color=color, marker=marker, markersize=35, lw=7, elinewidth=1, capthick=5, capsize=10)
         # plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_files_csf_sort, :, i_meth]), positions=ind_fig + i_meth_to_display * width + (float(i_meth_to_display) * width) / (nb_method + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
         errorbar_plots.append(plot_i)
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.5)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.2)
 
     # concatenate value of fractional volume to labels'name
-    xtick_labels = [labels_name_sort[i_lab]+'\n('+str(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab])+')' for i_lab in range(0, len(labels_name_sort))]
+    xtick_labels = [labels_name_sort[i_lab]+'\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab], 2))+']}$' for i_lab in range(0, len(labels_name_sort))]
+    ind_lemniscus = numpy.where(labels_name_sort == 'spinal lemniscus (spinothalamic and spinoreticular tracts)')[0][0]
+    xtick_labels[ind_lemniscus] = 'spinal lemniscus\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][ind_lemniscus], 2))+']}$'
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(errorbar_plots, methods_to_display, loc=1, fontsize=22, numpoints=1)
-    plt.xticks(ind_fig + (numpy.floor(float(nb_method-1)/2)) * width, xtick_labels, fontsize=18)
+    plt.legend(errorbar_plots, methods_to_display, loc=1, fontsize=50, numpoints=1)
+    plt.xticks(ind_fig + (numpy.floor(float(nb_method-1)/2)) * width, xtick_labels, fontsize=45)
     # Tweak spacing to prevent clipping of tick-labels
     plt.subplots_adjust(bottom=0, top=0.95, right=0.96)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 25])
+    plt.gca().set_ylim([0, 17])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig(results_folder+'/absolute_error_vs_fractional_volume')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume')
 
     plt.show()
 
@@ -376,6 +395,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     param_default = Param()
-    param = Param()
     # call main function
     main()
