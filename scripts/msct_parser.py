@@ -106,11 +106,12 @@ class Option:
 
         elif type_option == "multiple_choice":
             """
-            the choices are listed in example var
+            the choices are listed in example variable
             """
             if param not in self.example:
                 self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
-        
+            return param
+
         elif isinstance(type_option, list):
             """
             This option is defined as a list delimited by a delimiter (that cannot be a space)
