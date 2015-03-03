@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Augustin Roux, Benjamin De Leener
-# Modified: 2015-02-10
+# Modified: 2015-02-20
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -17,24 +17,70 @@ import sct_utils as sct
 import numpy as np
 import matplotlib.pyplot as plt
 from sct_orientation import get_orientation
+from msct_types import Coordinate
 
 
 class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, split=False):
-        if path is not None:
-            self.loadFromPath(path, verbose)
-        elif np_array is not None:
-            self.data = np_array
-            self.path = None
-            self.orientation = None
+
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1, split=False):
+        # initialization of all parameters
+        self.data = None
+        self.hdr = None
+        self.orientation = None
+        self.absolutepath = ""
+        self.path = ""
+        self.file_name = ""
+        self.ext = ""
+        self.dim = None
+
+        # load an image from file
+        if type(param) is str:
+            self.loadFromPath(param, verbose)
+        # copy constructor
+        elif isinstance(param, type(self)):
+            self.copy(param)
+        # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
+        elif type(param) is list:
+            self.data = np.zeros(param)
+            self.dim = param
+            self.hdr = hdr
+            self.orientation = orientation
+            self.absolutepath = absolutepath
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
+        # create a copy of im_ref
+        elif isinstance(param, (np.ndarray, np.generic)):
+            self.data = param
+            self.dim = self.data.shape
+            self.hdr = hdr
+            self.orientation = orientation
+            self.absolutepath = absolutepath
+            self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError(' Image constructor takes at least one argument.')
+
+        """
         if split:
             self.data = self.split_data()
-        self.dim = self.data.shape
+        """
+
+    def __deepcopy__(self, memo):
+        from copy import deepcopy
+        return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+
+    def copy(self, image=None):
+        from copy import deepcopy
+        if image is not None:
+            self.data = deepcopy(image.data)
+            self.dim = deepcopy(image.dim)
+            self.hdr = deepcopy(image.hdr)
+            self.orientation = deepcopy(image.orientation)
+            self.absolutepath = deepcopy(image.absolutepath)
+            self.path, self.file_name, self.ext = sct.extract_fname(self.absolutepath)
+        else:
+            return deepcopy(self)
 
     def loadFromPath(self, path, verbose):
         """
@@ -50,10 +96,16 @@ class Image(object):
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
+        self.absolutepath = path
         self.path, self.file_name, self.ext = sct.extract_fname(path)
+
+    def setFileName(self, filename):
+        self.absolutepath = filename
+        self.path, self.file_name, self.ext = sct.extract_fname(filename)
 
     def changeType(self, type=''):
         from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
+
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -88,12 +140,12 @@ class Image(object):
             isInteger = True
             if type == 'minimize':
                 for vox in self.data.flatten():
-                    if int(vox)!=vox:
+                    if int(vox) != vox:
                         isInteger = False
                         break
 
             if isInteger:
-                if min_vox >= 0: # unsigned
+                if min_vox >= 0:  # unsigned
                     if max_vox <= np.iinfo(np.uint8).max:
                         type = 'uint8'
                     elif max_vox <= np.iinfo(np.uint16):
@@ -116,14 +168,14 @@ class Image(object):
                     else:
                         raise ValueError("Maximum value of the image is to big to be represented.")
             else:
-                #if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
+                # if max_vox <= np.finfo(np.float16).max and min_vox >= np.finfo(np.float16).min:
                 #    type = 'np.float16' # not supported by nibabel
                 if max_vox <= np.finfo(np.float32).max and min_vox >= np.finfo(np.float32).min:
                     type = 'float32'
                 elif max_vox <= np.finfo(np.float64).max and min_vox >= np.finfo(np.float64).min:
                     type = 'float64'
 
-        print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
+        # print "The image has been set to "+type+" (previously "+str(self.hdr.get_data_dtype())+")"
         # change type of data in both numpy array and nifti header
         type_build = eval(type)
         self.data = type_build(self.data)
@@ -160,7 +212,7 @@ class Image(object):
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
     def flatten(self):
-        #return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
+        # return self.data.flatten().reshape(self.data.flatten().shape[0], 1)
         return self.data.flatten()
 
     # return a list of the image slices flattened
@@ -170,12 +222,31 @@ class Image(object):
             slices.append(slc.flatten())
         return slices
 
-    # return an empty image of the same size as the image self
-    def empty_image(self):
-        import copy
-        im_buf = copy.copy(self)
-        im_buf.data *= 0
-        return im_buf
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
+        """
+        This function return all the non-zero coordinates that the image contains.
+        Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
+        If reverse_coord is True, coordinate are sorted from larger to smaller.
+        """
+        X, Y, Z = (self.data > 0).nonzero()
+        list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+
+        if sorting is not None:
+            if reverse_coord not in [True, False]:
+                raise ValueError('reverse_coord parameter must be a boolean')
+
+            if sorting == 'x':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'y':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'z':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            elif sorting == 'value':
+                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+            else:
+                raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
+
+        return list_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
@@ -193,7 +264,7 @@ class Image(object):
         r = 0
         ok = 0
         for slice in data_mask:
-            #print 'SLICE ', s, slice
+            # print 'SLICE ', s, slice
             for row in slice:
                 if sum(row) > 0:
                     buffer_mask.append(row)
@@ -217,9 +288,13 @@ class Image(object):
             new_data.append(new_slice)
             s += 1
         new_data = np.asarray(new_data)
-        #print data_mask
+        # print data_mask
         print 'SHAPE ', new_data.shape
         self.data = new_data
+
+    def invert(self):
+        self.data = self.data.max() - self.data
+        return self
 
     def show(self):
         imgplot = plt.imshow(self.data)
@@ -227,8 +302,7 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         plt.show()
 
-    """
-    def split_data(self):
+    """def split_data(self):
         from sct_asman import split
         new_data = []
         for slice in self.data:
@@ -239,13 +313,13 @@ class Image(object):
         return new_data
     """
 
-
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
     from msct_parser import Parser
     import sys
+
     parser = Parser(__file__)
     parser.usage.set_description('Image')
     parser.add_option("-i", "file", "file", True)
