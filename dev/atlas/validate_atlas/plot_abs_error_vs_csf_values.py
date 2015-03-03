@@ -22,9 +22,10 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'bin,wa,wath,ml,map'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 
 # =======================================================================================================================
@@ -35,7 +36,7 @@ def main():
     methods_to_display = param_default.methods_to_display
 
     # Parameters for debug mode
-    if param.debug:
+    if param_default.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter"#"C:/cygwin64/home/Simon_2/data_methods_comparison"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
@@ -321,7 +322,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(results_folder+'/absolute_error_vs_csf_values')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values')
 
     plt.show()
 
@@ -330,6 +331,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     param_default = Param()
-    param = Param()
     # call main function
     main()
