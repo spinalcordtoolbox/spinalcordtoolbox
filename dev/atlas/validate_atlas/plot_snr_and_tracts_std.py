@@ -25,6 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'bin,wa,wath,ml,map'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 
 # =======================================================================================================================
@@ -502,7 +503,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
 
 
     # Plot B -- v3: Box plots absolute error
@@ -550,7 +551,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
 
 
     plt.show()
