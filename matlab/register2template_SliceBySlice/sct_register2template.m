@@ -14,6 +14,7 @@ function sct_register2template(file_reg,file_src,levels)
 log='log_applytransfo';
 % levels=5:-1:2;
 warp_transfo = 1;
+[~,SCT_DIR] = unix('echo $SCT_DIR');
 
 %-------------------------- FILES TO REGISTER -----------------------------------
 % file_reg = {'data_highQ_mean_masked'}; % file to register
