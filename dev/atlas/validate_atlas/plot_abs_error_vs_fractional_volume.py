@@ -22,9 +22,10 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = "results_20150210_200iter"
-        self.methods_to_display = 'wath,ml,map'
+        self.methods_to_display = 'wa,wath,ml,map'
+        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
         self.noise_std_to_display = 10
         self.tracts_std_to_display = 10
         self.csf_value_to_display = 5
@@ -384,7 +385,7 @@ def main():
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_vs_fractional_volume')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume')
 
     plt.show()
 

@@ -21,6 +21,7 @@ import commands
 import getopt
 from datetime import date
 import platform
+import subprocess
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
@@ -47,7 +48,7 @@ class Version(object):
 
         for v in version_sct_split:
             if not v.isdigit():
-                raise ValueError('Bad version string.')
+                raise ValueError('Bad version string: '+self.version_sct)
         self.major = int(version_sct_split[0])
         try:
             self.minor = int(version_sct_split[1])
@@ -360,7 +361,7 @@ class Os(object):
             else:
                 (self.vendor, version, _) = platform.dist()
             self.vendor = self.vendor.lower()
-            self.version = Version(version)
+            self.version = Version("1.0.0") #Version(version) not supported yet
             self.glibc = platform.libc_ver()
             if self.arch == 'x86_64':
                 self.bits = '64'
@@ -454,6 +455,19 @@ def download_file(url, localf, timeout=20):
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
+def runProcess(cmd):
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print output.strip()
+
+    (output, err) = process.communicate()
+    return process.wait(), output
+
+
 class Installer:
     def __init__(self):
         self.path_install = "/usr/local"
@@ -524,7 +538,8 @@ class Installer:
 
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
             print ">> " + cmd
-            status, output = commands.getstatusoutput(cmd)
+            status, output = runProcess(cmd)
+            #status, output = commands.getstatusoutput(cmd)
             if status != 0:
                 print 'ERROR! \n' + output + '\nExit program.\n'
                 sys.exit(2)
@@ -533,7 +548,8 @@ class Installer:
         print "Create folder: " + self.SCT_DIR + " ..."
         cmd = self.issudo+"mkdir "+self.SCT_DIR
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print output + '\n'
 
@@ -575,7 +591,8 @@ class Installer:
         print "\nCopy Spinal Cord Toolbox on your computer..."
         cmd = self.issudo + "cp -r spinalcordtoolbox/* " + self.SCT_DIR
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -592,7 +609,8 @@ class Installer:
                 print "  Deleting previous SCT entries in .bashrc"
                 cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
-                status, output = commands.getstatusoutput(cmd)
+                status, output = runProcess(cmd)
+                #status, output = commands.getstatusoutput(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -632,7 +650,8 @@ class Installer:
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -641,7 +660,8 @@ class Installer:
         os.chdir("requirements")
         cmd = "sudo ./requirements.sh"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
@@ -654,7 +674,8 @@ class Installer:
         if self.issudo is "":
             cmd = cmd+" -a"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -684,7 +705,8 @@ class Installer:
                     if self.issudo == "":
                         cmd = cmd + " -a"
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
                     else:
@@ -694,7 +716,8 @@ class Installer:
                     MsgUser.message("Removing patch-related files...")
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR while removing patch-related files \n' + output + '\nExit program.\n'
                     else:
@@ -711,7 +734,8 @@ class Installer:
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
@@ -720,7 +744,8 @@ class Installer:
         # deleting temporary files
         cmd = "rm -rf tmp.*"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR while removing temporary files \n' + output + '\nExit program.\n'
         else:
@@ -757,7 +782,6 @@ USAGE
 
 MANDATORY ARGUMENTS
 -p <path>                   installation path. Do not add "/" at the end!
--
 -h                          display this help
   """
 
