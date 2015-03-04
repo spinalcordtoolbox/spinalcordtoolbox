@@ -400,18 +400,32 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         :param pad: blank space in front of the string, default=30
         :return: string with \n separator
         """
-        i = 0
         s = ''
         strings = []
-        for c in string:
-            i += 1
-            if c == ' ':
-                last_space = i
-            if i%length == 0:
-                strings.append(string[0:last_space])
-                string = string[last_space:]
-                i = i - last_space
-        strings.append(string)
+
+        # check if "\n" are present in the string. If so, decompose the string.
+        string_split_line = string.split('\n')
+        if len(string_split_line) > 1:
+            for i in range(0,len(string_split_line)):
+                if i != 0:
+                    string_split_line[i] = '  ' + string_split_line[i]
+
+        # check if a string length is over "length"
+        for k,stri in enumerate(string_split_line):
+            i = 0
+            for c in stri:
+                i += 1
+                if c == ' ':
+                    last_space = i
+                if i%length == 0:
+                    strings.append(stri[0:last_space])
+                    stri = stri[last_space:]
+                    if k != 0:
+                        stri = '  '+stri
+                    i = i - last_space
+            strings.append(stri)
+
+        # Concatenate strings
         for i,yes in enumerate(strings):
             if i != 0:
                 s += ' '*pad
