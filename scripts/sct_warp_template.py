@@ -62,8 +62,8 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_src = path_sct+'/testing/data/errsm_23/mt/mtr.nii.gz'
-        fname_transfo = path_sct+'/testing/data/errsm_23/template/warp_template2mt.nii.gz'
+        fname_src = path_sct+'/testing/sct_testing_data/data/mt/mtr.nii.gz'
+        fname_transfo = path_sct+'/testing/sct_testing_data/data/mt/warp_template2mt.nii.gz'
         warp_atlas = 1
         warp_spinal_levels = 1
         verbose = 1
@@ -127,12 +127,12 @@ def main():
     sct.printv('\nWarp template objects...', verbose)
     sct.run('mkdir '+folder_out+folder_template, verbose)
     # TODO: read info_label, and create a list and loop across list elements-- see sct_extract_metric
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_T2.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p spline', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_GM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_WM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_level.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_CSF.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_cord.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_cord.nii.gz -d '+fname_src+' -w '+fname_transfo+' -p nn', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_T2.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x spline', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_GM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_WM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_level.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_CSF.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_cord.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_cord.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
     sct.run('cp '+path_template+folder_template+file_info_label+' '+folder_out+folder_template)
 
     # Warp atlas
@@ -147,7 +147,7 @@ def main():
         # Warp atlas
         for i in xrange(0, len(fname_list)):
             path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -p linear', verbose)
+            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
         # Copy list.txt
         sct.run('cp '+path_template+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
 
@@ -162,7 +162,7 @@ def main():
         # Warp levels
         for i in xrange(0, len(fname_list)):
             path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
-            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -p linear', verbose)
+            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)

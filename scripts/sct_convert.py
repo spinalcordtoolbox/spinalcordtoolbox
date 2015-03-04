@@ -112,7 +112,7 @@ def main():
 # ==========================================================================================
 def nii2mnc(fname_data,fname_out):
     print "Converting from nifti to minc"
-    sct.run("nii2mnc "+fname_data_tmp+" "+fname_out)
+    sct.run("nii2mnc "+fname_data+" "+fname_out)
 
 # Convert file from nifti to minc
 # ==========================================================================================
@@ -144,7 +144,7 @@ def nii2volviewer(fname_data,fname_out):
     print "Converting from nifti to volume viewer"
     path_in, file_in, ext_in = sct.extract_fname(fname_data)
     path_out, file_out, ext_out = sct.extract_fname(fname_out)
-    fname_data_nii = path_out+file_out+'.mnc'
+    fname_data_nii = path_out+"tmp."+file_out+'.mnc'
     nii2mnc(fname_data,fname_data_nii)
     mnc2volviewer(fname_data_nii,path_out+file_out)
 
@@ -185,8 +185,8 @@ def usage():
                 OPTIONAL ARGUMENTS
                 -o <output>           output volume. Add extension. Default="data".nii
                 -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
-                    -h                    help. Show this message
-                    """
+                -h                    help. Show this message
+                """
     # exit program
     sys.exit(2)
 
