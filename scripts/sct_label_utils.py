@@ -338,23 +338,12 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:
-                                            cross: create a cross. Must use flag "-c"
-                                            remove: remove labels. Must use flag "-r"
-                                            display-voxel: display all labels in file
-                                            create: create labels. Must use flag "-x" to list labels
-                                            increment: increment labels from top to bottom (in z direction, suppose RPI orientation)
-                                            MSE: compute Mean Square Error between labels input and reference input "-r"
-                                            """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r""",
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
-                      description="""labels x,y,z,v. Use ":" if you have multiple labels.
-                                            x: x-coordinates
-                                            y: y-coordinates
-                                            z: z-coordinates
-                                            v: value of label""",
+                      description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
                       mandatory=False,
                       example="1,5,2,6:3,7,2,1:3,7,9,32")
     parser.add_option(name="-r",
