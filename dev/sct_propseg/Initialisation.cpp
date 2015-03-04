@@ -305,21 +305,32 @@ bool Initialisation::computeInitialParameters(float startFactor)
 				im = resample->GetOutput();
 			}
             
+<<<<<<< .merge_file_EbwN5C
             // Search for symmetry in image
             //cout << "Symmetry = " << symmetryDetection3D(inputImage_, 40, 40) << endl;
             
+=======
+>>>>>>> .merge_file_pTyDIH
             // Searching the circles in the image using circular Hough transform, adapted from ITK
             // The list of radii and accumulator values are then extracted for analyses
 			vector<CVector3> vecCenter;
 			vector<double> vecRadii, vecAccumulator;
+<<<<<<< .merge_file_EbwN5C
 			searchCenters(im,vecCenter,vecRadii,vecAccumulator,startZ+i, vesselnessImage);
+=======
+			searchCenters(im,vecCenter,vecRadii,vecAccumulator,startZ+i);
+>>>>>>> .merge_file_pTyDIH
 			
             // Reformating of the detected circles in the image. Each detected circle is push in a Node with all its information.
             // The radii are transformed in mm using mean axial resolution
 			vector<Node*> vecNodeTemp;
 			for (unsigned int k=0; k<vecCenter.size(); k++) {
 				if (vecRadii[k] != 0.0) {
+<<<<<<< .merge_file_EbwN5C
 					CVector3 center = vecCenter[k];// center[0] /= stretchingFactor;
+=======
+					CVector3 center = vecCenter[k]; center[0] /= stretchingFactor;
+>>>>>>> .merge_file_pTyDIH
 					vecNodeTemp.push_back(new Node(center,mean_resolution_*vecRadii[k]/stretchingFactor,vecAccumulator[k],vecCenter[k],mean_resolution_*vecRadii[k],stretchingFactor));
 				}
 			}
@@ -354,8 +365,12 @@ bool Initialisation::computeInitialParameters(float startFactor)
 					{
                         // Compute the distance between two adjacent centers (in mm)
                         // If this distance is less or equal to the limit distance, the two centers are attached to each others
+<<<<<<< .merge_file_EbwN5C
 						//double currentDistance = sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
                         double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
+=======
+						double currentDistance = mean_resolution_*sqrt(pow(centers[k][i][m]->getPosition()[0]-centers[k-1][i][j]->getPosition()[0],2)+pow(centers[k][i][m]->getPosition()[1]-centers[k-1][i][j]->getPosition()[1],2)+pow(centers[k][i][m]->getPosition()[2]-centers[k-1][i][j]->getPosition()[2],2));
+>>>>>>> .merge_file_pTyDIH
 						if (currentDistance <= limitDistance)
 							listNeighbors[currentDistance] = centers[k-1][i][j];
 					}
@@ -414,6 +429,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		}
 		chains.push_back(temp);
 	}
+<<<<<<< .merge_file_EbwN5C
     
     
     // Search for the longest chain that is not far from the the center of the image (detected as the symmetry in the image) and with the largest accumulation value
@@ -424,10 +440,16 @@ bool Initialisation::computeInitialParameters(float startFactor)
     
     map<double, int, greater<double> > map_metric;
     
+=======
+	// And search for the longest and with larger accumulation value and small angle between normals 
+	unsigned int maxLenght = 0, max = 0;
+	double maxAccumulator = 0.0, angleMax = 15.0;
+>>>>>>> .merge_file_pTyDIH
 	for (unsigned int j=0; j<chains.size(); j++)
 	{
 		unsigned int length = chains[j].size();
         double angle = 0.0;
+<<<<<<< .merge_file_EbwN5C
         int middle_slice = inputImage_->GetLargestPossibleRegion().GetSize()[2]/2;
         double average_distance_to_center_of_image = 0.0;
         for (int k=0; k<length; k++)
@@ -440,6 +462,8 @@ bool Initialisation::computeInitialParameters(float startFactor)
         double weighted_distance = tanh(2.5-0.5*average_distance_to_center_of_image)/2+0.5;
         //double weighted_distance = 1;
         
+=======
+>>>>>>> .merge_file_pTyDIH
         if (length >= 3)
         {
             CVector3 vector1 = chains[j][0]->getPosition()-chains[j][length/2]->getPosition(), vector2 = (chains[j][length/2]->getPosition()-chains[j][length-1]->getPosition());
@@ -449,6 +473,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 		{
 			maxLenght = chains[j].size();
 			max = j;
+<<<<<<< .merge_file_EbwN5C
 			maxMetric = 0.0;
 			for (unsigned int k=0; k<length; k++)
 				maxMetric += chains[j][k]->getAccumulator() * weighted_distance * length;
@@ -464,12 +489,28 @@ bool Initialisation::computeInitialParameters(float startFactor)
 				max = j;
 				maxMetric = metric;
                 map_metric[maxMetric] = max;
+=======
+			maxAccumulator = 0.0;
+			for (unsigned int k=0; k<length; k++)
+				maxAccumulator += chains[j][k]->getAccumulator();
+		}
+		else if (length == maxLenght && angle <= angleMax)
+		{
+			double accumulator = 0.0;
+			for (unsigned int k=0; k<length; k++)
+				accumulator += chains[j][k]->getAccumulator();
+			if (accumulator > maxAccumulator) {
+				maxLenght = chains[j].size();
+				max = j;
+				maxAccumulator = accumulator;
+>>>>>>> .merge_file_pTyDIH
 			}
 		}
 	}
     
 	if (chains.size() > 1)
 	{
+<<<<<<< .merge_file_EbwN5C
 		unsigned int sizeMaxChain = chains[map_metric.begin()->second].size();
 		//cout << "Results : " << endl;
         points_.clear();
@@ -478,11 +519,25 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			//cout << chains[max][j]->getPosition() << " " << chains[max][j]->getRadius() << endl;
         }
         if (verbose_) cout << "Stretching factor of circle found = " << chains[map_metric.begin()->second][0]->getStretchingFactor() << endl;
+=======
+		unsigned int sizeMaxChain = chains[max].size();
+		//cout << "Results : " << endl;
+        points_.clear();
+		for (unsigned int j=0; j<sizeMaxChain; j++) {
+            points_.push_back(chains[max][j]->getPosition());
+			//cout << chains[max][j]->getPosition() << " " << chains[max][j]->getRadius() << endl;
+        }
+        if (verbose_) cout << "Stretching factor of circle found = " << chains[max][0]->getStretchingFactor() << endl;
+>>>>>>> .merge_file_pTyDIH
 		if (sizeMaxChain < numberOfSlices_) {
 			if (verbose_) cout << "Warning: Number of center found on slices (" << sizeMaxChain << ") doesn't correspond to number of analyzed slices. An error may occur. To improve results, you can increase the number of analyzed slices (option -n must be impair)" << endl;
             
 			// we have to transform pixel points to physical points
+<<<<<<< .merge_file_EbwN5C
 			CVector3 finalPoint, initPointT = chains[map_metric.begin()->second][0]->getPosition(), finalPointT = chains[map_metric.begin()->second][sizeMaxChain-1]->getPosition();
+=======
+			CVector3 finalPoint, initPointT = chains[max][0]->getPosition(), finalPointT = chains[max][sizeMaxChain-1]->getPosition();
+>>>>>>> .merge_file_pTyDIH
 			ContinuousIndex initPointIndex, finalPointIndex;
 			initPointIndex[0] = initPointT[0]; initPointIndex[1] = initPointT[1]; initPointIndex[2] = initPointT[2];
 			finalPointIndex[0] = finalPointT[0]; finalPointIndex[1] = finalPointT[1]; finalPointIndex[2] = finalPointT[2];
@@ -494,14 +549,24 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			initialNormal1_ = (finalPoint-initialPoint_).Normalize();
 			initialRadius_ = 0.0;
 			for (unsigned int j=0; j<sizeMaxChain; j++)
+<<<<<<< .merge_file_EbwN5C
 				initialRadius_ += chains[map_metric.begin()->second][j]->getRadiusStretch();
 			initialRadius_ /= sizeMaxChain;
             stretchingFactor_ = chains[map_metric.begin()->second][0]->getStretchingFactor();
+=======
+				initialRadius_ += chains[max][j]->getRadiusStretch();
+			initialRadius_ /= sizeMaxChain;
+            stretchingFactor_ = chains[max][0]->getStretchingFactor();
+>>>>>>> .merge_file_pTyDIH
 		}
 		else
 		{
 			// we have to transform pixel points to physical points
+<<<<<<< .merge_file_EbwN5C
 			CVector3 finalPoint1, finalPoint2, initPointT = chains[map_metric.begin()->second][(int)(sizeMaxChain/2)]->getPosition(), finalPointT1 = chains[map_metric.begin()->second][0]->getPosition(), finalPointT2 = chains[map_metric.begin()->second][sizeMaxChain-1]->getPosition();
+=======
+			CVector3 finalPoint1, finalPoint2, initPointT = chains[max][(int)(sizeMaxChain/2)]->getPosition(), finalPointT1 = chains[max][0]->getPosition(), finalPointT2 = chains[max][sizeMaxChain-1]->getPosition();
+>>>>>>> .merge_file_pTyDIH
 			ContinuousIndex initPointIndex, finalPoint1Index, finalPoint2Index;
 			initPointIndex[0] = initPointT[0]; initPointIndex[1] = initPointT[1]; initPointIndex[2] = initPointT[2];
 			finalPoint1Index[0] = finalPointT1[0]; finalPoint1Index[1] = finalPointT1[1]; finalPoint1Index[2] = finalPointT1[2];
@@ -517,9 +582,15 @@ bool Initialisation::computeInitialParameters(float startFactor)
 			initialNormal2_ = (finalPoint2-initialPoint_).Normalize();
 			initialRadius_ = 0.0;
 			for (unsigned int j=0; j<sizeMaxChain; j++)
+<<<<<<< .merge_file_EbwN5C
 				initialRadius_ += chains[map_metric.begin()->second][j]->getRadiusStretch();
 			initialRadius_ /= sizeMaxChain;
             stretchingFactor_ = chains[map_metric.begin()->second][0]->getStretchingFactor();
+=======
+				initialRadius_ += chains[max][j]->getRadiusStretch();
+			initialRadius_ /= sizeMaxChain;
+            stretchingFactor_ = chains[max][0]->getStretchingFactor();
+>>>>>>> .merge_file_pTyDIH
 		}
 		return true;
 	}
@@ -529,7 +600,12 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	}
 }
 
+<<<<<<< .merge_file_EbwN5C
 void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ, ImageType::Pointer imageVesselness)
+=======
+
+void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ)
+>>>>>>> .merge_file_pTyDIH
 {
 	DuplicatorType::Pointer duplicator = DuplicatorType::New();
 	duplicator->SetInputImage(im);
@@ -541,6 +617,7 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 	unsigned int numberOfCircles = 20;
 	double **center_result_small = new double*[numberOfCircles], **center_result_large = new double*[numberOfCircles];
 	for (unsigned int k=0; k<numberOfCircles; k++) {
+<<<<<<< .merge_file_EbwN5C
 		center_result_small[k] = new double[3]; // Detected centers are in mm
 		center_result_large[k] = new double[3];
 	}
@@ -548,6 +625,15 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 	double *accumulator_result_small = new double[numberOfCircles], *accumulator_result_large = new double[numberOfCircles];
 	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_/mean_resolution_,imageVesselness,startZ,-1.0);
 	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_/mean_resolution_+4.0,imageVesselness,startZ,1.0);
+=======
+		center_result_small[k] = new double[2];
+		center_result_large[k] = new double[2];
+	}
+	double *radius_result_small = new double[numberOfCircles], *radius_result_large = new double[numberOfCircles];
+	double *accumulator_result_small = new double[numberOfCircles], *accumulator_result_large = new double[numberOfCircles];
+	unsigned int numSmall = houghTransformCircles(im,numberOfCircles,center_result_small,radius_result_small,accumulator_result_small,radius_/mean_resolution_,-1.0);
+	unsigned int numLarge = houghTransformCircles(clonedOutput,numberOfCircles,center_result_large,radius_result_large,accumulator_result_large,radius_/mean_resolution_+6.0,1.0);
+>>>>>>> .merge_file_pTyDIH
     
 	// search along results for nested circles
 	vector<unsigned int> listMostPromisingCenters;
@@ -558,13 +644,19 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 		for (unsigned int j=0; j<numLarge; j++)
 		{
 			// distance between center + small_radius must be smaller than large_radius
+<<<<<<< .merge_file_EbwN5C
 			distance = sqrt(pow(center_result_small[i][0]-center_result_large[j][0],2)+pow(center_result_small[i][2]-center_result_large[j][2],2));
 			if ((distance+radius_result_small[i])*0.7 <= radius_result_large[j]) {
+=======
+			distance = sqrt(pow(center_result_small[i][0]-center_result_large[j][0],2)+pow(center_result_small[i][1]-center_result_large[j][1],2));
+			if ((distance+radius_result_small[i])*0.8 <= radius_result_large[j]) {
+>>>>>>> .merge_file_pTyDIH
 				listMostPromisingCenters.push_back(i);
 				listMostPromisingCentersLarge.push_back(j);
 			}
 		}
 	}
+<<<<<<< .merge_file_EbwN5C
     
     // If circular structure surrounded by other circular shapes were detected, we add them in the list of promising circles
     if (listMostPromisingCenters.size() > 0)
@@ -591,6 +683,18 @@ void Initialisation::searchCenters(ImageType2D::Pointer im, vector<CVector3> &ve
 
 
 unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, ImageType::Pointer VesselnessImage, float slice, double valPrint)
+=======
+	for (unsigned int i=0; i<listMostPromisingCenters.size(); i++)
+	{
+		vecCenter.push_back(CVector3(center_result_small[listMostPromisingCenters[i]][0],startZ,center_result_small[listMostPromisingCenters[i]][1]));
+		vecRadii.push_back(radius_result_small[listMostPromisingCenters[i]]);
+		vecAccumulator.push_back(accumulator_result_small[listMostPromisingCenters[i]]);
+	}
+}
+
+
+unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, double valPrint)
+>>>>>>> .merge_file_pTyDIH
 {
 	MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
 	minMaxCalculator->SetImage(im);
@@ -599,6 +703,7 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 	ImageType2D::PixelType maxIm = minMaxCalculator->GetMaximum(), minIm = minMaxCalculator->GetMinimum();
 	double val_Print = maxIm;
     
+<<<<<<< .merge_file_EbwN5C
     double min_radius = meanRadius-3.0/mean_resolution_;
     if (min_radius < 0) min_radius = 0;
     
@@ -611,11 +716,19 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
     medianFilter->SetInput( im );
     medianFilter->Update();
     im = medianFilter->GetOutput();*/
+=======
+    double min_radius = meanRadius-3.0;
+    if (min_radius < 0) min_radius = 0;
+>>>>>>> .merge_file_pTyDIH
 	
 	HoughCirclesFilter::Pointer houghfilter = HoughCirclesFilter::New();
 	houghfilter->SetInput(im);
 	houghfilter->SetMinimumRadius(min_radius);
+<<<<<<< .merge_file_EbwN5C
 	houghfilter->SetMaximumRadius(meanRadius+3.0/mean_resolution_);
+=======
+	houghfilter->SetMaximumRadius(meanRadius+3.0);
+>>>>>>> .merge_file_pTyDIH
 	houghfilter->SetSigmaGradient(2);
 	houghfilter->SetGradientFactor(valPrint*typeImageFactor_);
 	houghfilter->SetSweepAngle(M_PI/180.0*5.0);
@@ -647,6 +760,7 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 	itk::ImageRegionIterator<ImageType2D> it_output(im,im->GetLargestPossibleRegion());
 	itk::ImageRegionIterator<ImageType2D> it_input(m_PostProcessImage,m_PostProcessImage->GetLargestPossibleRegion());
     
+<<<<<<< .merge_file_EbwN5C
     typedef itk::Point< double, 2 > PointType2D;
     PointType2D point2d;
     PointType point3d;
@@ -709,6 +823,8 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
         cout << "Location    = " << e.GetLocation()    << endl;
         cout << "Description = " << e.GetDescription() << endl;
     }
+=======
+>>>>>>> .merge_file_pTyDIH
     
 	/** Set the disc ratio */
 	double discRatio = 1.1;
@@ -724,13 +840,20 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
 		it_output.GoToBegin();
 		for(it_input.GoToBegin();!it_input.IsAtEnd();++it_input)
 		{
+<<<<<<< .merge_file_EbwN5C
             if(it_input.Get() == max)
 			{
                 it_output.Set(val_Print);
+=======
+			if(it_input.Get() == max)
+			{
+				it_output.Set(val_Print);
+>>>>>>> .merge_file_pTyDIH
 				index = it_output.GetIndex();
 				double radius2 = m_RadiusImage->GetPixel(index);
 				if (index[0]!=0 && index[0]!=bound[0]-1 && index[1]!=0 && index[1]!=bound[1]-1)
 				{
+<<<<<<< .merge_file_EbwN5C
                     typedef itk::Point< double, 2 > PointType2D;
                     PointType2D point2d;
                     im->TransformIndexToPhysicalPoint(it_output.GetIndex(),point2d);
@@ -742,6 +865,10 @@ unsigned int Initialisation::houghTransformCircles(ImageType2D* im, unsigned int
                     center_result[circles][0] = index3d[0];
                     center_result[circles][1] = index3d[1];
                     center_result[circles][2] = index3d[2];
+=======
+					center_result[circles][0] = it_output.GetIndex()[0];
+					center_result[circles][1] = it_output.GetIndex()[1];
+>>>>>>> .merge_file_pTyDIH
 					radius_result[circles] = radius2;
 					accumulator_result[circles] = m_PostProcessImage->GetPixel(index);
                     
@@ -948,6 +1075,7 @@ void Initialisation::savePointAsAxialImage(ImageType::Pointer initialImage, stri
 		}
     }
     else cout << "Error: Spinal cord center not detected" << endl;
+<<<<<<< .merge_file_EbwN5C
 }
 
 ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
@@ -1778,4 +1906,6 @@ int Initialisation::symmetryDetection(ImageType2D::Pointer im, double cropWidth_
     int k;
     cin >> k;
     return middleSlice_;
+=======
+>>>>>>> .merge_file_pTyDIH
 }
