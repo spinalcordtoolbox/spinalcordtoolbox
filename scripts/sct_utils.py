@@ -51,6 +51,8 @@ def run(cmd, verbose=1):
         return status, output
 
 def runProcess(cmd, verbose=1):
+    if verbose:
+        print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     while True:
         output = process.stdout.readline()
