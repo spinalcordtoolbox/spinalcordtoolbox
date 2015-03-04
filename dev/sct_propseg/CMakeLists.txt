@@ -7,6 +7,7 @@ project(sct_propseg)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
+set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.5)
 set(CMAKE_INCLUDE_PATH ${VTK_DIR}/include/vtk-6.1)
 set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.7)
 
@@ -32,14 +33,19 @@ set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacO
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
+<<<<<<< .merge_file_wYMP73
 # This line was set up for statically linking standard libraries with the binary - does not work with clang on OSX10.10
 # set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+=======
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+>>>>>>> .merge_file_4MvXXU
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
 set(CMAKE_SHARED_LIBRARY_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
+
 
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
