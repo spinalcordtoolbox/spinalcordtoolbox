@@ -64,7 +64,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -73,6 +73,7 @@ class Option:
         self.default_value = default_value
         self.help = help
         self.parser = parser
+        self.order = order
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -177,12 +178,18 @@ class Parser:
         self.usage = Usage(self, __file__)
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self)
+        order = len(self.options)+1
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
         if len(arguments) == 0:
             self.usage.error()
+
+        # check if help is asked by the user
+        if "-h" in arguments:
+            print self.usage.generate()
+            exit(1)
 
         # initialize results
         dictionary = dict()
@@ -270,6 +277,7 @@ class Usage:
         self.arguments = parser.options
         #self.error = parser.errors
         self.arguments_string = ''
+        self.section = dict()
 
     def set_header(self):
         from time import gmtime
@@ -284,6 +292,9 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description)
 
+    def addSection(self, section):
+        self.section[len(self.arguments)+1] = section
+
     def set_usage(self):
         from os.path import basename
         self.usage = '\n\nUSAGE\n' + basename(self.file)
@@ -293,30 +304,37 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         self.usage += '\n'
 
     def set_arguments(self):
-        mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
-        optional = [opt for opt in self.arguments if not self.arguments[opt].mandatory]
-        #optional = self.arguments
-        #optional = mandatory
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory]
         if mandatory:
             self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
                 type_value = self.refactor_type_value(opt)
-                line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += '  ' + self.tab(line) + '\n'
+                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                self.arguments_string += self.tab(line) + '\n'
         if optional:
             self.arguments_string += '\n\nOPTIONAL ARGUMENTS\n'
             for opt in optional:
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
                 type_value = self.refactor_type_value(opt)
-                line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += '  ' + self.tab(line) + '\n'
+                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = '<multiple choice: ' + self.print_list_with_brackets(self.arguments[opt].example)
+            type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
-            type_value = '<list: ' + str(self.arguments[opt].type_value) + '>'
+            type_value = '<list>'
         else:
             type_value = '<' + self.arguments[opt].type_value + '>'
         return type_value
@@ -366,19 +384,20 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         """
         tab = ''
         for string in strings:
-            if len(string) < 20:
-                spaces = ' '*(20 - len(string))
+            if len(string) < 30:
+                spaces = ' '*(30 - len(string))
                 string += spaces
             tab += string
 
         return tab
 
 
-    def align(self, string, pad=100):
+    def align(self, string, length=70, pad=30):
         """
         This function split a string into a list of 100 char max strings
         :param string: string to split
-        :param pad: maximum length of a string, default=100
+        :param length: maximum length of a string, default=70
+        :param pad: blank space in front of the string, default=30
         :return: string with \n separator
         """
         i = 0
@@ -388,13 +407,17 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
             i += 1
             if c == ' ':
                 last_space = i
-            if i%pad == 0:
+            if i%length == 0:
                 strings.append(string[0:last_space])
-                string = string[last_space:-1]
+                string = string[last_space:]
                 i = i - last_space
         strings.append(string)
-        for yes in strings:
-            s += yes + '\n'
+        for i,yes in enumerate(strings):
+            if i != 0:
+                s += ' '*pad
+            s += yes
+            if i != len(strings)-1:
+                s += '\n'
         return s
 
 ########################################################################################################################
