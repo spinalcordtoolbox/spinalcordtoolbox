@@ -460,7 +460,7 @@ def main():
     matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
 
     # Plot A -- v3: Box plots absolute error
-    fig6 = plt.figure(6, figsize=(30, 15))
+    fig6 = plt.figure(6, figsize=(30, 16))
     width = 1.0 / (nb_method + 1)
     ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=55)
@@ -498,19 +498,19 @@ def main():
     xtick_labels = [int(xtick) for xtick in snr[ind_snr_sort_tracts_std_10]]
     plt.xticks(ind_fig6 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig6) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 15])
+    plt.gca().set_ylim([0, 18])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10', format='pdf')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10.pdf', format='PDF')
 
 
     # Plot B -- v3: Box plots absolute error
-    fig7 = plt.figure(7, figsize=(30, 15))
+    fig7 = plt.figure(7, figsize=(30, 16))
     width = 1.0 / (nb_method + 1)
     ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10])) * (1.0 + width)
-    plt.ylabel('Absolute error (%)', fontsize=55)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
     plt.xlabel('Tracts std (% of the mean value WM value)', fontsize=55)
     plt.title('Absolute error within all tracts as a function of tracts std\n', fontsize=65)
 
@@ -546,12 +546,12 @@ def main():
     xtick_labels = [int(xtick) for xtick in tracts_std[ind_tracts_std_sort_snr_10]]
     plt.xticks(ind_fig7 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig7) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 15])
+    plt.gca().set_ylim([0, 18])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10', format='pdf')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10.pdf', format='PDF')
 
 
     plt.show(block=False)
