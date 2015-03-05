@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'wath,ml,map'
-        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
         self.noise_std_to_display = 10
         self.tracts_std_to_display = 10
         self.csf_value_to_display = 5
@@ -366,7 +366,7 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.2)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 2, ind_fig[i_xtick] + (nb_method + 1) * width - width / 2, facecolor='grey', alpha=0.1)
 
     # concatenate value of fractional volume to labels'name
     xtick_labels = [labels_name_sort[i_lab]+'\n'+r'$\bf{['+str(round(fract_vol_per_lab_RL_gathered[ind_labels_sort][i_lab], 2))+']}$' for i_lab in range(0, len(labels_name_sort))]
@@ -387,7 +387,7 @@ def main():
 
     plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume')
 
-    plt.show()
+    plt.show(block=False)
 
 
 #=======================================================================================================================

@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = 'results_20150210_200iter/map'
         self.methods_to_display = 'map'
-        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 def color_legend_texts(leg):
     """Color legend texts based on color of corresponding lines"""
@@ -319,7 +319,7 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_box+1) * width - width / 4, facecolor='grey', alpha=0.3)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_box+1) * width - width / 4, facecolor='grey', alpha=0.1)
 
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
@@ -336,7 +336,7 @@ def main():
     plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters')
 
 
-    plt.show()
+    plt.show(block=False)
 
 
 #=======================================================================================================================
