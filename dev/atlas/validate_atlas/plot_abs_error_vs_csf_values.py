@@ -322,7 +322,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values', format='pdf')
 
     plt.show(block=False)
 
