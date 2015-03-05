@@ -281,13 +281,13 @@ def main():
 
     ind_files_csf_sort = numpy.argsort(csf_values)
 
-    matplotlib.rcParams.update({'font.size': 22, 'font.family': 'trebuchet'})
-    plt.figure(figsize=(30, 15))
+    matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
+    plt.figure(figsize=(30, 16))
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(ind_files_csf_sort)) * (1.0 + width)
-    plt.ylabel('Absolute error (%)\n', fontsize=22)
-    plt.xlabel('\nCSF values (in percentage of true value in tracts)', fontsize=22)
-    plt.title('Absolute error within all tracts as a function of CSF values\n', fontsize=24)
+    plt.ylabel('Absolute error (%)\n', fontsize=55)
+    plt.xlabel('CSF values (in percentage of true value in tracts)', fontsize=55)
+    plt.title('Absolute error within all tracts as a function of CSF values\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
@@ -312,17 +312,17 @@ def main():
         plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.1)
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
+    # plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
     # convert xtick labels into integers
     xtick_labels = [int(xtick) for xtick in csf_values[ind_files_csf_sort]]
     plt.xticks(ind_fig + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig) + (nb_method + 0.5) * width])
-    plt.gca().set_ylim([0, 20])
+    plt.gca().set_ylim([0, 18])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1.0))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values', format='pdf')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values.pdf', format='PDF')
 
     plt.show(block=False)
 

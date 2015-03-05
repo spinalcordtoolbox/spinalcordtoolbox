@@ -333,7 +333,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters', format='pdf')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters.pdf', format='PDF')
 
 
     plt.show(block=False)
