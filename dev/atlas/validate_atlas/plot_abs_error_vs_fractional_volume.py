@@ -385,7 +385,7 @@ def main():
     plt.grid(b=True, axis='y', which='both')
     fig.autofmt_xdate()
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume', format='pdf')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_fractional_volume.pdf', format='PDF')
 
     plt.show(block=False)
 
