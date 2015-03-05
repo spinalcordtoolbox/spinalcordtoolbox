@@ -300,7 +300,7 @@ def main():
     # plt.subplots_adjust(bottom=0.15, top=0.86, right=0.7, left=0.2)
 
 
-    plt.savefig(param_default.fname_folder_to_save_fig +'/automatic_method_vs_manual_methods')
+    plt.savefig(param_default.fname_folder_to_save_fig +'/automatic_method_vs_manual_methods', format='pdf')
 
 
     plt.show(block=False)
