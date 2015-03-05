@@ -458,13 +458,15 @@ def main():
     # plt.legend(bar_plots, methods_name[0], bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
 
     matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
+    plt.rcParams['xtick.major.pad'] = '9'
+    plt.rcParams['ytick.major.pad'] = '15'
 
     # Plot A -- v3: Box plots absolute error
     fig6 = plt.figure(6, figsize=(30, 16))
     width = 1.0 / (nb_method + 1)
     ind_fig6 = numpy.arange(len(snr[ind_snr_sort_tracts_std_10])) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=55)
-    plt.xlabel('Noise std (% of the mean value WM value)', fontsize=55)
+    plt.xlabel('Noise STD (% of true WM value)', fontsize=55)
     plt.title('Absolute error within all tracts as a function of noise std\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -474,11 +476,11 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-        whiskerprops = dict(color=color, linewidth=2)
-        capprops = dict(color=color, linewidth=2)
-        medianprops = dict(linewidth=3, color=color)
+        boxprops = dict(linewidth=4, color=color)
+        flierprops = dict(color=color, markeredgewidth=0.7, markersize=15, marker='.')
+        whiskerprops = dict(color=color, linewidth=3)
+        capprops = dict(color=color, linewidth=3)
+        medianprops = dict(linewidth=4, color=color)
         meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
         meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
         plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_snr_sort_tracts_std_10, :, i_meth]),
@@ -499,9 +501,11 @@ def main():
     plt.xticks(ind_fig6 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig6) + (nb_method + 0.5) * width])
     plt.gca().set_ylim([0, 18])
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
-    plt.grid(b=True, axis='y', which='both')
+    plt.grid(b=True, axis='y', which='both', alpha=0.5)
+    plt.subplots_adjust(left=0.1)
+
 
     plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10.pdf', format='PDF')
 
@@ -511,7 +515,7 @@ def main():
     width = 1.0 / (nb_method + 1)
     ind_fig7 = numpy.arange(len(tracts_std[ind_tracts_std_sort_snr_10])) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=55)
-    plt.xlabel('Tracts std (% of the mean value WM value)', fontsize=55)
+    plt.xlabel('Tracts STD (% of true WM value)', fontsize=55)
     plt.title('Absolute error within all tracts as a function of tracts std\n', fontsize=65)
 
     # colors = plt.get_cmap('jet')(np.linspace(0, 1.0, nb_method))
@@ -521,11 +525,11 @@ def main():
         i_meth = methods_name[0].index(meth)
         i_meth_to_display = methods_to_display.index(meth)
 
-        boxprops = dict(linewidth=3, color=color)
-        flierprops = dict(color=color, markeredgewidth=0.7, markersize=7, marker='.')
-        whiskerprops = dict(color=color, linewidth=2)
-        capprops = dict(color=color, linewidth=2)
-        medianprops = dict(linewidth=3, color=color)
+        boxprops = dict(linewidth=4, color=color)
+        flierprops = dict(color=color, markeredgewidth=0.7, markersize=15, marker='.')
+        whiskerprops = dict(color=color, linewidth=3)
+        capprops = dict(color=color, linewidth=3)
+        medianprops = dict(linewidth=4, color=color)
         meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
         meanlineprops = dict(linestyle='--', linewidth=2.5, color='purple')
         plot_i = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_tracts_std_sort_snr_10, :, i_meth]),
@@ -547,9 +551,10 @@ def main():
     plt.xticks(ind_fig7 + (numpy.floor(nb_method / 2)) * width * (1.0 + 1.0 / (nb_method + 1)), xtick_labels)
     plt.gca().set_xlim([-width, numpy.max(ind_fig7) + (nb_method + 0.5) * width])
     plt.gca().set_ylim([0, 18])
-    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
+    plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
-    plt.grid(b=True, axis='y', which='both')
+    plt.grid(b=True, axis='y', which='both', alpha=0.5)
+    plt.subplots_adjust(left=0.1)
 
     plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10.pdf', format='PDF')
 
