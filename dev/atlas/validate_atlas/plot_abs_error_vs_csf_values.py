@@ -25,7 +25,7 @@ class Param:
         self.debug = 0
         self.results_folder = "results_20150210_200iter"
         self.methods_to_display = 'bin,wa,wath,ml,map'
-        self.fname_folder_to_save_fig = '.' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 
 # =======================================================================================================================
@@ -309,7 +309,7 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.3)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_method + 1) * width - width / 4, facecolor='grey', alpha=0.1)
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
     plt.legend(box_plots, methods_to_display, loc='best', fontsize=22)
@@ -324,7 +324,7 @@ def main():
 
     plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_csf_values')
 
-    plt.show()
+    plt.show(block=False)
 
 #=======================================================================================================================
 # Start program
