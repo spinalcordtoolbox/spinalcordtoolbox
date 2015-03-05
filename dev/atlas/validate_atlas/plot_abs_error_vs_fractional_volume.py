@@ -319,7 +319,7 @@ def main():
 
 
     # Compute fractional volume per label
-    labels_id_FV, labels_name_FV, fract_vol_per_lab, labels_name_FV_RL_gathered, fract_vol_per_lab_RL_gathered = isct_get_fractional_volume.get_fractional_volume_per_label('/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/', 'info_label.txt')
+    labels_id_FV, labels_name_FV, fract_vol_per_lab, labels_name_FV_RL_gathered, fract_vol_per_lab_RL_gathered = isct_get_fractional_volume.get_fractional_volume_per_label('./cropped_atlas/', 'info_label.txt')
 
     # NOT NECESSARY NOW WE AVERAGE ACROSS BOTH SIDES (which orders the labels)
     # # check if the order of the labels returned by the function computing the fractional volumes is the same (which should be the case)
