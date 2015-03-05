@@ -503,7 +503,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_noise_std_Tracts_std_fixed_to_10', format='pdf')
 
 
     # Plot B -- v3: Box plots absolute error
@@ -551,7 +551,7 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_vs_tracts_std_Noise_std_fixed_to_10', format='pdf')
 
 
     plt.show(block=False)
