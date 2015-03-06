@@ -36,6 +36,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import sct_utils as sct
+from math import sqrt
 
 
 class PCA:
@@ -105,7 +106,7 @@ class PCA:
                 else:
                     break
         kept = len(eigenvalues_kept)
-        print 'kept = ', kept
+        print 'kept eigenvalues (PCA space dimension)  : ', kept
         return W, kept
 
     # STEP 6
@@ -141,13 +142,17 @@ class PCA:
         fig = plt.figure()
         for i_fig in range(0, self.kept):
             eigen_V = self.W.T[i_fig, :]
-            # TODO: size of the sublot is fixed, must code it to fit dynamically
-            a = fig.add_subplot(5, 3, i_fig + 1)
+            #dimensions of the subfigure
+            x = int(sqrt(self.kept))
+            y = int(self.kept/x)
+            x += 1
+            a = fig.add_subplot(x, y, i_fig + 1)
             a.set_title('Mode {}'.format(i_fig))
             if split:
-                imgplot = a.imshow(eigen_V.reshape(n/2, n))
+                #TODO: check if casting complex values to float isn't a too big loss of information ...
+                imgplot = a.imshow(eigen_V.reshape(n/2, n).astype(np.float))
             else:
-                imgplot = a.imshow(eigen_V.reshape(n, n))
+                imgplot = a.imshow(eigen_V.reshape(n, n).astype(np.float))
             imgplot.set_interpolation('nearest')
             #imgplot.set_cmap('gray')
 
@@ -169,7 +174,7 @@ class PCA:
         assert self.omega.shape == (self.kept, self.J), "The matrix is {}".format(self.omega.shape)
         for i in range(0, nb_mode):
             # Plot the dataset
-            plt.plot(self.omega[i,0:self.J], self.omega[i+1,0 :self.J],
+            plt.plot(self.omega[i, 0:self.J], self.omega[i+1, 0:self.J],
                      'o', markersize=7, color='blue', alpha=0.5, label='original dataset')
 
             # Plot the projected image's coord
@@ -185,14 +190,7 @@ class PCA:
                 else:
                     sct.printv('Cannot plot projected target.', 1, 'error')
 
-
-
             plt.title('Transformed samples with class labels mode {}'.format(i))
         plt.show()
 
 
-
-    # TODO
-    # project all the images from the dataset in order to calculate geodesical distances between the target image
-    # and the dataset
-    #def project_all
