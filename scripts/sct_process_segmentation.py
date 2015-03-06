@@ -33,6 +33,9 @@ class Param:
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
         self.name_method = 'counting_z_plane'  # for compute_CSA
+        self.slices = ''
+        self.vertebral_levels = ''
+        self.path_to_template = ''
         
         
 import sys
@@ -46,7 +49,6 @@ from sct_nurbs import NURBS
 import scipy
 import nibabel
 from sct_orientation import get_orientation, set_orientation
-
 
 # MAIN
 # ==========================================================================================
@@ -72,6 +74,9 @@ def main():
     smoothing_param = param.smoothing_param
     figure_fit = param.figure_fit
     name_output = param.name_output
+    slices = param.slices
+    vert_lev = param.vertebral_levels
+    path_to_template = param.path_to_template
     
     # Parameters for debug mode
     if param.debug:
@@ -85,7 +90,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:r:s:f:o:v:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -101,6 +106,9 @@ def main():
                 name_method = arg
             elif opt in('-b'):
                 volume_output = int(arg)
+            elif opt in('-l'):
+                vert_lev = arg
+                volume_output = 1
             elif opt in('-r'):
                 remove_temp_files = int(arg)
             elif opt in ('-s'):
@@ -109,8 +117,13 @@ def main():
                 figure_fit = int(arg)
             elif opt in ('-o'):
                 name_output = arg
+            elif opt in ('-t'):
+                path_to_template = arg
             elif opt in ('-v'):
                 verbose = int(arg)
+                volume_output = 1
+            elif opt in ('-z'):
+                slices = arg
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
@@ -142,7 +155,7 @@ def main():
         sct.printv('fslview '+fname_output+' &', param.verbose, 'code')
 
     if name_process == 'compute_csa':
-        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output)
+        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template)
 
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('See '+param.fname_csa+' file.')
@@ -242,7 +255,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output):
+def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -510,10 +523,63 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if volume_output:
         sct.generate_output_file(fname_csa_volume, path_data+name_output)  # extension already included in name_output
 
+    # average csa across vertebral levels or slices if asked
+    if slices or vert_levels:
+
+        if vert_levels and not path_to_template:
+            sct.printv('ERROR: need to give the template folder path as -t argument.', 'error')
+            sys.exit(2)
+        elif vert_levels and path_to_template:
+            abs_path_to_template = os.path.abspath(path_to_template)
+
+        # go to tmp folder
+        os.chdir(path_tmp)
+
+        # create temporary folder
+        sct.printv('\nCreate temporary folder to average csa...', verbose)
+        path_tmp_extract_metric = sct.slash_at_the_end('label_temp', 1)
+        sct.run('mkdir '+path_tmp_extract_metric, verbose)
+
+        # Copying output CSA volume in the temporary folder
+        sct.printv('\nCopy data to tmp folder...', verbose)
+        sct.run('cp '+fname_segmentation+' '+path_tmp_extract_metric)
+
+        # create file info_label
+        path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(fname_segmentation)
+        create_info_label('info_label.txt', path_tmp_extract_metric, file_fname_seg+ext_fname_seg)
+
+        if slices:
+            # average CSA
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../mean_csa -z "+slices)
+        if vert_levels:
+            sct.run('cp -R '+abs_path_to_template+' .')
+            # average CSA
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../mean_csa -v "+vert_levels)
+
+        os.chdir('..')
+
+        # Remove temporary files
+        print('\nRemove temporary folder used to average CSA...')
+        sct.run('rm -rf '+path_tmp_extract_metric)
+
     # Remove temporary files
     if remove_temp_files == 1:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
+
+
+#=======================================================================================================================
+# create text file info_label.txt
+#=======================================================================================================================
+def create_info_label(file_name, path_folder, fname_seg):
+
+    os.chdir(path_folder)
+    file_info_label = open(file_name, 'w')
+    file_info_label.write('# Spinal cord segmentation\n')
+    file_info_label.write('# ID, name, file\n')
+    file_info_label.write('0, mean CSA, '+fname_seg)
+    file_info_label.close()
+    os.chdir('..')
 
 
 #=======================================================================================================================
@@ -579,7 +645,7 @@ def ellipse_dim(a):
 # Detect edges of an image
 #=======================================================================================================================
 def edge_detection(f):
-    
+
     import Image
     
     #sigma = 1.0
@@ -587,7 +653,7 @@ def edge_detection(f):
     imgdata = np.array(img, dtype = float)
     G = imgdata
     #G = ndi.filters.gaussian_filter(imgdata, sigma)
-    gradx = np.array(G, dtype = float)                        
+    gradx = np.array(G, dtype = float)
     grady = np.array(G, dtype = float)
  
     mask_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
@@ -648,6 +714,11 @@ OPTIONAL ARGUMENTS
   -o <output_name>           name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
   -r {0,1}                   remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}                   verbose. Default="""+str(param_default.verbose)+"""
+  -l <lmin:lmax>             vertebral levels to compute the CSA across (need the option \"-p compute_csa\").
+                             Example: 2:9 for C2 to T2.
+  -z <zmin:zmax>             slice range to compute the CSA across.(need the option \"-p compute_csa\").
+                             First slice is 0. Example: 5:23.
+                             You can also select specific slices using commas. Example: 0,2,3,5,12
   -h                         help. Show this message
 
 EXAMPLE
