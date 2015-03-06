@@ -713,6 +713,12 @@ OPTIONAL ARGUMENTS
                              mm^2. Default="""+str(param_default.volume_output)+"""
   -o <output_name>           name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
   -r {0,1}                   remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
+  -t <path_to_template>      in the case you ask to average CSA across specific vertebral levels
+                             (options \"-p compute_csa\" and \"-l <lmin:lmax>\"), path to the folder
+                             containing the template labels (at least the file \"MNI-Poly-AMU_levels.nii.gz\")
+                             registered to your segmented image.
+                             Usually, once you have registered the template to your segmented data using
+                             sct_warp_template, this folder is included in the generated folder named \"label\".
   -v {0,1}                   verbose. Default="""+str(param_default.verbose)+"""
   -l <lmin:lmax>             vertebral levels to compute the CSA across (need the option \"-p compute_csa\").
                              Example: 2:9 for C2 to T2.
@@ -722,7 +728,9 @@ OPTIONAL ARGUMENTS
   -h                         help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa\n"""
+  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa\n
+  To compute CSA across vertebral levels C2 to C4:
+  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa -t label/template -l 2:4\n"""
 
     # exit program
     sys.exit(2)
