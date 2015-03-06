@@ -75,6 +75,14 @@ do
   fi
   echo "$cmd"
   $cmd
+
+  if [ "$is_admin" = true ] ; then
+    cmd="sudo chmod 775 ${scriptname}"
+  else
+    cmd="chmod 775 ${scriptname}"
+    fi
+  echo "$cmd"
+  $cmd
 done
 
 #removing internal stuff or stuff under development
