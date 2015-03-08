@@ -1,10 +1,8 @@
 
 function sct_tools_merge_text_files(text_files, output,transpose)
-% sct_tools_merge_text_files('fsems_*.bvec', output, transpose?)
+% sct_merge_text_files('fsems_*.bvec', output, transpose?)
 dbstop if error
-list_text=dir(text_files);
-list_text={list_text.name};
-list_text=sort_nat(list_text);
+list_text=sct_tools_ls(text_files,1);
 
 % =========================================================================
 % DON'T CHANGE BELOW
@@ -21,7 +19,7 @@ end
 % =========================================================================
 % MERGE BVEC FILE AND GENERATE SCHEME FILE
 % =========================================================================
-
+mkdir(fileparts(output))
 copyfile(list_text{1},output)
 output_fid = fopen(output,'r+');
 first_file=textscan(output_fid,'%s','delimiter','\n','CommentStyle','#');
