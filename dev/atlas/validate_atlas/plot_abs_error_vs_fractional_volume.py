@@ -355,7 +355,7 @@ def main():
     width = 1.0 / (nb_method + 1)
     ind_fig = numpy.arange(len(labels_name_sort)) * (1.0 + width)
     plt.ylabel('Absolute error (%)\n', fontsize=65)
-    plt.xlabel('Fractional volume', fontsize=65)
+    plt.xlabel('Fractional volume (% of number of WM voxels)', fontsize=65)
     plt.title('Absolute error per tract as a function of their fractional volume\n\n', fontsize=30)
     plt.suptitle('(Noise std='+str(snr[ind_file_to_display[0]][0])+', Tracts std='+str(tracts_std[ind_file_to_display[0]][0])+', CSF value='+str(csf_values[ind_file_to_display[0]][0])+')', fontsize=30)
 
