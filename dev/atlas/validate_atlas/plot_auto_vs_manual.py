@@ -258,6 +258,8 @@ def main():
     ind_file_noise10_tracts_std10 = numpy.where((snr == 10) & (tracts_std == 10))[0][0]
 
     matplotlib.rcParams.update({'font.size': 45, 'font.family': 'trebuchet'})
+    plt.rcParams['xtick.major.pad'] = '9'
+    plt.rcParams['ytick.major.pad'] = '15'
 
     fig0 = plt.figure(0, figsize=(34, 17))
     width = 0.5/(nb_method+1)
@@ -290,8 +292,9 @@ def main():
 
     # plt.legend(plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0., handler_map={Line2D: HandlerLine2D(numpoints=1)})
     plt.legend(plots, methods_to_display, loc='best', handler_map={Line2D: HandlerLine2D(numpoints=1)})
-    plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=45)
-    plt.gca().set_xlim([-width, numpy.max(ind_fig0)+(nb_method+0.5)*width])
+    # plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), labels_id[0], fontsize=45)
+    plt.xticks(ind_fig0 + (numpy.floor(nb_method/2))*width*(1.0+1.0/(nb_method+1)), ['l-cst', 'r-cst', 'dc'], fontsize=45)
+    plt.gca().set_xlim([-3*width, numpy.max(ind_fig0)+(nb_method+3)*width])
     # plt.gca().set_ylim([0, 2])
     plt.gca().yaxis.set_major_locator(plt.MultipleLocator(2.5))
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.5))
