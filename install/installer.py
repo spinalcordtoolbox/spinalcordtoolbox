@@ -770,14 +770,12 @@ class Installer:
 
         # display stuff
         print """\n"========================================================================================"
-Installation done! You may need to run a new Terminal in order to set environment variables.
-If you had errors, please start a new Terminal and run the following command:
+Installation done! Please open a new Terminal to set environment variables.
+If you noticed errors during installation, please start a new Terminal and run the following command:
 > sct_check_dependences -c -l
+Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/
-or contact the developers.
-
-You can now delete this folder by typing:
+If installation was successful, you can delete the installation folder by typing:
 > cd ..
 > rm -rf """ + os.getcwd() + """
 
