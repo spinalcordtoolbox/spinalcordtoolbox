@@ -624,7 +624,7 @@ class Installer:
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
                 status, output = runProcess(cmd)
                 #status, output = commands.getstatusoutput(cmd)
