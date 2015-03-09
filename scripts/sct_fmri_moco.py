@@ -54,6 +54,9 @@ def main():
     path_out = '.'
     param_user = ''
 
+    # reducing the number of CPU used for moco (see issue #201)
+    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
+
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
