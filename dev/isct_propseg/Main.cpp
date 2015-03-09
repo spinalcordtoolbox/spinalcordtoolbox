@@ -85,9 +85,11 @@
 
 // std libraries
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
 
 // local references
 #include "referential.h"
@@ -161,6 +163,16 @@ string StrPad(string original, size_t charCount, string prefix="")
 		original = tempString;
 	}
     return original;
+}
+
+vector<string> split(const string &s, char delim) {
+    vector<string> elems;
+    stringstream ss(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
 }
 
 void help()
@@ -256,6 +268,13 @@ int main(int argc, char *argv[])
     
     // Initialization with Vesselness Filter and Minimal Path
     bool init_with_minimalpath = true;
+    double minimalPath_alpha=0.15;
+    double minimalPath_beta=1.0;
+    double minimalPath_gamma=5.0;
+    double minimalPath_sigmaMinimum=1.5;
+    double minimalPath_sigmaMaximum=4.5;
+    unsigned int minimalPath_numberOfSigmaSteps=5;
+    double minimalPath_sigmaDistance=10.0;
     
     // Reading option parameters from user input
     for (int i = 0; i < argc; ++i) {
@@ -382,6 +401,19 @@ int main(int argc, char *argv[])
             CSF_segmentation = true;
             if (maxArea == 0.0) maxArea = 120;
             if (maxDeformation == 0.0) maxDeformation = 2.5;
+        }
+        else if (strcmp(argv[i],"-param-init")==0)
+        {
+            // param structure delimited by commas:
+            // minimalPath_alpha,minimalPath_beta,minimalPath_gamma,minimalPath_sigmaMinimum,minimalPath_sigmaMaximum,minimalPath_numberOfSigmaSteps,minimalPath_sigmaDistance
+            vector<string> param_init = split(argv[i], ',');
+            minimalPath_alpha = atof(param_init[0].c_str());
+            minimalPath_beta = atof(param_init[1].c_str());
+            minimalPath_gamma = atof(param_init[2].c_str());
+            minimalPath_sigmaMinimum = atof(param_init[3].c_str());
+            minimalPath_sigmaMaximum = atof(param_init[4].c_str());
+            minimalPath_numberOfSigmaSteps = atoi(param_init[5].c_str());
+            minimalPath_sigmaDistance = atof(param_init[6].c_str());
         }
 		else if (strcmp(argv[i],"-verbose")==0) {
             verbose = true;
@@ -658,7 +690,7 @@ int main(int argc, char *argv[])
         init.setGap(gapInterSlices); // gap between slices is necessary to provide good normals
         init.setRadius(radius); // approximate radius of spinal cord. This parameter is used to initiate Hough transform
         init.setNumberOfSlices(nbSlicesInitialisation);
-        centerline = init.getCenterlineUsingMinimalPath();
+        centerline = init.getCenterlineUsingMinimalPath(minimalPath_alpha, minimalPath_beta, minimalPath_gamma, minimalPath_sigmaMinimum, minimalPath_sigmaMaximum, minimalPath_numberOfSigmaSteps, minimalPath_sigmaDistance);
         init_with_centerline = true;
     }
     else
