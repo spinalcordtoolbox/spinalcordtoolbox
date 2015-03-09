@@ -43,7 +43,7 @@ cd t1
 # crop data using graphical user interface (put two points)
 # >> sct_crop -i t1.nii.gz
 # segmentation (used for registration to template)
-sct_propseg -i t1.nii.gz -t t1
+sct_propseg -i t1.nii.gz -t t1 -max-deformation 3
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
