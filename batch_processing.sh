@@ -102,7 +102,7 @@ cd mt
 # create points along the spinal cord mt1 to help segmentation.
 sct_label_utils -i mt1.nii.gz -t create -x 100,90,4,1:102,93,2,1:101,91,0,1 -o mt1_init.nii.gz
 # segment mt1
-sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -detect-radius 5 -max-deformation 5
+sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -radius 5 -max-deformation 5
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 # use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
