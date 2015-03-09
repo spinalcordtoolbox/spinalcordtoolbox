@@ -39,7 +39,7 @@ public:
     void setNumberOfSlices(int nbSlice) { numberOfSlices_ = nbSlice-(1-nbSlice%2); }; //need to be impair
     void setRadius(double radius) { radius_ = radius; };
     
-    vector<CVector3> getCenterlineUsingMinimalPath();
+    vector<CVector3> getCenterlineUsingMinimalPath(double alpha=0.15, double beta=1.0, double gamma=5.0, double sigmaMinimum=1.5, double sigmaMaximum=4.5, unsigned int numberOfSigmaSteps=5, double sigmaDistance=10.0);
     vector<CVector3> minimalPath3d(ImageType::Pointer image, double factx=sqrt(2));
     
 	bool computeInitialParameters(float startFactor=-1.0);
@@ -56,7 +56,7 @@ public:
 private:
 	void searchCenters(ImageType2D::Pointer im, vector<CVector3> &vecCenter, vector<double> &vecRadii, vector<double> &vecAccumulator, float startZ, ImageType::Pointer imageVesselness);
 	unsigned int houghTransformCircles(ImageType2D* im, unsigned int numberOfCircles, double** center_result, double* radius_result, double* accumulator_result, double meanRadius, ImageType::Pointer VeselnessImage, float slice, double valPrint=255);
-    ImageType::Pointer vesselnessFilter(ImageType::Pointer im);
+    ImageType::Pointer vesselnessFilter(ImageType::Pointer im, double alpha=0.15, double beta=1.0, double gamma=5.0, double sigmaMinimum=1.5, double sigmaMaximum=4.5, unsigned int numberOfSigmaSteps=5, double sigmaDistance=10.0);
     ImageType::Pointer vesselnessFilter2(ImageType::Pointer im);
     int symmetryDetection(ImageType2D::Pointer im, double cropWidth_, double bandWidth_);
     int symmetryDetection3D(ImageType::Pointer im, double cropWidth_, double bandWidth_);
