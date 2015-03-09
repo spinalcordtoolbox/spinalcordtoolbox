@@ -154,13 +154,15 @@ void Initialisation::setInputImage(ImageType::Pointer image)
 
 vector<CVector3> Initialisation::getCenterlineUsingMinimalPath()
 {
-    cout << "Starting vesselness filtering and minimal path identification" << endl;
+    if (verbose_) cout << "Starting vesselness filtering and minimal path identification..." << endl;
     // Apply vesselness filter on the image
     ImageType::Pointer vesselnessImage = vesselnessFilter(inputImage_);
     
     // Compute the minimal path on the vesselnessfilter result to find the centerline
+    // The vesselness image is multiplied by a 3D gaussian mask, around the median plane, in the left-right direction.
     vector<CVector3> centerline = minimalPath3d(vesselnessImage);
     
+    // Transform centerline coordinates in world coordinates as requested by PropSeg (previously in image coordinates).
     vector<CVector3> centerline_worldcoordinate;
     ImageType::IndexType ind;
     itk::Point<double,3> point;
@@ -171,7 +173,7 @@ vector<CVector3> Initialisation::getCenterlineUsingMinimalPath()
         centerline_worldcoordinate.push_back(CVector3(point[0],point[1],point[2]));
     }
     
-    cout << "Finished" << endl;
+    if (verbose_) cout << "Done" << endl;
     
     return centerline_worldcoordinate;
 }
@@ -1340,13 +1342,14 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     ObjectnessFilterType::Pointer objectnessFilter = ObjectnessFilterType::New();
     objectnessFilter->SetBrightObject( 1-typeImageFactor_ );
     objectnessFilter->SetScaleObjectnessMeasure( false );
-    objectnessFilter->SetAlpha( 0.5 );
+    objectnessFilter->SetAlpha( 0.2 );
     objectnessFilter->SetBeta( 1.0 );
     objectnessFilter->SetGamma( 5.0 );
+    objectnessFilter->SetObjectDimension(1);
     
-    double sigmaMinimum = 2.0;
-    double sigmaMaximum = 4.0;
-    unsigned int numberOfSigmaSteps = 10;
+    double sigmaMinimum = 1.5;
+    double sigmaMaximum = 4.5;
+    unsigned int numberOfSigmaSteps = 5;
     
     typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, ImageType > MultiScaleEnhancementFilterType;
     MultiScaleEnhancementFilterType::Pointer multiScaleEnhancementFilter =
@@ -1357,30 +1360,33 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     multiScaleEnhancementFilter->SetSigmaMinimum( sigmaMinimum );
     multiScaleEnhancementFilter->SetSigmaMaximum( sigmaMaximum );
     multiScaleEnhancementFilter->SetNumberOfSigmaSteps( numberOfSigmaSteps );
+    multiScaleEnhancementFilter->Update();
     
     ImageType::Pointer vesselnessImage = multiScaleEnhancementFilter->GetOutput();
-        
-    // Normalization of the vesselness image
-    /*StatisticsImageFilterType::Pointer statisticsImageFilter = StatisticsImageFilterType::New();
-    statisticsImageFilter->SetInput(vesselnessImage);
-    statisticsImageFilter->Update();
-    double meanIm = statisticsImageFilter->GetMean();
-    double sigmaIm = statisticsImageFilter->GetSigma();
-    double minIm = statisticsImageFilter->GetMinimum();
-    double maxIm = statisticsImageFilter->GetMaximum();
     
+    // Multiplying the vesselness filter results by a sigmoid mask to concentrate spinal cord detection aroung the median sagittal plane.
+    // sigmoid: tanh(5.0-0.5*left_right_distance)/2+0.5
+    // gaussian: e^(-left_right_distance^2/(2*10^2))
+    // left-right is the first dimension in world coordinates
+    int middle_slice = vesselnessImage->GetLargestPossibleRegion().GetSize()[2]/2;
+    ImageType::IndexType index;
+    PointType point, pointCenter;
+    index[0] = 0; index[1] = 0; index[2] = middle_slice;
+    inputImage_->TransformIndexToPhysicalPoint(index, pointCenter);
+    
+    double factor = 1.0, sigma_dist = 10;
     typedef itk::ImageRegionIterator< ImageType > ImageIterator;
-    ImageIterator vIt( vesselnessImage, vesselnessImage->GetBufferedRegion() );
+    ImageIterator vIt( vesselnessImage, vesselnessImage->GetLargestPossibleRegion() );
     vIt.GoToBegin();
-    double newMin = 0, newMax = 1;
-    minIm = meanIm-sigmaIm;
-    maxIm = meanIm+sigmaIm;
-    // normalization that remove extrema
     while ( !vIt.IsAtEnd() )
     {
-        vIt.Set((vIt.Get()-minIm)*(newMax-newMin)/(maxIm-minIm)+newMin);
+        index = vIt.GetIndex();
+        vesselnessImage->TransformIndexToPhysicalPoint(index, point);
+        //factor = tanh(5.0-0.5*abs(point[0]-pointCenter[0]))/2.0+0.5;
+        factor = exp(-pow(point[0]-pointCenter[0],2)/(2*sigma_dist*sigma_dist));
+        vIt.Set(vIt.Get()*factor);
         ++vIt;
-    }*/
+    }
     
     WriterType::Pointer writerVesselNess = WriterType::New();
     itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
@@ -1397,7 +1403,6 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
         cout << "Location    = " << e.GetLocation()    << endl;
         cout << "Description = " << e.GetDescription() << endl;
     }
-    
     
     return vesselnessImage;
 }
