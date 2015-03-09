@@ -30,6 +30,7 @@
 # Modified: 2015-03-02
 #
 # About the license: see the file LICENSE.TXT
+#TODO : compute the 'total' mean dice (T1, T2, T2star)
 #########################################################################################
 from msct_parser import Parser
 import sys
@@ -238,6 +239,7 @@ class Pipeline:
                 path = subject.dir_t2star
                 name = subject.name_t2star
                 t = 't2'
+                init_mask = ''
                 for file in os.listdir(path):
                     if 'mask' in file:
                         self.seg_t2star_params['init-mask'] = file
