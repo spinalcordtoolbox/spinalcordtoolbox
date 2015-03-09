@@ -254,6 +254,9 @@ int main(int argc, char *argv[])
 	bool tradeoff_d_bool = false;
     int nbiter_GGVF = 2;
     
+    // Initialization with Vesselness Filter and Minimal Path
+    bool init_with_minimalpath = true;
+    
     // Reading option parameters from user input
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
@@ -630,6 +633,7 @@ int main(int argc, char *argv[])
     double stretchingFactor = 1.0;
     vector<CVector3> centerline;
     
+    
     if (init_with_centerline)
     {
         if (verbose) cout << "Initialization - using given centerline" << endl;
@@ -646,6 +650,16 @@ int main(int argc, char *argv[])
             cout << "Normal 1 = " << normal1 << endl;
             cout << "Normal 2 = " << normal2 << endl;
         }
+    }
+    else if (init_with_minimalpath)
+    {
+        Initialisation init(image,typeImageFactor);
+        init.setVerbose(verbose);
+        init.setGap(gapInterSlices); // gap between slices is necessary to provide good normals
+        init.setRadius(radius); // approximate radius of spinal cord. This parameter is used to initiate Hough transform
+        init.setNumberOfSlices(nbSlicesInitialisation);
+        centerline = init.getCenterlineUsingMinimalPath();
+        init_with_centerline = true;
     }
     else
     {
