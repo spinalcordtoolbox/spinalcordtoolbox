@@ -624,7 +624,7 @@ class Installer:
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
                 status, output = runProcess(cmd)
                 #status, output = commands.getstatusoutput(cmd)
@@ -640,7 +640,9 @@ class Installer:
             bashrc.write("\nexport PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts")
             bashrc.write("\nexport SCT_DIR PATH")
             # forbid to run several ITK instances in parallel (see issue #201).
-            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1")
+            from multiprocessing import cpu_count
+            number_of_cpu = cpu_count()
+            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+number_of_cpu)
             bashrc.close()
 
         # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
