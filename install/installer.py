@@ -32,12 +32,11 @@ signal.signal(signal.SIGALRM, interrupted)
 
 def input_timeout(text):
     try:
-        print 'You have 5 seconds to type in your stuff...'
         foo = raw_input(text)
         return foo
     except:
-            # timeout
-            return
+        # timeout
+        return
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
