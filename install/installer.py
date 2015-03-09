@@ -22,6 +22,22 @@ import getopt
 from datetime import date
 import platform
 import subprocess
+import signal
+
+# small function for input with timeout
+def interrupted(signum, frame):
+    "called when read times out"
+    print 'interrupted!'
+signal.signal(signal.SIGALRM, interrupted)
+
+def input_timeout(text):
+    try:
+        print 'You have 5 seconds to type in your stuff...'
+        foo = raw_input(text)
+        return foo
+    except:
+            # timeout
+            return
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
@@ -579,8 +595,10 @@ class Installer:
             if version_sct.isLessThan_MajorMinor(version_sct_online):
                 print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
                 install_new = ""
+                signal.alarm(30)
                 while install_new not in ["yes","no"]:
-                    install_new = raw_input("[yes|no]: ")
+                    install_new = input_timeout("[yes|no]: ")
+                signal.alarm(0)
                 if install_new == "yes":
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
