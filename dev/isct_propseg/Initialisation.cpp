@@ -152,7 +152,7 @@ void Initialisation::setInputImage(ImageType::Pointer image)
     orientation_ = orientationFilter.getInitialImageOrientation();
 }
 
-vector<CVector3> Initialisation::getCenterlineUsingMinimalPath()
+vector<CVector3> Initialisation::getCenterlineUsingMinimalPath(double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
 {
     if (verbose_) cout << "Starting vesselness filtering and minimal path identification..." << endl;
     // Apply vesselness filter on the image
@@ -1328,7 +1328,7 @@ void Initialisation::savePointAsAxialImage(ImageType::Pointer initialImage, stri
     else cout << "Error: Spinal cord center not detected" << endl;
 }
 
-ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
+ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im, double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
 {
     typedef itk::ImageDuplicator< ImageType > DuplicatorTypeIm;
     DuplicatorTypeIm::Pointer duplicator = DuplicatorTypeIm::New();
@@ -1342,14 +1342,10 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     ObjectnessFilterType::Pointer objectnessFilter = ObjectnessFilterType::New();
     objectnessFilter->SetBrightObject( 1-typeImageFactor_ );
     objectnessFilter->SetScaleObjectnessMeasure( false );
-    objectnessFilter->SetAlpha( 0.2 );
-    objectnessFilter->SetBeta( 1.0 );
-    objectnessFilter->SetGamma( 5.0 );
+    objectnessFilter->SetAlpha( alpha );
+    objectnessFilter->SetBeta( beta );
+    objectnessFilter->SetGamma( gamma );
     objectnessFilter->SetObjectDimension(1);
-    
-    double sigmaMinimum = 1.5;
-    double sigmaMaximum = 4.5;
-    unsigned int numberOfSigmaSteps = 5;
     
     typedef itk::MultiScaleHessianBasedMeasureImageFilter< ImageType, HessianImageType, ImageType > MultiScaleEnhancementFilterType;
     MultiScaleEnhancementFilterType::Pointer multiScaleEnhancementFilter =
@@ -1374,7 +1370,7 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
     index[0] = 0; index[1] = 0; index[2] = middle_slice;
     inputImage_->TransformIndexToPhysicalPoint(index, pointCenter);
     
-    double factor = 1.0, sigma_dist = 10;
+    double factor = 1.0;
     typedef itk::ImageRegionIterator< ImageType > ImageIterator;
     ImageIterator vIt( vesselnessImage, vesselnessImage->GetLargestPossibleRegion() );
     vIt.GoToBegin();
@@ -1383,7 +1379,7 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im)
         index = vIt.GetIndex();
         vesselnessImage->TransformIndexToPhysicalPoint(index, point);
         //factor = tanh(5.0-0.5*abs(point[0]-pointCenter[0]))/2.0+0.5;
-        factor = exp(-pow(point[0]-pointCenter[0],2)/(2*sigma_dist*sigma_dist));
+        factor = exp(-pow(point[0]-pointCenter[0],2)/(2*sigmaDistance*sigmaDistance));
         vIt.Set(vIt.Get()*factor);
         ++vIt;
     }
