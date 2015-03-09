@@ -642,7 +642,7 @@ class Installer:
             # forbid to run several ITK instances in parallel (see issue #201).
             from multiprocessing import cpu_count
             number_of_cpu = cpu_count()
-            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+number_of_cpu)
+            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
             bashrc.close()
 
         # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
