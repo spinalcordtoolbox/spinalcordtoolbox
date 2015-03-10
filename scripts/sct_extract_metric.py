@@ -50,8 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['5',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '5'] # STD of the gaussian-distributed noise
+        self.adv_param = ['10',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '10'] # STD of the gaussian-distributed noise
 
 class Color:
     def __init__(self):
