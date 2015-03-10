@@ -833,8 +833,8 @@ OPTIONAL ARGUMENTS
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           map: maximum a posteriori. Mean priors are estimated by maximum likelihood
-                               within three clusters defined by the flag -c (white matter, gray 
-                               matter and CSF). Tract and noise variance are set with flag -p.
+                               within three clusters (white matter, gray matter and CSF). Tract and 
+                               noise variance are set with flag -p.
                                N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
