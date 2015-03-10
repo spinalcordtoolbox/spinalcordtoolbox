@@ -96,11 +96,11 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207185647/WM_phantom_noise.nii.gz'
-        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
+        fname_data = '/Users/julien/data/temp/sct_example_data/mt/mtr.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/mt/label/atlas/'
         method = 'map'
         ml_clusters = '0:29,30,31'
-        labels_of_interest = '0,1,15,16'
+        labels_of_interest = '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29'
         slices_of_interest = ''
         vertebral_levels = ''
         average_all_labels = 1
