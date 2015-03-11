@@ -60,7 +60,8 @@ def runProcess(cmd, verbose=1):
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
+            if verbose==1:
+                print output.strip()
             output_final += output.strip()+'\n'
     '''
     if timeout is None:
@@ -75,7 +76,7 @@ def runProcess(cmd, verbose=1):
                 return None, "Error, a timeout for this process occurred"
     '''
 
-    return process.wait(), output_final
+    return process.returncode, output_final
 
 #==============e=========================================================================================================
 # check RAM usage
