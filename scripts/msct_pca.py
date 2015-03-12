@@ -51,7 +51,7 @@ class PCA:
         # STEP 3
         self.covariance_matrix = self.covariance_matrix()
         # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
-        self.eig_pairs = self.sort_eig()
+        self.eig_pairs = self.sorted_eig()
         # STEP 5
         self.k = k
         self.W, self.kept = self.generate_W()
@@ -60,7 +60,7 @@ class PCA:
         self.omega = self.project_dataset()
 
     # STEP 2
-    def mean(self, ):
+    def mean(self):
         mean_im = []
         for row in self.dataset:
             m = sum(row)/self.J
@@ -70,16 +70,14 @@ class PCA:
 
     # STEP 3
     def covariance_matrix(self):
-        N = self.N
-        J = self.J
-        covariance_matrix = np.zeros((N, N))
-        for j in range(0, J):
-            covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(N, 1) - self.mean_image)\
-                .dot((self.dataset[:, j].reshape(N, 1) - self.mean_image).T)
+        covariance_matrix = np.zeros((self.N, self.N))
+        for j in range(0, self.J):
+            covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(self.N, 1) - self.mean_image)\
+                .dot((self.dataset[:, j].reshape(self.N, 1) - self.mean_image).T)
         return covariance_matrix
 
     # STEP 4
-    def sort_eig(self):
+    def sorted_eig(self):
         eigenvalues, eigenvectors = np.linalg.eig(self.covariance_matrix)
         # Create a list of (eigenvalue, eigenvector) tuple
         eig_pairs = [(np.abs(eigenvalues[i]), eigenvectors[:, i]) for i in range(len(eigenvalues))
@@ -110,18 +108,19 @@ class PCA:
         return W, kept
 
     # STEP 6
+    # Project the all dataset in order to get images "close" to the target & to plot the dataset
+    def project_dataset(self):
+        omega = []
+        for column in self.dataset.T:
+            omega.append(self.project_array(column).reshape(self.kept,))
+        return np.asarray(omega).T
+
     def project(self, target):
         # check if the target is a volume or a flat image
         coord_projected_slices = []
         # loop across all the slice
         for slice in target.data:
-        #     left_slice, right_slice = split(slice)
-        #     left_slice = left_slice.flatten().reshape(self.N)
-        #     right_slice = right_slice.flatten().reshape(self.N)
-        #     coord_projected_slices.append(self.W.T.dot(left_slice - self.mean_image))
-        #     coord_projected_slices.append(self.W.T.dot(right_slice - self.mean_image))
             coord_projected_slices.append(self.project_array(slice.flatten()))
-            #coord_projected_slices.append(self.W.T.dot(slice.flatten().reshape(slice.flatten().shape[0],1) - self.mean_image))
         return np.asarray(coord_projected_slices)
 
     def project_array(self, target_as_array):
@@ -132,6 +131,7 @@ class PCA:
         else:
             print "target dimension is {}, must be {}.\n".format(target_as_array.shape, self.N)
 
+    #
     # Show all the mode
     def show(self, split=0):
         from math import sqrt
@@ -158,12 +158,7 @@ class PCA:
 
         plt.show()
 
-    # Project the all dataset in order to get images "close" to the target & to plot the dataset
-    def project_dataset(self):
-        omega = []
-        for column in self.dataset.T:
-            omega.append(self.project_array(column).reshape(self.kept,))
-        return np.asarray(omega).T
+
 
     # plot the projected dataset on nb_mode modes, if target is provided then it will also add its coord in the graph
     def plot_omega(self, nb_mode=1, target_coord=None):
