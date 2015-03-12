@@ -25,7 +25,7 @@ class Image(object):
     """
 
     """
-    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_copy=None, im_ref_zero=None, split=False):
+    def __init__(self, path=None, verbose=0, np_array=None, shape=None, im_copy=None, im_ref_zero=None):
         # initialization
         self.absolutepath = ""
         self.path = ""
@@ -58,8 +58,7 @@ class Image(object):
             self.orientation = None
         else:
             raise TypeError(' Image constructor takes at least one argument.')
-        if split:
-            self.data = self.split_data()
+
         self.dim = self.data.shape
 
     def loadFromPath(self, path, verbose):
@@ -283,17 +282,6 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         plt.show()
 
-    """
-    def split_data(self):
-        from sct_asman import split
-        new_data = []
-        for slice in self.data:
-            left, right = split(slice)
-            new_data.append(left)
-            new_data.append(right)
-        new_data = np.asarray(new_data)
-        return new_data
-    """
 
 
 #=======================================================================================================================
