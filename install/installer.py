@@ -21,6 +21,22 @@ import commands
 import getopt
 from datetime import date
 import platform
+import subprocess
+import signal
+
+# small function for input with timeout
+def interrupted(signum, frame):
+    "called when read times out"
+    print 'interrupted!'
+signal.signal(signal.SIGALRM, interrupted)
+
+def input_timeout(text):
+    try:
+        foo = raw_input(text)
+        return foo
+    except:
+        # timeout
+        return
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
@@ -47,7 +63,7 @@ class Version(object):
 
         for v in version_sct_split:
             if not v.isdigit():
-                raise ValueError('Bad version string.')
+                raise ValueError('Bad version string: '+self.version_sct)
         self.major = int(version_sct_split[0])
         try:
             self.minor = int(version_sct_split[1])
@@ -360,7 +376,7 @@ class Os(object):
             else:
                 (self.vendor, version, _) = platform.dist()
             self.vendor = self.vendor.lower()
-            self.version = Version(version)
+            self.version = Version("1.0.0") #Version(version) not supported yet
             self.glibc = platform.libc_ver()
             if self.arch == 'x86_64':
                 self.bits = '64'
@@ -454,6 +470,19 @@ def download_file(url, localf, timeout=20):
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
+def runProcess(cmd):
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print output.strip()
+
+    (output, err) = process.communicate()
+    return process.wait(), output
+
+
 class Installer:
     def __init__(self):
         self.path_install = "/usr/local"
@@ -524,7 +553,8 @@ class Installer:
 
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
             print ">> " + cmd
-            status, output = commands.getstatusoutput(cmd)
+            status, output = runProcess(cmd)
+            #status, output = commands.getstatusoutput(cmd)
             if status != 0:
                 print 'ERROR! \n' + output + '\nExit program.\n'
                 sys.exit(2)
@@ -533,7 +563,8 @@ class Installer:
         print "Create folder: " + self.SCT_DIR + " ..."
         cmd = self.issudo+"mkdir "+self.SCT_DIR
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print output + '\n'
 
@@ -563,8 +594,10 @@ class Installer:
             if version_sct.isLessThan_MajorMinor(version_sct_online):
                 print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
                 install_new = ""
+                signal.alarm(30)
                 while install_new not in ["yes","no"]:
-                    install_new = raw_input("[yes|no]: ")
+                    install_new = input_timeout("[yes|no]: ")
+                signal.alarm(0)
                 if install_new == "yes":
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
@@ -575,7 +608,8 @@ class Installer:
         print "\nCopy Spinal Cord Toolbox on your computer..."
         cmd = self.issudo + "cp -r spinalcordtoolbox/* " + self.SCT_DIR
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -590,9 +624,10 @@ class Installer:
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
-                status, output = commands.getstatusoutput(cmd)
+                status, output = runProcess(cmd)
+                #status, output = commands.getstatusoutput(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -605,7 +640,9 @@ class Installer:
             bashrc.write("\nexport PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts")
             bashrc.write("\nexport SCT_DIR PATH")
             # forbid to run several ITK instances in parallel (see issue #201).
-            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1")
+            from multiprocessing import cpu_count
+            number_of_cpu = cpu_count()
+            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
             bashrc.close()
 
         # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
@@ -632,16 +669,18 @@ class Installer:
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # install required software
         print "\nInstall required software... "
         os.chdir("requirements")
-        cmd = "./requirements.sh"
+        cmd = "sudo ./requirements.sh"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
@@ -654,7 +693,8 @@ class Installer:
         if self.issudo is "":
             cmd = cmd+" -a"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -684,7 +724,8 @@ class Installer:
                     if self.issudo == "":
                         cmd = cmd + " -a"
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
                     else:
@@ -694,7 +735,8 @@ class Installer:
                     MsgUser.message("Removing patch-related files...")
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR while removing patch-related files \n' + output + '\nExit program.\n'
                     else:
@@ -711,7 +753,8 @@ class Installer:
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
@@ -720,7 +763,8 @@ class Installer:
         # deleting temporary files
         cmd = "rm -rf tmp.*"
         print ">> " + cmd
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR while removing temporary files \n' + output + '\nExit program.\n'
         else:
@@ -728,14 +772,12 @@ class Installer:
 
         # display stuff
         print """\n"========================================================================================"
-Installation done! You may need to run a new Terminal in order to set environment variables.
-If you had errors, please start a new Terminal and run the following command:
+Installation done! Please open a new Terminal to set environment variables.
+If you noticed errors during installation, please start a new Terminal and run the following command:
 > sct_check_dependences -c -l
+Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/
-or contact the developers.
-
-You can now delete this folder by typing:
+If installation was successful, you can delete the installation folder by typing:
 > cd ..
 > rm -rf """ + os.getcwd() + """
 
@@ -757,7 +799,6 @@ USAGE
 
 MANDATORY ARGUMENTS
 -p <path>                   installation path. Do not add "/" at the end!
--
 -h                          display this help
   """
 
