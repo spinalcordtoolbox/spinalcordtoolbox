@@ -50,6 +50,34 @@ def run(cmd, verbose=1):
     else:
         return status, output
 
+def runProcess(cmd, verbose=1):
+    if verbose:
+        print(bcolors.blue+cmd+bcolors.normal)
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            print output.strip()
+
+    (output, err) = process.communicate()
+
+    '''
+    if timeout is None:
+        process.wait()
+    else:
+        while process.poll() is None:
+            time.sleep(0.2)
+            now = datetime.datetime.now()
+            if (now - start).seconds > timeout:
+                os.kill(process.pid, signal.SIGKILL)
+                os.waitpid(-1, os.WNOHANG)
+                return None, "Error, a timeout for this process occurred"
+    '''
+
+    return process.wait(), output
+
 #==============e=========================================================================================================
 # check RAM usage
 # work only on Mac OSX
@@ -160,7 +188,7 @@ def check_folder_exist(fname, verbose=1):
             printv('  OK: '+fname, verbose, 'normal')
         pass
     else:
-        printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
+        printv('\nERROR: The directory ' + str(fname) + ' does not exist. Exit program.\n', 1, 'error')
 
 #=======================================================================================================================
 # check_write_permission:  Check existence of a folder.
@@ -280,15 +308,19 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         # first, check if path_in is different from path_out
         if os.path.isfile(path_out+file_out+'.nii'):
             printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+'.nii')
+            os.remove(path_out+file_out+'.nii')
+#            os.system('rm '+path_out+file_out+'.nii')  # 
+            # use remove instead of rm because: https://github.com/neuropoly/spinalcordtoolbox/issues/259
         if os.path.isfile(path_out+file_out+'.nii.gz'):
             printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+'.nii.gz')
+            os.remove(path_out+file_out+'.nii.gz')
+#            os.system('rm '+path_out+file_out+'.nii.gz')
     # if path_in the same as path_out, only delete fname_out with specific ext_out extension
     else:
         if os.path.isfile(path_out+file_out+ext_out):
             printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
-            os.system('rm '+path_out+file_out+ext_out)
+            os.remove(path_out+file_out+ext_out)
+            #os.system('rm '+path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
@@ -350,7 +382,8 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit prohram
     if type == 'error':
-        raise NameError('Error!')
+        #raise NameError('Error!')
+        sys.exit(2)
 
 
 #=======================================================================================================================

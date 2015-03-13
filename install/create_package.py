@@ -67,7 +67,7 @@ sct.run('mkdir '+folder_sct)
 
 # copy folders
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox')
-sct.run('cp installer.sh '+folder_sct)
+sct.run('cp installer.py '+folder_sct)
 sct.run('cp -r requirements '+folder_sct)
 sct.run('cp ../README.md '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')

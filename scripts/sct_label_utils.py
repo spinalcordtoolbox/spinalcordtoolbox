@@ -16,10 +16,8 @@
 from msct_parser import Parser
 from msct_image import Image
 
-import os
 import sys
 import sct_utils as sct
-import numpy as np
 import math
 
 
@@ -34,14 +32,12 @@ class Param:
 
 
 class ProcessLabels(object):
-    def __init__(self, fname_label, type_process, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
+    def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
                  coordinates=None, verbose='1'):
         self.image_input = Image(fname_label)
 
         if fname_ref is not None:
             self.image_ref = Image(fname_ref)
-
-        self.type_process = type_process
 
         self.fname_output = fname_output
         self.cross_radius = cross_radius
@@ -49,29 +45,31 @@ class ProcessLabels(object):
         self.coordinates = coordinates
         self.verbose = verbose
 
-    def process(self):
-        if self.type_process == 'cross':
+    def process(self, type_process):
+        if type_process == 'cross':
             self.output_image = self.cross()
-        elif self.type_process == 'plan':
+        elif type_process == 'plan':
             self.output_image = self.plan(self.cross_radius, 100, 5)
-        elif self.type_process == 'plan_ref':
+        elif type_process == 'plan_ref':
             self.output_image = self.plan_ref()
-        elif self.type_process == 'increment':
+        elif type_process == 'increment':
             self.output_image = self.increment_z_inverse()
-        elif self.type_process == 'MSE':
+        elif type_process == 'MSE':
             self.MSE()
-        elif self.type_process == 'remove':
+        elif type_process == 'remove':
             self.output_image = self.remove_label()
-        elif self.type_process == 'centerline':
+        elif type_process == 'centerline':
             self.extract_centerline()
-        elif self.type_process == 'display-voxel':
+        elif type_process == 'display-voxel':
             self.display_voxel()
-        elif self.type_process == 'create':
+        elif type_process == 'create':
             self.output_image = self.create_label
-        elif self.type_process == 'diff':
+        elif type_process == 'diff':
             self.diff()
-        elif self.type_process == 'dist-inter':  # second argument is in pixel distance
+        elif type_process == 'dist-inter':  # second argument is in pixel distance
             self.distance_interlabels(5)
+        else:
+            sct.printv('Error: The chosen process is not available.',1,'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -80,7 +78,7 @@ class ProcessLabels(object):
 
 
     def cross(self):
-        image_output = Image(im_copy=self.image_input)
+        image_output = Image(self.image_input)
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -126,7 +124,8 @@ class ProcessLabels(object):
         """
         This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -139,7 +138,8 @@ class ProcessLabels(object):
         """
         This function generate a plan in the reference space for each label present in the input image
         """
-        image_output = Image(im_ref_zero=self.image_ref)
+        image_output = Image(self.image_ref)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -154,7 +154,8 @@ class ProcessLabels(object):
         Therefore, labels are incremented from top to bottom, assuming a RPI orientation
         Labels are assumed to be non-zero.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates(sorted='z',reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
@@ -209,7 +210,8 @@ class ProcessLabels(object):
         self.coordinates is a list of coordinates (class in msct_types).
         a Coordinate contains x, y, z and value.
         """
-        image_output = Image(im_ref_zero=self.image_input)
+        image_output = Image(self.image_input)
+        image_output.data *= 0
 
         # loop across labels
         for i,coord in enumerate(self.coordinates):
@@ -223,7 +225,7 @@ class ProcessLabels(object):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
         """
-        image_output = Image(im_copy=self.image_input)
+        image_output = Image(self.image_input)
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
@@ -311,48 +313,6 @@ class ProcessLabels(object):
                     coordinates_input[i+1].x) + ',' + str(coordinates_input[i+1].y) + ',' + str(coordinates_input[i+1].z) + ']=' + str(
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print """
-""" + os.path.basename(__file__) + """
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Utility function for labels.
-
-USAGE
-  """ + os.path.basename(__file__) + """ -i <data> -t <process>
-
-MANDATORY ARGUMENTS
-  -i <data>        labels or image to create labels on. Must be 3D.
-  -o <output>      output volume.
-  -t <process>     process:
-                     cross: create a cross. Must use flag "-c"
-                     remove: remove labels. Must use flag "-r".
-                     display-voxel: display all labels in file
-                     create: create labels. Must use flag "-x" to list labels.
-
-OPTIONAL ARGUMENTS
-  -x <x,y,z,v>     labels. Use ":" if you have multiple labels.
-                     x: x-coordinates
-                     y: y-coordinates
-                     z: z-coordinates
-                     v: value of label
-  -r <volume>      reference volume for label removing.
-  -c <radius>      cross radius in mm (default=5mm).
-  -v {0,1}         verbose. Default=""" + str(param_default.verbose) + """
-  -d               dilate.
-  -h               help. Show this message
-
-EXAMPLE
-  """ + os.path.basename(__file__) + """ -i t2.nii.gz -c 5\n"""
-
-    # exit program
-    sys.exit(2)
-
 
 #=======================================================================================================================
 # Start program
@@ -378,23 +338,12 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:
-                                            cross: create a cross. Must use flag "-c"
-                                            remove: remove labels. Must use flag "-r"
-                                            display-voxel: display all labels in file
-                                            create: create labels. Must use flag "-x" to list labels
-                                            increment: increment labels from top to bottom (in z direction, suppose RPI orientation)
-                                            MSE: compute Mean Square Error between labels input and reference input "-r"
-                                            """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r""",
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
-                      description="""labels x,y,z,v. Use ":" if you have multiple labels.
-                                            x: x-coordinates
-                                            y: y-coordinates
-                                            z: z-coordinates
-                                            v: value of label""",
+                      description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
                       mandatory=False,
                       example="1,5,2,6:3,7,2,1:3,7,9,32")
     parser.add_option(name="-r",
@@ -436,5 +385,5 @@ if __name__ == "__main__":
         input_dilate = arguments["-d"]
     if "-v" in arguments:
         input_verbose = arguments["-v"]
-    processor = ProcessLabels(input_filename, process_type, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
-    processor.process()
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
+    processor.process(process_type)

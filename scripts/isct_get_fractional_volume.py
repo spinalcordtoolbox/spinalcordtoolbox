@@ -51,3 +51,25 @@ def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
     #     label_name_RL_gatehered.append(label_name[2 * nb_RL_labels + i_label].strip())
 
     return label_id, label_name, fract_volume_per_lab, label_name_RL_gatehered, fract_volume_per_lab_RL_gatehered
+
+
+def get_nb_voxel_in_WM(atlas_folder, file_label):
+    """This function takes as input the path to the folder containing an atlas and the name of the file gathering the
+    labels' file name of this atlas. It returns the number of voxels including at least one label."""
+
+    import sct_extract_metric
+    import nibabel
+    import numpy
+
+    [label_id, label_name, label_file] = sct_extract_metric.read_label_file(atlas_folder, file_label)
+    nb_label = len(label_file)
+
+    # sum of all the labels
+    sum_all_labels = nibabel.load(atlas_folder + label_file[0]).get_data()
+    for i_label in range(1, nb_label):
+        sum_all_labels = numpy.add(sum_all_labels, nibabel.load(atlas_folder + label_file[i_label]).get_data())
+
+    # count the number of non-zero voxels
+    nb_voxel_in_WM = numpy.count_nonzero(sum_all_labels)
+
+    return nb_voxel_in_WM
