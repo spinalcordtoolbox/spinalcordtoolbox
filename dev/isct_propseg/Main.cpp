@@ -597,8 +597,6 @@ int main(int argc, char *argv[])
             {
                 if (output_detection) init.savePointAsAxialImage(image,outputPath+"result_detection.png");
                 if (output_detection_nii) init.savePointAsBinaryImage(image,outputPath+inputFilename_nameonly+"_detection"+suffix, orientationFilter.getInitialImageOrientation());
-                cout << "output machin chose" << endl;
-                if (output_detection_nii) cout << "truc" << endl;
                 
                 init.getPoints(point,normal1,normal2,radius,stretchingFactor);
                 if (normal2 == CVector3::ZERO) normal2 = -normal1;
