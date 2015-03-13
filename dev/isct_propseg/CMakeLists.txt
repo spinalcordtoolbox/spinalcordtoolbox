@@ -1,12 +1,15 @@
+# set(CMAKE_C_COMPILER "llvm-gcc")
+# set(CMAKE_CXX_COMPILER "llvm-g++")
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
-project(sct_propseg)
+project(isct_propseg)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
 set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.5)
 set(CMAKE_INCLUDE_PATH ${VTK_DIR}/include/vtk-6.1)
+set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.7)
 
 option(BUILD_SHARED_LIBS OFF)
 
@@ -26,9 +29,12 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   endif()
 endif()
 
+set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk")
+
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+# This line was set up for statically linking standard libraries with the binary - does not work with clang on OSX10.10
+# set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
@@ -49,7 +55,7 @@ aux_source_directory(. SRC_LIST)
 aux_source_directory(./util SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(sct_propseg
+TARGET_LINK_LIBRARIES(isct_propseg
 ITKIONIFTI
 ITKIOImageBase
 ITKCommon
@@ -85,4 +91,3 @@ vtkFiltersModeling
 vtkIOGeometry
 vtkFiltersGeneral
 )
-

@@ -22,9 +22,10 @@ from matplotlib.legend_handler import *
 
 class Param:
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.results_folder = 'results_20150210_200iter/map'
         self.methods_to_display = 'map'
+        self.fname_folder_to_save_fig = './result_plots' #/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article'
 
 def color_legend_texts(leg):
     """Color legend texts based on color of corresponding lines"""
@@ -41,7 +42,7 @@ def main():
     methods_to_display = param_default.methods_to_display
 
     # Parameters for debug mode
-    if param.debug:
+    if param_default.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         results_folder = "/Users/slevy_local/spinalcordtoolbox/dev/atlas/validate_atlas/results_20150210_200iter/map" #"C:/cygwin64/home/Simon_2/data_map"
         path_sct = '/Users/slevy_local/spinalcordtoolbox' #'C:/cygwin64/home/Simon_2/spinalcordtoolbox'
@@ -251,6 +252,8 @@ def main():
 
     # ********************************** START PLOTTING HERE ***********************************************************
     matplotlib.rcParams.update({'font.size': 45, 'font.family': 'Trebuchet'})
+    plt.rcParams['xtick.major.pad'] = '9'
+    plt.rcParams['ytick.major.pad'] = '15'
     # matplotlib.rcParams['legend.handlelength'] = 0
 
 
@@ -296,21 +299,21 @@ def main():
     box_plots = []
 
 
-    boxprops = dict(linewidth=3, color='b')
-    flierprops = dict(markeredgewidth=0.7, markersize=7, marker='.', color='b')
-    whiskerprops = dict(linewidth=2, color='b')
-    capprops = dict(linewidth=2, color='b')
-    medianprops = dict(linewidth=3, color='b')
+    boxprops = dict(linewidth=6, color='b')
+    flierprops = dict(markeredgewidth=0.7, markersize=15, marker='.', color='b')
+    whiskerprops = dict(linewidth=5, color='b')
+    capprops = dict(linewidth=5, color='b')
+    medianprops = dict(linewidth=6, color='b')
     meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
     meanlineprops = dict(linestyle='--', linewidth=2.5)
     plot_constant_noise_var = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_var_label_sort_var_noise20, :, 0]), positions=ind_fig, widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
     box_plots.append(plot_constant_noise_var['boxes'][0])
 
-    boxprops = dict(linewidth=3, color='r')
-    flierprops = dict(markeredgewidth=0.7, markersize=7, marker='.', color='r')
-    whiskerprops = dict(linewidth=2, color='r')
-    capprops = dict(linewidth=2, color='r')
-    medianprops = dict(linewidth=3, color='r')
+    boxprops = dict(linewidth=6, color='r')
+    flierprops = dict(markeredgewidth=0.7, markersize=15, marker='.', color='r')
+    whiskerprops = dict(linewidth=5, color='r')
+    capprops = dict(linewidth=5, color='r')
+    medianprops = dict(linewidth=6, color='r')
     meanpointprops = dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick')
     meanlineprops = dict(linestyle='--', linewidth=2.5)
     plot_constant_label_var = plt.boxplot(numpy.transpose(abs_error_per_labels[ind_var_noise_sort_var_label20, :, 0]), positions=ind_fig + width + width / (nb_box + 1), widths=width, boxprops=boxprops, medianprops=medianprops, flierprops=flierprops, whiskerprops=whiskerprops, capprops=capprops)
@@ -318,12 +321,12 @@ def main():
 
     # add alternated vertical background colored bars
     for i_xtick in range(0, len(ind_fig), 2):
-        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_box+1) * width - width / 4, facecolor='grey', alpha=0.3)
+        plt.axvspan(ind_fig[i_xtick] - width - width / 4, ind_fig[i_xtick] + (nb_box+1) * width - width / 4, facecolor='grey', alpha=0.1)
 
 
     # plt.legend(box_plots, methods_to_display, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-    leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ voxels^2}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean\ value}}$'], loc=1, handletextpad=-2)
-    color_legend_texts(leg)
+    # leg = plt.legend(box_plots, [r'$\mathrm{\mathsf{noise\ variance\ =\ 20\ voxels^2}}$', r'$\mathrm{\mathsf{variance\ within\ labels\ =\ 20\%\ of\ the\ mean\ value}}$'], loc=1, handletextpad=-2)
+    # color_legend_texts(leg)
     # convert xtick labels into int
     xtick_labels = [int(xtick) for xtick in map_var_params[ind_var_label_sort_var_noise20, 0]]
     plt.xticks(ind_fig + (numpy.floor(nb_box / 2)) * (width/2) * (1.0 + 1.0 / (nb_box + 1)), xtick_labels)
@@ -332,10 +335,10 @@ def main():
     plt.gca().yaxis.set_minor_locator(plt.MultipleLocator(0.25))
     plt.grid(b=True, axis='y', which='both')
 
-    plt.savefig('/Users/slevy_local/Dropbox/article_wm_atlas/fig/to_include_in_article/absolute_error_as_a_function_of_MAP_parameters')
+    plt.savefig(param_default.fname_folder_to_save_fig+'/absolute_error_as_a_function_of_MAP_parameters.pdf', format='PDF')
 
 
-    plt.show()
+    plt.show(block=False)
 
 
 #=======================================================================================================================
@@ -343,6 +346,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     param_default = Param()
-    param = Param()
     # call main function
     main()
