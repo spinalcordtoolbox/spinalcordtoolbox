@@ -16,20 +16,24 @@
 #TODO : make it faster !! (maybe the imports are very slow ...)
 
 #TODO: is scipy.misc.toimage really needed ?
+
 #from scipy.misc import toimage
-from msct_pca import PCA
+
+import os
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.optimize import minimize
-from math import sqrt
-from math import exp
-from math import log
-from math import pi
-from math import fabs
+
+from msct_pca import PCA
 from msct_image import Image
 from msct_parser import *
-import matplotlib.pyplot as plt
 import sct_utils as sct
-import os
+
+from math import sqrt
+from math import exp
+from math import fabs
+#from math import log
+#from math import pi
 
 
 
@@ -37,9 +41,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.path_dictionary = '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
-        #self.patient_id = ['09', '24', '30', '31', '32', '25', '10', '08', '11', '16', '17', '18']
         self.include_GM = 0
-        self.split_data = 1  # this flag enables to duplicate the image in the right-left direction in order to have more dataset for the PCA
+        self.split_data = 0  # this flag enables to duplicate the image in the right-left direction in order to have more dataset for the PCA
         self.verbose = 0
 
 ########################################################################################################################
@@ -77,6 +80,8 @@ class Data:
         #List of atlases (A_M) and their label decision (D_M) (=segmentation of the gray matter), slice by slice in the common groupwise space
         #zip(self.A_M,self.D_M) would give a list of tuples (slice_image,slice_segmentation)
         self.A_M, self.D_M = self.coregister_dataset()
+
+        save_image(self.D[6], 'original_seg_slice_6', type='uint8')
 
         #self.show_data()
 
@@ -160,7 +165,7 @@ class Data:
                     Dm[j] = apply_2D_rigid_transformation(Dmj, R[j]['tx'], R[j]['ty'], R[j]['theta'])
 
         #TODO: save chi image to visualize the mean segmentation image
-        #save_square_image(chi, 'mean_seg')
+        save_image(chi, 'mean_seg', type='uint8')
         return R
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -298,7 +303,7 @@ class RigidRegistration:
     def compute_beta(self):
         beta = []
         ####decay_constants = self.compute_geodesic_distances()[1]
-        tau = 0.005 #1 #decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
+        tau = 0.005 #decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
         if self.coord_projected_target is not None:
             for i,coord_projected_slice in enumerate(self.coord_projected_target):
                 beta_slice = []
@@ -508,6 +513,7 @@ def show(coord_projected_img, pca, target):
     plt.show()
 
 
+#TODO: is this usefull ???
 # ----------------------------------------------------------------------------------------------------------------------
 # This little loop save projection through several pcas with different k i.e. different number of modes
 def save(dataset, list_atlas_seg):
@@ -527,15 +533,18 @@ def save(dataset, list_atlas_seg):
                           img_reducted.reshape(n, n / 2))
 
 #TODO: write a function to save images, see if already exist in msct_image ...
-def save_square_image(im_array, im_name):
-    import scipy
-    #im = Image(np_array=im_array)
-    if im_array.shape[1] == None:
-        n = int(sqrt(im_array.shape[0]))
-        im = im_array.reshape(n,n)
+# ----------------------------------------------------------------------------------------------------------------------
+# save an image from an array, if the array correspond to a flatten image, the saved image will be square shaped
+def save_image(im_array, im_name, type=''):
+    if isinstance(im_array, list):
+        n = int(sqrt(len(im_array)))
+        im_data = np.asarray(im_array).reshape(n,n)
     else:
-        im = im_array
-    scipy.misc.imsave(im_name + " .nii.gz", im )
+        im_data = np.asarray(im_array)
+    im = Image(np_array=im_data)
+    im.file_name = im_name
+    im.ext = '.nii.gz'
+    im.save(type=type)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # To apply a rigid transformation defined by tx, ty and theta to an image, with tx, ty, the translation along x and y and theta the rotation angle
