@@ -242,7 +242,7 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 #def b_spline_nurbs(x, y, z, control_points=0, degree=3,point_number=3000):
 
-def b_spline_nurbs(x, y, z, fname_centerline, degree=3,point_number=3000):
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3,point_number=3000):
 
     #from sct_nurbs_v2 import NURBS
     from sct_nurbs import NURBS
@@ -274,18 +274,21 @@ def b_spline_nurbs(x, y, z, fname_centerline, degree=3,point_number=3000):
     return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
 
 
-def getSize(x, y, z, file_name):
+def getSize(x, y, z, file_name=None):
     # get pixdim
-    import commands
-    cmd1 = 'fslval '+file_name+' pixdim1'
-    status, output = commands.getstatusoutput(cmd1)
-    p1 = float(output)
-    cmd2 = 'fslval '+file_name+' pixdim2'
-    status, output = commands.getstatusoutput(cmd2)
-    p2 = float(output)
-    cmd3 = 'fslval '+file_name+' pixdim3'
-    status, output = commands.getstatusoutput(cmd3)
-    p3 = float(output)
+    if file_name is not None:
+        import commands
+        cmd1 = 'fslval '+file_name+' pixdim1'
+        status, output = commands.getstatusoutput(cmd1)
+        p1 = float(output)
+        cmd2 = 'fslval '+file_name+' pixdim2'
+        status, output = commands.getstatusoutput(cmd2)
+        p2 = float(output)
+        cmd3 = 'fslval '+file_name+' pixdim3'
+        status, output = commands.getstatusoutput(cmd3)
+        p3 = float(output)
+    else:
+        p1,p2,p3 = 1.0,1.0,1.0
 
     # Centerline size
     s = 0
