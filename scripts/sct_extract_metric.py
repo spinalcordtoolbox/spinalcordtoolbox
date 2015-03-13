@@ -50,8 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['10',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '10'] # STD of the gaussian-distributed noise
+        self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '10'] # STD of the assumed gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -841,8 +841,8 @@ OPTIONAL ARGUMENTS
                           bin: binarize mask (threshold=0.5)
   -p <param>            advanced parameters for the 'map' method.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: standard deviation across labels, in percentage of the mean
-                          #2: standard deviation of the Gaussian noise
+                          #1: standard deviation of the metric value across labels, in percentage of the mean
+                          #2: standard deviation of the assumed Gaussian noise
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param_default.fname_output+"""
