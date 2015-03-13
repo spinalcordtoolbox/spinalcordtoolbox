@@ -25,7 +25,7 @@ class Image(object):
 
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, np_array=None, absolutepath="", verbose=1):
         # initialization of all parameters
         self.data = None
         self.absolutepath = ""
@@ -58,6 +58,8 @@ class Image(object):
             self.orientation = orientation
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
+        elif np_array is not None:
+            self.data = np_array
         else:
             raise TypeError(' Image constructor takes at least one argument.')
 
