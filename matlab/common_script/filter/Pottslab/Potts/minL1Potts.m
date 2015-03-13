@@ -30,6 +30,7 @@ function [u, dataError, nJumps, energy] = minL1Potts( f, gamma, varargin )
 if not(isreal(f))
     error('Data must be real-valued.')
 end
+f=f(:);
 
 f=f(:);
 ip = inputParser;

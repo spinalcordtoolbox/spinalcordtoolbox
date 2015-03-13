@@ -17,16 +17,17 @@ class param:
     def __init__(self):
         self.verbose = 1
         self.output_name = 'generated_centerline.nii.gz'
-        self.smoothness = '1'
+        self.smoothness = 1
         
 # check if needed Python libraries are already installed or not
 import sys
 import getopt
 import sct_utils as sct
-import nibabel
+from nibabel import load, Nifti1Image, save
 from numpy import linspace
 import os
-from msct_smooth import non_parametric, Univariate_Spline, polynomial_fit, opt_f
+#from msct_smooth import b_spline_nurbs
+#non_parametric, Univariate_Spline, polynomial_fit, opt_f
 from scipy import interpolate
 
 def main():
@@ -69,7 +70,7 @@ def main():
     print'  Input volume ...................... '+fname
     print'  Verbose ........................... '+str(verbose)
 
-    file = nibabel.load(fname)
+    file = load(fname)
     data = file.get_data()
     hdr = file.get_header()
     
@@ -93,20 +94,19 @@ def main():
 
     print X, Y, Z
 
+    # NURBS!
+    #X_fit, Y_fit, Z_fit, x_deriv, y_deriv, z_deriv = b_spline_nurbs(X, Y, Z, degree=3, point_number=3000)
+
     #f_opt_x, f_opt_y = opt_f(X,Y,Z)
     #print "f_opt = "+str(f_opt_x)+" "+str(f_opt_y)
     #f1 = non_parametric(Z,X,f=0.8)
     #f2 = non_parametric(Z,Y,f=0.8)
 
-    f1 = interpolate.UnivariateSpline(Z, X, s=smoothness)
-    f2 = interpolate.UnivariateSpline(Z, Y, s=smoothness)
-  
+    f1 = interpolate.UnivariateSpline(Z, X)
+    f2 = interpolate.UnivariateSpline(Z, Y)
+
     #f1 = polynomial_fit(Z,X,smoothness)
     #f2 = polynomial_fit(Z,Y,smoothness)
-    
-    
-    #tckp,u = interpolate.splprep([X,Y,Z],s=1000,k=3)
-    #xnew,ynew,znew = interpolate.splev(u,tckp)
     
     X_fit = f1(Z_new)
     Y_fit = f2(Z_new)
@@ -114,26 +114,9 @@ def main():
     print X_fit
     print Y_fit
 
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
+    if verbose==2 :
+        import matplotlib.pyplot as plt
 
-    # plt.figure()
- #    plt.plot(znew,xnew)
- #    plt.plot(Z,X,'o',linestyle = 'None')
- #    plt.show()
- #
- #    plt.figure()
- #    plt.plot(znew,ynew)
- #    plt.plot(Z,Y,'o',linestyle = 'None')
- #    plt.show()
- #
- #    fig1 = plt.figure()
- #    ax = Axes3D(fig1)
- #    ax.plot(X,Y,Z,'o',linestyle = 'None',zdir='z')
- #    ax.plot(xnew,ynew,znew,zdir='z')
- #    plt.show()
- #
-    if verbose==2 : 
         plt.figure()
         plt.plot(Z_new,X_fit)
         plt.plot(Z,X,'o',linestyle = 'None')
@@ -154,17 +137,14 @@ def main():
     hdr.set_data_dtype('float32') # set imagetype to uint8
     # save volume
     #data = data.astype(float32, copy =False)
-    img = nibabel.Nifti1Image(data, None, hdr)
+    img = Nifti1Image(data, None, hdr)
     file_name = output_name
-    nibabel.save(img,file_name)
+    save(img,file_name)
     
     print '\nFile created : ' + output_name
     
     del data
     
-    
-
-
 
     
 def usage():
