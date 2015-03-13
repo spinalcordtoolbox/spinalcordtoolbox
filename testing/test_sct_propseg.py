@@ -19,7 +19,7 @@ def test(path_data):
 
     # parameters
     folder_data = 't2/'
-    file_data = ['t2_seg.nii.gz', 't2_manual_segmentation.nii.gz', 't2_seg.nii.gz']
+    file_data = ['t2.nii.gz', 't2_manual_segmentation.nii.gz', 't2_seg.nii.gz']
 
     # define command
     cmd = 'sct_propseg -i ' + path_data + folder_data + file_data[0] \
@@ -27,7 +27,7 @@ def test(path_data):
         + ' -mesh'\
         + ' -cross'\
         + ' -centerline-binary'\
-        + ' -verbose'
+        + ' -v 1'
     '''
     cmd2 = 'sct_dice_coefficient ' + path_data + folder_data + file_data[1] \
                 + ' ' + f[2] \

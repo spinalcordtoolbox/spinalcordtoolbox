@@ -52,14 +52,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
-import time
-import sys
-import commands
 import sct_utils as sct
-import re, collections
-import datetime
-from itertools import *
 from msct_types import *
 
 ########################################################################################################################
@@ -71,7 +64,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -80,6 +73,7 @@ class Option:
         self.default_value = default_value
         self.help = help
         self.parser = parser
+        self.order = order
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -113,12 +107,13 @@ class Option:
 
         elif type_option == "multiple_choice":
             """
-            the choices are listed in example var
+            the choices are listed in example variable
             """
             if param not in self.example:
                 self.parser.usage.error(self.name + " only takes " + self.parser.usage.print_list_with_brackets(self.example) + " as potential arguments.")
-        
-        elif type_option is list:
+            return param
+
+        elif isinstance(type_option, list):
             """
             This option is defined as a list delimited by a delimiter (that cannot be a space)
             For now, only one-layer list are available
@@ -135,7 +130,7 @@ class Option:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
         else:
-            self.parser.usage.error("ERROR: Type of option \"" + self.type_value +"\" is not supported by the parser.")
+            self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
 
     def checkStandardType(self,param,type=None):
         # check if a int is really a int (same for str, float, long and complex)
@@ -183,18 +178,47 @@ class Parser:
         self.usage = Usage(self, __file__)
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self)
+        order = len(self.options)+1
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
         if len(arguments) == 0:
             self.usage.error()
 
+        # check if help is asked by the user
+        if "-h" in arguments:
+            print self.usage.generate()
+            exit(1)
+
         # initialize results
         dictionary = dict()
 
         # initialize the spelling checker
         self.spelling.setWordsAsList([name for name in self.options])
+
+        # checking if some file names or folder names contains spaces.
+        # We suppose here that the user provides correct structure of arguments (i.e., one "-something", one "argument value", one "-somethingelse", one "another argument value", etc.)
+        # We also suppose that multiple spaces can be present
+        arguments_temp = []
+        index_next = 0
+        for index in range(0,len(arguments)):
+            if index == index_next:
+                if arguments[index][0] == '-':
+                    arguments_temp.append(arguments[index])
+                    index_next = index+1
+                else:
+                    temp_str = arguments[index]
+                    index_temp = index
+                    if index_temp < len(arguments)-1:
+                        while arguments[index_temp+1][0] != '-': # check if a space is present. If so, concatenation of strings.
+                            temp_str += ' '+arguments[index_temp+1]
+                            index_temp += 1
+                            if index_temp >= len(arguments)-1:
+                                break
+                    index_next = index_temp+1
+                    arguments_temp.append(temp_str)
+        arguments = arguments_temp
 
         skip = False
         for index,arg in enumerate(arguments):
@@ -242,7 +266,6 @@ class Parser:
 ########################################################################################################################
 
 class Usage:
-
     # Constructor
     def __init__(self, parser, file):
         self.file = (file)
@@ -254,11 +277,14 @@ class Usage:
         self.arguments = parser.options
         #self.error = parser.errors
         self.arguments_string = ''
+        self.section = dict()
 
     def set_header(self):
-        creation = time.gmtime(os.path.getmtime(__file__))
+        from time import gmtime
+        from os.path import basename, getmtime
+        creation = gmtime(getmtime(__file__))
         self.header = """
-"""+os.path.basename(self.file)+"""
+"""+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
@@ -266,45 +292,57 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description)
 
+    def addSection(self, section):
+        self.section[len(self.arguments)+1] = section
+
     def set_usage(self):
-        self.usage = '\n\nUSAGE\n' + os.path.basename(self.file)
+        from os.path import basename
+        self.usage = '\n\nUSAGE\n' + basename(self.file)
         mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
         for opt in mandatory:
             self.usage += ' ' + opt + ' ' + str(self.arguments[opt].type_value)
         self.usage += '\n'
 
     def set_arguments(self):
-        mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
-        optional = [opt for opt in self.arguments if not self.arguments[opt].mandatory]
-        #optional = self.arguments
-        #optional = mandatory
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory]
         if mandatory:
             self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
                 type_value = self.refactor_type_value(opt)
-                line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += '  ' + self.tab(line) + '\n'
+                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                self.arguments_string += self.tab(line) + '\n'
         if optional:
             self.arguments_string += '\n\nOPTIONAL ARGUMENTS\n'
             for opt in optional:
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
                 type_value = self.refactor_type_value(opt)
-                line = [opt, type_value, self.arguments[opt].description]
-                self.arguments_string += '  ' + self.tab(line) + '\n'
+                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
             type_value = ''
         elif self.arguments[opt].type_value == 'multiple_choice':
-            type_value = '<multiple choice: ' + self.print_list_with_brackets(self.arguments[opt].example)
+            type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
-            type_value = '<list: ' + str(self.arguments[opt].type_value) + '>'
+            type_value = '<list>'
         else:
             type_value = '<' + self.arguments[opt].type_value + '>'
         return type_value
 
     def set_example(self):
+        from os.path import basename
         self.example = '\n\nEXAMPLE\n' + \
-            os.path.basename(self.file)
+            basename(self.file)
         for opt in [opt for opt in self.arguments if (self.arguments[opt].example and type(self.arguments[opt].example) is not list)]:
             self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
 
@@ -327,7 +365,8 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
             self.generate(error)
         else:
             print self.generate()
-            sys.exit(0)
+            from sys import exit
+            exit(0)
 
     def print_list_with_brackets(self, l):
         type_value = '{'
@@ -345,35 +384,54 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         """
         tab = ''
         for string in strings:
-            if len(string) < 20:
-                spaces = ' '*(20 - len(string))
+            if len(string) < 30:
+                spaces = ' '*(30 - len(string))
                 string += spaces
             tab += string
 
         return tab
 
 
-    def align(self, string, pad=100):
+    def align(self, string, length=70, pad=30):
         """
         This function split a string into a list of 100 char max strings
         :param string: string to split
-        :param pad: maximum length of a string, default=100
+        :param length: maximum length of a string, default=70
+        :param pad: blank space in front of the string, default=30
         :return: string with \n separator
         """
-        i = 0
         s = ''
         strings = []
-        for c in string:
-            i += 1
-            if c == ' ':
-                last_space = i
-            if i%pad == 0:
-                strings.append(string[0:last_space])
-                string = string[last_space:-1]
-                i = i - last_space
-        strings.append(string)
-        for yes in strings:
-            s += yes + '\n'
+
+        # check if "\n" are present in the string. If so, decompose the string.
+        string_split_line = string.split('\n')
+        if len(string_split_line) > 1:
+            for i in range(0,len(string_split_line)):
+                if i != 0:
+                    string_split_line[i] = '  ' + string_split_line[i]
+
+        # check if a string length is over "length"
+        for k,stri in enumerate(string_split_line):
+            i = 0
+            for c in stri:
+                i += 1
+                if c == ' ':
+                    last_space = i
+                if i%length == 0:
+                    strings.append(stri[0:last_space])
+                    stri = stri[last_space:]
+                    if k != 0:
+                        stri = '  '+stri
+                    i = i - last_space
+            strings.append(stri)
+
+        # Concatenate strings
+        for i,yes in enumerate(strings):
+            if i != 0:
+                s += ' '*pad
+            s += yes
+            if i != len(strings)-1:
+                s += '\n'
         return s
 
 ########################################################################################################################
@@ -397,10 +455,13 @@ class SpellingChecker:
     def setWordsAsFile(self, fname):
         self.NWORDS = self.train(self.words(file(fname).read()))
 
-    def words(self, text): return re.findall('[a-z]+', text.lower())
+    def words(self, text):
+        from re import findall
+        return findall('[a-z]+', text.lower())
 
     def train(self, features):
-        model = collections.defaultdict(lambda: 1)
+        from collections import defaultdict
+        model = defaultdict(lambda: 1)
         for f in features:
             model[f] += 1
         return model
