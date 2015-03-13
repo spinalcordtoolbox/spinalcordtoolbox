@@ -20,6 +20,7 @@
 #from scipy.misc import toimage
 
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
@@ -64,6 +65,8 @@ class Data:
         #zip(self.A,self.D) would give a list of tuples (slice_image,slice_segmentation)
         self.A, self.D = self.load_dictionary()
 
+        #save_image(self.D[6], 'original_seg_slice_6', type='uint8')
+
         #number of atlases in the dataset
         self.J = len(self.A)
         #dimension of the data (flatten slices)
@@ -72,16 +75,21 @@ class Data:
         #set of possible labels that can be assigned to a given voxel in the segmentation
         self.L = [0, 1] #1=GM, 0=WM or CSF
 
+        #apply_ants_2D_rigid_transfo(self.D[6], self.D[18], apply_transfo=False, transfo_name='test1')
+
+
+        #res_im2 = apply_ants_2D_rigid_transfo(self.D[6], self.D[20], search_reg=False, transfo_name='test1')
+
         sct.printv('\nComputing the rigid transformation to coregister all the data into a common groupwise space ...', self.param.verbose, 'normal')
         #list of rigid transformation for each slice to coregister the data into the common groupwise space
-        self.RM = self.rigid_coregistration()
+        self.RM, self.mean_seg = self.rigid_coregistration()
+
 
         sct.printv('\nCoregistering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         #List of atlases (A_M) and their label decision (D_M) (=segmentation of the gray matter), slice by slice in the common groupwise space
         #zip(self.A_M,self.D_M) would give a list of tuples (slice_image,slice_segmentation)
         self.A_M, self.D_M = self.coregister_dataset()
 
-        save_image(self.D[6], 'original_seg_slice_6', type='uint8')
 
         #self.show_data()
 
@@ -146,8 +154,9 @@ class Data:
         chi = self.compute_chi(self.D)
 
         for j,Dj in enumerate(self.D):
-            R.append(self.find_R(chi, Dj))
-            Dm.append(apply_2D_rigid_transformation(Dj, R[j]['tx'], R[j]['ty'], R[j]['theta']))
+            name_j_transform = 'rigid_transform_slice_' + str(j) + '.mat'
+            R.append(name_j_transform)
+            Dm.append(apply_ants_2D_rigid_transfo(chi, Dj,  transfo_name=name_j_transform))
 
         k = 1
         while not convergence:
@@ -155,18 +164,17 @@ class Data:
             chi = self.compute_chi(Dm)
             k += 1
             if chi_old == chi:
+                sct.printv('Achieved convergence to compute mean segmentation and rigid registration for the entire dataset in ' + str(k)+ ' steps', 1, 'info')
                 convergence = True
             elif k > 15:
                 sct.printv('WARNING: did not achieve convergence for the coregistration to a common groupwise space...', 1, 'warning')
                 break
             else:
                 for j,Dmj in enumerate(Dm):
-                    R[j] = self.find_R(chi, Dmj)
-                    Dm[j] = apply_2D_rigid_transformation(Dmj, R[j]['tx'], R[j]['ty'], R[j]['theta'])
+                    Dm[j] = apply_ants_2D_rigid_transfo(chi, Dm[j],  transfo_name=R[j])
 
-        #TODO: save chi image to visualize the mean segmentation image
         save_image(chi, 'mean_seg', type='uint8')
-        return R
+        return R, chi
 
     # ------------------------------------------------------------------------------------------------------------------
     # Compute the mean segmentation image 'chi' for a given decision dataset D
@@ -195,6 +203,7 @@ class Data:
                 chi.append(1)
         return chi
 
+    '''
     # ------------------------------------------------------------------------------------------------------------------
     # label-based cost function that RM must minimize
     def R_l0_norm(self, params, (chi, D)):
@@ -211,13 +220,11 @@ class Data:
         #params_bounds = ((0,xlim), (0,ylim), (0,2*pi))
         #res = minimize(self.R_l0_norm, start_params, args=(fixed_params,), bounds = params_bounds, method='SLSQP', options={'disp': False ,'eps' : 1.0})
         res = minimize(self.R_l0_norm, start_params, args=(fixed_params,), method='Nelder-Mead')
-
-
         #print '\n', res
-
 
         R = {'tx': res.x[0], 'ty' : res.x[1], 'theta' : res.x[2]}
         return R
+    '''
 
     # ------------------------------------------------------------------------------------------------------------------
     # return the coregistered data into the common groupwise space using the previously computed rigid transformation :self.RM
@@ -225,9 +232,11 @@ class Data:
         A_M = []
         D_M = []
         for j in range(self.J):
-            atlas_M = apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
+            atlas_M = apply_ants_2D_rigid_transfo(self.mean_seg, self.A[j], search_reg=False, transfo_name=self.RM[j])
+                #apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             A_M.append(atlas_M)
-            decision_M = apply_2D_rigid_transformation(self.D[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
+            decision_M = apply_ants_2D_rigid_transfo(self.mean_seg, self.D[j], search_reg=False, transfo_name=self.RM[j])
+                #apply_2D_rigid_transformation(self.D[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             D_M.append(decision_M)
 
         return A_M, D_M
@@ -532,7 +541,6 @@ def save(dataset, list_atlas_seg):
         scipy.misc.imsave("/home/django/aroux/Desktop/pca_modesInfluence/" + str(pca.kept) + "modes.jpeg",
                           img_reducted.reshape(n, n / 2))
 
-#TODO: write a function to save images, see if already exist in msct_image ...
 # ----------------------------------------------------------------------------------------------------------------------
 # save an image from an array, if the array correspond to a flatten image, the saved image will be square shaped
 def save_image(im_array, im_name, type=''):
@@ -546,6 +554,7 @@ def save_image(im_array, im_name, type=''):
     im.ext = '.nii.gz'
     im.save(type=type)
 
+'''
 # ----------------------------------------------------------------------------------------------------------------------
 # To apply a rigid transformation defined by tx, ty and theta to an image, with tx, ty, the translation along x and y and theta the rotation angle
 def apply_2D_rigid_transformation(matrix, tx, ty, theta):
@@ -567,13 +576,58 @@ def apply_2D_rigid_transformation(matrix, tx, ty, theta):
             if x < xlim and x >= 0 and y < ylim and y >= 0:
                 transformed_im[x,y] = pixel_value
     return transformed_im
-
-#TODO: replace apply_2D_rigid_transformation() by apply_ants_2D_rigid_transformation() using ants
-'''
-def apply_ants_2D_rigid_transformation():
-    status,output = sct.run('sct_antsRegistration ')
 '''
 
+def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_transfo=True, transfo_name=''):
+    import time
+    try:
+        dir_name = 'tmp_reg_' +str(time.time())
+        sct.run('mkdir ' + dir_name)
+        os.chdir('./'+ dir_name)
+
+        fixed_im_name = 'fixed_im'
+        save_image(fixed_im, fixed_im_name, type='uint8')
+        moving_im_name = 'moving_im'
+        save_image(moving_im, moving_im_name, type='uint8')
+
+        if search_reg:
+            reg_interpolation = 'BSpline'
+            gradientstep = 0.5
+            metric = 'MeanSquares'
+            niter = 20
+            smooth = 0
+            shrink = 1
+            cmd_reg = 'antsRegistration -d 2 -n ' + reg_interpolation + ' -t Rigid[' + str(gradientstep) + '] ' \
+                      '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz] -o reg  -c ' + str(niter) + \
+                      ' -s ' + str(smooth) + ' -f ' + str(shrink)
+
+            sct.runProcess(cmd_reg, verbose=1)
+
+            sct.run('cp reg0GenericAffine.mat ../rigidTransformations/'+transfo_name)
+
+
+        if apply_transfo:
+            if not search_reg:
+                sct.run('cp ../rigidTransformations/'+transfo_name +  ' ./reg0GenericAffine.mat ')
+
+
+            applyTransfo_interpolation = 'NearestNeighbor'
+            cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name +'.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                        '-n ' + applyTransfo_interpolation + ' -t reg0GenericAffine.mat  -r ' + fixed_im_name + '.nii.gz'
+
+            status, output = sct.runProcess(cmd_apply, verbose=1)
+
+            res_im = Image(moving_im_name + '_moved.nii.gz')
+    except Exception, e:
+        sct.printv('WARNING: AN ERROR OCCURRED WHEN DOING RIGID REGISTRATION USING ANTs',1 ,'warning')
+        print e
+    else:
+        print 'Removing temporary files ...'
+        os.chdir('..')
+        sct.run('rm -rf ' + dir_name + '/')
+
+    if apply_transfo:
+        return res_im.data
 # ----------------------------------------------------------------------------------------------------------------------
 # Kronecker delta function
 def kronecker_delta(x, y):
@@ -588,6 +642,7 @@ def kronecker_delta(x, y):
 ########################################################################################################################
 
 if __name__ == "__main__":
+    print '\nInitializing the parameters ...'
     param = Param()
 
     if param.debug:
@@ -597,6 +652,7 @@ if __name__ == "__main__":
     else:
         param_default = Param()
 
+        print '\nInitializing the parser ... '
         # Initialize the parser
         parser = Parser(__file__)
         parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
@@ -626,6 +682,7 @@ if __name__ == "__main__":
                           mandatory=False,
                           example='1')
 
+        print '\nParsing the arguments ...'
         arguments = parser.parse(sys.argv[1:])
         fname_input = arguments["-i"]
         param.path_dictionary = arguments["-dic"]
@@ -638,6 +695,7 @@ if __name__ == "__main__":
             param.verbose = arguments["-v"]
 
 
+    print '\nBuilding the appearance model...'
     # build the appearance model
     appearance_model = AppearanceModel(param=param)
 
@@ -646,6 +704,7 @@ if __name__ == "__main__":
     appearance_model.pca.show(split=param.split_data)
     '''
 
+    print '\nConstructing target image ...'
     # construct target image
     target_image = Image(fname_input)
     if param.split_data:
