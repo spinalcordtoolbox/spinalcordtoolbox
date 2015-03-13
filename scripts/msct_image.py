@@ -31,6 +31,8 @@ class Image(object):
         self.path = ""
         self.file_name = ""
         self.ext = ""
+        self.orientation = None
+        self.hdr = nib.AnalyzeHeader() #an empty header
 
         # load an image from file
         if path is not None:
