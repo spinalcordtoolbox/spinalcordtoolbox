@@ -11,9 +11,9 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 
 ## References
 
-- [PropSeg](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
+- De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014. [PDF](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
 - [MNI-Poly-AMU template](https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf)
-- [White matter atlas]https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf)
+- [White matter atlas](https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf)
 - [Template-based analysis](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf)
 - [Slice-wise motion correction](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
 
