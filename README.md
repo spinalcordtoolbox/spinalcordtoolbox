@@ -9,6 +9,14 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
+## References
+
+- [PropSeg](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
+- [MNI-Poly-AMU template](https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf)
+- [White matter atlas]https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf)
+- [Template-based analysis](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf)
+- [Slice-wise motion correction](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
+
 ## License
 
 The MIT License (MIT)
