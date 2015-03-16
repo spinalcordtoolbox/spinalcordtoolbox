@@ -161,7 +161,7 @@ class PCA:
 
 
     # plot the projected dataset on nb_mode modes, if target is provided then it will also add its coord in the graph
-    def plot_omega(self, nb_mode=1, target_coord=None):
+    def plot_omega(self, nb_mode=1, target_coord=None, to_highlight=None):
         if self.kept < nb_mode:
             print "Can't plot {} modes, not enough modes kept. " \
                   "Try to increase k, which is curently {}".format(nb_mode, self.k)
@@ -171,6 +171,9 @@ class PCA:
             # Plot the dataset
             plt.plot(self.omega[i, 0:self.J], self.omega[i+1, 0:self.J],
                      'o', markersize=7, color='blue', alpha=0.5, label='original dataset')
+            if to_highlight is not None:
+                plt.plot(self.omega[i, to_highlight[1]], self.omega[i+1, to_highlight[1]],
+                     'o', markersize=7, color='black', alpha=0.5, label='original dataset')
 
             # Plot the projected image's coord
             if target_coord is not None:
@@ -178,6 +181,9 @@ class PCA:
                 if len(target_coord.shape) == 2:
                     plt.plot(target_coord[i], target_coord[i+1],
                              '^', markersize=7, color='red', alpha=0.5, label='target')
+                    if to_highlight is not None:
+                        plt.plot(target_coord[i][to_highlight[0]], target_coord[i+1][to_highlight[0]],
+                             '^', markersize=7, color='darkred', alpha=0.5, label='target')
                 elif len(target_coord.shape) == 3:
                     for slice_coord in target_coord:
                         plt.plot(slice_coord[i], slice_coord[i+1],
