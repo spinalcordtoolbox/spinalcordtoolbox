@@ -190,12 +190,11 @@ def main():
 
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
-    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -start 20 -end 200')
+    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
 
     # straighten segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
     sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
-
 
     # # Straighten the spinal cord using centerline/segmentation
     # print('\nStraighten the spinal cord using centerline/segmentation...')
