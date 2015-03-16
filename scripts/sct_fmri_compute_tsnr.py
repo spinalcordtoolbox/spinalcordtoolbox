@@ -14,6 +14,7 @@
 
 from msct_parser import *
 import sct_utils as sct
+import sys
 
 
 '''
