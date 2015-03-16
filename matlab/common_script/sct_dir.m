@@ -1,6 +1,6 @@
-function list = sct_dir(string)
-% LIST FILES LIKE DIR SCRIPT.... BUT SORT BY FILENAME!!
-% dir sort like this     : 1.txt 10.txt 2.txt
-% sct_dir sort like this : 1.txt 2.txt  10.txt
-list=textscan(ls(string),'%s');list=sort_nat(list{1});
-end
+function SCT_DIR = sct_dir
+% SCT_DIR = sct_dir
+% Find spinalcordtoolbox directory
+[~,SCT_DIR]=unix('echo ${SCT_DIR}');
+sd=strsplit(SCT_DIR); sd(cellfun(@isempty,sd))=[];
+SCT_DIR=sd{end};
