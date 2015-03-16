@@ -87,6 +87,16 @@ public:
         return CVector3(Vd[0][0],Vd[1][0],Vd[2][0]);
     };
     
+    vector<CVector3> EvaluateBSplinePoints(unsigned int numberOfPoints)
+    {
+        vector<double> points(numberOfPoints,0.0); // 0.0 is the starting number, numberOfPoints is the range size
+        transform(points.begin(),points.end(),++points.begin(),bind2nd(plus<double>(),1.0/(numberOfPoints-1))); // 1.0/(numberOfPoints-1) is the increment
+        vector<CVector3> centerline;
+        for (unsigned int i=0; i<points.size(); i++)
+            centerline.push_back(EvaluateBSpline(points[i]));
+        return centerline;
+    };
+    
     double getNearestPoint(CVector3 point, double range)
     {
         double minIndex = 0;

@@ -49,7 +49,10 @@
 #include <itkStatisticsImageFilter.h>
 #include "itkTileImageFilter.h"
 #include "itkPermuteAxesImageFilter.h"
+#include <itkDiscreteGaussianImageFilter.h>
 
+
+#include "BSplineApproximation.h"
 #include "MatrixNxM.h"
 using namespace std;
 
@@ -152,15 +155,16 @@ void Initialisation::setInputImage(ImageType::Pointer image)
     orientation_ = orientationFilter.getInitialImageOrientation();
 }
 
-vector<CVector3> Initialisation::getCenterlineUsingMinimalPath(double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
+vector<CVector3> Initialisation::getCenterlineUsingMinimalPath(vector<int> middle_slices, double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
 {
-    if (verbose_) cout << "Starting vesselness filtering and minimal path identification..." << endl;
+    if (verbose_) cout << "Starting vesselness filtering and minimal path identification...";
     // Apply vesselness filter on the image
-    ImageType::Pointer vesselnessImage = vesselnessFilter(inputImage_);
+    ImageType::Pointer vesselnessImage = vesselnessFilter(middle_slices, inputImage_, alpha, beta, gamma, sigmaMinimum, sigmaMaximum, numberOfSigmaSteps, sigmaDistance);
     
     // Compute the minimal path on the vesselnessfilter result to find the centerline
     // The vesselness image is multiplied by a 3D gaussian mask, around the median plane, in the left-right direction.
-    vector<CVector3> centerline = minimalPath3d(vesselnessImage);
+    vector<CVector3> centerline;
+    ImageType::Pointer minimalImage = minimalPath3d(vesselnessImage, centerline, true, true);
     
     // Transform centerline coordinates in world coordinates as requested by PropSeg (previously in image coordinates).
     vector<CVector3> centerline_worldcoordinate;
@@ -178,7 +182,7 @@ vector<CVector3> Initialisation::getCenterlineUsingMinimalPath(double alpha, dou
     return centerline_worldcoordinate;
 }
 
-vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double factx)
+ImageType::Pointer Initialisation::minimalPath3d(ImageType::Pointer image, vector<CVector3> &centerline, bool homoInt, bool invert, double factx)
 {
 
 /*% MINIMALPATH Recherche du chemin minimum de Haut vers le bas et de
@@ -197,15 +201,20 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
     typedef itk::InvertIntensityImageFilter <ImageType> InvertIntensityImageFilterType;
     typedef itk::StatisticsImageFilter<ImageType> StatisticsImageFilterType;
     
-    StatisticsImageFilterType::Pointer statisticsImageFilterInput = StatisticsImageFilterType::New();
-    statisticsImageFilterInput->SetInput(image);
-    statisticsImageFilterInput->Update();
-    double maxIm = statisticsImageFilterInput->GetMaximum();
-    InvertIntensityImageFilterType::Pointer invertIntensityFilter = InvertIntensityImageFilterType::New();
-    invertIntensityFilter->SetInput(image);
-    invertIntensityFilter->SetMaximum(maxIm);
-    invertIntensityFilter->Update();
-    ImageType::Pointer inverted_image = invertIntensityFilter->GetOutput();
+    ImageType::Pointer inverted_image = image;
+    
+    if (invert)
+    {
+        StatisticsImageFilterType::Pointer statisticsImageFilterInput = StatisticsImageFilterType::New();
+        statisticsImageFilterInput->SetInput(image);
+        statisticsImageFilterInput->Update();
+        double maxIm = statisticsImageFilterInput->GetMaximum();
+        InvertIntensityImageFilterType::Pointer invertIntensityFilter = InvertIntensityImageFilterType::New();
+        invertIntensityFilter->SetInput(image);
+        invertIntensityFilter->SetMaximum(maxIm);
+        invertIntensityFilter->Update();
+        inverted_image = invertIntensityFilter->GetOutput();
+    }
     
     
     ImageType::SizeType sizeImage = image->GetLargestPossibleRegion().GetSize();
@@ -257,7 +266,7 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
             J1->SetPixel(index, 0.0);
         }
     }
-    for (int slice=1; slice<p-1; slice++)
+    for (int slice=1; slice<p; slice++)
     {
         // 1. extract pJ = the (slice-1)th slice of the image J1
         Matrice pJ = Matrice(m,n);
@@ -281,6 +290,20 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
             }
         }
         
+        // 2'
+        Matrice cPm = Matrice(m,n);
+        if (homoInt)
+        {
+            for (int x=0; x<m; x++)
+            {
+                for (int y=0; y<n; y++)
+                {
+                    index[0] = x; index[1] = slice-1; index[2] = y;
+                    cP(x,y) = cPixel->GetPixel(index);
+                }
+            }
+        }
+        
         // 3. Create a matrix VI with 5 slices, that are exactly a repetition of cP without borders
         // multiply all elements of all slices of VI except the middle one by factx
         Matrice VI[5];
@@ -298,6 +321,27 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
                 }
             }
             VI[i] = cP_in;
+        }
+        
+        // 3'.
+        Matrice VIm[5];
+        if (homoInt)
+        {
+            for (int i=0; i<5; i++)
+            {
+                // Create VIm
+                Matrice cPm_in = Matrice(m-1, n-1);
+                for (int x=0; x<m-2; x++)
+                {
+                    for (int y=0; y<n-2; y++)
+                    {
+                        cPm_in(x,y) = cPm(x+1,y+1);
+                        if (i!=2)
+                            cPm_in(x,y) *= factx;
+                    }
+                }
+                VIm[i] = cPm_in;
+            }
         }
         
         // 4. create a matrix of 5 slices, containing pJ(vectx-1,vecty),pJ(vectx,vecty-1),pJ(vectx,vecty),pJ(vectx,vecty+1),pJ(vectx+1,vecty) where vectx=2:m-1; and vecty=2:n-1;
@@ -327,6 +371,30 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
                 Jq[s] = pJ_temp;
                 s++;
                 if (s==2) s++; // we deal with middle slice before
+            }
+        }
+        
+        // 4'. An alternative is to minimize the difference in intensity between slices.
+        if (homoInt)
+        {
+            Matrice VI_temp[5];
+            // compute the difference between VI and VIm
+            for (int i=0; i<5; i++)
+                VI_temp[i] = VI[i] - VIm[i];
+            
+            // compute the minimum value for each element of the matrices
+            for (int i=0; i<5; i++)
+            {
+                for (int x=0; x<m-2; x++)
+                {
+                    for (int y=0; y<n-2; y++)
+                    {
+                        if (VI_temp[i](x,y) > 0)
+                            VI[i](x,y) = abs(VI_temp[i](x,y));///VIm[i](x,y);
+                        else
+                            VI[i](x,y) = abs(VI_temp[i](x,y));///VI[i](x,y);
+                    }
+                }
             }
         }
         
@@ -362,7 +430,7 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
             J2->SetPixel(index, 0.0);
         }
     }
-    for (int slice=p-2; slice>0; slice--)
+    for (int slice=p-2; slice>=0; slice--)
     {
         // 1. extract pJ = the (slice-1)th slice of the image J1
         Matrice pJ = Matrice(m,n);
@@ -386,6 +454,20 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
             }
         }
         
+        // 2'
+        Matrice cPm = Matrice(m,n);
+        if (homoInt)
+        {
+            for (int x=0; x<m; x++)
+            {
+                for (int y=0; y<n; y++)
+                {
+                    index[0] = x; index[1] = slice+1; index[2] = y;
+                    cPm(x,y) = cPixel->GetPixel(index);
+                }
+            }
+        }
+        
         // 3. Create a matrix VI with 5 slices, that are exactly a repetition of cP without borders
         // multiply all elements of all slices of VI except the middle one by factx
         Matrice VI[5];
@@ -403,6 +485,27 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
                 }
             }
             VI[i] = cP_in;
+        }
+        
+        // 3'.
+        Matrice VIm[5];
+        if (homoInt)
+        {
+            for (int i=0; i<5; i++)
+            {
+                // Create VI
+                Matrice cPm_in = Matrice(m-1, n-1);
+                for (int x=0; x<m-2; x++)
+                {
+                    for (int y=0; y<n-2; y++)
+                    {
+                        cPm_in(x,y) = cPm(x+1,y+1);
+                        if (i!=2)
+                            cPm_in(x,y) *= factx;
+                    }
+                }
+                VIm[i] = cPm_in;
+            }
         }
         
         // 4. create a matrix of 5 slices, containing pJ(vectx-1,vecty),pJ(vectx,vecty-1),pJ(vectx,vecty),pJ(vectx,vecty+1),pJ(vectx+1,vecty) where vectx=2:m-1; and vecty=2:n-1;
@@ -432,6 +535,30 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
                 Jq[s] = pJ_temp;
                 s++;
                 if (s==2) s++; // we deal with middle slice before
+            }
+        }
+        
+        // 4'. An alternative is to minimize the difference in intensity between slices.
+        if (homoInt)
+        {
+            Matrice VI_temp[5];
+            // compute the difference between VI and VIm
+            for (int i=0; i<5; i++)
+                VI_temp[i] = VI[i] - VIm[i];
+            
+            // compute the minimum value for each element of the matrices
+            for (int i=0; i<5; i++)
+            {
+                for (int x=0; x<m-2; x++)
+                {
+                    for (int y=0; y<n-2; y++)
+                    {
+                        if (VI_temp[i](x,y) > 0)
+                            VI[i](x,y) = abs(VI_temp[i](x,y));///VIm[i](x,y);
+                        else
+                            VI[i](x,y) = abs(VI_temp[i](x,y));///VI[i](x,y);
+                    }
+                }
             }
         }
         
@@ -470,6 +597,7 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
     }
 
     // Find the minimal value of S for each slice and create a binary image with all the coordinates
+    // TO DO: the minimal path shouldn't be a pixelar path. It should be a continuous spline that is minimum.
     double val_temp;
     vector<CVector3> list_index;
     for (int slice=1; slice<p-1; slice++)
@@ -492,9 +620,12 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
         list_index.push_back(CVector3(index_min[0], index_min[1], index_min[2]));
     }
     
+    //BSplineApproximation centerline_approximator = BSplineApproximation(&list_index);
+    //list_index = centerline_approximator.EvaluateBSplinePoints(list_index.size());
+    
     /*// create image with high values J1
-    ImageType::Pointer result = J2;
-    ImageIterator3D vItresult( result, result->GetBufferedRegion() );
+    ImageType::Pointer result_bin = J2;
+    ImageIterator3D vItresult( result_bin, result_bin->GetBufferedRegion() );
     vItresult.GoToBegin();
     while ( !vItresult.IsAtEnd() )
     {
@@ -504,14 +635,14 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
     for (int i=0; i<list_index.size(); i++)
     {
         index[0] = list_index[i][0]; index[1] = list_index[i][1]; index[2] = list_index[i][2];
-        result->SetPixel(index,1.0);
+        result_bin->SetPixel(index,1.0);
     }
     
     typedef itk::ImageFileWriter< ImageType > WriterTypeM;
     WriterTypeM::Pointer writerMin = WriterTypeM::New();
     itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
     writerMin->SetImageIO(ioV);
-    writerMin->SetInput( result );
+    writerMin->SetInput( J1 ); // result_bin
     writerMin->SetFileName("minimalPath.nii.gz");
     try {
         writerMin->Update();
@@ -524,7 +655,8 @@ vector<CVector3> Initialisation::minimalPath3d(ImageType::Pointer image, double 
         cout << "Description = " << e.GetDescription() << endl;
     }*/
 
-    return list_index;
+    centerline = list_index;
+    return J1; // return image with minimal path
 }
 
 bool Initialisation::computeInitialParameters(float startFactor)
@@ -606,7 +738,7 @@ bool Initialisation::computeInitialParameters(float startFactor)
 	vector<vector <vector <Node*> > > centers;
     
     // Apply vesselness filter on the image
-    ImageType::Pointer vesselnessImage = vesselnessFilter(inputImage_);
+    ImageType::Pointer vesselnessImage = vesselnessFilter(vector<int>(), inputImage_);
     
     // Start of the detection of circles and ellipses. For each axial slices, a Hough transform is performed to detect circles. Each axial image is stretched in the antero-posterior direction in order to detect the spinal cord as a ellipse as well as a circle.
     for (int i=roundIn(-((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i<=roundIn(((numberOfSlices_-1.0)/2.0)*(gap_/spacing[1])); i+=roundIn(gap_/spacing[1]))
@@ -1328,7 +1460,7 @@ void Initialisation::savePointAsAxialImage(ImageType::Pointer initialImage, stri
     else cout << "Error: Spinal cord center not detected" << endl;
 }
 
-ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im, double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
+ImageType::Pointer Initialisation::vesselnessFilter(vector<int> middle_slices, ImageType::Pointer im, double alpha, double beta, double gamma, double sigmaMinimum, double sigmaMaximum, unsigned int numberOfSigmaSteps, double sigmaDistance)
 {
     typedef itk::ImageDuplicator< ImageType > DuplicatorTypeIm;
     DuplicatorTypeIm::Pointer duplicator = DuplicatorTypeIm::New();
@@ -1360,15 +1492,30 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im, doubl
     
     ImageType::Pointer vesselnessImage = multiScaleEnhancementFilter->GetOutput();
     
-    // Multiplying the vesselness filter results by a sigmoid mask to concentrate spinal cord detection aroung the median sagittal plane.
+    /*// Multiplying the vesselness filter results by a sigmoid mask to concentrate spinal cord detection aroung the median sagittal plane.
     // sigmoid: tanh(5.0-0.5*left_right_distance)/2+0.5
     // gaussian: e^(-left_right_distance^2/(2*10^2))
     // left-right is the first dimension in world coordinates
-    int middle_slice = vesselnessImage->GetLargestPossibleRegion().GetSize()[2]/2;
+    vector<double> pointCenters;
     ImageType::IndexType index;
     PointType point, pointCenter;
-    index[0] = 0; index[1] = 0; index[2] = middle_slice;
-    inputImage_->TransformIndexToPhysicalPoint(index, pointCenter);
+    if (middle_slices.empty()) {
+        for (int i=0; i<vesselnessImage->GetLargestPossibleRegion().GetSize()[2]; i++)
+        {
+            int middle = vesselnessImage->GetLargestPossibleRegion().GetSize()[2]/2;
+            index[0] = 0; index[1] = 0; index[2] = middle;
+            inputImage_->TransformIndexToPhysicalPoint(index, pointCenter);
+            pointCenters.push_back(pointCenter[0]);
+        }
+    }
+    else {
+        for (int i=0; i<middle_slices.size(); i++)
+        {
+            index[0] = 0; index[1] = 0; index[2] = middle_slices[i];
+            inputImage_->TransformIndexToPhysicalPoint(index, pointCenter);
+            pointCenters.push_back(pointCenter[0]);
+        }
+    }
     
     double factor = 1.0;
     typedef itk::ImageRegionIterator< ImageType > ImageIterator;
@@ -1379,10 +1526,10 @@ ImageType::Pointer Initialisation::vesselnessFilter(ImageType::Pointer im, doubl
         index = vIt.GetIndex();
         vesselnessImage->TransformIndexToPhysicalPoint(index, point);
         //factor = tanh(5.0-0.5*abs(point[0]-pointCenter[0]))/2.0+0.5;
-        factor = exp(-pow(point[0]-pointCenter[0],2)/(2*sigmaDistance*sigmaDistance));
+        factor = exp(-pow(point[0]-pointCenters[index[1]],2)/(2*sigmaDistance*sigmaDistance));
         vIt.Set(vIt.Get()*factor);
         ++vIt;
-    }
+    }*/
     
     WriterType::Pointer writerVesselNess = WriterType::New();
     itk::NiftiImageIO::Pointer ioV = itk::NiftiImageIO::New();
