@@ -1,4 +1,4 @@
-function sct_register2template(file_reg,file_src,levels,verbose)
+function sct_register2template(file_reg,file_src,file_ref,levels,verbose)
 % sct_register2template(file_reg,file_src,levels)
 %-------------------------- FILES TO REGISTER -----------------------------------
 % file_reg = {'data_highQ_mean_masked'}; % file to register
@@ -24,7 +24,7 @@ warp_transfo = 1;
 %--------------------------------------------------------------------------
 
 %-----------------------------REFERENCE (DESTINATION)------------------------------------
-ref_fname = '/Volumes/etudiants/taduv/data/Boston/2014-07/Connectome/template/diffusion_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
+if isempty(file_ref), file_ref=[sct_dir '/data/template/MNI-Poly-AMU_WM.nii.gz']; end;
 levels_fname=[sct_dir '/data/template/MNI-Poly-AMU_level.nii.gz'];
 %--------------------------------------------------------------------------
 
@@ -68,17 +68,17 @@ freg = load_nii(file_reg{1});
     end
         
     % choose only good slices of the template
-	template=load_nii(ref_fname);
+	template=load_nii(file_ref);
     template_roi=template.img(:,:,z_lev);
     template_roi=make_nii(double(template_roi),[0.5 0.5 0.5],[],[]);
     save_nii(template_roi,'template_roi.nii')
-    ref_fname = 'template_roi';
+    file_ref = 'template_roi';
 
 %     % apply sqrt
 %     unix('fslmaths template_roi -sqrt -sqrt template_roi_sqrt');
 %     ref_fname = 'template_roi_sqrt';
     
-files_ref = sct_sliceandrename(ref_fname, 'z');
+files_ref = sct_sliceandrename(file_ref, 'z');
 
 % splitZ source
 files_src = sct_sliceandrename(file_src, 'z');
