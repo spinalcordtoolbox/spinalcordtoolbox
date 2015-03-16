@@ -15,9 +15,7 @@
 # TODO change 'target' by 'input'
 #TODO : make it faster !! (maybe the imports are very slow ...)
 
-#TODO: is scipy.misc.toimage really needed ?
 
-#from scipy.misc import toimage
 
 import os
 import sys
@@ -75,23 +73,20 @@ class Data:
         #set of possible labels that can be assigned to a given voxel in the segmentation
         self.L = [0, 1] #1=GM, 0=WM or CSF
 
-        #apply_ants_2D_rigid_transfo(self.D[6], self.D[18], apply_transfo=False, transfo_name='test1')
-
-
-        #res_im2 = apply_ants_2D_rigid_transfo(self.D[6], self.D[20], search_reg=False, transfo_name='test1')
 
         sct.printv('\nComputing the rigid transformation to coregister all the data into a common groupwise space ...', self.param.verbose, 'normal')
         #list of rigid transformation for each slice to coregister the data into the common groupwise space
         self.RM, self.mean_seg = self.rigid_coregistration()
 
+        self.mean_data = self.mean_data()
 
         sct.printv('\nCoregistering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         #List of atlases (A_M) and their label decision (D_M) (=segmentation of the gray matter), slice by slice in the common groupwise space
         #zip(self.A_M,self.D_M) would give a list of tuples (slice_image,slice_segmentation)
         self.A_M, self.D_M = self.coregister_dataset()
 
-
         #self.show_data()
+
 
     # ------------------------------------------------------------------------------------------------------------------
     # Load the dictionary:
@@ -147,22 +142,23 @@ class Data:
     # return the rigid transformation (for each slice, computed on D data) to coregister all the atlas information to a common groupwise space
     def rigid_coregistration(self):
         convergence = False
+        norm_fil = open('L0_norm.txt', 'w')
         ##initialization
         R = []
         Dm = []
         #chi = max(sum([[self.kronecker_delta(i,l) for i in slice[1].data] for slice in self.list_atlas_seg]) for l in self.L)
-        chi = self.compute_chi(self.D)
+        chi = self.compute_mean_seg(self.D)
 
         for j,Dj in enumerate(self.D):
             name_j_transform = 'rigid_transform_slice_' + str(j) + '.mat'
             R.append(name_j_transform)
+            print 'name transfo : ', name_j_transform
             Dm.append(apply_ants_2D_rigid_transfo(chi, Dj,  transfo_name=name_j_transform))
 
         k = 1
         while not convergence:
             chi_old = chi
-            chi = self.compute_chi(Dm)
-            k += 1
+            chi = self.compute_mean_seg(Dm)
             if chi_old == chi:
                 sct.printv('Achieved convergence to compute mean segmentation and rigid registration for the entire dataset in ' + str(k)+ ' steps', 1, 'info')
                 convergence = True
@@ -170,16 +166,24 @@ class Data:
                 sct.printv('WARNING: did not achieve convergence for the coregistration to a common groupwise space...', 1, 'warning')
                 break
             else:
+                k += 1
+                sum_norm = 0
                 for j,Dmj in enumerate(Dm):
                     Dm[j] = apply_ants_2D_rigid_transfo(chi, Dm[j],  transfo_name=R[j])
+                    norm = self.l0_norm(chi, Dm[j])
+                    sum_norm += norm
+                    norm_fil.write('\niteration ' + str(k) + ' - slice ' + str(j) + ' - L0 norm ' + str(norm))
+                norm_fil.write('\n----------------------> Mean norm for iteration ' + str(k) + ' : ' + str(sum_norm/self.J))
 
-        save_image(chi, 'mean_seg', type='uint8')
+
+        save_image(chi, 'mean_seg', path=self.param.path_dictionary, type='uint8')
+        norm_fil.close()
         return R, chi
 
     # ------------------------------------------------------------------------------------------------------------------
     # Compute the mean segmentation image 'chi' for a given decision dataset D
-    def compute_chi(self, D):
-        chi = []
+    def compute_mean_seg(self, D):
+        mean_seg = []
         choose_maj_vote = {}
         for l in self.L:
             to_be_summed = []
@@ -198,12 +202,25 @@ class Data:
 
         for vote_tuple in zip(choose_maj_vote[0], choose_maj_vote[1]):
             if vote_tuple[0] >= vote_tuple[1]:
-                chi.append(0)
+                mean_seg.append(0)
             elif vote_tuple[1] > vote_tuple[0]:
-                chi.append(1)
-        return chi
+                mean_seg.append(1)
+        return mean_seg
+
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # label-based cost function that RM must minimize
+    def l0_norm(self, chi, DM):
+        return np.linalg.norm(chi - DM.flatten(), 0)
+
 
     '''
+    # ------------------------------------------------------------------------------------------------------------------
+    # label-based cost function that RM must minimize
+    def R_l0_norm(self, chi, D, R):
+        return np.linalg.norm(chi - apply_ants_2D_rigid_transfo(chi, D, search_reg=False, apply_transfo=True, transfo_name=R).flatten(), 0)
+
+
     # ------------------------------------------------------------------------------------------------------------------
     # label-based cost function that RM must minimize
     def R_l0_norm(self, params, (chi, D)):
@@ -227,15 +244,26 @@ class Data:
     '''
 
     # ------------------------------------------------------------------------------------------------------------------
+    # compute the mean atlas image (used to coregister the dataset)
+    def mean_data(self):
+        sum=np.zeros(self.A[0].shape)
+        for slice in self.A:
+            for k,row in enumerate(slice):
+                sum[k] = np.add(sum[k],row)
+        mean = sum/self.J
+        return mean
+
+    # ------------------------------------------------------------------------------------------------------------------
     # return the coregistered data into the common groupwise space using the previously computed rigid transformation :self.RM
     def coregister_dataset(self):
         A_M = []
         D_M = []
         for j in range(self.J):
-            atlas_M = apply_ants_2D_rigid_transfo(self.mean_seg, self.A[j], search_reg=False, transfo_name=self.RM[j])
+            atlas_M = apply_ants_2D_rigid_transfo(self.mean_data, self.A[j], search_reg=False, transfo_name=self.RM[j], binary=False)
                 #apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             A_M.append(atlas_M)
             decision_M = apply_ants_2D_rigid_transfo(self.mean_seg, self.D[j], search_reg=False, transfo_name=self.RM[j])
+
                 #apply_2D_rigid_transformation(self.D[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             D_M.append(decision_M)
 
@@ -245,19 +273,31 @@ class Data:
         for j in range(self.J):
             fig = plt.figure()
 
-            d = fig.add_subplot(1,2, 1)
-            d.set_title('Original segmentation')
+            d = fig.add_subplot(2,2, 1)
+            d.set_title('Original space - seg')
             im_D = d.imshow(self.D[j])
             im_D.set_interpolation('nearest')
             im_D.set_cmap('gray')
 
-            dm = fig.add_subplot(1,2, 2)
-            dm.set_title('Segmentation in the common groupwise space')
+            dm = fig.add_subplot(2,2, 2)
+            dm.set_title('Common groupwise space - seg')
             im_DM = dm.imshow(self.D_M[j])
             im_DM.set_interpolation('nearest')
             im_DM.set_cmap('gray')
 
-            plt.suptitle('Slice ' + str(j) + '\n' + str(self.RM[j]))
+            a = fig.add_subplot(2,2, 3)
+            a.set_title('Original space - data ')
+            im_A = a.imshow(self.A[j])
+            im_A.set_interpolation('nearest')
+            im_A.set_cmap('gray')
+
+            am = fig.add_subplot(2,2, 4)
+            am.set_title('Common groupwise space - data ')
+            im_AM = am.imshow(self.A_M[j])
+            im_AM.set_interpolation('nearest')
+            im_AM.set_cmap('gray')
+
+            plt.suptitle('Slice ' + str(j))
             plt.show()
 
 
@@ -304,6 +344,8 @@ class RigidRegistration:
         for beta_slice in self.beta:
             self.mu.append(appearance_model.pca.omega.dot(beta_slice))
         self.sigma = self.compute_sigma()
+        self.selected_K = self.select_K()
+        self.target_GM_segmentation = self.label_fusion()
 
     # ------------------------------------------------------------------------------------------------------------------
     # beta is the model similarity between all the individual images and our input image
@@ -339,15 +381,44 @@ class RigidRegistration:
                 sigma_slice = []
                 sig = 0
                 for w_j in w_v:
-                    sig += beta_slice[j]*(w_j - self.mu[j])
+                    sig += beta_slice[j]*(w_j - self.mu[j])**2
                 sigma_slice.append(sig)
                 sigma.append(sigma_slice)
         return sigma
 
     # ------------------------------------------------------------------------------------------------------------------
+    # returns the index of the selected slices of the dataset to do label fusion and compute the graymater segmentation
+    def select_K(self, epsilon=0.015):
+        selected = []
+        for beta_slice in self.beta:
+            selected_by_slice=[]
+            for j, beta_j in enumerate(beta_slice):
+                if beta_j > epsilon:
+                    selected_by_slice.append(j)
+            selected.append(selected_by_slice)
+        return selected
+
+    def label_fusion(self):
+        res_seg = []
+        for i, selected_by_slice in enumerate(self.selected_K):
+            kept_decision_dataset = []
+            for j in selected_by_slice:
+                kept_decision_dataset.append(self.appearance_model.data.D_M[j])
+            slice_seg = np.asarray(self.appearance_model.data.compute_mean_seg(kept_decision_dataset)) #list of size Nx1
+            res_seg.append(slice_seg.reshape(self.appearance_model.data.D_M[0].shape))
+        res_seg = np.asarray(res_seg)
+        save_image(res_seg, 'GM_seg')
+        return res_seg
+
+
+
+
+
+
+    # ------------------------------------------------------------------------------------------------------------------
     # plot the pca and the target projection if target is provided
     def plot_omega(self):
-        self.appearance_model.pca.plot_omega(target_coord=self.coord_projected_target) if self.coord_projected_target is not None \
+        self.appearance_model.pca.plot_omega(target_coord=self.coord_projected_target, to_highlight=(3, self.selected_K[3])) if self.coord_projected_target is not None \
             else self.appearance_model.pca.plot_omega()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -407,6 +478,7 @@ class RigidRegistration:
             # plt.title('Projected Image')
             # plt.show()
         plt.show()
+
 
 
 
@@ -523,6 +595,7 @@ def show(coord_projected_img, pca, target):
 
 
 #TODO: is this usefull ???
+'''
 # ----------------------------------------------------------------------------------------------------------------------
 # This little loop save projection through several pcas with different k i.e. different number of modes
 def save(dataset, list_atlas_seg):
@@ -540,10 +613,11 @@ def save(dataset, list_atlas_seg):
             img_reducted += int(coord_projected_img[i][0]) * pca.W.T[i].reshape(pca.N, 1)
         scipy.misc.imsave("/home/django/aroux/Desktop/pca_modesInfluence/" + str(pca.kept) + "modes.jpeg",
                           img_reducted.reshape(n, n / 2))
+'''
 
 # ----------------------------------------------------------------------------------------------------------------------
 # save an image from an array, if the array correspond to a flatten image, the saved image will be square shaped
-def save_image(im_array, im_name, type=''):
+def save_image(im_array, im_name, path='', type=''):
     if isinstance(im_array, list):
         n = int(sqrt(len(im_array)))
         im_data = np.asarray(im_array).reshape(n,n)
@@ -552,6 +626,8 @@ def save_image(im_array, im_name, type=''):
     im = Image(np_array=im_data)
     im.file_name = im_name
     im.ext = '.nii.gz'
+    if path != '':
+        im.path = path
     im.save(type=type)
 
 '''
@@ -578,7 +654,7 @@ def apply_2D_rigid_transformation(matrix, tx, ty, theta):
     return transformed_im
 '''
 
-def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_transfo=True, transfo_name=''):
+def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_transfo=True, transfo_name='', binary = True):
     import time
     try:
         dir_name = 'tmp_reg_' +str(time.time())
@@ -592,7 +668,7 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_tran
 
         if search_reg:
             reg_interpolation = 'BSpline'
-            gradientstep = 0.5
+            gradientstep = 0.3  # 0.5
             metric = 'MeanSquares'
             niter = 20
             smooth = 0
@@ -601,21 +677,24 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_tran
                       '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink)
 
-            sct.runProcess(cmd_reg, verbose=1)
+            sct.runProcess(cmd_reg, verbose=0)
 
-            sct.run('cp reg0GenericAffine.mat ../rigidTransformations/'+transfo_name)
+            sct.run('cp reg0GenericAffine.mat ../rigidTransformations/'+transfo_name, 0)
 
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../rigidTransformations/'+transfo_name +  ' ./reg0GenericAffine.mat ')
+                sct.run('cp ../rigidTransformations/'+transfo_name +  ' ./reg0GenericAffine.mat ', 0)
 
+            if binary:
+                applyTransfo_interpolation = 'NearestNeighbor'
+            else:
+                applyTransfo_interpolation = 'BSpline'
 
-            applyTransfo_interpolation = 'NearestNeighbor'
             cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name +'.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                         '-n ' + applyTransfo_interpolation + ' -t reg0GenericAffine.mat  -r ' + fixed_im_name + '.nii.gz'
 
-            status, output = sct.runProcess(cmd_apply, verbose=1)
+            status, output = sct.runProcess(cmd_apply, verbose=0)
 
             res_im = Image(moving_im_name + '_moved.nii.gz')
     except Exception, e:
