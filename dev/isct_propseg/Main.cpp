@@ -268,13 +268,13 @@ int main(int argc, char *argv[])
     
     // Initialization with Vesselness Filter and Minimal Path
     bool init_with_minimalpath = true;
-    double minimalPath_alpha=0.15;
+    double minimalPath_alpha=0.1;
     double minimalPath_beta=1.0;
     double minimalPath_gamma=5.0;
     double minimalPath_sigmaMinimum=1.5;
     double minimalPath_sigmaMaximum=4.5;
-    unsigned int minimalPath_numberOfSigmaSteps=5;
-    double minimalPath_sigmaDistance=10.0;
+    unsigned int minimalPath_numberOfSigmaSteps=10;
+    double minimalPath_sigmaDistance=30.0;
     
     // Reading option parameters from user input
     for (int i = 0; i < argc; ++i) {
@@ -518,20 +518,24 @@ int main(int argc, char *argv[])
 	// Crop image if it is too large in left-right direction. No need to compute the initialization on the whole image. We assume the spinal cord is included in a 5cm large region.
 	ImageType::SizeType desiredSize = initialImage->GetLargestPossibleRegion().GetSize();
     ImageType::SpacingType spacingI = initialImage->GetSpacing();
-	if (desiredSize[2]*spacingI[2] > 60 && !init_with_mask && !init_with_centerline)
-	{
-		SymmetricalCropping symCroppingFilter;
-        symCroppingFilter.setInputImage(initialImage);
-		symCroppingFilter.setInitSlice(initialisation);
-		int crop_slice = -1;
-		try {
-			crop_slice = symCroppingFilter.symmetryDetection();
-		} catch(exception & e) {
-		    cerr << "Exception caught while computing symmetry" << endl;
-            cerr << e.what() << endl;
-            return EXIT_FAILURE;
-		}
-		if (crop_slice != -1) {
+    vector<int> middle_slices;
+	
+    SymmetricalCropping symCroppingFilter;
+    symCroppingFilter.setInputImage(initialImage);
+    symCroppingFilter.setInitSlice(initialisation);
+    int crop_slice = -1;
+    try {
+        crop_slice = symCroppingFilter.symmetryDetection();
+        //middle_slices = symCroppingFilter.symmetryDetectionFull();
+    } catch(exception & e) {
+        cerr << "Exception caught while computing symmetry" << endl;
+        cerr << e.what() << endl;
+        return EXIT_FAILURE;
+    }
+    if (desiredSize[2]*spacingI[2] > 60 && !init_with_mask && !init_with_centerline)
+    {
+        if (!middle_slices.empty()) {
+		//if (crop_slice != -1) {
 			if (verbose) cout << "Cropping input image in left-right direction around slice = " << crop_slice << endl;
 			image = symCroppingFilter.cropping();
 		} else {
@@ -690,7 +694,7 @@ int main(int argc, char *argv[])
         init.setGap(gapInterSlices); // gap between slices is necessary to provide good normals
         init.setRadius(radius); // approximate radius of spinal cord. This parameter is used to initiate Hough transform
         init.setNumberOfSlices(nbSlicesInitialisation);
-        centerline = init.getCenterlineUsingMinimalPath(minimalPath_alpha, minimalPath_beta, minimalPath_gamma, minimalPath_sigmaMinimum, minimalPath_sigmaMaximum, minimalPath_numberOfSigmaSteps, minimalPath_sigmaDistance);
+        centerline = init.getCenterlineUsingMinimalPath(middle_slices, minimalPath_alpha, minimalPath_beta, minimalPath_gamma, minimalPath_sigmaMinimum, minimalPath_sigmaMaximum, minimalPath_numberOfSigmaSteps, minimalPath_sigmaDistance);
         init_with_centerline = true;
     }
     else
