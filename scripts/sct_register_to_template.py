@@ -34,7 +34,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -79,9 +79,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop.nii.gz'
-        fname_landmarks = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_landmarks.nii.gz'
-        fname_seg = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_seg.nii.gz'
+        fname_data = '/Users/julien/data/sct_issues/20150316_allan/t2r.nii.gz'
+        fname_landmarks = '/Users/julien/data/sct_issues/20150316_allan/t2r-labels_error.nii.gz'
+        fname_seg = '/Users/julien/data/sct_issues/20150316_allan/t2r_seg.nii.gz'
         speed = 'superfast'
         #param_reg = '2,BSplineSyN,0.6,MeanSquares'
     else:
@@ -188,18 +188,27 @@ def main():
     set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
     set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
 
-    # Straighten the spinal cord using centerline/segmentation
+    # crop segmentation
+    # output: segmentation_rpi_crop.nii.gz
+    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -start 20 -end 200')
+
+    # straighten segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
+    sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
 
-    # Apply straightening to segmentation
-    print('\nApply straightening to segmentation...')
-    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz')
 
-    # Smoothing along centerline to improve accuracy and remove step effects
-    print('\nSmoothing along centerline to improve accuracy and remove step effects...')
-    sct.run('sct_c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
-    sct.run('sct_c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
+    # # Straighten the spinal cord using centerline/segmentation
+    # print('\nStraighten the spinal cord using centerline/segmentation...')
+    # sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
+    #
+    # # Apply straightening to segmentation
+    # print('\nApply straightening to segmentation...')
+    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz')
+    #
+    # # Smoothing along centerline to improve accuracy and remove step effects
+    # print('\nSmoothing along centerline to improve accuracy and remove step effects...')
+    # sct.run('sct_c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
+    # sct.run('sct_c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
@@ -219,9 +228,13 @@ def main():
     print('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...')
     status, output = sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
-    # Push the input labels in the template space
-    print('\nPush the input labels to the straight space...')
-    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -x nn')
+    # Apply straightening to labels
+    print('\nApply straightening to labels...')
+    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+
+    # # Push the input labels in the straight subject space
+    # print('\nPush the input labels to the straight subject space...')
+    # status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -x nn')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
@@ -233,8 +246,10 @@ def main():
 
     # Apply affine transformation: straight --> template
     print '\nApply affine transformation: straight --> template...'
-    status, output = sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w straight2templateAffine.txt')
-    status, output = sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w straight2templateAffine.txt')
+    status, output = sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
+    status, output = sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
+    # status, output = sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w straight2templateAffine.txt')
+    # status, output = sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w straight2templateAffine.txt')
 
     # now threshold at 0.5 (for partial volume interpolation)
     # do not do that anymore-- better to estimate transformation using trilinear interp image to avoid step effect. See issue #31 on github.
