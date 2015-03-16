@@ -1,4 +1,4 @@
-function sct_register2template(file_reg,file_src,levels)
+function sct_register2template(file_reg,file_src,levels,verbose)
 % sct_register2template(file_reg,file_src,levels)
 %-------------------------- FILES TO REGISTER -----------------------------------
 % file_reg = {'data_highQ_mean_masked'}; % file to register
@@ -11,6 +11,9 @@ function sct_register2template(file_reg,file_src,levels)
 % levels_fname='/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
 % %--------------------------------------------------------------------------
 
+if ~exist('verbose','var')
+    verbose=false;
+end
 log='log_applytransfo';
 % levels=5:-1:2;
 warp_transfo = 1;
@@ -21,8 +24,8 @@ warp_transfo = 1;
 %--------------------------------------------------------------------------
 
 %-----------------------------REFERENCE (DESTINATION)------------------------------------
-ref_fname = '/home/taduv/data/Boston/2014-07/Connectome/template/diffusion_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
-levels_fname='/Volumes/hd2_local/users_local/tanguy/spinalcordtoolbox/data/template/MNI-Poly-AMU_level.nii.gz';
+ref_fname = '/Volumes/etudiants/taduv/data/Boston/2014-07/Connectome/template/diffusion_template.nii.gz';%'/home/django/tanguy/matlab/spinalcordtoolbox/data/template/MNI-Poly-AMU_WM.nii.gz';
+levels_fname=[sct_dir '/data/template/MNI-Poly-AMU_level.nii.gz'];
 %--------------------------------------------------------------------------
 
 
@@ -52,17 +55,16 @@ levels_fname='/Volumes/hd2_local/users_local/tanguy/spinalcordtoolbox/data/templ
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 
-% read file_reg dim
-[~,dim] = read_avw(file_reg{1});
-[~,dim_ref] = read_avw(ref_fname);
+% read file_reg freg.dims
+freg = load_nii(file_reg{1});
 
 
 % read template files
     % read levels
-    levels_template=read_avw(levels_fname);
+    levels_template=load_nii(levels_fname);
     z_lev=[];
     for i=levels
-        [~,~,z]=find3d(levels_template==i); z_lev(end+1)=floor(mean(z));
+        [~,~,z]=find3d(levels_template.img==i); z_lev(end+1)=floor(mean(z));
     end
         
     % choose only good slices of the template
@@ -85,7 +87,7 @@ files_src = sct_sliceandrename(file_src, 'z');
 % Estimate transfo between source and GW template
 %--------------------------------------------------------------------------
 
-for level = 1:dim(3)
+for level = 1:freg.dims(3)
     cmd = ['ants 2 -m CC[' files_ref{level} ',' files_src{level} ',1,4] -t SyN -r Gauss[3,1] -o reg_ -i 1x50 --number-of-affine-iterations 1000x1000x1000 --rigid-affine true --ignore-void-origin true -r 0'];
     j_disp(log,['>> ',cmd]); [status result] = unix(cmd);
     
@@ -108,11 +110,11 @@ end
 
 for i_file_reg = 1:length(file_reg)
 files_reg = sct_sliceandrename(file_reg{i_file_reg}, 'z');
-for level = 1:dim(3)
+for level = 1:freg.dims(3)
     if warp_transfo, warp_mat = [mat_folder{level} '/reg_Warp.nii.gz ']; else warp_mat = ' '; end
     % split
     files_tmp = sct_sliceandrename(files_reg{level}, 't');
-    for iT=1:dim(4)
+    for iT=1:freg.dims(4)
         % register reg file
         cmd = ['WarpImageMultiTransform 2 ' files_tmp{iT} ' ' files_tmp{iT} '_reg.nii.gz  -R ' files_ref{level} ' ' warp_mat  mat_folder{level} '/reg_Affine.txt --use-BSpline'];
         j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
@@ -127,7 +129,7 @@ end
 % merge files
 %reg
 mergelist='';
-for iZ=1:dim(3)
+for iZ=1:freg.dims(3)
     mergelist=[mergelist sct_tool_remove_extension(files_reg{iZ},0) '_reg '];
 end
 cmd = ['fslmerge -z ' sct_tool_remove_extension(file_reg{i_file_reg},1) '_reg ' mergelist];
@@ -140,7 +142,9 @@ end
 % remove matrix
 unix('rm -rf mat_level*');
 % remove template
-for level = 1:dim(3), delete([files_ref{level} '*']); end
+for level = 1:freg.dims(3), delete([files_ref{level} '*']); end
 %delete([ref_fname '*']);
 % display
-unix('fslview template_roi data_highQ_mean_masked_reg')
+if verbose
+ unix(['fslview template_roi ' sct_tool_remove_extension(file_src,1) '_reg']);
+end
