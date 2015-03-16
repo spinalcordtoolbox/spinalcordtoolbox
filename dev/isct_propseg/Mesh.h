@@ -84,6 +84,8 @@ public:
     bool getVerbose() { return verbose_; };
     
     void cropUpAndDown(CVector3 upperSlicePoint, CVector3 upperSliceNormal, CVector3 downSlicePoint, CVector3 downSliceNormal);
+    
+    double computeMeanRadius(int numberOfPointsPerDisk);
 
 protected:
 	void calculateLocalPoints(CMatrix3x3 rotation, CVector3 translation);
