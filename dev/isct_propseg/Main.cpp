@@ -109,12 +109,14 @@
 #include <itkGradientMagnitudeImageFilter.h>
 #include <itkGradientImageFilter.h>
 #include <itkImageAlgorithm.h>
-#include <itkRescaleIntensityImageFilter.h>
+#include <itkIntensityWindowingImageFilter.h>
 #include <itkFileTools.h>
 #include <itkPointSet.h>
 #include <itkBSplineScatteredDataPointSetToImageFilter.h>
 #include <itkBSplineControlPointImageFunction.h>
 #include <itkImageSeriesReader.h>
+#include <itkMedianImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
 //#include <itkGDCMImageIO.h>
 //#include <itkGDCMSeriesFileNames.h>
 
@@ -123,8 +125,8 @@ using namespace std;
 // Type definitions
 typedef itk::Image< double, 3 >	ImageType;
 typedef itk::ImageFileReader<ImageType> ReaderType;
+typedef itk::ImageFileWriter<ImageType> WriterType;
 typedef itk::ImageRegionConstIterator<ImageType> ImageIterator;
-typedef itk::RescaleIntensityImageFilter< ImageType, ImageType > RescaleFilterType;
 typedef itk::CovariantVector< double, 3 > GradientPixelType;
 typedef itk::Image< GradientPixelType, 3 > GradientImageType;
 typedef itk::GradientImageFilter< ImageType, float, double, GradientImageType > VectorGradientFilterType;
@@ -485,9 +487,26 @@ int main(int argc, char *argv[])
 	}
 	else image = initialImage;
     
-	// Intensity normalization
+	// Robust intensity normalization
+    // Min and max values are detected after median filter.
+    typedef itk::MedianImageFilter< ImageType, ImageType > MedianFilterType;
+    MedianFilterType::Pointer medianFilter = MedianFilterType::New();
+    medianFilter->SetInput(image);
+    MedianFilterType::InputSizeType radiusMedianFilter;
+    radiusMedianFilter.Fill(2);
+    medianFilter->SetRadius(radiusMedianFilter);
+    medianFilter->Update();
+    
+    typedef itk::MinimumMaximumImageCalculator< ImageType > MinMaxCalculatorType;
+    MinMaxCalculatorType::Pointer minMaxCalculator = MinMaxCalculatorType::New();
+    minMaxCalculator->SetImage(medianFilter->GetOutput());
+    minMaxCalculator->Compute();
+    
+    typedef itk::IntensityWindowingImageFilter< ImageType, ImageType > RescaleFilterType;
 	RescaleFilterType::Pointer rescaleFilter = RescaleFilterType::New();
 	rescaleFilter->SetInput(image);
+    rescaleFilter->SetWindowMinimum(minMaxCalculator->GetMinimum());
+    rescaleFilter->SetWindowMaximum(minMaxCalculator->GetMaximum());
 	rescaleFilter->SetOutputMinimum(0);
 	rescaleFilter->SetOutputMaximum(1000);
     try {
