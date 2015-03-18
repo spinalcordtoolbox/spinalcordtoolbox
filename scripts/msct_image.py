@@ -25,8 +25,9 @@ class Image(object):
 
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, np_array=None, absolutepath="", verbose=1):
+    def __init__(self, param=None, hdr=nib.AnalyzeHeader(), orientation=None, absolutepath="", verbose=1):
         # initialization of all parameters
+        self.verbose = verbose
         self.data = None
         self.absolutepath = ""
         self.path = ""
@@ -38,6 +39,7 @@ class Image(object):
 
         # load an image from file
         if type(param) is str:
+
             self.loadFromPath(param, verbose)
         # copy constructor
         elif isinstance(param, type(self)):
@@ -58,8 +60,6 @@ class Image(object):
             self.orientation = orientation
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
-        elif np_array is not None:
-            self.data = np_array
         else:
             raise TypeError(' Image constructor takes at least one argument.')
 
@@ -203,7 +203,7 @@ class Image(object):
 
         self.hdr.set_data_shape(self.data.shape)
         img = nib.Nifti1Image(self.data, None, self.hdr)
-        print 'saving ' + self.path + self.file_name + self.ext + '\n'
+        sct.printv('saving ' + self.path + self.file_name + self.ext + '\n', verbose=self.verbose, type='normal')
         nib.save(img, self.path + self.file_name + self.ext)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
@@ -225,8 +225,15 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        X, Y, Z = (self.data > 0).nonzero()
-        list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        try:
+            if len(self.dim) == 3:
+                X, Y, Z = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            elif len(self.dim) == 2:
+                X, Y = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+        except Exception, e:
+            sct.printv('ERROR: Exception ' + str(e) + 'caught while geting non Zeros coordinates', 1, 'error')
 
         if sorting is not None:
             if reverse_coord not in [True, False]:
