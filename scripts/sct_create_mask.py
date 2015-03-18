@@ -36,7 +36,7 @@ class Param:
         self.method = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
-        self.size = '41'  # in voxel. if gaussian, size corresponds to sigma.
+        self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
