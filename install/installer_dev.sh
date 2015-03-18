@@ -140,6 +140,12 @@ cmd="./requirements.sh"
 echo ">> $cmd"; $cmd
 cd ..
 
+# Create links to python scripts
+echo
+echo "Create links to python scripts..."
+cmd="${SCT_DIR}/install/create_links.sh -a"
+echo ">> $cmd"; $cmd
+
 # check if other dependent software are installed
 echo
 echo "Check if other dependent software are installed..."
