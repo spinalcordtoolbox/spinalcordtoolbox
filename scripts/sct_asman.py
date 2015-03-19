@@ -13,7 +13,7 @@
 ########################################################################################################################
 
 # TODO change 'target' by 'input'
-#TODO : make it faster !! (maybe the imports are very slow ...)
+#TODO : make it faster
 
 
 
@@ -143,25 +143,17 @@ class Data:
     # ------------------------------------------------------------------------------------------------------------------
     # return the rigid transformation (for each slice, computed on D data) to coregister all the atlas information to a common groupwise space
     def find_rigid_coregistration(self):
-        ###convergence = False
-
-        ###norm_file = open('L0_norm.txt', 'w')
-
         # initialization
         R = []
         Dm = []
         Dm_flat = []
-        ###chi = max(sum([[self.kronecker_delta(i,l) for i in slice[1].data] for slice in self.list_atlas_seg]) for l in self.L)
         chi = self.compute_mean_seg(self.D)
-        ###k = 0
-        ###sum_norm = 0
         for j,Dj in enumerate(self.D):
             name_j_transform = 'rigid_transform_slice_' + str(j) + '.mat'
             R.append(name_j_transform)
             decision_M = apply_ants_2D_rigid_transfo(chi, Dj,  transfo_name=name_j_transform)
             Dm.append(decision_M)
             Dm_flat.append(decision_M.flatten())
-
         chi = self.compute_mean_seg(Dm)
 
         save_image(chi, 'mean_seg', path=param.path_dictionary, type='uint8')
@@ -217,6 +209,7 @@ class Data:
             #apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             A_M.append(atlas_M)
             A_M_flat.append(atlas_M.flatten())
+
         return np.asarray(A_M), np.asarray(A_M_flat)
 
     def show_data(self):
@@ -288,8 +281,8 @@ class RigidRegistration:
         # coord_projected_target is a list of all the coord of the target's projected slices
         sct.printv('\nProjecting the target image in the reduced common space ...', appearance_model.param.verbose, 'normal')
         self.coord_projected_target = appearance_model.pca.project(self.target_M) if self.target_M is not None else None
-        self.beta = self.compute_beta()
 
+        self.beta = self.compute_beta()
         self.selected_K = self.select_K()
         self.target_GM_seg_M = self.label_fusion()
         self.target_GM_seg = self.inverse_register_target()
@@ -320,7 +313,6 @@ class RigidRegistration:
     # Z is the partition function that enforces the constraint tha sum(beta)=1
     def compute_beta(self):
         beta = []
-        ####decay_constants = self.compute_geodesic_distances()[1]
         tau = 0.005 #decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
         if self.coord_projected_target is not None:
             for i,coord_projected_slice in enumerate(self.coord_projected_target):
@@ -340,9 +332,10 @@ class RigidRegistration:
         else:
             raise Exception("No projected input in the appearance model")
 
+
     # ------------------------------------------------------------------------------------------------------------------
     # returns the index of the selected slices of the dataset to do label fusion and compute the graymater segmentation
-    def select_K(self, epsilon=0.015):
+    def select_K(self, epsilon=0.055): # 0.035
         selected = []
         for beta_slice in self.beta:
             selected_by_slice=[]
@@ -368,7 +361,7 @@ class RigidRegistration:
     # ------------------------------------------------------------------------------------------------------------------
     # plot the pca and the target projection if target is provided
     def plot_omega(self):
-        self.appearance_model.pca.plot_omega(target_coord=self.coord_projected_target, to_highlight=(3, self.selected_K[3])) if self.coord_projected_target is not None \
+        self.appearance_model.pca.plot_omega(nb_mode=3, target_coord=self.coord_projected_target, to_highlight=(3, self.selected_K[3])) if self.coord_projected_target is not None \
             else self.appearance_model.pca.plot_omega()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -391,6 +384,7 @@ class RigidRegistration:
             else:
                 n = int(sqrt(self.appearance_model.pca.N))
 
+            # Plot original image
             orig_ax = fig1.add_subplot(10, 3, index)
             orig_ax.set_title('original slice {} '.format(index))
             if self.appearance_model.param.split_data:
@@ -418,6 +412,8 @@ class RigidRegistration:
             # plt.show()
         plt.show()
 
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # ASMAN METHOD ---------------------------------------------------------------------------------------------------
 class Asman():
@@ -425,16 +421,11 @@ class Asman():
 
         self.data = Data(param=param)
 
-        print '\nBuilding the appearance model...'
+        sct.printv('\nBuilding the appearance model...', verbose=param.verbose, type='normal')
         # build the appearance model
         self.appearance_model = AppearanceModel(param=param, data=self.data)
 
-        '''
-        sct.printv('\nShowing the PCA space ...')
-        appearance_model.pca.show(split=param.split_data)
-        '''
-
-        print '\nConstructing target image ...'
+        sct.printv('\nConstructing target image ...', verbose=param.verbose, type='normal')
         # construct target image
         self.target_image = Image(param.target_fname)
         if param.split_data:
@@ -445,21 +436,26 @@ class Asman():
                 splited_target.append(right_slice)
             self.target_image = Image(np.asarray(splited_target))
 
-
         #build a rigid registration
         self.rigid_reg = RigidRegistration(self.appearance_model, target_image=self.target_image)
-
-
-        sct.printv('\nPloting Omega ...')
-        self.rigid_reg.plot_omega()
-
-
-        sct.printv('\nShowing the projected target ...')
-        self.rigid_reg.show_projected_target()
 
         self.res_GM_seg = self.rigid_reg.target_GM_seg
         save_image(self.res_GM_seg.data, 'res_GM_seg')
 
+    def show(self):
+
+        '''
+        sct.printv('\nShowing the PCA space ...')
+        appearance_model.pca.show(split=param.split_data)
+        '''
+
+        sct.printv('\nPloting Omega ...')
+        self.rigid_reg.plot_omega()
+
+        '''
+        sct.printv('\nShowing the projected target ...')
+        self.rigid_reg.show_projected_target()
+        '''
 
 
 
@@ -530,7 +526,6 @@ def show(coord_projected_img, pca, target):
     plt.title('Projected Image')
     plt.show()
 
-
 # ----------------------------------------------------------------------------------------------------------------------
 # save an image from an array, if the array correspond to a flatten image, the saved image will be square shaped
 def save_image(im_array, im_name, path='', type='', verbose=1):
@@ -545,7 +540,6 @@ def save_image(im_array, im_name, path='', type='', verbose=1):
     if path != '':
         im.path = path
     im.save(type=type)
-
 
 def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_transfo=True, transfo_name='', binary = True, inverse=0, verbose=0):
     import time
@@ -669,3 +663,5 @@ if __name__ == "__main__":
 
 
     asman_seg = Asman(param=param)
+
+    asman_seg.show()
