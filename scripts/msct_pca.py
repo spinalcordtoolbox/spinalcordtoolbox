@@ -169,29 +169,38 @@ class PCA:
         assert self.omega.shape == (self.kept, self.J), "The matrix is {}".format(self.omega.shape)
         for i in range(0, nb_mode):
             # Plot the dataset
-            plt.plot(self.omega[i, 0:self.J], self.omega[i+1, 0:self.J],
-                     'o', markersize=7, color='blue', alpha=0.5, label='original dataset')
+            fig = plt.figure()
+
+            graph = fig.add_subplot(1,1,1)
+            graph.plot(self.omega[i, 0:self.J], self.omega[i+1, 0:self.J],
+                     'o', markersize=7, color='blue', alpha=0.5, label='dataset')
+
             if to_highlight is not None:
-                plt.plot(self.omega[i, to_highlight[1]], self.omega[i+1, to_highlight[1]],
-                     'o', markersize=7, color='black', alpha=0.5, label='original dataset')
+                graph.plot(self.omega[i, to_highlight[1]], self.omega[i+1, to_highlight[1]],
+                     'o', markersize=7, color='black', alpha=0.5, label='dataset')
 
             # Plot the projected image's coord
             if target_coord is not None:
                 # target coord is a numpy array of either dimension of all the slices or just one slice
                 if len(target_coord.shape) == 2:
-                    plt.plot(target_coord[i], target_coord[i+1],
+                    graph.plot(target_coord[i], target_coord[i+1],
                              '^', markersize=7, color='red', alpha=0.5, label='target')
-                    if to_highlight is not None:
-                        plt.plot(target_coord[i][to_highlight[0]], target_coord[i+1][to_highlight[0]],
-                             '^', markersize=7, color='darkred', alpha=0.5, label='target')
+
                 elif len(target_coord.shape) == 3:
-                    for slice_coord in target_coord:
-                        plt.plot(slice_coord[i], slice_coord[i+1],
+                    for j_slice,slice_coord in enumerate(target_coord):
+                        graph.plot(slice_coord[i], slice_coord[i+1],
                                  '^', markersize=7, color='red', alpha=0.5, label='target')
+
+                        if to_highlight is not None and j_slice == to_highlight[0]:
+                            graph.plot(slice_coord[i], slice_coord[i+1],
+                                     '^', markersize=7, color='black', alpha=0.5, label='target')
+
                 else:
                     sct.printv('Cannot plot projected target.', 1, 'error')
 
-            plt.title('Transformed samples with class labels mode {}'.format(i))
+            plt.title('Transformed samples with class labels')
+            plt.xlabel('Mode ' + str(i))
+            plt.ylabel('Mode ' + str(i+1))
         plt.show()
 
 
