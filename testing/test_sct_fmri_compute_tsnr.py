@@ -17,17 +17,14 @@ import commands
 import os
 
 
-class Param:
-    def __init__(self, data_path='', data_files=[]):
-        self.data_path = data_path
-        self.data_files = data_files
-        self.verbose = 1
-
-def test(param):
+def test(data_path):
+    #parameters
+    data_folders = ['t2/', 'fmri/']
+    data_files = ['t2.nii.gz', 'fmri.nii.gz']
 
     # define command
-    cmd = 'sct_fmri_compute_tsnr -fmri ' + param.data_path + '/' + param.data_files[1] \
-          + ' -anat ' + param.data_path + '/' + param.data_files[0]
+    cmd = 'sct_fmri_compute_tsnr -fmri ' + data_path + data_folders[1] + data_files[1] \
+          + ' -anat ' + data_path + data_folders[0] + data_files[0]
 
     # return
     return commands.getstatusoutput(cmd)
@@ -35,7 +32,6 @@ def test(param):
 
 if __name__ == "__main__":
     # call main function
-    param = Param(data_path=os.path.abspath('.'), data_files=['t2.nii.gz', 'fmri.nii.gz'])
-    test(param)
+    test()
 
 
