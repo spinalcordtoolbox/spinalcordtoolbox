@@ -65,27 +65,29 @@ class Tsnr:
 
         # motion correct the fmri data
         sct.printv('Motion correct the fMRI data...', self.param.verbose, 'normal')
+
         path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
+
         fname_fmri_moco = fname_fmri + '_moco'
-        #TODO: replace sct.run() by sct.runProcess() if available in the current branch
-        sct.run('mcflirt -in ' + fname_fmri + ' -out ' + fname_fmri_moco)
+
+        sct.runProcess('mcflirt -in ' + sct.slash_at_the_end(path_fmri,'/') + fname_fmri + ' -out ' + fname_fmri_moco)
 
         # compute tsnr
         sct.printv('Compute the tSNR...', self.param.verbose, 'normal')
         fname_fmri_moco_mean = fname_fmri_moco + '_mean'
-        sct.run('fslmaths ' + fname_fmri_moco + ' -Tmean ' + fname_fmri_moco_mean)
+        sct.runProcess('fslmaths ' + fname_fmri_moco + ' -Tmean ' + fname_fmri_moco_mean)
         fname_fmri_moco_std = fname_fmri_moco + '_std'
-        sct.run('fslmaths ' + fname_fmri_moco + ' -Tstd ' + fname_fmri_moco_std)
+        sct.runProcess('fslmaths ' + fname_fmri_moco + ' -Tstd ' + fname_fmri_moco_std)
         fname_fmri_tsnr = fname_fmri + '_tsnr'
-        sct.run('fslmaths ' + fname_fmri_moco_mean + ' -div ' + fname_fmri_moco_std + ' ' + fname_fmri_tsnr)
+        sct.runProcess('fslmaths ' + fname_fmri_moco_mean + ' -div ' + fname_fmri_moco_std + ' ' + fname_fmri_tsnr)
 
         # register tsnr to anatomic
         sct.printv('Register tSNR to anatomic...', self.param.verbose, 'normal')
-        sct.run('sct_c3d ' + self.anat + ' ' + fname_fmri_tsnr + '.nii.gz -reslice-identity -o ' + fname_fmri_tsnr + '_reslice.nii.gz')
+        sct.runProcess('sct_c3d ' + self.anat + ' ' + fname_fmri_tsnr + '.nii.gz -reslice-identity -o ' + fname_fmri_tsnr + '_reslice.nii.gz')
 
         # Remove temp files
         sct.printv('Remove temporary files...', self.param.verbose, 'normal')
-        sct.run('rm ' + fname_fmri_moco_std + '.nii.gz')
+        sct.runProcess('rm ' + fname_fmri_moco_std + '.nii.gz')
 
         sct.printv('Done!', self.param.verbose, 'info')
 
