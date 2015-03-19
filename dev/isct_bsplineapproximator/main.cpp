@@ -180,6 +180,8 @@ int main(int argc, const char * argv[])
             ++it;
         }
         
+        cout << centerline[centerline.size()-1] << endl;
+        
         // check if each slice contains more than one voxel
         double slice = centerline[0][dim]-1.0;
         CVector3 temp;
@@ -190,12 +192,16 @@ int main(int argc, const char * argv[])
             if (centerline[k][dim] == slice) {
                 temp += centerline[k];
                 countVox++;
+                if (k == centerline.size()-1) {
+                    if (countVox != 0)
+                        centerline_temp.push_back(temp/countVox);
+                }
             }
             else if (centerline[k][dim] > slice) {
                 if (countVox != 0)
                     centerline_temp.push_back(temp/countVox);
                 countVox = 0;
-                temp = CVector3();
+                temp = centerline[k];
                 slice = centerline[k][dim];
             }
             else {
@@ -237,6 +243,14 @@ int main(int argc, const char * argv[])
         return EXIT_FAILURE;
     }
     
+    // Write new centerline into text file
+    ofstream outputfile0;
+    outputfile0.open("centerline_0.txt");
+    for (double i=0; i<centerline.size(); i++)
+        outputfile0 << centerline[i][0] << " " << centerline[i][1] << " " << centerline[i][2] << endl;
+    outputfile0.close();
+    cout << centerline[centerline.size()-1] << endl;
+    
     // Compute BSpline approximation on centerline
     BSplineApproximation bspline = BSplineApproximation(&centerline, numberOfLevels);
     
@@ -256,7 +270,7 @@ int main(int argc, const char * argv[])
         centerline.push_back(bspline.EvaluateBSpline(value));
         centerlineDerivative.push_back(bspline.EvaluateGradient(value));
     }
-    
+    cout << centerline[centerline.size()-1] << endl;
     
     if (numberOfSlices && !worldCoordinate && inputIsImage)
     {
@@ -267,10 +281,12 @@ int main(int argc, const char * argv[])
         vector<CVector3> temp_vector_centerline, temp_vector_derivative;
         for (int slice=0; slice<numberOfSlices; slice++)
         {
+            //cout << "Slice= " << slice << endl;
             CVector3 temp_centerline, temp_derivative;
             int numberOfPointInSlice = 0;
-            while (floor(centerline[currentPoint][dim]) == slice)
+            while (round(centerline[currentPoint][dim]) == slice)
             {
+                //cout << "Current point= " << centerline[currentPoint] << endl;
                 temp_centerline += centerline[currentPoint];
                 temp_derivative += centerlineDerivative[currentPoint];
                 currentPoint++;
