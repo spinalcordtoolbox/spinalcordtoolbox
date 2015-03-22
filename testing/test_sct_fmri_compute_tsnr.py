@@ -19,12 +19,11 @@ import os
 
 def test(data_path):
     #parameters
-    data_folders = ['t2/', 'fmri/']
-    data_files = ['t2.nii.gz', 'fmri.nii.gz']
+    data_folders = ['fmri/']
+    data_files = ['fmri.nii.gz']
 
     # define command
-    cmd = 'sct_fmri_compute_tsnr -fmri ' + data_path + data_folders[1] + data_files[1] \
-          + ' -anat ' + data_path + data_folders[0] + data_files[0]
+    cmd = 'sct_fmri_compute_tsnr -i ' + data_path + data_folders[0] + data_files[0]
 
     # return
     return commands.getstatusoutput(cmd)
