@@ -201,7 +201,6 @@ class ProcessLabels(object):
 
         return result
 
-    @property
     def create_label(self):
         """
         This function create an image with labels listed by the user.
@@ -210,7 +209,7 @@ class ProcessLabels(object):
         self.coordinates is a list of coordinates (class in msct_types).
         a Coordinate contains x, y, z and value.
         """
-        image_output = Image(self.image_input)
+        image_output = self.image_input.copy()
         image_output.data *= 0
 
         # loop across labels

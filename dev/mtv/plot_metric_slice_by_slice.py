@@ -14,26 +14,30 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 from sct_extract_metric import extract_metric_within_tract
 
+# ============================================== PARAMETERS ============================================================
 # go to folder containing the data
-os.chdir('/home/django/slevy/data/')
 subject = 'd_sp_pain_pilot1'
 scanner = 'criugm'
+os.chdir('/Volumes/slevy-3/data/'+scanner+'/'+subject+'/mtv')
+
 
 flip_angles = [5, 10, 20, 30]
 
 nb_flip_angles = len(flip_angles)
 
 # File names
-fname_PD_map = scanner+'/'+subject+'/mtv/PD_map.nii.gz'
-fname_T1_map = scanner+'/'+subject+'/mtv/T1_map.nii.gz'
-fname_MTVF_map = scanner+'/'+subject+'/mtv/MTVF_map.nii.gz'
+fname_PD_map = 'PD_map.nii.gz'
+fname_T1_map = 'T1_map.nii.gz'
+fname_MTVF_map = 'MTVF_map.nii.gz'
 fname_SPGR = []
 for fa in flip_angles:
     if fa != 10:
-        fname_SPGR.append(scanner+'/'+subject+'/mtv/spgr'+str(fa)+'to10.nii.gz')
-fname_SPGR.insert(1, scanner+'/'+subject+'/mtv/spgr10_crop.nii.gz')
-fname_CSF_mask = scanner+'/'+subject+'/mtv/spgr10_crop_csf_mask.nii.gz'
-fname_cord_mask = scanner+'/'+subject+'/mtv/spgr10_crop_seg_modif.nii.gz'
+        fname_SPGR.append('spgr'+str(fa)+'to10.nii.gz')
+fname_SPGR.insert(1, 'spgr10_crop.nii.gz')
+fname_CSF_mask = 'spgr10_crop_csf_mask.nii.gz'
+fname_cord_mask = 'spgr10_crop_seg_modif.nii.gz'
+
+# ======================================================================================================================
 
 # Load data
 PD_map = nib.load(fname_PD_map).get_data()
@@ -45,6 +49,7 @@ for i_fa in range(0, nb_flip_angles):
 CSF_mask = nib.load(fname_CSF_mask).get_data()
 cord_mask = nib.load(fname_cord_mask).get_data()
 
+# initialize data
 (nx, ny, nz) = PD_map.shape
 
 PD_mean_in_CSF_per_slice = np.empty((nz, 2))
@@ -61,7 +66,6 @@ SPGR_mean_in_cord = np.empty((nb_flip_angles, 2))
 
 
 # metric extraction for fig1
-
 for z in range(0, nz):
     CSF_mask_slice = np.empty((1), dtype=object)
     cord_mask_slice = np.empty((1), dtype=object)
@@ -99,7 +103,7 @@ for i_fa in range(0, nb_flip_angles):
 
 # Fig1: Signal slice-by-slice in cord and CSF for T1, PD, MTV and SPGR10
 # ----------------------------------------------------------------------------------------------------------------------
-fig1 = pylab.figure(1)
+fig1 = pylab.figure(1, figsize=(20, 15))
 fig1.suptitle('Mean T1, PD, MTVF and SPGR signal with flip angle=10deg in CSF and cord slice-by-slice', fontsize=20)
 
 T1_ax = fig1.add_subplot(221, title='T1')
@@ -109,6 +113,7 @@ T1_ax.set_ylabel('Mean T1 +/- std', fontsize=18)
 T1_ax.errorbar(range(0, nz), T1_mean_in_CSF_per_slice[:, 0], T1_mean_in_CSF_per_slice[:, 1], marker='o')  # CSF
 T1_ax.errorbar(range(0, nz), T1_mean_in_cord_per_slice[:, 0], T1_mean_in_cord_per_slice[:, 1], marker='o', color='r')  # cord
 T1_ax.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+T1_ax.set_ylim([-5, 10])
 
 PD_ax = fig1.add_subplot(222, title='PD')
 PD_ax.grid(True)
@@ -117,6 +122,8 @@ PD_ax.set_ylabel('Mean PD +/- std', fontsize=18)
 PD_ax.errorbar(range(0, nz), PD_mean_in_CSF_per_slice[:, 0], PD_mean_in_CSF_per_slice[:, 1], marker='o')  # CSF
 PD_ax.errorbar(range(0, nz), PD_mean_in_cord_per_slice[:, 0], PD_mean_in_cord_per_slice[:, 1], marker='o', color='r')  # cord
 PD_ax.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+PD_ax.set_ylim([-1000, 12000])
+
 
 MTVF_ax = fig1.add_subplot(223, title='MTVF')
 MTVF_ax.grid(True)
@@ -125,6 +132,7 @@ MTVF_ax.set_ylabel('Mean MTVF +/- std', fontsize=18)
 MTVF_ax.errorbar(range(0, nz), MTVF_mean_in_CSF_per_slice[:, 0], MTVF_mean_in_CSF_per_slice[:, 1], marker='o')  # CSF
 MTVF_ax.errorbar(range(0, nz), MTVF_mean_in_cord_per_slice[:, 0], MTVF_mean_in_cord_per_slice[:, 1], marker='o', color='r')  # cord
 MTVF_ax.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
+MTVF_ax.set_ylim([-3, 3])
 
 SPGR10_ax = fig1.add_subplot(224, title='SPGR signal with flip angle=10deg')
 SPGR10_ax.grid(True)
@@ -134,10 +142,13 @@ SPGR10_ax.errorbar(range(0, nz), SPGR10_mean_in_CSF_per_slice[:, 0], SPGR10_mean
 SPGR10_ax.errorbar(range(0, nz), SPGR10_mean_in_cord_per_slice[:, 0], SPGR10_mean_in_cord_per_slice[:, 1], marker='o', color='r')  # cord
 SPGR10_ax.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2D(numpoints=1)}, fontsize=18)
 
+os.system('if ! [ -e "plots" ]; then mkdir plots; fi;')
+pylab.savefig('plots/t1_pd_mtv_spgr10_vs_slices.pdf')
+
 # Fig2: Signal in whole cord and CSF SPGR as a function of the flip angle
 # ----------------------------------------------------------------------------------------------------------------------
 
-fig2 = pylab.figure(2)
+fig2 = pylab.figure(2, figsize=(20, 15))
 fig2.suptitle('SPGR signal in whole cord and CSF as a function of the flip angle (5 slices in the middle)', fontsize=20)
 
 fig2_ax = fig2.add_subplot(111)
@@ -150,5 +161,5 @@ fig2_ax.legend(['CSF', 'cord'], loc=2, handler_map={lgd.Line2D: lgd.HandlerLine2
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-
+pylab.savefig('plots/spgr_signal_in_cord_and_csf_vs_flip_angle.pdf')
 pylab.show()
