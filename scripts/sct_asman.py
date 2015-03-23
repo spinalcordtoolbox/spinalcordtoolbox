@@ -31,8 +31,6 @@ import sct_utils as sct
 from math import sqrt
 from math import exp
 from math import fabs
-#from math import log
-#from math import pi
 
 
 
@@ -42,7 +40,7 @@ class Param:
         self.path_dictionary = '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
         self.target_fname = ''
         self.split_data = 0  # this flag enables to duplicate the image in the right-left direction in order to have more dataset for the PCA
-        self.verbose = 0
+        self.verbose = 1
 
 
 ########################################################################################################################
@@ -171,8 +169,12 @@ class Data:
                 consistent_vox = []
                 for row in slice:
                     for i in row:
-                        if i > 0.2:
-                            i = 1
+                        try:
+                            if i > 0.2:
+                                i = 1
+                        except ValueError:
+                            print 'Value Error with i = ', i
+                            print 'Dataset was : \n', D
                         consistent_vox.append(kronecker_delta(i, l))
                 to_be_summed.append(consistent_vox)
             summed_vector = np.zeros(len(to_be_summed[0]), dtype=np.int)
@@ -274,17 +276,27 @@ class RigidRegistration:
         self.appearance_model = appearance_model
         # Get the target image
         self.target = target_image
-        save_image(self.target.data, 'target_image')
+        #save_image(self.target.data, 'target_image')
+
         self.target_M = self.register_target_to_model_space()
-        save_image(self.target_M.data, 'target_image_model_space')
+        #save_image(self.target_M.data, 'target_image_model_space')
 
         # coord_projected_target is a list of all the coord of the target's projected slices
         sct.printv('\nProjecting the target image in the reduced common space ...', appearance_model.param.verbose, 'normal')
         self.coord_projected_target = appearance_model.pca.project(self.target_M) if self.target_M is not None else None
+        #print '----SHAPE COORD PROJECTED TARGET -----', self.coord_projected_target.shape
+        #print '----COORD PROJECTED TARGET -----', self.coord_projected_target
 
-        self.beta = self.compute_beta()
-        self.selected_K = self.select_K()
-        self.target_GM_seg_M = self.label_fusion()
+        self.beta = self.compute_beta(self.coord_projected_target, tau=self.compute_tau())
+        #print '----------- BETAS :', self.beta
+        #self.beta = self.compute_beta(self.coord_projected_target, tau=0.00114)
+
+        sct.printv('\nSelecting the atlases closest to the target ...', appearance_model.param.verbose, 'normal')
+        self.selected_K = self.select_K(self.beta)
+        #print '----SELECTED K -----', self.selected_K
+        #print '----SHAPE SELECTED K -----', self.selected_K.shape
+        sct.printv('\nComputing the result gray matter segmentation ...', appearance_model.param.verbose, 'normal')
+        self.target_GM_seg_M = self.label_fusion(self.selected_K)
         self.target_GM_seg = self.inverse_register_target()
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -292,7 +304,7 @@ class RigidRegistration:
     def register_target_to_model_space(self):
         target_M = []
         for i,slice in enumerate(self.target.data):
-            slice_M = apply_ants_2D_rigid_transfo(self.appearance_model.data.mean_data, slice, binary=False, transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            slice_M = apply_ants_2D_rigid_transfo(self.appearance_model.data.mean_data, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             target_M.append(slice_M)
         return Image(param=np.asarray(target_M))
 
@@ -301,7 +313,7 @@ class RigidRegistration:
     def inverse_register_target(self):
         res_seg = []
         for i,slice_M in enumerate(self.target_GM_seg_M.data):
-            slice = apply_ants_2D_rigid_transfo(self.appearance_model.data.mean_data, slice_M, search_reg=False ,binary=True, inverse=1, transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            slice = apply_ants_2D_rigid_transfo(self.appearance_model.data.mean_data, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             res_seg.append(slice)
         return Image(param=np.asarray(res_seg))
 
@@ -311,11 +323,15 @@ class RigidRegistration:
     # beta is the model similarity between all the individual images and our input image
     # beta = (1/Z)exp(-tau*square_norm(omega-omega_j))
     # Z is the partition function that enforces the constraint tha sum(beta)=1
-    def compute_beta(self):
+    def compute_beta(self, coord_target, tau=0.01):
         beta = []
-        tau = 0.005 #decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
-        if self.coord_projected_target is not None:
-            for i,coord_projected_slice in enumerate(self.coord_projected_target):
+        #sct.printv('----------- COMPUTING BETA --------------', 1, 'info')
+        #print '------ TAU = ', tau
+        #print '---------- IN BETA : coord_target ---------------->', coord_target
+        #print '---------- IN BETA : shape coord_target ---------------->', coord_target.shape, ' len = ', len(coord_target.shape)
+        #print '---------- IN BETA : type coord_target[0][0] ---------------->', type(coord_target[0][0])
+        if isinstance(coord_target[0][0], (list, np.ndarray)): # SEE IF WE NEED TO CHECK TEH SECOND DIMENSION OF COORD TARGET OR THE FIRST ...
+            for i,coord_projected_slice in enumerate(coord_target):
                 beta_slice = []
                 # in omega matrix, each column correspond to the projection of one of the original data image,
                 # the transpose operator .T enable the loop to iterate over all the images coord
@@ -328,33 +344,82 @@ class RigidRegistration:
                     beta_slice[i] = (1/Z) * b
 
                 beta.append(beta_slice)
-            return np.asarray(beta)
         else:
-            raise Exception("No projected input in the appearance model")
+            # in omega matrix, each column correspond to the projection of one of the original data image,
+            # the transpose operator .T enable the loop to iterate over all the images coord
+            for omega_j in self.appearance_model.pca.omega.T:
+                square_norm = np.linalg.norm((coord_target - omega_j), 2)
+                beta.append(exp(-tau*square_norm))
+
+                Z = sum(beta)
+                for i, b in enumerate(beta):
+                    beta[i] = (1/Z) * b
+
+        return np.asarray(beta)
+
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
+    def compute_tau(self):
+        sct.printv('\nComputing Tau ... \n'
+                   '(Tau is a parameter indicatng the decay constant associated with a geodesic distance between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
+        from scipy.optimize import minimize
+        def to_minimize(tau):
+            sum_norm = 0
+            for j,Amj_flat in enumerate(self.appearance_model.data.A_M_flat):
+                Kj = self.select_K(self.compute_beta(self.appearance_model.pca.project_array(Amj_flat), tau=tau)) #in project : Image(param=Amj)
+                est_dmj = self.label_fusion(Kj)
+                sum_norm += l0_norm(self.appearance_model.data.D_M[j], est_dmj.data)
+            return sum_norm
+        est_tau = minimize(to_minimize, 0, method='Nelder-Mead', options={'xtol':0.0005})
+        sct.printv('Estimated tau : ' + str(est_tau.x[0]))
+        return est_tau.x[0]
+
+
 
 
     # ------------------------------------------------------------------------------------------------------------------
     # returns the index of the selected slices of the dataset to do label fusion and compute the graymater segmentation
-    def select_K(self, epsilon=0.055): # 0.035
+    def select_K(self, beta, epsilon=0.015):
         selected = []
-        for beta_slice in self.beta:
-            selected_by_slice=[]
-            for j, beta_j in enumerate(beta_slice):
+        #print '---------- IN SELECT_K : shape beta ---------------->', beta.shape, ' len = ', len(beta.shape)
+        #print '---------- IN SELECT_K : type beta[0] ---------------->', type(beta[0])
+        if isinstance(beta[0], (list, np.ndarray)):
+            for beta_slice in beta:
+                selected_by_slice=[]
+                for j, beta_j in enumerate(beta_slice):
+                    if beta_j > epsilon:
+                        selected_by_slice.append(j)
+                # selected.append(np.asarray(selected_by_slice))
+                selected.append(selected_by_slice)
+        else:
+            for j, beta_j in enumerate(beta):
                 if beta_j > epsilon:
-                    selected_by_slice.append(j)
-            selected.append(selected_by_slice)
-        return selected
+                    selected.append(j)
 
-    def label_fusion(self):
+        return np.asarray(selected)
+
+    def label_fusion(self, selected_K):
         res_seg_M = []
-        for i, selected_by_slice in enumerate(self.selected_K):
+        #print '---------- IN LABEL_FUSION : shape selected_K ---------------->', selected_K.shape, ' len = ', len(selected_K.shape)
+        #print '---------- IN LABEL_FUSION : type selected_K[0] ---------------->', type(selected_K[0])
+        if isinstance(selected_K[0], (list, np.ndarray)):
+            for i, selected_by_slice in enumerate(selected_K):
+                kept_decision_dataset = []
+                for j in selected_by_slice:
+                    kept_decision_dataset.append(self.appearance_model.data.D_M[j])
+                slice_seg = self.appearance_model.data.compute_mean_seg(kept_decision_dataset)
+                res_seg_M.append(slice_seg)
+        else:
             kept_decision_dataset = []
-            for j in selected_by_slice:
+            for j in selected_K:
                 kept_decision_dataset.append(self.appearance_model.data.D_M[j])
             slice_seg = self.appearance_model.data.compute_mean_seg(kept_decision_dataset)
-            res_seg_M.append(slice_seg)
+            res_seg_M = slice_seg
+
         res_seg_M = np.asarray(res_seg_M)
-        save_image(res_seg_M, 'res_GM_seg_model_space')
+        #save_image(res_seg_M, 'res_GM_seg_model_space')
+
         return Image(res_seg_M)
 
 
@@ -440,7 +505,10 @@ class Asman():
         self.rigid_reg = RigidRegistration(self.appearance_model, target_image=self.target_image)
 
         self.res_GM_seg = self.rigid_reg.target_GM_seg
-        save_image(self.res_GM_seg.data, 'res_GM_seg')
+        name_res = sct.extract_fname(param.target_fname)[1] + '_GM_seg'
+        save_image(self.res_GM_seg.data, name_res)
+
+        sct.printv('Done! \nTo see the result, type : fslview ' + param.target_fname + ' ' + name_res + '.nii.gz -l Red -t 0.4 &')
 
     def show(self):
 
@@ -541,18 +609,19 @@ def save_image(im_array, im_name, path='', type='', verbose=1):
         im.path = path
     im.save(type=type)
 
-def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_transfo=True, transfo_name='', binary = True, inverse=0, verbose=0):
+def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary = True, inverse=0, verbose=0):
     import time
     try:
-        if 'rigidTransformations' not in os.listdir('.'):
-            sct.run('mkdir ./rigidTransformations')
+        transfo_dir = transfo_type.lower() + '_transformations'
+        if transfo_dir not in os.listdir('.'):
+            sct.run('mkdir ./' + transfo_dir)
         dir_name = 'tmp_reg_' +str(time.time())
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./'+ dir_name)
 
         if binary:
             t = 'uint8'
-        else :
+        else:
             t = ''
 
         fixed_im_name = 'fixed_im'
@@ -570,18 +639,18 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, apply_tran
             niter = 20
             smooth = 0
             shrink = 1
-            cmd_reg = 'antsRegistration -d 2 -n ' + reg_interpolation + ' -t Rigid[' + str(gradientstep) + '] ' \
+            cmd_reg = 'antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + '] ' \
                       '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params  + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink)
 
             sct.runProcess(cmd_reg, verbose=verbose)
 
-            sct.run('cp reg0GenericAffine.mat ../rigidTransformations/'+transfo_name, verbose=verbose)
+            sct.run('cp reg0GenericAffine.mat ../' + transfo_dir + '/'+transfo_name, verbose=verbose)
 
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../rigidTransformations/'+transfo_name +  ' ./reg0GenericAffine.mat ', verbose=verbose)
+                sct.run('cp ../' + transfo_dir + '/'+transfo_name +  ' ./reg0GenericAffine.mat ', verbose=verbose)
 
             if binary:
                 applyTransfo_interpolation = 'NearestNeighbor'
@@ -612,6 +681,11 @@ def kronecker_delta(x, y):
         return 1
     else:
         return 0
+
+# ------------------------------------------------------------------------------------------------------------------
+# label-based cost function
+def l0_norm(X, Y):
+    return np.linalg.norm(X.flatten() - Y.flatten(), 0)
 
 
 ########################################################################################################################
@@ -665,3 +739,4 @@ if __name__ == "__main__":
     asman_seg = Asman(param=param)
 
     asman_seg.show()
+
