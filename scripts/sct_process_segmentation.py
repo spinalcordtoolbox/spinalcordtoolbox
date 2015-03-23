@@ -108,7 +108,6 @@ def main():
                 volume_output = int(arg)
             elif opt in('-l'):
                 vert_lev = arg
-                volume_output = 1
             elif opt in('-r'):
                 remove_temp_files = int(arg)
             elif opt in ('-s'):
