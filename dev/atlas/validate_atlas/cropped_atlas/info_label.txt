@@ -3,7 +3,7 @@
 0, left fasciculus gracilis, WMtract__00.nii.gz
 1, left fasciculus cuneatus, WMtract__01.nii.gz
 2, left lateral corticospinal tract, WMtract__02.nii.gz
-3, left ventral spinocerebellar tract, WMtract__03.nii.gz
+3, left spinocerebellar tract, WMtract__03.nii.gz
 4, left rubrospinal tract, WMtract__04.nii.gz
 5, left lateral reticulospinal tract, WMtract__05.nii.gz
 6, left spinal lemniscus (spinothalamic and spinoreticular tracts), WMtract__06.nii.gz
@@ -18,7 +18,7 @@
 15, right fasciculus gracilis, WMtract__15.nii.gz
 16, right fasciculus cuneatus, WMtract__16.nii.gz
 17, right lateral corticospinal tract, WMtract__17.nii.gz
-18, right ventral spinocerebellar tract, WMtract__18.nii.gz
+18, right spinocerebellar tract, WMtract__18.nii.gz
 19, right rubrospinal tract, WMtract__19.nii.gz
 20, right lateral reticulospinal tract, WMtract__20.nii.gz
 21, right spinal lemniscus (spinothalamic and spinoreticular tracts), WMtract__21.nii.gz

@@ -50,8 +50,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['5',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '5'] # STD of the gaussian-distributed noise
+        self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '10'] # STD of the assumed gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -96,11 +96,11 @@ def main():
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_data = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/tmp.141207185647/WM_phantom_noise.nii.gz'
-        path_label = '/Users/julien/code/spinalcordtoolbox/dev/atlas/validate_atlas/cropped_atlas/'
+        fname_data = '/Users/julien/data/temp/sct_example_data/mt/mtr.nii.gz'
+        path_label = '/Users/julien/data/temp/sct_example_data/mt/label/atlas/'
         method = 'map'
         ml_clusters = '0:29,30,31'
-        labels_of_interest = '0,1,15,16'
+        labels_of_interest = '0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29'
         slices_of_interest = ''
         vertebral_levels = ''
         average_all_labels = 1
@@ -647,14 +647,11 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_param):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', adv_param=[]):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
     """
-
-    perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
@@ -749,6 +746,9 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
 
     # Estimation with maximum a posteriori (map)
     if method == 'map':
+        perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+        var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
+
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         # construct beta0
@@ -833,16 +833,16 @@ OPTIONAL ARGUMENTS
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           map: maximum a posteriori. Mean priors are estimated by maximum likelihood
-                               within three clusters defined by the flag -c (white matter, gray 
-                               matter and CSF). Tract and noise variance are set with flag -p.
+                               within three clusters (white matter, gray matter and CSF). Tract and 
+                               noise variance are set with flag -p.
                                N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
                           wa: weighted average
                           wath: weighted average (only consider values >0.5)
                           bin: binarize mask (threshold=0.5)
   -p <param>            advanced parameters for the 'map' method.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: standard deviation across labels, in percentage of the mean
-                          #2: standard deviation of the Gaussian noise
+                          #1: standard deviation of the metric value across labels, in percentage of the mean
+                          #2: standard deviation of the assumed Gaussian noise
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param_default.fname_output+"""

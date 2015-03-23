@@ -248,9 +248,9 @@ class Parser:
                 # check if the input argument is close to a known option
                 spelling_candidates = self.spelling.correct(arg)
                 if len(spelling_candidates) != 0:
-                    self.usage.error(" Did you mean: "+', '.join(spelling_candidates) + '?')
+                    self.usage.error("ERROR: argument "+arg+" does not exist. Did you mean: "+', '.join(spelling_candidates) + '?')
                 else:
-                    self.usage.error("ERROR: wrong input arguments. See documentation.")
+                    self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
 
         # check if all mandatory arguments are provided by the user
         if dictionary:
@@ -290,7 +290,7 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
 
     def set_description(self, description):
-        self.description = '\n\nDESCRIPTION\n' + self.align(description)
+        self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
         self.section[len(self.arguments)+1] = section
