@@ -177,7 +177,7 @@ class PCA:
 
             if to_highlight is not None:
                 graph.plot(self.omega[i, to_highlight[1]], self.omega[i+1, to_highlight[1]],
-                     'o', markersize=7, color='black', alpha=0.5, label='dataset')
+                     'o', markersize=7, color='black', alpha=0.5, label='chosen dataset')
 
             # Plot the projected image's coord
             if target_coord is not None:
@@ -193,12 +193,12 @@ class PCA:
 
                         if to_highlight is not None and j_slice == to_highlight[0]:
                             graph.plot(slice_coord[i], slice_coord[i+1],
-                                     '^', markersize=7, color='black', alpha=0.5, label='target')
+                                     '^', markersize=7, color='black', alpha=0.5, label='this target')
 
                 else:
                     sct.printv('Cannot plot projected target.', 1, 'error')
 
-            plt.title('Transformed samples with class labels')
+            plt.title('Atlas and target slices in the PCA space. (' + str(self.kept) + ' modes in total)')
             plt.xlabel('Mode ' + str(i))
             plt.ylabel('Mode ' + str(i+1))
         plt.show()
