@@ -155,6 +155,7 @@ def main():
         sct.printv('fslview '+fname_output+' &', param.verbose, 'code')
 
     if name_process == 'compute_csa':
+        volume_output = 1
         compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template)
 
         sct.printv('\nDone! To view results, type:', param.verbose)
@@ -467,9 +468,6 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
                  # if verbose == 1 and name_method == 'ellipse_z_plane':
                  #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
 
-        # Display results
-        sct.printv('z='+str(iz)+': '+str(csa[iz])+' mm^2', verbose, 'bold')
-
     if spline_smoothing == 1:
         sct.printv('\nSmoothing results with spline...', verbose)
         tck = scipy.interpolate.splrep((z_centerline*z_scale), csa, s=smoothing_param)
@@ -488,6 +486,8 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     file_results = open('csa.txt', 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ',' + str(csa[i-min_z_index])+'\n')
+        # Display results
+        sct.printv('z='+str(i-min_z_index)+': '+str(csa[i-min_z_index])+' mm^2', verbose, 'bold')
     file_results.close()
 
     # output volume of csa values
@@ -550,11 +550,11 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
         if slices:
             # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../mean_csa -z "+slices)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+path_data+"/mean_csa -z "+slices)
         if vert_levels:
             sct.run('cp -R '+abs_path_to_template+' .')
             # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../mean_csa -v "+vert_levels)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+path_data+"/mean_csa -v "+vert_levels)
 
         os.chdir('..')
 
@@ -705,7 +705,8 @@ MANDATORY ARGUMENTS
                             - extract_centerline: extract centerline as binary file from segmentation
                             - compute_csa: computes cross-sectional area by counting pixels in each
                               slice and then geometrically adjusting using centerline orientation.
-                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column)
+                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column) and
+                              a volume in which each slice\'s value is equal to the CSA (mm^2).
 
 OPTIONAL ARGUMENTS
   -s {0,1}                   smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
