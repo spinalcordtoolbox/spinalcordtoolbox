@@ -9,6 +9,16 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 - [Getting started](https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh)
 - [List of changes](https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md)
 
+## References
+
+- [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
+- [Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014;Article ID 719520.](http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf)
+- [Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014;102P2:817-827.](https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf)
+- [Benhamou et al. Atlas of white-matter tracts in the human spinal cord. Proc. ISMRM, Milan, Italy 2014:5132](https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf)
+- [Cadotte et al. Characterizing the Location of Spinal and Vertebral Levels in the Human Cervical Spinal Cord. AJNR Am J Neuroradiol 2014;(in press).](https://dl.dropboxusercontent.com/u/20592661/publications/Cadotte_AJNR14_SpinalLevel.pdf)
+- [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf) 
+- [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
+
 ## License
 
 The MIT License (MIT)

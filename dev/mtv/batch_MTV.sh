@@ -1,4 +1,3 @@
-
 #!/bin/bash
 # hc_sc_003
 # mtv processing

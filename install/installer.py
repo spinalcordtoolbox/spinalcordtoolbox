@@ -22,6 +22,21 @@ import getopt
 from datetime import date
 import platform
 import subprocess
+import signal
+
+# small function for input with timeout
+def interrupted(signum, frame):
+    "called when read times out"
+    print 'interrupted!'
+signal.signal(signal.SIGALRM, interrupted)
+
+def input_timeout(text):
+    try:
+        foo = raw_input(text)
+        return foo
+    except:
+        # timeout
+        return
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
@@ -579,8 +594,10 @@ class Installer:
             if version_sct.isLessThan_MajorMinor(version_sct_online):
                 print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
                 install_new = ""
+                signal.alarm(30)
                 while install_new not in ["yes","no"]:
-                    install_new = raw_input("[yes|no]: ")
+                    install_new = input_timeout("[yes|no]: ")
+                signal.alarm(0)
                 if install_new == "yes":
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
@@ -607,7 +624,7 @@ class Installer:
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
                 status, output = runProcess(cmd)
                 #status, output = commands.getstatusoutput(cmd)
@@ -623,7 +640,9 @@ class Installer:
             bashrc.write("\nexport PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts")
             bashrc.write("\nexport SCT_DIR PATH")
             # forbid to run several ITK instances in parallel (see issue #201).
-            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1")
+            from multiprocessing import cpu_count
+            number_of_cpu = cpu_count()
+            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
             bashrc.close()
 
         # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
@@ -753,14 +772,12 @@ class Installer:
 
         # display stuff
         print """\n"========================================================================================"
-Installation done! You may need to run a new Terminal in order to set environment variables.
-If you had errors, please start a new Terminal and run the following command:
+Installation done! Please open a new Terminal to set environment variables.
+If you noticed errors during installation, please start a new Terminal and run the following command:
 > sct_check_dependences -c -l
+Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-If you are still getting errors, please post an issue here: https://sourceforge.net/p/spinalcordtoolbox/discussion/help/
-or contact the developers.
-
-You can now delete this folder by typing:
+If installation was successful, you can delete the installation folder by typing:
 > cd ..
 > rm -rf """ + os.getcwd() + """
 
