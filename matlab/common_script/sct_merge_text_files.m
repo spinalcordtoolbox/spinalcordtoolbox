@@ -1,5 +1,6 @@
-function sct_merge_text_files(text_files, output,transpose)
-% sct_merge_text_files('fsems_*.bvec', output, transpose?)
+
+function sct_tools_merge_text_files(text_files, output,transpose)
+% sct_tools_merge_text_files('fsems_*.bvec', output, transpose?)
 dbstop if error
 list_text=dir(text_files);
 list_text={list_text.name};
