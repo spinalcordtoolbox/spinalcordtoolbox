@@ -647,14 +647,11 @@ def check_labels(labels_of_interest, nb_labels):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_param):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', adv_param=[]):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
     """
-
-    perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
@@ -749,6 +746,9 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
 
     # Estimation with maximum a posteriori (map)
     if method == 'map':
+        perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+        var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
+
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         # construct beta0
