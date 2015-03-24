@@ -527,7 +527,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
 #=======================================================================================================================
 def remove_slices(data_to_crop, slices_of_interest):
 
-    # check if user selected specific slices using delimitor ','
+   # check if user selected specific slices using delimitor ','
     if not slices_of_interest.find(',') == -1:
         slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
     else:
