@@ -20,25 +20,6 @@
 
 # 2014-06-06: corrected bug related to small FOV volumes Solution: reduced spline order (3), computation of a lot of point (1000)
 
-
-## Create a structure to pass important user parameters to the main function
-class Param:
-    ## The constructor
-    def __init__(self):
-        self.debug = 0
-        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
-        self.gapxy = 20  # size of cross in x and y direction for the landmarks
-        self.gapz = 15  # gap between landmarks along z voxels
-        self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        self.fitting_method = 'smooth' # smooth | splines | polynomial
-        self.interpolation_warp = 'spline'
-        self.remove_temp_files = 1  # remove temporary files
-        self.verbose = 1
-        self.nurbs_ctl_points = 0
-        self.smooth_sigma = 15
-        self.smooth_padding = 70
-        self.smooth_sigma_low = 6
-
 # check if needed Python libraries are already installed or not
 import os
 import getopt
@@ -55,8 +36,30 @@ from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from sct_orientation import get_orientation, set_orientation
+from scipy.interpolate import interp1d
+
+
+## Create a structure to pass important user parameters to the main function
+class Param:
+    ## The constructor
+    def __init__(self):
+        self.debug = 0
+        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
+        self.gapxy = 20  # size of cross in x and y direction for the landmarks
+        self.gapz = 15  # gap between landmarks along z voxels
+        self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
+        self.fitting_method = 'smooth' # smooth | splines | polynomial
+        self.interpolation_warp = 'spline'
+        self.remove_temp_files = 1  # remove temporary files
+        self.verbose = 1
+        self.nurbs_ctl_points = 0
+        self.smooth_sigma = 15
+        self.smooth_padding = 0
+        self.smooth_sigma_low = 6
+
+
 
 
 #=======================================================================================================================
@@ -92,7 +95,7 @@ def main():
         fname_centerline = path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
         remove_temp_files = 0
         centerline_fitting = 'smooth'
-        import matplotlib.pyplot as plt
+        #import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         verbose = 2
     else:
@@ -158,8 +161,9 @@ def main():
     print ''
 
     # if verbose 2, import matplotlib
-    if verbose == 2:
-        import matplotlib.pyplot as plt
+
+    #if verbose == 2:
+    #    import matplotlib.pyplot as plt
 
     # Extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
@@ -198,11 +202,11 @@ def main():
         #sct.run('sct_c3d ' + file_centerline + ext_centerline + ' -pad ' + smooth_padding+ 'x' + smooth_padding + 'x0vox '+ smooth_padding + 'x' + smooth_padding + 'x0vox 0 -o ' + file_centerline_pad + ext_centerline)
         #sct.run('fslmaths ' + file_centerline_pad + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline_pad + ext_centerline)
         sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
-        sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_pad)
+        #sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_pad)
     else:
         pad = str(smooth_padding)
         sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
-        sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
+        #sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
 
     # open centerline
     print '\nOpen centerline volume...'
@@ -227,6 +231,28 @@ def main():
     # remove padding
     x_centerline = [x - smooth_padding for x in x_centerline]
     y_centerline = [y - smooth_padding for y in y_centerline]
+
+    if verbose==2:
+        plt.figure(1)
+        plt.subplot(121)
+        plt.plot(z_centerline, x_centerline, 'ro')
+
+     # 2D smoothing
+    x_centerline = numpy.asarray(x_centerline)
+    z_centerline = numpy.asarray(z_centerline)
+
+    type_window='hanning'
+    x_centerline = msct_smooth.smoothing_window(x_centerline, window_len=100, window=type_window)
+
+    x_centerline = x_centerline.tolist()
+
+
+    if verbose==2:
+        plt.subplot(122)
+        plt.plot(z_centerline, x_centerline, 'ro')
+        plt.title("Window_length=100")
+        plt.show()
+
 
     # clear variable
     del data
@@ -706,3 +732,6 @@ if __name__ == "__main__":
     param_default = Param()
     # call main function
     main()
+
+#os.chdir("/home/tamag/data/template/errsm_35/t2")
+#sct_straighten_spinalcord("data_RPI_centerline.nii.gz", "data_RPI_centerline_smoothed.nii.gz", 10)
