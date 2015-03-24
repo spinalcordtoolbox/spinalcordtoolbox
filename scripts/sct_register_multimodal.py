@@ -181,8 +181,8 @@ def main():
         metricSize = '4'  # corresponds to radius
 
     # get full path
-    fname_src = os.path.abspath(fname_src)
-    fname_dest = os.path.abspath(fname_dest)
+    #fname_src = os.path.abspath(fname_src)
+    #fname_dest = os.path.abspath(fname_dest)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -258,68 +258,6 @@ def main():
     sct.printv('\nConcatenate affine and local transformations...', verbose)
     sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2dest.nii.gz')
     sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2src.nii.gz')
-
-
-        # # Estimate transformation using ANTS
-        # sct.printv('\nStep #1: Estimate large-scale deformation using segmentations...', verbose)
-        #
-        # # cmd = ('sct_antsSliceRegularizedRegistration '
-        # #        '-t Translation[0.5] '
-        # #        '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
-        # #        '-p 5 '
-        # #        '-i 5 '
-        # #        '-f 1 '
-        # #        '-s 5 '
-        # #        '-o [stage1,regSeg.nii]')
-        # # status, output = sct.run(cmd)
-        # if algo_first.lower() == 'slicereg':
-        #     cmd = ('sct_antsSliceRegularizedRegistration '
-        #            '-t Translation[0.5] '
-        #            '-m MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4,Regular,0.2] '
-        #            '-p 5 '
-        #            '-i 5 '
-        #            '-f 1 '
-        #            '-s 5 '
-        #            '-o [stage10,regSeg.nii] ' )
-        # else:
-        #     cmd = ('sct_antsRegistration '
-        #            '--dimensionality 3 '
-        #            '--transform '+algo_first+'[0.5,3,0] '
-        #            '--metric MeanSquares[dest_seg.nii.gz,src_seg_regAffine.nii.gz,1,4] '
-        #            '--convergence 10x3 '
-        #            '--shrink-factors 2x1 '
-        #            '--smoothing-sigmas 1x1mm '
-        #            '--restrict-deformation 1x1x0 '
-        #            '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because antsRegistration add "0Warp"
-        #            '--interpolation BSpline[3] ' )
-        # status, output = sct.run(cmd)
-        #
-        # # 2nd stage registration
-        # sct.printv('\nStep #2: Estimate small-scale deformations using images...', verbose)
-        # cmd = ('sct_antsRegistration '
-        #        '--dimensionality 3 '
-        #        '--initial-moving-transform stage10Warp.nii.gz '
-        #        '--transform '+algo+'['+gradientStep+',3,0] '
-        #        '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
-        #        '--convergence '+numberIterations+' '
-        #        '--shrink-factors 1 '
-        #        '--smoothing-sigmas 0mm '
-        #        '--restrict-deformation 1x1x0 '
-        #        '--output [stage2,src_regAffineWarp.nii] '
-        #        '--collapse-output-transforms 0 '
-        #        '--interpolation BSpline[3] '
-        #        +masking)
-        # status, output = sct.run(cmd)
-        #
-        # # Concatenate multi-stage transformations
-        # sct.printv('\nConcatenate multi-stage transformations...', verbose)
-        # sct.run('sct_concat_transfo -w stage10Warp.nii.gz,stage21Warp.nii.gz -d dest.nii -o warp_src2dest0.nii.gz')
-        # sct.run('sct_concat_transfo -w stage21InverseWarp.nii.gz,stage10InverseWarp.nii.gz -d src.nii -o warp_dest2src0.nii.gz')
-        #
-        # # Concatenate transformations
-        # sct.printv('\nConcatenate affine and local transformations...', verbose)
-        # sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,warp_src2dest0.nii.gz -d dest.nii -o warp_src2destFinal.nii.gz')
-        # sct.run('sct_concat_transfo -w warp_dest2src0.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2srcFinal.nii.gz')
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
