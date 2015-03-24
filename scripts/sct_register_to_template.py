@@ -79,9 +79,9 @@ def main():
     # Parameters for debug mode
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Users/julien/data/sct_issues/20150316_allan/t2r.nii.gz'
-        fname_landmarks = '/Users/julien/data/sct_issues/20150316_allan/t2r-labels_error.nii.gz'
-        fname_seg = '/Users/julien/data/sct_issues/20150316_allan/t2r_seg.nii.gz'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2_new/t2.nii.gz'
+        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2_new/labels.nii.gz'
+        fname_seg = '/Users/julien/data/temp/sct_example_data/t2_new/t2_seg.nii.gz'
         speed = 'superfast'
         #param_reg = '2,BSplineSyN,0.6,MeanSquares'
     else:
