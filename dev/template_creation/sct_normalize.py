@@ -100,7 +100,7 @@ def main():
     nz_nonz = len(z_centerline)
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
+    # print z_centerline,nz_nonz,len(x_centerline)
     print '\nGet center of mass of the centerline ...'
     for iz in xrange(len(z_centerline)):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
@@ -113,7 +113,7 @@ def main():
    #      print iz-min(z_centerline)
    #      print x_centerline[iz-min(z_centerline)]
         means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
-    #print("means=", means)
+    
     
     print('\nSmoothing results with spline...')    
     m =np.mean(means)
@@ -127,34 +127,11 @@ def main():
         plt.plot(z_centerline,means_smooth)
         plt.show()
     
-    print('\nNormalizing intensity along centerline...')
-
-    means_smooth_extended = [0 for i in range(0, data.shape[2], 1)]
-    #means_smooth_extended = np.zeros[data.shape[2]]
-
-
-    #Define extended meaned intensity for all the spinal cord
-    for iz in range(len(z_centerline)):
-        means_smooth_extended[z_centerline[iz]] = means_smooth[iz]
-
-    X_means_smooth_extended = np.nonzero(means_smooth_extended)
-    X_means_smooth_extended = np.transpose(X_means_smooth_extended)
-    #initialization
-    means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
-    means_smooth_extended[len(X_means_smooth_extended)] = means_smooth_extended[X_means_smooth_extended[-1]]
-    #recurrence
-    for i in range(1,len(X_means_smooth_extended)-1):
-        means_smooth_extended[X_means_smooth_extended[i]] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1]]+means_smooth_extended[X_means_smooth_extended[i+1]])
-
-    #Old
-#    for iz in xrange(len(z_centerline)):
-#        data[:,:,z_centerline[iz]] = data[:,:,z_centerline[iz]]*(mean_intensity/means_smooth[iz])  #pb sur la formule
-
-    #New
-    for i in range(data.shape[2]):
-        data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[iz])
-
-    print("data[:,:,216].any()", data[:,:,216].any())
+    print('\nNormalizing intensity along centerline...')    
+    for iz in xrange(len(z_centerline)):
+        
+        data[:,:,z_centerline[iz]] = data[:,:,z_centerline[iz]]*(mean_intensity/means_smooth[iz])
+       
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     # save volume
     sct.printv('\nWrite NIFTI volumes...',verbose)
@@ -210,4 +187,3 @@ if __name__ == "__main__":
     param = param()
     # call main function
     main()
-
