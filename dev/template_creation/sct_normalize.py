@@ -23,15 +23,25 @@ class param:
         
 # check if needed Python libraries are already installed or not
 import sys
+import commands
 import os
 import getopt
+
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
 import sct_utils as sct
 import nibabel
 import numpy as np
+
 from time import strftime
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
 from scipy import ndimage
+
+
 
 def main():
     
@@ -129,27 +139,49 @@ def main():
     
     print('\nNormalizing intensity along centerline...')
 
-    means_smooth_extended = [0 for i in range(0, data.shape[2], 1)]
+
 
 
     #Define extended meaned intensity for all the spinal cord
+    means_smooth_extended = [0 for i in range(0, data.shape[2], 1)]
     for iz in range(len(z_centerline)):
         means_smooth_extended[z_centerline[iz]] = means_smooth[iz]
 
-    #Fixing values of extremities
+
     X_means_smooth_extended = np.nonzero(means_smooth_extended)
     X_means_smooth_extended = np.transpose(X_means_smooth_extended)
-    #initialization
+
+    #initialization: we fixe the extrem values to avoid edge effects
     means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
-    means_smooth_extended[len(X_means_smooth_extended)] = means_smooth_extended[X_means_smooth_extended[-1]]
+    means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
+
+    #Add two rows to the vector X_means_smooth_extended:
+    # one before as means_smooth_extended[0] is now diff from 0
+    # one after as means_smooth_extended[-1] is now diff from 0
+    X_means_smooth_extended = np.append(X_means_smooth_extended, len(means_smooth_extended)-1)
+    X_means_smooth_extended = np.insert(X_means_smooth_extended, 0, 0)
+
+
+
+#    for i in range(1,len(X_means_smooth_extended)-1):
+#        means_smooth_extended[X_means_smooth_extended[i]] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1]]+means_smooth_extended[X_means_smooth_extended[i+1]])
+
     #recurrence
-    for i in range(1,len(X_means_smooth_extended)-1):
-        means_smooth_extended[X_means_smooth_extended[i]] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1]]+means_smooth_extended[X_means_smooth_extended[i+1]])
+    count_zeros=0
+    for i in range(1,len(means_smooth_extended)-1):
+        if means_smooth_extended[i]==0:
+            means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
+            count_zeros += 1
+    if verbose :
+        plt.figure()
+        plt.plot(means_smooth_extended)
+        plt.title("Extended mean intensity")
+        plt.show()
+    print means_smooth_extended
 
     for i in range(data.shape[2]):
-        data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[iz])
+        data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
 
-    print("data[:,:,216].any()", data[:,:,216].any())
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     # save volume
     sct.printv('\nWrite NIFTI volumes...',verbose)
