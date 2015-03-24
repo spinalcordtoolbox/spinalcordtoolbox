@@ -63,7 +63,7 @@ class ProcessLabels(object):
         elif type_process == 'display-voxel':
             self.display_voxel()
         elif type_process == 'create':
-            self.output_image = self.create_label
+            self.output_image = self.create_label()
         elif type_process == 'diff':
             self.diff()
         elif type_process == 'dist-inter':  # second argument is in pixel distance
@@ -208,6 +208,10 @@ class ProcessLabels(object):
 
         self.coordinates is a list of coordinates (class in msct_types).
         a Coordinate contains x, y, z and value.
+        If only one label is to be added, coordinates must be completed with '[]'
+        examples:
+        For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate' object from msct_types
+        For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
         """
         image_output = self.image_input.copy()
         image_output.data *= 0
