@@ -42,12 +42,17 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.outSuffix  = "_reg"
         self.padding = 5  # add 'padding' slices at the top and bottom of the volumes if deformation at the edge is not good. Default=5. Put 0 for no padding.
-        self.param = ['10',  # number of iterations for last stage
-                      'SyN',  # algo: SyN, BSplineSyN, sliceReg
+        self.algo = "syn"  # algo for registration
+        self.param_syn = ['10',  # number of iterations. For several stages, add x. E.g.: 50x10
+                      '2',  # shrink factor. For several stages, add x.
+                      '0',  # smoothing factor. For several stages, add x.
                       '0.5',  # gradientStep
-                      'MeanSquares']  # metric: MI,MeanSquares
+                      'MI']  # metric: CC,MI,MeanSquares
+        self.param_slicereg = ['10',  # number of iterations. For several stages, add x. E.g.: 50x10
+                      '3',  # degree of polynomial.
+                      'MeanSquares']  # metric: CC,MI,MeanSquares
         self.verbose = 1  # verbose
-        self.interp = 'spline'  # nn, linear, spline
+        self.interp = 'linear'  # nn, linear, spline
 
 import sys
 import getopt
@@ -77,7 +82,7 @@ def main():
     use_segmentation = 0  # use spinal cord segmentation to improve robustness
     use_init_transfo = ''
     # gradientStep = param.gradientStep
-    # algo = param.algo
+    algo = param.algo
     start_time = time.time()
     print ''
 
@@ -90,13 +95,13 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_dest = path_sct_data+'/mt/mt1.nii.gz'
         fname_src = path_sct_data+'/t2/t2.nii.gz'
-        param_user = '10,SyN,0.5,MI'
+        param_user = '10,syn,0.5,MI'
         remove_temp_files = 0
         verbose = 1
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hd:i:m:o:p:r:s:t:v:x:z:a:')
+            opts, args = getopt.getopt(sys.argv[1:], 'ha:d:i:m:o:p:r:v:x:z:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -104,6 +109,8 @@ def main():
         for opt, arg in opts:
             if opt == '-h':
                 usage()
+            elif opt in ('-a'):
+                algo = arg
             elif opt in ("-d"):
                 fname_dest = arg
             elif opt in ("-i"):
@@ -116,29 +123,30 @@ def main():
                 param_user = arg
             elif opt in ('-r'):
                 remove_temp_files = int(arg)
-            elif opt in ("-s"):
-                fname_src_seg = arg
-            elif opt in ("-t"):
-                fname_dest_seg = arg
             elif opt in ('-v'):
                 verbose = int(arg)
             elif opt in ('-x'):
                 param.interp = arg
             elif opt in ('-z'):
                 padding = arg
-            elif opt in ('-a'):
-                algo_first = arg
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_dest == '':
         sct.printv('ERROR in '+os.path.basename(__file__)+': All mandatory arguments are not provided. Type: '+os.path.basename(__file__)+' -h.\n', 1, 'error')
 
     # parse argument for param
-    if not param_user == '':
-        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
-        del param_user
-        # TODO: check integrity of input
-    numberIterations, algo, gradientStep, metric = param.param
+    if algo == 'syn' or algo == 'bsplinesyn':
+        if not param_user == '':
+            param.param_syn = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+            del param_user
+        numberIterations, shrinkFactor, smoothingSigma, gradientStep, metric = param.param_syn
+    elif algo == 'slicereg':
+        if not param_user == '':
+            param.param_slicereg = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
+            del param_user
+        numberIterations, degPoly, metric = param.param_slicereg
+    else:
+        sct.printv('ERROR: algo '+algo+' does not exist. Exit program', 1, 'error')
 
     # if sliceReg is used, we can't pad in the image...
     if algo == 'slicereg':
@@ -153,7 +161,6 @@ def main():
     print '  Output name ......... '+fname_output
     print '  Algorithm ........... '+algo
     print '  Number of iterations  '+str(numberIterations)
-    print '  Gradient step ....... '+gradientStep
     print '  Metric .............. '+metric
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
@@ -179,10 +186,6 @@ def main():
         metricSize = '32'  # corresponds to number of bins
     else:
         metricSize = '4'  # corresponds to radius
-
-    # get full path
-    #fname_src = os.path.abspath(fname_src)
-    #fname_dest = os.path.abspath(fname_dest)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -222,14 +225,14 @@ def main():
     sct.printv('\nPut source into destination space using header...', verbose)
     sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
 
-    # Estimate transformation using ANTS
+    # Estimate transformation
     sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
     if algo == 'slicereg':
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
                '-m '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
-               '-p 3 '
+               '-p '+degPoly+' '
                '-i '+numberIterations+' '
                '-f 1 '
                '-s 0 '
@@ -240,11 +243,11 @@ def main():
                '--dimensionality 3 '
                '--transform '+algo+'['+gradientStep+',3,0] '
                '--metric '+metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
-               '--convergence 20x'+numberIterations+' '
-               '--shrink-factors 2x1 '
-               '--smoothing-sigmas 2x0mm '
+               '--convergence '+numberIterations+' '
+               '--shrink-factors '+shrinkFactor+' '
+               '--smoothing-sigmas '+smoothingSigma+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [stage1,src_regAffineWarp.nii] '  # here the warp name is stage1 because sct_antsRegistration add "0Warp"
+               '--output [stage1,src_regAffineWarp.nii] '
                '--interpolation BSpline[3] '
                +masking)
 
@@ -305,7 +308,7 @@ DESCRIPTION
   direction (i.e., axial plane). Hence, this function assumes that orientation of the destination
   image is axial (RPI). If you need to register two volumes with large deformations and/or different
   contrasts, it is recommended to input spinal cord segmentations (binary mask) in order to achieve
-  maximum robustness. To do so, you can use sct_segmentation_propagation.
+  maximum robustness.
   The program outputs a warping field that can be used to register other images to the destination
   image. To apply the warping field to another image, use sct_apply_transfo
 
@@ -317,30 +320,32 @@ MANDATORY ARGUMENTS
   -d <dest>        destination image
 
 OPTIONAL ARGUMENTS
-  -s <source_seg>  segmentation for source image (mandatory if -t is used)
-  -t <dest_seg>    segmentation for destination image (mandatory if -s is used)
   -m <mask>        mask used on destination image.
   -o <output>      name of output file. Default=source_reg
-  -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
-                     1) number of iterations for last stage.
-                     2) algo: {SyN, BSplineSyN, slicereg}
-                        N.B. if you use sliceReg, then you should set -z 0. Also, the two input
-                        volumes should have same the same dimensions.
-                        For more info about sliceReg, type: sct_antsSliceRegularizedRegistration
-                     3) gradient step. The larger the more deformation.
-                     4) metric:
+  -a {syn,bsplinesyn,slicereg}  algorithm for registration.
+                     more info on slicereg: http://goo.gl/Sj3ZeU
+  -p <param>       parameters for registration. Separate with ','. Depends on the algorithm:
+                   if a = syn or bsplinesyn:
+                     1) number of iterations. For multiple stages, separate with 'x'. Default="""+param_default.param_syn[0]+"""
+                     2) shrink factor. Default="""+param_default.param_syn[1]+"""
+                     3) smoothing factor in mm. Default="""+param_default.param_syn[2]+"""
+                     4) gradient step. The larger the more deformation. Default="""+param_default.param_syn[3]+"""
+                     5) metric: Default="""+param_default.param_syn[4]+"""
                           MI: fast, but requires a minimum of voxels (otherwise it crashes)
                           MeanSquares: fast, requires similar contrast between src and dest.
                           CC: slow, but sometimes produces best results.
+                   if a = slicereg:
+                     1) number of iterations (only one stage). Default="""+param_default.param_slicereg[0]+"""
+                     2) degree of polynomial function. Default="""+param_default.param_slicereg[1]+"""
+                     3) metric: {MI,MeanSquares,CC}. Default="""+param_default.param_slicereg[2]+"""
   -z <padding>     size of z-padding to enable deformation at edges. Default="""+str(param_default.padding)+"""
   -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
   -r {0,1}         remove temporary files. Default="""+str(param.remove_temp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
 
 EXAMPLES
-  Register mean DWI data to the T1 volume using segmentations:
-  """+os.path.basename(__file__)+""" -i dwi_mean.nii.gz -d t1.nii.gz -s dwi_mean_seg.nii.gz -t t1_seg.nii.gz \n"""
+  Register mean DWI data to the T1 volume using SyN:
+  """+os.path.basename(__file__)+""" -i dwi_mean.nii.gz -d t1.nii.gz -a syn -p 50x5,4x2,0x0,0.5,MI -x linear \n"""
 
     # exit program
     sys.exit(2)
