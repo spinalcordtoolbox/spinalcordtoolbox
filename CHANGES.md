@@ -6,8 +6,9 @@
 - NEW: sct_fmri_compute_tsnr: new function to compute TSNR from fMRI data (performs moco before)
 - OPT: sct_extract_metric: new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
 - OPT: new WM atlas: added gray matter and CSF for computing partial volume
+- OPT: now use all available cores for ANTs and adjust variable when running dmri_moco (issue #238)
 
-##1.1.2 (beta)
+##1.1.2_beta
 
 - BUG: sct_dmri_moco: fixed crash when using mask (issue # 245)
 - OPT: sct_create_mask: (1) updated usage (size in vox instead of mm), (2) fixed minor issues related to mask size.
