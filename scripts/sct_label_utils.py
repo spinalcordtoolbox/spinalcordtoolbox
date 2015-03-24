@@ -63,7 +63,7 @@ class ProcessLabels(object):
         elif type_process == 'display-voxel':
             self.display_voxel()
         elif type_process == 'create':
-            self.output_image = self.create_label
+            self.output_image = self.create_label()
         elif type_process == 'diff':
             self.diff()
         elif type_process == 'dist-inter':  # second argument is in pixel distance
