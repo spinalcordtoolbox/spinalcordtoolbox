@@ -28,8 +28,9 @@ typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags OrientationType
 
 void help()
 {
-    cout << "sct_crop_image - Version 0.3" << endl;
-    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuropoly.info>" << endl << endl;
+    cout << "sct_crop_image" << endl;
+    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuropoly.info>" << endl;
+    cout << "modified: 2015-03-24" << endl;
 	
 	cout << "This program crop an image. You can provide either directly the starting and ending slice number around that the image will be cropped or a mask. You can as well crop in any dimension you want. This program supports 2D to 7D images with the following voxel types: char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double." << endl << endl;
     
@@ -315,7 +316,6 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
             std::cerr << "ERROR: only one dimension can be cropped." << std::endl;
             return EXIT_FAILURE;
         }
-        cout << "crop" << dims[0] << " " << dims.size() << endl;
         
         typename ImageType::RegionType region = image->GetLargestPossibleRegion();
         ImageIterator itTarget( image, region );
@@ -353,8 +353,6 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
         endSlices[0] = end[0];
         endSlices[1] = end[1];
         endSlices[2] = end[2];
-        cout << startSlices[0] << " " << startSlices[1] << " " << startSlices[2] << endl;
-        cout << endSlices[0] << " " << endSlices[1] << " " << endSlices[2] << endl;
     }
     else
     {
@@ -369,8 +367,8 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
 	typename ImageType::IndexType desiredStart1;
     desiredStart1.Fill(0);
     for (int i=0; i<dims.size(); i++) {
-        desiredStart1[dims[i]] = startSlices[i];
-        desiredSize1[dims[i]] = endSlices[i]-startSlices[i]+1;
+        desiredStart1[dims[i]] = startSlices[dims[i]];
+        desiredSize1[dims[i]] = endSlices[dims[i]]-startSlices[dims[i]]+1;
     }
     
 	if (realCrop)
