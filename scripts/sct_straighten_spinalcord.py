@@ -81,6 +81,10 @@ def main():
     smooth_sigma = param.smooth_sigma
     smooth_padding = param.smooth_padding
     smooth_sigma_low = param.smooth_sigma_low
+    window_length_x = 80
+    window_length_y = 80
+    type_window_x = 'hanning'
+    type_window_y = 'hanning'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -232,11 +236,20 @@ def main():
     x_centerline = [x - smooth_padding for x in x_centerline]
     y_centerline = [y - smooth_padding for y in y_centerline]
 
-
+    print px, py, pz
         # 2D smoothing
-    window_length_x=80  #length in mm
-    window_length_y=80  #length in mm
-    # For x
+    #window_length_x = min(80,(2*nz_nonz-2)*px)  #length in mm
+    #window_length_y = min(80,(2*nz_nonz-2)*py)  #length in mm
+
+    #The number of points of the curve must be superior to int(window_length_x/2.0)+1
+    if window_length_x >= (2*nz_nonz-2)*px :
+        window_length_x = (2*nz_nonz-2)*px
+        print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length_x)
+    if window_length_y >= (2*nz_nonz-2)*py :
+        window_length_y = (2*nz_nonz-2)*py
+        print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length_y)
+
+
     #change x_centerline to array
     x_centerline = numpy.asarray(x_centerline)
     y_centerline = numpy.asarray(y_centerline)
@@ -254,11 +267,8 @@ def main():
         y_centerline_extended = numpy.insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
 
     #Smoothing of the extended curve
-    type_window_x='hanning'
-    x_centerline_temp = msct_smooth.smoothing_window(x_centerline_extended, window_len=window_length_x/px, window=type_window_x)
-
-    type_window_y='hanning'
-    y_centerline_temp = msct_smooth.smoothing_window(y_centerline_extended, window_len=window_length_y/py, window=type_window_y)
+    x_centerline_temp = msct_smooth.smoothing_window(x_centerline_extended, window_len=window_length_x/pz, window=type_window_x)
+    y_centerline_temp = msct_smooth.smoothing_window(y_centerline_extended, window_len=window_length_y/pz, window=type_window_y)
 
     #Selection of the part of interest of the curve
     x_centerline_final = x_centerline_temp[int(window_length_x/2.0) : int(window_length_x/2.0) + x_centerline.shape[0]]
