@@ -395,7 +395,7 @@ def smoothing_window(x,window_len=11,window='hanning'):
 
     input:
         x: the input signal
-        window_len: the dimension of the smoothing window; should be an odd integer
+        window_len: the dimension of the smoothing window (in number of points); should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
 
@@ -427,7 +427,6 @@ def smoothing_window(x,window_len=11,window='hanning'):
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
-
 
     s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
     #print(len(s))
