@@ -532,6 +532,9 @@ def remove_slices(data_to_crop, slices_of_interest):
         slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
     else:
         slices_range = [int(x) for x in slices_of_interest.split(':')]  # 2-element list
+        # if only one slice (z) was selected, consider as z:z
+        if len(slices_range) == 1:
+            slices_range = [slices_range[0], slices_range[0]]
         slices_list = [i for i in range(slices_range[0], slices_range[1]+1)]
 
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
