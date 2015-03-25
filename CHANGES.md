@@ -7,6 +7,13 @@
 - OPT: sct_extract_metric: new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
 - OPT: new WM atlas: added gray matter and CSF for computing partial volume
 - OPT: now use all available cores for ANTs and adjust variable when running dmri_moco (issue #238)
+- INST: new installer in python, simpler to use and check for latest patches
+- BUG: various small bugs are now fixed, including metric extraction, image crop, PropSeg, registration to template
+- REF: msct_parser: new parser that generate documentation/usage
+- REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
+- OPT: straightening: improved smoothing and variable resolution
+- OPT: sct_register_multimodal: simplification of registration between multimodal images, it is now possible to use regularized slice-wise registration (SliceReg)
+- NEW: sct_get_ernst_angle: new script to compute and display Ernst angle depending on T1 and TR
 
 ##1.1.2_beta
 
