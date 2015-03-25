@@ -177,7 +177,7 @@ def main():
         plt.plot(means_smooth_extended)
         plt.title("Extended mean intensity")
         plt.show()
-    print means_smooth_extended
+    #print means_smooth_extended
 
     for i in range(data.shape[2]):
         data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
