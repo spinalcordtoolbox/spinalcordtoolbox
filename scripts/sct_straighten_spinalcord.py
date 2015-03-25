@@ -232,27 +232,68 @@ def main():
     x_centerline = [x - smooth_padding for x in x_centerline]
     y_centerline = [y - smooth_padding for y in y_centerline]
 
+
+        # 2D smoothing
+    window_length_x=80  #length in mm
+    window_length_y=80  #length in mm
+    # For x
+    #change x_centerline to array
+    x_centerline = numpy.asarray(x_centerline)
+    y_centerline = numpy.asarray(y_centerline)
+    #print("x_centerline_.shape[0]=", x_centerline.shape[0], "x_centerline[0]=",x_centerline[0],"x_centerline[-1]=", x_centerline[-1])
+
+    #Extension of the curve to smooth to avoid edge effects
+    x_centerline_extended = x_centerline
+    for i in range(int(window_length_x/2.0)+1) :
+        x_centerline_extended = numpy.append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i])
+        x_centerline_extended = numpy.insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i])
+
+    y_centerline_extended = y_centerline
+    for i in range(int(window_length_y/2.0)+1) :
+        y_centerline_extended = numpy.append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i])
+        y_centerline_extended = numpy.insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
+
+    #Smoothing of the extended curve
+    type_window_x='hanning'
+    x_centerline_temp = msct_smooth.smoothing_window(x_centerline_extended, window_len=window_length_x/px, window=type_window_x)
+
+    type_window_y='hanning'
+    y_centerline_temp = msct_smooth.smoothing_window(y_centerline_extended, window_len=window_length_y/py, window=type_window_y)
+
+    #Selection of the part of interest of the curve
+    x_centerline_final = x_centerline_temp[int(window_length_x/2.0) : int(window_length_x/2.0) + x_centerline.shape[0]]
+    #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
+    y_centerline_final = y_centerline_temp[int(window_length_y/2.0) : int(window_length_y/2.0) + y_centerline.shape[0]]
+
+    #convert to list final result
+    x_centerline_final = x_centerline_final.tolist()
+    y_centerline_final = y_centerline_final.tolist()
+
     if verbose==2:
         plt.figure(1)
-        plt.subplot(121)
+        #ax = plt.subplot(211)
+        plt.subplot(211)
         plt.plot(z_centerline, x_centerline, 'ro')
-
-     # 2D smoothing
-    x_centerline = numpy.asarray(x_centerline)
-    z_centerline = numpy.asarray(z_centerline)
-
-    type_window='hanning'
-    x_centerline = msct_smooth.smoothing_window(x_centerline, window_len=100, window=type_window)
-
-    x_centerline = x_centerline.tolist()
+        plt.plot(z_centerline, x_centerline_final)
+        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window_x, window_length_x))
+        #ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('x')
 
 
-    if verbose==2:
-        plt.subplot(122)
-        plt.plot(z_centerline, x_centerline, 'ro')
-        plt.title("Window_length=100")
+        #ay = plt.subplot(212)
+        plt.subplot(212)
+        plt.plot(z_centerline, y_centerline, 'ro')
+        plt.plot(z_centerline, y_centerline_final)
+        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window_y, window_length_y))
+        #ay.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('y')
         plt.show()
 
+    x_centerline = x_centerline_final
+    y_centerline = y_centerline_final
+        #end of 2D smoothing
 
     # clear variable
     del data
