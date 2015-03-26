@@ -1,4 +1,4 @@
-# White matter atlas - generated on 2014-12-09 by Julien Cohen-Adad
+# White matter atlas - generated on 2014-12-09
 # ID, name, file
 0, left fasciculus gracilis, WMtract__00.nii.gz
 1, left fasciculus cuneatus, WMtract__01.nii.gz

@@ -201,7 +201,6 @@ class ProcessLabels(object):
 
         return result
 
-
     def create_label(self):
         """
         This function create an image with labels listed by the user.
