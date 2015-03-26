@@ -273,6 +273,35 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3,point_number=3000):
   
     return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
 
+#=======================================================================================================================
+# 3D B-Spline function using ITK
+#=======================================================================================================================
+def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
+
+    print '\nFitting centerline using B-spline approximation (using ITK)...'
+    import sct_utils as sct
+    status, output = sct.runProcess("isct_bsplineapproximator -i "+fname_centerline+" -o tmp.centerline.txt -l "+str(numberOfLevels))
+    if (status != 0):
+        print "WARNING: \n"+output
+
+    f = open('tmp.centerline.txt', 'r')
+    x_fit = []
+    y_fit = []
+    z_fit = []
+    x_deriv = []
+    y_deriv = []
+    z_deriv = []
+    for line in f:
+        center = line.split(' ')
+        x_fit.append(float(center[0]))
+        y_fit.append(float(center[1]))
+        z_fit.append(float(center[2]))
+        x_deriv.append(float(center[3]))
+        y_deriv.append(float(center[4]))
+        z_deriv.append(float(center[5]))
+
+    return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
+
 
 def getSize(x, y, z, file_name=None):
     # get pixdim
