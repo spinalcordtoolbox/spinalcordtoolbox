@@ -60,7 +60,7 @@ def main():
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     fname_segmentation = ''
     name_process = ''
-    processes = ['extract_centerline', 'compute_csa']
+    processes = ['extract_centerline', 'compute_csa', 'length']
     method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
     name_method = param.name_method
     volume_output = param.volume_output
@@ -149,6 +149,10 @@ def main():
         if (volume_output):
             sct.printv('fslview '+name_output+' &', param.verbose, 'code')
 
+    if name_process == 'length':
+        result_length = compute_length(fname_segmentation,remove_temp_files)
+        print '\nLength of the Spinal Cord = '+str(round(result_length,2))+' mm'
+
     # display elapsed time
     elapsed_time = time.time() - start_time
     print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
@@ -157,6 +161,64 @@ def main():
 
     # End of Main
 
+# compute the length of the spinal cord
+# ==========================================================================================
+def compute_length(fname_segmentation, remove_temp_files):
+    # Extract path, file and extension
+    fname_segmentation = os.path.abspath(fname_segmentation)
+    path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
+
+    # create temporary folder
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
+
+    # copy files into tmp folder
+    sct.run('cp '+fname_segmentation+' '+path_tmp)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
+    # Change orientation of the input segmentation into RPI
+    print '\nOrient segmentation image to RPI orientation...'
+    fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
+    set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
+
+    # Extract orientation of the input segmentation
+    orientation = get_orientation(file_data+ext_data)
+    print '\nOrientation of segmentation image: ' + orientation
+
+    # Get size of data
+    print '\nGet dimensions data...'
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
+
+    print '\nOpen segmentation volume...'
+    file = nibabel.load(fname_segmentation_orient)
+    data = file.get_data()
+    hdr = file.get_header()
+
+    # Extract min and max index in Z direction
+    X, Y, Z = (data>0).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+    x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
+    y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
+    z_centerline = [iz for iz in range(min_z_index, max_z_index+1)]
+    # Extract segmentation points and average per slice
+    for iz in range(min_z_index, max_z_index+1):
+        x_seg, y_seg = (data[:,:,iz]>0).nonzero()
+        x_centerline[iz-min_z_index] = np.mean(x_seg)
+        y_centerline[iz-min_z_index] = np.mean(y_seg)
+    for k in range(len(X)):
+        data[X[k],Y[k],Z[k]] = 0
+    # Fit the centerline points with splines and return the new fitted coordinates
+    x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+
+    result_length = 0.0
+    from math import sqrt
+    for i in range(len(x_centerline_fit)-1):
+        result_length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
+
+    return result_length
 
 # extract_centerline
 # ==========================================================================================
