@@ -1,7 +1,7 @@
 %  Save NIFTI dataset. Support both *.nii and *.hdr/*.img file extension.
 %  If file extension is not provided, *.hdr/*.img will be used as default.
 %  
-%  Usage: save_nii(nii, filename, [old_RGB])
+%  Usage: save_nii(nii, filename, [old_nii_fname])
 %  
 %  nii.hdr - struct with NIFTI header fields (from load_nii.m or make_nii.m)
 %
@@ -48,14 +48,15 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_RGB)
+function save_nii(nii, fileprefix, old_nii_fname)
    
-   if ~exist('nii','var') | isempty(nii) | ~isfield(nii,'hdr') | ...
-	~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
+   if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
+	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
 
       error('Usage: save_nii(nii, filename, [old_RGB])');
    end
-
+   
+   
    if isfield(nii,'untouch') & nii.untouch == 1
       error('Usage: please use ''save_untouch_nii.m'' for the untouched structure.');
    end
@@ -63,6 +64,18 @@ function save_nii(nii, fileprefix, old_RGB)
    if ~exist('old_RGB','var') | isempty(old_RGB)
       old_RGB = 0;
    end
+   
+   if ~isstruct(nii)
+       if exist('old_nii_fname','var')
+           oldnii=load_nii(old_nii_fname);
+           oldnii.img=nii;
+           nii=oldnii;
+       else
+           error('Usage: save_nii(nii, filename, old_nii_fname)')
+       end
+   end
+   
+   nii.hdr.dime.dim(1:length(size(nii.img))+1)=[length(size(nii.img)) size(nii.img)];
 
    v = version;
 
