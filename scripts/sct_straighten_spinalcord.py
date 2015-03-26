@@ -27,18 +27,17 @@ import time
 import commands
 import sys
 import sct_utils as sct
-from sct_utils import fsloutput
-from sct_nurbs import NURBS
+# from sct_utils import fsloutput
+# from sct_nurbs import NURBS
 import nibabel
 import numpy
-from scipy import interpolate # TODO: check if used
+# from scipy import interpolate # TODO: check if used
 from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 import msct_smooth
-import matplotlib.pyplot as plt
 from sct_orientation import get_orientation, set_orientation
-from scipy.interpolate import interp1d
+# from scipy.interpolate import interp1d
 
 
 ## Create a structure to pass important user parameters to the main function
@@ -120,12 +119,12 @@ def main():
                 remove_temp_files = int(arg)
             elif opt in ('-w'):
                 interpolation_warp = str(arg)
-            elif opt in ('-f'):
-                centerline_fitting = str(arg)
+            # elif opt in ('-f'):
+            #     centerline_fitting = str(arg)
             elif opt in ('-v'):
                 verbose = int(arg)
-            elif opt in ('-n'):
-                nurbs_ctl_points = int(round(int(arg)))
+            # elif opt in ('-n'):
+            #     nurbs_ctl_points = int(round(int(arg)))
 
     # display usage if a mandatory argument is not provided
     if fname_anat == '' or fname_centerline == '':
@@ -142,22 +141,22 @@ def main():
     sct.check_file_exist(fname_anat)
     sct.check_file_exist(fname_centerline)
 
-    # check interp method
-    if interpolation_warp == 'spline':
-        interpolation_warp_ants = '--use-BSpline'
-    elif interpolation_warp == 'trilinear':
-        interpolation_warp_ants = ''
-    elif interpolation_warp == 'nearestneighbor':
-        interpolation_warp_ants = '--use-NN'
-    else:
-        print '\WARNING: Interpolation method not recognized. Using: '+param.interpolation_warp
-        interpolation_warp_ants = '--use-BSpline'
+    # # check interp method
+    # if interpolation_warp == 'spline':
+    #     interpolation_warp_ants = '--use-BSpline'
+    # elif interpolation_warp == 'trilinear':
+    #     interpolation_warp_ants = ''
+    # elif interpolation_warp == 'nearestneighbor':
+    #     interpolation_warp_ants = '--use-NN'
+    # else:
+    #     print '\WARNING: Interpolation method not recognized. Using: '+param.interpolation_warp
+    #     interpolation_warp_ants = '--use-BSpline'
 
     # Display arguments
     print '\nCheck input arguments...'
     print '  Input volume ...................... '+fname_anat
     print '  Centerline ........................ '+fname_centerline
-    print '  Centerline fitting option ......... '+centerline_fitting
+    # print '  Centerline fitting option ......... '+centerline_fitting
     print '  Final interpolation ............... '+interpolation_warp
     print '  Verbose ........................... '+str(verbose)
     print ''
@@ -274,6 +273,8 @@ def main():
     y_centerline_final = y_centerline_final.tolist()
 
     if verbose==2:
+        import matplotlib.pyplot as plt
+
         plt.figure(1)
         #ax = plt.subplot(211)
         plt.subplot(211)
@@ -757,8 +758,7 @@ def usage():
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
         '  -p <padding>      amount of padding for generating labels. Default='+str(param_default.padding)+'\n' \
-        '  -f {smooth,splines,polynomial}  centerline regularization method. Default='+str(param_default.fitting_method)+'\n' \
-        '  -w {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
+        '  -x {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
@@ -777,6 +777,3 @@ if __name__ == "__main__":
     param_default = Param()
     # call main function
     main()
-
-#os.chdir("/home/tamag/data/template/errsm_35/t2")
-#sct_straighten_spinalcord("data_RPI_centerline.nii.gz", "data_RPI_centerline_smoothed.nii.gz", 10)
