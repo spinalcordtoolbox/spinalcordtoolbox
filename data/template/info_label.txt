@@ -1,4 +1,4 @@
-# Template labels
+# Template labels - generated on 2014-08-11
 # ID, name, file
 0, spinal cord, MNI-Poly-AMU_cord.nii.gz
 1, cerebrospinal fluid, MNI-Poly-AMU_CSF.nii.gz
