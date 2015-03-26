@@ -103,7 +103,7 @@ def main():
     
     X,Y,Z = (data_c>0).nonzero()
     
-    min_z_index, max_z_index = min(Z), max(Z)
+    #min_z_index, max_z_index = min(Z), max(Z)
     
     
     z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
