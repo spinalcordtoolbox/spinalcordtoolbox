@@ -494,20 +494,19 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         sct.printv('\nCreate volume of CSA values...', verbose)
         # get orientation of the input data
         orientation = get_orientation('segmentation.nii')
+        data_seg = data_seg.astype(np.float32, copy=False)
         # loop across slices
-        for iz in range(min_z_index,max_z_index+1):
+        for iz in range(min_z_index, max_z_index+1):
             # retrieve seg pixels
             x_seg, y_seg = (data_seg[:, :, iz] > 0).nonzero()
             seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
             # loop across pixels in segmentation
-            for i in seg :
+            for i in seg:
                 # replace value with csa value
                 data_seg[i[0], i[1], iz] = csa[iz-min_z_index]
         # create header
-        hdr_seg.set_data_dtype('uint8')  # set imagetype to uint8
+        hdr_seg.set_data_dtype('float32')  # set imagetype to uint8
         # save volume
-        # print '\nWrite NIFTI volumes...'
-        data_seg = data_seg.astype(np.float32, copy =False)
         img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
         nibabel.save(img, 'csa_RPI.nii')
         # Change orientation of the output centerline into input orientation
@@ -522,7 +521,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if volume_output:
         sct.generate_output_file(fname_csa_volume, path_data+name_output)  # extension already included in name_output
 
-    # average csa across vertebral levels or slices if asked
+    # average csa across vertebral levels or slices if asked (flag -z or -v)
     if slices or vert_levels:
 
         if vert_levels and not path_to_template:
