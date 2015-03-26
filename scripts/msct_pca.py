@@ -133,7 +133,7 @@ class PCA:
 
     #
     # Show all the mode
-    def show(self, split=0):
+    def show_all_modes(self, split=0):
         from math import sqrt
         if split:
             n = int(sqrt(2*self.N))
@@ -154,8 +154,101 @@ class PCA:
             else:
                 imgplot = a.imshow(eigen_V.reshape(n, n).astype(np.float))
             imgplot.set_interpolation('nearest')
-            #imgplot.set_cmap('gray')
+            imgplot.set_cmap('gray')
+        plt.show()
 
+        #
+    # Show one mode
+    def show_mode(self, mode=0, split=0):
+        from math import sqrt
+        if split:
+            n = int(sqrt(2*self.N))
+        else:
+            n = int(sqrt(self.N))
+        fig = plt.figure()
+        eigen_V = self.W.T[mode, :]
+        eigen_value = self.eig_pairs[mode][0]
+        mean_vect = self.mean_image.reshape(len(self.mean_image),)
+
+
+        minus_3vect = mean_vect -  3 * eigen_value *eigen_V
+
+
+        print '\n\n-------> minus_3vect min :', min(minus_3vect), ' max :', max(minus_3vect)
+        print 'mean  min :', min(mean_vect), ' max : ', max(mean_vect)
+        print 'eig  min :', min(eigen_V), ' max : ', max(eigen_V)
+
+
+        print 'eig Val', self.eig_pairs[mode][0]
+
+        plot_minus3 = fig.add_subplot(1, 5, 1)
+        plot_minus3.set_title('Mean - 3 lambda * eigen vector')
+        if split:
+            #TODO: check if casting complex values to float isn't a too big loss of information ...
+            im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n/2, n).astype(np.float))
+        else:
+            im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n, n).astype(np.float))
+        im_minus3.set_interpolation('nearest')
+        im_minus3.set_cmap('gray')
+
+        minus_3vect /= (max(minus_3vect) - min(minus_3vect))
+
+
+        minus_vect = mean_vect - eigen_value *eigen_V
+
+        minus_vect /= (max(minus_vect) - min(minus_vect))
+        '''
+        print '\n\n-------> minus_vect', minus_vect
+        print 'mean ', mean_vect
+        print 'eig ', eigen_V
+        '''
+
+        plot_minus = fig.add_subplot(1, 5, 2)
+        plot_minus.set_title('Mean - 1 lambda * eigen vector')
+        if split:
+            #TODO: check if casting complex values to float isn't a too big loss of information ...
+            im_minus = plot_minus.imshow(minus_vect.reshape(n/2, n).astype(np.float))
+        else:
+            im_minus = plot_minus.imshow(minus_vect.reshape(n, n).astype(np.float))
+        im_minus.set_interpolation('nearest')
+        im_minus.set_cmap('gray')
+
+        plot_mean = fig.add_subplot(1, 5, 3)
+        plot_mean.set_title('Mean')
+        if split:
+            #TODO: check if casting complex values to float isn't a too big loss of information ...
+            im_mean = plot_mean.imshow(mean_vect.reshape(n/2, n).astype(np.float))
+        else:
+            im_mean = plot_mean.imshow(mean_vect.reshape(n, n).astype(np.float))
+        im_mean.set_interpolation('nearest')
+        im_mean.set_cmap('gray')
+
+        plus_vect = mean_vect + eigen_value*eigen_V
+        plot_plus = fig.add_subplot(1, 5, 4)
+        plot_plus.set_title('Mean + 1 lambda * eigen vector')
+        if split:
+            #TODO: check if casting complex values to float isn't a too big loss of information ...
+            im_plus = plot_plus.imshow(plus_vect.reshape(n/2, n).astype(np.float))
+        else:
+            im_plus = plot_plus.imshow(plus_vect.reshape(n, n).astype(np.float))
+        im_plus.set_interpolation('nearest')
+        im_plus.set_cmap('gray')
+
+        plus_3vect = mean_vect +  3 * eigen_value *eigen_V
+
+        plot_plus3 = fig.add_subplot(1, 5, 5)
+        plot_plus3.set_title('Mean + 3 lambda * eigen vector')
+        if split:
+            #TODO: check if casting complex values to float isn't a too big loss of information ...
+            im_plus3 = plot_plus3.imshow(plus_3vect.reshape(n/2, n).astype(np.float))
+        else:
+            im_plus3 = plot_plus3.imshow(plus_3vect.reshape(n, n).astype(np.float))
+        im_plus3.set_interpolation('nearest')
+        im_plus3.set_cmap('gray')
+
+
+
+        plt.suptitle('Mode ' + str(mode))
         plt.show()
 
 
@@ -167,40 +260,42 @@ class PCA:
                   "Try to increase k, which is curently {}".format(nb_mode, self.k)
             exit(2)
         assert self.omega.shape == (self.kept, self.J), "The matrix is {}".format(self.omega.shape)
-        for i in range(0, nb_mode):
-            # Plot the dataset
-            fig = plt.figure()
+        for i in range(nb_mode):
+            for j in range(i,nb_mode):
+                # Plot the dataset
+                if j != i:
+                    fig = plt.figure()
 
-            graph = fig.add_subplot(1,1,1)
-            graph.plot(self.omega[i, 0:self.J], self.omega[i+1, 0:self.J],
-                     'o', markersize=7, color='blue', alpha=0.5, label='dataset')
+                    graph = fig.add_subplot(1,1,1)
+                    graph.plot(self.omega[i, 0:self.J], self.omega[j, 0:self.J],
+                             'o', markersize=7, color='blue', alpha=0.5, label='dataset')
 
-            if to_highlight is not None:
-                graph.plot(self.omega[i, to_highlight[1]], self.omega[i+1, to_highlight[1]],
-                     'o', markersize=7, color='black', alpha=0.5, label='chosen dataset')
+                    if to_highlight is not None:
+                        graph.plot(self.omega[i, to_highlight[1]], self.omega[j, to_highlight[1]],
+                             'o', markersize=7, color='black', alpha=0.5, label='chosen dataset')
 
-            # Plot the projected image's coord
-            if target_coord is not None:
-                # target coord is a numpy array of either dimension of all the slices or just one slice
-                if len(target_coord.shape) == 2:
-                    graph.plot(target_coord[i], target_coord[i+1],
-                             '^', markersize=7, color='red', alpha=0.5, label='target')
+                    # Plot the projected image's coord
+                    if target_coord is not None:
+                        # target coord is a numpy array of either dimension of all the slices or just one slice
+                        if len(target_coord.shape) == 2:
+                            graph.plot(target_coord[i], target_coord[j],
+                                     '^', markersize=7, color='red', alpha=0.5, label='target')
 
-                elif len(target_coord.shape) == 3:
-                    for j_slice,slice_coord in enumerate(target_coord):
-                        graph.plot(slice_coord[i], slice_coord[i+1],
-                                 '^', markersize=7, color='red', alpha=0.5, label='target')
+                        elif len(target_coord.shape) == 3:
+                            for j_slice,slice_coord in enumerate(target_coord):
+                                graph.plot(slice_coord[i], slice_coord[j],
+                                         '^', markersize=7, color='red', alpha=0.5, label='target')
 
-                        if to_highlight is not None and j_slice == to_highlight[0]:
-                            graph.plot(slice_coord[i], slice_coord[i+1],
-                                     '^', markersize=7, color='black', alpha=0.5, label='this target')
+                                if to_highlight is not None and j_slice == to_highlight[0]:
+                                    graph.plot(slice_coord[i], slice_coord[j],
+                                             '^', markersize=7, color='black', alpha=0.5, label='this target')
 
-                else:
-                    sct.printv('Cannot plot projected target.', 1, 'error')
+                        else:
+                            sct.printv('Cannot plot projected target.', 1, 'error')
 
-            plt.title('Atlas and target slices in the PCA space. (' + str(self.kept) + ' modes in total)')
-            plt.xlabel('Mode ' + str(i))
-            plt.ylabel('Mode ' + str(i+1))
+                    plt.title('Atlas and target slices in the PCA space. (' + str(self.kept) + ' modes in total)')
+                    plt.xlabel('Mode ' + str(i))
+                    plt.ylabel('Mode ' + str(j))
         plt.show()
 
 
