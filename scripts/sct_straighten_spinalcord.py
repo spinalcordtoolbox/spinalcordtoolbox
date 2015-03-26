@@ -81,10 +81,8 @@ def main():
     smooth_sigma = param.smooth_sigma
     smooth_padding = param.smooth_padding
     smooth_sigma_low = param.smooth_sigma_low
-    window_length_x = 80
-    window_length_y = 80
-    type_window_x = 'hanning'
-    type_window_y = 'hanning'
+    window_length = 80
+    type_window = 'hanning'
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -236,44 +234,40 @@ def main():
     x_centerline = [x - smooth_padding for x in x_centerline]
     y_centerline = [y - smooth_padding for y in y_centerline]
 
-    print px, py, pz
         # 2D smoothing
-    #window_length_x = min(80,(2*nz_nonz-2)*px)  #length in mm
-    #window_length_y = min(80,(2*nz_nonz-2)*py)  #length in mm
 
-    #The number of points of the curve must be superior to int(window_length_x/2.0)+1
-    if window_length_x >= (2*nz_nonz-2)*px :
-        window_length_x = (2*nz_nonz-2)*px
-        print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length_x)
-    if window_length_y >= (2*nz_nonz-2)*py :
-        window_length_y = (2*nz_nonz-2)*py
-        print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length_y)
+    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
+    if window_length >= int(2*nz_nonz * pz) :
+        window_length = int(2*nz_nonz * pz)
+        print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length)
+    if window_length >= int(2*nz_nonz * pz) :
+        window_length = int(2*nz_nonz * pz)
+        print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length)
 
 
-    #change x_centerline to array
+    #change to array
     x_centerline = numpy.asarray(x_centerline)
     y_centerline = numpy.asarray(y_centerline)
-    #print("x_centerline_.shape[0]=", x_centerline.shape[0], "x_centerline[0]=",x_centerline[0],"x_centerline[-1]=", x_centerline[-1])
 
-    #Extension of the curve to smooth to avoid edge effects
+    #Extension of the curve to smooth, to avoid edge effects
     x_centerline_extended = x_centerline
-    for i in range(int(window_length_x/2.0)+1) :
+    for i in range(int(window_length/(2.0*pz))+1) :
         x_centerline_extended = numpy.append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i])
         x_centerline_extended = numpy.insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i])
 
     y_centerline_extended = y_centerline
-    for i in range(int(window_length_y/2.0)+1) :
+    for i in range(int(window_length/(2.0*pz))+1) :
         y_centerline_extended = numpy.append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i])
         y_centerline_extended = numpy.insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
 
     #Smoothing of the extended curve
-    x_centerline_temp = msct_smooth.smoothing_window(x_centerline_extended, window_len=window_length_x/pz, window=type_window_x)
-    y_centerline_temp = msct_smooth.smoothing_window(y_centerline_extended, window_len=window_length_y/pz, window=type_window_y)
+    x_centerline_temp = msct_smooth.smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
+    y_centerline_temp = msct_smooth.smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
 
-    #Selection of the part of interest of the curve
-    x_centerline_final = x_centerline_temp[int(window_length_x/2.0) : int(window_length_x/2.0) + x_centerline.shape[0]]
+    #Selection of the part of interest of the extended curve
+    x_centerline_final = x_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + x_centerline.shape[0]]
     #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
-    y_centerline_final = y_centerline_temp[int(window_length_y/2.0) : int(window_length_y/2.0) + y_centerline.shape[0]]
+    y_centerline_final = y_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + y_centerline.shape[0]]
 
     #convert to list final result
     x_centerline_final = x_centerline_final.tolist()
@@ -285,7 +279,7 @@ def main():
         plt.subplot(211)
         plt.plot(z_centerline, x_centerline, 'ro')
         plt.plot(z_centerline, x_centerline_final)
-        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window_x, window_length_x))
+        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
         #ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
@@ -295,7 +289,7 @@ def main():
         plt.subplot(212)
         plt.plot(z_centerline, y_centerline, 'ro')
         plt.plot(z_centerline, y_centerline_final)
-        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window_y, window_length_y))
+        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
         #ay.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('y')
