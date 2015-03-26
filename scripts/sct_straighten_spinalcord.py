@@ -49,14 +49,14 @@ class Param:
         self.gapxy = 20  # size of cross in x and y direction for the landmarks
         self.gapz = 15  # gap between landmarks along z voxels
         self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        self.fitting_method = 'smooth' # smooth | splines | polynomial
-        self.interpolation_warp = 'spline'
+        # self.fitting_method = 'smooth' # smooth | splines | polynomial
+        # self.interpolation_warp = 'spline'
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
-        self.nurbs_ctl_points = 0
-        self.smooth_sigma = 15
-        self.smooth_padding = 0
-        self.smooth_sigma_low = 6
+        # self.nurbs_ctl_points = 0
+        # self.smooth_sigma = 15
+        # self.smooth_padding = 0
+        # self.smooth_sigma_low = 6
 
 
 
@@ -78,7 +78,7 @@ def main():
     interpolation_warp = param.interpolation_warp
     nurbs_ctl_points = param.nurbs_ctl_points
     smooth_sigma = param.smooth_sigma
-    smooth_padding = param.smooth_padding
+    # smooth_padding = param.smooth_padding
     smooth_sigma_low = param.smooth_sigma_low
     window_length = 80
     type_window = 'hanning'
@@ -195,28 +195,24 @@ def main():
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
     # smoothing the centerline
-    fname_centerline_pad = 'pad_' + fname_centerline_orient
-    if centerline_fitting == 'smooth':
-        pad = str(smooth_padding)
-        # pad in X-Y plane to avoid cropping the smoothed centerline
-        #file_centerline_pad = file_centerline + '_pad'
-        #sct.run('sct_c3d ' + file_centerline + ext_centerline + ' -pad ' + smooth_padding+ 'x' + smooth_padding + 'x0vox '+ smooth_padding + 'x' + smooth_padding + 'x0vox 0 -o ' + file_centerline_pad + ext_centerline)
-        #sct.run('fslmaths ' + file_centerline_pad + ext_centerline + ' -s ' + str(smooth_sigma) + ' ' + file_centerline_pad + ext_centerline)
-        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
+    # fname_centerline_pad = 'pad_' + fname_centerline_orient
+    # if centerline_fitting == 'smooth':
+    #     pad = str(smooth_padding)
+    #     sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
         #sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma) + ' ' + fname_centerline_pad)
-    else:
-        pad = str(smooth_padding)
-        sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
-        #sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
+    # else:
+    #     pad = str(smooth_padding)
+    #     sct.run('sct_c3d ' + fname_centerline_orient + ' -pad ' + pad+ 'x' + pad + 'x0vox ' + pad + 'x' + pad + 'x0vox 0 -o ' + fname_centerline_pad)
+    #     #sct.run('fslmaths ' + fname_centerline_pad + ' -s ' + str(smooth_sigma_low) + ' ' + fname_centerline_pad)
 
     # open centerline
     print '\nOpen centerline volume...'
-    file = nibabel.load(fname_centerline_pad)
+    file = nibabel.load(fname_centerline)
     data = file.get_data()
 
     # loop across z and associate x,y coordinate with the point having maximum intensity
     # N.B. len(z_centerline) = nz_nonz can be smaller than nz in case the centerline is smaller than the input volume
-    z_centerline = [iz for iz in range(0, nz, 1) if data[:,:,iz].any() ]
+    z_centerline = [iz for iz in range(0, nz, 1) if data[:, :, iz].any()]
     nz_nonz = len(z_centerline)
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
@@ -227,7 +223,7 @@ def main():
     # get center of mass of the centerline/segmentation
     print '\nGet center of mass of the centerline/segmentation...'
     for iz in range(0, nz_nonz, 1):
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(numpy.array(data[:,:,z_centerline[iz]]))
+        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(numpy.array(data[:, :, z_centerline[iz]]))
 
     # remove padding
     x_centerline = [x - smooth_padding for x in x_centerline]
