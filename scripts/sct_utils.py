@@ -289,10 +289,6 @@ def get_dimension(fname):
 def generate_output_file(fname_in, fname_out, verbose=1):
     # import stuff
     import shutil  # for moving files
-    # get absolute fname
-    fname_in = os.path.abspath(fname_in)
-    fname_out = os.path.abspath(fname_out)
-    # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -301,26 +297,13 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
+        printv('  WARNING: fname_in and fname_out are the same. Do nothing.', 1, 'warning')
         print '  File created: '+path_out+file_out+ext_out
         return path_out+file_out+ext_out
-    # if fname_out already exists in nii or nii.gz
-    if path_in != os.path.abspath(path_out):
-        # first, check if path_in is different from path_out
-        if os.path.isfile(path_out+file_out+'.nii'):
-            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii')
-#            os.system('rm '+path_out+file_out+'.nii')  # 
-            # use remove instead of rm because: https://github.com/neuropoly/spinalcordtoolbox/issues/259
-        if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii.gz')
-#            os.system('rm '+path_out+file_out+'.nii.gz')
-    # if path_in the same as path_out, only delete fname_out with specific ext_out extension
-    else:
-        if os.path.isfile(path_out+file_out+ext_out):
-            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+ext_out)
-            #os.system('rm '+path_out+file_out+ext_out)
+    # if fname_out already exists in nii or nii.gz format
+    if os.path.isfile(path_out+file_out+ext_out):
+        printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
+        os.remove(path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)

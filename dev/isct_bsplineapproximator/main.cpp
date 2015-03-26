@@ -136,7 +136,7 @@ int main(int argc, const char * argv[])
         
         OrientImage<ImageType> orientationFilter;
         orientationFilter.setInputImage(image_centerline);
-        orientationFilter.orientation(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_AIL);
+        orientationFilter.orientation(itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RPI);
         image_centerline = orientationFilter.getOutputImage();
         
         ImageType::IndexType ind;
@@ -144,7 +144,7 @@ int main(int argc, const char * argv[])
         typedef itk::ImageRegionConstIterator<ImageType> ImageIterator;
         ImageIterator it( image_centerline, image_centerline->GetRequestedRegion() );
         it.GoToBegin();
-        int dim = 1;
+        int dim = 2;
         while(!it.IsAtEnd())
         {
             if (it.Get()!=0)
@@ -153,13 +153,11 @@ int main(int argc, const char * argv[])
                 
                 if (worldCoordinate) {
                     image_centerline->TransformIndexToPhysicalPoint(ind, point);
-                    dim = 2;
                 }
                 else {
                     point[0] = ind[0];
                     point[1] = ind[1];
                     point[2] = ind[2];
-                    dim = 1;
                 }
                 bool added = false;
                 if (centerline.size() == 0) {
@@ -181,7 +179,7 @@ int main(int argc, const char * argv[])
         }
         
         // check if each slice contains more than one voxel
-        double slice = centerline[0][dim]-1.0;
+        double slice = -1000000.0;
         CVector3 temp;
         int countVox = 0;
         vector<CVector3> centerline_temp;
@@ -192,17 +190,14 @@ int main(int argc, const char * argv[])
                 countVox++;
             }
             else if (centerline[k][dim] > slice) {
-                if (countVox != 0)
+                if (k != 0)
                     centerline_temp.push_back(temp/countVox);
-                countVox = 0;
-                temp = CVector3();
+                countVox = 1;
+                temp = centerline[k];
                 slice = centerline[k][dim];
             }
-            else {
-                cerr << "ERROR in centerline approximation. Please contact administrator." << endl;
-                cout << centerline[k] << endl;
-            }
         }
+        centerline_temp.push_back(temp/countVox);
         centerline = centerline_temp;
     }
     else if (pos_txt != string::npos)
@@ -254,13 +249,13 @@ int main(int argc, const char * argv[])
     {
         value = i/(numberOfPointsSpline-1);
         centerline.push_back(bspline.EvaluateBSpline(value));
-        centerlineDerivative.push_back(bspline.EvaluateGradient(value));
+        centerlineDerivative.push_back(bspline.EvaluateGradient(value).Normalize());
     }
-    
+
     
     if (numberOfSlices && !worldCoordinate && inputIsImage)
     {
-        int dim = 1;
+        int dim = 2;
         int numberOfSlices = image_centerline->GetLargestPossibleRegion().GetSize()[dim];
         
         int currentPoint = 0;
@@ -269,7 +264,7 @@ int main(int argc, const char * argv[])
         {
             CVector3 temp_centerline, temp_derivative;
             int numberOfPointInSlice = 0;
-            while (floor(centerline[currentPoint][dim]) == slice)
+            while (round(centerline[currentPoint][dim]) == slice)
             {
                 temp_centerline += centerline[currentPoint];
                 temp_derivative += centerlineDerivative[currentPoint];
