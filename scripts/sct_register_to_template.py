@@ -273,7 +273,7 @@ def main():
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview template2anat -b 0,4000 '+fname_data+' &', verbose, 'info')
+    sct.printv('fslview '+fname_data+' template2anat -b 0,4000 &', verbose, 'info')
     sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
 
 
