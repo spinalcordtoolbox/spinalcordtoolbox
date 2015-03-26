@@ -165,7 +165,7 @@ string StrPad(string original, size_t charCount, string prefix="")
 
 void help()
 {
-    cout << "sct_propseg - Version 1.0.2 (2014-11-26)" << endl;
+    cout << "sct_propseg - Version 1.1 (2015-03-24)" << endl;
     cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \nPart of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox> \nAuthor : Benjamin De Leener" << endl << endl;
     
     cout << "DESCRIPTION" << endl;
