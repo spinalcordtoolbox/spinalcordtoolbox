@@ -95,9 +95,11 @@ def main():
     sct.check_file_exist(fname_src)
     sct.check_file_exist(fname_dest)
     for i in range(len(fname_warp_list)):
+        # check if file exist
         sct.check_file_exist(fname_warp_list[i])
         # get absolute path
-        fname_warp_list[i] = os.path.abspath(fname_warp_list[i])
+        # fname_warp_list[i] = os.path.abspath(fname_warp_list[i])
+        # fname_warp_list[i] = os.path.abspath(fname_warp_list[i])
 
     # check if destination file is 3d
     sct.check_if_3d(fname_dest)
@@ -106,18 +108,20 @@ def main():
     fname_warp_list.reverse()
 
     # Extract path, file and extension
-    path_src, file_src, ext_src = sct.extract_fname(os.path.abspath(fname_src))
-    fname_dest = os.path.abspath(fname_dest)
+    # path_src, file_src, ext_src = sct.extract_fname(os.path.abspath(fname_src))
+    # fname_dest = os.path.abspath(fname_dest)
+    path_src, file_src, ext_src = sct.extract_fname(fname_src)
+    # fname_dest = os.path.abspath(fname_dest
 
     # Get output folder and file name
     if fname_src_reg == '':
         path_out = ''  # output in user's current directory
         file_out = file_src+'_reg'
         ext_out = ext_src
-        fname_src_reg = path_out+file_out+ext_out
+        fname_out = path_out+file_out+ext_out
     else:
-        path_out, file_out, ext_out = sct.extract_fname(fname_src_reg)
-    fname_out = os.path.abspath(path_out+file_out+ext_out)
+    #     path_out, file_out, ext_out = sct.extract_fname(fname_src_reg)
+        fname_out = fname_src_reg
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
@@ -165,13 +169,9 @@ def main():
         # come back to parent folder
         os.chdir('..')
 
-    # Generate output files
-    sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(fname_out, fname_out)
-
     # to view results
     print '\nDone! To view results, type:'
-    print 'fslview '+fname_dest+' '+fname_src_reg+' &'
+    print 'fslview '+fname_dest+' '+fname_out+' &'
     print
 
 
