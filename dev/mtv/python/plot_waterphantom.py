@@ -117,8 +117,8 @@ ax_t1 = fig1.add_subplot(222)
 # TR=20 ms
 ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20[:, 0], t1_noB1_mean_std_tr20[:, 1], label='T1 without B1 correction (TR=20ms)', color='b')
 ax_t1.errorbar(range(0, nz_tr20), t1_B1_mean_std_tr20[:, 0], t1_B1_mean_std_tr20[:, 1], label='T1 with B1 correction (TR=20ms)', color='g')
-ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20[:, 0], t1_noB1_mean_std_tr20[:, 1], label='T1 without B1 correction (TR=20ms)-matlab', color='b', lw=3.0)  # matlab
-ax_t1.errorbar(range(0, nz_tr20), t1_B1_mean_std_tr20[:, 0], t1_B1_mean_std_tr20[:, 1], label='T1 with B1 correction (TR=20ms)-matlab', color='g', lw=3.0)  # matlab
+ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20m[:, 0], t1_noB1_mean_std_tr20m[:, 1], label='T1 without B1 correction (TR=20ms)-matlab', color='b', lw=3.0)  # matlab
+ax_t1.errorbar(range(0, nz_tr20), t1_B1_mean_std_tr20m[:, 0], t1_B1_mean_std_tr20m[:, 1], label='T1 with B1 correction (TR=20ms)-matlab', color='g', lw=3.0)  # matlab
 
 # TR=10 ms
 ax_t1.errorbar(range(0, nz_tr10), t1_noB1_mean_std_tr10[:, 0], t1_noB1_mean_std_tr10[:, 1], label='T1 without B1 correction (TR=10ms)', color='b', ls='--')
