@@ -372,9 +372,9 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
 
     from sct_tools import progress3d
 
-    plt.ion()  # turns interactive mode on
-    plt.gca().set_xlabel(r'$I(\theta)/tan(\theta)$')
-    plt.gca().set_ylabel(r'$I(\theta)/sin(\theta)$')
+    # plt.ion()  # turns interactive mode on
+    # plt.gca().set_xlabel(r'$I(\theta)/tan(\theta)$')
+    # plt.gca().set_ylabel(r'$I(\theta)/sin(\theta)$')
     for k in range(1, nz):
         for j in range(1, ny):
             for i in range(1, nx):
@@ -384,7 +384,7 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
                 y = np.divide(spgr[i, j, k, :], np.sin(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
                 x = np.divide(spgr[i, j, k, :], np.tan(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
 
-                linear_regression = np.polyfit(x, y, 1, w=[0.7, 1, 1, 0.9])
+                linear_regression = np.polyfit(x, y, 1)
                 slope = linear_regression[0]
                 intercep = linear_regression[1]
 
@@ -397,10 +397,10 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
                 t1_map[i, j, k] = t1
                 PD_map[i, j, k] = intercep/(1 - math.exp(-tr/t1))
 
-                plt.plot(x, y)
-                plt.draw()
-                plt.grid()
-                plt.title('Voxel position = ('+str(i)+', '+str(j)+', '+str(k)+')')
+                # plt.plot(x, y)
+                # plt.draw()
+                # plt.grid()
+                # plt.title('Voxel position = ('+str(i)+', '+str(j)+', '+str(k)+')')
 
     return PD_map, t1_map, recorder_vox_out
 
