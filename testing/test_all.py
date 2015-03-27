@@ -9,11 +9,9 @@
 
 
 import os
-import shutil
 import getopt
 import sys
 import time
-from numpy import loadtxt
 import commands
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -252,6 +250,7 @@ def test_function(script_name):
             print_ok()
         else:
             print_fail()
+            print output
 
         # log file
         write_to_log_file(fname_log, output, 'w')
