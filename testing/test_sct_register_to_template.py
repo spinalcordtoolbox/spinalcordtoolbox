@@ -24,9 +24,8 @@ def test(path_data):
 
     cmd = 'sct_register_to_template -i ' + path_data + folder_data[0] + file_data[0] \
           + ' -l ' + path_data + folder_data[0] + file_data[1] \
-          + ' -m ' + path_data + folder_data[0] + file_data[2] \
+          + ' -s ' + path_data + folder_data[0] + file_data[2] \
           + ' -r 0' \
-          + ' -s superfast' \
           + ' -t ' + path_data + folder_data[1]
 
     '''
