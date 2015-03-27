@@ -623,6 +623,12 @@ def check_labels(labels_of_interest, nb_labels):
     # by default, all labels are selected
     list_label_id = range(0, nb_labels)
 
+    # if spinal cord was selected, include all white matter tracts + gray matter
+    if labels_of_interest == 'sc':
+        if nb_labels < 31:
+            sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord but your /atlas folder containing labels only contains '+nb_labels+' labels. You need all white matter tracts (WMtract_XX)')
+        list_label_id = range(0, 31)
+
     # only specific labels are selected
     if labels_of_interest != '':
         # Check if label chosen is in format : 0,1,2,..
