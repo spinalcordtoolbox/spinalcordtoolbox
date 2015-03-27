@@ -681,7 +681,8 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
             list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
 
         # Sort labels ID and remove redundant values
-        list_label_id = list(set(list_label_id.sort()))
+        list_label_id.sort()
+        list_label_id = list(set(list_label_id))
 
     return list_label_id, average_labels
 
