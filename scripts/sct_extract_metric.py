@@ -366,13 +366,13 @@ def read_label_file(path_info_label, file_info_label):
     for i in range(0, len(lines)-1):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
-        label_name.append(line[1])
+        label_name.append(line[1].strip())
         label_file.append(line[2][:-1].strip())
     # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code
     # lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
-    label_name.append(line[1])
+    label_name.append(line[1].strip())
     line[2]=line[2]+' '
     label_file.append(line[2].strip())
 
