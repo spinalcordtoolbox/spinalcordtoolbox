@@ -872,6 +872,13 @@ OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
+                        You can also select labels using 1:3 to get labels 1,2,3.
+                        Following shortcuts are also available:
+                        -l sc will extract the metric in the whole cord
+                        -l wm will extract the metric in the whole white matter
+                        -l gm will extract the metric in the gray matter
+                        BECAREFUL: to use these shortcuts, you must have warped the all white matter atlas
+                        to your metric beforehand (see sct_warp_template).
   -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
