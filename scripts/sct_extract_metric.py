@@ -188,7 +188,7 @@ def main():
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    label_id_user = check_labels(labels_of_interest, nb_labels_total)  # If 'labels_of_interest' is empty, then
+    label_id_user, average_all_labels = check_labels(labels_of_interest, nb_labels_total, average_all_labels, method)  # If 'labels_of_interest' is empty, then
     # 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
@@ -621,16 +621,49 @@ def check_method(method, fname_normalizing_label, normalization_method):
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
-def check_labels(labels_of_interest, nb_labels):
+def check_labels(labels_of_interest, nb_labels, average_labels, method):
 
     # by default, all labels are selected
     list_label_id = range(0, nb_labels)
 
-    # if spinal cord was selected, include all white matter tracts + gray matter
-    if labels_of_interest == 'sc':
-        if nb_labels < 31:
-            sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord but your /atlas folder containing labels only contains '+nb_labels+' labels. You need all white matter tracts (WMtract_XX)')
-        list_label_id = range(0, 31)
+    if labels_of_interest:
+        # if spinal cord was selected, need all 32 labels from folder atlas
+        if labels_of_interest == 'sc':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            if nb_labels < 31 and (method != 'ml' and method != 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 30 white matter tracts and the gray matter from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 30).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = range(0, 31)
+                average_labels = 1
+
+        elif labels_of_interest == 'gm':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the gray matter using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = [30]
+
+        elif labels_of_interest == 'wm':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the white matter using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = range(0, 30)
+                average_labels = 1
+
+        elif ':' in labels_of_interest:
+            
 
     # only specific labels are selected
     if labels_of_interest != '':
@@ -650,7 +683,7 @@ def check_labels(labels_of_interest, nb_labels):
                 print '\nERROR: "' + str(num) + '" is not a correct label. Enter valid number. Exit program.\n'
                 sys.exit(2)
 
-    return list_label_id
+    return list_label_id, average_labels
 
 
 #=======================================================================================================================
