@@ -101,7 +101,7 @@ if __name__ == "__main__":
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
                       mandatory=False)
     parser.add_option(name="-init",
-                      type_value="int",
+                      type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
                       mandatory=False)
     parser.add_option(name="-init-mask",

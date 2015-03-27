@@ -244,7 +244,7 @@ OPTIONAL ARGUMENTS
   -h               help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i dwi.nii.gz -t 5\n"""
+  """+os.path.basename(__file__)+""" -i dwi.nii.gz -s RPI\n"""
 
     # exit program
     sys.exit(2)
