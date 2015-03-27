@@ -627,6 +627,12 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
     list_label_id = range(0, nb_labels)
 
     if labels_of_interest:
+        # Check if label chosen is in the right format
+        for char in labels_of_interest:
+            if not char in '0123456789,:scwmg':
+                sct.printv('\nERROR: ' + labels_of_interest + ' is not the correct format to select labels.\n Exit program.\n', type='error')
+                usage()
+
         # if spinal cord was selected, need all 32 labels from folder atlas
         if labels_of_interest == 'sc':
             if nb_labels < 32 and (method == 'ml' or method == 'map'):
@@ -663,25 +669,19 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
                 average_labels = 1
 
         elif ':' in labels_of_interest:
-            
+            label_ids_range = [int(x) for x in labels_of_interest.split(':')]
+            if len(label_ids_range)>2:
+                sct.printv('\nERROR: label IDs selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n', type='error')
+                usage()
+            else:
+                label_ids_range.sort()
+                list_label_id = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
 
-    # only specific labels are selected
-    if labels_of_interest != '':
-        # Check if label chosen is in format : 0,1,2,..
-        for char in labels_of_interest:
-            if not char in '0123456789, ':
-                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
-                sys.exit(2)
+        else:
+            list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
 
-        # Remove redundant values of label chosen and convert in integer
-        list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
-        list_label_id.sort()
-
-        # Check if label chosen correspond to a label
-        for num in list_label_id:
-            if not num in range(0, nb_labels):
-                print '\nERROR: "' + str(num) + '" is not a correct label. Enter valid number. Exit program.\n'
-                sys.exit(2)
+        # Sort labels ID and remove redundant values
+        list_label_id = list(set(list_label_id.sort()))
 
     return list_label_id, average_labels
 
