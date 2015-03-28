@@ -12,13 +12,13 @@
 #########################################################################################
 
 
+#import re
 import sys
 import commands
 import getopt
 import os
 import time
 import sct_utils as sct
-from sct_extract_metric import read_label_file
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -35,12 +35,6 @@ class Param:
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
         self.file_info_label = 'info_label.txt'
-        self.label_name_template_t2 = 'T2-weighted template'
-        self.label_name_gray_matter = 'gray matter'
-        self.label_name_white_matter = 'white matter'
-        self.label_name_vertebral_labeling = 'vertebral labeling'
-        self.label_name_csf = 'cerebrospinal fluid'
-        self.label_name_cord = 'spinal cord'
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.verbose = 1  # verbose
@@ -59,12 +53,6 @@ def main():
     folder_atlas = param.folder_atlas
     folder_spinal_levels = param.folder_spinal_levels
     file_info_label = param.file_info_label
-    label_name_template_t2 = param.label_name_template_t2
-    label_name_gray_matter = param.label_name_gray_matter
-    label_name_white_matter = param.label_name_white_matter
-    label_name_vertebral_labeling = param.label_name_vertebral_labeling
-    label_name_csf = param.label_name_csf
-    label_name_cord = param.label_name_cord
     warp_atlas = param.warp_atlas
     warp_spinal_levels = param.warp_spinal_levels
     verbose = param.verbose
@@ -137,59 +125,44 @@ def main():
 
     # Warp template objects
     sct.printv('\nWarp template objects...', verbose)
-
-    # create folder template
     sct.run('mkdir '+folder_out+folder_template, verbose)
-
-    # read file info labels
-    template_label_ids, template_label_names, template_label_file = read_label_file(path_template+folder_template, param.file_info_label)
-
-    # warp labels according to their characteristics
-    ind_t2 = template_label_names.index(label_name_template_t2)
-    ind_gm = template_label_names.index(label_name_gray_matter)
-    ind_wm = template_label_names.index(label_name_white_matter)
-    ind_vertebral_levels = template_label_names.index(label_name_vertebral_labeling)
-    ind_csf = template_label_names.index(label_name_csf)
-    ind_cord = template_label_names.index(label_name_cord)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_t2]+' -o '+folder_out+folder_template+template_label_file[ind_t2]+' -d '+fname_src+' -w '+fname_transfo+' -x spline', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_gm]+' -o '+folder_out+folder_template+template_label_file[ind_gm]+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_wm]+' -o '+folder_out+folder_template+template_label_file[ind_wm]+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_vertebral_levels]+' -o '+folder_out+folder_template+template_label_file[ind_vertebral_levels]+' -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_csf]+' -o '+folder_out+folder_template+template_label_file[ind_csf]+' -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
-    sct.run('sct_apply_transfo -i '+path_template+folder_template+template_label_file[ind_cord]+' -o '+folder_out+folder_template+template_label_file[ind_cord]+' -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
+    # TODO: read info_label, and create a list and loop across list elements-- see sct_extract_metric
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_T2.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_T2.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x spline', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_GM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_GM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_WM.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_WM.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_level.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_level.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_CSF.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_CSF.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
+    sct.run('sct_apply_transfo -i '+path_template+folder_template+'MNI-Poly-AMU_cord.nii.gz -o '+folder_out+folder_template+'MNI-Poly-AMU_cord.nii.gz -d '+fname_src+' -w '+fname_transfo+' -x nn', verbose)
     sct.run('cp '+path_template+folder_template+file_info_label+' '+folder_out+folder_template)
 
     # Warp atlas
     if warp_atlas == 1:
         sct.printv('\nWarp atlas of white matter tracts...', verbose)
-
         # create output folder
         sct.run('mkdir '+folder_out+folder_atlas)
-
-        # read file info labels
-        atlas_label_ids, atlas_label_names, atlas_label_file = read_label_file(path_template+folder_atlas, param.file_info_label)
+        # get atlas files
+        # TODO: read info_label.txt instead of ls
+        status, output = sct.run('ls '+path_template+folder_atlas+'*.nii.gz', verbose)
+        fname_list = output.split()
         # Warp atlas
-        for i in xrange(0, len(atlas_label_file)):
-            path_list, file_list, ext_list = sct.extract_fname(atlas_label_file[i])
-            sct.run('sct_apply_transfo -i '+path_template+folder_atlas+atlas_label_file[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
-
+        for i in xrange(0, len(fname_list)):
+            path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
+            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_atlas+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
         # Copy list.txt
         sct.run('cp '+path_template+folder_atlas+file_info_label+' '+folder_out+folder_atlas)
 
     # Warp spinal levels
     if warp_spinal_levels == 1:
         sct.printv('\nWarp spinal levels...', verbose)
-
         # create output folder
         sct.run('mkdir '+folder_out+folder_spinal_levels, verbose)
-
-        # read file info labels
-        spinal_label_ids, spinal_label_names, spinal_label_file = read_label_file(path_template+folder_spinal_levels, param.file_info_label)
-
+        # get spinal level files
+        status, output = sct.run('ls '+path_template+folder_spinal_levels+'*.nii.gz', verbose)
+        fname_list = output.split()
         # Warp levels
-        for i in xrange(0, len(spinal_label_file)):
-            path_list, file_list, ext_list = sct.extract_fname(spinal_label_file[i])
-            sct.run('sct_apply_transfo -i '+path_template+folder_spinal_levels+spinal_label_file[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
+        for i in xrange(0, len(fname_list)):
+            path_list, file_list, ext_list = sct.extract_fname(fname_list[i])
+            sct.run('sct_apply_transfo -i '+fname_list[i]+' -o '+folder_out+folder_spinal_levels+file_list+ext_list+' -d '+fname_src+' -w '+fname_transfo+' -x linear', verbose)
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
@@ -204,17 +177,13 @@ def usage():
 """+os.path.basename(__file__)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
 DESCRIPTION
   This function warps the template and all atlases to a given image (e.g. fMRI, DTI, MTR, etc.).
-
 USAGE
   """+os.path.basename(__file__)+""" -d <dest> -w <warp>
-
 MANDATORY ARGUMENTS
   -d <dest>             destination image the template will be warped into
   -w <warp>             warping field
-
 OPTIONAL ARGUMENTS
   -a {0,1}              warp atlas of white matter. Default="""+str(param_default.warp_atlas)+"""
   -s {0,1}              warp spinal levels. Default="""+str(param_default.warp_spinal_levels)+"""
@@ -222,7 +191,6 @@ OPTIONAL ARGUMENTS
   -t <path_template>    Specify path to template data. Default="""+str(param_default.path_template)+"""
   -v {0,1}              verbose. Default="""+str(param_default.verbose)+"""
   -h                    help. Show this message
-
 EXAMPLE
   """+os.path.basename(__file__)+""" -d dwi_mean.nii.gz -w warp_template2dmri.nii.gz -o label\n"""
 
