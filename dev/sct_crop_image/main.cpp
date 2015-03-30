@@ -360,13 +360,29 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
     }
     else
     {
+        vector<float> startSlices_temp = vector<float>(N);
+        vector<float> endSlices_temp = vector<float>(N);
+        for (int i=0; i<N; i++) {
+            startSlices_temp[i] = 0;
+            endSlices_temp[i] = desiredSize1[i];
+        }
         for (int i=0; i<dims.size(); i++) {
-            if (startSlices[i] > 0.0 && startSlices[i] < 1.0) startSlices[i] = desiredSize1[dims[i]]*startSlices[i];
-            if (endSlices[i] > 0.0 && endSlices[i] < 1.0) endSlices[i] = desiredSize1[dims[i]]*endSlices[i];
-            else if (endSlices[i] < 0) endSlices[i] = desiredSize1[dims[i]] + endSlices[i] - 1.0;
-            else if (endSlices[i] == 0.0) endSlices[i] = desiredSize1[dims[i]]-1;
+            startSlices_temp[dims[i]] = startSlices[i];
+            endSlices_temp[dims[i]] = endSlices[i];
+        }
+        startSlices = startSlices_temp;
+        endSlices = endSlices_temp;
+        
+        for (int i=0; i<dims.size(); i++) {
+            if (startSlices[dims[i]] > 0.0 && startSlices[dims[i]] < 1.0) startSlices[dims[i]] = desiredSize1[dims[i]]*startSlices[dims[i]];
+            if (endSlices[dims[i]] > 0.0 && endSlices[dims[i]] < 1.0) endSlices[dims[i]] = desiredSize1[dims[i]]*endSlices[dims[i]];
+            else if (endSlices[dims[i]] < 0) endSlices[dims[i]] = desiredSize1[dims[i]] + endSlices[dims[i]] - 1.0;
+            else if (endSlices[dims[i]] == 0.0) endSlices[dims[i]] = desiredSize1[dims[i]]-1;
         }
 	}
+    
+    for (int i=0; i<N; i++)
+        cout << startSlices[i] << " " << endSlices[i] << endl;
     
 	typename ImageType::IndexType desiredStart1;
     desiredStart1.Fill(0);
