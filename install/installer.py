@@ -667,7 +667,7 @@ class Installer:
                     bashprofile.close()
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-        cmd = "bash . "+self.home+"/.bashrc"
+        cmd = "bash <(. "+self.home+"/.bashrc)"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
