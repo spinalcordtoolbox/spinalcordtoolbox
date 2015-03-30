@@ -618,7 +618,6 @@ class Installer:
         print "\nEdit .bashrc..."
 
         # check if .bashrc exist. If not, create it.
-        print "HOME= "+self.home
         if not os.path.isfile(self.home+"/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
             open(self.home+'/.bashrc', 'w+').close()
@@ -668,7 +667,7 @@ class Installer:
                     bashprofile.close()
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-        cmd = ". ~/.bashrc"
+        cmd = ". "+self.home+"/.bashrc"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
