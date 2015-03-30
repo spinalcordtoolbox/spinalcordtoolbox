@@ -106,9 +106,9 @@ def get_or_set_orientation():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     if param.fname_out == '':
         # path_out, file_out, ext_out = '', file_data+'_'+param.orientation, ext_data
-        fname_out = os.path.abspath(file_data+'_'+param.orientation+ext_data)
+        fname_out = path_data+file_data+'_'+param.orientation+ext_data
     else:
-        fname_out = os.path.abspath(param.fname_out)
+        fname_out = param.fname_out
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', param.verbose)
