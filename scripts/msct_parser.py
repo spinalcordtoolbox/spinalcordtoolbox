@@ -5,6 +5,7 @@
 # Add option with name, type, short description, mandatory or not, example using add_option method.
 # usage: add_option(name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None)
 # If the user make a misspelling, the parser will search in the option list what are nearest option and suggests it to the user
+#
 # Type of options are:
 # - file, folder (check existence)
 # - folder_creation (check existence and if does not exist, create it if writing permission)
@@ -14,6 +15,8 @@
 # - coordinate [x, y, z, value]
 # - lists, for example list of coordinate: [[','],'Coordinate']
 # - None, return True when detected (example of boolean)
+#
+# The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
 #
 # Usage:
 # from msct_parser import *
@@ -252,11 +255,17 @@ class Parser:
                 else:
                     self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
 
-        # check if all mandatory arguments are provided by the user
         if dictionary:
+            # check if all mandatory arguments are provided by the user
             for option in [opt for opt in self.options if self.options[opt].mandatory]:
                 if option not in dictionary:
                     self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
+
+            # check if optional arguments with default values are all in the dictionary. If not, add them.
+            for option in [opt for opt in self.options if not self.options[opt].mandatory]:
+                print option
+                if option not in dictionary and self.options[option].default_value:
+                    dictionary[option] = self.options[option].default_value
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
@@ -298,9 +307,13 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
     def set_usage(self):
         from os.path import basename
         self.usage = '\n\nUSAGE\n' + basename(self.file)
-        mandatory = [opt for opt in self.arguments if self.arguments[opt].mandatory]
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
         for opt in mandatory:
-            self.usage += ' ' + opt + ' ' + str(self.arguments[opt].type_value)
+            if self.arguments[opt].type_value == 'multiple_choice':
+                self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
+            else:
+                self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
         self.usage += '\n'
 
     def set_arguments(self):
@@ -343,8 +356,13 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         from os.path import basename
         self.example = '\n\nEXAMPLE\n' + \
             basename(self.file)
-        for opt in [opt for opt in self.arguments if (self.arguments[opt].example and type(self.arguments[opt].example) is not list)]:
-            self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+            if type(self.arguments[opt].example) is list:
+                self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
+            else:
+                self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
 
     def generate(self, error=None):
         self.set_header()
