@@ -678,8 +678,8 @@ class Installer:
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
         print ">> " + cmd
-        #status, output = runProcess(cmd) # runProcess does not seems to work when sourcing .bashrc
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd) # runProcess does not seems to work on Travis when sourcing .bashrc
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -688,8 +688,8 @@ class Installer:
         os.chdir("requirements")
         cmd = "sudo ./requirements.sh"
         print ">> " + cmd
-        #status, output = runProcess(cmd)
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
