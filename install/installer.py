@@ -471,7 +471,7 @@ def download_file(url, localf, timeout=20):
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
 def runProcess(cmd, verbose=1):
-    process = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
         output = process.stdout.readline()
