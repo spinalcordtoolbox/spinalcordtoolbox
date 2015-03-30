@@ -27,14 +27,13 @@ install:
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
-  #- PATH=${PATH}:${SCT_DIR}/scripts
   - PATH=${PATH}:${SCT_DIR}/bin
   - PATH=${PATH}:${SCT_DIR}/bin/linux
   - export SCT_DIR PATH
   - . ~/.bashrc
 
 # SCT: create links
-  - ./install/create_links.sh
+  - ./install/create_links.sh -a
 
 # Go to testing folder
   - cd testing
