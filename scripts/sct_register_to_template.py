@@ -175,9 +175,9 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.runProcess('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    sct.runProcess('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    sct.runProcess('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -190,66 +190,66 @@ def main():
 
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
-    sct.runProcess('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
+    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
 
     # straighten segmentation
     print('\nStraighten the spinal cord using centerline/segmentation...')
-    sct.runProcess('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
+    sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
     print('\nRemove unused label on template. Keep only label present in the input label image...')
-    sct.runProcess('sct_label_utils -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
+    sct.run('sct_label_utils -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
 
     # Make sure landmarks are INT
     print '\nConvert landmarks to INT...'
-    sct.runProcess('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz')
+    sct.run('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz')
 
     # Create a cross for the template labels - 5 mm
     print('\nCreate a 5 mm cross for the template labels...')
-    sct.runProcess('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
+    sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
 
     # Create a cross for the input labels and dilate for straightening preparation - 5 mm
     print('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...')
-    sct.runProcess('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
+    sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
     # Apply straightening to labels
     print('\nApply straightening to labels...')
-    sct.runProcess('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
     # Convert landmarks from FLOAT32 to INT
     print '\nConvert landmarks from FLOAT32 to INT...'
-    sct.runProcess('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+    sct.run('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     print '\nEstimate affine transfo: straight anat --> template (landmark-based)...'
-    sct.runProcess('sct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
+    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
 
     # Apply affine transformation: straight --> template
     print '\nApply affine transformation: straight --> template...'
-    sct.runProcess('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
-    sct.runProcess('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
+    sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
+    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
 
     # Registration straight spinal cord to template
     print('\nRegister straight spinal cord to template...')
     # register using segmentations
-    sct.runProcess('sct_register_multimodal -i segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template_seg+' -a bsplinesyn -p 10,1,0,0.5,MeanSquares -r 0 -v '+str(verbose)+' -x nn -z 10', verbose)
+    sct.run('sct_register_multimodal -i segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template_seg+' -a bsplinesyn -p 10,1,0,0.5,MeanSquares -r 0 -v '+str(verbose)+' -x nn -z 10', verbose)
     # apply to image
-    sct.runProcess('sct_apply_transfo -i data_rpi_straight2templateAffine.nii -w warp_segmentation_rpi_straight2templateAffine2MNI-Poly-AMU_cord.nii.gz -d '+fname_template+' -o data_rpi_straight2templateAffine_step0.nii')
+    sct.run('sct_apply_transfo -i data_rpi_straight2templateAffine.nii -w warp_segmentation_rpi_straight2templateAffine2MNI-Poly-AMU_cord.nii.gz -d '+fname_template+' -o data_rpi_straight2templateAffine_step0.nii')
     # register using images
-    sct.runProcess('sct_register_multimodal -i data_rpi_straight2templateAffine_step0.nii -d '+fname_template+' -a syn -p 10,1,0,0.5,MI -r 0 -v '+str(verbose)+' -x spline -z 10', verbose)
+    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine_step0.nii -d '+fname_template+' -a syn -p 10,1,0,0.5,MI -r 0 -v '+str(verbose)+' -x spline -z 10', verbose)
 
     # Concatenate transformations: template2anat & anat2template
     sct.printv('\nConcatenate transformations: template --> straight --> anat...', verbose)
-    sct.runProcess('sct_concat_transfo -w warp_MNI-Poly-AMU_T22data_rpi_straight2templateAffine_step0.nii.gz,warp_MNI-Poly-AMU_cord2segmentation_rpi_straight2templateAffine.nii.gz,-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz')
+    sct.run('sct_concat_transfo -w warp_MNI-Poly-AMU_T22data_rpi_straight2templateAffine_step0.nii.gz,warp_MNI-Poly-AMU_cord2segmentation_rpi_straight2templateAffine.nii.gz,-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz')
     sct.printv('\nConcatenate transformations: anat --> straight --> template...', verbose)
-    sct.runProcess('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,warp_segmentation_rpi_straight2templateAffine2MNI-Poly-AMU_cord.nii.gz,warp_data_rpi_straight2templateAffine_step02MNI-Poly-AMU_T2.nii.gz -d '+fname_template+' -o warp_anat2template.nii.gz')
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,warp_segmentation_rpi_straight2templateAffine2MNI-Poly-AMU_cord.nii.gz,warp_data_rpi_straight2templateAffine_step02MNI-Poly-AMU_T2.nii.gz -d '+fname_template+' -o warp_anat2template.nii.gz')
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.runProcess('sct_apply_transfo -i '+fname_template+' -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
-        sct.runProcess('sct_apply_transfo -i data.nii  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
+        sct.run('sct_apply_transfo -i '+fname_template+' -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
+        sct.run('sct_apply_transfo -i data.nii  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
@@ -265,7 +265,7 @@ def main():
     # Delete temporary files
     if remove_temp_files == 1:
         sct.printv('\nDelete temporary files...', verbose)
-        sct.runProcess('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
