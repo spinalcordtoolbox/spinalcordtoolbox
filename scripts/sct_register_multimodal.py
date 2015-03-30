@@ -54,12 +54,15 @@ class Param:
         self.verbose = 1  # verbose
         self.interp = 'linear'  # nn, linear, spline
 
+
 import sys
 import getopt
 import os
 import commands
 import time
+
 import sct_utils as sct
+
 
 
 # MAIN
@@ -322,7 +325,7 @@ MANDATORY ARGUMENTS
 OPTIONAL ARGUMENTS
   -m <mask>        mask used on destination image.
   -o <output>      name of output file. Default=source_reg
-  -a {syn,bsplinesyn,slicereg}  algorithm for registration.
+  -a {syn,bsplinesyn,slicereg}  algorithm for registration. Default="""+param_default.algo+"""
                      more info on slicereg: http://goo.gl/Sj3ZeU
   -p <param>       parameters for registration. Separate with ','. Depends on the algorithm:
                    if a = syn or bsplinesyn:
