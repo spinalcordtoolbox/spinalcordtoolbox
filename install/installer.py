@@ -508,7 +508,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Installer version "+str(Version("1.1"))
+        print "Modified: 2015-03-30"
         print "============================="
 
         try:
@@ -618,10 +618,10 @@ class Installer:
         print "\nEdit .bashrc..."
 
         # check if .bashrc exist. If not, create it.
-        print self.home
-        if not os.path.isfile("~/.bashrc"):
+        print "HOME= "+self.home
+        if not os.path.isfile(self.home+"/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
-            open('~/.bashrc', 'w+').close()
+            open(self.home+'/.bashrc', 'w+').close()
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
