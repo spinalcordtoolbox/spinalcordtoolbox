@@ -619,9 +619,9 @@ class Installer:
 
         # check if .bashrc exist. If not, create it.
         print self.home
-        if not os.path.isfile(self.home+"~/.bashrc"):
+        if not os.path.isfile("~/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
-            open(self.home+'/.bashrc', 'w+').close()
+            open('~/.bashrc', 'w+').close()
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
                 print "  Deleting previous SCT entries in .bashrc"
