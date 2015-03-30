@@ -618,6 +618,10 @@ class Installer:
         print "\nEdit .bashrc..."
 
         # check if .bashrc exist. If not, create it.
+        status, output = runProcess('ls -la '+self.home)
+        print output
+        print "Is .bashrc exists? "+str(os.path.isfile(self.home+"/.bashrc"))
+
         if not os.path.isfile(self.home+"/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
             open(self.home+'/.bashrc', 'w+').close()
