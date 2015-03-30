@@ -470,17 +470,19 @@ def download_file(url, localf, timeout=20):
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
-def runProcess(cmd):
-    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def runProcess(cmd, verbose=1):
+    process = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output_final = ''
     while True:
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
-
-    (output, err) = process.communicate()
-    return process.wait(), output
+            if verbose==1:
+                print output.strip()
+            output_final += output.strip()+'\n'
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    return process.returncode, output_final[0:-1]
 
 
 class Installer:
@@ -667,7 +669,7 @@ class Installer:
                     bashprofile.close()
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-        cmd = "bash source ~/.bashrc"
+        cmd = ". ~/.bashrc"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
