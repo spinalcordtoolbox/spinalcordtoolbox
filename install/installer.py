@@ -618,7 +618,7 @@ class Installer:
         print "\nEdit .bashrc..."
 
         # check if .bashrc exist. If not, create it.
-        status, output = runProcess('more '+self.home+"/.bashrc")
+        status, output = runProcess('chsh')
         print output
 
         if not os.path.isfile(self.home+"/.bashrc"):
