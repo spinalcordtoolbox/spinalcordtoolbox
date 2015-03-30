@@ -617,10 +617,12 @@ class Installer:
         # check if .bashrc was already modified. If so, we delete lines related to SCT
         print "\nEdit .bashrc..."
 
-        # check if .bashrc exist. If not, create it.
-        status, output = runProcess('chsh')
+
+        status, output = runProcess('chsh -s /bin/bash')
+        print status
         print output
 
+        # check if .bashrc exist. If not, create it.
         if not os.path.isfile(self.home+"/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
             open(self.home+'/.bashrc', 'w+').close()
