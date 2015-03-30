@@ -63,8 +63,8 @@ def run(cmd, verbose=1):
             if verbose==1:
                 print output.strip()
             output_final += output.strip()+'\n'
-
-    return process.returncode, output_final
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    return process.returncode, output_final[0:-1]
 
 #==============e=========================================================================================================
 # check RAM usage
