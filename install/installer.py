@@ -629,6 +629,13 @@ class Installer:
                 cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
                 status, output = runProcess(cmd)
+                if status != 0:
+                    print '\nERROR! \n' + output + '\nExit program.\n'
+
+                print "  Deleting previous SCT entries in .bash_profile"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
+                print ">> " + cmd
+                status, output = runProcess(cmd)
                 #status, output = commands.getstatusoutput(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
