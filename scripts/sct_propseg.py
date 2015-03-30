@@ -215,7 +215,7 @@ if __name__ == "__main__":
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
 
-    sct.runProcess(cmd, verbose)
+    sct.run(cmd, verbose)
 
     sct.printv("\nDone!",1,"normal")
     sct.printv("Type the following command in the terminal to see the results:", 1, "normal")

@@ -263,8 +263,9 @@ class Parser:
 
             # check if optional arguments with default values are all in the dictionary. If not, add them.
             for option in [opt for opt in self.options if not self.options[opt].mandatory]:
-                if option not in dictionary and option.default_value:
-                    dictionary[option.name] = option.default_value
+                print option
+                if option not in dictionary and self.options[option].default_value:
+                    dictionary[option] = self.options[option].default_value
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
