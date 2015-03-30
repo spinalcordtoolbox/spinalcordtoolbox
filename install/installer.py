@@ -617,11 +617,6 @@ class Installer:
         # check if .bashrc was already modified. If so, we delete lines related to SCT
         print "\nEdit .bashrc..."
 
-
-        status, output = runProcess('chsh -s /bin/bash')
-        print status
-        print output
-
         # check if .bashrc exist. If not, create it.
         if not os.path.isfile(self.home+"/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
@@ -672,7 +667,7 @@ class Installer:
                     bashprofile.close()
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-        cmd = ". "+self.home+"/.bashrc"
+        cmd = "bash . "+self.home+"/.bashrc"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
