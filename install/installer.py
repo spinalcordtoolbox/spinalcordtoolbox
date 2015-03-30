@@ -618,7 +618,8 @@ class Installer:
         print "\nEdit .bashrc..."
 
         # check if .bashrc exist. If not, create it.
-        if not os.path.isfile(self.home+"/.bashrc"):
+        print self.home
+        if not os.path.isfile(self.home+"~/.bashrc"):
             print "  ~/.bashrc does not exist. Creating it..."
             open(self.home+'/.bashrc', 'w+').close()
         else:
