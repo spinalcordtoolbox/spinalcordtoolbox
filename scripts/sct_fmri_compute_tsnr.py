@@ -12,9 +12,10 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+import sys
+
 from msct_parser import *
 import sct_utils as sct
-import sys
 
 
 class Param:
@@ -85,9 +86,10 @@ if __name__ == "__main__":
                           mandatory=True,
                           example='fmri.nii.gz')
         parser.add_option(name="-v",
-                          type_value="int",
+                          type_value="multiple_choice",
                           description="verbose",
-                          mandatory=False)
+                          mandatory=False,
+                          example=['0', '1'])
 
         arguments = parser.parse(sys.argv[1:])
         input_fmri = arguments["-i"]
