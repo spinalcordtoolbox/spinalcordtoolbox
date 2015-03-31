@@ -88,7 +88,7 @@ def main():
     # Check input Parameters
     parser = Parser(__file__)
     parser.usage.set_description('compute MTV')
-    parser.add_option("-b", "file", "alpha_b1map_smooth", False, "b1/b1_smoothed_in_spgr10_space_crop.nii.gz")
+    parser.add_option("-b", "file", "B1 angle scaling map", False, "b1/b1_scaling_mask_cropped.nii.gz")
     parser.add_option("-c", "file", "CSF mask", False, "spgr10_crop_csf_mask.nii.gz")
     parser.add_option("-f", "str", "flip angles", True, "4,10,20,30")
     parser.add_option("-o", "str", "output file name", True, "T1_map,PD_map,MTVF_map")
@@ -153,7 +153,6 @@ def main():
     sct.printv('\tDone.')
 
     # ------------------------------------------------- LOAD DATA ------------------------------------------------------
-    # TODO: if seg given, create mask and crop spgr data
     # Load SPGR images
     spgr = np.empty((spgr_nx, spgr_ny, spgr_nz, nb_flip_angles))
     for i_fa in range(0, nb_flip_angles):
@@ -170,17 +169,6 @@ def main():
         # If GRE images are given, estimate the B1 scaling map with the method of double flip angle
         sct.printv('\nB1 scaling map will be estimated using the double flip angle method.\n')
         b1_map_scale = nib.load(fname_b1_smoothed).get_data() # estimate_b1_with_double_flip_angle(b1_maps, spgr_nx, spgr_ny, spgr_nz, alpha_b1, fname_spgr_data[1])
-
-    # # If segmentation of the cord is provided, create a box mask of data surrounding cord and CSF from the segmentation of the cord to reduce the computational time
-    # if fname_spgr_seg:
-    #     path_spgr, file_first_flip_angle_spgr, ext_spgr = sct.extract_fname(fname_spgr_data[0])
-    #     fname_box_max = path_spgr + 'spgr_cord_box_mask' + ext_spgr
-    #     sct.printv('Create a box mask of data surrounding cord and CSF from the segmentation of the cord to reduce the computational time...')
-    #     sct.run('sct_create_mask -i ' + fname_spgr_data[0] + ' -m centerline,' + fname_spgr_seg + ' -f box -s 40')
-    #     sct.run('mv mask_' + file_first_flip_angle_spgr + ext_spgr + ' ' + fname_box_max)
-    #     # Load this box mask
-    #     box_mask = nib.load(fname_box_max).get_data()
-    #     sct.printv('\tDone.')
 
 
     # ------------------------------ Estimate PD and T1 fitting SPGR data ---------------------------------------------
@@ -372,7 +360,7 @@ def estimate_mean_PD_per_slice_from_mean_in_SPGR_data(spgr, csf_mask, sc_mask, f
 #=======================================================================================================================
 # Estimate the proton density and T1 by Fram's method (1987)
 #=======================================================================================================================
-def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz, cropping_mask=None):
+def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
     """Estimate the proton density map and the T1 maps using linear regression presented by Fram (1987)"""
 
     # Initialization of the maps to be estimated
@@ -384,37 +372,35 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz, cropping
 
     from sct_tools import progress3d
 
-    plt.ion()  # turns interactive mode on
-    plt.gca().set_xlabel(r'$I(\theta)/tan(\theta)$')
-    plt.gca().set_ylabel(r'$I(\theta)/sin(\theta)$')
+    # plt.ion()  # turns interactive mode on
+    # plt.gca().set_xlabel(r'$I(\theta)/tan(\theta)$')
+    # plt.gca().set_ylabel(r'$I(\theta)/sin(\theta)$')
     for k in range(1, nz):
         for j in range(1, ny):
             for i in range(1, nx):
 
                 progress3d(i, j, k, nx, ny, nz)
 
-                if (((cropping_mask is not None) and (cropping_mask[i, j, k] == 1)) or (cropping_mask is None)) and not (b1_map_scale[i, j, k] == 0) and not (np.max(spgr[i, j, k, :]) == 0):
+                y = np.divide(spgr[i, j, k, :], np.sin(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
+                x = np.divide(spgr[i, j, k, :], np.tan(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
 
-                    y = np.divide(spgr[i, j, k, :], np.sin(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
-                    x = np.divide(spgr[i, j, k, :], np.tan(flip_angles*(np.pi/180)*b1_map_scale[i, j, k]))
+                linear_regression = np.polyfit(x, y, 1)
+                slope = linear_regression[0]
+                intercep = linear_regression[1]
 
-                    linear_regression = np.polyfit(x, y, 1)
-                    slope = linear_regression[0]
-                    intercep = linear_regression[1]
+                if slope > 0:
+                    t1 = -tr/math.log(slope)
+                else:  # due to noise or bad fitting
+                    t1 = 0.000000000000001
+                    recorder_vox_out += 1
 
-                    if slope > 0:
-                        t1 = -tr/math.log(slope)
-                    else:  # due to noise or bad fitting
-                        t1 = 0.000000000000001
-                        recorder_vox_out += 1
+                t1_map[i, j, k] = t1
+                PD_map[i, j, k] = intercep/(1 - math.exp(-tr/t1))
 
-                    t1_map[i, j, k] = t1
-                    PD_map[i, j, k] = intercep/(1 - math.exp(-tr/t1))
-
-                    plt.plot(x, y)
-                    plt.draw()
-                    plt.grid()
-                    plt.title('Voxel position = ('+str(i)+', '+str(j)+', '+str(k)+')')
+                # plt.plot(x, y)
+                # plt.draw()
+                # plt.grid()
+                # plt.title('Voxel position = ('+str(i)+', '+str(j)+', '+str(k)+')')
 
     return PD_map, t1_map, recorder_vox_out
 

@@ -9,11 +9,9 @@
 
 
 import os
-import shutil
 import getopt
 import sys
 import time
-from numpy import loadtxt
 import commands
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -150,6 +148,7 @@ def fill_functions():
     #functions.append('sct_convert')
     functions.append('sct_convert_binary_to_trilinear')
     functions.append('sct_create_mask')
+    functions.append('sct_crop_image')
     functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
@@ -252,6 +251,7 @@ def test_function(script_name):
             print_ok()
         else:
             print_fail()
+            print output
 
         # log file
         write_to_log_file(fname_log, output, 'w')
