@@ -470,17 +470,19 @@ def download_file(url, localf, timeout=20):
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
-def runProcess(cmd):
+def runProcess(cmd, verbose=1):
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output_final = ''
     while True:
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
-
-    (output, err) = process.communicate()
-    return process.wait(), output
+            if verbose==1:
+                print output.strip()
+            output_final += output.strip()+'\n'
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    return process.returncode, output_final[0:-1]
 
 
 class Installer:
@@ -508,7 +510,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Installer version "+str(Version("1.1"))
+        print "Modified: 2015-03-30"
         print "============================="
 
         try:
@@ -627,6 +629,13 @@ class Installer:
                 cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
                 print ">> " + cmd
                 status, output = runProcess(cmd)
+                if status != 0:
+                    print '\nERROR! \n' + output + '\nExit program.\n'
+
+                print "  Deleting previous SCT entries in .bash_profile"
+                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
+                print ">> " + cmd
+                status, output = runProcess(cmd)
                 #status, output = commands.getstatusoutput(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
@@ -669,7 +678,7 @@ class Installer:
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
         print ">> " + cmd
-        status, output = runProcess(cmd)
+        status, output = runProcess(cmd) # runProcess does not seems to work on Travis when sourcing .bashrc
         #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'

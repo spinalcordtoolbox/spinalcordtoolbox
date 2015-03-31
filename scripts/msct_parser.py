@@ -439,7 +439,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
                     strings.append(stri[0:last_space])
                     stri = stri[last_space:]
                     if k != 0:
-                        stri = '  '+stri
+                        stri = '    '+stri
                     i = i - last_space
             strings.append(stri)
 

@@ -27,14 +27,13 @@ install:
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
-  #- PATH=${PATH}:${SCT_DIR}/scripts
   - PATH=${PATH}:${SCT_DIR}/bin
   - PATH=${PATH}:${SCT_DIR}/bin/linux
   - export SCT_DIR PATH
   - . ~/.bashrc
 
 # SCT: create links
-  - ./install/create_links.sh
+  - ./install/create_links.sh -a
 
 # Go to testing folder
   - cd testing
@@ -42,9 +41,7 @@ install:
 script:
   - python ../scripts/sct_check_dependences.py
   - python test_all.py -d 1
-  #- travis_wait python test_smooth_spinalcord.py
-  #- travis_wait python test_register_to_template.py
-  - cd ../install
-  - python create_package.py -s linux
-  - cd ../spinalcordtoolbox_v*
-  - python installer.py
+# - cd ../install
+# - python create_package.py -s linux
+# - cd ../spinalcordtoolbox_v*
+# - python installer.py
