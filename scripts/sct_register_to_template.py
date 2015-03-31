@@ -24,8 +24,10 @@ import getopt
 import os
 import commands
 import time
+
 import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
+from sct_orientation import set_orientation
+
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -49,6 +51,12 @@ class Param:
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
+
+class Paramreg_step(Paramreg):
+    def __init__(self):
+        self.step = '1'
+        self.type = 'im'
+        Paramreg.__init__(self)
 
 
 # MAIN
