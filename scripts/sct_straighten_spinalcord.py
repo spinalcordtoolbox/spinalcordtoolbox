@@ -632,7 +632,7 @@ def main():
     # Ideally, the error should be zero.
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x nn -w tmp.curve2straight.nii.gz')
     file_centerline_straight = nibabel.load('tmp.centerline_straight.nii.gz')
     data_centerline_straight = file_centerline_straight.get_data()
     Xc, Yc, Zc = (data_centerline_straight > 0).nonzero()
@@ -645,12 +645,14 @@ def main():
     # compute error between the input data and the nurbs
     from math import sqrt
     mse_curve = 0.0
+    max_dist = 0.0
     for i in range(0,len(z_straight_centerline)):
-        #print x0-x_straight_centerline[i], y0-y_straight_centerline[i]
-        #print ((x0-x_straight_centerline[i])*px)**2+((y0-y_straight_centerline[i])*py)**2
-        mse_curve += ((x0-x_straight_centerline[i])*px)**2 + ((y0-y_straight_centerline[i])*py)**2
-    mse_curve = sqrt(mse_curve)/float(len(z_straight_centerline))
-    sct.printv('MSE of straightened centerline = '+str(round(mse_curve,2))+' mm', verbose)
+        dist = ((x0-x_straight_centerline[i]+padding)*px)**2 + ((y0-y_straight_centerline[i]+padding)*py)**2
+        mse_curve += dist
+        dist = sqrt(dist)
+        if dist > max_dist:
+            max_dist = dist
+    mse_curve = mse_curve/float(len(z_straight_centerline))
 
     # come back to parent folder
     os.chdir('..')
@@ -668,6 +670,10 @@ def main():
         sct.run('rm -rf '+path_tmp)
     
     print '\nDone!\n'
+
+    max_dist
+    sct.printv('Maximum x-y error = '+str(round(max_dist,2))+' mm', verbose, 'bold')
+    sct.printv('Accuracy of straightening (MSE) = '+str(round(mse_curve,2))+' mm', verbose, 'bold')
 
 
 
