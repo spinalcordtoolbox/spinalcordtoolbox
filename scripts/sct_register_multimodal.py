@@ -117,7 +117,7 @@ def main():
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",
-                      type_value="str",
+                      type_value="file_output",
                       description="Name of output file.",
                       mandatory=False,
                       example="src_reg.nii.gz")
