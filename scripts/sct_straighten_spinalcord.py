@@ -628,6 +628,30 @@ def main():
     print '\nApply transformation to input image...'
     c = sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
 
+    # compute the error between the straightened centerline/segmentation and the central vertical line.
+    # Ideally, the error should be zero.
+    # Apply deformation to input image
+    print '\nApply transformation to input image...'
+    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+    file_centerline_straight = nibabel.load('tmp.centerline_straight.nii.gz')
+    data_centerline_straight = file_centerline_straight.get_data()
+    Xc, Yc, Zc = (data_centerline_straight > 0).nonzero()
+    z_straight_centerline = range(min(Zc),max(Zc), 1)
+    x_straight_centerline = [0 for iz in z_straight_centerline]
+    y_straight_centerline = [0 for iz in z_straight_centerline]
+    for i,iz in enumerate(z_straight_centerline):
+        x_straight_centerline[i], y_straight_centerline[i] = ndimage.measurements.center_of_mass(numpy.array(data_centerline_straight[:, :, iz]))
+
+    # compute error between the input data and the nurbs
+    from math import sqrt
+    mse_curve = 0.0
+    for i in range(0,len(z_straight_centerline)):
+        #print x0-x_straight_centerline[i], y0-y_straight_centerline[i]
+        #print ((x0-x_straight_centerline[i])*px)**2+((y0-y_straight_centerline[i])*py)**2
+        mse_curve += ((x0-x_straight_centerline[i])*px)**2 + ((y0-y_straight_centerline[i])*py)**2
+    mse_curve = sqrt(mse_curve)/float(len(z_straight_centerline))
+    sct.printv('MSE of straightened centerline = '+str(round(mse_curve,2))+' mm', verbose)
+
     # come back to parent folder
     os.chdir('..')
 
