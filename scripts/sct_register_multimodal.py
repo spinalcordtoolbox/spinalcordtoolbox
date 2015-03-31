@@ -36,6 +36,7 @@
 
 import sys
 #import getopt
+import shutil
 import os
 import commands
 import time
@@ -87,6 +88,9 @@ def main():
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
+    # get default parameters
+    paramreg = Paramreg()
+
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
@@ -113,16 +117,16 @@ def main():
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",
-                      type_value="file",
+                      type_value="str",
                       description="Name of output file.",
                       mandatory=False,
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value="str",
-                      description="""parameters for registration. If you have several steps, separate with ":" """,
+                      description="""parameters for registration. Separate with ",".\nalgo: {syn,bsplinesyn,slicereg}. Default="""+paramreg.algo+"""\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.metric+"""\niter: <int> Number of iterations. Default="""+paramreg.iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.poly,
                       mandatory=False,
                       default_value="algo=syn,metric=MI,iter=5,shrink=2,smooth=0,grad=0.5",
-                      example="algo=syn,metric=MI,iter=5,shrink=2,smooth=0,grad=0.5")
+                      example="algo=slicereg,metric=MeanSquares,iter=20")
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
@@ -175,7 +179,6 @@ def main():
         verbose = 1
 
     # update paramreg with user's arguments
-    paramreg = Paramreg()
     paramreg.update(paramreg_user)
 
     # if sliceReg is used, we can't pad in the image...
@@ -313,26 +316,15 @@ def main():
 
     # Delete temporary files
     if remove_temp_files == 1:
-        print '\nRemove temporary files...'
-        sct.run('rm -rf '+path_tmp)
+        sct.printv('\nRemove temporary files...', verbose)
+        shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
-
-    # to view results
-    print '\nTo view results, type:'
-    print 'fslview '+fname_dest+' '+fname_src2dest+' &'
-    print 'fslview '+fname_src+' '+fname_dest2src+' &'
-    print ''
-
-
-
-# parse parameters for registration
-# ==========================================================================================
-def parse_paramreg(paramreg):
-    """paramreg: class"""
-    paramreg.replace(' ', '').split(',')  # remove spaces and parse with comma
+    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
+    sct.printv('\nTo view results, type:', verbose)
+    sct.printv('fslview '+fname_dest+' '+fname_src2dest+' &', verbose, 'info')
+    sct.printv('fslview '+fname_src+' '+fname_dest2src+' &\n', verbose, 'info')
 
 
 
