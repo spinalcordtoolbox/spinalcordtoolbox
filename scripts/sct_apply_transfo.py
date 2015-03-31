@@ -85,10 +85,19 @@ def main():
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
+    use_inverse = []
+    fname_warp_list_invert = []
     fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
     fname_warp_list = fname_warp_list.split(",")  # parse with comma
     for i in range(len(fname_warp_list)):
-        sct.printv('  Warp #'+str(i)+': '+fname_warp_list[i], verbose)
+        # Check if inverse matrix is specified with '-' at the beginning of file name
+        if fname_warp_list[i].find('-') == 0:
+            use_inverse.append('-i ')
+            fname_warp_list[i] = fname_warp_list[i][1:]  # remove '-'
+        else:
+            use_inverse.append('')
+        sct.printv('  Transfo #'+str(i)+': '+use_inverse[i]+fname_warp_list[i], verbose)
+        fname_warp_list_invert.append(use_inverse[i]+fname_warp_list[i])
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -97,15 +106,14 @@ def main():
     for i in range(len(fname_warp_list)):
         # check if file exist
         sct.check_file_exist(fname_warp_list[i])
-        # get absolute path
-        # fname_warp_list[i] = os.path.abspath(fname_warp_list[i])
-        # fname_warp_list[i] = os.path.abspath(fname_warp_list[i])
+    for i in range(len(fname_warp_list_invert)):
+        sct.check_file_exist(fname_warp_list_invert[i])
 
     # check if destination file is 3d
     sct.check_if_3d(fname_dest)
 
     # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
-    fname_warp_list.reverse()
+    fname_warp_list_invert.reverse()
 
     # Extract path, file and extension
     # path_src, file_src, ext_src = sct.extract_fname(os.path.abspath(fname_src))
@@ -132,7 +140,7 @@ def main():
     if nt == 1:
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
+        sct.run('sct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
     # if 4d, loop across the T dimension
     else:
