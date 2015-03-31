@@ -74,12 +74,9 @@ class Paramreg:
 def main():
 
     # Initialization
-    # fname_src = ''
-    # fname_dest = ''
     fname_output = ''
     fname_mask = ''
     padding = 5
-    parameters = 'algo=syn,metric=MI,iter=10,shrink=2,smooth=0,grad=0.5'
     remove_temp_files = 1
     verbose = 1
 
@@ -114,11 +111,13 @@ def main():
                       type_value="file",
                       description="Binary mask to improve robustness.",
                       mandatory=False,
+                      default_value='',
                       example="mask.nii.gz")
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Name of output file.",
                       mandatory=False,
+                      default_value='',
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value="str",
@@ -130,7 +129,7 @@ def main():
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
-                      example="5")
+                      default_value='5')
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -154,20 +153,14 @@ def main():
     # get arguments
     fname_src = arguments['-i']
     fname_dest = arguments['-d']
-    if '-o' in arguments:
-        fname_output = arguments['-o']
-    if '-m' in arguments:
-        fname_mask = arguments['-m']
-    if '-z' in arguments:
-        padding = arguments['-z']
-    if '-m' in arguments:
-        fname_mask = arguments['-m']
+    fname_output = arguments['-o']
+    fname_mask = arguments['-m']
+    padding = arguments['-z']
+    fname_mask = arguments['-m']
     paramreg_user = arguments['-p']
-    if '-r' in arguments:
-        remove_temp_files = arguments['-r']
+    remove_temp_files = arguments['-r']
     interp = arguments['-x']
-    if '-v' in arguments:
-        verbose = arguments['-v']
+    verbose = arguments['-v']
 
     # Parameters for debug mode
     if param.debug:

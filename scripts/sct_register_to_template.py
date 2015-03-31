@@ -27,6 +27,7 @@ import time
 
 import sct_utils as sct
 from sct_orientation import set_orientation
+from sct_register_multimodal import Paramreg
 
 
 # get path of the toolbox
@@ -39,23 +40,24 @@ class Param:
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
-        self.speed = 'fast'  # speed of registration. slow | normal | fast
-        self.nb_iterations = '5'
-        self.algo = 'SyN'
-        self.gradientStep = '0.5'
-        self.metric = 'MI'
-        self.verbose = 1  # verbose
+        # self.speed = 'fast'  # speed of registration. slow | normal | fast
+        # self.nb_iterations = '5'
+        # self.algo = 'SyN'
+        # self.gradientStep = '0.5'
+        # self.metric = 'MI'
+        # self.verbose = 1  # verbose
         self.path_template = path_sct+'/data/template'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
-        self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
-
+        # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 class Paramreg_step(Paramreg):
     def __init__(self):
+        # additional parameters from class Paramreg
         self.step = '1'
         self.type = 'im'
+        # inheritate class Paramreg from sct_register_multimodal
         Paramreg.__init__(self)
 
 
@@ -63,26 +65,71 @@ class Paramreg_step(Paramreg):
 # ==========================================================================================
 def main():
 
-    # Initialization
-    fname_data = ''
-    fname_landmarks = ''
-    fname_seg = ''
-    path_template = param.path_template
+    # get default parameters
+    paramreg = Paramreg()
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Register anatomical image to the template.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Anatomical image.",
+                      mandatory=True,
+                      example="anat.nii.gz")
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord segmentation.",
+                      mandatory=True,
+                      example="anat_seg.nii.gz")
+    parser.add_option(name="-l",
+                      type_value="file",
+                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      mandatory=True,
+                      default_value='',
+                      example="anat_labels.nii.gz")
+    parser.add_option(name="-t",
+                      type_value="folder",
+                      description="Path to MNI-Poly-AMU template.",
+                      mandatory=False,
+                      default_value=param.path_template)
+    parser.add_option(name="-p",
+                      type_value="str",
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number.\ntype: {im,seg} type of data used for registration.\nalgo: {syn,bsplinesyn,slicereg}. Default="""+paramreg.algo+"""\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.metric+"""\niter: <int> Number of iterations. Default="""+paramreg.iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.poly,
+                      mandatory=False,
+                      default_value="algo=syn,metric=MI,iter=5,shrink=2,smooth=0,grad=0.5",
+                      example="algo=slicereg,metric=MeanSquares,iter=20")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    arguments = parser.parse(sys.argv[1:])
+
+    # get arguments
+    fname_data = arguments['-i']
+    fname_seg = arguments['-s']
+    fname_landmarks = arguments['-l']
+    paramreg_user = arguments['-p']
+    path_template = arguments['-t']
+    remove_temp_files = arguments['-r']
+    verbose = arguments['-v']
+
+    # initialize other parameters
     file_template = param.file_template
     file_template_label = param.file_template_label
     file_template_seg = param.file_template_seg
     output_type = param.output_type
-    speed = param.speed
-    param_reg = ''
-    nb_iterations, algo, gradientStep, metric = param.nb_iterations, param.algo, param.gradientStep, param.metric
-    remove_temp_files = param.remove_temp_files
-    verbose = param.verbose
-    smoothing_sigma = param.smoothing_sigma
+    # smoothing_sigma = param.smoothing_sigma
+
     # start timer
     start_time = time.time()
-
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
     # Parameters for debug mode
     if param.debug:
@@ -285,52 +332,11 @@ def main():
     sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
 
 
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Register anatomical image to the template.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <anat> -m <segmentation> -l <landmarks>
-
-MANDATORY ARGUMENTS
-  -i <anat>                    anatomical image
-  -s <segmentation>            spinal cord segmentation.
-  -l <landmarks>               landmarks at spinal cord center.
-                               See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/
-
-OPTIONAL ARGUMENTS
-  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <param>                   parameters to register the straightened anat to the template.
-                               Separate with comma. Default="""+param_default.nb_iterations+','+param_default.algo+','+param_default.gradientStep+','+param_default.metric+"""
-                                 1) number of iterations.
-                                 2) algo: {syn, bsplinesyn}
-                                 3) gradient step. The larger the more deformation.
-                                 4) metric: {MI,MeanSquares}.
-                                    If you find very large deformations, switching to MeanSquares can help.
-  -t <path_template>           Specify path to template. Default="""+str(param_default.path_template)+"""
-  -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
-  -h                           help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i t2.nii.gz -l labels.nii.gz -s t2_seg.nii.gz\n"""
-
-    # exit program
-    sys.exit(2)
-
-
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
     # initialize parameters
     param = Param()
-    param_default = Param()
     # call main function
     main()
