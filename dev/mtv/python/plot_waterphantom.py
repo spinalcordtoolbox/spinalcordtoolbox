@@ -17,6 +17,8 @@ fname_pd_noB1_tr20m = 'mtv_tr20/PD_map_no_b1_matlab.nii.gz'  # matlab
 fname_t1_noB1_tr20m = 'mtv_tr20/T1_map_no_b1_matlab.nii.gz'  # matlab
 fname_pd_B1_tr20 = 'mtv_tr20/PD_map_b1_corr.nii.gz'
 fname_t1_B1_tr20 = 'mtv_tr20/T1_map_b1_corr.nii.gz'
+fname_pd_B1_tr20m = 'mtv_tr20/PD_map_b1_corr_matlab.nii.gz'  # matlab
+fname_t1_B1_tr20m = 'mtv_tr20/T1_map_b1_corr_matlab.nii.gz'  # matlab
 fname_spgr5_tr20 = 'mtv_tr20/spgr5mask_cropped.nii.gz'
 fname_spgr10_tr20 = 'mtv_tr20/spgr10mask_cropped.nii.gz'
 fname_spgr20_tr20 = 'mtv_tr20/spgr20mask_cropped.nii.gz'
@@ -46,6 +48,8 @@ pd_noB1_tr20m = nib.load(fname_pd_noB1_tr20m).get_data()  # matlab
 t1_noB1_tr20m = nib.load(fname_t1_noB1_tr20m).get_data()  # matlab
 pd_B1_tr20 = nib.load(fname_pd_B1_tr20).get_data()
 t1_B1_tr20 = nib.load(fname_t1_B1_tr20).get_data()
+pd_B1_tr20m = nib.load(fname_pd_B1_tr20m).get_data()  # matlab
+t1_B1_tr20m = nib.load(fname_t1_B1_tr20m).get_data()  # matlab
 spgr5_tr20 = nib.load(fname_spgr5_tr20).get_data()
 spgr10_tr20 = nib.load(fname_spgr10_tr20).get_data()
 spgr20_tr20 = nib.load(fname_spgr20_tr20).get_data()
@@ -73,6 +77,8 @@ pd_noB1_mean_std_tr20m = compute_metric_mean_and_std_slice_by_slice(pd_noB1_tr20
 t1_noB1_mean_std_tr20m = compute_metric_mean_and_std_slice_by_slice(t1_noB1_tr20m)  # matlab
 pd_B1_mean_std_tr20 = compute_metric_mean_and_std_slice_by_slice(pd_B1_tr20)
 t1_B1_mean_std_tr20 = compute_metric_mean_and_std_slice_by_slice(t1_B1_tr20)
+pd_B1_mean_std_tr20m = compute_metric_mean_and_std_slice_by_slice(pd_B1_tr20m)  # matlab
+t1_B1_mean_std_tr20m = compute_metric_mean_and_std_slice_by_slice(t1_B1_tr20m)  # matlab
 spgr5_mean_std_tr20 = compute_metric_mean_and_std_slice_by_slice(spgr5_tr20)
 spgr10_mean_std_tr20 = compute_metric_mean_and_std_slice_by_slice(spgr10_tr20)
 spgr20_mean_std_tr20 = compute_metric_mean_and_std_slice_by_slice(spgr20_tr20)
@@ -96,6 +102,7 @@ ax_pd = fig1.add_subplot(221)
 ax_pd.errorbar(range(0, nz_tr20), pd_noB1_mean_std_tr20[:, 0], pd_noB1_mean_std_tr20[:, 1], label='PD without B1 correction (TR=20ms)', color='b')
 ax_pd.errorbar(range(0, nz_tr20), pd_B1_mean_std_tr20[:, 0], pd_B1_mean_std_tr20[:, 1], label='PD with B1 correction (TR=20ms)', color='g')
 ax_pd.errorbar(range(0, nz_tr20), pd_noB1_mean_std_tr20m[:, 0], pd_noB1_mean_std_tr20m[:, 1], label='PD without B1 correction (TR=20ms)-matlab', color='b', lw=3.0)  # matlab
+ax_pd.errorbar(range(0, nz_tr20), pd_B1_mean_std_tr20m[:, 0], pd_B1_mean_std_tr20m[:, 1], label='PD with B1 correction (TR=20ms)-matlab', color='g', lw=3.0)  # matlab
 # TR=10 ms
 ax_pd.errorbar(range(0, nz_tr10), pd_noB1_mean_std_tr10[:, 0], pd_noB1_mean_std_tr10[:, 1], label='PD without B1 correction (TR=10ms)', color='b', ls='--')
 ax_pd.errorbar(range(0, nz_tr10), pd_B1_mean_std_tr10[:, 0], pd_B1_mean_std_tr10[:, 1], label='PD with B1 correction (TR=10ms)', color='g', ls='--')
@@ -110,8 +117,8 @@ ax_t1 = fig1.add_subplot(222)
 # TR=20 ms
 ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20[:, 0], t1_noB1_mean_std_tr20[:, 1], label='T1 without B1 correction (TR=20ms)', color='b')
 ax_t1.errorbar(range(0, nz_tr20), t1_B1_mean_std_tr20[:, 0], t1_B1_mean_std_tr20[:, 1], label='T1 with B1 correction (TR=20ms)', color='g')
-ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20[:, 0], t1_noB1_mean_std_tr20[:, 1], label='T1 without B1 correction (TR=20ms)-matlab', color='b', lw=3.0)  # matlab
-
+ax_t1.errorbar(range(0, nz_tr20), t1_noB1_mean_std_tr20m[:, 0], t1_noB1_mean_std_tr20m[:, 1], label='T1 without B1 correction (TR=20ms)-matlab', color='b', lw=3.0)  # matlab
+ax_t1.errorbar(range(0, nz_tr20), t1_B1_mean_std_tr20m[:, 0], t1_B1_mean_std_tr20m[:, 1], label='T1 with B1 correction (TR=20ms)-matlab', color='g', lw=3.0)  # matlab
 # TR=10 ms
 ax_t1.errorbar(range(0, nz_tr10), t1_noB1_mean_std_tr10[:, 0], t1_noB1_mean_std_tr10[:, 1], label='T1 without B1 correction (TR=10ms)', color='b', ls='--')
 ax_t1.errorbar(range(0, nz_tr10), t1_B1_mean_std_tr10[:, 0], t1_B1_mean_std_tr10[:, 1], label='T1 with B1 correction (TR=10ms)', color='g', ls='--')
