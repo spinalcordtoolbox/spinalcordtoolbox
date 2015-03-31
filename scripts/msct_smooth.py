@@ -242,7 +242,7 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 #=======================================================================================================================
 #def b_spline_nurbs(x, y, z, control_points=0, degree=3,point_number=3000):
 
-def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3,point_number=3000):
+def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1):
 
     #from sct_nurbs_v2 import NURBS
     from sct_nurbs import NURBS
@@ -256,10 +256,12 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3,point_number=3000):
     #     print 'In b_spline_nurbs we get control_point = ', control_points
     #     nurbs = NURBS(degree, point_number, data, False, control_points)
 
-    import math
-    centerlineSize = getSize(x, y, z, fname_centerline)
-    nbControl = 30*math.log(centerlineSize, 10) - 42
-    nbControl = round(nbControl)
+    if nbControl == -1:
+        import math
+        centerlineSize = getSize(x, y, z, fname_centerline)
+        nbControl = 30*math.log(centerlineSize, 10) - 42
+        nbControl = round(nbControl)
+
     nurbs = NURBS(degree, point_number, data, False, nbControl)
 
     P = nurbs.getCourbe3D()

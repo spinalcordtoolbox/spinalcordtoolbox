@@ -101,7 +101,7 @@ if __name__ == "__main__":
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
                       mandatory=False)
     parser.add_option(name="-init",
-                      type_value="int",
+                      type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
                       mandatory=False)
     parser.add_option(name="-init-mask",
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
 
-    sct.runProcess(cmd, verbose)
+    sct.run(cmd, verbose)
 
     sct.printv("\nDone!",1,"normal")
     sct.printv("Type the following command in the terminal to see the results:", 1, "normal")

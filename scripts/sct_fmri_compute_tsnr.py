@@ -12,9 +12,10 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
+import sys
+
 from msct_parser import *
 import sct_utils as sct
-import sys
 
 
 class Param:
@@ -43,20 +44,20 @@ class Tsnr:
         sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
         path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
         fname_fmri_moco = fname_fmri + '_moco'
-        sct.runProcess('mcflirt -in ' + sct.slash_at_the_end(path_fmri) + fname_fmri + ' -out ' + fname_fmri_moco)
+        sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri) + fname_fmri + ' -out ' + fname_fmri_moco)
 
         # compute tsnr
         sct.printv('\nCompute the tSNR...', self.param.verbose, 'normal')
         fname_fmri_moco_mean = fname_fmri_moco + '_mean'
-        sct.runProcess('fslmaths ' + fname_fmri_moco + ' -Tmean ' + fname_fmri_moco_mean)
+        sct.run('fslmaths ' + fname_fmri_moco + ' -Tmean ' + fname_fmri_moco_mean)
         fname_fmri_moco_std = fname_fmri_moco + '_std'
-        sct.runProcess('fslmaths ' + fname_fmri_moco + ' -Tstd ' + fname_fmri_moco_std)
+        sct.run('fslmaths ' + fname_fmri_moco + ' -Tstd ' + fname_fmri_moco_std)
         fname_fmri_tsnr = fname_fmri + '_tsnr'
-        sct.runProcess('fslmaths ' + fname_fmri_moco_mean + ' -div ' + fname_fmri_moco_std + ' ' + fname_fmri_tsnr)
+        sct.run('fslmaths ' + fname_fmri_moco_mean + ' -div ' + fname_fmri_moco_std + ' ' + fname_fmri_tsnr)
 
         # Remove temp files
         sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        sct.runProcess('rm ' + fname_fmri_moco_std + '.nii.gz')
+        sct.run('rm ' + fname_fmri_moco_std + '.nii.gz')
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
@@ -85,9 +86,10 @@ if __name__ == "__main__":
                           mandatory=True,
                           example='fmri.nii.gz')
         parser.add_option(name="-v",
-                          type_value="int",
+                          type_value="multiple_choice",
                           description="verbose",
-                          mandatory=False)
+                          mandatory=False,
+                          example=['0', '1'])
 
         arguments = parser.parse(sys.argv[1:])
         input_fmri = arguments["-i"]

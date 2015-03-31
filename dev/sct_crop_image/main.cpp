@@ -29,25 +29,29 @@ typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags OrientationType
 void help()
 {
     cout << "sct_crop_image" << endl;
-    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuropoly.info>" << endl;
-    cout << "modified: 2015-03-24" << endl;
+    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuro.polymtl.ca>" << endl;
+    cout << "modified: 2015-03-26" << endl;
 	
-	cout << "This program crop an image. You can provide either directly the starting and ending slice number around that the image will be cropped or a mask. You can as well crop in any dimension you want. This program supports 2D to 7D images with the following voxel types: char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double." << endl << endl;
+    cout << "This program crop an image in any direction. You can provide either directly the starting and ending slice number around that the image will be cropped or a mask. You can as well crop in any dimension you want. This program supports 2D to 7D images with the following voxel types: char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double." << endl;
+    cout << "You can also crop an image based on the maximum field a view in the one direction where there are non-null voxels (-bzmax option). You must indicate the dimension you want to crop (-dim option)" << endl << endl;
     
     cout << "Usage : " << endl << "\t sct_crop_image -i <inputfilename> -o <outputfilename> [options]" << endl;
     cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -m <maskfilename> [options]" << endl;
     cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -dim 1,3 -start 20,35 -end 70,50" << endl << endl;
     
-    cout << "Available options : " << endl;
-    cout << "\t-i <inputfilename> \t (no default)" << endl;
-    cout << "\t-o <outputfilename> \t (no default)" << endl;
-    cout << "\t-m <maskfilename> \t (cropping around the mask)" << endl;
-    cout << "\t-start <s0,...,sn> \t (start slices, ]0,1[: percentage, 0 & >1: slice number)" << endl;
-    cout << "\t-end <e0,...,en> \t (end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value)" << endl;
-    cout << "\t-dim <d0,...,dn> \t (dimension to crop, from 0 to n-1, default is 1)" << endl;
-    cout << "\t-shift <s0,...,sn> \t (adding shift when used with mask, default is 0)" << endl;
-    cout << "\t-b <backgroundvalue> \t (replace voxels outside cropping region with background value)" << endl;
-    cout << "\t-mesh <meshfilename> \t (mesh to crop)" << endl;
+    cout << "MANDATORY ARGUMENTS" << endl;
+    cout << "\t-i <inputfilename>" << endl;
+    cout << "\t-o <outputfilename>" << endl;
+    
+    cout << endl << "OPTIONAL ARGUMENTS" << endl;
+    cout << "\t-m <maskfilename> \t cropping around the mask" << endl;
+    cout << "\t-start <s0,...,sn> \t start slices, ]0,1[: percentage, 0 & >1: slice number" << endl;
+    cout << "\t-end <e0,...,en> \t end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value" << endl;
+    cout << "\t-dim <d0,...,dn> \t dimension to crop, from 0 to n-1, default is 1" << endl;
+    cout << "\t-shift <s0,...,sn> \t adding shift when used with mask, default is 0" << endl;
+    cout << "\t-b <backgroundvalue> \t replace voxels outside cropping region with background value" << endl;
+    cout << "\t-bzmax \t\t\t maximize the cropping of the image in one dimension (must provide -dim)" << endl;
+    cout << "\t-mesh <meshfilename> \t mesh to crop" << endl;
     cout << "\t-help" << endl;
 }
 
@@ -356,13 +360,29 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
     }
     else
     {
+        vector<float> startSlices_temp = vector<float>(N);
+        vector<float> endSlices_temp = vector<float>(N);
+        for (int i=0; i<N; i++) {
+            startSlices_temp[i] = 0;
+            endSlices_temp[i] = desiredSize1[i];
+        }
         for (int i=0; i<dims.size(); i++) {
-            if (startSlices[i] > 0.0 && startSlices[i] < 1.0) startSlices[i] = desiredSize1[dims[i]]*startSlices[i];
-            if (endSlices[i] > 0.0 && endSlices[i] < 1.0) endSlices[i] = desiredSize1[dims[i]]*endSlices[i];
-            else if (endSlices[i] < 0) endSlices[i] = desiredSize1[dims[i]] + endSlices[i] - 1.0;
-            else if (endSlices[i] == 0.0) endSlices[i] = desiredSize1[dims[i]]-1;
+            startSlices_temp[dims[i]] = startSlices[i];
+            endSlices_temp[dims[i]] = endSlices[i];
+        }
+        startSlices = startSlices_temp;
+        endSlices = endSlices_temp;
+        
+        for (int i=0; i<dims.size(); i++) {
+            if (startSlices[dims[i]] > 0.0 && startSlices[dims[i]] < 1.0) startSlices[dims[i]] = desiredSize1[dims[i]]*startSlices[dims[i]];
+            if (endSlices[dims[i]] > 0.0 && endSlices[dims[i]] < 1.0) endSlices[dims[i]] = desiredSize1[dims[i]]*endSlices[dims[i]];
+            else if (endSlices[dims[i]] < 0) endSlices[dims[i]] = desiredSize1[dims[i]] + endSlices[dims[i]] - 1.0;
+            else if (endSlices[dims[i]] == 0.0) endSlices[dims[i]] = desiredSize1[dims[i]]-1;
         }
 	}
+    
+    for (int i=0; i<N; i++)
+        cout << startSlices[i] << " " << endSlices[i] << endl;
     
 	typename ImageType::IndexType desiredStart1;
     desiredStart1.Fill(0);

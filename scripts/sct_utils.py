@@ -41,7 +41,7 @@ class bcolors:
 # run
 #=======================================================================================================================
 # Run UNIX command
-def run(cmd, verbose=1):
+def run_old(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
@@ -50,33 +50,21 @@ def run(cmd, verbose=1):
     else:
         return status, output
 
-def runProcess(cmd, verbose=1):
+def run(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output_final = ''
     while True:
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
-
-    (output, err) = process.communicate()
-
-    '''
-    if timeout is None:
-        process.wait()
-    else:
-        while process.poll() is None:
-            time.sleep(0.2)
-            now = datetime.datetime.now()
-            if (now - start).seconds > timeout:
-                os.kill(process.pid, signal.SIGKILL)
-                os.waitpid(-1, os.WNOHANG)
-                return None, "Error, a timeout for this process occurred"
-    '''
-
-    return process.wait(), output
+            if verbose==1:
+                print output.strip()
+            output_final += output.strip()+'\n'
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    return process.returncode, output_final[0:-1]
 
 #==============e=========================================================================================================
 # check RAM usage
