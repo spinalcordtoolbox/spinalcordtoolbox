@@ -30,6 +30,7 @@ from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg
 
 
+
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -53,12 +54,12 @@ class Param:
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 class Paramreg_step(Paramreg):
-    def __init__(self):
+    def __init__(self, step='1', type='im', algo='syn', metric='MI', iter='10', shrink='2', smooth='0', poly='3', gradStep='0.5'):
         # additional parameters from class Paramreg
-        self.step = '1'
-        self.type = 'im'
+        self.step = step
+        self.type = type
         # inheritate class Paramreg from sct_register_multimodal
-        Paramreg.__init__(self)
+        Paramreg.__init__(self, algo, metric, iter, shrink, smooth, poly, gradStep)
 
 
 # MAIN
@@ -66,7 +67,9 @@ class Paramreg_step(Paramreg):
 def main():
 
     # get default parameters
-    paramreg = Paramreg()
+    paramreg = dict()
+    paramreg['1'] = Paramreg_step(step='1', type='seg')
+    paramreg['2'] = Paramreg_step(step='2', type='im')
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -120,6 +123,9 @@ def main():
     path_template = arguments['-t']
     remove_temp_files = arguments['-r']
     verbose = arguments['-v']
+
+    # check paramreg_user
+    numberOfStep = len(paramreg_user)
 
     # initialize other parameters
     file_template = param.file_template

@@ -53,14 +53,15 @@ class Param:
 
 # Parameters for registration
 class Paramreg:
-    def __init__(self):
-        self.algo = 'syn'
-        self.metric = 'MI'
-        self.iter = '10'
-        self.shrink = '2'
-        self.smooth = '0'
-        self.poly = '3'  # slicereg only
-        self.gradStep = '0.5'
+    def __init__(self, algo='syn', metric='MI', iter='10', shrink='2', smooth='0', poly='3', gradStep='0.5'):
+        self.algo = algo
+        self.metric = metric
+        self.iter = iter
+        self.shrink = shrink
+        self.smooth = smooth
+        self.poly = poly  # slicereg only
+        self.gradStep = gradStep
+
     # update constructor with user's parameters
     def update(self, paramreg_user):
         list_objects = paramreg_user.split(',')
