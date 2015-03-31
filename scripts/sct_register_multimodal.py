@@ -36,7 +36,6 @@
 
 import sys
 #import getopt
-import shutil
 import os
 import commands
 import time
@@ -142,11 +141,13 @@ def main():
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
                       mandatory=False,
+                      default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
                       mandatory=False,
+                      default_value='1',
                       example=['0', '1'])
     arguments = parser.parse(sys.argv[1:])
 
@@ -198,13 +199,6 @@ def main():
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
 
-    # # check existence of input files
-    # print '\nCheck if files exist...'
-    # sct.check_file_exist(fname_src)
-    # sct.check_file_exist(fname_dest)
-    # if not fname_mask == '':
-    #     sct.check_file_exist(fname_mask)
-
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
     sct.check_if_3d(fname_src)
@@ -233,16 +227,16 @@ def main():
         path_out, file_out, ext_out = sct.extract_fname(fname_output)
 
     # create temporary folder
-    print('\nCreate temporary folder...')
+    sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    status, output = sct.run('mkdir '+path_tmp)
+    status, output = sct.run('mkdir '+path_tmp, verbose)
 
     # copy files to temporary folder
-    print('\nCopy files...')
-    sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/src.nii')
-    sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii')
+    sct.printv('\nCopy files...', verbose)
+    sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
+    sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
     if not fname_mask == '':
-        sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz')
+        sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
         masking = '-x mask.nii.gz'  # this variable will be used when calling ants
     else:
         masking = ''  # this variable will be used when calling ants
@@ -256,7 +250,7 @@ def main():
 
     # Put source into destination space using header (no estimation -- purely based on header)
     sct.printv('\nPut source into destination space using header...', verbose)
-    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]')
+    sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
 
     # Estimate transformation
     sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
@@ -284,40 +278,41 @@ def main():
                '--interpolation BSpline[3] '
                +masking)
     else:
-        sct.printv('ERROR: algo '+paramreg.algo+' does not exist. Exit program', 1, 'error')
+        sct.printv('\nERROR: algo '+paramreg.algo+' does not exist. Exit program\n', '1', 'error')
 
     # run registration
-    status, output = sct.run(cmd)
+    status, output = sct.run(cmd, verbose)
     if status:
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
 
     # Concatenate transformations
     sct.printv('\nConcatenate affine and local transformations...', verbose)
-    sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2dest.nii.gz')
-    sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2src.nii.gz')
+    sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2dest.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
-    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x '+interp)
+    sct.run('sct_apply_transfo -i src.nii -o src_reg.nii -d dest.nii -w warp_src2dest.nii.gz -x '+interp, verbose)
     sct.printv('\nApply transfo dest --> source...', verbose)
-    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x '+interp)
+    sct.run('sct_apply_transfo -i dest.nii -o dest_reg.nii -d src.nii -w warp_dest2src.nii.gz -x '+interp, verbose)
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out)
-    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz')
-    fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest)
-    sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz')
+    fname_src2dest = sct.generate_output_file(path_tmp+'/src_reg.nii', path_out+file_out+ext_out, verbose)
+    sct.generate_output_file(path_tmp+'/warp_src2dest.nii.gz', path_out+'warp_'+file_src+'2'+file_dest+'.nii.gz', verbose)
+    fname_dest2src = sct.generate_output_file(path_tmp+'/dest_reg.nii', path_out+file_dest+'_reg'+ext_dest, verbose)
+    sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
     # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
     # Delete temporary files
     if remove_temp_files == 1:
         sct.printv('\nRemove temporary files...', verbose)
-        shutil.rmtree(path_tmp)
+        os.removedirs(path_tmp)
+        #shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

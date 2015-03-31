@@ -14,7 +14,6 @@
 import os
 import errno
 import sys
-import traceback
 import commands
 import subprocess
 import re
@@ -50,8 +49,8 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
-def run(cmd, verbose=1):
-    if verbose:
+def run(cmd, verbose='1'):
+    if verbose == '1':
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
@@ -60,7 +59,7 @@ def run(cmd, verbose=1):
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose==1:
+            if verbose == '1':
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
@@ -348,7 +347,7 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.bold
 
     # print message
-    if verbose:
+    if verbose == '1':
         print(color+string+bcolors.normal)
 
     # if error, exit prohram
