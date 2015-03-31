@@ -52,7 +52,7 @@ class Param:
 
 
 # Parameters for registration
-class Paramreg:
+class Paramreg(object):
     def __init__(self, algo='syn', metric='MI', iter='10', shrink='2', smooth='0', poly='3', gradStep='0.5'):
         self.algo = algo
         self.metric = metric
@@ -155,9 +155,9 @@ def main():
     fname_src = arguments['-i']
     fname_dest = arguments['-d']
     fname_output = arguments['-o']
-    fname_mask = arguments['-m']
+    if '-m' in arguments:
+        fname_mask = arguments['-m']
     padding = arguments['-z']
-    fname_mask = arguments['-m']
     paramreg_user = arguments['-p']
     remove_temp_files = arguments['-r']
     interp = arguments['-x']
