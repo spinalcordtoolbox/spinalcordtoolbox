@@ -45,7 +45,7 @@ import commands
 import numpy as np
 import time
 import sct_utils as sct
-from sct_nurbs import NURBS
+from msct_nurbs import NURBS
 import scipy
 import nibabel
 from sct_orientation import get_orientation, set_orientation
