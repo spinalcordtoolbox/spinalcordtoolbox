@@ -13,8 +13,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
 import commands
+
+import sct_utils as sct
 
 
 def test(path_data):
@@ -24,7 +25,6 @@ def test(path_data):
 
     cmd = 'sct_straighten_spinalcord -i '+ path_data + folder_data + file_data[0] \
           + ' -c ' + path_data + folder_data + file_data[1] \
-          + ' -f splines' \
           + ' -r 0' \
           + ' -v 1'
     return sct.run(cmd, 0)
