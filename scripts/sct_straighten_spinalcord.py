@@ -39,6 +39,7 @@ from sct_orientation import set_orientation
 
 
 
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -82,8 +83,8 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
-        fname_centerline = path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
+        fname_anat = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'  #path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
+        fname_centerline = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  # path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
         remove_temp_files = 0
         type_window = 'hanning'
         verbose = 1
@@ -137,7 +138,7 @@ def main():
     
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    sct.run('mkdir '+path_tmp, verbose)
 
     # copy files into tmp folder
     sct.run('cp '+fname_anat+' '+path_tmp)
@@ -424,10 +425,6 @@ def main():
     save(img, 'tmp.landmarks_straight.nii.gz')
     sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
-    # remove padding for straight labels
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 0,1 -start '+str(padding-2)+','+str(padding-2)+' -end '+str(nx+padding+1)+','+str(ny+padding+1), verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 2 -bzmax', verbose)
-
 
     # Estimate deformation field by pairing landmarks
     #==========================================================================================
@@ -436,6 +433,7 @@ def main():
     sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
     sct.run('sct_label_utils -t remove -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -r tmp.landmarks_curved.nii.gz', verbose)
 
+    # convert landmarks to INT
     sct.printv('\nConvert landmarks to INT...', verbose)
     sct.run('sct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
     sct.run('sct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
@@ -451,43 +449,35 @@ def main():
     # Estimate b-spline transformation curve --> straight
     sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
     sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0', verbose)
-    
+
+    # remove padding for straight labels
+    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
+    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
     #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # !!! DO NOT USE sct.run HERE BECAUSE sct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
-    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
-    sct.printv('>> '+cmd, verbose, 'code')
+    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
+    sct.printv(cmd, verbose, 'code')
     commands.getstatusoutput(cmd)
-
-    # This stands to avoid overlapping between landmarks
-    #print('\nMake sure all labels between landmark_curved and landmark_curved match...')
-    #sct.run('sct_label_utils -t remove -i tmp.landmarks_curved_rigid.nii.gz -o tmp.landmarks_straight.nii.gz -r tmp.landmarks_straight.nii.gz')
 
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-    c = sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0', verbose)
+    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0', verbose)
     
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
-    # same comment as before
-    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
-    sct.printv('>> '+cmd, verbose, 'code')
-    c = commands.getstatusoutput(cmd)
-    
-    #print '\nPad input image...'
-    #sct.run('sct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
-    
-    # Unpad landmarks...
-    # THIS WAS REMOVED ON 2014-06-03 because the output data was cropped at the edge, which caused landmarks to sometimes disappear
-    # print '\nUnpad landmarks...'
-    # sct.run('fslroi tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
-    
-    # Apply deformation to input image
+    # cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    sct.printv(cmd, verbose, 'code')
+    commands.getstatusoutput(cmd)
+
+    # Apply transformation to input image
     sct.printv('\nApply transformation to input image...', verbose)
-    c = sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+    sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz', verbose)
 
     # come back to parent folder
     os.chdir('..')
