@@ -28,7 +28,8 @@ import sct_utils as sct
 from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg
 from msct_parser import Parser
-
+from msct_image import Image
+from msct_types import Coordinate
 
 
 
@@ -224,6 +225,20 @@ def main():
         sct.printv('.. Metric................... '+paramreg.steps[pStep].metric)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
+
+    # check if label image contains coherent labels
+    image_label = Image(fname_landmarks)
+    # -> all labels must be different
+    labels = image_label.getNonZeroCoordinates()
+    hasDifferentLabels = True
+    for lab in labels:
+        for otherlabel in labels:
+            if lab != otherlabel and lab.hasEqualValue(otherlabel):
+                hasDifferentLabels = False
+                break
+    if not hasDifferentLabels:
+        print 'ERROR: Wrong landmarks input. All labels must be different.'
+        sys.exit(2)
 
     # create temporary folder
     print('\nCreate temporary folder...')
