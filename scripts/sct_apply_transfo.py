@@ -25,6 +25,7 @@ import sct_utils as sct
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     def __init__(self):
@@ -180,7 +181,6 @@ def main():
         os.chdir('..')
 
     # display elapsed time
-    elapsed_time = time.time() - start_time
     sct.printv('\nDone! To view results, type:', verbose)
     sct.printv('fslview '+fname_dest+' '+fname_out+' &\n', verbose, 'info')
 
