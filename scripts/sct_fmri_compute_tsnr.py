@@ -95,7 +95,7 @@ if __name__ == "__main__":
         input_fmri = arguments["-i"]
 
         if "-v" in arguments:
-            param.verbose = arguments["-v"]
+            param.verbose = int(arguments["-v"])
 
         tsnr = Tsnr(param=param, fmri=input_fmri)
         tsnr.compute()
