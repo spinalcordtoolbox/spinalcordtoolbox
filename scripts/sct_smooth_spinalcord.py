@@ -19,8 +19,9 @@ import getopt
 import os
 import sys
 import time
+
 import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
+from sct_orientation import set_orientation
 
 
 class Param:
@@ -108,7 +109,7 @@ def main():
 
     # Straighten the spinal cord
     print '\nStraighten the spinal cord...'
-    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -w spline -v '+str(verbose))
+    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -x spline -v '+str(verbose))
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
