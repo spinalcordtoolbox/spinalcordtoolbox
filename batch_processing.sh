@@ -16,16 +16,15 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # spinal cord segmentation
-# tips: we use "-max-deformation 3" otherwise the segmentation does not cover the whole spinal cord
+# tips: we use "-max-deformation 4" otherwise the segmentation does not cover the whole spinal cord
 # tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
-# tips: we use "-centerline-binary" to get the centerline, which can be used to initialize segmentation on other contrasts.
-sct_propseg -i t2.nii.gz -t t2 -centerline-binary -mesh -max-deformation 4 -init 130
+# tips: we use "-mesh" to get the mesh of the segmentation, which can be viewed using MITKWORKBENCH
+sct_propseg -i t2.nii.gz -t t2 -mesh -max-deformation 4 -init 130
 # check your results:
 fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
-# tips: You can also use MITKWORKBENCH to view the mesh.
 # At this point you should make labels. Here we can use the file labels.nii.gz, which contains labels at C3 (value=3) and T4 (value=11).
 # register to template
-sct_register_to_template -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -o 1 -s normal -r 0
+sct_register_to_template -i t2.nii.gz -l labels.nii.gz -s t2_seg.nii.gz -r 0
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # compute cross-sectional area
