@@ -5,8 +5,8 @@
 
 - NEW: sct_fmri_compute_tsnr: new function to compute TSNR from fMRI data (performs moco before)
 - OPT: sct_straighten_spinalcord: now MUCH faster and more accurate (issue #240)
-- OPT: sct_register_to_template: more accurate, allows more flexibility regarding input parameters.
-       N.B. parameter "-m" has been replaced by "-s" 
+- OPT: sct_register_to_template: allows more flexibility by allowing multiple steps for registration (flag -p).
+  - N.B. flag "-m" has been replaced by "-s"
 - OPT: sct_register_multimodal: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
 - OPT: sct_extract_metric: new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
 - OPT: new WM atlas: added gray matter and CSF for computing partial volume
@@ -18,6 +18,7 @@
 - OPT: straightening: improved smoothing and variable resolution
 - OPT: sct_register_multimodal: simplification of registration between multimodal images, it is now possible to use regularized slice-wise registration (SliceReg)
 - NEW: sct_get_ernst_angle: new script to compute and display Ernst angle depending on T1 and TR
+- OPT: sct_process_segmentation: now allows to compute average CSA across vertebral levels (or slices)
 
 ##1.1.2_beta (2014-12-25)
 
