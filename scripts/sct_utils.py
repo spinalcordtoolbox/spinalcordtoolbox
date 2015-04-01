@@ -280,6 +280,8 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
+        print "HOLA2"
+
         printv('  ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
@@ -300,7 +302,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
-    if verbose:
+    if verbose == 1 or verbose == '1':
         print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
@@ -347,7 +349,7 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.bold
 
     # print message
-    if verbose == '1':
+    if verbose == 1 or verbose == '1':
         print(color+string+bcolors.normal)
 
     # if error, exit prohram
