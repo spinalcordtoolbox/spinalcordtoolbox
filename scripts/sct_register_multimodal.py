@@ -160,9 +160,9 @@ def main():
         fname_mask = arguments['-m']
     padding = arguments['-z']
     paramreg_user = arguments['-p']
-    remove_temp_files = arguments['-r']
     interp = arguments['-x']
-    verbose = arguments['-v']
+    remove_temp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
 
     # Parameters for debug mode
     if param.debug:
@@ -172,7 +172,7 @@ def main():
         fname_src = path_sct_data+'/t2/t2.nii.gz'
         param_user = '10,syn,0.5,MI'
         remove_temp_files = '0'
-        verbose = '1'
+        verbose = 1
 
     # update paramreg with user's arguments
     paramreg.update(paramreg_user)
@@ -236,7 +236,7 @@ def main():
 
     # if sliceReg is used, we can't pad in the image...
     if paramreg.algo == 'slicereg':
-        sct.printv('WARNING: if sliceReg is used, padding should not be used. Now setting padding=0', '1', 'warning')
+        sct.printv('WARNING: if sliceReg is used, padding should not be used. Now setting padding=0', 1, 'warning')
         padding = 0
 
     # Pad the destination image (because ants doesn't deform the extremities)
@@ -280,13 +280,13 @@ def main():
                '--interpolation BSpline[3] '
                +masking)
     else:
-        sct.printv('\nERROR: algo '+paramreg.algo+' does not exist. Exit program\n', '1', 'error')
+        sct.printv('\nERROR: algo '+paramreg.algo+' does not exist. Exit program\n', 1, 'error')
 
     # run registration
     status, output = sct.run(cmd, verbose)
     if status:
-        sct.printv(output, '1', 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', '1', 'error')
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
 
     # Concatenate transformations
     sct.printv('\nConcatenate affine and local transformations...', verbose)
@@ -312,7 +312,7 @@ def main():
 
 
     # Delete temporary files
-    if remove_temp_files == '1':
+    if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
         os.removedirs(path_tmp)
 
@@ -328,7 +328,7 @@ def main():
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in, file_out, padding):
-    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, '1')
+    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
     return
 
 
