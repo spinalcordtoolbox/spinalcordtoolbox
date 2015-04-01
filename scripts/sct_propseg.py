@@ -39,13 +39,11 @@ if __name__ == "__main__":
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-up",
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
