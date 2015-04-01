@@ -20,11 +20,6 @@ import commands
 import getopt
 import time
 
-
-# get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
 import sct_utils as sct
 
 
@@ -53,6 +48,9 @@ def main():
     # start timer
     start_time = time.time()
     
+    # get path of the toolbox
+    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
     # Parameters for debug mode
     if param.debug:
         fname_data = path_sct+'/testing/data/errsm_23/t2/t2_manual_segmentation.nii.gz'
