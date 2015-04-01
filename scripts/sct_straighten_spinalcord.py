@@ -26,17 +26,18 @@ import getopt
 import time
 import commands
 import sys
+
 import sct_utils as sct
+
 # from sct_utils import fsloutput
 # from sct_nurbs import NURBS
 from nibabel import load, Nifti1Image, save
-from numpy import array, asarray, append, insert, linalg, arctan, cos, sin
 # from scipy import interpolate # TODO: check if used
 from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
 from msct_smooth import smoothing_window, evaluate_derivative_3D
-from sct_orientation import get_orientation, set_orientation
+from sct_orientation import set_orientation
 # from scipy.interpolate import interp1d
 
 
@@ -97,7 +98,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:w:f:v:n:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:v:x:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -112,7 +113,7 @@ def main():
                 fname_centerline = arg
             elif opt in ('-r'):
                 remove_temp_files = int(arg)
-            elif opt in ('-w'):
+            elif opt in ('-x'):
                 interpolation_warp = str(arg)
             # elif opt in ('-f'):
             #     centerline_fitting = str(arg)
@@ -513,7 +514,7 @@ def main():
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview '+fname_straight+' &', verbose, 'info')
+    sct.printv('fslview '+fname_straight+' &\n', verbose, 'info')
 
 
 
@@ -538,7 +539,7 @@ def usage():
         '\n'\
         'OPTIONAL ARGUMENTS\n' \
         '  -p <padding>      amount of padding for generating labels. Default='+str(param_default.padding)+'\n' \
-        '  -x {nearestneighbor,trilinear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
+        '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
