@@ -20,7 +20,6 @@
 # TODO: set gradient-step-length in mm instead of vox size.
 
 import sys
-import getopt
 import os
 import commands
 import time
@@ -29,6 +28,7 @@ import sct_utils as sct
 from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg
 from msct_parser import Parser
+
 
 
 
@@ -313,7 +313,7 @@ def main():
         list_inverse_warping_fields.append('warp_'+f_template_seg+'2'+file_multistepreg['seg']+'.nii.gz')
         sct.run('sct_apply_transfo -i '+file_multistepreg['im']+'.nii.gz -w warp_'+file_multistepreg['seg']+'2'+f_template_seg+'.nii.gz -d '+fname_template+' -o '+file_multistepreg['im']+'_step'+pStep.step+'.nii.gz')
 
-    for i in range(2,len(paramreg.steps)+1):
+    for i in range(2, len(paramreg.steps)+1):
         pStep = paramreg.steps[str(i)]
         if pStep is not '1': # first step is already done
             # compute warping field
