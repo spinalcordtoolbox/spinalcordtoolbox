@@ -27,18 +27,16 @@ import time
 import commands
 import sys
 
-import sct_utils as sct
-
-# from sct_utils import fsloutput
-# from sct_nurbs import NURBS
 from nibabel import load, Nifti1Image, save
-# from scipy import interpolate # TODO: check if used
+from numpy import array, asarray, append, insert, linalg
 from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
+
+import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D
 from sct_orientation import set_orientation
-# from scipy.interpolate import interp1d
+
 
 
 ## Create a structure to pass important user parameters to the main function
@@ -50,16 +48,10 @@ class Param:
         self.gapxy = 20  # size of cross in x and y direction for the landmarks
         self.gapz = 15  # gap between landmarks along z voxels
         self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
-        # self.fitting_method = 'smooth' # smooth | splines | polynomial
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
-        self.type_window = 'hanning'  # 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-        # self.nurbs_ctl_points = 0
-        # self.smooth_sigma = 15
-        # self.smooth_padding = 0
-        # self.smooth_sigma_low = 6
-
+        self.type_window = 'hanning'  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
 
 
 
@@ -286,7 +278,6 @@ def main():
 
     ### TODO: THIS PART IS SLOW AND CAN BE MADE FASTER
     ### >>==============================================================================================================
-    # elif centerline_fitting=='splines' or centerline_fitting == 'non_parametric' or centerline_fitting == 'smooth':
     for index in range(0, n_iz_curved, 1):
         # calculate d (ax+by+cz+d=0)
         # print iz_curved[index]
@@ -341,14 +332,13 @@ def main():
     landmark_straight = [ [ [ 0 for i in range(0,3)] for i in range (0,5) ] for i in iz_curved ] # same structure as landmark_curved
     
     # calculate the z indices corresponding to the Euclidean distance between two consecutive points on the curved centerline (approximation curve --> line)
-
+    # TODO: DO NOT APPROXIMATE CURVE --> LINE
     if nb_landmark == 1:
         iz_straight = [0 for i in range(0, nb_landmark+1)]
     else:
         iz_straight = [0 for i in range(0, nb_landmark)]
 
-
-    #print iz_straight,len(iz_straight)
+    # print iz_straight,len(iz_straight)
     iz_straight[0] = iz_curved[0]
     for index in range(1, n_iz_curved, 1):
         # compute vector between two consecutive points on the curved centerline
@@ -358,7 +348,7 @@ def main():
         # compute norm of this vector
         norm_vector_centerline = linalg.norm(vector_centerline, ord=2)
         # round to closest integer value
-        norm_vector_centerline_rounded = int(round(norm_vector_centerline,0))
+        norm_vector_centerline_rounded = int(round(norm_vector_centerline, 0))
         # assign this value to the current z-coordinate on the straight centerline
         iz_straight[index] = iz_straight[index-1] + norm_vector_centerline_rounded
     
@@ -423,7 +413,7 @@ def main():
             data_straight_landmarks[x+padding-1:x+padding+2, y+padding-1:y+padding+2, z+padding-1:z+padding+2] = landmark_value
             # increment landmark value
             landmark_value = landmark_value + 1
-    
+
     # Write NIFTI volumes
     sct.printv('\nWrite NIFTI volumes...', verbose)
     hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
@@ -433,6 +423,10 @@ def main():
     img = Nifti1Image(data_straight_landmarks, None, hdr)
     save(img, 'tmp.landmarks_straight.nii.gz')
     sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
+
+    # remove padding for straight labels
+    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 0,1 -start '+str(padding-2)+','+str(padding-2)+' -end '+str(nx+padding+1)+','+str(ny+padding+1), verbose)
+    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 2 -bzmax', verbose)
 
 
     # Estimate deformation field by pairing landmarks
