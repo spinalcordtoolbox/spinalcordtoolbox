@@ -24,10 +24,13 @@ import getopt
 import sys
 import time
 import commands
+
 import nibabel as nib
 import numpy as np
+
 import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
+
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -377,15 +380,15 @@ def read_label_file(path_info_label, file_info_label):
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in '+file_info_label+' ...'
+    # print '\nCheck existence of all files listed in '+file_info_label+' ...'
     for fname in label_file:
-        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
-                os.path.isfile(path_info_label+fname + '.nii.gz'):
-            print('  OK: '+path_info_label+fname)
-            pass
-        else:
-            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
-                  +file_info_label+'.\n')
+        sct.check_file_exist(path_info_label+fname)
+        # if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
+        #         os.path.isfile(path_info_label+fname + '.nii.gz'):
+        #     sct.printv('  OK: '+path_info_label+fname, param.verbose)
+        #     pass
+        # else:
+        #     sct.printv('  ERROR: ' + path_info_label+fname + ' does not exist\n', 1, 'error')
 
     # Close file.txt
     f.close()
