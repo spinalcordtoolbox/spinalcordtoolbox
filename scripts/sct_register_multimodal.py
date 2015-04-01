@@ -75,11 +75,12 @@ class Paramreg(object):
 def main():
 
     # Initialization
-    fname_output = ''
+    # fname_output = ''
     fname_mask = ''
-    padding = 5
-    remove_temp_files = 1
-    verbose = 1
+    # padding = 5
+    # remove_temp_files = 1
+    # verbose = 1
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
     start_time = time.time()
     # get path of the toolbox
@@ -130,7 +131,7 @@ def main():
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
-                      default_value='5')
+                      default_value=5)
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -155,7 +156,7 @@ def main():
     fname_src = arguments['-i']
     fname_dest = arguments['-d']
     fname_output = arguments['-o']
-    if '-m' in arguments:
+    if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
     paramreg_user = arguments['-p']
@@ -170,16 +171,11 @@ def main():
         fname_dest = path_sct_data+'/mt/mt1.nii.gz'
         fname_src = path_sct_data+'/t2/t2.nii.gz'
         param_user = '10,syn,0.5,MI'
-        remove_temp_files = 0
-        verbose = 1
+        remove_temp_files = '0'
+        verbose = '1'
 
     # update paramreg with user's arguments
     paramreg.update(paramreg_user)
-
-    # if sliceReg is used, we can't pad in the image...
-    if paramreg.algo == 'slicereg':
-        sct.printv('WARNING: if sliceReg is used, padding should not be used. Now setting padding=0', 1, 'warning')
-        padding = 0
 
     # print arguments
     print '\nInput parameters:'
@@ -238,6 +234,11 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # if sliceReg is used, we can't pad in the image...
+    if paramreg.algo == 'slicereg':
+        sct.printv('WARNING: if sliceReg is used, padding should not be used. Now setting padding=0', '1', 'warning')
+        padding = 0
+
     # Pad the destination image (because ants doesn't deform the extremities)
     sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
     pad_image('dest.nii', 'dest_pad.nii', padding)
@@ -250,6 +251,13 @@ def main():
     sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
 
     if paramreg.algo == 'slicereg':
+        # # threshold images (otherwise, automatic crop does not work -- see issue #293)
+        # sct.run(fsloutput+'fslmaths dest_pad -thr 0.1 dest_pad_thr', verbose)
+        # sct.run(fsloutput+'fslmaths src_regAffine -thr 0.1 src_regAffine_thr', verbose)
+        # # crop source and destination images in case some slices are the edge are empty (otherwise slicereg crashes)
+        # sct.run('sct_crop_image -i dest_pad_thr.nii -o dest_pad_thr_crop.nii -dim 2 -bzmax', verbose)
+        # sct.run('sct_crop_image -i src_regAffine_thr.nii -o src_regAffine_thr_crop.nii -dim 2 -bzmax', verbose)
+        # estimate transfo
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
                '-m '+paramreg.metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
@@ -277,8 +285,8 @@ def main():
     # run registration
     status, output = sct.run(cmd, verbose)
     if status:
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+        sct.printv(output, '1', 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', '1', 'error')
 
     # Concatenate transformations
     sct.printv('\nConcatenate affine and local transformations...', verbose)
@@ -302,11 +310,11 @@ def main():
     sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_'+file_dest+'2'+file_src+'.nii.gz', verbose)
     # sct.generate_output_file(path_tmp+'/warp_dest2src.nii.gz', path_out+'warp_dest2src.nii.gz')
 
+
     # Delete temporary files
-    if remove_temp_files == 1:
+    if remove_temp_files == '1':
         sct.printv('\nRemove temporary files...', verbose)
         os.removedirs(path_tmp)
-        #shutil.rmtree(path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
@@ -320,7 +328,7 @@ def main():
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in, file_out, padding):
-    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
+    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, '1')
     return
 
 
