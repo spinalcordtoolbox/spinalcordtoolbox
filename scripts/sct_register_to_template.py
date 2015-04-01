@@ -29,7 +29,7 @@ from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg
 from msct_parser import Parser
 from msct_image import Image
-from msct_types import Coordinate
+
 
 
 
@@ -124,7 +124,7 @@ def main():
                       default_value=param.path_template)
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number.\ntype: {im,seg} type of data used for registration.\nalgo: {syn,bsplinesyn,slicereg}. Default="""+paramreg.steps['1'].algo+"""\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {syn,bsplinesyn,slicereg}. Default="""+paramreg.steps['1'].algo+"""\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
                       mandatory=False,
                       example="algo=slicereg,metric=MeanSquares,iter=20")
     parser.add_option(name="-r",
