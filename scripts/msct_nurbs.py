@@ -59,8 +59,6 @@
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
-import sys
-import math
 # check if needed Python libraries are already installed or not
 try:
     from numpy import *
