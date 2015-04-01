@@ -49,8 +49,8 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
-def run(cmd, verbose='1'):
-    if verbose == '1':
+def run(cmd, verbose=1):
+    if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
@@ -59,7 +59,7 @@ def run(cmd, verbose='1'):
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose == '1':
+            if verbose:
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
@@ -302,7 +302,7 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
-    if verbose == 1 or verbose == '1':
+    if verbose:
         print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
@@ -349,7 +349,7 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.bold
 
     # print message
-    if verbose == 1 or verbose == '1':
+    if verbose:
         print(color+string+bcolors.normal)
 
     # if error, exit prohram

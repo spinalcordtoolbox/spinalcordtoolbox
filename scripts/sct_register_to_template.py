@@ -32,6 +32,7 @@ from msct_parser import Parser
 
 
 
+
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -85,7 +86,7 @@ class ParamregMultiStep:
             else:
                 self.steps[param_reg.step] = param_reg
         else:
-            sct.printv("ERROR: parameters must contain 'step'",1,'error')
+            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
 
 # MAIN
 # ==========================================================================================
@@ -144,8 +145,8 @@ def main():
     fname_seg = arguments['-s']
     fname_landmarks = arguments['-l']
     path_template = arguments['-t']
-    remove_temp_files = arguments['-r']
-    verbose = arguments['-v']
+    remove_temp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
 
     speed = "normal"
 
@@ -361,14 +362,14 @@ def main():
 
    # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz')
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz')
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz', verbose)
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data, verbose)
 
     # Delete temporary files
-    if remove_temp_files == 1:
+    if remove_temp_files:
         sct.printv('\nDelete temporary files...', verbose)
         sct.run('rm -rf '+path_tmp)
 
