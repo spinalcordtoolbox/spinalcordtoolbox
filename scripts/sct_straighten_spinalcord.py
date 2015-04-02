@@ -39,6 +39,11 @@ from sct_orientation import set_orientation
 
 
 
+
+
+
+
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -52,6 +57,7 @@ class Param:
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
         self.type_window = 'hanning'  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+        self.window_length = 50
 
 
 
@@ -69,8 +75,6 @@ def main():
     remove_temp_files = param.remove_temp_files
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
-    window_length = 50
-    type_window = param.type_window
 
     # start timer
     start_time = time.time()
@@ -82,11 +86,11 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
-        fname_centerline = path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
+        fname_anat = '/Users/julien/data/temp/sct_example_data/t2/tmp.150401221259/anat_rpi.nii'  #path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
+        fname_centerline = '/Users/julien/data/temp/sct_example_data/t2/tmp.150401221259/centerline_rpi.nii'  # path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
         remove_temp_files = 0
         type_window = 'hanning'
-        verbose = 1
+        verbose = 2
     else:
         # Check input param
         try:
@@ -118,6 +122,9 @@ def main():
     if fname_anat == '' or fname_centerline == '':
         usage()
 
+    # update field
+    param.verbose = verbose
+
     # check existence of input files
     sct.check_file_exist(fname_anat)
     sct.check_file_exist(fname_centerline)
@@ -137,7 +144,7 @@ def main():
     
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    sct.run('mkdir '+path_tmp, verbose)
 
     # copy files into tmp folder
     sct.run('cp '+fname_anat+' '+path_tmp)
@@ -146,111 +153,19 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
-
-    # FIND CENTER OF MASS OF CENTERLINE
-    #==========================================================================================
     # Change orientation of the input centerline into RPI
-    print '\nOrient centerline to RPI orientation...'
-    fname_centerline_orient = 'centerline_rpi' + ext_centerline
-    set_orientation(file_centerline+ext_centerline, 'RPI', fname_centerline_orient)
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
+    fname_centerline_orient = file_centerline+'_rpi.nii.gz'
+    set_orientation(fname_centerline, 'RPI', fname_centerline_orient)
 
-    print '\nGet dimensions of input centerline...'
+    # Get dimension
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
-    print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-    print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    # open centerline
-    print '\nOpen centerline volume...'
-    file = load(fname_centerline_orient)
-    data = file.get_data()
-
-    # loop across z and associate x,y coordinate with the point having maximum intensity
-    # N.B. len(z_centerline) = nz_nonz can be smaller than nz in case the centerline is smaller than the input volume
-    z_centerline = [iz for iz in range(0, nz, 1) if data[:, :, iz].any()]
-    nz_nonz = len(z_centerline)
-    x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    x_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
-    y_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
-    z_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
-
-    # get center of mass of the centerline/segmentation
-    sct.printv('\nGet center of mass of the centerline/segmentation...', verbose)
-    for iz in range(0, nz_nonz, 1):
-        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
-
-    # 2D smoothing
-
-    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-    if window_length >= int(2*nz_nonz * pz):
-        window_length = int(2*nz_nonz * pz)
-        print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length)
-    if window_length >= int(2*nz_nonz * pz):
-        window_length = int(2*nz_nonz * pz)
-        print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length)
-
-    # change to array
-    x_centerline = asarray(x_centerline)
-    y_centerline = asarray(y_centerline)
-
-    # Extension of the curve to smooth, to avoid edge effects
-    x_centerline_extended = x_centerline
-    for i in range(int(window_length/(2.0*pz))+1):
-        x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i])
-        x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i])
-
-    y_centerline_extended = y_centerline
-    for i in range(int(window_length/(2.0*pz))+1):
-        y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i])
-        y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
-
-    # Smoothing of the extended curve
-    x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
-    y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
-
-    # Selection of the part of interest of the extended curve
-    x_centerline_final = x_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + x_centerline.shape[0]]
-    #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
-    y_centerline_final = y_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + y_centerline.shape[0]]
-
-    # convert to list final result
-    x_centerline_final = x_centerline_final.tolist()
-    y_centerline_final = y_centerline_final.tolist()
-
-    if verbose == 2:
-        import matplotlib.pyplot as plt
-        plt.figure(1)
-        #ax = plt.subplot(211)
-        plt.subplot(211)
-        plt.plot(z_centerline, x_centerline, 'ro')
-        plt.plot(z_centerline, x_centerline_final)
-        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-        #ax.set_aspect('equal')
-        plt.xlabel('z')
-        plt.ylabel('x')
-        #ay = plt.subplot(212)
-        plt.subplot(212)
-        plt.plot(z_centerline, y_centerline, 'ro')
-        plt.plot(z_centerline, y_centerline_final)
-        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-        #ay.set_aspect('equal')
-        plt.xlabel('z')
-        plt.ylabel('y')
-        plt.show()
-
-    x_centerline = x_centerline_final
-    y_centerline = y_centerline_final
-
-    # clear variable
-    del data
-
-    x_centerline_fit = x_centerline
-    y_centerline_fit = y_centerline
-    z_centerline_fit = z_centerline
-
-    # get derivative
-    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline, px, py, pz)
-
+    # smooth centerline
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param)
 
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -258,6 +173,7 @@ def main():
     # landmarks are created along the curved centerline every z=gapz. They consist of a "cross" of size gapx and gapy. In voxel space!!!
     
     # find z indices along centerline given a specific gap: iz_curved
+    nz_nonz = len(z_centerline)
     nb_landmark = int(round(float(nz_nonz)/gapz))
 
     if nb_landmark == 0:
@@ -313,8 +229,9 @@ def main():
         landmark_curved[index][4][2] = (-1/c)*(a*x+b*landmark_curved[index][4][1]+d)  # z for -y
     ### <<==============================================================================================================
 
-    if verbose == 2:
+    if verbose == 3:
         from mpl_toolkits.mplot3d import Axes3D
+        import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = Axes3D(fig)
         ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
@@ -424,10 +341,6 @@ def main():
     save(img, 'tmp.landmarks_straight.nii.gz')
     sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
-    # remove padding for straight labels
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 0,1 -start '+str(padding-2)+','+str(padding-2)+' -end '+str(nx+padding+1)+','+str(ny+padding+1), verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -dim 2 -bzmax', verbose)
-
 
     # Estimate deformation field by pairing landmarks
     #==========================================================================================
@@ -436,6 +349,7 @@ def main():
     sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
     sct.run('sct_label_utils -t remove -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight.nii.gz -r tmp.landmarks_curved.nii.gz', verbose)
 
+    # convert landmarks to INT
     sct.printv('\nConvert landmarks to INT...', verbose)
     sct.run('sct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
     sct.run('sct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
@@ -451,43 +365,35 @@ def main():
     # Estimate b-spline transformation curve --> straight
     sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
     sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x5 3 2 0', verbose)
-    
+
+    # remove padding for straight labels
+    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
+    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
     #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
     # !!! DO NOT USE sct.run HERE BECAUSE sct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
-    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
-    sct.printv('>> '+cmd, verbose, 'code')
+    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
+    sct.printv(cmd, verbose, 'code')
     commands.getstatusoutput(cmd)
-
-    # This stands to avoid overlapping between landmarks
-    #print('\nMake sure all labels between landmark_curved and landmark_curved match...')
-    #sct.run('sct_label_utils -t remove -i tmp.landmarks_curved_rigid.nii.gz -o tmp.landmarks_straight.nii.gz -r tmp.landmarks_straight.nii.gz')
 
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-    c = sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0', verbose)
+    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x5 3 2 0', verbose)
     
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
-    # same comment as before
-    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
-    sct.printv('>> '+cmd, verbose, 'code')
-    c = commands.getstatusoutput(cmd)
-    
-    #print '\nPad input image...'
-    #sct.run('sct_c3d '+fname_anat+' -pad '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox '+str(padz)+'x'+str(padz)+'x'+str(padz)+'vox 0 -o tmp.anat_pad.nii')
-    
-    # Unpad landmarks...
-    # THIS WAS REMOVED ON 2014-06-03 because the output data was cropped at the edge, which caused landmarks to sometimes disappear
-    # print '\nUnpad landmarks...'
-    # sct.run('fslroi tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz '+str(padding)+' '+str(nx)+' '+str(padding)+' '+str(ny)+' '+str(padding)+' '+str(nz))
-    
-    # Apply deformation to input image
+    # cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    sct.printv(cmd, verbose, 'code')
+    commands.getstatusoutput(cmd)
+
+    # Apply transformation to input image
     sct.printv('\nApply transformation to input image...', verbose)
-    c = sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz')
+    sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz', verbose)
 
     # compute the error between the straightened centerline/segmentation and the central vertical line.
     # Ideally, the error should be zero.
@@ -566,12 +472,122 @@ def usage():
         '  -p <padding>      amount of padding for generating labels. Default='+str(param_default.padding)+'\n' \
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
+        '  -v {0,1,2,3}      Verbose. 0: nothing, 1: basic, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
         '  sct_straighten_spinalcord -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
+
+
+
+# Smooth centerline
+#=======================================================================================================================
+def smooth_centerline(fname_centerline, param):
+    """
+    :param fname_centerline: centerline in RPI orientation
+    :return: a bunch of useful stuff
+    """
+    window_length = param.window_length
+    type_window = param.type_window
+
+    # get dimensions (again!)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
+
+    # open centerline
+    print '\nOpen centerline volume...'
+    file = load(fname_centerline)
+    data = file.get_data()
+
+    # loop across z and associate x,y coordinate with the point having maximum intensity
+    # N.B. len(z_centerline) = nz_nonz can be smaller than nz in case the centerline is smaller than the input volume
+    z_centerline = [iz for iz in range(0, nz, 1) if data[:, :, iz].any()]
+    nz_nonz = len(z_centerline)
+    x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+    y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+    x_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
+    y_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
+    z_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
+
+    # get center of mass of the centerline/segmentation
+    sct.printv('\nGet center of mass of the centerline/segmentation...', param.verbose)
+    for iz in range(0, nz_nonz, 1):
+        x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
+
+    # 2D smoothing
+
+    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
+    if window_length >= int(2*nz_nonz * pz):
+        window_length = int(2*nz_nonz * pz)
+        print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length)
+    if window_length >= int(2*nz_nonz * pz):
+        window_length = int(2*nz_nonz * pz)
+        print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length)
+
+    # change to array
+    x_centerline = asarray(x_centerline)
+    y_centerline = asarray(y_centerline)
+
+    # Extension of the curve to smooth, to avoid edge effects
+    x_centerline_extended = x_centerline
+    for i in range(int(window_length/(2.0*pz))+1):
+        x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i])
+        x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i])
+
+    y_centerline_extended = y_centerline
+    for i in range(int(window_length/(2.0*pz))+1):
+        y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i])
+        y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
+
+    # Smoothing of the extended curve
+    x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
+    y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
+
+    # Selection of the part of interest of the extended curve
+    x_centerline_final = x_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + x_centerline.shape[0]]
+    #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
+    y_centerline_final = y_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + y_centerline.shape[0]]
+
+    # convert to list final result
+    x_centerline_final = x_centerline_final.tolist()
+    y_centerline_final = y_centerline_final.tolist()
+
+    if param.verbose == 3:
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        #ax = plt.subplot(211)
+        plt.subplot(211)
+        plt.plot(z_centerline, x_centerline, 'ro')
+        plt.plot(z_centerline, x_centerline_final)
+        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
+        #ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('x')
+        #ay = plt.subplot(212)
+        plt.subplot(212)
+        plt.plot(z_centerline, y_centerline, 'ro')
+        plt.plot(z_centerline, y_centerline_final)
+        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
+        #ay.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('y')
+        plt.show()
+
+    x_centerline = x_centerline_final
+    y_centerline = y_centerline_final
+
+    # clear variable
+    del data
+
+    x_centerline_fit = x_centerline
+    y_centerline_fit = y_centerline
+    z_centerline_fit = z_centerline
+
+    # get derivative
+    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline, px, py, pz)
+
+    return x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
+
 
 
 #=======================================================================================================================

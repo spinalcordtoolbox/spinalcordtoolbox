@@ -28,12 +28,15 @@ import os
 import getopt
 import sys
 import commands
-import sct_utils as sct
-from sct_nurbs import NURBS
-from sct_utils import fsloutput
+
 import nibabel
 import numpy
+
+import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
+
 
 
 #=======================================================================================================================
@@ -58,8 +61,6 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data+'/t2/t2.nii.gz'
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
     else:
         # Check input param
         try:
