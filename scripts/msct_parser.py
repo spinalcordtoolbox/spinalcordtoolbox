@@ -56,7 +56,6 @@
 #########################################################################################
 
 import sct_utils as sct
-from msct_types import *
 
 ########################################################################################################################
 ####### OPTION
@@ -263,7 +262,6 @@ class Parser:
 
             # check if optional arguments with default values are all in the dictionary. If not, add them.
             for option in [opt for opt in self.options if not self.options[opt].mandatory]:
-                print option
                 if option not in dictionary and self.options[option].default_value:
                     dictionary[option] = self.options[option].default_value
 
