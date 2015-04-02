@@ -59,7 +59,7 @@ def run(cmd, verbose=1):
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose:
+            if verbose == 2:
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
@@ -280,8 +280,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
     if not os.path.isfile(fname_in):
-        print "HOLA2"
-
         printv('  ERROR: File '+fname_in+' does not exist. Exit program.', 1, 'error')
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
