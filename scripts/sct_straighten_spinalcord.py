@@ -52,7 +52,7 @@ class Param:
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20  # size of cross in x and y direction for the landmarks
         self.gapz = 15  # gap between landmarks along z voxels
-        self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
+        self.padding = 50  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
@@ -94,7 +94,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:v:x:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -109,6 +109,8 @@ def main():
                 fname_centerline = arg
             elif opt in ('-r'):
                 remove_temp_files = int(arg)
+            elif opt in ('-p'):
+                padding = int(arg)
             elif opt in ('-x'):
                 interpolation_warp = str(arg)
             # elif opt in ('-f'):
@@ -395,6 +397,32 @@ def main():
     sct.printv('\nApply transformation to input image...', verbose)
     sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz', verbose)
 
+    # compute the error between the straightened centerline/segmentation and the central vertical line.
+    # Ideally, the error should be zero.
+    # Apply deformation to input image
+    print '\nApply transformation to input image...'
+    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x nn -w tmp.curve2straight.nii.gz')
+    file_centerline_straight = load('tmp.centerline_straight.nii.gz')
+    data_centerline_straight = file_centerline_straight.get_data()
+    Xc, Yc, Zc = (data_centerline_straight > 0).nonzero()
+    z_straight_centerline = range(min(Zc),max(Zc), 1)
+    x_straight_centerline = [0 for iz in z_straight_centerline]
+    y_straight_centerline = [0 for iz in z_straight_centerline]
+    for i,iz in enumerate(z_straight_centerline):
+        x_straight_centerline[i], y_straight_centerline[i] = ndimage.measurements.center_of_mass(array(data_centerline_straight[:, :, iz]))
+
+    # compute error between the input data and the nurbs
+    from math import sqrt
+    mse_curve = 0.0
+    max_dist = 0.0
+    for i in range(0,len(z_straight_centerline)):
+        dist = ((x0-x_straight_centerline[i]+padding)*px)**2 + ((y0-y_straight_centerline[i]+padding)*py)**2
+        mse_curve += dist
+        dist = sqrt(dist)
+        if dist > max_dist:
+            max_dist = dist
+    mse_curve = mse_curve/float(len(z_straight_centerline))
+
     # come back to parent folder
     os.chdir('..')
 
@@ -410,6 +438,11 @@ def main():
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf '+path_tmp, verbose)
     
+    print '\nDone!\n'
+
+    max_dist
+    sct.printv('Maximum x-y error = '+str(round(max_dist,2))+' mm', verbose, 'bold')
+    sct.printv('Accuracy of straightening (MSE) = '+str(round(mse_curve,2))+' mm', verbose, 'bold')
     # display elapsed time
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
@@ -500,13 +533,13 @@ def smooth_centerline(fname_centerline, param):
     # Extension of the curve to smooth, to avoid edge effects
     x_centerline_extended = x_centerline
     for i in range(int(window_length/(2.0*pz))+1):
-        x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i])
-        x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i])
+        x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i-1])
+        x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
 
     y_centerline_extended = y_centerline
     for i in range(int(window_length/(2.0*pz))+1):
-        y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i])
-        y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i])
+        y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i-1])
+        y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
 
     # Smoothing of the extended curve
     x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
@@ -536,6 +569,27 @@ def smooth_centerline(fname_centerline, param):
         plt.subplot(212)
         plt.plot(z_centerline, y_centerline, 'ro')
         plt.plot(z_centerline, y_centerline_final)
+        plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
+        #ay.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('y')
+        plt.show()
+
+        z_centerline_extended = [i for i in range(0,x_centerline_extended.shape[0])]
+
+        plt.figure(2)
+        #ax = plt.subplot(211)
+        plt.subplot(211)
+        plt.plot(z_centerline_extended, x_centerline_extended, 'ro')
+        plt.plot(z_centerline_extended, x_centerline_temp)
+        plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
+        #ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('x')
+        #ay = plt.subplot(212)
+        plt.subplot(212)
+        plt.plot(z_centerline_extended, y_centerline_extended, 'ro')
+        plt.plot(z_centerline_extended, y_centerline_temp)
         plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
         #ay.set_aspect('equal')
         plt.xlabel('z')

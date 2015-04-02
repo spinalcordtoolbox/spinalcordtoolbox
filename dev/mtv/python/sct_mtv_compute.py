@@ -159,6 +159,7 @@ def main():
         spgr[:, :, :, i_fa] = nib.load(fname_spgr_data[i_fa]).get_data()
     # Record header to generate the final MTV map with the same header
     hdr = nib.load(fname_spgr_data[0]).get_header()
+    hdr.set_data_dtype('float32')  # set data type to float 32 (because SPGR are coded in int16)
 
     # ------------------------------------------------- Compute B1 scaling map -----------------------------------------
     if not fname_b1_smoothed:
@@ -364,8 +365,8 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
     """Estimate the proton density map and the T1 maps using linear regression presented by Fram (1987)"""
 
     # Initialization of the maps to be estimated
-    PD_map = np.zeros((nx, ny, nz))
-    t1_map = np.zeros((nx, ny, nz))
+    PD_map = np.zeros((nx, ny, nz), dtype=float)
+    t1_map = np.zeros((nx, ny, nz), dtype=float)
 
     # Compute PD and T1 voxel-wize
     recorder_vox_out = 0  # recorder of the number of voxels with values out of range
@@ -389,7 +390,10 @@ def estimate_PD_and_T1(spgr, flip_angles, tr, b1_map_scale, nx, ny, nz):
                 intercep = linear_regression[1]
 
                 if slope > 0:
-                    t1 = -tr/math.log(slope)
+                    if slope == 1:  # means T1 is really high
+                        t1 = 30
+                    else:
+                        t1 = -tr/math.log(slope)
                 else:  # due to noise or bad fitting
                     t1 = 0.000000000000001
                     recorder_vox_out += 1
