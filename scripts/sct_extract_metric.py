@@ -22,14 +22,15 @@
 import os
 import getopt
 import sys
-import time
 import commands
+import time
 
 import nibabel as nib
 import numpy as np
 
 import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
+
 
 
 # get path of the toolbox
@@ -88,7 +89,6 @@ def main():
     normalization_method = ''  # optional then default is empty
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
-    start_time = time.time()  # save start time for duration
     verbose = param.verbose
     flag_h = 0
     ml_clusters = param.ml_clusters
@@ -329,17 +329,14 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print color.bold + '\nEstimation results:'
+    sct.printv('\nEstimation results:', 1)
     for i in range(0, metric_mean.size):
-        print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
-              +' +/- '+str(metric_std[i])+color.end
+        sct.printv(str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i]), 1, 'info')
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
                  method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
-    # Print elapsed time
-    print '\nElapsed time : ' + str(int(round(time.time() - start_time))) + 's\n'
 
 
 #=======================================================================================================================
