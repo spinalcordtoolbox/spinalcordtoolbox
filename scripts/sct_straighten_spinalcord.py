@@ -42,11 +42,12 @@ from sct_orientation import set_orientation
 
 
 
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20  # size of cross in x and y direction for the landmarks
         self.gapz = 15  # gap between landmarks along z voxels
@@ -84,8 +85,8 @@ def main():
     # Parameters for debug mode
     if param.debug == 1:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_anat = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'  #path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
-        fname_centerline = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  # path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
+        fname_anat = '/Users/julien/data/temp/sct_example_data/t2/tmp.150401221259/anat_rpi.nii'  #path_sct+'/testing/sct_testing_data/data/t2/t2.nii.gz'
+        fname_centerline = '/Users/julien/data/temp/sct_example_data/t2/tmp.150401221259/centerline_rpi.nii'  # path_sct+'/testing/sct_testing_data/data/t2/t2_seg.nii.gz'
         remove_temp_files = 0
         type_window = 'hanning'
         verbose = 2
@@ -153,7 +154,7 @@ def main():
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    fname_centerline_orient = 'centerline_rpi.nii.gz'
+    fname_centerline_orient = file_centerline+'_rpi.nii.gz'
     set_orientation(fname_centerline, 'RPI', fname_centerline_orient)
 
     # Get dimension

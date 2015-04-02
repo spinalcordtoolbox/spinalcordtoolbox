@@ -113,11 +113,11 @@ def main():
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('sct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii')
+    sct.run('sct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii', verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord...'
-    sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline')
+    sct.run('sct_apply_transfo -i anat_rpi_straight_smooth.nii -o anat_rpi_straight_smooth_curved.nii -d anat.nii -w warp_straight2curve.nii.gz -x spline', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -161,12 +161,12 @@ def usage():
         '\n' \
         'MANDATORY ARGUMENTS\n' \
         '  -i <image>        input image to smooth.\n' \
-        '  -c <centerline>   spinal cord centerline (given by the function sct_get_centerline) or segmentation.\n' \
+        '  -c <centerline>   spinal cord centerline or segmentation.\n' \
         '\n' \
         'OPTIONAL ARGUMENTS\n' \
         '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=3.' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
+        '  -v {0,1,2}        verbose. 0: nothing, 1: small, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'
 
