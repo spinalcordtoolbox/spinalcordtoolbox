@@ -33,7 +33,6 @@ from msct_image import Image
 
 
 
-
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -41,7 +40,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug = 0
+        self.debug = 1
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         # self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -139,21 +138,28 @@ def main():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
-    arguments = parser.parse(sys.argv[1:])
+    if param.debug:
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
+        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
+        fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
+        path_template = param.path_template
+        remove_temp_files = 0
+        verbose = 2
+        # speed = 'superfast'
+        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
+    else:
+        arguments = parser.parse(sys.argv[1:])
 
-    # get arguments
-    fname_data = arguments['-i']
-    fname_seg = arguments['-s']
-    fname_landmarks = arguments['-l']
-    path_template = arguments['-t']
-    remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments['-v'])
-
-    speed = "normal"
-
-    if '-p' in arguments:
+        # get arguments
+        fname_data = arguments['-i']
+        fname_seg = arguments['-s']
+        fname_landmarks = arguments['-l']
+        path_template = arguments['-t']
+        remove_temp_files = int(arguments['-r'])
+        verbose = int(arguments['-v'])
         paramreg_user = arguments['-p']
-        # update parameters
+        # update parameters for registration
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
 
@@ -167,14 +173,6 @@ def main():
     # start timer
     start_time = time.time()
 
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2_new/t2.nii.gz'
-        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2_new/labels.nii.gz'
-        fname_seg = '/Users/julien/data/temp/sct_example_data/t2_new/t2_seg.nii.gz'
-        speed = 'superfast'
-        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
     path_template = os.path.abspath(path_template)
@@ -200,21 +198,20 @@ def main():
     print '.. Segmentation:         '+fname_seg
     print '.. Path template:        '+path_template
     print '.. Output type:          '+str(output_type)
-    print '.. Speed:                '+speed
     print '.. Remove temp files:    '+str(remove_temp_files)
 
-    # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
-    if speed == "slow":
-        nb_iterations = "50"
-    elif speed == "normal":
-        nb_iterations = "15"
-    elif speed == "fast":
-        nb_iterations = "5"
-    elif speed == "superfast":
-        nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
-    else:
-        print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
-        sys.exit(2)
+    # # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
+    # if speed == "slow":
+    #     nb_iterations = "50"
+    # elif speed == "normal":
+    #     nb_iterations = "15"
+    # elif speed == "fast":
+    #     nb_iterations = "5"
+    # elif speed == "superfast":
+    #     nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
+    # else:
+    #     print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
+    #     sys.exit(2)
 
     sct.printv('\nParameters for registration:')
     for pStep in paramreg.steps:
