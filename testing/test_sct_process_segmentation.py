@@ -13,7 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
 import commands
 
 
@@ -25,7 +24,7 @@ def test(path_data):
 
     # define command
     cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
-          + ' -p compute_csa' \
+          + ' -p csa' \
           + ' -s 1'\
           + ' -b 1'\
           + ' -r 0'\
