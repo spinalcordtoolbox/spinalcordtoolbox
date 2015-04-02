@@ -247,6 +247,10 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
 
     from math import log
     from msct_nurbs import NURBS
+
+    """x.reverse()
+    y.reverse()
+    z.reverse()"""
           
     print '\nFitting centerline using B-spline approximation...'
     data = [[x[n], y[n], z[n]] for n in range(len(x))]
@@ -273,6 +277,40 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     x_deriv=Q[0]
     y_deriv=Q[1]
     z_deriv=Q[2]
+
+    """x_fit = x_fit[::-1]
+    y_fit = x_fit[::-1]
+    z_fit = x_fit[::-1]
+    x_deriv = x_fit[::-1]
+    y_deriv = x_fit[::-1]
+    z_deriv = x_fit[::-1]"""
+
+    PC = nurbs.getControle()
+    PC_x = [p[0] for p in PC]
+    PC_y = [p[1] for p in PC]
+    PC_z = [p[2] for p in PC]
+
+    import matplotlib.pyplot as plt
+    plt.figure(1)
+    #ax = plt.subplot(211)
+    plt.subplot(211)
+    plt.plot(z, x, 'r.')
+    plt.plot(z_fit, x_fit)
+    plt.plot(PC_z,PC_x,'go')
+    plt.title("X")
+    #ax.set_aspect('equal')
+    plt.xlabel('z')
+    plt.ylabel('x')
+    #ay = plt.subplot(212)
+    plt.subplot(212)
+    plt.plot(z, y, 'r.')
+    plt.plot(z_fit, y_fit)
+    plt.plot(PC_z,PC_y,'go')
+    plt.title("Y")
+    #ay.set_aspect('equal')
+    plt.xlabel('z')
+    plt.ylabel('y')
+    plt.show()
   
     return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
 
