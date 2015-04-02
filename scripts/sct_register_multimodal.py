@@ -149,7 +149,7 @@ def main():
                       description="""Verbose.""",
                       mandatory=False,
                       default_value='1',
-                      example=['0', '1'])
+                      example=['0', '1', '2'])
     arguments = parser.parse(sys.argv[1:])
 
     # get arguments

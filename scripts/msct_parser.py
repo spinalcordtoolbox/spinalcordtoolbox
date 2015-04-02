@@ -56,6 +56,7 @@
 #########################################################################################
 
 import sct_utils as sct
+from msct_types import Coordinate # useful for Coordinate
 
 ########################################################################################################################
 ####### OPTION
@@ -86,6 +87,7 @@ class Option:
         check integrity of each option type
         if type is provided, use type instead of self.type_value --> allow recursive integrity checking
         """
+
         type_option = self.type_value
         if type is not None:
             type_option = type

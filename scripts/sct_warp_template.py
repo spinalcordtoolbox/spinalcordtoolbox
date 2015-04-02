@@ -24,6 +24,7 @@ from sct_extract_metric import read_label_file
 
 
 
+
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -155,7 +156,8 @@ def main():
 # Warp labels
 # ==========================================================================================
 def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
-    # read label file
+    # read label file and check if file exists
+    sct.printv('\nRead label file...', param.verbose)
     template_label_ids, template_label_names, template_label_file = read_label_file(path_label+folder_label, file_label)
     # create output folder
     sct.run('mkdir '+path_out+folder_label, param.verbose)
@@ -163,11 +165,11 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     for i in xrange(0, len(template_label_file)):
         fname_label = path_label+folder_label+template_label_file[i]
         # check if file exists
-        sct.check_file_exist(fname_label)
+        # sct.check_file_exist(fname_label)
         # apply transfo
         sct.run('sct_apply_transfo -i '+fname_label+' -o '+path_out+folder_label+template_label_file[i] +' -d '+fname_src+' -w '+fname_transfo+' -x '+get_interp(template_label_file[i]), param.verbose)
     # Copy list.txt
-    sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label)
+    sct.run('cp '+path_label+folder_label+param.file_info_label+' '+path_out+folder_label, 0)
 
 
 
