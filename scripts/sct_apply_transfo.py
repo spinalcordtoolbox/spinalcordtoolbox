@@ -19,8 +19,11 @@ import sys
 import os
 import getopt
 import commands
-import sct_utils as sct
 import time
+
+import sct_utils as sct
+
+
 
 
 # DEFAULT PARAMETERS
@@ -177,10 +180,10 @@ def main():
         # come back to parent folder
         os.chdir('..')
 
-    # to view results
-    print '\nDone! To view results, type:'
-    print 'fslview '+fname_dest+' '+fname_out+' &'
-    print
+    # display elapsed time
+    sct.printv('\nDone! To view results, type:', verbose)
+    sct.printv('fslview '+fname_dest+' '+fname_out+' &\n', verbose, 'info')
+
 
 
 # Print usage
