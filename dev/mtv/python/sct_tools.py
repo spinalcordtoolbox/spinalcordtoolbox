@@ -43,14 +43,15 @@ def compute_metric_mean_and_std_slice_by_slice(np_data_metric, np_data_mask=[]):
 
     for z in range(0, nz):
 
-        if np_data_mask == []:
-            ind = [range(0, np_data_metric.shape[0]), range(0, np_data_metric.shape[1])]
+        if not np_data_mask:
+            metric_mean_and_std[z, 0] = numpy.mean(np_data_metric[:, :, z])
+            metric_mean_and_std[z, 1] = numpy.std(np_data_metric[:, :, z])
         else:
             mask_slice = np_data_mask[..., z]  # extract slice z from the mask
             ind = numpy.where(mask_slice == 1)
 
-        metric_mean_and_std[z, 0] = numpy.mean(np_data_metric[ind[0], ind[1], z])
-        metric_mean_and_std[z, 1] = numpy.std(np_data_metric[ind[0], ind[1], z])
+            metric_mean_and_std[z, 0] = numpy.mean(np_data_metric[ind[0], ind[1], z])
+            metric_mean_and_std[z, 1] = numpy.std(np_data_metric[ind[0], ind[1], z])
 
     return metric_mean_and_std
 
