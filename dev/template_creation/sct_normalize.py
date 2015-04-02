@@ -108,6 +108,9 @@ def main():
     
     z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
     nz_nonz = len(z_centerline)
+    if nz_nonz==0 :
+        print '\nERROR: Centerline is empty'
+        sys.exit()
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
     #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
@@ -124,8 +127,8 @@ def main():
    #      print x_centerline[iz-min(z_centerline)]
         means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
     #print("means=", means)
-    
-    print('\nSmoothing results with spline...')    
+
+    print('\nSmoothing results with spline...')
     m =np.mean(means)
     sigma = np.std(means)
     smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
@@ -136,7 +139,6 @@ def main():
         plt.plot(z_centerline,means)
         plt.plot(z_centerline,means_smooth)
         plt.show()
-    
     print('\nNormalizing intensity along centerline...')
 
 
@@ -191,7 +193,7 @@ def main():
     nibabel.save(img,output_name)
     sct.printv('\n.. File created:' + output_name,verbose)
 
-    print('\nNormalizing overall intensity...')    
+    print('\nNormalizing overall intensity...')
     # sct.run('fslmaths ' + output_name + ' -inm ' + str(mean_intensity) + ' ' + output_name)
      
     # to view results
