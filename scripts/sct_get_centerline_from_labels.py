@@ -23,7 +23,7 @@ from scipy import interpolate
 
 
 
-def sct_obtain_centerline(segmentation_file=None, label_file=None, output_file_name=None, parameter = "binary_centerline", remove_temp_files = 1, verbose = 0 ):
+def main(segmentation_file=None, label_file=None, output_file_name=None, parameter = "binary_centerline", remove_temp_files = 1, verbose = 0 ):
 
 #Process for a binary file as output:
     if parameter == "binary_centerline":
@@ -786,15 +786,15 @@ if __name__ == "__main__":
                       default_value="1")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
-                      description="Visualization parameter.",
+                      description="Verbose. 0: nothing. 1: basic. 2: extended.",
                       mandatory=False,
-                      example=[0,1],
-                      default_value="0")
+                      default_value='1',
+                      example=['0', '1', '2'])
     arguments = parser.parse(sys.argv[1:])
 
     parameter = "binary_centerline"
     remove_temp_files = 1
-    verbose = 0
+    # verbose = 0
 
 
     if "-i" in arguments:
@@ -813,14 +813,11 @@ if __name__ == "__main__":
         parameter = arguments["-p"]
     if "-r" in arguments:
         remove_temp_files = arguments["-r"]
-    if "-v" in arguments:
-        verbose = arguments["-v"]
-
-
+    verbose = int(arguments["-v"])
 
     #sct_obtain_centerline(segmentation_file="data_RPI_seg.nii.gz", label_file="labels_brainstem_completed.nii.gz", output_file_name="centerline_from_label_and_seg.nii.gz", parameter = "binary_centerline", remove_temp_files = 0, verbose = 0 )
     #sct_obtain_centerline(segmentation_file = "data_RPI_seg.nii.gz", label_file="labels_brainstem_completed.nii.gz", output_file_name="test_label_and_seg.txt", parameter = "text_file", remove_temp_files = 1, verbose = 0 )
-    sct_obtain_centerline(segmentation_file, label_file, output_file_name, parameter, remove_temp_files, verbose=1)
+    main(segmentation_file, label_file, output_file_name, parameter, remove_temp_files, verbose)
 
 #segmentation_file="data_RPI_seg.nii.gz"
 #label_file="labels_brainstem_completed.nii.gz"
