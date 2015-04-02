@@ -136,11 +136,10 @@ def main():
     print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
     # to view results
-    print 'To view results, type:'
-    print 'fslview '+file_anat+' '+file_anat+'_smooth &\n'
+    sct.printv('Done! To view results, type:', verbose)
+    sct.printv('fslview '+file_anat+' '+file_anat+'_smooth &\n', verbose, 'info')
 
-    # End of Main
-    
+
 
 #=======================================================================================================================
 # usage
