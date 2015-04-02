@@ -381,8 +381,9 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
         }
 	}
     
+    cout << "Cropping the following region:" << endl;
     for (int i=0; i<N; i++)
-        cout << startSlices[i] << " " << endSlices[i] << endl;
+        cout << "Dimension " << i << ": " << startSlices[i] << " " << endSlices[i] << endl;
     
 	typename ImageType::IndexType desiredStart1;
     desiredStart1.Fill(0);
