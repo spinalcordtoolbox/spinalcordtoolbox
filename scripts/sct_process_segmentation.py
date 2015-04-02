@@ -28,7 +28,7 @@ import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_orientation import get_orientation, set_orientation
-
+from sct_straighten_spinalcord import smooth_centerline
 
 
 
@@ -50,7 +50,9 @@ class Param:
         self.slices = ''
         self.vertebral_levels = ''
         self.path_to_template = ''
-        
+        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
+
         
 # MAIN
 # ==========================================================================================
@@ -164,19 +166,15 @@ def main():
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation,remove_temp_files)
-        print '\nLength of the Spinal Cord = '+str(round(result_length,2))+' mm'
-
-    # display elapsed time
-    elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s\n'
-
-    
+        sct.printv('\nLength of the Spinal Cord = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
     # End of Main
 
 # compute the length of the spinal cord
 # ==========================================================================================
 def compute_length(fname_segmentation, remove_temp_files):
+    from math import sqrt
+
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
@@ -191,43 +189,52 @@ def compute_length(fname_segmentation, remove_temp_files):
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # Change orientation of the input segmentation into RPI
-    print '\nOrient segmentation image to RPI orientation...'
-    fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
+    # Change orientation of the input centerline into RPI
+    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    fname_segmentation_orient = 'segmentation_rpi' + ext_data
     set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
 
-    # Extract orientation of the input segmentation
-    orientation = get_orientation(file_data+ext_data)
-    print '\nOrientation of segmentation image: ' + orientation
-
-    # Get size of data
-    print '\nGet dimensions data...'
+    # Get dimension
+    sct.printv('\nGet dimensions...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
-    print '\nOpen segmentation volume...'
-    file = nibabel.load(fname_segmentation_orient)
-    data = file.get_data()
-    hdr = file.get_header()
+    # smooth segmentation/centerline
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
 
-    # Extract min and max index in Z direction
-    X, Y, Z = (data>0).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
-    x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
-    y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
-    z_centerline = [iz for iz in range(min_z_index, max_z_index+1)]
-    # Extract segmentation points and average per slice
-    for iz in range(min_z_index, max_z_index+1):
-        x_seg, y_seg = (data[:,:,iz]>0).nonzero()
-        x_centerline[iz-min_z_index] = np.mean(x_seg)
-        y_centerline[iz-min_z_index] = np.mean(y_seg)
-    for k in range(len(X)):
-        data[X[k],Y[k],Z[k]] = 0
-    # Fit the centerline points with splines and return the new fitted coordinates
-    x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+    # # Extract orientation of the input segmentation
+    # orientation = get_orientation(file_data+ext_data)
+    # print '\nOrientation of segmentation image: ' + orientation
+    #
+    # # Get size of data
+    # print '\nGet dimensions data...'
+    # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    # print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
+    #
+    # print '\nOpen segmentation volume...'
+    # file = nibabel.load(fname_segmentation_orient)
+    # data = file.get_data()
+    # hdr = file.get_header()
+    #
+    # # Extract min and max index in Z direction
+    # X, Y, Z = (data>0).nonzero()
+    # min_z_index, max_z_index = min(Z), max(Z)
+    # x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
+    # y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
+    # z_centerline = [iz for iz in range(min_z_index, max_z_index+1)]
+    # # Extract segmentation points and average per slice
+    # for iz in range(min_z_index, max_z_index+1):
+    #     x_seg, y_seg = (data[:,:,iz]>0).nonzero()
+    #     x_centerline[iz-min_z_index] = np.mean(x_seg)
+    #     y_centerline[iz-min_z_index] = np.mean(y_seg)
+    # for k in range(len(X)):
+    #     data[X[k],Y[k],Z[k]] = 0
+    # # Fit the centerline points with splines and return the new fitted coordinates
+    # x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
+    # compute length of centerline
     result_length = 0.0
-    from math import sqrt
     for i in range(len(x_centerline_fit)-1):
         result_length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
 
@@ -382,9 +389,9 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
  #    plt.show()
 
     # Defining cartesian basis vectors 
-    x = np.array([1,0,0])
-    y = np.array([0,1,0])
-    z = np.array([0,0,1])
+    x = np.array([1, 0, 0])
+    y = np.array([0, 1, 0])
+    z = np.array([0, 0, 1])
     
     # Creating folder in which JPG files will be stored
     sct.printv('\nCreating folder in which JPG files will be stored...', verbose)
@@ -409,10 +416,10 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         c = z_centerline_deriv[iz]
 
         #vector normal to the plane
-        normal = normalize(np.array([a,b,c]))
+        normal = normalize(np.array([a, b, c]))
 
         # angle between normal vector and z
-        angle = np.arccos(np.dot(normal,z))
+        angle = np.arccos(np.dot(normal, z))
 
         if name_method == 'counting_ortho_plane' or name_method == 'ellipse_ortho_plane':
 
@@ -623,7 +630,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         sct.run('rm -rf '+path_tmp_extract_metric)
 
     # Remove temporary files
-    if remove_temp_files == 1:
+    if remove_temp_files:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
 
@@ -760,33 +767,29 @@ USAGE
   """+os.path.basename(__file__)+"""  -i <segmentation> -p <process>
 
 MANDATORY ARGUMENTS
-  -i <segmentation>         spinal cord segmentation (e.g., use sct_segmentation_propagation)
-  -p <process>              type of process to be performed:
-                            - extract_centerline: extract centerline as binary file from segmentation
-                            - compute_csa: computes cross-sectional area by counting pixels in each
-                              slice and then geometrically adjusting using centerline orientation.
-                              Output is a text file with z (1st column) and CSA in mm^2 (2nd column) and
-                              a volume in which each slice\'s value is equal to the CSA (mm^2).
+  -i <segmentation>     spinal cord segmentation (e.g., use sct_segmentation_propagation)
+  -p <process>          type of process to be performed:
+                        - extract_centerline: extract centerline as binary file
+                        - length: compute length of the segmentation
+                        - compute_csa: computes cross-sectional area by counting pixels in each
+                          slice and then geometrically adjusting using centerline orientation.
+                          Output is a text file with z (1st column) and CSA in mm^2 (2nd column) and
+                          a volume in which each slice\'s value is equal to the CSA (mm^2).
 
 OPTIONAL ARGUMENTS
-  -s {0,1}                   smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
-  -b {0,1}                   outputs a volume in which each slice\'s value is equal to the CSA in
-                             mm^2. Default="""+str(param_default.volume_output)+"""
-  -o <output_name>           name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
-  -r {0,1}                   remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
-  -t <path_to_template>      in the case you ask to average CSA across specific vertebral levels
-                             (options \"-p compute_csa\" and \"-l <lmin:lmax>\"), path to the folder
-                             containing the template labels (at least the file \"MNI-Poly-AMU_levels.nii.gz\")
-                             registered to your segmented image.
-                             Usually, once you have registered the template to your segmented data using
-                             sct_warp_template, this folder is included in the generated folder named \"label\".
-  -v {0,1}                   verbose. Default="""+str(param_default.verbose)+"""
-  -l <lmin:lmax>             vertebral levels to compute the CSA across (need the option \"-p compute_csa\").
-                             Example: 2:9 for C2 to T2.
-  -z <zmin:zmax>             slice range to compute the CSA across.(need the option \"-p compute_csa\").
-                             First slice is 0. Example: 5:23.
-                             You can also select specific slices using commas. Example: 0,2,3,5,12
-  -h                         help. Show this message
+  -s {0,1}              Smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
+  -b {0,1}              Outputs a volume in which each slice\'s value is equal to the CSA in
+                          mm^2. Default="""+str(param_default.volume_output)+"""
+  -o <output_name>      Name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
+  -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p compute_csa\").
+                          Example: 5:23. First slice is 0.
+                          You can also select specific slices using commas. Example: 0,2,3,5,12
+  -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p compute_csa\").
+                          Example: 2:9 for C2 to T2.
+  -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
+  -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
+  -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
+  -h                    Help. Show this message
 
 EXAMPLE
   """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa\n
