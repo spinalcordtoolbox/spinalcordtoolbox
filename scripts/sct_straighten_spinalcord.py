@@ -52,7 +52,7 @@ class Param:
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = 20  # size of cross in x and y direction for the landmarks
         self.gapz = 15  # gap between landmarks along z voxels
-        self.padding = 30  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
+        self.padding = 50  # pad input volume in order to deal with the fact that some landmarks might be outside the FOV due to the curvature of the spinal cord
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
@@ -94,7 +94,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:v:x:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -109,6 +109,8 @@ def main():
                 fname_centerline = arg
             elif opt in ('-r'):
                 remove_temp_files = int(arg)
+            elif opt in ('-p'):
+                padding = int(arg)
             elif opt in ('-x'):
                 interpolation_warp = str(arg)
             # elif opt in ('-f'):
@@ -400,14 +402,14 @@ def main():
     # Apply deformation to input image
     print '\nApply transformation to input image...'
     c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x nn -w tmp.curve2straight.nii.gz')
-    file_centerline_straight = nibabel.load('tmp.centerline_straight.nii.gz')
+    file_centerline_straight = load('tmp.centerline_straight.nii.gz')
     data_centerline_straight = file_centerline_straight.get_data()
     Xc, Yc, Zc = (data_centerline_straight > 0).nonzero()
     z_straight_centerline = range(min(Zc),max(Zc), 1)
     x_straight_centerline = [0 for iz in z_straight_centerline]
     y_straight_centerline = [0 for iz in z_straight_centerline]
     for i,iz in enumerate(z_straight_centerline):
-        x_straight_centerline[i], y_straight_centerline[i] = ndimage.measurements.center_of_mass(numpy.array(data_centerline_straight[:, :, iz]))
+        x_straight_centerline[i], y_straight_centerline[i] = ndimage.measurements.center_of_mass(array(data_centerline_straight[:, :, iz]))
 
     # compute error between the input data and the nurbs
     from math import sqrt
