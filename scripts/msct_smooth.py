@@ -11,17 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from math import sqrt
-from scipy.interpolate import splrep,splev
-import sys
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! ---'
-    sys.exit(2)
-#from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-#from sct_nurbs import NURBS
+from scipy.interpolate import splrep, splev
 
 
 #=======================================================================================================================
@@ -37,46 +27,53 @@ def smooth(fname, padding):
 #=======================================================================================================================
 def spline_2D(z_centerline, x_centerline):
 
-    m = np.mean(x_centerline)
-    sigma = np.std(x_centerline)
-    print (m - np.sqrt(2*m))*(sigma**2), (m + np.sqrt(2*m))*(sigma**2)
+    from numpy import mean, std, sqrt
 
-    smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+    m = mean(x_centerline)
+    sigma = std(x_centerline)
+    print (m - sqrt(2*m))*(sigma**2), (m + sqrt(2*m))*(sigma**2)
+
+    smoothing_param = (((m + sqrt(2*m))*(sigma**2))+((m - sqrt(2*m))*(sigma**2)))/2
     print('\nSmoothing results with spline...')
-    tck = splrep(z_centerline, x_centerline, s=smoothing_param)
+    tck = splrep(z_centerline, x_centerline, s = smoothing_param)
     x_centerline_fit = splev(z_centerline, tck)
     return x_centerline_fit
 
-    # plt.figure()
-    # plt.plot(z_centerline,means)
-    # plt.plot(z_centerline,means_smooth)
-    # plt.show()
 
 
 #=======================================================================================================================
 # Polynomial fit
 #=======================================================================================================================
 def polynomial_fit(x,y,degree):
-    
+
+    import numpy as np
+
     coeffs = np.polyfit(x, y, degree)
     poly = np.poly1d(coeffs)
     y_fit = np.polyval(poly, x)
  
-    return y_fit,poly
+    return y_fit, poly
 
 
 #=======================================================================================================================
 # Polynomial derivative
 #=======================================================================================================================   
 def polynomial_deriv(x,poly):
+
+    from numpy import polyder, polyval
+
+    poly_deriv = polyder(poly, m = 1)
+    y_fit_deriv = polyval(poly_deriv, x)
     
-    poly_deriv = np.polyder(poly, m = 1)
-    y_fit_deriv = np.polyval(poly_deriv, x)
-    
-    return y_fit_deriv,poly_deriv
+    return y_fit_deriv, poly_deriv
 
 
+
+#=======================================================================================================================
+# Get norm
+#=======================================================================================================================
 def norm(x, y, z, p1, p2, p3):
+    from math import sqrt
     s = 0
     for i in xrange (len(x)-1):
         s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
@@ -84,37 +81,42 @@ def norm(x, y, z, p1, p2, p3):
     return s
 
 
+
 #=======================================================================================================================
 # Evaluate derivative of data points
 #=======================================================================================================================
 def evaluate_derivative_2D(x,y):
-        
-    y_deriv = np.array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range (0,len(x)-1)])
-    y_deriv = np.append(y_deriv,(y[-1] - y[-2])/(x[-1] - x[-2]))
-    
+    from numpy import array, append
+    y_deriv = array([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in range(0, len(x)-1)])
+    y_deriv = append(y_deriv,(y[-1] - y[-2])/(x[-1] - x[-2]))
     return y_deriv
 
 
+
+#=======================================================================================================================
+# Evaluate derivative of data points in 3D
+#=======================================================================================================================
 def evaluate_derivative_3D(x, y, z, px, py, pz):
+    from numpy import array, sqrt, insert, append
 
     x = [x_elem*px for x_elem in x]
     y = [y_elem*py for y_elem in y]
     z = [z_elem*pz for z_elem in z]
 
-    x_deriv = np.array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(x)-1)])
-    y_deriv = np.array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(y)-1)])
-    z_deriv = np.array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range (1,len(z)-1)])
+    x_deriv = array([(x[i+1]-x[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(x)-1)])
+    y_deriv = array([(y[i+1]-y[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(y)-1)])
+    z_deriv = array([(z[i+1]-z[i-1])/sqrt((x[i+1]-x[i-1])**2+(y[i+1]-y[i-1])**2+(z[i+1]-z[i-1])**2) for i in range(1,len(z)-1)])
 
-    x_deriv = np.insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    x_deriv = np.append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    x_deriv = insert(x_deriv, 0, (x[1]-x[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    x_deriv = append(x_deriv, (x[-1]-x[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
     #print len(x_deriv)
 
-    y_deriv = np.insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    y_deriv = np.append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    y_deriv = insert(y_deriv, 0, (y[1]-y[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    y_deriv = append(y_deriv, (y[-1]-y[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
-    z_deriv = np.insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
-    z_deriv = np.append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
+    z_deriv = insert(z_deriv, 0, (z[1]-z[0])/sqrt((x[1]-x[0])**2+(y[1]-y[0])**2+(z[1]-z[0])**2))
+    z_deriv = append(z_deriv, (z[-1]-z[-2])/sqrt((x[-1]-x[-2])**2+(y[-1]-y[-2])**2+(z[-1]-z[-2])**2))
 
     return x_deriv, y_deriv, z_deriv
 
@@ -137,32 +139,38 @@ def non_parametric(x,y,f = 0.25,iter = 3):
     https://gist.github.com/agramfort/850437 """
     from math import ceil
     from scipy import linalg
+    from numpy import sort, abs, zeros, ones, array, sum, median, clip
     
     n = len(x)
     r = int(ceil(f*n))
-    h = [np.sort(np.abs(x - x[i]))[r] for i in range(n)]
-    w = np.clip(np.abs((x[:,None] - x[None,:]) / h), 0.0, 1.0)
+    h = [sort(abs(x - x[i]))[r] for i in range(n)]
+    w = clip(abs((x[:,None] - x[None,:]) / h), 0.0, 1.0)
     w = (1 - w**3)**3
-    yest = np.zeros(n)
-    delta = np.ones(n)
+    yest = zeros(n)
+    delta = ones(n)
     for iteration in range(iter):
         for i in range(n):
             weights = delta * w[:,i]
-            b = np.array([np.sum(weights*y), np.sum(weights*y*x)])
-            A = np.array([[np.sum(weights), np.sum(weights*x)],
-                   [np.sum(weights*x), np.sum(weights*x*x)]])
+            b = array([sum(weights*y), sum(weights*y*x)])
+            A = array([[sum(weights), sum(weights*x)],
+                   [sum(weights*x), sum(weights*x*x)]])
             beta = linalg.solve(A, b)
             yest[i] = beta[0] + beta[1]*x[i]
 
         residuals = y - yest
-        s = np.median(np.abs(residuals))
-        delta = np.clip(residuals / (6.0 * s), -1, 1)
+        s = median(abs(residuals))
+        delta = clip(residuals / (6.0 * s), -1, 1)
         delta = (1 - delta**2)**2
 
     return yest
 
 
+
+#=======================================================================================================================
+# TODO: ADD DESCRIPTION
+#=======================================================================================================================
 def opt_f(x, y, z):
+    from numpy import max, mean, linalg
     print 'optimizing f parameter in non-parametric...'
     f_list = [0.1, 0.15, 0.20, 0.22, 0.25, 0.3, 0.35, 0.40, 0.45, 0.5]
     msx_min = 2
@@ -174,14 +182,8 @@ def opt_f(x, y, z):
             x_fit = non_parametric(z, x, f)
             y_fit = non_parametric(z, y, f)
 
-            #msx = mean_squared_error(x, x_fit)
-            #msy = mean_squared_error(y, y_fit)
-
             msex = mean_squared_error(x, x_fit)
             msey = mean_squared_error(y, y_fit)
-
-            #print msx, msex, f
-            #print msy, msey, f
 
             if msx < msx_min:
                 msx_min = msx
@@ -192,10 +194,10 @@ def opt_f(x, y, z):
 
             x_fit_d, y_fit_d, z_d = evaluate_derivative_3D(x_fit, y_fit, z)
             x_fit_dd, y_fit_dd, z_dd = evaluate_derivative_3D(x_fit_d, y_fit_d, z_d)
-            amp_xd = np.max(abs(x_fit_dd))
-            amp_yd = np.max(abs(y_fit_dd))
-            mean_xd = np.mean(x_fit_dd)
-            mean_yd = np.mean(y_fit_dd)
+            amp_xd = max(abs(x_fit_dd))
+            amp_yd = max(abs(y_fit_dd))
+            mean_xd = mean(x_fit_dd)
+            mean_yd = mean(y_fit_dd)
             mean = mean_xd + mean_yd
 
             # ax = plt.subplot(1,2,1)
@@ -217,25 +219,24 @@ def opt_f(x, y, z):
             print 'AMP', amp_xd, amp_yd
             print 'MEAN', mean_xd, mean_yd, mean
 
-        except np.linalg.linalg.LinAlgError:
+        except linalg.linalg.LinAlgError:
             print 'LinAlgError raised'
-
     print msx_min, f_opt_x
     print msy_min, f_opt_y
     return f_opt_x, f_opt_y
+
 
 
 #=======================================================================================================================
 # Univariate Spline fitting
 #=======================================================================================================================
 def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
-    
     from scipy.interpolate import UnivariateSpline
     s = UnivariateSpline(x, y, w, bbox, k, s)
     ys = s(x)
-    
-    return ys    
-    
+    return ys
+
+
 
 #=======================================================================================================================
 # 3D B-Spline function, sct_nurbs
@@ -244,8 +245,8 @@ def Univariate_Spline(x, y, w=None, bbox=[None, None], k=3, s=None) :
 
 def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, nbControl=-1):
 
-    #from sct_nurbs_v2 import NURBS
-    from sct_nurbs import NURBS
+    from math import log
+    from msct_nurbs import NURBS
           
     print '\nFitting centerline using B-spline approximation...'
     data = [[x[n], y[n], z[n]] for n in range(len(x))]
@@ -259,7 +260,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     if nbControl == -1:
         import math
         centerlineSize = getSize(x, y, z, fname_centerline)
-        nbControl = 30*math.log(centerlineSize, 10) - 42
+        nbControl = 30*log(centerlineSize, 10) - 42
         nbControl = round(nbControl)
 
     nurbs = NURBS(degree, point_number, data, False, nbControl)
@@ -273,7 +274,9 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y_deriv=Q[1]
     z_deriv=Q[2]
   
-    return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
+    return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
+
+
 
 #=======================================================================================================================
 # 3D B-Spline function using ITK
@@ -282,7 +285,7 @@ def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
 
     print '\nFitting centerline using B-spline approximation (using ITK)...'
     import sct_utils as sct
-    status, output = sct.runProcess("isct_bsplineapproximator -i "+fname_centerline+" -o tmp.centerline.txt -l "+str(numberOfLevels))
+    status, output = sct.run("isct_bsplineapproximator -i "+fname_centerline+" -o tmp.centerline.txt -l "+str(numberOfLevels))
     if (status != 0):
         print "WARNING: \n"+output
 
@@ -302,24 +305,30 @@ def b_spline_nurbs_itk(fname_centerline, numberOfLevels=10):
         y_deriv.append(float(center[4]))
         z_deriv.append(float(center[5]))
 
-    return x_fit, y_fit,z_fit,x_deriv,y_deriv,z_deriv
+    return x_fit, y_fit, z_fit, x_deriv, y_deriv, z_deriv
 
 
+
+#=======================================================================================================================
+# get size
+#=======================================================================================================================
 def getSize(x, y, z, file_name=None):
+    from commands import getstatusoutput
+    from math import sqrt
     # get pixdim
     if file_name is not None:
         import commands
         cmd1 = 'fslval '+file_name+' pixdim1'
-        status, output = commands.getstatusoutput(cmd1)
+        status, output = getstatusoutput(cmd1)
         p1 = float(output)
         cmd2 = 'fslval '+file_name+' pixdim2'
-        status, output = commands.getstatusoutput(cmd2)
+        status, output = getstatusoutput(cmd2)
         p2 = float(output)
         cmd3 = 'fslval '+file_name+' pixdim3'
-        status, output = commands.getstatusoutput(cmd3)
+        status, output = getstatusoutput(cmd3)
         p3 = float(output)
     else:
-        p1,p2,p3 = 1.0,1.0,1.0
+        p1, p2, p3 = 1.0, 1.0, 1.0
 
     # Centerline size
     s = 0
@@ -329,29 +338,22 @@ def getSize(x, y, z, file_name=None):
     return s
 
 
+
 #=======================================================================================================================
 # functions to get centerline size
 #=======================================================================================================================
 def getPxDimensions(file_name):
-    import commands
+    from commands import getstatusoutput
     cmd1 = 'fslval '+file_name+' pixdim1'
-    status, output = commands.getstatusoutput(cmd1)
+    status, output = getstatusoutput(cmd1)
     p1 = float(output)
     cmd2 = 'fslval '+file_name+' pixdim2'
-    status, output = commands.getstatusoutput(cmd2)
+    status, output = getstatusoutput(cmd2)
     p2 = float(output)
     cmd3 = 'fslval '+file_name+' pixdim3'
-    status, output = commands.getstatusoutput(cmd3)
+    status, output = getstatusoutput(cmd3)
     p3 = float(output)
     return p1, p2, p3
-
-
-#def getSize(x, y, z, p1, p2, p3):
-#    s = 0
-#    for i in xrange (len(x)-1):
-#        s += sqrt((p1*(x[i+1]-x[i]))**2+(p2*(y[i+1]-y[i]))**2+(p3*(z[i+1]-z[i])**2))
-#    print "centerline size: ", s
-#    return s
 
 
 
@@ -360,40 +362,39 @@ def getPxDimensions(file_name):
 #=======================================================================================================================
 def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
     """see http://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.splprep.html for full input information"""
-    from scipy.interpolate import splprep,splev
-    
-    tckp,u = splprep([x,y,z], s = s, k = k, nest = nest)
+    from scipy.interpolate import splprep, splev
+    tckp, u = splprep([x,y,z], s = s, k = k, nest = nest)
+    xnew, ynew, znew = splev(u, tckp)
+    return xnew, ynew, znew
 
-    xnew,ynew,znew = splev(u,tckp)
-    
-    return xnew, ynew, znew 
 
 
 #=======================================================================================================================
 # lowpass filter  
 #=======================================================================================================================
-def lowpass (y) :
+def lowpass(y):
     from scipy.fftpack import fftfreq, fft
     from scipy.signal import filtfilt, iirfilter
-  
+    from numpy import abs, amax
     frequency = fftfreq(len(y))
-    spectrum = np.abs(fft(y, n=None, axis=-1, overwrite_x=False))
-    Wn = np.amax(frequency)/10
-    N = 5              #Order of the filter
+    spectrum = abs(fft(y, n=None, axis=-1, overwrite_x=False))
+    Wn = amax(frequency)/10
+    N = 5  # Order of the filter
     b, a = iirfilter(N, Wn, rp=None, rs=None, btype='low', analog=False, ftype='butter', output='ba')
     y_smooth = filtfilt(b, a, y, axis=-1, padtype=None)
-
-
     return y_smooth
-    
+
+
+
 #=======================================================================================================================
 # moving_average
 #=======================================================================================================================   
-def moving_average(y, n=3) :
-    y_smooth = np.cumsum(y, dtype=float)
+def moving_average(y, n=3):
+    from numpy import cumsum
+    y_smooth = cumsum(y, dtype=float)
     y_smooth[n:] = y_smooth[n:] - y_smooth[:-n]
-    
     return y_smooth[n - 1:] / n
+
 
 
 #=======================================================================================================================
@@ -403,7 +404,7 @@ def mean_squared_error(x, x_fit):
     mse = 0
     if len(x_fit) == len(x) and len(x) is not 0:
         n = len(x)
-        for i in range(0,len(x)):
+        for i in range(0, len(x)):
             mse += (x[i]-x_fit[i])*(x[i]-x_fit[i])
         mse = float(mse)
         mse *= (1/float(n))
@@ -416,7 +417,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x,window_len=11,window='hanning'):
+def smoothing_window(x, window_len=11, window='hanning'):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -449,33 +450,28 @@ def smoothing_window(x,window_len=11,window='hanning'):
     return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
     return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
-
+    from numpy import r_, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
     if x.size < window_len:
         raise ValueError, "Input vector needs to be bigger than window size."
-    if window_len<3:
+    if window_len < 3:
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
-    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
-    #print(len(s))
+    s = r_[x[window_len-1:0:-1], x, x[-1:-window_len:-1]]
 
     #Creation of the window
     if window == 'flat': #moving average
-        w=np.ones(window_len,'d')
+        w = ones(window_len, 'd')
     else:
-        w=eval('np.'+window+'(window_len)')
+        w = eval(window+'(window_len)')
 
     #Convolution of the window with the inputted signal
-    y=np.convolve(w/w.sum(),s,mode='valid')
+    y = convolve(w/w.sum(), s, mode='valid')
 
-    #To obtain length(output) == length(input)
-    if window_len%2==0 :
+    if window_len%2 == 0:
         return y[(window_len/2-1):-(window_len/2)]
-    if window_len%2!=0 :
+    if window_len%2 != 0:
         return y[(window_len/2-1):-(window_len/2+1)]
-
-    #length(output) != length(input)
-    #return y

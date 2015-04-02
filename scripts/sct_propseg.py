@@ -39,13 +39,11 @@ if __name__ == "__main__":
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-up",
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
@@ -223,4 +221,4 @@ if __name__ == "__main__":
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
-    sct.printv("fslview "+input_filename+" "+folder_output+output_filename+" -l Red -b 0,1 -t 0.7")
+    sct.printv("fslview "+input_filename+" "+folder_output+output_filename+" -l Red -b 0,1 -t 0.7 &")

@@ -13,9 +13,23 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
+
+import sys
+import getopt
+import os
+import commands
+import time
+
+import numpy as np
+import scipy
+import nibabel
+
+import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_orientation import get_orientation, set_orientation
+
+
 
 
 # DEFAULT PARAMETERS
@@ -38,18 +52,6 @@ class Param:
         self.path_to_template = ''
         
         
-import sys
-import getopt
-import os
-import commands
-import numpy as np
-import time
-import sct_utils as sct
-from sct_nurbs import NURBS
-import scipy
-import nibabel
-from sct_orientation import get_orientation, set_orientation
-
 # MAIN
 # ==========================================================================================
 def main():
@@ -85,8 +87,6 @@ def main():
         verbose = 1
         volume_output = 1
         remove_temp_files = 0
-        from matplotlib.pyplot import imshow, gray, show
-        from mpl_toolkits.mplot3d import Axes3D
     else:
         # Check input parameters
         try:
