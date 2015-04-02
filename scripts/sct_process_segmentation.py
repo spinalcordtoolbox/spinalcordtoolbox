@@ -31,11 +31,6 @@ from sct_orientation import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 
 
-
-
-
-
-
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -54,9 +49,7 @@ class Param:
         self.slices = ''
         self.vertebral_levels = ''
         self.path_to_template = ''
-        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
-
+        
         
 # MAIN
 # ==========================================================================================
