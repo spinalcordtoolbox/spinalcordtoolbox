@@ -32,6 +32,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -141,7 +142,10 @@ def main():
     # display usage if no method provided
     if name_process == 'compute_csa' and method_CSA == '':
         usage() 
-        
+
+    # update fields
+    param.verbose = verbose
+
     # check existence of input files
     sct.check_file_exist(fname_segmentation)
     
@@ -153,7 +157,7 @@ def main():
         fname_output = extract_centerline(fname_segmentation,remove_temp_files)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
-        sct.printv('fslview '+fname_output+' &', param.verbose, 'code')
+        sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
 
     if name_process == 'compute_csa':
         volume_output = 1
@@ -169,6 +173,8 @@ def main():
         sct.printv('\nLength of the Spinal Cord = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
     # End of Main
+
+
 
 # compute the length of the spinal cord
 # ==========================================================================================
@@ -203,42 +209,14 @@ def compute_length(fname_segmentation, remove_temp_files):
     # smooth segmentation/centerline
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
 
-    # # Extract orientation of the input segmentation
-    # orientation = get_orientation(file_data+ext_data)
-    # print '\nOrientation of segmentation image: ' + orientation
-    #
-    # # Get size of data
-    # print '\nGet dimensions data...'
-    # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    # print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
-    #
-    # print '\nOpen segmentation volume...'
-    # file = nibabel.load(fname_segmentation_orient)
-    # data = file.get_data()
-    # hdr = file.get_header()
-    #
-    # # Extract min and max index in Z direction
-    # X, Y, Z = (data>0).nonzero()
-    # min_z_index, max_z_index = min(Z), max(Z)
-    # x_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
-    # y_centerline = [0 for i in range(0,max_z_index-min_z_index+1)]
-    # z_centerline = [iz for iz in range(min_z_index, max_z_index+1)]
-    # # Extract segmentation points and average per slice
-    # for iz in range(min_z_index, max_z_index+1):
-    #     x_seg, y_seg = (data[:,:,iz]>0).nonzero()
-    #     x_centerline[iz-min_z_index] = np.mean(x_seg)
-    #     y_centerline[iz-min_z_index] = np.mean(y_seg)
-    # for k in range(len(X)):
-    #     data[X[k],Y[k],Z[k]] = 0
-    # # Fit the centerline points with splines and return the new fitted coordinates
-    # x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
-
     # compute length of centerline
     result_length = 0.0
     for i in range(len(x_centerline_fit)-1):
         result_length += sqrt(((x_centerline_fit[i+1]-x_centerline_fit[i])*px)**2+((y_centerline_fit[i+1]-y_centerline_fit[i])*py)**2+((z_centerline[i+1]-z_centerline[i])*pz)**2)
 
     return result_length
+
+
 
 # extract_centerline
 # ==========================================================================================
@@ -257,22 +235,23 @@ def extract_centerline(fname_segmentation, remove_temp_files):
 
     # go to tmp folder
     os.chdir(path_tmp)
-            
-    # Change orientation of the input segmentation into RPI
-    print '\nOrient segmentation image to RPI orientation...'
-    fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
+
+    # Change orientation of the input centerline into RPI
+    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    fname_segmentation_orient = 'segmentation_rpi' + ext_data
     set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
+
+    # Get dimension
+    sct.printv('\nGet dimensions...', param.verbose)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
     # Extract orientation of the input segmentation
     orientation = get_orientation(file_data+ext_data)
-    print '\nOrientation of segmentation image: ' + orientation
+    sct.printv('\nOrientation of segmentation image: ' + orientation, param.verbose)
 
-    # Get size of data
-    print '\nGet dimensions data...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    print '.. '+str(nx)+' x '+str(ny)+' y '+str(nz)+' z '+str(nt)
-
-    print '\nOpen segmentation volume...'
+    sct.printv('\nOpen segmentation volume...', param.verbose)
     file = nibabel.load(fname_segmentation_orient)
     data = file.get_data()
     hdr = file.get_header()
@@ -289,20 +268,23 @@ def extract_centerline(fname_segmentation, remove_temp_files):
         x_centerline[iz-min_z_index] = np.mean(x_seg)
         y_centerline[iz-min_z_index] = np.mean(y_seg)
     for k in range(len(X)):
-        data[X[k],Y[k],Z[k]] = 0
-    # Fit the centerline points with splines and return the new fitted coordinates
-    x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+        data[X[k], Y[k], Z[k]] = 0
 
+    # extract centerline and smooth it
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
         data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1
     # Write the centerline image in RPI orientation
     hdr.set_data_dtype('uint8') # set imagetype to uint8
-    print '\nWrite NIFTI volumes...'
+    sct.printv('\nWrite NIFTI volumes...', param.verbose)
     img = nibabel.Nifti1Image(data, None, hdr)
-    nibabel.save(img, 'tmp.centerline.nii')
-    sct.generate_output_file('tmp.centerline.nii', file_data+'_centerline'+ext_data)
+    nibabel.save(img, 'centerline.nii.gz')
+    sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, param.verbose)
+
+    # create a txt file with the centerline
+    # TODO
 
     del data
 
@@ -310,14 +292,14 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     os.chdir('..')
 
     # Change orientation of the output centerline into input orientation
-    print '\nOrient centerline image to input orientation: ' + orientation
+    sct.printv('\nOrient centerline image to input orientation: ' + orientation, param.verbose)
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
     set_orientation(path_tmp+'/'+file_data+'_centerline'+ext_data, orientation, file_data+'_centerline'+ext_data)
 
    # Remove temporary files
     if remove_temp_files:
-        print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        sct.printv('\nRemove temporary files...', param.verbose)
+        sct.run('rm -rf '+path_tmp, param.verbose)
 
     return file_data+'_centerline'+ext_data
 
