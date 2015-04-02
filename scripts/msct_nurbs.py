@@ -90,7 +90,7 @@ class NURBS():
         self.courbe3D_deriv = []
         self.nbControle = 10  ### correspond au nombre de points de controle calcules.
         self.precision = precision
-        self.tolerance = 0.007
+        self.tolerance = 0.5 # in mm
 
         if sens:                  #### si on donne les points de controle#####
             if type(liste[0][0]).__name__ == 'list':
@@ -111,8 +111,8 @@ class NURBS():
                 # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
                 # compute the ideal number of control points based on tolerance
                 error_curve = 1000.0
-                self.nbControle = 8#self.degre+1
-                while error_curve > self.tolerance:
+                self.nbControle = self.degre+1
+                while error_curve > self.tolerance and self.nbControle < len(P_x) and self.nbControle <= 40:
                     # compute the nurbs based on input data and number of controle points
                     print 'Number of control points = ' + str(self.nbControle)
                     self.pointsControle = self.reconstructGlobalApproximation(P_x,P_y,P_z,self.degre,self.nbControle)
@@ -127,7 +127,7 @@ class NURBS():
                             if dist < min_dist:
                                 min_dist = dist
                         error_curve += min_dist
-                    error_curve = math.sqrt(error_curve)/float(len(P_x))
+                    error_curve = error_curve/float(len(P_x))
 
                     print 'Error on approximation = ' + str(error_curve)
 
