@@ -53,7 +53,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, algo='syn', metric='MI', iter='10', shrink='2', smooth='0', poly='3', gradStep='0.5'):
+    def __init__(self, algo='syn', metric='MI', iter='10', shrink='1', smooth='0', poly='3', gradStep='0.5'):
         self.algo = algo
         self.metric = metric
         self.iter = iter
@@ -75,7 +75,7 @@ class Paramreg(object):
 def main():
 
     # Initialization
-    # fname_output = ''
+    fname_output = ''
     fname_mask = ''
     # padding = 5
     # remove_temp_files = 1
@@ -113,13 +113,11 @@ def main():
                       type_value="file",
                       description="Binary mask to improve robustness.",
                       mandatory=False,
-                      default_value='',
                       example="mask.nii.gz")
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Name of output file.",
                       mandatory=False,
-                      default_value='',
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value="str",
@@ -155,7 +153,8 @@ def main():
     # get arguments
     fname_src = arguments['-i']
     fname_dest = arguments['-d']
-    fname_output = arguments['-o']
+    if '-o' in arguments:
+        fname_output = arguments['-o']
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
@@ -314,7 +313,7 @@ def main():
     # Delete temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
-        os.removedirs(path_tmp)
+        sct.run('rm -rf '+path_tmp, verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
