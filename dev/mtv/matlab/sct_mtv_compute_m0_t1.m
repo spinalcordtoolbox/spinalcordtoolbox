@@ -29,8 +29,8 @@ if nargin<6
 end
 
 dims = size(data);
-T1 = zeros(dims(1:end-1));
-M0 = zeros(dims(1:end-1));
+T1 = zeros([dims(1:end-1), 3]);
+M0 = zeros([dims(1:end-1), 3]);
 warning('off');
 j_progress('loop over voxels...')
 for ii=1:dims(1)
@@ -47,17 +47,17 @@ for ii=1:dims(1)
             % fit data
 %             param = polyfit(x,y,1);
             [fitresult, gof] = LinearFit(x, y, verbose);
-            ci = confint(fitresult,0.70); % confidence interval of the fitting (returns the slope and intercept of the lines framing the fit)
-            ci(isnan(ci))=0;
-            param=coeffvalues(fitresult); % slope and intercept of the fitting
+            param = coeffvalues(fitresult); % slope and intercept of the fitting
             param(isnan(param))=0;
             
-%             [M0(ii,jj,kk,1),T1(ii,jj,kk,1)]=getM0T1(param,TR);
-%             [M0(ii,jj,kk,2),T1(ii,jj,kk,2)]=getM0T1(ci(1,:),TR);
-%             [M0(ii,jj,kk,3),T1(ii,jj,kk,3)]=getM0T1(ci(2,:),TR);
+            ci = confint(fitresult,0.682); % confidence interval of the fitting (returns the slope and intercept of the lines framing the fit)
+            ci(isnan(ci)) = 0;
             
-            [M0(ii,jj,kk),T1(ii,jj,kk)]=getM0T1(param,TR); % compute PD and T1
-            
+            % compute PD and T1
+%             [M0(ii,jj,kk),T1(ii,jj,kk)]=getM0T1(param,TR);
+            [M0(ii,jj,kk,1),T1(ii,jj,kk,1)]=getM0T1(param,TR);
+            [M0(ii,jj,kk,2),T1(ii,jj,kk,2)]=getM0T1(ci(1,:),TR);
+            [M0(ii,jj,kk,3),T1(ii,jj,kk,3)]=getM0T1(ci(2,:),TR);
             
             % if T1 is known
 %             a=exp(-TR/3);
@@ -108,12 +108,14 @@ ft = fittype( 'poly1' );
 
 % Plot fit with data.
 if verbose && max(xData~=0) && max(yData~=0)
-    figure( 23 );
-    h = plot( fitresult, xData, yData,'+' );
+    
+    figure(100)
+    h = plot( fitresult, xData, yData,'+');
     set(h,'MarkerSize',30)
     legend( h, 'y vs. x', 'untitled fit 1', 'Location', 'NorthEast' );
     p11 = predint(fitresult,x,0.95,'observation','off');
-    hold on,plot(x,p11,'m--');
+    hold on
+    plot(x,p11,'m--');
     hold off
     % Label axes
     xlabel( 'x' );
