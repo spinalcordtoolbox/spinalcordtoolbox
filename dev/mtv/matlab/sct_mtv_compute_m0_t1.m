@@ -45,15 +45,19 @@ for ii=1:dims(1)
             x = squeeze(data(ii, jj, kk, :))./tan(flipAngles/180*pi*b1Map(ii, jj, kk))';
             
             % fit data
+%             param = polyfit(x,y,1);
             [fitresult, gof] = LinearFit(x, y, verbose);
             ci = confint(fitresult,0.70); % confidence interval of the fitting (returns the slope and intercept of the lines framing the fit)
             ci(isnan(ci))=0;
             param=coeffvalues(fitresult); % slope and intercept of the fitting
             param(isnan(param))=0;
             
-            [M0(ii,jj,kk,1),T1(ii,jj,kk,1)]=getM0T1(param,TR);
-            [M0(ii,jj,kk,2),T1(ii,jj,kk,2)]=getM0T1(ci(1,:),TR);
-            [M0(ii,jj,kk,3),T1(ii,jj,kk,3)]=getM0T1(ci(2,:),TR);
+%             [M0(ii,jj,kk,1),T1(ii,jj,kk,1)]=getM0T1(param,TR);
+%             [M0(ii,jj,kk,2),T1(ii,jj,kk,2)]=getM0T1(ci(1,:),TR);
+%             [M0(ii,jj,kk,3),T1(ii,jj,kk,3)]=getM0T1(ci(2,:),TR);
+            
+            [M0(ii,jj,kk),T1(ii,jj,kk)]=getM0T1(param,TR); % compute PD and T1
+            
             
             % if T1 is known
 %             a=exp(-TR/3);
@@ -74,7 +78,8 @@ for ii=1:dims(1)
         end
     end
 end
-j_progress('...done')
+display('...done')
+
 
 function [fitresult, gof] = LinearFit(x, y, verbose)
 %CREATEFIT(X,Y)
