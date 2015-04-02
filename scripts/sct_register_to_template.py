@@ -33,6 +33,7 @@ from msct_image import Image
 
 
 
+
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -40,7 +41,7 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 class Param:
     ## The constructor
     def __init__(self):
-        self.debug = 1
+        self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
         # self.speed = 'fast'  # speed of registration. slow | normal | fast
@@ -137,7 +138,7 @@ def main():
                       description="""Verbose.""",
                       mandatory=False,
                       default_value='1',
-                      example=['0', '1'])
+                      example=['0', '1', '2'])
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
