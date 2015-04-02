@@ -18,7 +18,10 @@
 - OPT: straightening: improved smoothing and variable resolution
 - OPT: sct_register_multimodal: simplification of registration between multimodal images, it is now possible to use regularized slice-wise registration (SliceReg)
 - NEW: sct_get_ernst_angle: new script to compute and display Ernst angle depending on T1 and TR
-- OPT: sct_process_segmentation: now allows to compute average CSA across vertebral levels (or slices)
+- OPT: sct_process_segmentation:
+  - can compute average CSA across vertebral levels or slices
+  - can compute length of segmentation
+  - N.B. process names were simplified to: "csa", "length" and "centerline"
 
 ##1.1.2_beta (2014-12-25)
 
