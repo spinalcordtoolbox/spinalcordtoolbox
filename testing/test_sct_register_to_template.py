@@ -26,6 +26,7 @@ def test(path_data):
           + ' -l ' + path_data + folder_data[0] + file_data[1] \
           + ' -s ' + path_data + folder_data[0] + file_data[2] \
           + ' -r 0' \
+          + ' -p step=1,iter=0:step=2,iter=0' \
           + ' -t ' + path_data + folder_data[1]
 
     return commands.getstatusoutput(cmd)
