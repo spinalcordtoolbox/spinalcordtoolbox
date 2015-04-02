@@ -35,6 +35,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -578,7 +579,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if slices or vert_levels:
 
         if vert_levels and not path_to_template:
-            sct.printv('ERROR: need to give the template folder path as -t argument.', 'error')
+            sct.printv('\nERROR: Path to template is missing. See usage.\n', 1, 'error')
             sys.exit(2)
         elif vert_levels and path_to_template:
             abs_path_to_template = os.path.abspath(path_to_template)
@@ -601,11 +602,11 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
         if slices:
             # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+path_data+"/mean_csa -z "+slices)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -z "+slices)
         if vert_levels:
             sct.run('cp -R '+abs_path_to_template+' .')
             # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+path_data+"/mean_csa -v "+vert_levels)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -v "+vert_levels)
 
         os.chdir('..')
 
