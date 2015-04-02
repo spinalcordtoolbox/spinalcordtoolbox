@@ -41,6 +41,7 @@ from sct_orientation import set_orientation
 
 
 
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -151,17 +152,18 @@ def main():
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
-    print '\nOrient centerline to RPI orientation...'
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
     fname_centerline_orient = 'centerline_rpi.nii.gz'
     set_orientation(fname_centerline, 'RPI', fname_centerline_orient)
 
-    print '\nGet dimensions...'
+    # Get dimension
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
-    print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-    print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param)
 
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -225,7 +227,7 @@ def main():
         landmark_curved[index][4][2] = (-1/c)*(a*x+b*landmark_curved[index][4][1]+d)  # z for -y
     ### <<==============================================================================================================
 
-    if verbose == 2:
+    if verbose == 3:
         from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
         fig = plt.figure()
@@ -437,7 +439,7 @@ def usage():
         '  -p <padding>      amount of padding for generating labels. Default='+str(param_default.padding)+'\n' \
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: txt, 2: txt+fig. Default='+str(param_default.verbose)+'\n' \
+        '  -v {0,1,2,3}      Verbose. 0: nothing, 1: basic, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -448,7 +450,7 @@ def usage():
 
 # Smooth centerline
 #=======================================================================================================================
-def smooth_centerline(fname_centerline):
+def smooth_centerline(fname_centerline, param):
     """
     :param fname_centerline: centerline in RPI orientation
     :return: a bunch of useful stuff
@@ -517,7 +519,7 @@ def smooth_centerline(fname_centerline):
     x_centerline_final = x_centerline_final.tolist()
     y_centerline_final = y_centerline_final.tolist()
 
-    if param.verbose == 2:
+    if param.verbose == 3:
         import matplotlib.pyplot as plt
         plt.figure(1)
         #ax = plt.subplot(211)
