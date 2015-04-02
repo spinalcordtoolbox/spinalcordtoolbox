@@ -33,6 +33,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -67,7 +68,7 @@ def main():
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
     fname_segmentation = ''
     name_process = ''
-    processes = ['extract_centerline', 'compute_csa', 'length']
+    processes = ['centerline', 'csa', 'length']
     method_CSA = ['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane']
     name_method = param.name_method
     volume_output = param.volume_output
@@ -86,7 +87,7 @@ def main():
     # Parameters for debug mode
     if param.debug:
         fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        name_process = 'compute_csa'
+        name_process = 'csa'
         verbose = 1
         volume_output = 1
         remove_temp_files = 0
@@ -136,11 +137,11 @@ def main():
         usage()
 
     # display usage if incorrect method
-    if name_process == 'compute_csa' and (name_method not in method_CSA):
+    if name_process == 'csa' and (name_method not in method_CSA):
         usage()
     
     # display usage if no method provided
-    if name_process == 'compute_csa' and method_CSA == '':
+    if name_process == 'csa' and method_CSA == '':
         usage() 
 
     # update fields
@@ -159,7 +160,7 @@ def main():
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
 
-    if name_process == 'compute_csa':
+    if name_process == 'csa':
         volume_output = 1
         compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template)
 
@@ -751,9 +752,9 @@ USAGE
 MANDATORY ARGUMENTS
   -i <segmentation>     spinal cord segmentation (e.g., use sct_segmentation_propagation)
   -p <process>          type of process to be performed:
-                        - extract_centerline: extract centerline as binary file
+                        - centerline: extract centerline as binary file
                         - length: compute length of the segmentation
-                        - compute_csa: computes cross-sectional area by counting pixels in each
+                        - csa: computes cross-sectional area by counting pixels in each
                           slice and then geometrically adjusting using centerline orientation.
                           Output is a text file with z (1st column) and CSA in mm^2 (2nd column) and
                           a volume in which each slice\'s value is equal to the CSA (mm^2).
@@ -763,10 +764,10 @@ OPTIONAL ARGUMENTS
   -b {0,1}              Outputs a volume in which each slice\'s value is equal to the CSA in
                           mm^2. Default="""+str(param_default.volume_output)+"""
   -o <output_name>      Name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
-  -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p compute_csa\").
+  -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p csa\").
                           Example: 5:23. First slice is 0.
                           You can also select specific slices using commas. Example: 0,2,3,5,12
-  -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p compute_csa\").
+  -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
   -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
@@ -774,9 +775,9 @@ OPTIONAL ARGUMENTS
   -h                    Help. Show this message
 
 EXAMPLE
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa\n
+  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa\n
   To compute CSA across vertebral levels C2 to C4:
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p compute_csa -t label/template -l 2:4\n"""
+  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa -t label/template -l 2:4\n"""
 
     # exit program
     sys.exit(2)
