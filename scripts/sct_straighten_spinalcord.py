@@ -28,7 +28,7 @@ import commands
 import sys
 
 from nibabel import load, Nifti1Image, save
-from numpy import array, asarray, append, insert, linalg
+from numpy import array, asarray, append, insert, linalg, mean
 from sympy.solvers import solve
 from sympy import Symbol
 from scipy import ndimage
@@ -401,27 +401,28 @@ def main():
     # Ideally, the error should be zero.
     # Apply deformation to input image
     print '\nApply transformation to input image...'
-    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight.nii.gz -x nn -w tmp.curve2straight.nii.gz')
-    file_centerline_straight = load('tmp.centerline_straight.nii.gz')
-    data_centerline_straight = file_centerline_straight.get_data()
-    Xc, Yc, Zc = (data_centerline_straight > 0).nonzero()
-    z_straight_centerline = range(min(Zc),max(Zc), 1)
-    x_straight_centerline = [0 for iz in z_straight_centerline]
-    y_straight_centerline = [0 for iz in z_straight_centerline]
-    for i,iz in enumerate(z_straight_centerline):
-        x_straight_centerline[i], y_straight_centerline[i] = ndimage.measurements.center_of_mass(array(data_centerline_straight[:, :, iz]))
+    c = sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x nn -w tmp.curve2straight.nii.gz')
+    #c = sct.run('sct_crop_image -i tmp.centerline_straight.nii.gz -o tmp.centerline_straight_crop.nii.gz -dim 2 -bzmax')
+    from msct_image import Image
+    file_centerline_straight = Image('tmp.centerline_straight.nii.gz')
+    coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
+    mean_coord = []
+    for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
+        mean_coord.append(mean([[coord.x*coord.value, coord.y*coord.value] for coord in coordinates_centerline if coord.z == z], axis=0))
 
     # compute error between the input data and the nurbs
     from math import sqrt
     mse_curve = 0.0
     max_dist = 0.0
-    for i in range(0,len(z_straight_centerline)):
-        dist = ((x0-x_straight_centerline[i]+padding)*px)**2 + ((y0-y_straight_centerline[i]+padding)*py)**2
+    x0 = int(round(file_centerline_straight.data.shape[0]/2.0))
+    y0 = int(round(file_centerline_straight.data.shape[1]/2.0))
+    for coord_z in mean_coord:
+        dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
         mse_curve += dist
         dist = sqrt(dist)
         if dist > max_dist:
             max_dist = dist
-    mse_curve = mse_curve/float(len(z_straight_centerline))
+    mse_curve = mse_curve/float(len(mean_coord))
 
     # come back to parent folder
     os.chdir('..')
