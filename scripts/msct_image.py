@@ -236,13 +236,13 @@ class Image(object):
                 raise ValueError('reverse_coord parameter must be a boolean')
 
             if sorting == 'x':
-                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+                list_coordinates = sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
             elif sorting == 'y':
-                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+                list_coordinates = sorted(list_coordinates, key=lambda obj: obj.y, reverse=reverse_coord)
             elif sorting == 'z':
-                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+                list_coordinates = sorted(list_coordinates, key=lambda obj: obj.z, reverse=reverse_coord)
             elif sorting == 'value':
-                sorted(list_coordinates, key=lambda obj: obj.x, reverse=reverse_coord)
+                list_coordinates = sorted(list_coordinates, key=lambda obj: obj.value, reverse=reverse_coord)
             else:
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
