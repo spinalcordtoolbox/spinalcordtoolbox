@@ -48,7 +48,7 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_nii_fname)
+function save_nii(nii, fileprefix, old_nii_fname,datatype)
    
    if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
 	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
@@ -77,6 +77,29 @@ function save_nii(nii, fileprefix, old_nii_fname)
    
    nii.hdr.dime.dim(1:length(size(nii.img))+1)=[length(size(nii.img)) size(nii.img)];
 
+  if exist('datatype','var')
+      bittable=  [0 0; % DT_NONE, DT_UNKNOWN
+                  1 1; % DT_BINARY
+                  2 8; % DT_UINT8, NIFTI_TYPE_UINT8
+                  4 16; % DT_INT16, NIFTI_TYPE_INT16
+                  8 32; % DT_INT32, NIFTI_TYPE_INT32
+                  16 32; % DT_FLOAT32, NIFTI_TYPE_FLOAT32
+                  32 64; % DT_COMPLEX64, NIFTI_TYPE_COMPLEX64
+                  64 64; % DT_FLOAT64, NIFTI_TYPE_FLOAT64
+                  128 24; % DT_RGB24, NIFTI_TYPE_RGB24
+                  256 8; % DT_INT8, NIFTI_TYPE_INT8
+                  511 96; % DT_RGB96, NIFTI_TYPE_RGB96
+                  512 16; % DT_UNINT16, NIFTI_TYPE_UNINT16
+                  768 32; % DT_UNINT32, NIFTI_TYPE_UNINT32
+                  1024 64; % DT_INT64, NIFTI_TYPE_INT64
+                  1280 64; % DT_UINT64, NIFTI_TYPE_UINT64
+                  1536 128; % DT_FLOAT128, NIFTI_TYPE_FLOAT128
+                  1792 128; % DT_COMPLEX128, NIFTI_TYPE_COMPLEX128
+                  2048 256];
+      nii.hdr.dime.datatype=datatype;
+      nii.hdr.dime.bitpix=bittable(bittable(:,1)==datatype,2);
+  end
+   
    v = version;
 
    %  Check file extension. If .gz, unpack it into temp folder
