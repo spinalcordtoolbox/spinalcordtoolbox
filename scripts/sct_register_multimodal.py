@@ -49,7 +49,8 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.outSuffix  = "_reg"
-
+        self.fname_mask = ''
+        self.padding = 5
 
 # Parameters for registration
 class Paramreg(object):
@@ -111,7 +112,7 @@ def main():
 
     # Initialization
     fname_output = ''
-    fname_mask = ''
+    fname_mask = param.fname_mask
     # padding = 5
     # remove_temp_files = 1
     # verbose = 1
@@ -166,7 +167,7 @@ def main():
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
-                      default_value=5)
+                      default_value=param.padding)
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -226,6 +227,11 @@ def main():
     print '  Remove temp files ... '+str(remove_temp_files)
     print '  Verbose ............. '+str(verbose)
 
+    # update param
+    param.verbose = verbose
+    param.padding = padding
+    param.fname_mask = fname_mask
+
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
     sct.check_if_3d(fname_src)
@@ -274,12 +280,15 @@ def main():
     # if segmentation, also do it for seg
 
     # loop across registration steps
-    for i in range(0, len(paramreg.steps)):
+    warp_forward = []
+    for i_step in range(0, len(paramreg.steps)):
         # if step>0, apply warp_forward_concat to the src image to be used
-        if i > 0:
-            src_warp = apply_warping_field(src, warp_forward_concat)
+        if i_step > 0:
+            src = apply_warping_field(src, warp_forward_concat)
         # register src --> dest
-        warp_forward[i], warp_inverse[i] = register(src_warp, dest, paramreg[1])
+        src = 'src.nii'
+        dest = 'dest.nii'
+        warp_forward.append(register(src, dest, paramreg, str(i_step)))
         # concatenate forward warping field
         warp_forward_concat = concatenate_warping_fields(warp_forward)
 
@@ -362,11 +371,17 @@ def main():
 
 # register images
 # ==========================================================================================
-def register(src, dest, paramreg):
-    # Estimate transformation
-    sct.printv('\nEstimate transformation (can take a couple of minutes)...', verbose)
+def register(src, dest, paramreg, i_step_str):
 
-    if paramreg.algo == 'slicereg':
+    sct.printv('\nEstimate transformation for step #'+i_step_str+'...', param.verbose)
+
+    # set metricSize
+    if paramreg.steps[i_step_str].metric == 'MI':
+        metricSize = '32'  # corresponds to number of bins
+    else:
+        metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
+
+    if paramreg.steps[i_step_str].algo == 'slicereg':
         # # threshold images (otherwise, automatic crop does not work -- see issue #293)
         # sct.run(fsloutput+'fslmaths dest_pad -thr 0.1 dest_pad_thr', verbose)
         # sct.run(fsloutput+'fslmaths src_regAffine -thr 0.1 src_regAffine_thr', verbose)
@@ -376,50 +391,44 @@ def register(src, dest, paramreg):
         # estimate transfo
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
-               '-m '+paramreg.metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
-               '-p '+paramreg.poly+' '
-               '-i '+paramreg.iter+' '
+               '-m '+paramreg.steps[i_step_str].metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
+               '-p '+paramreg.steps[i_step_str].poly+' '
+               '-i '+paramreg.steps[i_step_str].iter+' '
                '-f 1 '
                '-s 0 '
-               '-o [stage10,src_regAffineWarp.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-               +masking)
-    elif paramreg.algo == 'syn' or paramreg.algo == 'bsplinesyn':
+               '-o [stage1] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               +param.fname_mask)
 
-        # if sliceReg is used, we can't pad in the image...
-        if paramreg.algo == 'slicereg':
-            sct.printv('WARNING: if sliceReg is used, padding should not be used. Now setting padding=0', 1, 'warning')
-            padding = 0
-
+    elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
         # Pad the destination image (because ants doesn't deform the extremities)
-        sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
-        pad_image('dest.nii', 'dest_pad.nii', padding)
-        # if segmentation, also pad the segmentation
-
-        # set metricSize
-        if paramreg.metric == 'MI':
-            metricSize = '32'  # corresponds to number of bins
-        else:
-            metricSize = '4'  # corresponds to radius
+        # sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
+        pad_image(dest, dest, param.padding)
 
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
-               '--transform '+paramreg.algo+'['+paramreg.gradStep+',3,0] '
-               '--metric '+paramreg.metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+'] '
-               '--convergence '+paramreg.iter+' '
-               '--shrink-factors '+paramreg.shrink+' '
-               '--smoothing-sigmas '+paramreg.smooth+'mm '
+               '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
+               '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
+               '--convergence '+paramreg.steps[i_step_str].iter+' '
+               '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
+               '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [stage1,src_regAffineWarp.nii] '
+               '--output [step'+i_step_str+'1] '
                '--interpolation BSpline[3] '
-               +masking)
+               +param.fname_mask)
     else:
-        sct.printv('\nERROR: algo '+paramreg.algo+' does not exist. Exit program\n', 1, 'error')
+        sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')
 
     # run registration
-    status, output = sct.run(cmd, verbose)
+    status, output = sct.run(cmd, param.verbose)
     if status:
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    else:
+        # rename warping fields
+        warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
+        os.rename('step'+i_step_str+'10Warp.nii.gz', warp_forward)
+
+    return warp_forward
 
 
 
