@@ -1,7 +1,7 @@
 %  Save NIFTI dataset. Support both *.nii and *.hdr/*.img file extension.
 %  If file extension is not provided, *.hdr/*.img will be used as default.
 %  
-%  Usage: save_nii(nii, filename, [old_RGB])
+%  Usage: save_nii(nii, filename, [old_nii_fname])
 %  
 %  nii.hdr - struct with NIFTI header fields (from load_nii.m or make_nii.m)
 %
@@ -48,14 +48,15 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_RGB)
+function save_nii(nii, fileprefix, old_nii_fname,datatype)
    
-   if ~exist('nii','var') | isempty(nii) | ~isfield(nii,'hdr') | ...
-	~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
+   if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
+	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
 
       error('Usage: save_nii(nii, filename, [old_RGB])');
    end
-
+   
+   
    if isfield(nii,'untouch') & nii.untouch == 1
       error('Usage: please use ''save_untouch_nii.m'' for the untouched structure.');
    end
@@ -63,12 +64,47 @@ function save_nii(nii, fileprefix, old_RGB)
    if ~exist('old_RGB','var') | isempty(old_RGB)
       old_RGB = 0;
    end
+   
+   if ~isstruct(nii)
+       if exist('old_nii_fname','var')
+           oldnii=load_nii(old_nii_fname);
+           oldnii.img=nii;
+           nii=oldnii;
+       else
+           error('Usage: save_nii(nii, filename, old_nii_fname)')
+       end
+   end
+   
+   nii.hdr.dime.dim(1:length(size(nii.img))+1)=[length(size(nii.img)) size(nii.img)];
 
+  if exist('datatype','var')
+      bittable=  [0 0; % DT_NONE, DT_UNKNOWN
+                  1 1; % DT_BINARY
+                  2 8; % DT_UINT8, NIFTI_TYPE_UINT8
+                  4 16; % DT_INT16, NIFTI_TYPE_INT16
+                  8 32; % DT_INT32, NIFTI_TYPE_INT32
+                  16 32; % DT_FLOAT32, NIFTI_TYPE_FLOAT32
+                  32 64; % DT_COMPLEX64, NIFTI_TYPE_COMPLEX64
+                  64 64; % DT_FLOAT64, NIFTI_TYPE_FLOAT64
+                  128 24; % DT_RGB24, NIFTI_TYPE_RGB24
+                  256 8; % DT_INT8, NIFTI_TYPE_INT8
+                  511 96; % DT_RGB96, NIFTI_TYPE_RGB96
+                  512 16; % DT_UNINT16, NIFTI_TYPE_UNINT16
+                  768 32; % DT_UNINT32, NIFTI_TYPE_UNINT32
+                  1024 64; % DT_INT64, NIFTI_TYPE_INT64
+                  1280 64; % DT_UINT64, NIFTI_TYPE_UINT64
+                  1536 128; % DT_FLOAT128, NIFTI_TYPE_FLOAT128
+                  1792 128; % DT_COMPLEX128, NIFTI_TYPE_COMPLEX128
+                  2048 256];
+      nii.hdr.dime.datatype=datatype;
+      nii.hdr.dime.bitpix=bittable(bittable(:,1)==datatype,2);
+  end
+   
    v = version;
 
    %  Check file extension. If .gz, unpack it into temp folder
    %
-   if strcmp(fileprefix(end-2:end), '.gz')
+   if length(fileprefix) > 2 & strcmp(fileprefix(end-2:end), '.gz')
 
       if ~strcmp(fileprefix(end-6:end), '.img.gz') & ...
 	 ~strcmp(fileprefix(end-6:end), '.hdr.gz') & ...
@@ -85,7 +121,7 @@ function save_nii(nii, fileprefix, old_RGB)
       end
    end
    
-   filetype = 1;
+   filetype = 2;
 
    %  Note: fileprefix is actually the filename you want to save
    %   
@@ -176,9 +212,12 @@ function write_nii(nii, filetype, fileprefix, old_RGB)
       error('This datatype is not supported');
    end
    
+   
+   
    hdr.dime.glmax = round(double(max(nii.img(:))));
    hdr.dime.glmin = round(double(min(nii.img(:))));
-   
+   dims=size(nii.img);
+   hdr.dime.dim(2:1+length(dims))=dims;
    if filetype == 2
       fid = fopen(sprintf('%s.nii',fileprefix),'w');
       
