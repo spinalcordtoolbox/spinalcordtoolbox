@@ -281,62 +281,34 @@ def main():
 
     # loop across registration steps
     warp_forward = []
+    warp_inverse = []
     for i_step in range(0, len(paramreg.steps)):
+        sct.printv('\nEstimate transformation for step #'+str(i_step)+'...', param.verbose)
+        # identify which is the src and dest
+        if paramreg.steps[str(i_step)].type == 'im':
+            src = 'src.nii'
+            dest = 'dest.nii'
+            interp_step = 'linear'
+        elif paramreg.steps[str(i_step)].type == 'seg':
+            src = 'src_seg.nii'
+            dest = 'dest_seg.nii'
+            interp_step = 'nn'
+        else:
+            sct.run('ERROR: Wrong image type.', 1, 'error')
         # if step>0, apply warp_forward_concat to the src image to be used
         if i_step > 0:
-            src = apply_warping_field(src, warp_forward_concat)
+            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
+            src = sct.add_suffix(src, '_reg')
         # register src --> dest
-        src = 'src.nii'
-        dest = 'dest.nii'
-        warp_forward.append(register(src, dest, paramreg, str(i_step)))
-        # concatenate forward warping field
-        warp_forward_concat = concatenate_warping_fields(warp_forward)
+        warp_forward_out, warp_inverse_out = register(src, dest, paramreg, str(i_step))
+        warp_forward.append(warp_forward_out)
+        warp_inverse.append(warp_inverse_out)
 
-
-    # # here we only consider two modes: (im) -> registration on image and (seg) -> registration on segmentation
-    # file_multistepreg, interpolation, destination = dict(), dict(), dict()
-    # file_multistepreg['seg'], interpolation['seg'], destination['seg'] = 'seg', 'nn', 'dest_seg_pad.nii'
-    # file_multistepreg['im'], interpolation['im'], destination['im'] = 'im', 'spline', 'src_seg_regAffine.nii'
-    #
-    # path_template, f_template, ext_template = sct.extract_fname(fname_template)
-    # path_template_seg, f_template_seg, ext_template_seg = sct.extract_fname(fname_template_seg)
-    # list_warping_fields, list_inverse_warping_fields = [], []
-    #
-    # # at least one step is mandatory
-    # pStep = paramreg.steps['1']
-    # sct.run('sct_register_multimodal -i '+file_multistepreg[pStep.type]+'.nii.gz -o '+file_multistepreg[pStep.type]+'_step1.nii.gz -d '+destination[pStep.type]+' -p algo='+pStep.algo+',metric='+pStep.metric+',iter='+pStep.iter+',shrink='+pStep.shrink+',smooth='+pStep.smooth+',poly='+pStep.poly+',gradStep='+pStep.gradStep+' -r 0 -v '+str(verbose)+' -x '+interpolation[pStep.type]+' -z 10', verbose)
-    # # apply warping field on the other image
-    # if pStep.type == 'im':
-    #     list_warping_fields.append('warp_'+file_multistepreg['im']+'2'+f_template+'.nii.gz')
-    #     list_inverse_warping_fields.append('warp_'+f_template+'2'+file_multistepreg['im']+'.nii.gz')
-    #     sct.run('sct_apply_transfo -i '+file_multistepreg['seg']+'.nii.gz -w warp_'+file_multistepreg['im']+'2'+f_template+'.nii.gz -d '+fname_template+' -o '+file_multistepreg['seg']+'_step'+pStep.step+'.nii.gz')
-    # else:
-    #     list_warping_fields.append('warp_'+file_multistepreg['seg']+'2'+f_template_seg+'.nii.gz')
-    #     list_inverse_warping_fields.append('warp_'+f_template_seg+'2'+file_multistepreg['seg']+'.nii.gz')
-    #     sct.run('sct_apply_transfo -i '+file_multistepreg['im']+'.nii.gz -w warp_'+file_multistepreg['seg']+'2'+f_template_seg+'.nii.gz -d '+fname_template+' -o '+file_multistepreg['im']+'_step'+pStep.step+'.nii.gz')
-    #
-    # for i in range(2, len(paramreg.steps)+1):
-    #     pStep = paramreg.steps[str(i)]
-    #     if pStep is not '1': # first step is already done
-    #         # compute warping field
-    #         sct.run('sct_register_multimodal -i '+file_multistepreg[pStep.type]+'_step'+str(i-1)+'.nii.gz -o '+file_multistepreg[pStep.type]+'_step'+pStep.step+'.nii.gz -d '+destination[pStep.type]+' -p algo='+pStep.algo+',metric='+pStep.metric+',iter='+pStep.iter+',shrink='+pStep.shrink+',smooth='+pStep.smooth+',poly='+pStep.poly+',gradStep='+pStep.gradStep+' -r 0 -v '+str(verbose)+' -x '+interpolation[pStep.type]+' -z 10', verbose)
-    #
-    #         # apply warping field on the other image and add new warping field to list
-    #         if pStep.type == 'im':
-    #             list_warping_fields.append('warp_'+file_multistepreg['im']+'_step'+str(i-1)+'2'+f_template+'.nii.gz')
-    #             list_inverse_warping_fields.append('warp_'+f_template+'2'+file_multistepreg['im']+'_step'+str(i-1)+'.nii.gz')
-    #             sct.run('sct_apply_transfo -i '+file_multistepreg['seg']+'_step'+str(i-1)+'.nii.gz -w warp_'+file_multistepreg['im']+'_step'+str(i-1)+'2'+f_template+'.nii.gz -d '+fname_template+' -o '+file_multistepreg['seg']+'_step'+pStep.step+'.nii.gz')
-    #         else:
-    #             list_warping_fields.append('warp_'+file_multistepreg['seg']+'_step'+str(i-1)+'2'+f_template_seg+'.nii.gz')
-    #             list_inverse_warping_fields.append('warp_'+f_template_seg+'2'+file_multistepreg['seg']+'_step'+str(i-1)+'.nii.gz')
-    #             sct.run('sct_apply_transfo -i '+file_multistepreg['im']+'_step'+str(i-1)+'.nii.gz -w warp_'+file_multistepreg['seg']+'_step'+str(i-1)+'2'+f_template_seg+'.nii.gz -d '+fname_template+' -o '+file_multistepreg['im']+'_step'+pStep.step+'.nii.gz')
-    #
-    # list_inverse_warping_fields.reverse()
-    #
-    # # Concatenate transformations
-    # sct.printv('\nConcatenate affine and local transformations...', verbose)
-    # sct.run('sct_concat_transfo -w regAffine0GenericAffine.mat,stage10Warp.nii.gz -d dest.nii -o warp_src2dest.nii.gz', verbose)
-    # sct.run('sct_concat_transfo -w stage10InverseWarp.nii.gz,-regAffine0GenericAffine.mat -d src.nii -o warp_dest2src.nii.gz', verbose)
+    # Concatenate transformations
+    sct.printv('\nConcatenate transformations...', verbose)
+    sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
+    warp_inverse.reverse()
+    sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
 
     # Apply warping field to src data
     sct.printv('\nApply transfo source --> dest...', verbose)
@@ -373,8 +345,6 @@ def main():
 # ==========================================================================================
 def register(src, dest, paramreg, i_step_str):
 
-    sct.printv('\nEstimate transformation for step #'+i_step_str+'...', param.verbose)
-
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
@@ -391,30 +361,35 @@ def register(src, dest, paramreg, i_step_str):
         # estimate transfo
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
-               '-m '+paramreg.steps[i_step_str].metric+'[dest_pad.nii,src_regAffine.nii,1,'+metricSize+',Regular,0.2] '
+               '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
                '-p '+paramreg.steps[i_step_str].poly+' '
                '-i '+paramreg.steps[i_step_str].iter+' '
                '-f 1 '
                '-s 0 '
-               '-o [stage1] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +param.fname_mask)
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
         # Pad the destination image (because ants doesn't deform the extremities)
         # sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
-        pad_image(dest, dest, param.padding)
+        dest_pad = sct.add_suffix(dest, '_pad')
+        pad_image(dest, dest_pad, param.padding)
 
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
-               '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
+               '--metric '+paramreg.steps[i_step_str].metric+'['+dest_pad+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+'1] '
+               '--output [step'+i_step_str+'] '
                '--interpolation BSpline[3] '
                +param.fname_mask)
+        warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
         sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')
 
@@ -426,9 +401,11 @@ def register(src, dest, paramreg, i_step_str):
     else:
         # rename warping fields
         warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
-        os.rename('step'+i_step_str+'10Warp.nii.gz', warp_forward)
+        os.rename(warp_forward_out, warp_forward)
+        warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
+        os.rename(warp_inverse_out, warp_inverse)
 
-    return warp_forward
+    return warp_forward, warp_inverse
 
 
 
