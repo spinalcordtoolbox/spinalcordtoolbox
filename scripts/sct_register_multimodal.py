@@ -44,6 +44,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -105,6 +106,7 @@ def main():
     # Initialization
     fname_output = ''
     fname_mask = param.fname_mask
+    fname_src_seg = ''
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
 
     start_time = time.time()
