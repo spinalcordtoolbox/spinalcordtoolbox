@@ -35,12 +35,13 @@
 
 
 import sys
-#import getopt
 import os
 import commands
 import time
+
 import sct_utils as sct
 from msct_parser import Parser
+
 
 
 # DEFAULT PARAMETERS
@@ -54,7 +55,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MI', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -71,15 +72,6 @@ class Paramreg(object):
         for object in list_objects:
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
-
-# class Paramreg_step(Paramreg):
-#     def __init__(self, step='0', type='im', algo='syn', metric='MI', iter='10', shrink='2', smooth='0', poly='3', gradStep='0.5'):
-#         # additional parameters from class Paramreg
-#         # default step is zero to manage wrong input: if step=0, it is not a correct step
-#         self.step = step
-#         self.type = type
-#         # inheritate class Paramreg from sct_register_multimodal
-#         Paramreg.__init__(self, algo, metric, iter, shrink, smooth, poly, gradStep)
 
 class ParamregMultiStep:
     '''
@@ -113,10 +105,7 @@ def main():
     # Initialization
     fname_output = ''
     fname_mask = param.fname_mask
-    # padding = 5
-    # remove_temp_files = 1
-    # verbose = 1
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
 
     start_time = time.time()
     # get path of the toolbox
@@ -140,17 +129,27 @@ def main():
                                  'sct_apply_transfo')
     parser.add_option(name="-i",
                       type_value="file",
-                      description="Source image.",
+                      description="Image source.",
                       mandatory=True,
-                      example="data_src.nii.gz")
+                      example="src.nii.gz")
     parser.add_option(name="-d",
                       type_value="file",
-                      description="Destination image.",
+                      description="Image destination.",
                       mandatory=True,
-                      example="data_dest.nii.gz")
+                      example="dest.nii.gz")
+    parser.add_option(name="-iseg",
+                      type_value="file",
+                      description="Segmentation source.",
+                      mandatory=False,
+                      example="src_seg.nii.gz")
+    parser.add_option(name="-dseg",
+                      type_value="file",
+                      description="Segmentation destination.",
+                      mandatory=False,
+                      example="dest_seg.nii.gz")
     parser.add_option(name="-m",
                       type_value="file",
-                      description="Binary mask to improve robustness.",
+                      description="Binary mask to improve accuracy over region of interest.",
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",
@@ -191,6 +190,10 @@ def main():
     # get arguments
     fname_src = arguments['-i']
     fname_dest = arguments['-d']
+    if '-iseg' in arguments:
+        fname_src_seg = arguments['-iseg']
+    if '-dseg' in arguments:
+        fname_dest_seg = arguments['-dseg']
     if '-o' in arguments:
         fname_output = arguments['-o']
     if "-m" in arguments:
@@ -262,6 +265,9 @@ def main():
     sct.printv('\nCopy files...', verbose)
     sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
     sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
+    if fname_src_seg:
+        sct.run('sct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii', verbose)
+        sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
     if not fname_mask == '':
         sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
         masking = '-x mask.nii.gz'  # this variable will be used when calling ants
@@ -395,15 +401,15 @@ def register(src, dest, paramreg, i_step_str):
 
     # run registration
     status, output = sct.run(cmd, param.verbose)
-    if status:
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    else:
+    if os.path.isfile(warp_forward_out):
         # rename warping fields
         warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
         os.rename(warp_forward_out, warp_forward)
         warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
         os.rename(warp_inverse_out, warp_inverse)
+    else:
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
 
     return warp_forward, warp_inverse
 
