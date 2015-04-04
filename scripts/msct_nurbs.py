@@ -75,7 +75,7 @@ except ImportError:
 
 
 class NURBS():
-    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None):
+    def __init__(self, degre=3, precision=1000, liste=None, sens=False, nbControl=None, verbose=1):
         #(self, degre=3, precision=1000, liste=None, sens=False, nurbs_ctl_points=None, size=None, div=None)
         """
         Ce constructeur initialise une NURBS et la construit.
@@ -91,6 +91,7 @@ class NURBS():
         self.nbControle = 10  ### correspond au nombre de points de controle calcules.
         self.precision = precision
         self.tolerance = 0.01 # in mm
+        self.verbose = verbose
 
         if sens:                  #### si on donne les points de controle#####
             if type(liste[0][0]).__name__ == 'list':
@@ -111,7 +112,7 @@ class NURBS():
                 # self.nbControl = len(P_z)/5  ## ordre 3 -> len(P_z)/10, 4 -> len/7, 5-> len/5   permet d'obtenir une bonne approximation sans trop "interpoler" la courbe
                 # compute the ideal number of control points based on tolerance
                 error_curve = 1000.0
-                self.nbControle = 15#self.degre+1
+                self.nbControle = 7#self.degre+1
 
                 # compute weights based on curve density
                 w = [1.0]*len(P_x)
@@ -123,35 +124,45 @@ class NURBS():
                 w[0], w[-1] = w[1], w[-2]
 
                 last_error_curve = 0.0
-                while abs(error_curve-last_error_curve) > self.tolerance and self.nbControle < len(P_x) and self.nbControle <= 30:
+                while abs(error_curve-last_error_curve) > self.tolerance and self.nbControle < len(P_x) and self.nbControle <= 50:
                     last_error_curve = error_curve
 
                     # compute the nurbs based on input data and number of controle points
-                    print 'Number of control points = ' + str(self.nbControle)
+                    if verbose >= 1:
+                        print 'Test: #control points = ' + str(self.nbControle)
                     self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
-                    self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision/3)  # generate curve with low resolution
+                    try:
+                        self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision/3)  # generate curve with low resolution
 
-                    # compute error between the input data and the nurbs
-                    error_curve = 0.0
-                    for i in range(0,len(P_x)):
-                        min_dist = 10000.0
-                        for k in range(0,len(self.courbe3D[0])):
-                            dist = (self.courbe3D[0][k]-P_x[i])**2+(self.courbe3D[1][k]-P_y[i])**2+(self.courbe3D[2][k]-P_z[i])**2
-                            if dist < min_dist:
-                                min_dist = dist
-                        error_curve += min_dist
-                    error_curve /= float(len(P_x))
+                        # compute error between the input data and the nurbs
+                        error_curve = 0.0
+                        for i in range(0,len(P_x)):
+                            min_dist = 10000.0
+                            for k in range(0,len(self.courbe3D[0])):
+                                dist = (self.courbe3D[0][k]-P_x[i])**2+(self.courbe3D[1][k]-P_y[i])**2+(self.courbe3D[2][k]-P_z[i])**2
+                                if dist < min_dist:
+                                    min_dist = dist
+                            error_curve += min_dist
+                        error_curve /= float(len(P_x))
 
-                    print 'Error on approximation = ' + str(error_curve)
+                        if verbose >= 1:
+                            print 'Error on approximation = ' + str(round(error_curve, 2)) + ' mm'
+
+                    except Exception as ex:
+                        if verbose >= 1:
+                            print ex
+                        error_curve = float('Inf')
 
                     # prepare for next iteration
                     self.nbControle += 1
                 self.nbControle -= 1  # last addition does not count
 
                 self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
-                print 'Number of control points = ' + str(self.nbControle)
+                if verbose >= 1:
+                    print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
-                print 'In NURBS we get nurbs_ctl_points = ',nbControl
+                if verbose >= 1:
+                    print 'In NURBS we get nurbs_ctl_points = ',nbControl
                 w = [1.0]*len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
@@ -297,6 +308,7 @@ class NURBS():
                 sum_num_y_der += N_temp_deriv*point[1]
                 sum_num_z_der += N_temp_deriv*point[2]
                 sum_den_der += N_temp_deriv
+
             P_x.append(sum_num_x/sum_den) # sum_den = 1 !
             P_y.append(sum_num_y/sum_den)
             P_z.append(sum_num_z/sum_den)
@@ -304,26 +316,38 @@ class NURBS():
             P_y_d.append(sum_num_y_der)
             P_z_d.append(sum_num_z_der)
 
+            if sum_den <= 0.05:
+                raise Exception('WARNING: NURBS instability')
+
+
+
+        P_x = [P_x[i] for i in argsort(P_z)]
+        P_y = [P_y[i] for i in argsort(P_z)]
+        P_x_d = [P_x_d[i] for i in argsort(P_z)]
+        P_y_d = [P_y_d[i] for i in argsort(P_z)]
+        P_z_d = [P_z_d[i] for i in argsort(P_z)]
+        P_z = sort(P_z)
+
         #on veut que les coordonnees fittees aient le meme z que les coordonnes de depart. on se ramene donc a des entiers et on moyenne en x et y  .
         P_x=array(P_x)
         P_y=array(P_y)
         P_x_d=array(P_x_d)
         P_y_d=array(P_y_d)
         P_z_d=array(P_z_d)
-        P_z=array([int(round(P_z[i])) for i in range(0,len(P_z))])
-    
+        P_z=array([int(round(P_z[i])) for i in range(0, len(P_z))])
+
         #not perfect but works (if "enough" points), in order to deal with missing z slices
-        for i in range (min(P_z),max(P_z)+1,1):
-            if (i in P_z) is False :
+        for i in range(min(P_z), max(P_z)+1, 1):
+            if i not in P_z:
                 #print ' Missing z slice '
                 #print i
-                P_z = insert(P_z,where(P_z==i-1)[-1][-1]+1,i)
-                P_x = insert(P_x,where(P_z==i-1)[-1][-1]+1,(P_x[where(P_z==i-1)[-1][-1]+1-1]+P_x[where(P_z==i-1)[-1][-1]+1+1])/2)
-                P_y = insert(P_y,where(P_z==i-1)[-1][-1]+1,(P_y[where(P_z==i-1)[-1][-1]+1-1]+P_y[where(P_z==i-1)[-1][-1]+1+1])/2)
-                P_x_d = insert(P_x_d,where(P_z==i-1)[-1][-1]+1,(P_x_d[where(P_z==i-1)[-1][-1]+1-1]+P_x_d[where(P_z==i-1)[-1][-1]+1+1])/2)
-                P_y_d = insert(P_y_d,where(P_z==i-1)[-1][-1]+1,(P_y_d[where(P_z==i-1)[-1][-1]+1-1]+P_y_d[where(P_z==i-1)[-1][-1]+1+1])/2)
-                P_z_d = insert(P_z_d,where(P_z==i-1)[-1][-1]+1,(P_z_d[where(P_z==i-1)[-1][-1]+1-1]+P_z_d[where(P_z==i-1)[-1][-1]+1+1])/2)
-
+                P_z_temp = insert(P_z,where(P_z==i-1)[-1][-1]+1,i)
+                P_x_temp = insert(P_x,where(P_z==i-1)[-1][-1]+1,(P_x[where(P_z==i-1)[-1][-1]]+P_x[where(P_z==i-1)[-1][-1]+1])/2)
+                P_y_temp = insert(P_y,where(P_z==i-1)[-1][-1]+1,(P_y[where(P_z==i-1)[-1][-1]]+P_y[where(P_z==i-1)[-1][-1]+1])/2)
+                P_x_d_temp = insert(P_x_d,where(P_z==i-1)[-1][-1]+1,(P_x_d[where(P_z==i-1)[-1][-1]]+P_x_d[where(P_z==i-1)[-1][-1]+1])/2)
+                P_y_d_temp = insert(P_y_d,where(P_z==i-1)[-1][-1]+1,(P_y_d[where(P_z==i-1)[-1][-1]]+P_y_d[where(P_z==i-1)[-1][-1]+1])/2)
+                P_z_d_temp = insert(P_z_d,where(P_z==i-1)[-1][-1]+1,(P_z_d[where(P_z==i-1)[-1][-1]]+P_z_d[where(P_z==i-1)[-1][-1]+1])/2)
+                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp
 
         coord_mean = array([[mean(P_x[P_z==i]),mean(P_y[P_z==i]),i] for i in range(min(P_z),max(P_z)+1,1)])
 
@@ -337,28 +361,24 @@ class NURBS():
         P_x_d=coord_mean_d[:,:][:,0]
         P_y_d=coord_mean_d[:,:][:,1]
         P_z_d=coord_mean_d[:,:][:,2]
-        #print P_x_d,P_y_d,P_z_d
 
-#        p=len(P_x)/3
-#        n=1
-#        #plotting a tangent
-#        p1 = [P_x[p],P_y[p],P_z[p]]
-#        p2 = [P_x[p]+n*P_x_d[p],P_y[p]+n*P_y_d[p],P_z[p]+n*P_z_d[p]]
-#                #### 3D plot
-#        fig1 = plt.figure()
-#        ax = Axes3D(fig1)
-#        #ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
-#        ax.plot(P_x,P_y,P_z,zdir='z')
-#        ax.plot([p1[0],p2[0]],[p1[1],p2[1]],[p1[2],p2[2]],zdir='z')
-#        #ax.plot(x_centerline_fit_der,y_centerline_fit_der,z_centerline_fit_der,zdir='z')
-#        plt.show()
-
-
-        #print 'Construction effectuee'
         return [P_x,P_y,P_z], [P_x_d,P_y_d,P_z_d]
 
     def Tk(self,k,Q,Nik,ubar,u):
         return Q[k] - self.evaluateN(Nik[-1],ubar,u)*Q[-1] - self.evaluateN(Nik[0],ubar,u)*Q[0]
+
+    def isXinY(self, y, x):
+        result = True
+        for i in range(0, len(y)-1):
+            if y[i] - y[i+1] != 0.0:
+                result_temp = False
+                for j in range(0, len(x)):
+                    if y[i] - y[i+1] != 0.0 and y[i] <= x[j] <= y[i+1]:
+                        result_temp = True
+                        break
+                result = result and result_temp
+        return result
+
 
     def reconstructGlobalApproximation(self,P_x,P_y,P_z,p,n,w):
         # p = degre de la NURBS
@@ -368,23 +388,46 @@ class NURBS():
         m = len(P_x)
 
         # Calcul des chords
-        di = 0
+        di = 0.0
         for k in xrange(m-1):
             di += math.sqrt((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)
-        u = [0]*p
         ubar = [0]
         for k in xrange(m-1):
             #ubar.append((k+1)/float(m))  # uniform method
             #ubar.append(ubar[-1]+abs((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # chord length method
             ubar.append(ubar[-1]+math.sqrt((P_x[k+1]-P_x[k])**2 + (P_y[k+1]-P_y[k])**2 + (P_z[k+1]-P_z[k])**2)/di)  # centripetal method
 
-        d = (m+1)/(n-p+1)
 
+        # the knot vector should reflect the distribution of ubar
+        d = (m+1)/(n-p+1)
+        u_nonuniform = [0.0]*p
         for j in xrange(n-p):
             i = int((j+1)*d)
             alpha = (j+1)*d-i
-            u.append((1-alpha)*ubar[i-1]+alpha*ubar[i])
-        u.extend([1]*p)
+            u_nonuniform.append((1-alpha)*ubar[i-1]+alpha*ubar[i])
+        u_nonuniform.extend([1.0]*p)
+
+        # the knot vector can also is uniformly distributed
+        u_uniform = [0.0]*p
+        for j in xrange(n-p):
+            u_uniform.append((float(j)+1)/float(n-p))
+        u_uniform.extend([1.0]*p)
+
+        # The only condition for NURBS to work here is that there is at least one point P_.. in each knot space.
+        # The uniform knot vector does not ensure this condition while the nonuniform knot vector ensure it but lack of uniformity in case of variable density of points.
+        # We need a compromise between the two methods: the knot vector must be as uniform as possible, with at least one point between each pair of knots.
+        # New algo:
+        # knotVector = uniformKnotVector
+        # while isKnotSpaceEmpty:
+        #     knotVector += gamma * (nonuniformKnotVector - nonuniformKnotVector)
+        #     # where gamma is a ratio [0,1] multiplier of an integer: 1/gamma = int
+        u_uniform = array(u_uniform)
+        u_nonuniform = array(u_nonuniform)
+        u = array(u_uniform, copy=True)
+        gamma = 1.0/10.0
+        while not self.isXinY(y=u, x=ubar):
+            u += gamma * (u_nonuniform - u_uniform)
+
 
         Nik_temp = [[-1 for j in xrange(p)] for i in xrange(n)]
         for i in xrange(n):
@@ -446,7 +489,6 @@ class NURBS():
         P[0][0],P[0][1],P[0][2] = P_x[0],P_y[0],P_z[0]
         P[-1][0],P[-1][1],P[-1][2] = P_x[-1],P_y[-1],P_z[-1]
 
-        #print 'Reconstruction effectuee'
         return P
 
     def reconstructGlobalInterpolation(self,P_x,P_y,P_z,p):  ### now in 3D
