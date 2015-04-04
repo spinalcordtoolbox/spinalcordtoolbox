@@ -490,7 +490,7 @@ def usage():
 
 # Smooth centerline
 #=======================================================================================================================
-def smooth_centerline(fname_centerline, param, algo_fitting, verbose):
+def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
     """
     :param fname_centerline: centerline in RPI orientation
     :return: a bunch of useful stuff
