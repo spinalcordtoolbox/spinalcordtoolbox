@@ -3,6 +3,8 @@
 #
 # Module containing several useful functions.
 #
+# PLEASE!! SORT FUNCTIONS ALPHABETICALLY!
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
@@ -36,7 +38,19 @@ class bcolors:
     bold = '\033[1m'
     underline = '\033[4m'
 
-#==============e=========================================================================================================
+
+
+#=======================================================================================================================
+# add suffix
+#=======================================================================================================================
+def add_suffix(file_ext, suffix):
+    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
+    # add suffix
+    return file_name+suffix+'.'+ext_name
+
+
+
+#=======================================================================================================================
 # run
 #=======================================================================================================================
 # Run UNIX command
@@ -50,6 +64,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 def run(cmd, verbose=1):
+    # print sys._getframe().f_back.f_code.co_name
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -63,9 +78,18 @@ def run(cmd, verbose=1):
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    return process.returncode, output_final[0:-1]
+    if process.returncode:
+        # from inspect import stack
+        printv(output_final[0:-1], 1,'warning')
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+        # sys.exit()
+    else:
+        # no need to output process.returncode (because different from 0)
+        return process.returncode, output_final[0:-1]
 
-#==============e=========================================================================================================
+
+
+#=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
 #=======================================================================================================================
@@ -93,7 +117,7 @@ def checkRAM(os,verbose=1):
         processLines = ps.split('\n')
         sep = re.compile('[\s]+')
         rssTotal = 0 # kB
-        for row in range(1,len(processLines)):
+        for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
             rowElements = sep.split(rowText)
             try:
@@ -306,17 +330,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
 
 
 #=======================================================================================================================
-# sign
-#=======================================================================================================================
-# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
-def sign(x):
-    if x >= 0:
-        return 1
-    else:
-        return -1
-
-
-#=======================================================================================================================
 # check_if_installed
 #=======================================================================================================================
 # check if dependant software is installed
@@ -350,10 +363,21 @@ def printv(string, verbose=1, type='normal'):
     if verbose:
         print(color+string+bcolors.normal)
 
-    # if error, exit prohram
+    # if error, exit program
     if type == 'error':
         #raise NameError('Error!')
         sys.exit(2)
+
+
+#=======================================================================================================================
+# sign
+#=======================================================================================================================
+# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
+def sign(x):
+    if x >= 0:
+        return 1
+    else:
+        return -1
 
 
 #=======================================================================================================================
@@ -367,6 +391,8 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
+
+
 
 
 #=======================================================================================================================
