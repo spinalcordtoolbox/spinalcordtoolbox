@@ -56,18 +56,22 @@ class ProcessLabels(object):
             self.output_image = self.increment_z_inverse()
         elif type_process == 'MSE':
             self.MSE()
+            self.fname_output = None
         elif type_process == 'remove':
             self.output_image = self.remove_label()
         elif type_process == 'centerline':
             self.extract_centerline()
         elif type_process == 'display-voxel':
             self.display_voxel()
+            self.fname_output = None
         elif type_process == 'create':
             self.output_image = self.create_label()
         elif type_process == 'diff':
             self.diff()
+            self.fname_output = None
         elif type_process == 'dist-inter':  # second argument is in pixel distance
             self.distance_interlabels(5)
+            self.fname_output = None
         else:
             sct.printv('Error: The chosen process is not available.',1,'error')
 
@@ -376,8 +380,7 @@ if __name__ == "__main__":
     input_dilate = False
     input_coordinates = None
     input_verbose = '1'
-    if "-o" in arguments:
-        input_fname_output = arguments["-o"]
+    input_fname_output = arguments["-o"]
     if "-r" in arguments:
         input_fname_ref = arguments["-r"]
     if "-x" in arguments:
