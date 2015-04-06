@@ -44,9 +44,9 @@ class bcolors:
 # add suffix
 #=======================================================================================================================
 def add_suffix(file_ext, suffix):
-    file_name, ext_name = file_ext.split(os.extsep,1)  # here we use os.extsep to account for nii.gz extensions
+    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
     # add suffix
-    return file_name+suffix+ext_name
+    return file_name+suffix+'.'+ext_name
 
 
 
