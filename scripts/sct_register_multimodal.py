@@ -45,6 +45,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -308,7 +309,7 @@ def main():
             sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
-        warp_forward_out, warp_inverse_out = register(src, dest, paramreg, str(i_step))
+        warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
         warp_forward.append(warp_forward_out)
         warp_inverse.append(warp_inverse_out)
 
@@ -351,7 +352,7 @@ def main():
 
 # register images
 # ==========================================================================================
-def register(src, dest, paramreg, i_step_str):
+def register(src, dest, paramreg, param, i_step_str):
 
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
