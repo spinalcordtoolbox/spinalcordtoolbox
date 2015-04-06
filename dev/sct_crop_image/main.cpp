@@ -36,7 +36,7 @@ void help()
     cout << "You can also crop an image based on the maximum field a view in the one direction where there are non-null voxels (-bzmax option). You must indicate the dimension you want to crop (-dim option)" << endl << endl;
     
     cout << "Usage : " << endl << "\t sct_crop_image -i <inputfilename> -o <outputfilename> [options]" << endl;
-    cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -m <maskfilename> [options]" << endl;
+    cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -bmax [options]" << endl;
     cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -dim 1,3 -start 20,35 -end 70,50" << endl << endl;
     
     cout << "MANDATORY ARGUMENTS" << endl;
@@ -50,7 +50,7 @@ void help()
     cout << "\t-dim <d0,...,dn> \t dimension to crop, from 0 to n-1, default is 1" << endl;
     cout << "\t-shift <s0,...,sn> \t adding shift when used with mask, default is 0" << endl;
     cout << "\t-b <backgroundvalue> \t replace voxels outside cropping region with background value" << endl;
-    cout << "\t-bzmax \t\t\t maximize the cropping of the image in one dimension (must provide -dim)" << endl;
+    cout << "\t-bmax \t\t\t maximize the cropping of the image (provide -dim if you want to specify the dimensions)" << endl;
     cout << "\t-mesh <meshfilename> \t mesh to crop" << endl;
     cout << "\t-help" << endl;
 }
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
             meshFilename = argv[i];
 			isMesh = true;
         }
-        else if (strcmp(argv[i],"-bmax")==0)
+        else if (strcmp(argv[i],"-bmax")==0 || strcmp(argv[i],"-bzmax")==0)
         {
             maxBoundingBox = true;
         }
