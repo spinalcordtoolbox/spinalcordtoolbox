@@ -23,8 +23,9 @@ end
 % load MP
 % nC=ModPlage(nC,-Inf,Inf,0,1);
 [m,n,p]=size(nC);
-mask=isinf(nC);
+mask=isinf(nC) | isnan(nC) | nC==0;
 nC(mask)=0;
+
 cPixel = nC;
 
 vectx=2:m-1;
