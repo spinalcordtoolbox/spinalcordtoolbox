@@ -33,6 +33,7 @@ from msct_image import Image
 
 
 
+
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -302,17 +303,16 @@ def main():
         warp_forward.append(warp_forward_out)
         warp_inverse.append(warp_inverse_out)
 
-    # Concatenate transformations: template2anat & anat2template
-    sct.printv('\nConcatenate transformations: template --> anat...', verbose)
-    sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
+    # Concatenate transformations:
     sct.printv('\nConcatenate transformations: anat --> template...', verbose)
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
     warp_inverse.reverse()
-    sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('sct_apply_transfo -i '+fname_template+' -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
-        sct.run('sct_apply_transfo -i data.nii  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
+        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
+        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
