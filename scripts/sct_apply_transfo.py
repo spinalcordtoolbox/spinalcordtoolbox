@@ -181,7 +181,7 @@ def main():
         os.chdir('..')
 
     # 2. crop the resulting image using dimensions from the warping field
-    sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+fname_warp_list[0])
+    sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+fname_warp_list[0]+' -b 0')
 
     # display elapsed time
     sct.printv('\nDone! To view results, type:', verbose)
