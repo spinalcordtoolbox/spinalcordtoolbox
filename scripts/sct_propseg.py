@@ -49,7 +49,7 @@ if __name__ == "__main__":
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
                       example=["0","1"],
-                      default_value="0")
+                      default_value="1")
     parser.add_option(name="-h",
                       type_value=None,
                       description="display this help",
@@ -215,10 +215,8 @@ if __name__ == "__main__":
 
     sct.run(cmd, verbose)
 
-    sct.printv("\nDone!",1,"normal")
-    sct.printv("Type the following command in the terminal to see the results:", 1, "normal")
-
+    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
-    sct.printv("fslview "+input_filename+" "+folder_output+"/"+output_filename+" -l Red -b 0,1 -t 0.7 &")
+    sct.printv("fslview "+input_filename+" "+output_filename+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

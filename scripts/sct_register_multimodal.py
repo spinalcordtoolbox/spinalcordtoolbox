@@ -354,6 +354,8 @@ def main():
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
 
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
+
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
@@ -361,12 +363,24 @@ def register(src, dest, paramreg, param, i_step_str):
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
-        # # threshold images (otherwise, automatic crop does not work -- see issue #293)
-        # sct.run(fsloutput+'fslmaths dest_pad -thr 0.1 dest_pad_thr', verbose)
-        # sct.run(fsloutput+'fslmaths src_regAffine -thr 0.1 src_regAffine_thr', verbose)
-        # # crop source and destination images in case some slices are the edge are empty (otherwise slicereg crashes)
-        # sct.run('sct_crop_image -i dest_pad_thr.nii -o dest_pad_thr_crop.nii -dim 2 -bzmax', verbose)
-        # sct.run('sct_crop_image -i src_regAffine_thr.nii -o src_regAffine_thr_crop.nii -dim 2 -bzmax', verbose)
+        # threshold images (otherwise, automatic crop does not work -- see issue #293)
+        src_th = sct.add_suffix(src, '_th')
+        sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
+        dest_th = sct.add_suffix(dest, '_th')
+        sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
+        # find zmin and zmax
+        zmin_src, zmax_src = find_zmin_zmax(src_th)
+        zmin_dest, zmax_dest = find_zmin_zmax(dest_th)
+        zmin_total = max([zmin_src, zmin_dest])
+        zmax_total = min([zmax_src, zmax_dest])
+        # crop data
+        src_crop = sct.add_suffix(src, '_crop')
+        sct.run('sct_crop_image -i '+src+' -o '+src_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+        dest_crop = sct.add_suffix(dest, '_crop')
+        sct.run('sct_crop_image -i '+dest+' -o '+dest_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+        # update variables
+        src = src_crop
+        dest = dest_crop
         # estimate transfo
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
@@ -423,6 +437,15 @@ def register(src, dest, paramreg, param, i_step_str):
 def pad_image(fname_in, file_out, padding):
     sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
     return
+
+
+
+def find_zmin_zmax(fname):
+    # crop image
+    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
+    # parse output
+    zmin, zmax = output[output.find('Dimension 2: ')+13:].split(' ')
+    return int(zmin), int(zmax)
 
 
 
