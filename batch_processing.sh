@@ -1,5 +1,5 @@
-# !/etc/bash
-# 
+#!/bin/sh
+#
 # example of commands to process multi-parametric data of the spinal cord
 
 
@@ -102,9 +102,9 @@ sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -radius 4
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 # use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
-sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 40 -f cylinder
+sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # register mt0 on mt1
-sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -p 20,BSplineSyN,0.2,MeanSquares
+sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
 # register to template (template registered to t2).
