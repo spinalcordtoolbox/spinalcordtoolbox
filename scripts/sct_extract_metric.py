@@ -22,12 +22,16 @@
 import os
 import getopt
 import sys
-import time
 import commands
+import time
+
 import nibabel as nib
 import numpy as np
+
 import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
+
+
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -50,8 +54,8 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.fname_vertebral_labeling = 'MNI-Poly-AMU_level.nii.gz'
         self.ml_clusters = '0:29,30,31'  # three classes: WM, GM and CSF
-        self.adv_param = ['10',  # STD within label, in percentage of the mean (mean is estimated using cluster-based ML)
-                          '10'] # STD of the gaussian-distributed noise
+        self.adv_param = ['10',  # STD of the metric value across labels, in percentage of the mean (mean is estimated using cluster-based ML)
+                          '10'] # STD of the assumed gaussian-distributed noise
 
 class Color:
     def __init__(self):
@@ -85,7 +89,6 @@ def main():
     normalization_method = ''  # optional then default is empty
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
-    start_time = time.time()  # save start time for duration
     verbose = param.verbose
     flag_h = 0
     ml_clusters = param.ml_clusters
@@ -188,7 +191,7 @@ def main():
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
-    label_id_user = check_labels(labels_of_interest, nb_labels_total)  # If 'labels_of_interest' is empty, then
+    label_id_user, average_all_labels = check_labels(labels_of_interest, nb_labels_total, average_all_labels, method)  # If 'labels_of_interest' is empty, then
     # 'label_id_user' contains the index of all labels in the file info_label.txt
 
     # print parameters
@@ -326,17 +329,14 @@ def main():
     metric_std = metric_std[label_id_user]
 
     # display metrics
-    print color.bold + '\nEstimation results:'
+    sct.printv('\nEstimation results:', 1)
     for i in range(0, metric_mean.size):
-        print color.bold+str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])\
-              +' +/- '+str(metric_std[i])+color.end
+        sct.printv(str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i]), 1, 'info')
 
     # save and display metrics
     save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
                  method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
-    # Print elapsed time
-    print '\nElapsed time : ' + str(int(round(time.time() - start_time))) + 's\n'
 
 
 #=======================================================================================================================
@@ -366,26 +366,26 @@ def read_label_file(path_info_label, file_info_label):
     for i in range(0, len(lines)-1):
         line = lines[i].split(',')
         label_id.append(int(line[0]))
-        label_name.append(line[1])
+        label_name.append(line[1].strip())
         label_file.append(line[2][:-1].strip())
     # An error could occur at the last line (deletion of the last character of the .txt file), the 5 following code
     # lines enable to avoid this error:
     line = lines[-1].split(',')
     label_id.append(int(line[0]))
-    label_name.append(line[1])
+    label_name.append(line[1].strip())
     line[2]=line[2]+' '
     label_file.append(line[2].strip())
 
     # check if all files listed are present in folder. If not, WARNING.
-    print '\nCheck existence of all files listed in '+file_info_label+' ...'
+    # print '\nCheck existence of all files listed in '+file_info_label+' ...'
     for fname in label_file:
-        if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
-                os.path.isfile(path_info_label+fname + '.nii.gz'):
-            print('  OK: '+path_info_label+fname)
-            pass
-        else:
-            print('  WARNING: ' + path_info_label+fname + ' does not exist but is listed in '
-                  +file_info_label+'.\n')
+        sct.check_file_exist(path_info_label+fname)
+        # if os.path.isfile(path_info_label+fname) or os.path.isfile(path_info_label+fname + '.nii') or \
+        #         os.path.isfile(path_info_label+fname + '.nii.gz'):
+        #     sct.printv('  OK: '+path_info_label+fname, param.verbose)
+        #     pass
+        # else:
+        #     sct.printv('  ERROR: ' + path_info_label+fname + ' does not exist\n', 1, 'error')
 
     # Close file.txt
     f.close()
@@ -532,6 +532,9 @@ def remove_slices(data_to_crop, slices_of_interest):
         slices_list = [int(x) for x in slices_of_interest.split(',')]  # n-element list
     else:
         slices_range = [int(x) for x in slices_of_interest.split(':')]  # 2-element list
+        # if only one slice (z) was selected, consider as z:z
+        if len(slices_range) == 1:
+            slices_range = [slices_range[0], slices_range[0]]
         slices_list = [i for i in range(slices_range[0], slices_range[1]+1)]
 
     # Remove slices that are not wanted (+1 is to include the last selected slice as Python "includes -1"
@@ -618,43 +621,80 @@ def check_method(method, fname_normalizing_label, normalization_method):
 #=======================================================================================================================
 # Check the consistency of the labels asked by the user
 #=======================================================================================================================
-def check_labels(labels_of_interest, nb_labels):
+def check_labels(labels_of_interest, nb_labels, average_labels, method):
 
     # by default, all labels are selected
     list_label_id = range(0, nb_labels)
 
-    # only specific labels are selected
-    if labels_of_interest != '':
-        # Check if label chosen is in format : 0,1,2,..
+    if labels_of_interest:
+        # Check if label chosen is in the right format
         for char in labels_of_interest:
-            if not char in '0123456789, ':
-                print '\nERROR: "' + labels_of_interest + '" is not correct. Enter format "1,2,3,4,5,..". Exit program.\n'
-                sys.exit(2)
+            if not char in '0123456789,:scwmg':
+                sct.printv('\nERROR: ' + labels_of_interest + ' is not the correct format to select labels.\n Exit program.\n', type='error')
+                usage()
 
-        # Remove redundant values of label chosen and convert in integer
-        list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
+        # if spinal cord was selected, need all 32 labels from folder atlas
+        if labels_of_interest == 'sc':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            if nb_labels < 31 and (method != 'ml' and method != 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 30 white matter tracts and the gray matter from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 30).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = range(0, 31)
+                average_labels = 1
+
+        elif labels_of_interest == 'gm':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the gray matter using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = [30]
+
+        elif labels_of_interest == 'wm':
+            if nb_labels < 32 and (method == 'ml' or method == 'map'):
+                sct.printv('\nERROR: You\'ve asked to extract metric in the white matter using the method '+method+' but your atlas folder containing'
+                           ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
+                usage()
+            else:
+                list_label_id = range(0, 30)
+                average_labels = 1
+
+        elif ':' in labels_of_interest:
+            label_ids_range = [int(x) for x in labels_of_interest.split(':')]
+            if len(label_ids_range)>2:
+                sct.printv('\nERROR: label IDs selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n', type='error')
+                usage()
+            else:
+                label_ids_range.sort()
+                list_label_id = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
+
+        else:
+            list_label_id = list(set([int(x) for x in labels_of_interest.split(",")]))
+
+        # Sort labels ID and remove redundant values
         list_label_id.sort()
+        list_label_id = list(set(list_label_id))
 
-        # Check if label chosen correspond to a label
-        for num in list_label_id:
-            if not num in range(0, nb_labels):
-                print '\nERROR: "' + str(num) + '" is not a correct label. Enter valid number. Exit program.\n'
-                sys.exit(2)
-
-    return list_label_id
+    return list_label_id, average_labels
 
 
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_param):
+def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', adv_param=[]):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
     """
-
-    perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-    var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
 
 
     nb_labels = len(labels)  # number of labels
@@ -749,6 +789,9 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters, adv_
 
     # Estimation with maximum a posteriori (map)
     if method == 'map':
+        perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+        var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
+
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         # construct beta0
@@ -829,6 +872,13 @@ OPTIONAL ARGUMENTS
   -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
+                        You can also select labels using 1:3 to get labels 1,2,3.
+                        Following shortcuts are also available:
+                        -l sc will extract the metric in the whole cord
+                        -l wm will extract the metric in the whole white matter
+                        -l gm will extract the metric in the gray matter
+                        BECAREFUL: to use these shortcuts, you must have warped the all white matter atlas
+                        to your metric beforehand (see sct_warp_template).
   -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
@@ -841,8 +891,8 @@ OPTIONAL ARGUMENTS
                           bin: binarize mask (threshold=0.5)
   -p <param>            advanced parameters for the 'map' method.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: standard deviation across labels, in percentage of the mean
-                          #2: standard deviation of the Gaussian noise
+                          #1: standard deviation of the metric value across labels, in percentage of the mean
+                          #2: standard deviation of the assumed Gaussian noise
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param_default.fname_output+"""
