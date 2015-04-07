@@ -54,6 +54,7 @@ class Image(object):
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = extract_fname(absolutepath)
         else:
+
             raise TypeError(' Image constructor takes at least one argument.')
 
         """
