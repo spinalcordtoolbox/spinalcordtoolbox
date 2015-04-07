@@ -388,21 +388,21 @@ int cropImageBasedOnReference(string inputFilename, string outputFilename, strin
     if (!startBool || !endBool)
     {
         cout << "ERROR: cannot crop input image from reference image. Something is wrong. Check your data." << endl;
-        cout << endl << "Input image region: " << endl << regionIm;
-        cout << "Start in image space: " << startIm << endl;
-        cout << "End in image space: " << endIm << endl;
-        cout << "Start in physical space: " << pointStartIm << endl;
-        cout << "End in physical space: " << pointEndIm << endl;
-        cout << endl << "Reference image region: " << endl << regionRef;
-        cout << "Start in image space: " << startRef << endl;
-        cout << "End in image space: " << endRef << endl;
-        cout << "Start in physical space: " << pointStartRef << endl;
-        cout << "End in physical space: " << pointEndRef << endl;
-        cout << endl << "Crop around: " << endl;
-        cout << "Start in image space: " << startImCrop << endl;
-        cout << "End in image space: " << endImCrop << endl;
-        cout << "Start in physical space: " << pointStartImCrop << endl;
-        cout << "End in physical space: " << pointEndImCrop << endl;
+        cout<<endl<< "Input image region: "<<endl<<regionIm;
+        cout<<"Start in image space: "<<startIm<<endl;
+        cout<<"End in image space: "<<endIm<<endl;
+        cout<<"Start in physical space: "<<pointStartIm<<endl;
+        cout<<"End in physical space: "<<pointEndIm<<endl;
+        cout<<endl << "Reference image region: "<<endl<<regionRef;
+        cout<<"Start in image space: "<<startRef<<endl;
+        cout<<"End in image space: "<<endRef<<endl;
+        cout<<"Start in physical space: "<<pointStartRef<<endl;
+        cout<<"End in physical space: "<<pointEndRef<<endl;
+        cout<<endl << "Crop around: "<<endl;
+        cout<<"Start in image space: "<<startImCrop<<endl;
+        cout<<"End in image space: "<<endImCrop<<endl;
+        cout<<"Start in physical space: "<<pointStartImCrop<<endl;
+        cout<<"End in physical space: "<<pointEndImCrop<<endl;
         return EXIT_FAILURE;
     }
     
