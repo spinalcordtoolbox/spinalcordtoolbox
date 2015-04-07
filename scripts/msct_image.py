@@ -267,14 +267,33 @@ class Image(object):
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
+    #orientation must be IRP to be able to go trough slices as first dimension
     # This method is called in sct_crop_over_mask script
     def crop_from_square_mask(self, mask):
-        from numpy import asarray
+        from numpy import asarray, zeros
 
         data_array = self.data
-
         data_mask = mask.data
+
         print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
+        #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
+        if data_array.shape != data_mask.shape:
+            old_data_array = data_array
+            pad = int((data_mask.shape[1] - old_data_array.shape[1])/2 +1)
+
+            data_array = zeros(data_mask.shape)
+            for n_slice, slice in enumerate(data_array):
+                n_row_old_data_array = 0
+                for row in slice[pad:-pad-1]:
+
+                    row[pad:pad + old_data_array.shape[1]] = old_data_array[n_slice,n_row_old_data_array]
+                    n_row_old_data_array += 1
+            self.data = data_array
+            self.file_name = self.file_name + '_resized'
+            self.save()
+            #print data_array
+
+
         data_array = asarray(data_array)
         data_mask = asarray(data_mask)
         new_data = []
@@ -282,16 +301,13 @@ class Image(object):
         buffer_mask = []
 
         for n_slice, slice in enumerate(data_mask):
-            #print '############################################################################################################\n'
-            #print 'SLICE ', n_slice , '\n\n', slice
 
             for n_row, row in enumerate(slice):
-                if sum(row) > 0 and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
+                if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                     buffer_mask.append(row)
                     buffer.append(data_array[n_slice][n_row])
 
-            #print 'buffer_mask : ', buffer_mask
-            #print 'buffer : ', buffer
+
 
             new_slice_mask = asarray(buffer_mask).T
             new_slice = asarray(buffer).T
@@ -318,7 +334,6 @@ class Image(object):
         data_array = self.data
         data_mask = mask.data
         assert data_array.shape == data_mask.shape
-        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
         array = asarray(data_array)
         data_mask = asarray(data_mask)
 
