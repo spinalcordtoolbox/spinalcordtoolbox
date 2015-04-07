@@ -33,7 +33,7 @@ for level=1:size(nii.img,3)
         centerline(level,:)=[round(ctr.Centroid(2)),round(ctr.Centroid(1)),level];
     end
 end
-x=centerline(:,1); y=centerline(:,2); z=1:size(nii.img,3)*nii.scales(3);
+x=centerline(:,1); y=centerline(:,2); z=[1:size(nii.img,3)]*nii.scales(3);
 rm=isnan(x)|isnan(y);
 [fitresult, gof] = createFit(z(~rm), x(~rm));
 x=feval(fitresult,z);
