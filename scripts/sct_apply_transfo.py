@@ -169,7 +169,7 @@ def main():
         for it in range(nt):
             file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
             file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
+            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
         # Merge files back
         sct.printv('\nMerge file back...', verbose)
         cmd = fsloutput+'fslmerge -t '+fname_out
@@ -179,6 +179,9 @@ def main():
         sct.run(cmd, param.verbose)
         # come back to parent folder
         os.chdir('..')
+
+    # 2. crop the resulting image using dimensions from the warping field
+    sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+fname_warp_list[0])
 
     # display elapsed time
     sct.printv('\nDone! To view results, type:', verbose)
