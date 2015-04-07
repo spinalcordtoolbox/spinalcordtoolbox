@@ -24,7 +24,7 @@ def test(path_data):
     file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz']
 
     # define command
-    cmd = 'sct_get_centerline -i ' + path_data + folder_data + file_data[0] \
+    cmd = 'sct_get_centerline_automatic -i ' + path_data + folder_data + file_data[0] \
           + ' -p ' + path_data + folder_data + file_data[1] \
           + ' -g 1'\
           + ' -k 4'\
