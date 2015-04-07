@@ -46,6 +46,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -395,15 +396,18 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
+
         # Pad the destination image (because ants doesn't deform the extremities)
-        # sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
-        dest_pad = sct.add_suffix(dest, '_pad')
-        pad_image(dest, dest_pad, param.padding)
+        # N.B. no need to pad if iter = 0
+        if not paramreg.steps[i_step_str].iter == '0':
+            dest_pad = sct.add_suffix(dest, '_pad')
+            pad_image(dest, dest_pad, param.padding)
+            dest = dest_pad
 
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
-               '--metric '+paramreg.steps[i_step_str].metric+'['+dest_pad+','+src+',1,'+metricSize+'] '
+               '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
