@@ -39,6 +39,7 @@ from sct_orientation import set_orientation
 
 
 
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -543,12 +544,12 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
         # Extension of the curve to smooth, to avoid edge effects
         x_centerline_extended = x_centerline
         for i in range(int(window_length/(2.0*pz))+1):
-            x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i-1])
+            x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-2-i])
             x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
 
         y_centerline_extended = y_centerline
         for i in range(int(window_length/(2.0*pz))+1):
-            y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i-1])
+            y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-2-i])
             y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
 
         # Smoothing of the extended curve
