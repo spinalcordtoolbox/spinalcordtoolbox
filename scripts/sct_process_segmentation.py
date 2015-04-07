@@ -32,6 +32,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -152,7 +153,7 @@ def main():
     print '\nCheck parameters:'
     print '.. segmentation file:             '+fname_segmentation
 
-    if name_process == 'extract_centerline':
+    if name_process == 'centerline':
         fname_output = extract_centerline(fname_segmentation,remove_temp_files)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
@@ -169,7 +170,7 @@ def main():
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation,remove_temp_files)
-        sct.printv('\nLength of the Spinal Cord = '+str(round(result_length,2))+' mm\n', verbose, 'info')
+        sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
     # End of Main
 
