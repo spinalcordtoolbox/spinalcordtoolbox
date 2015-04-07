@@ -262,7 +262,6 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     #     nurbs = NURBS(degree, point_number, data, False, control_points)
 
     if nbControl == -1:
-        import math
         centerlineSize = getSize(x, y, z, fname_centerline)
         nbControl = 30*log(centerlineSize, 10) - 42
         nbControl = round(nbControl)
@@ -356,7 +355,6 @@ def getSize(x, y, z, file_name=None):
     from math import sqrt
     # get pixdim
     if file_name is not None:
-        import commands
         cmd1 = 'fslval '+file_name+' pixdim1'
         status, output = getstatusoutput(cmd1)
         p1 = float(output)
@@ -489,28 +487,37 @@ def smoothing_window(x, window_len=11, window='hanning'):
     return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
     return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
-    from numpy import r_, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from numpy import ones, convolve  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from math import ceil
+    import sct_utils as sct
+
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
     if x.size < window_len:
         raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
+        sct.printv("Window size is too small for effective smoothing. Increase window size.", 1, 'warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
-    s = r_[x[window_len-1:0:-1], x, x[-1:-window_len:-1]]
+    # make window_len as odd integer
+    window_len_int = ceil((window_len + 1)/2)*2 - 1
 
-    #Creation of the window
+    # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
+
+    # Creation of the window
     if window == 'flat': #moving average
         w = ones(window_len, 'd')
     else:
-        w = eval(window+'(window_len)')
+        w = eval(window+'(window_len_int)')
 
-    #Convolution of the window with the inputted signal
-    y = convolve(w/w.sum(), s, mode='valid')
+    # Convolution of the window with the input signal
+    y = convolve(x, w/w.sum(), mode='same')
+    # y = convolve(w/w.sum(), s, mode='full')
 
-    if window_len%2 == 0:
-        return y[(window_len/2-1):-(window_len/2)]
-    if window_len%2 != 0:
-        return y[(window_len/2-1):-(window_len/2+1)]
+    return y
+    # if window_len_int%2 == 0:
+    #     return y[(window_len_int/2-1):-(window_len_int/2)]
+    # if window_len_int%2 != 0:
+    #     return y[(window_len_int/2-1):-(window_len_int/2+1)]
