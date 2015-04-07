@@ -241,12 +241,13 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             img = nibabel.Nifti1Image(data_label, None, hdr_label)
             # save volume
             file_name_label = file_data_label + '_centerline' + ext_data_label
-            #nibabel.save(img, file_name_label)
+            nibabel.save(img, file_name_label)
             print '\nFile created : ' + file_name_label
 
             # copy files into tmp folder
             sct.run('cp '+file_name_label+' '+path_tmp)
-
+            #effacer fichier dans folder parent
+            os.remove(file_name_label)
             del data_label
 
 
@@ -670,13 +671,20 @@ def remove_overlap(file_centerline_generated_by_labels, file_with_seg_or_centerl
         image_with_seg_or_centerline = Image(file_with_seg_or_centerline).copy()
         z_test = ComputeZMinMax(image_with_seg_or_centerline)
         zmax = z_test.Zmax
+        zmin = z_test.Zmin
 
         tab1 = Image(file_centerline_generated_by_labels).copy()
         size_x=tab1.data.shape[0]
         size_y=tab1.data.shape[1]
+
+        #X_coor, Y_coor, Z_coor = (tab1.data).nonzero()
+        #nb_one = X_coor.shape[0]
+        #for i in range(0, nb_one):
+        #    tab1.data[X_coor[i], Y_coor[i], X_coor[i]] = 0
+
         #each slice under zmax is filled with zeros
         print zmax
-        for i in range(0, zmax-1): #or zmax?
+        for i in range(zmin, zmax):
             tab1.data[:,:,i] = np.zeros((size_x,size_y))
 
 
@@ -688,6 +696,7 @@ def remove_overlap(file_centerline_generated_by_labels, file_with_seg_or_centerl
     if parameter == 1 :
         z_test = ComputeZMinMax(file_with_seg_or_centerline)
         zmax = z_test.Zmax
+        zmin = z_test.Zmin
         print zmax
         #create output txt file
         tab2 = open(output_file_name , "w")
@@ -699,7 +708,7 @@ def remove_overlap(file_centerline_generated_by_labels, file_with_seg_or_centerl
             with open(output_file_name, "w") as f1:
                 for line in data_line:
                     words = line.split()
-                    if int(words [0]) > zmax :
+                    if int(words [0]) < zmin or int(words [0]) > zmax :
                         f1.write(line)
 
 ########## Class to compute Zmin and Zmax of a centerline file (binary or text) ###########
@@ -727,7 +736,7 @@ class ComputeZMinMax():
         i=x[2]
         while np.max(self.image.data[:,:,i-1]) == 0 and i>-1:
             i=i-1
-        Zmax = i  #Zmax is the last slice, top slice, with a non zero value
+        Zmax = i-1  #Zmax is the last slice, top slice, with a non zero value
 
         return Zmin, Zmax
 
@@ -780,22 +789,24 @@ if __name__ == "__main__":
 
     parser.add_option(name="-r",
                       type_value="multiple_choice",
-                      description="Remove temporary files. Specify 1 to get access to temporary files.",
+                      description="Remove temporary files. Specify 0 to get access to temporary files.",
                       mandatory=False,
-                      example=[0,1],
+                      example=['0','1'],
                       default_value="1")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing. 1: basic. 2: extended.",
                       mandatory=False,
-                      default_value='1',
+                      default_value='0',
                       example=['0', '1', '2'])
     arguments = parser.parse(sys.argv[1:])
 
-    parameter = "binary_centerline"
-    remove_temp_files = 1
+    #parameter = "binary_centerline"
+    #remove_temp_files = 1
     # verbose = 0
-
+    parameter = arguments["-p"]
+    remove_temp_files = int(arguments["-r"])
+    verbose = int(arguments["-v"])
 
     if "-i" in arguments:
         segmentation_file = arguments["-i"]
@@ -809,11 +820,6 @@ if __name__ == "__main__":
     if "-o" in arguments:
         output_file_name = arguments["-o"]
     else: output_file_name = None
-    if "-p" in arguments:
-        parameter = arguments["-p"]
-    if "-r" in arguments:
-        remove_temp_files = arguments["-r"]
-    verbose = int(arguments["-v"])
 
     #sct_obtain_centerline(segmentation_file="data_RPI_seg.nii.gz", label_file="labels_brainstem_completed.nii.gz", output_file_name="centerline_from_label_and_seg.nii.gz", parameter = "binary_centerline", remove_temp_files = 0, verbose = 0 )
     #sct_obtain_centerline(segmentation_file = "data_RPI_seg.nii.gz", label_file="labels_brainstem_completed.nii.gz", output_file_name="test_label_and_seg.txt", parameter = "text_file", remove_temp_files = 1, verbose = 0 )
