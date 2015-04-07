@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_register_multimodal script
+# Test function for sct_get_centerline script
 #
 #   replace the shell test script in sct 1.0
 #
@@ -19,17 +19,15 @@ import commands
 
 def test(path_data):
 
-    folder_data = 'mt/'
-    file_data = ['mt0.nii.gz', 'mt1.nii.gz']
+    # parameters
+    folder_data = 't2/'
+    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
 
-    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
-          + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -o data_reg.nii.gz'  \
-          + ' -p step=1,algo=syn,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
-          + ' -x linear' \
-          + ' -r 0' \
+    # define command
+    cmd = 'sct_get_centerline_from_labels -i '+path_data+folder_data+file_data[0] \
+          + ' -i '+path_data+folder_data+file_data[1] \
           + ' -v 1'
-
+    # return
     #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
