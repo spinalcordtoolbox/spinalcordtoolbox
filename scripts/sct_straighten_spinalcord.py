@@ -40,6 +40,7 @@ from sct_orientation import set_orientation
 
 
 
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -481,7 +482,7 @@ def usage():
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -a {hanning,nurbs}Algorithm for curve fitting. Default='+str(param_default.algo_fitting)+'\n' \
-        '  -v {0,1,2,3}      Verbose. 0: nothing, 1: basic, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
+        '  -v {0,1,2}        Verbose. 0: nothing, 1: basic, 2: extended. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -600,7 +601,7 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
             plt.figure(1)
             # plot x = f(z)
             plt.subplot(211)
-            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm, 'bo')
+            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_extended_mm, 'bo')
             pltx, = plt.plot(z_centerline_mm, x_centerline_mm, 'ro')
             pltx_fit, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm)
             plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
@@ -610,7 +611,7 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
             plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
             # plot y = f(z)
             plt.subplot(212)
-            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm, 'bo')
+            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_extended_mm, 'bo')
             plty, = plt.plot(z_centerline_mm, y_centerline_mm, 'ro')
             plty_fit, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm)
             plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
