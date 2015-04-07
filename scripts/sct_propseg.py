@@ -39,19 +39,17 @@ if __name__ == "__main__":
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-up",
                       type_value="int",
                       description="up limit of the propagation, default is the highest slice of the image",
-                      mandatory=False,
-                      default_value="0")
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
                       example=["0","1"],
-                      default_value="0")
+                      default_value="1")
     parser.add_option(name="-h",
                       type_value=None,
                       description="display this help",
@@ -101,7 +99,7 @@ if __name__ == "__main__":
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
                       mandatory=False)
     parser.add_option(name="-init",
-                      type_value="int",
+                      type_value="float",
                       description="axial slice where the propagation starts, default is middle axial slice",
                       mandatory=False)
     parser.add_option(name="-init-mask",
@@ -215,12 +213,10 @@ if __name__ == "__main__":
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
 
-    sct.runProcess(cmd, verbose)
+    sct.run(cmd, verbose)
 
-    sct.printv("\nDone!",1,"normal")
-    sct.printv("Type the following command in the terminal to see the results:", 1, "normal")
-
+    sct.printv('\nDone! To view results, type:', verbose)
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
-    sct.printv("fslview "+input_filename+" "+folder_output+output_filename+" -l Red -b 0,1 -t 0.7")
+    sct.printv("fslview "+input_filename+" "+output_filename+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

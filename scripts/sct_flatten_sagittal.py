@@ -28,12 +28,15 @@ import os
 import getopt
 import sys
 import commands
-import sct_utils as sct
-from sct_nurbs import NURBS
-from sct_utils import fsloutput
+
 import nibabel
 import numpy
+
+import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
+
 
 
 #=======================================================================================================================
@@ -44,7 +47,7 @@ def main():
     # Initialization
     fname_anat = ''
     fname_centerline = ''
-    centerline_fitting = 'splines'
+    centerline_fitting = 'polynome'
     remove_temp_files = param.remove_temp_files
     interp = param.interp
     degree_poly = param.deg_poly
@@ -58,8 +61,6 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data+'/t2/t2.nii.gz'
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
     else:
         # Check input param
         try:
@@ -263,13 +264,12 @@ def usage():
         '  sct_flatten_sagittal -i t2.nii.gz -c centerline.nii.gz\n'
     sys.exit(2)
 
-def b_spline_centerline(x_centerline,y_centerline,z_centerline):
+def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     """Give a better fitting of the centerline than the method 'spline_centerline' using b-splines"""
-    
-    
-    points = [[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))]
-    
-    nurbs = NURBS(3,len(z_centerline)*3,points) # for the third argument (number of points), give at least len(z_centerline)
+
+    points = [[x_centerline[n], y_centerline[n], z_centerline[n]] for n in range(len(x_centerline))]
+
+    nurbs = NURBS(3, len(z_centerline)*3, points, nbControl=None, verbose=2) # for the third argument (number of points), give at least len(z_centerline)
     # (len(z_centerline)+500 or 1000 is ok)
     P = nurbs.getCourbe3D()
     x_centerline_fit=P[0]

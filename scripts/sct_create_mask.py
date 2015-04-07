@@ -36,7 +36,7 @@ class Param:
         self.method = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
-        self.size = '41'  # in voxel. if gaussian, size corresponds to sigma.
+        self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -240,7 +240,7 @@ def create_mask():
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+param.fname_data+' '+param.fname_out+' -l Red -t 0.5 &', param.verbose, 'code')
+    sct.printv('fslview '+param.fname_data+' '+param.fname_out+' -l Red -t 0.5 &', param.verbose, 'info')
     print
 
 
