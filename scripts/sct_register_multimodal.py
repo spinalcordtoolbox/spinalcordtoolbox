@@ -46,6 +46,11 @@ from msct_parser import Parser
 
 
 
+
+
+
+
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -273,9 +278,6 @@ def main():
         sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
     if not fname_mask == '':
         sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
-        masking = '-x mask.nii.gz'  # this variable will be used when calling ants
-    else:
-        masking = ''  # this variable will be used when calling ants
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -354,19 +356,39 @@ def main():
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
 
+    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
+
     # set metricSize
     if paramreg.steps[i_step_str].metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
+    # set masking
+    if param.fname_mask:
+        masking = '-x mask.nii.gz'
+    else:
+        masking = ''
+
     if paramreg.steps[i_step_str].algo == 'slicereg':
-        # # threshold images (otherwise, automatic crop does not work -- see issue #293)
-        # sct.run(fsloutput+'fslmaths dest_pad -thr 0.1 dest_pad_thr', verbose)
-        # sct.run(fsloutput+'fslmaths src_regAffine -thr 0.1 src_regAffine_thr', verbose)
-        # # crop source and destination images in case some slices are the edge are empty (otherwise slicereg crashes)
-        # sct.run('sct_crop_image -i dest_pad_thr.nii -o dest_pad_thr_crop.nii -dim 2 -bzmax', verbose)
-        # sct.run('sct_crop_image -i src_regAffine_thr.nii -o src_regAffine_thr_crop.nii -dim 2 -bzmax', verbose)
+        # threshold images (otherwise, automatic crop does not work -- see issue #293)
+        src_th = sct.add_suffix(src, '_th')
+        sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
+        dest_th = sct.add_suffix(dest, '_th')
+        sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
+        # find zmin and zmax
+        zmin_src, zmax_src = find_zmin_zmax(src_th)
+        zmin_dest, zmax_dest = find_zmin_zmax(dest_th)
+        zmin_total = max([zmin_src, zmin_dest])
+        zmax_total = min([zmax_src, zmax_dest])
+        # crop data
+        src_crop = sct.add_suffix(src, '_crop')
+        sct.run('sct_crop_image -i '+src+' -o '+src_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+        dest_crop = sct.add_suffix(dest, '_crop')
+        sct.run('sct_crop_image -i '+dest+' -o '+dest_crop+' -dim 2 -start '+str(zmin_total)+' -end '+str(zmax_total), param.verbose)
+        # update variables
+        src = src_crop
+        dest = dest_crop
         # estimate transfo
         cmd = ('sct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
@@ -374,29 +396,33 @@ def register(src, dest, paramreg, param, i_step_str):
                '-p '+paramreg.steps[i_step_str].poly+' '
                '-i '+paramreg.steps[i_step_str].iter+' '
                '-f 1 '
-               '-s 0 '
+               '-s '+paramreg.steps[i_step_str].smooth+' '
+               '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
+
         # Pad the destination image (because ants doesn't deform the extremities)
-        # sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
-        dest_pad = sct.add_suffix(dest, '_pad')
-        pad_image(dest, dest_pad, param.padding)
+        # N.B. no need to pad if iter = 0
+        if not paramreg.steps[i_step_str].iter == '0':
+            dest_pad = sct.add_suffix(dest, '_pad')
+            pad_image(dest, dest_pad, param.padding)
+            dest = dest_pad
 
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
-               '--metric '+paramreg.steps[i_step_str].metric+'['+dest_pad+','+src+',1,'+metricSize+'] '
+               '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
                '--output [step'+i_step_str+'] '
                '--interpolation BSpline[3] '
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
@@ -423,6 +449,15 @@ def register(src, dest, paramreg, param, i_step_str):
 def pad_image(fname_in, file_out, padding):
     sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
     return
+
+
+
+def find_zmin_zmax(fname):
+    # crop image
+    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
+    # parse output
+    zmin, zmax = output[output.find('Dimension 2: ')+13:].split(' ')
+    return int(zmin), int(zmax)
 
 
 
