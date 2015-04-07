@@ -240,7 +240,9 @@ def crop_T2_star(dir):
             mask_box = ''
             seg_in_croped = ''
             manual_seg_croped = ''
-            print subject_dir
+
+            #print subject_dir
+
             '''
             #VERSION 1 OF THE PRE TREATMENTS
 
@@ -326,9 +328,9 @@ def crop_T2_star(dir):
                 if 't2star.nii' in file and 'mask' not in file and 'seg' not in file and 'IRP' not in file:
                     t2star = file
                     t2star_path,t2star_name,ext = sct.extract_fname(t2star)
-                elif 'square_mask' in file and 'IRP' not in file:
+                elif 'square' in file and 'mask' in file and 'IRP' not in file:
                     mask_box = file
-                elif '_seg' in file and 'in' not in file and 'croped' not in file and 'IRP' not in file:
+                elif '_seg' in file and 'in' not in file and 'croped' not in file and 'gm' not in file and 'IRP' not in file:
                     sc_seg = file
                 elif '_seg_in' in file and 'croped' not in file and 'IRP' not in file:
                     seg_in = file
@@ -362,7 +364,7 @@ def crop_T2_star(dir):
                     if mask_box == '':
                         #sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o ' + t2star_name + '_square_mask.nii.gz -f box' )
                         #sct_create_mask -i errsm_05_t2star_seg_in.nii.gz -m centerline,errsm_05_t2star_seg_corrected.nii.gz -s 45 -f box -o errsm_05_t2star_mask_from_sc_seg.nii.gz
-                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,'+ sc_seg +' -s 41 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box' )
+                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,'+ sc_seg +' -s 43 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box' )
                         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
                     if seg_in_croped == '':
                         sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
