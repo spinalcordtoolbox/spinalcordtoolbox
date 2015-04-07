@@ -48,6 +48,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -391,6 +392,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '-i '+paramreg.steps[i_step_str].iter+' '
                '-f 1 '
                '-s '+paramreg.steps[i_step_str].smooth+' '
+               '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +param.fname_mask)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
