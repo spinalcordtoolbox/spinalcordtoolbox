@@ -62,6 +62,13 @@ class Image(object):
             self.path, self.file_name, self.ext = sct.extract_fname(absolutepath)
         else:
             raise TypeError(' Image constructor takes at least one argument.')
+    '''
+    def __repr__(self):
+        fig=plt.figure()
+        plt.imshow(self.data.astype(float))
+        plt.plot()
+        return self.file_name
+    '''
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
@@ -252,49 +259,68 @@ class Image(object):
 
         return list_coordinates
 
+
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
     # This method is called in sct_crop_over_mask script
     def crop_from_square_mask(self, mask):
-        array = self.data
+
+        data_array = self.data
         data_mask = mask.data
-        print 'ORIGINAL SHAPE: ', array.shape, '   ==   ', data_mask.shape
-        array = np.asarray(array)
+        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
+        data_array = np.asarray(data_array)
         data_mask = np.asarray(data_mask)
         new_data = []
         buffer = []
         buffer_mask = []
-        s = 0
-        r = 0
-        ok = 0
-        for slice in data_mask:
-            # print 'SLICE ', s, slice
-            for row in slice:
-                if sum(row) > 0:
+
+        for n_slice, slice in enumerate(data_mask):
+            #print '############################################################################################################\n'
+            #print 'SLICE ', n_slice , '\n\n', slice
+
+            for n_row, row in enumerate(slice):
+                if sum(row) > 0 and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                     buffer_mask.append(row)
-                    buffer.append(array[s][r])
-                    #print 'OK1', ok
-                    ok += 1
-                r += 1
+                    buffer.append(data_array[n_slice][n_row])
+
+            #print 'buffer_mask : ', buffer_mask
+            #print 'buffer : ', buffer
+
             new_slice_mask = np.asarray(buffer_mask).T
             new_slice = np.asarray(buffer).T
-            r = 0
             buffer = []
-            for row in new_slice_mask:
+            for n_row, row in enumerate(new_slice_mask):
                 if sum(row) != 0:
-                    buffer.append(new_slice[r])
-                r += 1
+                    buffer.append(new_slice[n_row])
             #print buffer
             new_slice = np.asarray(buffer).T
-            r = 0
             buffer_mask = []
             buffer = []
             new_data.append(new_slice)
-            s += 1
         new_data = np.asarray(new_data)
         # print data_mask
+        self.data = new_data
+        print 'Header ... ',self.hdr
+
+
+
+    # crop the image in order to keep only voxels in the mask
+    # doesn't change the image dimension
+    # This method is called in sct_crop_over_mask script
+    def crop_from_mask(self, mask):
+        array = self.data
+        data_mask = mask.data
+        assert array.shape == data_mask.shape
+        print 'ORIGINAL SHAPE: ', array.shape, '   ==   ', data_mask.shape
+        array = np.asarray(array)
+        data_mask = np.asarray(data_mask)
+
+        #Element-wise matrix multiplication:
+        new_data = np.einsum('ijk,ijk->ijk',data_mask,array)
         print 'SHAPE ', new_data.shape
         self.data = new_data
+
+
 
     def invert(self):
         self.data = self.data.max() - self.data
@@ -305,7 +331,6 @@ class Image(object):
         imgplot.set_cmap('gray')
         imgplot.set_interpolation('nearest')
         plt.show()
-
 
 # =======================================================================================================================
 # Start program
