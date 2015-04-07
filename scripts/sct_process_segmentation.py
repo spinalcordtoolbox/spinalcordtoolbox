@@ -34,6 +34,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -126,7 +127,7 @@ def main():
                 verbose = int(arg)
                 volume_output = 1
             elif opt in ('-w'):
-                param.window_length = arg
+                param.window_length = int(arg)
             elif opt in ('-z'):
                 slices = arg
 
