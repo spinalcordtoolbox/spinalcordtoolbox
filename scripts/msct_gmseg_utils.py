@@ -15,12 +15,15 @@
 from math import sqrt
 
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 #from scipy.optimize import minimize
 
 from msct_image import Image
 import sct_utils as sct
+from msct_parser import Parser
 
 
 class Slice:
@@ -223,3 +226,173 @@ def kronecker_delta(x, y):
 # label-based cost function
 def l0_norm(X, Y):
     return np.linalg.norm(X.flatten() - Y.flatten(), 0)
+
+########################################################################################################################
+######---------------------------------------------- PRETREATMENTS -----------------------------------------------######
+########################################################################################################################
+def crop_T2_star(dir):
+    for subject_dir in os.listdir(dir):
+        if os.path.isdir(subject_dir):
+            t2star = ''
+            sc_seg = ''
+            seg_in = ''
+            manual_seg = ''
+            mask_box = ''
+            seg_in_croped = ''
+            manual_seg_croped = ''
+            print subject_dir
+            '''
+            #VERSION 1 OF THE PRE TREATMENTS
+
+            mask_centerline = ''
+            centerline = ''
+            mask_box = ''
+            croped = ''
+            print subject_dir
+            for file in os.listdir(dir + '/' + subject_dir):
+                if 't2star.nii' in file and 'mask' not in file:
+                    t2star = file
+                elif '-mask_centerline.nii' in file:
+                    mask_centerline = file
+                elif 'mask_' in file:
+                    mask_box = file
+                elif '_centerline.nii' in file:
+                    centerline = file
+                elif '_croped' in file :
+                    croped = file
+            if t2star != '' and mask_centerline != '':
+                path = dir + '/' + subject_dir + '/'
+                print 'path : ', path
+                os.chdir(path)
+                t2star_path,t2star_name,ext = sct.extract_fname(t2star)
+                if centerline == '':
+                    sct.run('sct_get_centerline -i ' + t2star + ' -p '  + mask_centerline)
+                if mask_box == '':
+                    sct.run('sct_create_mask -i '  + t2star + ' -m centerline,'  + centerline +' -s 40 -f box' )
+                if croped == '':
+                    sct.run('sct_crop_image -i '  + t2star + ' -o '  + t2star_name + '_croped' + ext+ ' -m mask_' + t2star)
+                os.chdir('..')
+            '''
+
+
+
+            '''
+            #VERSION 2 OF THE PRE TREATMENTS
+
+
+
+            for file in os.listdir(dir + '/' + subject_dir):
+                if 't2star.nii' in file and 'mask' not in file and 'seg' not in file and 'IRP' not in file:
+                    t2star = file
+                    t2star_path,t2star_name,ext = sct.extract_fname(t2star)
+                elif 'square_mask' in file and 'IRP' not in file:
+                    mask_box = file
+                elif '_seg' in file and 'in' not in file and 'croped' not in file and 'IRP' not in file:
+                    sc_seg = file
+                elif '_seg_in' in file and 'croped' not in file and 'IRP' not in file:
+                    seg_in = file
+                    seg_in_name = sct.extract_fname(seg_in)[1]
+                elif '_croped' in file and 'IRP' not in file:
+                    seg_in_croped = file
+            if t2star != '' and sc_seg != '':
+                path = dir + '/' + subject_dir + '/'
+                print 'path : ', path
+                os.chdir(path)
+
+                try:
+
+                    if seg_in == '':
+                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+                        seg_in = t2star_name + '_seg_in.nii.gz'
+                        seg_in_name = t2star_name + '_seg_in'
+                    if mask_box == '':
+                        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o ' + t2star_name + '_square_mask.nii.gz -f box' )
+                        mask_box = t2star_name + '_square_mask.nii.gz'
+                    if seg_in_croped == '':
+                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+                    #os.chdir('..')
+
+                except Exception,e:
+                    sct.printv('WARNING: an error occured ... \n ' + str(e) ,1, 'warning')
+                else:
+                    print 'Done !'
+                    #sct.run('rm -rf ./tmp_' + now)
+                os.chdir('..')
+            '''
+
+
+            #VERSION 3 OF THE PRE TREATMENTS
+            for file in os.listdir(dir + '/' + subject_dir):
+                if 't2star.nii' in file and 'mask' not in file and 'seg' not in file and 'IRP' not in file:
+                    t2star = file
+                    t2star_path,t2star_name,ext = sct.extract_fname(t2star)
+                elif 'square_mask' in file and 'IRP' not in file:
+                    mask_box = file
+                elif '_seg' in file and 'in' not in file and 'croped' not in file and 'IRP' not in file:
+                    sc_seg = file
+                elif '_seg_in' in file and 'croped' not in file and 'IRP' not in file:
+                    seg_in = file
+                    seg_in_name = sct.extract_fname(seg_in)[1]
+                elif 'gm' in file and 'croped.nii' not in file and 'IRP' not in file:
+                    manual_seg = file
+                    print manual_seg
+                    manual_seg_name = sct.extract_fname(manual_seg)[1]
+                elif '_croped.nii' in file and 'IRP' not in file and 'gm' not in file:
+                    seg_in_croped = file
+                elif '_croped.nii' in file and 'gm' in file and 'IRP' not in file:
+                    manual_seg_croped = file
+                    print manual_seg_croped
+            if t2star != '' and sc_seg != '':
+                path = dir + '/' + subject_dir + '/'
+                print 'path : ', path
+                os.chdir(path)
+                '''
+                now = str(time.time())
+                sct.run('mkdir tmp_'+ now)
+                sct.run('cp ./' + t2star + ' ./tmp_'+now+'/'+t2star)
+                sct.run('cp ./' + sc_seg + ' ./tmp_'+now+'/'+sc_seg)
+                os.chdir('./tmp_'+now)
+                '''
+                try:
+
+                    if seg_in == '':
+                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+                        seg_in = t2star_name + '_seg_in.nii.gz'
+                        seg_in_name = t2star_name + '_seg_in'
+                    if mask_box == '':
+                        #sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o ' + t2star_name + '_square_mask.nii.gz -f box' )
+                        #sct_create_mask -i errsm_05_t2star_seg_in.nii.gz -m centerline,errsm_05_t2star_seg_corrected.nii.gz -s 45 -f box -o errsm_05_t2star_mask_from_sc_seg.nii.gz
+                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,'+ sc_seg +' -s 41 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box' )
+                        mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+                    if seg_in_croped == '':
+                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+                    if manual_seg_croped == '':
+                        sct.run('sct_crop_over_mask.py -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1 -o ' + manual_seg_name + '_croped')
+
+                    #os.chdir('..')
+
+                except Exception,e:
+                    sct.printv('WARNING: an error occured ... \n ' + str(e) ,1, 'warning')
+                else:
+                    print 'Done !'
+                    #sct.run('rm -rf ./tmp_' + now)
+                os.chdir('..')
+
+
+
+
+if __name__ == "__main__":
+        # Initialize the parser
+        parser = Parser(__file__)
+        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.add_option(name="-crop",
+                          type_value="folder",
+                          description="Path to the folder containing all your subjects' data",
+                          mandatory=False,
+                          example='dictionary/')
+
+        arguments = parser.parse(sys.argv[1:])
+
+        if "-crop" in arguments:
+            crop_T2_star(arguments['-crop'])
+
