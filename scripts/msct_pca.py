@@ -7,7 +7,7 @@
 #
 # Step 1: Take the whole dataset consisting of J N-dimensional flattened images [NxJ], N=nb of vox
 #
-# Step 2: Compute the mean image: PSI (called mean_image in the code)
+# Step 2: Compute the mean image: PSI (called mean_data_vect in the code)
 #
 # Step 3: Compute the covariance matrix of the dataset
 #
@@ -37,24 +37,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sct_utils as sct
 from math import sqrt
+import os
 
 
 class PCA:
 
-    def __init__(self, dataset, datashape=None, k=0.80):
+    def __init__(self, dataset, mean_vect=None, eig_pairs=None, k=0.80):
         # STEP 1
         self.dataset = dataset  # This should be a J*N dimensional matrix of J N-dimensional flattened images
         self.N = dataset.shape[0]  # The number of rows is the dimension of flattened images
         self.J = dataset.shape[1]  # The number of columns is the number of images
         # STEP 2
-        self.mean_image = self.mean()
-        # STEP 3
-        self.covariance_matrix = self.covariance_matrix()
-        # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
-        self.eig_pairs = self.sorted_eig()
+        if mean_vect is not None:
+            self.mean_data_vect = mean_vect
+        else:
+            self.mean_data_vect = self.mean()
+
+
+        n = int(sqrt(self.N))
+        self.mean_image = self.mean_data_vect.reshape(n,n)
+
+        fig=plt.figure()
+        plt.imshow(self.mean_image.astype(np.float))
+        plt.plot()
+
+        if eig_pairs == None:
+            # STEP 3
+            self.covariance_matrix = self.covariance_matrix()
+            # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
+            self.eig_pairs = self.sorted_eig()
+        else:
+             # STEP 3
+            self.covariance_matrix = None
+            # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
+            self.eig_pairs = eig_pairs
         # STEP 5
         self.k = k
         self.W, self.kept = self.generate_W()
+        print '\n\n-------> IN PCA : '
+        print '\n-> W:', self.W
+        print '\n-> kept:', self.kept
         # omega is a matrix of k rows and J columns, each columns correspond to a vector projection of an image from
         # the dataset
         self.omega = self.project_dataset()
@@ -72,13 +94,16 @@ class PCA:
     def covariance_matrix(self):
         covariance_matrix = np.zeros((self.N, self.N))
         for j in range(0, self.J):
-            covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(self.N, 1) - self.mean_image)\
-                .dot((self.dataset[:, j].reshape(self.N, 1) - self.mean_image).T)
+            covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect)\
+                .dot((self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect).T)
         return covariance_matrix
 
     # STEP 4
     def sorted_eig(self):
         eigenvalues, eigenvectors = np.linalg.eig(self.covariance_matrix)
+
+        eigenvectors = eigenvectors.astype(np.float)
+
         # Create a list of (eigenvalue, eigenvector) tuple
         eig_pairs = [(np.abs(eigenvalues[i]), eigenvectors[:, i]) for i in range(len(eigenvalues))
                      if np.abs(eigenvalues[i]) > 0.0000001]
@@ -94,13 +119,13 @@ class PCA:
         first = 1
         for eig in self.eig_pairs:
             if first:
-                W = eig[1].reshape(self.N, 1)
+                W = np.asarray(eig[1]).reshape(self.N, 1)
                 eigenvalues_kept.append(eig[0])
                 first = 0
             else:
                 if (sum(eigenvalues_kept) + eig[0])/s <= self.k:
                     eigenvalues_kept.append(eig[0])
-                    W = np.hstack((W, eig[1].reshape(self.N, 1)))
+                    W = np.hstack((W, np.asarray(eig[1]).reshape(self.N, 1)))
                 else:
                     break
         kept = len(eigenvalues_kept)
@@ -126,10 +151,35 @@ class PCA:
     def project_array(self, target_as_array):
         if target_as_array.shape == (self.N,):
             target = target_as_array.reshape(self.N, 1)
-            coord_projected_img = self.W.T.dot(target - self.mean_image)
+            coord_projected_img = self.W.T.dot(target - self.mean_data_vect)
             return coord_projected_img
         else:
             print "target dimension is {}, must be {}.\n".format(target_as_array.shape, self.N)
+
+
+    def save_data(self, path):
+        previous_path = os.getcwd()
+        os.chdir(path)
+        fic_data = open('data_pca.txt', 'w')
+        for i,m in enumerate(self.mean_data_vect):
+            if i == len(self.mean_data_vect) - 1:
+                fic_data.write(str(m[0]))
+            else:
+                fic_data.write(str(m[0]) + ' , ')
+        fic_data.write('\n')
+        for i,eig in enumerate(self.eig_pairs):
+            eig_vect_string = ''
+            for v in eig[1]:
+                eig_vect_string += str(v) + ' '
+            if i == len(self.eig_pairs) - 1:
+                fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string)
+            else:
+
+                fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string + ' , ')
+        fic_data.write('\n')
+        fic_data.close()
+        os.chdir(previous_path)
+
 
     #
     # Show all the mode
@@ -168,7 +218,7 @@ class PCA:
         fig = plt.figure()
         eigen_V = self.W.T[mode, :]
         eigen_value = self.eig_pairs[mode][0]
-        mean_vect = self.mean_image.reshape(len(self.mean_image),)
+        mean_vect = self.mean_data_vect.reshape(len(self.mean_data_vect),)
 
 
         minus_3vect = mean_vect -  3 * eigen_value *eigen_V
