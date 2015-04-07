@@ -49,6 +49,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -276,9 +277,6 @@ def main():
         sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
     if not fname_mask == '':
         sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
-        masking = '-x mask.nii.gz'  # this variable will be used when calling ants
-    else:
-        masking = ''  # this variable will be used when calling ants
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -365,6 +363,9 @@ def register(src, dest, paramreg, param, i_step_str):
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
+    # set masking
+    masking = '-x mask.nii.gz'
+
     if paramreg.steps[i_step_str].algo == 'slicereg':
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
         src_th = sct.add_suffix(src, '_th')
@@ -394,7 +395,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '-s '+paramreg.steps[i_step_str].smooth+' '
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
@@ -417,7 +418,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '--restrict-deformation 1x1x0 '
                '--output [step'+i_step_str+'] '
                '--interpolation BSpline[3] '
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
