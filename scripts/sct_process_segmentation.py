@@ -31,6 +31,7 @@ from sct_orientation import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -49,7 +50,9 @@ class Param:
         self.slices = ''
         self.vertebral_levels = ''
         self.path_to_template = ''
-        
+        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
+
         
 # MAIN
 # ==========================================================================================
@@ -203,7 +206,7 @@ def compute_length(fname_segmentation, remove_temp_files):
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
     # smooth segmentation/centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
 
     # compute length of centerline
     result_length = 0.0
@@ -267,7 +270,7 @@ def extract_centerline(fname_segmentation, remove_temp_files):
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
@@ -356,7 +359,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     # x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
     z_centerline_scaled = [x*pz for x in z_centerline]
 
    # # 3D plot of the fit
