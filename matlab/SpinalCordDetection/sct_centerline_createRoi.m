@@ -22,4 +22,4 @@ close
 BW2=logical(repmat(BW,[1 size(mat,2) 1 size(mat,4)]));
 
 BW=BW1 & BW2;
-pos=max(round([pos2(2) pos2(2)+pos2(4) pos1(2) pos1(2)+pos1(4) pos1(1) pos1(1)+pos1(3)]),1);
+pos=max(round([pos2(2) min(pos2(2)+pos2(4),size(mat,1)) pos1(2) min(pos1(2)+pos1(4),size(mat,2)) pos1(1) min(pos1(1)+pos1(3),size(mat,3))]),1);
