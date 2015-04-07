@@ -33,6 +33,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -52,7 +53,7 @@ class Param:
         self.vertebral_levels = ''
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
 
         
 # MAIN
@@ -93,7 +94,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -124,6 +125,8 @@ def main():
             elif opt in ('-v'):
                 verbose = int(arg)
                 volume_output = 1
+            elif opt in ('-w'):
+                param.window_length = arg
             elif opt in ('-z'):
                 slices = arg
 
@@ -769,6 +772,7 @@ OPTIONAL ARGUMENTS
   -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
   -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
+  -w <smoothing>        Smoothing window size. Only used with 'centerline'
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
   -h                    Help. Show this message
