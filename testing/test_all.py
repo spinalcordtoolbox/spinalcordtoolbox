@@ -9,11 +9,9 @@
 
 
 import os
-import shutil
 import getopt
 import sys
 import time
-from numpy import loadtxt
 import commands
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -148,18 +146,21 @@ def fill_functions():
     functions.append('sct_compute_mtr')
     functions.append('sct_concat_transfo')
     #functions.append('sct_convert')
-    functions.append('sct_convert_binary_to_trilinear')
+    #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
+    functions.append('sct_crop_image')
     functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
-    #functions.append('sct_label_utils')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
     functions.append('sct_flatten_sagittal')
+    functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
-    functions.append('sct_get_centerline')
+    functions.append('sct_get_centerline_automatic')
+    functions.append('sct_get_centerline_from_labels')
+    functions.append('sct_label_utils')
     functions.append('sct_orientation')
     functions.append('sct_otsu')
     functions.append('sct_process_segmentation')
@@ -251,6 +252,7 @@ def test_function(script_name):
             print_ok()
         else:
             print_fail()
+            print output
 
         # log file
         write_to_log_file(fname_log, output, 'w')

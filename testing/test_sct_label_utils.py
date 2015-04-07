@@ -19,11 +19,10 @@ def test(data_path):
 
     # parameters
     folder_data = ['t2/']
-    file_data = ['t2.nii.gz']
+    file_data = ['t2_seg.nii.gz']
 
     # define command
-    cmd = 'sct_label_utils -i t2.nii.gz ' + data_path + folder_data[1] + file_data[2] \
-        + ' -c 5'
+    cmd = 'sct_label_utils -i ' + data_path + folder_data[0] + file_data[0] + ' -t create -x 1,1,1,1:2,2,2,2'
 
     # return
     #return sct.run(cmd, 0)

@@ -28,30 +28,35 @@ typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags OrientationType
 
 void help()
 {
-    cout << "sct_crop_image - Version 0.3" << endl;
-    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuropoly.info>" << endl << endl;
+    cout << "sct_crop_image" << endl;
+    cout << "Author : Benjamin De Leener - NeuroPoly lab <www.neuro.polymtl.ca>" << endl;
+    cout << "modified: 2015-03-26" << endl;
 	
-	cout << "This program crop an image. You can provide either directly the starting and ending slice number around that the image will be cropped or a mask. You can as well crop in any dimension you want. This program supports 2D to 7D images with the following voxel types: char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double." << endl << endl;
+    cout << "This program crop an image in any direction. You can provide either directly the starting and ending slice number around that the image will be cropped or a mask. You can as well crop in any dimension you want. This program supports 2D to 7D images with the following voxel types: char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, float, double." << endl;
+    cout << "You can also crop an image based on the maximum field a view in the one direction where there are non-null voxels (-bzmax option). You must indicate the dimension you want to crop (-dim option)" << endl << endl;
     
     cout << "Usage : " << endl << "\t sct_crop_image -i <inputfilename> -o <outputfilename> [options]" << endl;
-    cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -m <maskfilename> [options]" << endl;
+    cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -bmax [options]" << endl;
     cout << "\t sct_crop_image -i <inputfilename> -o <outputfilename> -dim 1,3 -start 20,35 -end 70,50" << endl << endl;
     
-    cout << "Available options : " << endl;
-    cout << "\t-i <inputfilename> \t (no default)" << endl;
-    cout << "\t-o <outputfilename> \t (no default)" << endl;
-    cout << "\t-m <maskfilename> \t (cropping around the mask)" << endl;
-    cout << "\t-start <s0,...,sn> \t (start slices, ]0,1[: percentage, 0 & >1: slice number)" << endl;
-    cout << "\t-end <e0,...,en> \t (end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value)" << endl;
-    cout << "\t-dim <d0,...,dn> \t (dimension to crop, from 0 to n-1, default is 1)" << endl;
-    cout << "\t-shift <s0,...,sn> \t (adding shift when used with mask, default is 0)" << endl;
-    cout << "\t-b <backgroundvalue> \t (replace voxels outside cropping region with background value)" << endl;
-    cout << "\t-mesh <meshfilename> \t (mesh to crop)" << endl;
+    cout << "MANDATORY ARGUMENTS" << endl;
+    cout << "\t-i <inputfilename>" << endl;
+    cout << "\t-o <outputfilename>" << endl;
+    
+    cout << endl << "OPTIONAL ARGUMENTS" << endl;
+    cout << "\t-m <maskfilename> \t cropping around the mask" << endl;
+    cout << "\t-start <s0,...,sn> \t start slices, ]0,1[: percentage, 0 & >1: slice number" << endl;
+    cout << "\t-end <e0,...,en> \t end slices, ]0,1[: percentage, 0: last slice, >1: slice number, <0: last slice - value" << endl;
+    cout << "\t-dim <d0,...,dn> \t dimension to crop, from 0 to n-1, default is 1" << endl;
+    cout << "\t-shift <s0,...,sn> \t adding shift when used with mask, default is 0" << endl;
+    cout << "\t-b <backgroundvalue> \t replace voxels outside cropping region with background value" << endl;
+    cout << "\t-bmax \t\t\t maximize the cropping of the image (provide -dim if you want to specify the dimensions)" << endl;
+    cout << "\t-mesh <meshfilename> \t mesh to crop" << endl;
     cout << "\t-help" << endl;
 }
 
 template<typename TPixelType, unsigned int N>
-int transform(string inputFilename, string outputFilename, string maskFilename, string meshFilename, bool isMask, bool isMesh, float backgroundValue, bool realCrop, vector<float> startSlices, vector<float> endSlices, vector<float> dims, vector<float> shiftSlices);
+int transform(string inputFilename, string outputFilename, string maskFilename, string meshFilename, bool isMask, bool maxZBoundingBox, bool isMesh, float backgroundValue, bool realCrop, vector<float> startSlices, vector<float> endSlices, vector<float> dims, vector<float> shiftSlices);
 
 // This method split the input argument into int with delimiter and add a shift
 vector<float> splitString(string s, string delimiter, float shift=0.0)
@@ -77,7 +82,7 @@ int main(int argc, char *argv[])
     }
     string inputFilename = "", outputFilename = "", maskFilename = "", meshFilename = "";
     float startSlice = 0.0, endSlice = 0.0, dim = 1.0, backgroundValue = 0.0;
-    bool isMask = false, isMesh = false, realCrop = true;
+    bool isMask = false, isMesh = false, realCrop = true, maxBoundingBox = false;
     vector<float> dims, startSlices, endSlices, shiftSlices;
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
@@ -119,6 +124,10 @@ int main(int argc, char *argv[])
             meshFilename = argv[i];
 			isMesh = true;
         }
+        else if (strcmp(argv[i],"-bmax")==0 || strcmp(argv[i],"-bzmax")==0)
+        {
+            maxBoundingBox = true;
+        }
         else if (strcmp(argv[i],"-help")==0) {
             help();
             return EXIT_FAILURE;
@@ -136,12 +145,12 @@ int main(int argc, char *argv[])
     if (shiftSlices.size() == 0) {
         for (int i=0; i<dims.size(); i++) shiftSlices.push_back(0);
     }
-    if (startSlices.size() != dims.size() && !isMask) {
+    if (startSlices.size() != dims.size() && !isMask && !maxBoundingBox) {
         cerr << "Start slices must have the same number of elements than dimension (-dim)" << endl;
 		help();
         return EXIT_FAILURE;
     }
-    if (endSlices.size() != dims.size() && !isMask) {
+    if (endSlices.size() != dims.size() && !isMask && !maxBoundingBox) {
         cerr << "End slices must have the same number of elements than dimension (-dim)" << endl;
 		help();
         return EXIT_FAILURE;
@@ -151,6 +160,7 @@ int main(int argc, char *argv[])
 		help();
         return EXIT_FAILURE;
     }
+    
     
     
     itk::NiftiImageIO::Pointer io = itk::NiftiImageIO::New();
@@ -165,6 +175,9 @@ int main(int argc, char *argv[])
         help();
         return EXIT_FAILURE;
     }
+    if (maxBoundingBox && dims.size() == 0) {
+        for (int i=0; i<numberOfDimensions; i++) dims.push_back(i);
+    }
     if (dims.size() == 0) {
         for (int i=0; i<numberOfDimensions; i++) dims.push_back(i);
     }
@@ -173,84 +186,84 @@ int main(int argc, char *argv[])
     }
     
     if (io->GetComponentTypeAsString(pixelType)=="char") {
-        if (numberOfDimensions==2) return transform<char,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<char,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<char,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<char,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<char,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<char,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<char,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<char,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<char,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<char,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<char,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<char,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="unsigned_char") {
-        if (numberOfDimensions==2) return transform<unsigned char,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==3) return transform<unsigned char,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==4) return transform<unsigned char,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==5) return transform<unsigned char,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==6) return transform<unsigned char,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==7) return transform<unsigned char,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        if (numberOfDimensions==2) return transform<unsigned char,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==3) return transform<unsigned char,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==4) return transform<unsigned char,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==5) return transform<unsigned char,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==6) return transform<unsigned char,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==7) return transform<unsigned char,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="short") {
-        if (numberOfDimensions==2) return transform<short,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==3) return transform<short,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==4) return transform<short,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==5) return transform<short,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==6) return transform<short,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==7) return transform<short,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        if (numberOfDimensions==2) return transform<short,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==3) return transform<short,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==4) return transform<short,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==5) return transform<short,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==6) return transform<short,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==7) return transform<short,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="unsigned_short") {
-        if (numberOfDimensions==2) return transform<unsigned short,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==3) return transform<unsigned short,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==4) return transform<unsigned short,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==5) return transform<unsigned short,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==6) return transform<unsigned short,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==7) return transform<unsigned short,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        if (numberOfDimensions==2) return transform<unsigned short,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==3) return transform<unsigned short,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==4) return transform<unsigned short,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==5) return transform<unsigned short,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==6) return transform<unsigned short,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==7) return transform<unsigned short,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="int") {
-        if (numberOfDimensions==2) return transform<int,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<int,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<int,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<int,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<int,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<int,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<int,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<int,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<int,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<int,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<int,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<int,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="unsigned_int") {
-        if (numberOfDimensions==2) return transform<unsigned int,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<unsigned int,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<unsigned int,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<unsigned int,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<unsigned int,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<unsigned int,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<unsigned int,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<unsigned int,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<unsigned int,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<unsigned int,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<unsigned int,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<unsigned int,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="long") {
-        if (numberOfDimensions==2) return transform<long,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
-        else if (numberOfDimensions==3) return transform<long,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<long,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<long,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<long,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<long,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<long,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims, shiftSlices);
+        else if (numberOfDimensions==3) return transform<long,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<long,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<long,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<long,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<long,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="unsigned_long") {
-        if (numberOfDimensions==2) return transform<unsigned long,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<unsigned long,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<unsigned long,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<unsigned long,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<unsigned long,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<unsigned long,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<unsigned long,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<unsigned long,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<unsigned long,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<unsigned long,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<unsigned long,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<unsigned long,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="float") {
-        if (numberOfDimensions==2) return transform<float,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<float,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<float,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<float,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<float,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<float,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<float,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<float,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<float,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<float,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<float,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<float,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else if (io->GetComponentTypeAsString(pixelType)=="double") {
-        if (numberOfDimensions==2) return transform<double,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==3) return transform<double,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==4) return transform<double,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==5) return transform<double,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==6) return transform<double,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
-        else if (numberOfDimensions==7) return transform<double,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        if (numberOfDimensions==2) return transform<double,2>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==3) return transform<double,3>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==4) return transform<double,4>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==5) return transform<double,5>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==6) return transform<double,6>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
+        else if (numberOfDimensions==7) return transform<double,7>(inputFilename,outputFilename,maskFilename,meshFilename,isMask,maxBoundingBox,isMesh,backgroundValue,realCrop,startSlices,endSlices,dims,shiftSlices);
     }
     else {
         cerr << "ERROR: Pixel type " << io->GetComponentTypeAsString(pixelType) << " is not supported." << endl;
@@ -262,7 +275,7 @@ int main(int argc, char *argv[])
 }
 
 template<typename TPixelType, unsigned int N>
-int transform(string inputFilename, string outputFilename, string maskFilename, string meshFilename, bool isMask, bool isMesh, float backgroundValue, bool realCrop, vector<float> startSlices, vector<float> endSlices, vector<float> dims, vector<float> shiftSlices)
+int transform(string inputFilename, string outputFilename, string maskFilename, string meshFilename, bool isMask, bool maxBoundingBox, bool isMesh, float backgroundValue, bool realCrop, vector<float> startSlices, vector<float> endSlices, vector<float> dims, vector<float> shiftSlices)
 {
     typedef itk::Image< TPixelType, N > ImageType;
     typedef itk::ImageFileReader< ImageType > ReaderType;
@@ -305,21 +318,83 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
             endSlices.push_back(*max_element(elements.begin(),elements.end()) + shiftSlices[i]);
         }
 	}
+    else if (maxBoundingBox)
+    {
+        typename ImageType::RegionType region = image->GetLargestPossibleRegion();
+        ImageIterator itTarget( image, region );
+        itTarget.GoToBegin();
+        typename ImageType::PixelType pixelTarget;
+        typename ImageType::IndexType indexTarget, start, end;
+        typename ImageType::SizeType sizeRegion=region.GetSize();
+        start.Fill(-1); end.Fill(-1);
+        for (int i=0; i<N; i++) {
+            startSlices.push_back(-1.0);
+            endSlices.push_back(-1.0);
+            end[i] = sizeRegion[i]-1;
+        }
+        
+        for (int i=0; i<dims.size(); i++)
+            end[dims[i]] = -1;
+        
+        
+        while( !itTarget.IsAtEnd() )
+        {
+            indexTarget = itTarget.GetIndex();
+            pixelTarget = itTarget.Get();
+            if (pixelTarget != 0)
+            {
+                for (int i=0; i<dims.size(); i++)
+                {
+                    if (start[dims[i]] == -1)
+                        start[dims[i]] = indexTarget[dims[i]];
+                    if (end[dims[i]] == -1)
+                        end[dims[i]] = indexTarget[dims[i]];
+                
+                    if (indexTarget[dims[i]] < start[dims[i]]) start[dims[i]] = indexTarget[dims[i]];
+                    if (indexTarget[dims[i]] > end[dims[i]]) end[dims[i]] = indexTarget[dims[i]];
+                }
+            }
+            ++itTarget;
+        }
+        for (int i=0; i<N; i++) {
+            startSlices[i] = start[i];
+            if (start[i] == -1)
+                startSlices[i] = 0;
+            endSlices[i] = end[i];
+        }
+    }
     else
     {
+        vector<float> startSlices_temp = vector<float>(N);
+        vector<float> endSlices_temp = vector<float>(N);
+        for (int i=0; i<N; i++) {
+            startSlices_temp[i] = 0;
+            endSlices_temp[i] = desiredSize1[i];
+        }
         for (int i=0; i<dims.size(); i++) {
-            if (startSlices[i] > 0.0 && startSlices[i] < 1.0) startSlices[i] = desiredSize1[dims[i]]*startSlices[i];
-            if (endSlices[i] > 0.0 && endSlices[i] < 1.0) endSlices[i] = desiredSize1[dims[i]]*endSlices[i];
-            else if (endSlices[i] < 0) endSlices[i] = desiredSize1[dims[i]] + endSlices[i] - 1.0;
-            else if (endSlices[i] == 0.0) endSlices[i] = desiredSize1[dims[i]]-1;
+            startSlices_temp[dims[i]] = startSlices[i];
+            endSlices_temp[dims[i]] = endSlices[i];
+        }
+        startSlices = startSlices_temp;
+        endSlices = endSlices_temp;
+        
+        for (int i=0; i<dims.size(); i++) {
+            if (startSlices[dims[i]] > 0.0 && startSlices[dims[i]] < 1.0) startSlices[dims[i]] = desiredSize1[dims[i]]*startSlices[dims[i]];
+            if (endSlices[dims[i]] > 0.0 && endSlices[dims[i]] < 1.0) endSlices[dims[i]] = desiredSize1[dims[i]]*endSlices[dims[i]];
+            else if (endSlices[dims[i]] < 0) endSlices[dims[i]] = desiredSize1[dims[i]] + endSlices[dims[i]] - 1.0;
+            else if (endSlices[dims[i]] == 0.0) endSlices[dims[i]] = desiredSize1[dims[i]]-1;
         }
 	}
+    
+    cout << "Cropping the following region:" << endl;
+    for (int i=0; i<N; i++)
+        cout << "Dimension " << i << ": " << startSlices[i] << " " << endSlices[i] << endl;
     
 	typename ImageType::IndexType desiredStart1;
     desiredStart1.Fill(0);
     for (int i=0; i<dims.size(); i++) {
-        desiredStart1[dims[i]] = startSlices[i];
-        desiredSize1[dims[i]] = endSlices[i]-startSlices[i]+1;
+        desiredStart1[dims[i]] = startSlices[dims[i]];
+        desiredSize1[dims[i]] = endSlices[dims[i]]-startSlices[dims[i]]+1;
     }
     
 	if (realCrop)

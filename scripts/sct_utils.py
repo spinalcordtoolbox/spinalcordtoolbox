@@ -3,6 +3,8 @@
 #
 # Module containing several useful functions.
 #
+# PLEASE!! SORT FUNCTIONS ALPHABETICALLY!
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Julien Cohen-Adad
@@ -14,7 +16,6 @@
 import os
 import errno
 import sys
-import traceback
 import commands
 import subprocess
 import re
@@ -37,11 +38,23 @@ class bcolors:
     bold = '\033[1m'
     underline = '\033[4m'
 
-#==============e=========================================================================================================
+
+
+#=======================================================================================================================
+# add suffix
+#=======================================================================================================================
+def add_suffix(file_ext, suffix):
+    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
+    # add suffix
+    return file_name+suffix+'.'+ext_name
+
+
+
+#=======================================================================================================================
 # run
 #=======================================================================================================================
 # Run UNIX command
-def run(cmd, verbose=1):
+def run_old(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
@@ -50,35 +63,33 @@ def run(cmd, verbose=1):
     else:
         return status, output
 
-def runProcess(cmd, verbose=1):
+def run(cmd, verbose=1):
+    # print sys._getframe().f_back.f_code.co_name
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output_final = ''
     while True:
         output = process.stdout.readline()
         if output == '' and process.poll() is not None:
             break
         if output:
-            print output.strip()
-
-    (output, err) = process.communicate()
-
-    '''
-    if timeout is None:
-        process.wait()
+            if verbose == 2:
+                print output.strip()
+            output_final += output.strip()+'\n'
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    if process.returncode:
+        # from inspect import stack
+        printv(output_final[0:-1], 1,'warning')
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+        # sys.exit()
     else:
-        while process.poll() is None:
-            time.sleep(0.2)
-            now = datetime.datetime.now()
-            if (now - start).seconds > timeout:
-                os.kill(process.pid, signal.SIGKILL)
-                os.waitpid(-1, os.WNOHANG)
-                return None, "Error, a timeout for this process occurred"
-    '''
+        # no need to output process.returncode (because different from 0)
+        return process.returncode, output_final[0:-1]
 
-    return process.wait(), output
 
-#==============e=========================================================================================================
+
+#=======================================================================================================================
 # check RAM usage
 # work only on Mac OSX
 #=======================================================================================================================
@@ -106,7 +117,7 @@ def checkRAM(os,verbose=1):
         processLines = ps.split('\n')
         sep = re.compile('[\s]+')
         rssTotal = 0 # kB
-        for row in range(1,len(processLines)):
+        for row in range(1, len(processLines)):
             rowText = processLines[row].strip()
             rowElements = sep.split(rowText)
             try:
@@ -289,10 +300,6 @@ def get_dimension(fname):
 def generate_output_file(fname_in, fname_out, verbose=1):
     # import stuff
     import shutil  # for moving files
-    # get absolute fname
-    fname_in = os.path.abspath(fname_in)
-    fname_out = os.path.abspath(fname_out)
-    # extract input file extension
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -301,26 +308,13 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         sys.exit(2)
     # if input and output fnames are the same, do nothing and exit function
     if fname_in == fname_out:
+        printv('  WARNING: fname_in and fname_out are the same. Do nothing.', 1, 'warning')
         print '  File created: '+path_out+file_out+ext_out
         return path_out+file_out+ext_out
-    # if fname_out already exists in nii or nii.gz
-    if path_in != os.path.abspath(path_out):
-        # first, check if path_in is different from path_out
-        if os.path.isfile(path_out+file_out+'.nii'):
-            printv('  WARNING: File '+path_out+file_out+'.nii'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii')
-#            os.system('rm '+path_out+file_out+'.nii')  # 
-            # use remove instead of rm because: https://github.com/neuropoly/spinalcordtoolbox/issues/259
-        if os.path.isfile(path_out+file_out+'.nii.gz'):
-            printv('  WARNING: File '+path_out+file_out+'.nii.gz'+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+'.nii.gz')
-#            os.system('rm '+path_out+file_out+'.nii.gz')
-    # if path_in the same as path_out, only delete fname_out with specific ext_out extension
-    else:
-        if os.path.isfile(path_out+file_out+ext_out):
-            printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
-            os.remove(path_out+file_out+ext_out)
-            #os.system('rm '+path_out+file_out+ext_out)
+    # if fname_out already exists in nii or nii.gz format
+    if os.path.isfile(path_out+file_out+ext_out):
+        printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
+        os.remove(path_out+file_out+ext_out)
     # Move file to output folder (keep the same extension as input)
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
@@ -333,17 +327,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if verbose:
         print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
-
-
-#=======================================================================================================================
-# sign
-#=======================================================================================================================
-# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
-def sign(x):
-    if x >= 0:
-        return 1
-    else:
-        return -1
 
 
 #=======================================================================================================================
@@ -380,10 +363,21 @@ def printv(string, verbose=1, type='normal'):
     if verbose:
         print(color+string+bcolors.normal)
 
-    # if error, exit prohram
+    # if error, exit program
     if type == 'error':
         #raise NameError('Error!')
         sys.exit(2)
+
+
+#=======================================================================================================================
+# sign
+#=======================================================================================================================
+# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
+def sign(x):
+    if x >= 0:
+        return 1
+    else:
+        return -1
 
 
 #=======================================================================================================================
@@ -397,6 +391,8 @@ def slash_at_the_end(path, slash=0):
         if not path[-1:] == '/':
             path = path+'/'
     return path
+
+
 
 
 #=======================================================================================================================

@@ -25,8 +25,7 @@ def test(path_data):
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
           + ' -o data_reg.nii.gz'  \
-          + ' -p 3,SyN,0.5,MI'  \
-          + ' -z 1' \
+          + ' -p step=1,algo=syn,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
           + ' -x linear' \
           + ' -r 0' \
           + ' -v 1'

@@ -23,15 +23,25 @@ class param:
         
 # check if needed Python libraries are already installed or not
 import sys
+import commands
 import os
 import getopt
+
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
 import sct_utils as sct
 import nibabel
 import numpy as np
+
 from time import strftime
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
 from scipy import ndimage
+
+
 
 def main():
     
@@ -93,14 +103,17 @@ def main():
     
     X,Y,Z = (data_c>0).nonzero()
     
-    min_z_index, max_z_index = min(Z), max(Z)
+    #min_z_index, max_z_index = min(Z), max(Z)
     
     
     z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
     nz_nonz = len(z_centerline)
+    if nz_nonz==0 :
+        print '\nERROR: Centerline is empty'
+        sys.exit()
     x_centerline = [0 for iz in range(0, nz_nonz, 1)]
     y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-    # print z_centerline,nz_nonz,len(x_centerline)
+    #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
     print '\nGet center of mass of the centerline ...'
     for iz in xrange(len(z_centerline)):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
@@ -113,9 +126,9 @@ def main():
    #      print iz-min(z_centerline)
    #      print x_centerline[iz-min(z_centerline)]
         means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
-    
-    
-    print('\nSmoothing results with spline...')    
+    #print("means=", means)
+
+    print('\nSmoothing results with spline...')
     m =np.mean(means)
     sigma = np.std(means)
     smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
@@ -126,12 +139,51 @@ def main():
         plt.plot(z_centerline,means)
         plt.plot(z_centerline,means_smooth)
         plt.show()
-    
-    print('\nNormalizing intensity along centerline...')    
-    for iz in xrange(len(z_centerline)):
-        
-        data[:,:,z_centerline[iz]] = data[:,:,z_centerline[iz]]*(mean_intensity/means_smooth[iz])
-       
+    print('\nNormalizing intensity along centerline...')
+
+
+
+
+    #Define extended meaned intensity for all the spinal cord
+    means_smooth_extended = [0 for i in range(0, data.shape[2], 1)]
+    for iz in range(len(z_centerline)):
+        means_smooth_extended[z_centerline[iz]] = means_smooth[iz]
+
+
+    X_means_smooth_extended = np.nonzero(means_smooth_extended)
+    X_means_smooth_extended = np.transpose(X_means_smooth_extended)
+
+    #initialization: we fixe the extrem values to avoid edge effects
+    means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
+    means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
+
+    #Add two rows to the vector X_means_smooth_extended:
+    # one before as means_smooth_extended[0] is now diff from 0
+    # one after as means_smooth_extended[-1] is now diff from 0
+    X_means_smooth_extended = np.append(X_means_smooth_extended, len(means_smooth_extended)-1)
+    X_means_smooth_extended = np.insert(X_means_smooth_extended, 0, 0)
+
+
+
+#    for i in range(1,len(X_means_smooth_extended)-1):
+#        means_smooth_extended[X_means_smooth_extended[i]] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1]]+means_smooth_extended[X_means_smooth_extended[i+1]])
+
+    #recurrence
+    count_zeros=0
+    for i in range(1,len(means_smooth_extended)-1):
+        if means_smooth_extended[i]==0:
+            means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
+            count_zeros += 1
+    if verbose :
+        plt.figure()
+        plt.plot(means_smooth_extended)
+        plt.title("Extended mean intensity")
+        plt.show()
+    #print means_smooth_extended
+
+    for i in range(data.shape[2]):
+        data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
+
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     # save volume
     sct.printv('\nWrite NIFTI volumes...',verbose)
@@ -141,7 +193,7 @@ def main():
     nibabel.save(img,output_name)
     sct.printv('\n.. File created:' + output_name,verbose)
 
-    print('\nNormalizing overall intensity...')    
+    print('\nNormalizing overall intensity...')
     # sct.run('fslmaths ' + output_name + ' -inm ' + str(mean_intensity) + ' ' + output_name)
      
     # to view results
@@ -187,3 +239,4 @@ if __name__ == "__main__":
     param = param()
     # call main function
     main()
+

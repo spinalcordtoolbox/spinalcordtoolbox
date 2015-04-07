@@ -4,7 +4,7 @@ set(CMAKE_CXX_COMPILER "g++")
 project(sct_dice_coefficient)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
-set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.5)
+set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.7)
 
 option(BUILD_SHARED_LIBS OFF)
 
@@ -26,7 +26,7 @@ endif()
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
-set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+# set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
