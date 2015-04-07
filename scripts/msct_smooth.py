@@ -496,7 +496,7 @@ def smoothing_window(x, window_len=11, window='hanning'):
     if x.size < window_len:
         raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
-        sct.printv("Window size is too small for effective smoothing. Increase window size.", 1, 'warning')
+        sct.printv('Window size is too small. No smoothing was applied.', 1, 'warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
