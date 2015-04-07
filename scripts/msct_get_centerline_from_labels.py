@@ -20,17 +20,19 @@ import sct_utils as sct
 from sct_orientation import get_orientation, set_orientation
 from sct_process_segmentation import b_spline_centerline
 from scipy import interpolate, ndimage
+from msct_nurbs import NURBS
 
 
 
 class ExtractCenterline :
     def __init__(self):
         self.list_image = []
+        self.list_file = []
         self.centerline = []
         self.dimension = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    def addfiles(self, file):
-
+    def addfiles1(self, file):
+        print(len(self.list_image))
         image_input = Image(file)
 
         #check that files are same size
@@ -42,7 +44,28 @@ class ExtractCenterline :
                 print('\nError: Files are not of the same size.')
                 sys.exit()
         # Add file if same size
-        self.list_image = self.list_image.extend(image_input)
+        self.list_image = self.list_image.extend([image_input])
+
+        print(self.list_image)
+
+    def addfiles2(self, file):
+
+        image_input = Image(file)
+
+
+        #check that files are same size
+        if len(self.list_image) > 0 :
+            image_o = Image(self.list_file[0])
+            self.dimension = sct.get_dimension(image_o)
+            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(image_input)
+            if self.dimension != [nx, ny, nz, nt, px, py, pz, pt] :
+                # Return error and exit programm if not same size
+                print('\nError: Files are not of the same size.')
+                sys.exit()
+        # Add file if same size
+        self.list_file = self.list_file.extend([file])
+
+        print(self.list_file)
 
     def compute(self):
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.list_image[0])
@@ -71,7 +94,13 @@ class ExtractCenterline :
         for iz in range(0, nz_nonz, 1):
             x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(image_concatenation[:, :, z_centerline[iz]])
 
-        x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+        points = [[x_centerline[n],y_centerline[n], z_centerline[n]] for n in range(len(z_centerline))]
+        nurbs = NURBS(3,1000,points)
+        P = nurbs.getCourbe3D()
+        x_centerline_fit =  P[0]
+        y_centerline_fit =  P[1]
+
+        #x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
         for iz in range(0, nz_nonz, 1):
             image_output[x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz]] = 1
