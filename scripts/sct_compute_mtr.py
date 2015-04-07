@@ -125,8 +125,7 @@ def main():
 
     # to view results
     sct.printv('\nDone! To view results, type:', verbose)
-    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &', verbose, 'code')
-    print
+    sct.printv('fslview '+fname_mt0+' '+fname_mt1+' '+file_out+' &\n', verbose, 'info')
 
 
 # Print usage

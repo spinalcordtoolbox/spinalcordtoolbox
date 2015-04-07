@@ -1,4 +1,4 @@
-function [coord,binary,S] = minimalPath3d(nC,factx, display)
+function [coord,binary,S] = minimalPath3d(nC,factx,homogeneousmod , display)
 
 % MINIMALPATH Recherche du chemin minimum de Haut vers le bas et de
 % bas vers le haut tel que décrit par Luc Vincent 1998
@@ -23,8 +23,9 @@ end
 % load MP
 % nC=ModPlage(nC,-Inf,Inf,0,1);
 [m,n,p]=size(nC);
-mask=isinf(nC);
+mask=isinf(nC) | isnan(nC) | nC==0;
 nC(mask)=0;
+
 cPixel = nC;
 
 vectx=2:m-1;
@@ -37,14 +38,19 @@ for row=2:p
     pJ=squeeze(J1(:,:,row-1));
 %     pP=cPixel(i-1,:);
     cP=squeeze(cPixel(:,:,row));
+    cPm=squeeze(cPixel(:,:,row-1));
 %     Iq=[pP(vect-1);pP(vect);pP(vect+1)];
     VI=repmat(cP(vectx,vecty),1,1,5);
+    VIm=repmat(cPm(vectx,vecty),1,1,5);
 %     VI=Ip;
-    VI(:,:,1:2)=VI(:,:,1:2).*factx;
-    VI(:,:,4:5)=VI(:,:,4:5).*factx;
+    VI(:,:,1:2)=VI(:,:,1:2).*factx; VIm(:,:,1:2)=VIm(:,:,1:2).*factx;
+    VI(:,:,4:5)=VI(:,:,4:5).*factx; VIm(:,:,4:5)=VIm(:,:,4:5).*factx;
     Jq=cat(3,pJ(vectx-1,vecty),pJ(vectx,vecty-1),pJ(vectx,vecty),pJ(vectx,vecty+1),pJ(vectx+1,vecty));
-    J1(2:end-1,2:end-1,row)=min(Jq+VI,[],3);
-%     J1(i,2:end-1)=min([J1(i,2:end-1);min(Jq+VI,[],1)],[],1);
+    if homogeneousmod
+        J1(2:end-1,2:end-1,row)=min(Jq+abs(VI-VIm)./min(VI,VIm),[],3);
+    else
+        J1(2:end-1,2:end-1,row)=min(Jq+VI,[],3);
+    end
 end
 
 
@@ -54,14 +60,19 @@ for row=p-1:-1:1
     pJ=squeeze(J2(:,:,row+1));
 %     pP=cPixel(i-1,:);
     cP=squeeze(cPixel(:,:,row));
+    cPm=squeeze(cPixel(:,:,row+1));
 %     Iq=[pP(vect-1);pP(vect);pP(vect+1)];
     VI=repmat(cP(vectx,vecty),1,1,5);
+    VIm=repmat(cPm(vectx,vecty),1,1,5);
 %     VI=Ip;
-    VI(:,:,1:2)=VI(:,:,1:2).*factx;
-    VI(:,:,4:5)=VI(:,:,4:5).*factx;
+    VI(:,:,1:2)=VI(:,:,1:2).*factx; VIm(:,:,1:2)=VIm(:,:,1:2).*factx;
+    VI(:,:,4:5)=VI(:,:,4:5).*factx; VIm(:,:,4:5)=VIm(:,:,4:5).*factx;
     Jq=cat(3,pJ(vectx-1,vecty),pJ(vectx,vecty-1),pJ(vectx,vecty),pJ(vectx,vecty+1),pJ(vectx+1,vecty));
-    J2(2:end-1,2:end-1,row)=min(Jq+VI,[],3);
-%     J1(i,2:end-1)=min([J1(i,2:end-1);min(Jq+VI,[],1)],[],1);
+    if homogeneousmod
+        J2(2:end-1,2:end-1,row)=min(Jq+abs(VI-VIm)./min(VI,VIm),[],3);
+    else
+        J2(2:end-1,2:end-1,row)=min(Jq+VI,[],3);
+    end
 end
 
 
@@ -76,6 +87,14 @@ for row=1:p
     binary(mx(1,my(row),row),my(row),row)=true;
 end
 
+if display
+    figure(46)
+    imagesc(squeeze(S(floor(end/2),:,:))',[prctile(S(:),0) prctile(S(:),10)]); axis image
+    figure(47)
+    imagesc(squeeze(S(:,floor(end/2),:))',[prctile(S(:),0) prctile(S(:),10)]); axis image
+    figure(48)
+     imagesc(squeeze(nC(floor(end/2),:,:))',[prctile(nC(:),10) prctile(nC(:),90)]); axis image
+end
 % % [mv2,mi2]=min(fliplr(S),[],2);]
 % sR=(1:m)';
 % sC=round(mi1);

@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-# Modified: 2014-08-29
+# Modified: 2015-03-31
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -20,12 +20,19 @@
 # TODO: set gradient-step-length in mm instead of vox size.
 
 import sys
-import getopt
 import os
 import commands
 import time
+
 import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
+from sct_orientation import set_orientation
+from sct_register_multimodal import Paramreg, ParamregMultiStep, register
+from msct_parser import Parser
+from msct_image import Image
+
+
+
+
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -37,17 +44,19 @@ class Param:
         self.debug = 0
         self.remove_temp_files = 1  # remove temporary files
         self.output_type = 1
-        self.speed = 'fast'  # speed of registration. slow | normal | fast
-        self.nb_iterations = '5'
-        self.algo = 'SyN'
-        self.gradientStep = '0.5'
-        self.metric = 'MI'
+        self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
+        self.padding = 10  # this field is needed in the function register@sct_register_multimodal
+        # self.speed = 'fast'  # speed of registration. slow | normal | fast
+        # self.nb_iterations = '5'
+        # self.algo = 'SyN'
+        # self.gradientStep = '0.5'
+        # self.metric = 'MI'
         self.verbose = 1  # verbose
         self.path_template = path_sct+'/data/template'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
-        self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
+        # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
 
@@ -55,68 +64,94 @@ class Param:
 # ==========================================================================================
 def main():
 
-    # Initialization
-    fname_data = ''
-    fname_landmarks = ''
-    fname_seg = ''
-    path_template = param.path_template
+    # get default parameters
+    step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
+    step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
+    # step1 = Paramreg()
+    paramreg = ParamregMultiStep([step1, step2])
+
+    # step1 = Paramreg_step(step='1', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5')
+    # step2 = Paramreg_step(step='2', type='im', algo='syn', metric='MI', iter='10', shrink='1', smooth='0', gradStep='0.5')
+    # paramreg = ParamregMultiStep([step1, step2])
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Register anatomical image to the template.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Anatomical image.",
+                      mandatory=True,
+                      example="anat.nii.gz")
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord segmentation.",
+                      mandatory=True,
+                      example="anat_seg.nii.gz")
+    parser.add_option(name="-l",
+                      type_value="file",
+                      description="Labels. See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/",
+                      mandatory=True,
+                      default_value='',
+                      example="anat_labels.nii.gz")
+    parser.add_option(name="-t",
+                      type_value="folder",
+                      description="Path to MNI-Poly-AMU template.",
+                      mandatory=False,
+                      default_value=param.path_template)
+    parser.add_option(name="-p",
+                      type_value=[[':'], 'str'],
+                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype="""+paramreg.steps['1'].type+"""\nalgo="""+paramreg.steps['1'].algo+"""\nmetric="""+paramreg.steps['1'].metric+"""\npoly="""+paramreg.steps['1'].poly+"""\n--\nstep=2\ntype="""+paramreg.steps['2'].type+"""\nalgo="""+paramreg.steps['2'].algo+"""\nmetric="""+paramreg.steps['2'].metric+"""\niter="""+paramreg.steps['2'].iter+"""\nshrink="""+paramreg.steps['2'].shrink+"""\nsmooth="""+paramreg.steps['2'].smooth+"""\ngradStep="""+paramreg.steps['2'].gradStep+"""\n--""",
+                      mandatory=False,
+                      example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
+                      mandatory=False,
+                      default_value=param.verbose,
+                      example=['0', '1', '2'])
+    if param.debug:
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
+        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
+        fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
+        path_template = param.path_template
+        remove_temp_files = 0
+        verbose = 2
+        # speed = 'superfast'
+        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
+    else:
+        arguments = parser.parse(sys.argv[1:])
+
+        # get arguments
+        fname_data = arguments['-i']
+        fname_seg = arguments['-s']
+        fname_landmarks = arguments['-l']
+        path_template = arguments['-t']
+        remove_temp_files = int(arguments['-r'])
+        verbose = int(arguments['-v'])
+        if '-p' in arguments:
+            paramreg_user = arguments['-p']
+            # update registration parameters
+            for paramStep in paramreg_user:
+                paramreg.addStep(paramStep)
+
+    # initialize other parameters
     file_template = param.file_template
     file_template_label = param.file_template_label
     file_template_seg = param.file_template_seg
     output_type = param.output_type
-    speed = param.speed
-    param_reg = ''
-    nb_iterations, algo, gradientStep, metric = param.nb_iterations, param.algo, param.gradientStep, param.metric
-    remove_temp_files = param.remove_temp_files
-    verbose = param.verbose
-    smoothing_sigma = param.smoothing_sigma
+    # smoothing_sigma = param.smoothing_sigma
+
     # start timer
     start_time = time.time()
 
-    # get path of the toolbox
-    status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop.nii.gz'
-        fname_landmarks = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_landmarks.nii.gz'
-        fname_seg = '/Volumes/users_hd2-1/slevy/data/criugm/errsm_23/t2/t2_crop_seg.nii.gz'
-        speed = 'superfast'
-        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:l:m:o:p:r:s:t:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ("-i"):
-                fname_data = arg
-            elif opt in ('-l'):
-                fname_landmarks = arg
-            elif opt in ("-m"):
-                fname_seg = arg
-            elif opt in ("-o"):
-                output_type = int(arg)
-            elif opt in ("-p"):
-                param_reg = arg
-            elif opt in ("-r"):
-                remove_temp_files = int(arg)
-            elif opt in ("-s"):
-                speed = arg
-            elif opt in ("-t"):
-                path_template = arg
-
-    # display usage if a mandatory argument is not provided
-    if fname_data == '' or fname_landmarks == '' or fname_seg == '':
-        usage()
-
-    # get absolute path
+    # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
     path_template = os.path.abspath(path_template)
 
     # get fname of the template + template objects
@@ -125,208 +160,177 @@ def main():
     fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
-    sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data, verbose)
-    sct.check_file_exist(fname_landmarks, verbose)
-    sct.check_file_exist(fname_seg, verbose)
+    sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_label, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
 
     # print arguments
-    print '\nCheck parameters:'
-    print '.. Data:                 '+fname_data
-    print '.. Landmarks:            '+fname_landmarks
-    print '.. Segmentation:         '+fname_seg
-    print '.. Path template:        '+path_template
-    print '.. Output type:          '+str(output_type)
-    print '.. Speed:                '+speed
-    print '.. Remove temp files:    '+str(remove_temp_files)
-
-    # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
-    if speed == "slow":
-        nb_iterations = "50"
-    elif speed == "normal":
-        nb_iterations = "15"
-    elif speed == "fast":
-        nb_iterations = "5"
-    elif speed == "superfast":
-        nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
-    else:
-        print 'ERROR: Wrong input registration speed {slow, normal, fast}.'
-        sys.exit(2)
-
-    # Check registration parameters selected by user
-    if param_reg:
-        nb_iterations, algo, gradientStep, metric = param_reg.split(',')
+    sct.printv('\nCheck parameters:', verbose)
+    sct.printv('.. Data:                 '+fname_data, verbose)
+    sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
+    sct.printv('.. Segmentation:         '+fname_seg, verbose)
+    sct.printv('.. Path template:        '+path_template, verbose)
+    sct.printv('.. Output type:          '+str(output_type), verbose)
+    sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
     sct.printv('\nParameters for registration:')
-    sct.printv('.. Number of iterations..... '+nb_iterations)
-    sct.printv('.. Algorithm................ '+algo)
-    sct.printv('.. Gradient step............ '+gradientStep)
-    sct.printv('.. Metric................... '+metric)
+    for pStep in range(1, len(paramreg.steps)+1):
+        sct.printv('Step #'+paramreg.steps[str(pStep)].step, verbose)
+        sct.printv('.. Type #'+paramreg.steps[str(pStep)].type, verbose)
+        sct.printv('.. Algorithm................ '+paramreg.steps[str(pStep)].algo, verbose)
+        sct.printv('.. Metric................... '+paramreg.steps[str(pStep)].metric, verbose)
+        sct.printv('.. Number of iterations..... '+paramreg.steps[str(pStep)].iter, verbose)
+        sct.printv('.. Shrink factor............ '+paramreg.steps[str(pStep)].shrink, verbose)
+        sct.printv('.. Smoothing factor......... '+paramreg.steps[str(pStep)].smooth, verbose)
+        sct.printv('.. Gradient step............ '+paramreg.steps[str(pStep)].gradStep, verbose)
+        sct.printv('.. Degree of polynomial..... '+paramreg.steps[str(pStep)].poly, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
+    sct.printv('\nCheck input labels...')
+    # check if label image contains coherent labels
+    image_label = Image(fname_landmarks)
+    # -> all labels must be different
+    labels = image_label.getNonZeroCoordinates()
+    hasDifferentLabels = True
+    for lab in labels:
+        for otherlabel in labels:
+            if lab != otherlabel and lab.hasEqualValue(otherlabel):
+                hasDifferentLabels = False
+                break
+    if not hasDifferentLabels:
+        sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
+
     # create temporary folder
-    print('\nCreate temporary folder...')
+    sct.printv('\nCreate temporary folder...', verbose)
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     status, output = sct.run('mkdir '+path_tmp)
 
     # copy files to temporary folder
-    print('\nCopy files...')
-    status, output = sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    status, output = sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    status, output = sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    sct.printv('\nCopy files...', verbose)
+    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    sct.run('sct_c3d '+fname_template+' -o '+path_tmp+'/template.nii')
+    sct.run('sct_c3d '+fname_template_label+' -o '+path_tmp+'/template_labels.nii.gz')
+    sct.run('sct_c3d '+fname_template_seg+' -o '+path_tmp+'/template_seg.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Change orientation of input images to RPI
-    print('\nChange orientation of input images to RPI...')
+    sct.printv('\nChange orientation of input images to RPI...', verbose)
     set_orientation('data.nii', 'RPI', 'data_rpi.nii')
     set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
     set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
 
-    # Straighten the spinal cord using centerline/segmentation
-    print('\nStraighten the spinal cord using centerline/segmentation...')
-    sct.run('sct_straighten_spinalcord -i data_rpi.nii -c segmentation_rpi.nii.gz -r 0')
+    # crop segmentation
+    # output: segmentation_rpi_crop.nii.gz
+    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
 
-    # Apply straightening to segmentation
-    print('\nApply straightening to segmentation...')
-    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz')
-
-    # Smoothing along centerline to improve accuracy and remove step effects
-    print('\nSmoothing along centerline to improve accuracy and remove step effects...')
-    sct.run('sct_c3d data_rpi_straight.nii -smooth 0x0x'+str(smoothing_sigma)+'vox -o data_rpi_straight.nii')
-    sct.run('sct_c3d segmentation_rpi_straight.nii.gz -smooth 0x0x'+str(smoothing_sigma)+'vox -o segmentation_rpi_straight.nii.gz')
+    # straighten segmentation
+    sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
+    sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
-    print('\nRemove unused label on template. Keep only label present in the input label image...')
-    status, output = sct.run('sct_label_utils -t remove -i '+fname_template_label+' -o template_label.nii.gz -r landmarks_rpi.nii.gz')
+    sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
+    sct.run('sct_label_utils -t remove -i template_labels.nii.gz -o template_label.nii.gz -r landmarks_rpi.nii.gz')
 
     # Make sure landmarks are INT
-    print '\nConvert landmarks to INT...'
-    sct.run('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz')
+    sct.printv('\nConvert landmarks to INT...', verbose)
+    sct.run('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz', verbose)
 
     # Create a cross for the template labels - 5 mm
-    print('\nCreate a 5 mm cross for the template labels...')
-    status, output = sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
+    sct.printv('\nCreate a 5 mm cross for the template labels...', verbose)
+    sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
 
     # Create a cross for the input labels and dilate for straightening preparation - 5 mm
-    print('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...')
-    status, output = sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
+    sct.printv('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...', verbose)
+    sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
-    # Push the input labels in the template space
-    print('\nPush the input labels to the straight space...')
-    status, output = sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d data_rpi_straight.nii -w warp_curve2straight.nii.gz -x nn')
+    # Apply straightening to labels
+    sct.printv('\nApply straightening to labels...', verbose)
+    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
     # Convert landmarks from FLOAT32 to INT
-    print '\nConvert landmarks from FLOAT32 to INT...'
+    sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
     sct.run('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
-    print '\nEstimate affine transfo: straight anat --> template (landmark-based)...'
+    sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
     sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
 
     # Apply affine transformation: straight --> template
-    print '\nApply affine transformation: straight --> template...'
-    status, output = sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w straight2templateAffine.txt')
-    status, output = sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d '+fname_template+' -w straight2templateAffine.txt')
-
-    # now threshold at 0.5 (for partial volume interpolation)
-    # do not do that anymore-- better to estimate transformation using trilinear interp image to avoid step effect. See issue #31 on github.
-    # sct.run('sct_c3d segmentation_rpi_straight2templateAffine.nii.gz -threshold -inf 0.5 0 1 -o segmentation_rpi_straight2templateAffine.nii.gz')
+    sct.printv('\nApply affine transformation: straight --> template...', verbose)
+    sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
+    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
 
     # Registration straight spinal cord to template
-    print('\nRegister straight spinal cord to template...')
-    sct.run('sct_register_multimodal -i data_rpi_straight2templateAffine.nii -d '+fname_template+' -s segmentation_rpi_straight2templateAffine.nii.gz -t '+fname_template_seg+' -r 0 -p '+nb_iterations+','+algo+','+gradientStep+','+metric+' -v '+str(verbose)+' -x spline -z 10', verbose)
+    sct.printv('\nRegister straight spinal cord to template...', verbose)
 
-    # Concatenate warping fields: template2anat & anat2template
-    print('\nConcatenate transformations: template --> straight --> anat...')
-    sct.run('sct_concat_transfo -w warp_dest2src.nii.gz,-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz')
-    print('\nConcatenate transformations: anat --> straight --> template...')
-    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,warp_src2dest.nii.gz -d '+fname_template+' -o warp_anat2template.nii.gz')
-    # cmd = 'sct_ComposeMultiTransform 3 warp_anat2template.nii.gz -R '+fname_template+' warp_src2dest.nii.gz straight2templateAffine.txt warp_curve2straight.nii.gz'
-    # print '>> '+cmd
-    # commands.getstatusoutput(cmd)
+    # loop across registration steps
+    warp_forward = []
+    warp_inverse = []
+    for i_step in range(1, len(paramreg.steps)+1):
+        sct.printv('\nEstimate transformation for step #'+str(i_step)+'...', verbose)
+        # identify which is the src and dest
+        if paramreg.steps[str(i_step)].type == 'im':
+            src = 'data_rpi_straight2templateAffine.nii'
+            dest = 'template.nii'
+            interp_step = 'linear'
+        elif paramreg.steps[str(i_step)].type == 'seg':
+            src = 'segmentation_rpi_straight2templateAffine.nii.gz'
+            dest = 'template_seg.nii.gz'
+            interp_step = 'nn'
+        else:
+            sct.run('ERROR: Wrong image type.', 1, 'error')
+        # if step>1, apply warp_forward_concat to the src image to be used
+        if i_step > 1:
+            sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
+            src = sct.add_suffix(src, '_reg')
+        # register src --> dest
+        warp_forward_out, warp_inverse_out = register(src, dest, paramreg, param, str(i_step))
+        warp_forward.append(warp_forward_out)
+        warp_inverse.append(warp_inverse_out)
 
-# sct_ComposeMultiTransform 3 warp_final.nii.gz -R data.nii warp_dest2src.nii.gz -i straight2templateAffine.txt warp_straight2curve.nii.gz
+    # Concatenate transformations:
+    sct.printv('\nConcatenate transformations: anat --> template...', verbose)
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+    warp_inverse.reverse()
+    sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('sct_apply_transfo -i '+fname_template+' -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
-        sct.run('sct_apply_transfo -i data.nii  -o anat2template.nii.gz -d '+fname_template+' -w warp_anat2template.nii.gz')
+        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
+        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz')
 
     # come back to parent folder
     os.chdir('..')
 
    # Generate output files
-    print('\nGenerate output files...')
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz')
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz')
+    sct.printv('\nGenerate output files...', verbose)
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz', verbose)
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data, verbose)
 
     # Delete temporary files
-    if remove_temp_files == 1:
-        print '\nDelete temporary files...'
+    if remove_temp_files:
+        sct.printv('\nDelete temporary files...', verbose)
         sct.run('rm -rf '+path_tmp)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
 
     # to view results
-    print '\nTo view results, type:'
-    print 'fslview template2anat -b 0,4000 '+fname_data+' &'
-    print 'fslview anat2template '+fname_template+' -b 0,4000 &\n'
-
-
-
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Register anatomical image to the template.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <anat> -m <segmentation> -l <landmarks>
-
-MANDATORY ARGUMENTS
-  -i <anat>                    anatomical image
-  -m <segmentation>            spinal cord segmentation.
-  -l <landmarks>               landmarks at spinal cord center.
-                               See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/
-
-OPTIONAL ARGUMENTS
-  -o {0, 1}                    output type. 0: warp, 1: warp+images. Default="""+str(param_default.output_type)+"""
-  -p <param>                   parameters for registration of the straightened anatomical image to the template.
-                               ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.
-                               Default="""+param_default.nb_iterations+','+param_default.algo+','+param_default.gradientStep+','+param_default.metric+"""
-                                 1) number of iterations for last stage.
-                                 2) algo: {SyN, BSplineSyN}
-                                 3) gradient step. The larger the more deformation.
-                                 4) metric: {MI,MeanSquares}.
-                                    If you find very large deformations, switching to MeanSquares can help.
-  -t <path_template>           Specify path to template. Default="""+str(param_default.path_template)+"""
-  -s {slow, normal, fast}      Speed of registration. Slow gives the best results. Default="""+str(param_default.speed)+"""
-  -r {0, 1}                    remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
-  -h                           help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i t2.nii.gz -l labels.nii.gz -m t2_seg.nii.gz -s normal\n"""
-
-    # exit program
-    sys.exit(2)
+    sct.printv('\nTo view results, type:', verbose)
+    sct.printv('fslview '+fname_data+' template2anat -b 0,4000 &', verbose, 'info')
+    sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
 
 
 
@@ -335,6 +339,5 @@ EXAMPLE
 if __name__ == "__main__":
     # initialize parameters
     param = Param()
-    param_default = Param()
     # call main function
     main()
