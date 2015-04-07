@@ -50,6 +50,7 @@ from msct_parser import Parser
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -364,7 +365,10 @@ def register(src, dest, paramreg, param, i_step_str):
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
     # set masking
-    masking = '-x mask.nii.gz'
+    if param.fname_mask:
+        masking = '-x mask.nii.gz'
+    else:
+        masking = ''
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
