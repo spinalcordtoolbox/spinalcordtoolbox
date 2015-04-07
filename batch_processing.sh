@@ -27,6 +27,8 @@ fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
 sct_register_to_template -i t2.nii.gz -l labels.nii.gz -s t2_seg.nii.gz -p step=1,type=seg,algo=slicereg:step=2,type=seg,algo=bsplinesyn,iter=5,shrink=2:step=3,type=im,algo=syn,iter=3,shrink=1
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
+# check results
+fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area between C2 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 2:4
 # go back to root folder
@@ -74,14 +76,14 @@ sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init 3
 fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 & 
 # register to template (template registered to t2).
 # tips: here, we register the spinal cord segmentation to the mean DWI image because the contrasts are similar
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d dwi_moco_mean.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=bsplinesyn,metric=MI,iter=5 -x linear
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d dwi_moco_mean.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg dwi_moco_mean_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=10,poly=3,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2 -x nn
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_cord2dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 sct_concat_transfo -w warp_dwi_moco_mean2MNI-Poly-AMU_cord.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_dmri2template.nii.gz
 # warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
-# visualize white matter template on DWI
-fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 &
+# visualize white matter template and lateral CST on DWI
+fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 # compute tensors (using FSL)
 dtifit -k dmri_moco -o dti -m dwi_moco_mean -r bvecs.txt -b bvals.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
