@@ -108,14 +108,17 @@ class PCA:
         eig_pairs = [(np.abs(eigenvalues[i]), eigenvectors[:, i]) for i in range(len(eigenvalues))
                      if np.abs(eigenvalues[i]) > 0.0000001]
         # Sort the (eigenvalue, eigenvector) tuples from high to low
-        eig_pairs.sort()
-        eig_pairs.reverse()
+
+        def getKey(item):
+            return item[0] #sorting by eigenvalues
+        eig_pairs = sorted(eig_pairs, key=getKey, reverse=True)
         return eig_pairs
 
     # STEP 5
     def generate_W(self):
         eigenvalues_kept = []
         s = sum([eig[0] for eig in self.eig_pairs])
+        print '\n####################################\n ---> sum of eigenvalues : ', s
         first = 1
         for eig in self.eig_pairs:
             if first:
