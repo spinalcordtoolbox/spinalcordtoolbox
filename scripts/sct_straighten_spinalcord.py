@@ -54,7 +54,7 @@ class Param:
         self.interpolation_warp = 'spline'
         self.remove_temp_files = 1  # remove temporary files
         self.verbose = 1
-        self.algo_fitting = 'hanning'  # 'hanning' or 'nurbs'
+        self.algo_fitting = 'nurbs'  # 'hanning' or 'nurbs'
         self.type_window = 'hanning'  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
         self.window_length = 50
 
