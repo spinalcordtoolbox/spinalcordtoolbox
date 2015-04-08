@@ -1,6 +1,8 @@
 #!/bin/sh
 #
-# example of commands to process multi-parametric data of the spinal cord
+# Example of commands to process multi-parametric data of the spinal cord
+# For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
+# N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
 
 
 # set default FSL output to be nii.gz
@@ -132,11 +134,13 @@ sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz
 # tips: if you have low SNR you can group consecutive images with "-g"
 # put T2 segmentation into fmri space
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -p step=1,iter=0
-#sct_c3d fmri_moco_mean.nii.gz ../t2/t2_centerline.nii.gz -reslice-identity -interpolation NearestNeighbor -o t2_centerline.nii.gz
-# segment mean volume
+# extract centerline
+sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
+# segment mean fMRI volume
+sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
 # tips: we use the T2 segmentation to help with fMRI segmentation
-# tips: we use "-radius 6" otherwise the segmentation is too small
-sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_seg_reg.nii.gz -radius 6
+# tips: we use "-radius 5" otherwise the segmentation is too small
+# tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
 # check segmentation
 fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
