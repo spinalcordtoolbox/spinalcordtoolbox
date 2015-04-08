@@ -1,7 +1,7 @@
 %  Save NIFTI dataset. Support both *.nii and *.hdr/*.img file extension.
 %  If file extension is not provided, *.hdr/*.img will be used as default.
 %  
-%  Usage: save_nii(nii, filename, [old_nii_fname])
+%  Usage: save_nii(nii, filename, [old_nii_fname, datatype])
 %  
 %  nii.hdr - struct with NIFTI header fields (from load_nii.m or make_nii.m)
 %

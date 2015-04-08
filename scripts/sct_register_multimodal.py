@@ -46,6 +46,11 @@ from msct_parser import Parser
 
 
 
+
+
+
+
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -273,9 +278,6 @@ def main():
         sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
     if not fname_mask == '':
         sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
-        masking = '-x mask.nii.gz'  # this variable will be used when calling ants
-    else:
-        masking = ''  # this variable will be used when calling ants
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -362,6 +364,12 @@ def register(src, dest, paramreg, param, i_step_str):
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
+    # set masking
+    if param.fname_mask:
+        masking = '-x mask.nii.gz'
+    else:
+        masking = ''
+
     if paramreg.steps[i_step_str].algo == 'slicereg':
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
         src_th = sct.add_suffix(src, '_th')
@@ -388,29 +396,33 @@ def register(src, dest, paramreg, param, i_step_str):
                '-p '+paramreg.steps[i_step_str].poly+' '
                '-i '+paramreg.steps[i_step_str].iter+' '
                '-f 1 '
-               '-s 0 '
+               '-s '+paramreg.steps[i_step_str].smooth+' '
+               '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
+
         # Pad the destination image (because ants doesn't deform the extremities)
-        # sct.printv('\nPad src and destination volumes (because ants doesn''t deform the extremities)...', verbose)
-        dest_pad = sct.add_suffix(dest, '_pad')
-        pad_image(dest, dest_pad, param.padding)
+        # N.B. no need to pad if iter = 0
+        if not paramreg.steps[i_step_str].iter == '0':
+            dest_pad = sct.add_suffix(dest, '_pad')
+            pad_image(dest, dest_pad, param.padding)
+            dest = dest_pad
 
         cmd = ('sct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
-               '--metric '+paramreg.steps[i_step_str].metric+'['+dest_pad+','+src+',1,'+metricSize+'] '
+               '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
                '--output [step'+i_step_str+'] '
                '--interpolation BSpline[3] '
-               +param.fname_mask)
+               +masking)
         warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
