@@ -139,7 +139,7 @@ def main():
     points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
     nurbs = NURBS(3,1000,points)
     P = nurbs.getCourbe3D()
-    means_smooth=P[0]
+    means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
 
     if verbose :
         plt.figure()
