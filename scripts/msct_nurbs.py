@@ -158,7 +158,7 @@ class NURBS():
                     # prepare for next iteration
                     self.nbControle += 1
                 self.nbControle -= 1  # last addition does not count
-                
+
                 self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
                 if verbose >= 1:
                     print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
@@ -487,17 +487,20 @@ class NURBS():
         P_yb = (R.T*W*R).I*Ty.T
         P_zb = (R.T*W*R).I*Tz.T
 
+        # Modification of first and last control points
+        P_xb[0],P_yb[0],P_zb[0] = P_x[0],P_y[0],P_z[0]
+        P_xb[-1],P_yb[-1],P_zb[-1] = P_x[-1],P_y[-1],P_z[-1]
+        P_xb[0] = P_x[0]
+
         # At this point, we need to check if the control points are in a correct range or if there were instability.
         # Typically, control points should be far from the data points. One way to do so is to ensure that the
         from numpy import std
+        std_factor = 10.0
         std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(array(P_x)), std(array(P_y)), std(array(P_z))
-        if std_Px > 5.0*std_x or std_Py > 5.0*std_y or std_Pz > 5.0*std_z:
+        if std_Px > std_factor*std_x or std_Py > std_factor*std_y or std_Pz > std_factor*std_z:
             raise Exception('WARNING: NURBS instability -> wrong control points')
 
         P = [[P_xb[i,0],P_yb[i,0],P_zb[i,0]] for i in range(len(P_xb))]
-        # On modifie les premiers et derniers points
-        P[0][0],P[0][1],P[0][2] = P_x[0],P_y[0],P_z[0]
-        P[-1][0],P[-1][1],P[-1][2] = P_x[-1],P_y[-1],P_z[-1]
 
         return P
 
