@@ -487,7 +487,7 @@ def smoothing_window(x, window_len=11, window='hanning'):
     return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
     return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
-    from numpy import ones, convolve  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from numpy import ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
     from math import ceil
     import sct_utils as sct
 
