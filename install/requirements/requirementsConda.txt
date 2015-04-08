@@ -3,5 +3,3 @@ scipy==0.14.0
 pillow==2.5.1
 sympy
 matplotlib
-pip
-

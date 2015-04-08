@@ -510,7 +510,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-03-30"
+        print "Modified: 2015-04-07"
         print "============================="
 
         try:
@@ -781,16 +781,19 @@ class Installer:
 
         # display stuff
         print """\n"========================================================================================"
-Installation done! Please open a new Terminal to set environment variables.
+Installation finished!
+
 If you noticed errors during installation, please start a new Terminal and run the following command:
 > sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-If installation was successful, you can delete the installation folder by typing:
-> cd ..
-> rm -rf """ + os.getcwd() + """
+To get started, open a new Terminal and follow instructions here:
+https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/
 
-To get started, open a new Terminal and follow instructions here: https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/
+If you have any problem, please post your issue here:
+http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
+
+Have fun!
 """
 
 
