@@ -133,19 +133,20 @@ def main():
     m =np.mean(means)
     sigma = np.std(means)
     smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+    #Equivalent to : m*sigma**2
     tck = splrep(z_centerline, means, s=smoothing_param)
-    #means_smooth = splev(z_centerline, tck)
+    means_smooth = splev(z_centerline, tck)
     #Test smoothing with nurbs
-    points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
-    nurbs = NURBS(3,1000,points)
-    P = nurbs.getCourbe3D()
-    means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
+    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
+    #nurbs = NURBS(3,1000,points)
+    #P = nurbs.getCourbe3D()
+    #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
 
     if verbose :
         plt.figure()
-        plt.subplot(2,1,1)
-        plt.plot(z_centerline,means)
-        plt.subplot(2,1,2)
+        #plt.subplot(2,1,1)
+        plt.plot(z_centerline,means, "ro")
+        #plt.subplot(2,1,2)
         plt.plot(means_smooth)
         plt.show()
     print('\nNormalizing intensity along centerline...')
@@ -196,7 +197,6 @@ def main():
         plt.title("Extended mean intensity")
 
         plt.show()
-    #print means_smooth_extended
 
     for i in range(data.shape[2]):
         data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
