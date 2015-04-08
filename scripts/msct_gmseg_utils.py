@@ -183,7 +183,7 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_ty
                       '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params  + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)
 
-            sct.runProcess(cmd_reg, verbose=verbose)
+            sct.run(cmd_reg, verbose=verbose)
 
             sct.run('cp reg0GenericAffine.mat ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
 
@@ -200,7 +200,7 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_ty
             cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name +'.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                         '-n ' + applyTransfo_interpolation + ' -t [reg0GenericAffine.mat,'+ str(inverse) +']  -r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
-            status, output = sct.runProcess(cmd_apply, verbose=verbose)
+            status, output = sct.run(cmd_apply, verbose=verbose)
 
             res_im = Image(moving_im_name + '_moved.nii.gz')
     except Exception, e:
@@ -325,23 +325,24 @@ def crop_T2_star(dir):
 
             #VERSION 3 OF THE PRE TREATMENTS
             for file in os.listdir(dir + '/' + subject_dir):
-                if 't2star.nii' in file and 'mask' not in file and 'seg' not in file and 'IRP' not in file:
+                file_low = file.lower()
+                if 't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
                     t2star = file
                     t2star_path,t2star_name,ext = sct.extract_fname(t2star)
-                elif 'square' in file and 'mask' in file and 'IRP' not in file:
+                elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
                     mask_box = file
-                elif '_seg' in file and 'in' not in file and 'croped' not in file and 'gm' not in file and 'IRP' not in file:
+                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
                     sc_seg = file
-                elif '_seg_in' in file and 'croped' not in file and 'IRP' not in file:
+                elif '_seg_in' in file_low and 'croped' not in file_low and 'IRP' not in file_low:
                     seg_in = file
                     seg_in_name = sct.extract_fname(seg_in)[1]
-                elif 'gm' in file and 'croped.nii' not in file and 'IRP' not in file:
+                elif 'gm' in file_low and 'croped.nii' not in file_low and 'IRP' not in file_low:
                     manual_seg = file
                     print manual_seg
                     manual_seg_name = sct.extract_fname(manual_seg)[1]
-                elif '_croped.nii' in file and 'IRP' not in file and 'gm' not in file:
+                elif '_croped.nii' in file_low and 'IRP' not in file_low and 'gm' not in file_low:
                     seg_in_croped = file
-                elif '_croped.nii' in file and 'gm' in file and 'IRP' not in file:
+                elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
                     manual_seg_croped = file
                     print manual_seg_croped
             if t2star != '' and sc_seg != '':
