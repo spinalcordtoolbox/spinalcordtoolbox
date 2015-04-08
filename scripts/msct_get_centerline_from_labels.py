@@ -31,24 +31,6 @@ class ExtractCenterline :
         self.centerline = []
         self.dimension = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    def addfiles1(self, file):
-        print(len(self.list_image))
-        image_input = Image(file)
-
-        #check that files are same size
-        if len(self.list_image) > 0 :
-            self.dimension = sct.get_dimension(self.list_image[0])
-            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(image_input)
-            #if self.dimension != [nx, ny, nz, nt, px, py, pz, pt] :
-            if self.dimension[0:2] != [nx, ny, nz] or self.dimension[4:6] != [px, py, pz] :
-                # Return error and exit programm if not same size
-                print('\nError: Files are not of the same size.')
-                sys.exit()
-        # Add file if same size
-        self.list_image.append(image_input)
-
-        print(self.list_image)
-
     def addfiles(self, file):
 
         path_data, file_data, ext_data = sct.extract_fname(file)
@@ -94,7 +76,7 @@ class ExtractCenterline :
 
         # Calculate centerline coordinates and create image of the centerline
         for iz in range(0, nz_nonz, 1):
-            x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(image_concatenation[:, :, z_centerline[iz]])
+            x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(image_concatenation.data[:, :, z_centerline[iz]])
 
         points = [[x_centerline[n],y_centerline[n], z_centerline[n]] for n in range(len(z_centerline))]
         nurbs = NURBS(3, 1000, points)
@@ -107,7 +89,6 @@ class ExtractCenterline :
 
         for iz in range(0, z_centerline_fit.shape[0], 1):
             image_output.data[x_centerline_fit[iz], y_centerline_fit[iz], z_centerline_fit[iz]] = 1
-
 
 
         return image_output
@@ -240,16 +221,16 @@ class ExtractCenterline :
         # Create output text file
         if output_file_name != None :
             file_name = output_file_name
-        else: file_name = 'generated'+'_centerline'+'.txt'
+        else: file_name = 'generated_centerline.txt'
 
         sct.printv('\nWrite text file...')
         #file_results = open("../"+file_name, 'w')
         file_results = open(file_name, 'w')
         for i in range(0, z_centerline_fit.shape[0], 1):
-            file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i]) + ' ' + str(y_centerline_fit[i]) + '\n')
+            file_results.write(str(int(z_centerline_fit[i])) + ' ' + str(x_centerline_fit[i]) + ' ' + str(y_centerline_fit[i]) + '\n')
         file_results.close()
 
-        return file_name
+        #return file_name
 
 
 
