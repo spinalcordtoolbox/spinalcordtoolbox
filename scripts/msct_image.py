@@ -31,7 +31,12 @@ class Image(object):
         self.file_name = ""
         self.ext = ""
         self.orientation = None
-        self.hdr = AnalyzeHeader() #an empty header
+        if hdr == None:
+            hdr = AnalyzeHeader()
+            self.hdr = AnalyzeHeader() #an empty header
+        else:
+            self.hdr = hdr
+
         self.dim = None
 
         # load an image from file
