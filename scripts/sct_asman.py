@@ -81,7 +81,7 @@ class Dataset:
             save_image(self.slices[j].D,'slice_'+str(j) + '_dec')
             save_image(self.slices[j].DM,'slice_'+str(j) + '_registered_dec')
         os.chdir('..')
-        self.show_data()
+        #self.show_data()
 
     # ------------------------------------------------------------------------------------------------------------------
     # Compute the model using the dictionary dataset
@@ -94,7 +94,7 @@ class Dataset:
 
         #self.A, self.D = self.load_dictionary()
 
-        sct.runProcess('mkdir ' + self.model_dic_name)
+        sct.run('mkdir ' + self.model_dic_name)
 
         self.slices, dic_data_info = self.load_dictionary()
 
@@ -145,14 +145,14 @@ class Dataset:
 
                 subject_seg_in = ''
                 subject_GM = ''
-                sct.runProcess('mkdir ' + self.model_dic_name + '/' + subject_dir, verbose=self.param.verbose)
+                sct.run('mkdir ' + self.model_dic_name + '/' + subject_dir, verbose=self.param.verbose)
                 for file in os.listdir(subject_path):
-                    if 'GM.nii' in file or 'gmseg.nii' in file:
+                    if 'GM' in file or 'gmseg' in file:
                         subject_GM = file
-                        sct.runProcess('cp ./' +self.param.path_dictionary  + subject_dir + '/' + file + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_dec.nii.gz')
+                        sct.run('cp ./' +self.param.path_dictionary  + subject_dir + '/' + file + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_dec.nii.gz')
                     if 'seg_in' in file and 'gm' not in file.lower():
                         subject_seg_in = file
-                        sct.runProcess('cp ./' +self.param.path_dictionary  + subject_dir + '/' + file + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_atlas.nii.gz')
+                        sct.run('cp ./' +self.param.path_dictionary  + subject_dir + '/' + file + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_atlas.nii.gz')
 
                 atlas = Image(subject_path + '/' + subject_seg_in)
                 seg = Image(subject_path + '/' + subject_GM)
@@ -220,9 +220,15 @@ class Dataset:
             slice.set(D=inverted_slice_decision)
 
     def segmentations_coregistration(self):
-        print 'DOING A FIRST RIGID COREGISTRATION OF THE DATA'
+        '''
+        print 'DOING A RIGID COREGISTRATION OF THE DATA'
         first_mean_seg = self.compute_mean_seg(np.asarray([slice.D for slice in self.slices]))
         current_mean_seg = self.find_coregistration(chi=first_mean_seg,transfo_type='Rigid')
+        '''
+
+        current_mean_seg = self.compute_mean_seg(np.asarray([slice.D for slice in self.slices]))
+        print 'DOING AN AFFINE COREGISTRATION OF THE DATA'
+        current_mean_seg = self.find_coregistration(chi=current_mean_seg,transfo_type='Affine')
 
         '''
         fig=plt.figure()
@@ -263,13 +269,13 @@ class Dataset:
 
     # ------------------------------------------------------------------------------------------------------------------
     # return the rigid transformation (for each slice, computed on D data) to coregister all the atlas information to a common groupwise space
-    def find_coregistration(self,chi=None, transfo_type=None):
+    def find_coregistration(self,chi=None, transfo_type='Rigid'):
         # initialization
         #chi = self.compute_mean_seg(np.asarray([slice.D for slice in self.slices]))
         for slice in self.slices:
             name_j_transform = 'transform_slice_' + str(slice.id) + '.mat'
             slice.set(RtoM=name_j_transform)
-            decision_M = apply_ants_2D_rigid_transfo(chi, slice.D,  transfo_name=name_j_transform, path=self.model_dic_name+'/', transfo_type='Affine')
+            decision_M = apply_ants_2D_rigid_transfo(chi, slice.D,  transfo_name=name_j_transform, path=self.model_dic_name+'/', transfo_type=transfo_type)
             slice.set(DM=decision_M.astype(int))
             slice.set(DM_flat=decision_M.flatten().astype(int))
         chi = self.compute_mean_seg([slice.DM for slice in self.slices])
@@ -443,7 +449,7 @@ class Dataset:
 # ----------------------------------------------------------------------------------------------------------------------
 # APPEARANCE MODEL -----------------------------------------------------------------------------------------------------
 class AppearanceModel:
-    def __init__(self, param=None, dataset=None):
+    def __init__(self, param=None, dataset=None, k=0.8):
         if param is None:
             self.param = Param()
         else:
@@ -463,7 +469,7 @@ class AppearanceModel:
               'DM_FLAT :\n ', self.dataset.slices[0].DM_flat, '\nDM NOT FLAT :\n', self.dataset.slices[0].DM
         '''
         if  self.param.todo_model == 'compute':
-            self.pca = PCA(np.asarray([slice.AM_flat for slice in self.dataset.slices]).T, k=0.8) #WARNING : k usually is 0.8
+            self.pca = PCA(np.asarray([slice.AM_flat for slice in self.dataset.slices]).T, k=k) #WARNING : k usually is 0.8
             self.dataset.mean_data = self.pca.mean_image
 
             save_image(self.pca.mean_image, 'mean_data', path=self.dataset.model_dic_name+'/')#, type='uint8')
@@ -525,6 +531,10 @@ class RigidRegistration:
         print '----SHAPE COORD PROJECTED TARGET -----', self.coord_projected_target.shape
         print '----COORD PROJECTED TARGET -----', self.coord_projected_target
         '''
+
+        self.epsilon = round(1.0/self.appearance_model.dataset.J,4) - 0.001
+        print 'epsilon : ', self.epsilon
+
         if tau is None :
             self.tau = self.compute_tau()
         else:
@@ -534,6 +544,7 @@ class RigidRegistration:
         #self.beta = self.compute_beta(self.coord_projected_target, tau=0.00114)
 
         sct.printv('\nSelecting the atlases closest to the target ...', appearance_model.param.verbose, 'normal')
+
         self.selected_K = self.select_K(self.beta)
         #print '----SELECTED K -----', self.selected_K
         #print '----SHAPE SELECTED K -----', self.selected_K.shape
@@ -575,6 +586,7 @@ class RigidRegistration:
     # Z is the partition function that enforces the constraint tha sum(beta)=1
     def compute_beta(self, coord_target, tau=0.01):
         beta = []
+        print '\n\n\n\n\n TAU = ', tau, '\n\n\n'
         #sct.printv('----------- COMPUTING BETA --------------', 1, 'info')
         #print '------ TAU = ', tau
         #print '---------- IN BETA : coord_target ---------------->', coord_target
@@ -590,6 +602,10 @@ class RigidRegistration:
                     beta_slice.append(exp(-tau*square_norm))
 
                 Z = sum(beta_slice)
+                '''
+                print 'beta case 1 :', beta
+                print '--> sum beta ', Z
+                '''
                 for i, b in enumerate(beta_slice):
                     beta_slice[i] = (1/Z) * b
 
@@ -601,9 +617,13 @@ class RigidRegistration:
                 square_norm = np.linalg.norm((coord_target - omega_j), 2)
                 beta.append(exp(-tau*square_norm))
 
-                Z = sum(beta)
-                for i, b in enumerate(beta):
-                    beta[i] = (1/Z) * b
+            Z = sum(beta)
+            '''
+            print 'beta case 2 :', beta
+            print '--> sum beta ', Z
+            '''
+            for i, b in enumerate(beta):
+                beta[i] = (1/Z) * b
 
         return np.asarray(beta)
 
@@ -612,7 +632,7 @@ class RigidRegistration:
     # decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
     def compute_tau(self):
         sct.printv('\nComputing Tau ... \n'
-                   '(Tau is a parameter indicatng the decay constant associated with a geodesic distance between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
+                   '(Tau is a parameter indicating the decay constant associated with a geodesic distance between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
         from scipy.optimize import minimize
         def to_minimize(tau):
             sum_norm = 0
@@ -634,7 +654,7 @@ class RigidRegistration:
 
     # ------------------------------------------------------------------------------------------------------------------
     # returns the index of the selected slices of the dataset to do label fusion and compute the graymater segmentation
-    def select_K(self, beta, epsilon=0.015):#0.015
+    def select_K(self, beta):#0.015
         selected = []
         #print '---------- IN SELECT_K : shape beta ---------------->', beta.shape, ' len = ', len(beta.shape)
         #print '---------- IN SELECT_K : type beta[0] ---------------->', type(beta[0])
@@ -642,13 +662,13 @@ class RigidRegistration:
             for beta_slice in beta:
                 selected_by_slice=[]
                 for j, beta_j in enumerate(beta_slice):
-                    if beta_j > epsilon:
+                    if beta_j > self.epsilon:
                         selected_by_slice.append(j)
                 # selected.append(np.asarray(selected_by_slice))
                 selected.append(selected_by_slice)
         else:
             for j, beta_j in enumerate(beta):
-                if beta_j > epsilon:
+                if beta_j > self.epsilon:
                     selected.append(j)
 
         return np.asarray(selected)
@@ -744,7 +764,7 @@ class Asman():
 
         sct.printv('\nBuilding the appearance model...', verbose=param.verbose, type='normal')
         # build the appearance model
-        self.appearance_model = AppearanceModel(param=param, dataset=self.dataset)
+        self.appearance_model = AppearanceModel(param=param, dataset=self.dataset, k=0.8) #WARNING : K IS USUALLY 0.8
 
         sct.printv('\nConstructing target image ...', verbose=param.verbose, type='normal')
         # construct target image
@@ -762,7 +782,7 @@ class Asman():
                 splited_target.append(right_slice)
             self.target_image = Image(np.asarray(splited_target))
 
-        tau= None#0.000982421875 #0.00090625 #None
+        tau = None #0.000765625 #0.00025 #0.000982421875 #0.00090625 #None
 
         if param.todo_model == 'load' :
             fic = open(self.appearance_model.dataset.model_dic_name + '/tau.txt','r')
@@ -774,7 +794,7 @@ class Asman():
         self.rigid_reg = RigidRegistration(self.appearance_model, target_image=self.target_image, tau=tau)
 
         self.res_GM_seg = self.rigid_reg.target_GM_seg
-        name_res = sct.extract_fname(param.target_fname)[1] + '_GM_seg'
+        name_res = sct.extract_fname(param.target_fname)[1] + '_graymatterseg'
         save_image(self.res_GM_seg.data, name_res)
 
         inverted_res_seg=[]
