@@ -497,7 +497,6 @@ class NURBS():
         from numpy import std
         std_factor = 10.0
         std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(array(P_x)), std(array(P_y)), std(array(P_z))
-        print std_Px, std_Py, std_Pz, std_x, std_y, std_z
         if std_Px > std_factor*std_x or std_Py > std_factor*std_y or std_Pz > std_factor*std_z:
             raise Exception('WARNING: NURBS instability -> wrong control points')
 
