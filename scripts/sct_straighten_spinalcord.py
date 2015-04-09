@@ -543,10 +543,7 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
         #The number of points of the curve must be superior to int(window_length/(2.0*pz))
         if window_length >= int(2*nz_nonz * pz):
             window_length = int(2*nz_nonz * pz)
-            sct.printv("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: "+str(window_length), param.verbose, 'warning')
-        if window_length >= int(2*nz_nonz * pz):
-            window_length = int(2*nz_nonz * pz)
-            print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: "+str(window_length), param.verbose, 'warning')
+            sct.printv("WARNING: The ponderation window's length was too high compared to the number of z slices. The value is now of: "+str(window_length), param.verbose, 'warning')
 
         # change to array
         x_centerline = asarray(x_centerline)
