@@ -45,6 +45,7 @@ def main():
     fname_src_reg = ''
     verbose = 1
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
+    crop_reference = 0 # if = 1, put 0 everywhere around warping field, if = 2, real crop
 
     # Parameters for debug mode
     if param.debug:
@@ -58,7 +59,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:x:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:x:c:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -78,6 +79,8 @@ def main():
                 verbose = int(arg)
             elif opt in ('-w'):
                 fname_warp_list = arg
+            elif opt in ('-c'):
+                crop_reference = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
@@ -101,6 +104,12 @@ def main():
             use_inverse.append('')
         sct.printv('  Transfo #'+str(i)+': '+use_inverse[i]+fname_warp_list[i], verbose)
         fname_warp_list_invert.append(use_inverse[i]+fname_warp_list[i])
+
+    # need to check if last warping field is an affine transfo
+    isLastAffine = False
+    path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1])
+    if ext_fname in ['.txt','.mat']:
+        isLastAffine = True
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
@@ -169,7 +178,7 @@ def main():
         for it in range(nt):
             file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
             file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list)+' -r '+fname_dest+interp, verbose)
+            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
         # Merge files back
         sct.printv('\nMerge file back...', verbose)
         cmd = fsloutput+'fslmerge -t '+fname_out
@@ -179,6 +188,16 @@ def main():
         sct.run(cmd, param.verbose)
         # come back to parent folder
         os.chdir('..')
+
+    # 2. crop the resulting image using dimensions from the warping field
+    warping_field = fname_warp_list_invert[-1]
+    # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
+    if isLastAffine:
+        sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',1,'warning')
+    elif crop_reference == 1:
+        sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
+    elif crop_reference == 2:
+        sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
     # display elapsed time
     sct.printv('\nDone! To view results, type:', verbose)
