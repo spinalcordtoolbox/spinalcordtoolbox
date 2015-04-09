@@ -160,6 +160,7 @@ def main():
     fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
+    sct.printv('\nCheck template files...')
     sct.check_file_exist(fname_template, verbose)
     sct.check_file_exist(fname_template_label, verbose)
     sct.check_file_exist(fname_template_seg, verbose)
@@ -173,29 +174,21 @@ def main():
     sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
-    # # Check speed parameter and create registration mode: slow 50x30, normal 50x15, fast 10x3 (default)
-    # if speed == "slow":
-    #     nb_iterations = "50"
-    # elif speed == "normal":
-    #     nb_iterations = "15"
-    # elif speed == "fast":
-    #     nb_iterations = "5"
-    # elif speed == "superfast":
-    #     nb_iterations = "1"  # only for debugging purpose-- do not inform the user about this option
-    # else:
-    #     sct.printv('ERROR: Wrong input registration speed {slow, normal, fast}.'
-    #     sys.exit(2)
-
     sct.printv('\nParameters for registration:')
-    for pStep in paramreg.steps:
-        sct.printv('.. Step #'+paramreg.steps[pStep].step, verbose)
-        sct.printv('.. Number of iterations..... '+paramreg.steps[pStep].iter, verbose)
-        sct.printv('.. Algorithm................ '+paramreg.steps[pStep].algo, verbose)
-        sct.printv('.. Gradient step............ '+paramreg.steps[pStep].gradStep, verbose)
-        sct.printv('.. Metric................... '+paramreg.steps[pStep].metric, verbose)
+    for pStep in range(1, len(paramreg.steps)+1):
+        sct.printv('Step #'+paramreg.steps[str(pStep)].step, verbose)
+        sct.printv('.. Type #'+paramreg.steps[str(pStep)].type, verbose)
+        sct.printv('.. Algorithm................ '+paramreg.steps[str(pStep)].algo, verbose)
+        sct.printv('.. Metric................... '+paramreg.steps[str(pStep)].metric, verbose)
+        sct.printv('.. Number of iterations..... '+paramreg.steps[str(pStep)].iter, verbose)
+        sct.printv('.. Shrink factor............ '+paramreg.steps[str(pStep)].shrink, verbose)
+        sct.printv('.. Smoothing factor......... '+paramreg.steps[str(pStep)].smooth, verbose)
+        sct.printv('.. Gradient step............ '+paramreg.steps[str(pStep)].gradStep, verbose)
+        sct.printv('.. Degree of polynomial..... '+paramreg.steps[str(pStep)].poly, verbose)
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
+    sct.printv('\nCheck input labels...')
     # check if label image contains coherent labels
     image_label = Image(fname_landmarks)
     # -> all labels must be different
@@ -311,8 +304,8 @@ def main():
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz')
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz')
+        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -c 1', verbose)
+        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -c 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
