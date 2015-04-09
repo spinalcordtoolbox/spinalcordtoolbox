@@ -521,3 +521,36 @@ def smoothing_window(x, window_len=11, window='hanning'):
     #     return y[(window_len_int/2-1):-(window_len_int/2)]
     # if window_len_int%2 != 0:
     #     return y[(window_len_int/2-1):-(window_len_int/2+1)]
+
+
+def smooth_curve(x_curve, type_window='hanning', window_length=30):
+    """smooth the data using a window with requested size.
+
+    This function first extends the data with a miror effect on the sides to avoid edge effect when windowing the curve.
+    It is to be used if one wants a complete smoothing of the curve."""
+    import numpy as np
+    import sct_utils as sct
+
+    nb_points = x_curve.shape[0]
+    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
+    if window_length >= int(2*nb_points):
+        window_length = int(2*nb_points)
+        sct.printv("WARNING: The ponderation window's length was too high compared to the number of z slices. The value is now of: "+str(window_length), param.verbose, 'warning')
+
+
+    # Extend the curve before smoothing to avoid edge effects
+    x_extended = x_curve
+    size_curve = x_curve.shape[0]
+    size_padding = int(window_length/2.0)
+    for i in range(size_padding+1):
+        x_extended = np.append(x_extended, 2*x_curve[-1] - x_curve[-2-i])
+        x_extended = np.insert(x_extended, 0, 2*x_curve[0] - x_curve[i+1])
+
+
+    # Smooth the extended curve
+    x_temp = smoothing_window(x_extended, window_len=window_length, window=type_window)
+
+    # Crop the curve back to its original size
+    x_final = x_temp[size_padding+1:size_padding+size_curve+1]
+
+    return x_final
