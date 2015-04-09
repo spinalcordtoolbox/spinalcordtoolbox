@@ -20,6 +20,7 @@ class param:
         self.verbose = 0
         self.mean_intensity = 1000  # value to assign to the spinal cord
         self.padding = 3 # vox
+        self.window_length = 80 # size of the smoothing window
         
 # check if needed Python libraries are already installed or not
 import sys
@@ -40,7 +41,7 @@ from time import strftime
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
 from scipy import ndimage
-from msct_nurbs import NURBS
+from msct_smooth import smooth_curve
 
 
 
@@ -52,9 +53,10 @@ def main():
     mean_intensity = param.mean_intensity
     verbose = param.verbose
     padding = param.padding
+    window_length = param.window_length
     
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:c:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:c:v:p:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -63,7 +65,9 @@ def main():
         elif opt in ("-i"):
             fname = arg
         elif opt in ("-c"):
-            fname_centerline = arg    
+            fname_centerline = arg
+        elif opt in ("-p"):
+            window_length = int(arg)
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -130,17 +134,24 @@ def main():
     #print("means=", means)
 
     print('\nSmoothing results with spline...')
-    m =np.mean(means)
-    sigma = np.std(means)
-    smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+    # Smoothing with scipy library (Julien Touati's code)
+    #m =np.mean(means)
+    #sigma = np.std(means)
+    #smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
     #Equivalent to : m*sigma**2
-    tck = splrep(z_centerline, means, s=smoothing_param)
-    means_smooth = splev(z_centerline, tck)
+    #tck = splrep(z_centerline, means, s=smoothing_param)
+    #means_smooth = splev(z_centerline, tck)
+
     #Test smoothing with nurbs
     #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
     #nurbs = NURBS(3,1000,points)
     #P = nurbs.getCourbe3D()
     #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
+
+    #Smoothing with hanning
+    means = np.asarray(means)
+    means_smooth = smooth_curve(means, window_length=window_length)
+    print means.shape[0], means_smooth.shape[0]
 
     if verbose :
         plt.figure()
@@ -148,6 +159,7 @@ def main():
         plt.plot(z_centerline,means, "ro")
         #plt.subplot(2,1,2)
         plt.plot(means_smooth)
+        plt.title("Mean intensity: Type of window: hanning     Window_length= %d mm" % window_length)
         plt.show()
     print('\nNormalizing intensity along centerline...')
 
@@ -193,6 +205,7 @@ def main():
         plt.title("Mean intensity")
 
         plt.subplot(2,1,2)
+        plt.plot(z_centerline,means)
         plt.plot(means_smooth_extended)
         plt.title("Extended mean intensity")
 
@@ -217,6 +230,7 @@ def main():
     print '\nDone !'
     print '\nTo view results, type:'
     print 'fslview '+output_name+' &\n'
+
 
 
     
