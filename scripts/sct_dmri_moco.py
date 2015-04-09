@@ -224,11 +224,11 @@ def main():
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    print '\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s'
+    sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', param.verbose)
 
     #To view results
-    print '\nTo view results, type:'
-    print 'fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n'
+    sct.printv('\nTo view results, type:', param.verbose)
+    sct.printv('fslview -m ortho,ortho '+param.path_out+file_data+param.suffix+' '+file_data+' &\n', param.verbose, 'info')
 
 
 #=======================================================================================================================
