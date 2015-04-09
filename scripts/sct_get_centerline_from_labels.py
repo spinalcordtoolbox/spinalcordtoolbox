@@ -198,6 +198,10 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             data_label = file_label.get_data()
             hdr_label = file_label.get_header()
 
+            if verbose == 1:
+                from copy import copy
+                data_label_to_show = copy(data_label)
+
             X,Y,Z = (data_label>0).nonzero()
             Z_new = np.linspace(min(Z),max(Z),(max(Z)-min(Z)+1))
 
@@ -282,6 +286,9 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             data_seg = file_seg.get_data()
             hdr_seg = file_seg.get_header()
 
+            if verbose == 1:
+                data_seg_to_show = copy(data_seg)
+
             # Extract min and max index in Z direction
             X, Y, Z = (data_seg>0).nonzero()
             min_z_index, max_z_index = min(Z), max(Z)
@@ -328,18 +335,90 @@ def main(segmentation_file=None, label_file=None, output_file_name=None, paramet
             print '\nRemoving overlap of the centerline obtain with label file if there are any:'
 
             ## Remove overlap from centerline file obtain with label file
-            remove_overlap(file_name_label, file_name_seg, "generated_centerline_without_overlap1.nii.gz")
+            remove_overlap(file_name_label, file_name_seg, "generated_centerline_without_overlap.nii.gz")
 
 
-
-            ## En faire un module
             ## Concatenation of the two centerline files
             print '\nConcatenation of the two centerline files:'
             if output_file_name != None :
                 file_name = output_file_name
             else: file_name = 'centerline_total_from_label_and_seg'
 
-            sct.run('fslmaths generated_centerline_without_overlap1.nii.gz -add ' + file_name_seg + ' ' + file_name)
+            sct.run('fslmaths generated_centerline_without_overlap.nii.gz -add ' + file_name_seg + ' ' + file_name)
+
+
+
+            if verbose == 1 :
+                import matplotlib.pyplot as plt
+                from scipy import ndimage
+
+                #Get back concatenation of segmentation and labels before any processing
+                data_concatenate = data_seg_to_show + data_label_to_show
+                z_centerline = [iz for iz in range(0, nz, 1) if data_concatenate[:, :, iz].any()]
+                nz_nonz = len(z_centerline)
+                x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+                y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+
+
+                # Calculate centerline coordinates and create image of the centerline
+                for iz in range(0, nz_nonz, 1):
+                    x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(data_concatenate[:, :, z_centerline[iz]])
+
+                #Load file with resulting centerline
+                file_centerline_fit = nibabel.load(file_name)
+                data_centerline_fit = file_centerline_fit.get_data()
+
+                z_centerline_fit = [iz for iz in range(0, nz, 1) if data_centerline_fit[:, :, iz].any()]
+                nz_nonz_fit = len(z_centerline_fit)
+                x_centerline_fit_total = [0 for iz in range(0, nz_nonz_fit, 1)]
+                y_centerline_fit_total = [0 for iz in range(0, nz_nonz_fit, 1)]
+
+                #Convert to array
+                x_centerline_fit_total = np.asarray(x_centerline_fit_total)
+                y_centerline_fit_total = np.asarray(y_centerline_fit_total)
+                #Calculate overlap between seg and label
+                length_overlap = X_fit.shape[0] + x_centerline_fit.shape[0] - x_centerline_fit_total.shape[0]
+                # The total fitting is the concatenation of the two fitting (
+                for i in range(x_centerline_fit.shape[0]):
+                    x_centerline_fit_total[i] = x_centerline_fit[i]
+                    y_centerline_fit_total[i] = y_centerline_fit[i]
+                for i in range(X_fit.shape[0]-length_overlap):
+                    x_centerline_fit_total[x_centerline_fit.shape[0] + i] = X_fit[i+length_overlap]
+                    y_centerline_fit_total[x_centerline_fit.shape[0] + i] = Y_fit[i+length_overlap]
+                    print x_centerline_fit.shape[0] + i
+
+                #for iz in range(0, nz_nonz_fit, 1):
+                #    x_centerline_fit[iz], y_centerline_fit[iz] = ndimage.measurements.center_of_mass(data_centerline_fit[:, :, z_centerline_fit[iz]])
+
+                #Creation of a vector x that takes into account the distance between the labels
+                #x_centerline_fit = np.asarray(x_centerline_fit)
+                #y_centerline_fit = np.asarray(y_centerline_fit)
+                x_display = [0 for i in range(x_centerline_fit_total.shape[0])]
+                y_display = [0 for i in range(y_centerline_fit_total.shape[0])]
+
+
+                for i in range(0, nz_nonz, 1):
+                    x_display[z_centerline[i]-z_centerline[0]] = x_centerline[i]
+                    y_display[z_centerline[i]-z_centerline[0]] = y_centerline[i]
+
+                plt.figure(1)
+                plt.subplot(2,1,1)
+                plt.plot(z_centerline_fit, x_display, 'ro')
+                plt.plot(z_centerline_fit, x_centerline_fit_total)
+                plt.xlabel("Z")
+                plt.ylabel("X")
+                plt.title("x and x_fit coordinates")
+
+                plt.subplot(2,1,2)
+                plt.plot(z_centerline_fit, y_display, 'ro')
+                plt.plot(z_centerline_fit, y_centerline_fit_total)
+                plt.xlabel("Z")
+                plt.ylabel("Y")
+                plt.title("y and y_fit coordinates")
+                plt.show()
+
+                del data_concatenate, data_label_to_show, data_seg_to_show, data_centerline_fit
+
             sct.run('cp '+file_name+' ../')
 
             # Copy result into parent folder
