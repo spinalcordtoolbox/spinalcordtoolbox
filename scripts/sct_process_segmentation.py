@@ -34,7 +34,6 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
-
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -55,6 +54,7 @@ class Param:
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
+        self.algo_fitting = 'nurbs'
 
         
 # MAIN
@@ -95,7 +95,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -130,6 +130,8 @@ def main():
                 param.window_length = int(arg)
             elif opt in ('-z'):
                 slices = arg
+            elif opt in ('-a'):
+                param.algo_fitting = str(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
@@ -158,7 +160,7 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation,remove_temp_files)
+        fname_output = extract_centerline(fname_segmentation, param, remove_temp_files)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
@@ -224,7 +226,7 @@ def compute_length(fname_segmentation, remove_temp_files):
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files):
+def extract_centerline(fname_segmentation, param, remove_temp_files):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -275,7 +277,36 @@ def extract_centerline(fname_segmentation, remove_temp_files):
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 1)
+
+    if param.verbose == 1 :
+            import matplotlib.pyplot as plt
+
+            #Creation of a vector x that takes into account the distance between the labels
+            nz_nonz = len(z_centerline)
+            x_display = [0 for i in range(x_centerline_fit.shape[0])]
+            y_display = [0 for i in range(y_centerline_fit.shape[0])]
+            for i in range(0, nz_nonz, 1):
+                x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
+                y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
+
+
+            plt.figure(1)
+            plt.subplot(2,1,1)
+            plt.plot(z_centerline_fit, x_display, 'ro')
+            plt.plot(z_centerline_fit, x_centerline_fit)
+            plt.xlabel("Z")
+            plt.ylabel("X")
+            plt.title("x and x_fit coordinates")
+
+            plt.subplot(2,1,2)
+            plt.plot(z_centerline_fit, y_display, 'ro')
+            plt.plot(z_centerline_fit, y_centerline_fit)
+            plt.xlabel("Z")
+            plt.ylabel("Y")
+            plt.title("y and y_fit coordinates")
+            plt.show()
+
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
@@ -288,7 +319,15 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, param.verbose)
 
     # create a txt file with the centerline
-    # TODO
+    file_name = file_data+'_centerline'+'.txt'
+    sct.printv('\nWrite text file...', param.verbose)
+    file_results = open(file_name, 'w')
+    for i in range(min_z_index, max_z_index+1):
+        file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
+    file_results.close()
+
+    # Copy result into parent folder
+    sct.run('cp '+file_name+' ../')
 
     del data
 
@@ -780,6 +819,7 @@ OPTIONAL ARGUMENTS
   -w <smoothing>        Smoothing window size. Only used with 'centerline'
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
+  -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
   -h                    Help. Show this message
 
 EXAMPLE
