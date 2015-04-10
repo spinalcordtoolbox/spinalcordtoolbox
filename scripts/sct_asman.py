@@ -81,7 +81,7 @@ class Dataset:
             save_image(self.slices[j].D,'slice_'+str(j) + '_dec')
             save_image(self.slices[j].DM,'slice_'+str(j) + '_registered_dec')
         os.chdir('..')
-        #self.show_data()
+        self.show_data()
 
     # ------------------------------------------------------------------------------------------------------------------
     # Compute the model using the dictionary dataset
@@ -110,15 +110,24 @@ class Dataset:
         #set of possible labels that can be assigned to a given voxel in the segmentation
         self.L = [0, 1] #1=WM, 0=GM or CSF
 
-        sct.printv('\nComputing the rigid transformation to coregister all the data into a common groupwise space ...', self.param.verbose, 'normal')
+        sct.printv('\nComputing the transformation to coregister all the data into a common groupwise space ...', self.param.verbose, 'normal')
         #list of rigid transformation for each slice to coregister the data into the common groupwise space
-        self.mean_seg = self.segmentations_coregistration()
+
+        coregistration_transfos = ['Affine'] #'Rigid',
+        #coregistration_transfos = ['SyN']
+        self.mean_seg = self.segmentations_coregistration(transfo_to_apply=coregistration_transfos)
         dic_data_info = self.save_model_data(dic_data_info,'DM')
 
         sct.printv('\nCoregistering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         #List of atlases (A_M) and their label decision (D_M) (=segmentation of the gray matter), slice by slice in the common groupwise space
         #zip(self.A_M,self.D_M) would give a list of tuples (slice_image,slice_segmentation)
-        self.coregister_data()
+        self.coregister_data(transfo_to_apply=coregistration_transfos)
+
+        '''
+        TESTING
+        '''
+        self.crop_data()
+
         dic_data_info = self.save_model_data(dic_data_info,'AM')
 
         self.mean_data = self.mean_dataset(np.asarray([slice.AM for slice in self.slices]))
@@ -219,16 +228,12 @@ class Dataset:
             inverted_slice_decision = np.absolute(sc.data - im_d.data).astype(int)
             slice.set(D=inverted_slice_decision)
 
-    def segmentations_coregistration(self):
-        '''
-        print 'DOING A RIGID COREGISTRATION OF THE DATA'
-        first_mean_seg = self.compute_mean_seg(np.asarray([slice.D for slice in self.slices]))
-        current_mean_seg = self.find_coregistration(chi=first_mean_seg,transfo_type='Rigid')
-        '''
+    def segmentations_coregistration(self, transfo_to_apply=None):
 
         current_mean_seg = self.compute_mean_seg(np.asarray([slice.D for slice in self.slices]))
-        print 'DOING AN AFFINE COREGISTRATION OF THE DATA'
-        current_mean_seg = self.find_coregistration(chi=current_mean_seg,transfo_type='Affine')
+        for transfo in transfo_to_apply:
+            sct.printv('Doing a ' + transfo + ' registration of each segmentation slice to the mean segmentation ...', self.param.verbose, 'normal')
+            current_mean_seg = self.find_coregistration(chi=current_mean_seg, transfo_type=transfo)
 
         '''
         fig=plt.figure()
@@ -265,6 +270,99 @@ class Dataset:
         for slice in self.slices:
             s_w_pix += np.sum(slice.D)
         return s_w_pix/self.J
+    '''
+    def crop_data_new_ellipse(self):
+        #croping the A_M images
+
+        #mean_seg dimensions :
+        #height
+        down = True
+        above = False
+        height_min = 0
+        height_max = 0
+        for h,row in enumerate(self.mean_seg.T):
+            if sum(row) == 0:
+                if down :
+                    height_min = h
+                elif not above:
+                    height_max = h
+                    above = True
+            else:
+                down = False
+        height_min += 1
+        height_max -= 1
+
+        #width
+        left = True
+        right = False
+        width_min = 0
+        width_max = 0
+        for w,row in enumerate(self.mean_seg):
+            if sum(row) == 0:
+                if left :
+                    width_min = w
+                elif not right:
+                    width_max = w
+                    right = True
+            else:
+                left = False
+        width_min += 1
+        width_max -= 1
+
+        a = (width_max - width_min)/2.0
+        b = (height_max - height_min)/2.0
+
+        range_x = np.asarray(range(int(-10*a),int(10*a)+1)) /10.0
+        top_points = [(b * sqrt(1-(x**2/a**2)),x) for x in range_x]
+        n = int(sqrt(self.N))
+
+        top_points.sort()
+
+        ellipse_mask = np.zeros((n,n))
+        done_rows = []
+        for point in top_points:
+            y_plus = int(round((n/2)+point[0]))
+            y_minus = int(round((n/2)-point[0]))
+            print 'y_plus', y_plus, 'y_minus', y_minus
+            if y_plus not in done_rows:
+                x_plus = int(round((n/2)+abs(point[1])))
+                x_minus = int(round((n/2)-abs(point[1])))
+                for x in range(x_minus, x_plus+1):
+                    ellipse_mask[x, y_plus] = 1
+                    ellipse_mask[x, y_minus] = 1
+                done_rows.append(y_plus)
+
+
+        print 'axis', a, b
+        print 'done_rows', done_rows
+        print 'center : ', int(n/2)
+        print ellipse_mask
+        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', type='uint8')
+        '''
+    def crop_data(self):
+        im_mean_seg = Image(param=self.mean_seg)
+
+        nz_coord = im_mean_seg.getNonZeroCoordinates()
+        nz_coord_dic = {}
+        for coord in nz_coord:
+            nz_coord_dic[coord.x] = []
+        for coord in nz_coord:
+            nz_coord_dic[coord.x].append(coord.y)
+
+        ellipse_mask = im_mean_seg.copy().data
+
+        for x, y_list in nz_coord_dic.items():
+            full_y_list = range(min(y_list), max(y_list)+1)
+            if y_list != full_y_list:
+                for y in full_y_list:
+                    ellipse_mask[x, y] = 1
+
+        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', type='uint8')
+
+        for slice in self.slices:
+            new_AM = np.einsum('ij,ij->ij',ellipse_mask,slice.AM)
+            slice.set(AM=new_AM)
+
 
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -275,7 +373,7 @@ class Dataset:
         for slice in self.slices:
             name_j_transform = 'transform_slice_' + str(slice.id) + '.mat'
             slice.set(RtoM=name_j_transform)
-            decision_M = apply_ants_2D_rigid_transfo(chi, slice.D,  transfo_name=name_j_transform, path=self.model_dic_name+'/', transfo_type=transfo_type)
+            decision_M = apply_ants_transfo(chi, slice.D,  transfo_name=name_j_transform, path=self.model_dic_name+'/', transfo_type=transfo_type)
             slice.set(DM=decision_M.astype(int))
             slice.set(DM_flat=decision_M.flatten().astype(int))
         chi = self.compute_mean_seg([slice.DM for slice in self.slices])
@@ -329,11 +427,12 @@ class Dataset:
 
     # ------------------------------------------------------------------------------------------------------------------
     # return the coregistered data into the common groupwise space using the previously computed rigid transformation :self.RM
-    def coregister_data(self):
+    def coregister_data(self,  transfo_to_apply=None):
         list_A = [slice.A for slice in self.slices]
         for slice in self.slices:
-            atlas_M = apply_ants_2D_rigid_transfo(self.mean_dataset(list_A), slice.A, search_reg=False, transfo_name=slice.RtoM, binary=False, path=self.model_dic_name+'/', transfo_type='Affine')
-            #apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
+            for transfo in transfo_to_apply:
+                atlas_M = apply_ants_transfo(self.mean_dataset(list_A), slice.A, search_reg=False, transfo_name=slice.RtoM, binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
+                #apply_2D_rigid_transformation(self.A[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
             slice.set(AM=atlas_M)
             slice.set(AM_flat=atlas_M.flatten())
 
@@ -476,34 +575,34 @@ class AppearanceModel:
             self.pca.save_data(self.dataset.model_dic_name)
 
         elif self.param.todo_model == 'load':
-            fic_data_pca = open(self.param.path_dictionary + 'data_pca.txt', 'r')
-            mean_data_list = fic_data_pca.readline().split(',')
-            eig_pairs_list = fic_data_pca.readline().split(',')
-            fic_data_pca.close()
+            pca_mean_data, pca_eig_pairs = self.load_pca_file()
 
-            mean_data_vect = []
-            for val in mean_data_list:
-                mean_data_vect.append([float(val)])
-            mean_data_vect = np.asarray(mean_data_vect)
-
-            eig_pairs_vect = []
-            for pair in eig_pairs_list:
-                eig_val_str, eig_vect_str = pair.split(';')
-                eig_vect_str = eig_vect_str.split(' ')
-                #eig_vect_str[-1] = eig_vect_str[-1][:-1]
-                eig_vect = []
-                for i,v in enumerate(eig_vect_str):
-
-                    if v != '' and v != '\n':
-                        eig_vect.append(float(v))
-
-                eig_pairs_vect.append((float(eig_val_str), eig_vect))
-
-            self.pca = PCA(np.asarray([slice.AM_flat for slice in self.dataset.slices]).T, mean_vect=mean_data_vect, eig_pairs=eig_pairs_vect, k=0.8)
+            self.pca = PCA(np.asarray([slice.AM_flat for slice in self.dataset.slices]).T, mean_vect=pca_mean_data, eig_pairs=pca_eig_pairs, k=k)
 
 
+    def load_pca_file(self, file_name='data_pca.txt'):
+        fic_data_pca = open(self.param.path_dictionary + file_name, 'r')
+        mean_data_list = fic_data_pca.readline().split(',')
+        eig_pairs_list = fic_data_pca.readline().split(',')
+        fic_data_pca.close()
 
+        mean_data_vect = []
+        for val in mean_data_list:
+            mean_data_vect.append([float(val)])
+        mean_data_vect = np.asarray(mean_data_vect)
 
+        eig_pairs_vect = []
+        for pair in eig_pairs_list:
+            eig_val_str, eig_vect_str = pair.split(';')
+            eig_vect_str = eig_vect_str.split(' ')
+            #eig_vect_str[-1] = eig_vect_str[-1][:-1]
+            eig_vect = []
+            for i,v in enumerate(eig_vect_str):
+                 if v != '' and v != '\n':
+                    eig_vect.append(float(v))
+            eig_pairs_vect.append((float(eig_val_str), eig_vect))
+
+        return mean_data_vect, eig_pairs_vect
 
 # ----------------------------------------------------------------------------------------------------------------------
 # RIGID REGISTRATION ---------------------------------------------------------------------------------------------------
@@ -515,13 +614,13 @@ class RigidRegistration:
         self.target = target_image
         #save_image(self.target.data, 'target_image')
         #print '---TARGET IMAGE IN CLASS RIGIDREGISTRATION : ', self.target.data
-        save_image(self.target.data[0],'target_slice0_rigidreg_'+self.appearance_model.param.todo_model)
+        #save_image(self.target.data[0],'target_slice0_rigidreg_'+self.appearance_model.param.todo_model)
 
 
         self.target_M = self.register_target_to_model_space()
         #print '----- registered target ---- ', self.target_M.data
         #save_image(self.target_M.data, 'target_image_model_space')
-        save_image(self.target_M.data[0],'target_registered_slice0_rigidreg_'+self.appearance_model.param.todo_model)
+        #save_image(self.target_M.data[0],'target_registered_slice0_rigidreg_'+self.appearance_model.param.todo_model)
 
         # coord_projected_target is a list of all the coord of the target's projected slices
         sct.printv('\nProjecting the target image in the reduced common space ...', appearance_model.param.verbose, 'normal')
@@ -557,11 +656,11 @@ class RigidRegistration:
     def register_target_to_model_space(self):
         target_M = []
         for i,slice in enumerate(self.target.data):
-            #slice_M = apply_ants_2D_rigid_transfo(self.appearance_model.dataset.mean_data, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            #slice_M = apply_ants_transfo(self.appearance_model.dataset.mean_data, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             n = int(sqrt(self.appearance_model.pca.N))
             mean_vect = self.appearance_model.pca.mean_data_vect.reshape(len(self.appearance_model.pca.mean_data_vect),)
             im = mean_vect.reshape(n, n).astype(np.float)
-            slice_M = apply_ants_2D_rigid_transfo(im, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            slice_M = apply_ants_transfo(im, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             target_M.append(slice_M)
         return Image(param=np.asarray(target_M))
 
@@ -570,11 +669,11 @@ class RigidRegistration:
     def inverse_register_target(self):
         res_seg = []
         for i,slice_M in enumerate(self.target_GM_seg_M.data):
-            #slice = apply_ants_2D_rigid_transfo(self.appearance_model.dataset.mean_data, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            #slice = apply_ants_transfo(self.appearance_model.dataset.mean_data, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             n = int(sqrt(self.appearance_model.pca.N))
             mean_vect = self.appearance_model.pca.mean_data_vect.reshape(len(self.appearance_model.pca.mean_data_vect),)
             im = mean_vect.reshape(n, n).astype(np.float)
-            slice = apply_ants_2D_rigid_transfo(im, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
+            slice = apply_ants_transfo(im, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
             res_seg.append(slice)
         return Image(param=np.asarray(res_seg))
 
@@ -586,7 +685,6 @@ class RigidRegistration:
     # Z is the partition function that enforces the constraint tha sum(beta)=1
     def compute_beta(self, coord_target, tau=0.01):
         beta = []
-        print '\n\n\n\n\n TAU = ', tau, '\n\n\n'
         #sct.printv('----------- COMPUTING BETA --------------', 1, 'info')
         #print '------ TAU = ', tau
         #print '---------- IN BETA : coord_target ---------------->', coord_target
@@ -771,7 +869,7 @@ class Asman():
         self.target_image = Image(param.target_fname)
 
         #print '---TARGET IMAGE IN CLASS ASMAN : ', self.target_image.data
-        save_image(self.target_image.data[0],'target_slice0_asman_'+param.todo_model)
+        #save_image(self.target_image.data[0],'target_slice0_asman_'+param.todo_model)
 
 
         if param.split_data:
