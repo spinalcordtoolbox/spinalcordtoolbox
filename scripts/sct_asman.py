@@ -57,12 +57,21 @@ class Dataset:
             self.param = Param()
         else:
             self.param = param
+
+        # list of the slices of the dictionary
         self.slices = []
+        # number of slices
         self.J = 0
+        # dimension of the slices (flattened)
         self.N = 0
+        # list of the possible label decisions in a segmentation image (if only 1 label L=[0,1])
         self.L = []
+        # mean segmentation image of the dataset
         self.mean_seg = None
+        # mean image of the dataset
         self.mean_data = None
+
+        # folder containing the saved model
         self.model_dic_name = ''
         if self.param.todo_model == 'compute':
             self.model_dic_name = './gmseg_model_dictionary'
@@ -71,6 +80,8 @@ class Dataset:
             self.model_dic_name = self.param.path_dictionary #TODO change the path by the name of the dic ?? ...
             self.load_model_dataset()
 
+        # save all the dictionary slices
+        ##### --> not used by the model, only for visualization
         if 'data_by_slice' not in os.listdir('.'):
             sct.run('mkdir ./data_by_slice')
         os.chdir('./data_by_slice')
@@ -81,6 +92,7 @@ class Dataset:
             save_image(self.slices[j].D,'slice_'+str(j) + '_dec')
             save_image(self.slices[j].DM,'slice_'+str(j) + '_registered_dec')
         os.chdir('..')
+
         self.show_data()
 
     # ------------------------------------------------------------------------------------------------------------------
