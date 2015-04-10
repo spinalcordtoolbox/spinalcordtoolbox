@@ -73,7 +73,7 @@ class PCA:
             self.eig_pairs = eig_pairs
         # STEP 5
         self.k = k
-        self.W, self.kept = self.generate_W()
+        self.W, self.kept = self.generate_W(modes_to_ignore=0)
         print '\n\n-------> IN PCA : '
         print '\n-> W:', self.W
         print '\n-> kept:', self.kept
@@ -115,12 +115,13 @@ class PCA:
         return eig_pairs
 
     # STEP 5
-    def generate_W(self):
+    def generate_W(self, modes_to_ignore=0):
         eigenvalues_kept = []
         s = sum([eig[0] for eig in self.eig_pairs])
         print '\n####################################\n ---> sum of eigenvalues : ', s
         first = 1
-        for eig in self.eig_pairs:
+        start=modes_to_ignore
+        for eig in self.eig_pairs[start:]:
             if first:
                 W = np.asarray(eig[1]).reshape(self.N, 1)
                 eigenvalues_kept.append(eig[0])
