@@ -260,7 +260,7 @@ class Pipeline:
                     cmd = cmd + " -radius " + str(radius)
 
                 sct.printv("\nDoing segmentation on " + subject.dir + '/' + path + "/" + name + " using sct_propseg ...", verbose=1, type="normal")
-                sct.runProcess(cmd)
+                sct.run(cmd)
                 for file in os.listdir('./'):
                             if "_seg.nii" in file:
                                 name_seg = file
@@ -292,13 +292,13 @@ class Pipeline:
             os.chdir(path)
 
             try:
-                cmd_register = 'sct_register_to_template -i ' + name + ' -m ' + name_seg + ' -l ' + subject.name_landmarks_t2
+                cmd_register = 'sct_register_to_template -i ' + name + ' -s ' + name_seg + ' -l ' + subject.name_landmarks_t2
 
                 if self.reg_template_params is not None :
                     cmd_register = cmd_register + " -p " + str(self.reg_template_params)
 
                 sct.printv("\nDoing registration to template on " + subject.dir + '/' + path + '/' + subject.name_t2 +" using sct_register_to_template ...", verbose=1, type="normal")
-                sct.runProcess(cmd_register)
+                sct.run(cmd_register)
             except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO' + t.upper() + ' : ', 1, 'warning')
                     print e
@@ -309,7 +309,7 @@ class Pipeline:
                     cmd_warp = 'sct_warp_template -d ' + name + ' -w warp_template2anat.nii.gz'
 
                     sct.printv("\nWarping Template to T2 on " + subject.dir + '/' + path + "/" + name+" using sct_warp_template ...", verbose=1, type="normal")
-                    sct.runProcess(cmd_warp)
+                    sct.run(cmd_warp)
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO ' + t.upper() + ' : ', 1, 'warning')
                     print e
@@ -320,24 +320,23 @@ class Pipeline:
     def register_warp_multimodal(self, t, src='template2anat.nii.gz'):
         for subject in self.data:
             os.chdir(subject.dir)
-            if subject.path_t2star is not '':
+            if subject.dir_t2star is not '':
                 if t == 't1':
-                    path_anat = subject.dir_t1
+                    path_anat = '../' + subject.dir_t1
                 elif t == 't2':
-                    path_anat = subject.dir_t2
+                    path_anat = '../' + subject.dir_t2
 
 
                 try:
                     os.chdir(subject.dir_t2star)
 
                     #Register
-                    cmd_register = 'sct_register_multimodal -i ' + path_anat + '/' + src + ' -d ' + subject.name_t2star + \
-                        ' -s ' + path_anat + '/label/template/MNI-Poly-AMU_cord.nii.gz -t ' + subject.name_t2star_seg
+                    cmd_register = 'sct_register_multimodal -i ' + path_anat + '/' + src + ' -d ' + subject.name_t2star + ' -iseg ' + path_anat + '/label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + subject.name_t2star_seg
                     if self.reg_multimodal_params is not None :
                         cmd_register = cmd_register + " -p " + str(self.reg_multimodal_params)
 
-                    sct.printv("\nDoing registration template2anat to " + + subject.dir + '/' + subject.dir_t2star + "/" + subject.name_t2star +" using sct_register_multimodal ...", verbose=1, type="normal")
-                    #sct.runProcess(cmd_register)
+                    sct.printv("\nDoing registration template2anat to " + subject.dir + '/' + subject.dir_t2star + "/" + subject.name_t2star +" using sct_register_multimodal ...", verbose=1, type="normal")
+                    #sct.run(cmd_register)
                     sct.run(cmd_register)
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO T2STAR : ', 1, 'warning')
@@ -349,7 +348,7 @@ class Pipeline:
                         src_name = sct.extract_fname(src)[1]
                         cmd_concat = 'sct_concat_transfo -w ' + path_anat + '/warp_template2anat.nii.gz,warp_src2dest.nii.gz -d ' + subject.name_t2star + ' -o warp_' + src_name + '2t2star.nii.gz'
                         sct.printv("\nConcatenate transformations using sct_concat_transfo ...", verbose=1, type="normal")
-                        sct.runProcess(cmd_concat)
+                        sct.run(cmd_concat)
                     except Exception, e:
                         sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO CONCATENATE TRANSFORMATIONS : ', 1, 'warning')
                         print e
@@ -361,7 +360,7 @@ class Pipeline:
                             cmd_warp = 'sct_warp_template -d ' + subject.name_t2star + ' -w warp_' + src_name + '2t2star.nii.gz'
 
                             sct.printv("\nWarping Template to T2star on " + + subject.dir + '/' + subject.dir_t2star +"/" + subject.name_t2star +" using sct_warp_template ...", verbose=1, type="normal")
-                            sct.runProcess(cmd_warp)
+                            sct.run(cmd_warp)
                         except Exception, e:
                             sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO T2STAR : ', 1, 'warning')
                             print e
@@ -413,7 +412,7 @@ class Pipeline:
                     os.chdir(path)
                     cmd_dice = 'sct_dice_coefficient ' + res + ' ' + ref
                     sct.printv("\nComputing the dice coefficient for the " + t + " image(s) of subject " + subject.dir + "  ...", verbose=1, type="normal")
-                    status, output = sct.runProcess(cmd_dice)
+                    status, output = sct.run(cmd_dice)
 
                     dice_dictionary[subject.dir] = float(output.split(' ')[-1][:-2])
                     res_file.write(subject.dir + ' : ' + str(dice_dictionary[subject.dir]) + '\n')
@@ -633,11 +632,11 @@ if __name__ == "__main__":
     input_seg = False
     input_seg_params = {'init':0.5,'up':None,'down':None,'centerline':None,'init-mask':None,'radius':4}
     input_reg_template = False
-    input_reg_template_params = '5,SyN,0.5,MI'
+    input_reg_template_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
     input_seg_t2star = False
     input_seg_t2star_params = {'init':0.5,'up':None,'down':None,'centerline':None,'init-mask':None,'radius':4}
     input_reg_multimodal = False
-    input_reg_multimodal_params = '5,SyN,0.5,MI'
+    input_reg_multimodal_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
     input_dice = False
     input_dice_on = []
     if "-seg" in arguments:
