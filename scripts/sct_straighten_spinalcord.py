@@ -172,7 +172,7 @@ def main():
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param, algo_fitting, verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param, verbose)
 
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -494,13 +494,14 @@ def usage():
 
 # Smooth centerline
 #=======================================================================================================================
-def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
+def smooth_centerline(fname_centerline, param, verbose=1):
     """
     :param fname_centerline: centerline in RPI orientation
     :return: a bunch of useful stuff
     """
     window_length = param.window_length
     type_window = param.type_window
+    algo_fitting = param.algo_fitting
 
     sct.printv('\nSmooth centerline/segmentation...', param.verbose)
 
@@ -640,6 +641,10 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
 
         # get derivative
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline, px, py, pz)
+
+        x_centerline_fit = asarray(x_centerline_fit)
+        y_centerline_fit = asarray(y_centerline_fit)
+        z_centerline_fit = asarray(z_centerline_fit)
 
     elif algo_fitting == 'nurbs':
         from msct_smooth import b_spline_nurbs
