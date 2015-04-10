@@ -280,7 +280,8 @@ def extract_centerline(fname_segmentation, param, remove_temp_files):
     x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 1)
 
     if param.verbose == 1 :
-            import matplotlib.pyplot as plt
+            #import matplotlib.pyplot as plt
+            from matplotlib.pyplot import *
 
             #Creation of a vector x that takes into account the distance between the labels
             nz_nonz = len(z_centerline)
@@ -291,22 +292,37 @@ def extract_centerline(fname_segmentation, param, remove_temp_files):
                 y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
 
 
-            plt.figure(1)
-            plt.subplot(2,1,1)
-            plt.plot(z_centerline_fit, x_display, 'ro')
-            plt.plot(z_centerline_fit, x_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("X")
-            plt.title("x and x_fit coordinates")
+            # plt.figure(1)
+            # plt.subplot(2,1,1)
+            # plt.plot(z_centerline_fit, x_display, 'ro')
+            # plt.plot(z_centerline_fit, x_centerline_fit)
+            # plt.xlabel("Z")
+            # plt.ylabel("X")
+            # plt.title("x and x_fit coordinates")
+            #
+            # plt.subplot(2,1,2)
+            # plt.plot(z_centerline_fit, y_display, 'ro')
+            # plt.plot(z_centerline_fit, y_centerline_fit)
+            # plt.xlabel("Z")
+            # plt.ylabel("Y")
+            # plt.title("y and y_fit coordinates")
+            # plt.show()
 
-            plt.subplot(2,1,2)
-            plt.plot(z_centerline_fit, y_display, 'ro')
-            plt.plot(z_centerline_fit, y_centerline_fit)
-            plt.xlabel("Z")
-            plt.ylabel("Y")
-            plt.title("y and y_fit coordinates")
-            plt.show()
+            figure(1)
+            subplot(2,1,1)
+            plot(z_centerline_fit, x_display, 'ro')
+            plot(z_centerline_fit, x_centerline_fit)
+            xlabel("Z")
+            ylabel("X")
+            title("x and x_fit coordinates")
 
+            subplot(2,1,2)
+            plot(z_centerline_fit, y_display, 'ro')
+            plot(z_centerline_fit, y_centerline_fit)
+            xlabel("Z")
+            ylabel("Y")
+            title("y and y_fit coordinates")
+            show()
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
