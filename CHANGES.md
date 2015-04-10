@@ -19,6 +19,7 @@
 - OPT: **sct_process_segmentation**:
   - can compute average CSA across vertebral levels or slices
   - can compute length of segmentation
+  - can compute CSA on non-binary images such as probabilistic gray/white matter maps
   - N.B. process names were simplified to: "csa", "length" and "centerline"
 - OPT: **sct_crop_image**: now possible to crop an image based on a reference space
 - OPT: new WM atlas: added gray matter and CSF for computing partial volume
