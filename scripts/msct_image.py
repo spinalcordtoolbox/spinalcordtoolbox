@@ -18,7 +18,7 @@ class Image(object):
     """
 
     """
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1, split=False):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
         from numpy import zeros, ndarray, generic
         from sct_utils import extract_fname
         from nibabel import AnalyzeHeader
@@ -100,6 +100,7 @@ class Image(object):
             printv('Error: make sure ' + path + ' is an image.')
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
+        self.dim = self.data.shape
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
@@ -251,7 +252,7 @@ class Image(object):
                 X, Y = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         except Exception, e:
-            printv('ERROR: Exception ' + str(e) + 'caught while geting non Zeros coordinates', 1, 'error')
+            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if sorting is not None:
             if reverse_coord not in [True, False]:
