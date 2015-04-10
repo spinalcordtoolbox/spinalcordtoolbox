@@ -149,7 +149,7 @@ def save_image(im_array, im_name, path='', type='', verbose=1):
         im.path = path
     im.save(type=type)
 
-def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary = True, path='./', inverse=0, verbose=0):
+def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary = True, path='./', inverse=0, verbose=0):
     import time
     try:
         transfo_dir = transfo_type.lower() + '_transformations'
@@ -169,8 +169,22 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_ty
         moving_im_name = 'moving_im'
         save_image(moving_im, moving_im_name, type=t, verbose=verbose)
 
+        if transfo_type == 'Rigid' or transfo_type == 'Affine':
+            mat_name = 'reg0GenericAffine.mat'
+        elif transfo_type == 'BSpline':
+            mat_name = 'reg0BSpline.txt'
+        elif transfo_type == 'BSplineSyN' or transfo_type == 'SyN':
+            mat_name = 'reg0Warp.nii.gz'
+
         if search_reg:
             reg_interpolation = 'BSpline'
+            transfo_params = ''
+            if transfo_type == 'BSpline':
+                transfo_params = ',1'
+            elif transfo_type == 'BSplineSyN':
+                transfo_params = ',1,1'
+            elif transfo_type == 'SyN':
+                transfo_params = ',1,1'
             gradientstep = 0.3  # 0.5
             metric = 'MeanSquares'
             metric_params = ',5'
@@ -179,18 +193,18 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_ty
             niter = 20
             smooth = 0
             shrink = 1
-            cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + '] ' \
+            cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params +  '] ' \
                       '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params  + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)
 
             sct.run(cmd_reg, verbose=verbose)
 
-            sct.run('cp reg0GenericAffine.mat ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
+            sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
 
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./reg0GenericAffine.mat ', verbose=verbose)
+                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./'+ mat_name , verbose=verbose)
 
             if binary:
                 applyTransfo_interpolation = 'NearestNeighbor'
@@ -198,7 +212,7 @@ def apply_ants_2D_rigid_transfo(fixed_im, moving_im, search_reg=True, transfo_ty
                 applyTransfo_interpolation = 'BSpline'
 
             cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name +'.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
-                        '-n ' + applyTransfo_interpolation + ' -t [reg0GenericAffine.mat,'+ str(inverse) +']  -r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
+                        '-n ' + applyTransfo_interpolation + ' -t ['+ mat_name +','+ str(inverse) +']  -r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
             status, output = sct.run(cmd_apply, verbose=verbose)
 
