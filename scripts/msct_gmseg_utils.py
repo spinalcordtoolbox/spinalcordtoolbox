@@ -18,8 +18,8 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import time
-#from scipy.optimize import minimize
+# import time
+# from scipy.optimize import minimize
 
 from msct_image import Image
 import sct_utils as sct
@@ -27,34 +27,34 @@ from msct_parser import Parser
 
 
 class Slice:
-    def __init__(self, id=None, A=None, D=None, RtoM='', AM=None, DM=None, AM_flat=None, DM_flat=None, level=None):
+    def __init__(self, id=None, im=None, seg=None, RtoM='', im_M=None, seg_M=None, im_M_flat=None, seg_M_flat=None, level=None):
         self.id = id
-        self.A = A
-        self.D = D
+        self.im = im
+        self.seg = seg
         self.RtoM = RtoM
-        self.AM = AM
-        self.DM = DM
-        self.AM_flat = AM_flat
-        self.DM_flat = DM_flat
+        self.im_M = im_M
+        self.seg_M = seg_M
+        self.im_M_flat = im_M_flat
+        self.seg_M_flat = seg_M_flat
         self.level = level
 
-    def set(self, id=None, A=None, D=None, RtoM='', AM=None, DM=None, AM_flat=None, DM_flat=None, level=None):
+    def set(self, id=None, im=None, seg=None, RtoM='', im_M=None, seg_M=None, im_M_flat=None, seg_M_flat=None, level=None):
         if id is not None:
             self.id = id
-        if A is not None:
-            self.A = A
-        if D is not None:
-            self.D = D
+        if im is not None:
+            self.im = im
+        if seg is not None:
+            self.seg = seg
         if RtoM != '':
             self.RtoM = RtoM
-        if AM is not None:
-            self.AM = AM
-        if DM is not None:
-            self.DM = DM
-        if AM_flat is not None:
-            self.AM_flat = AM_flat
-        if DM_flat is not None:
-            self.DM_flat = DM_flat
+        if im_M is not None:
+            self.im_M = im_M
+        if seg_M is not None:
+            self.seg_M = seg_M
+        if im_M_flat is not None:
+            self.im_M_flat = im_M_flat
+        if seg_M_flat is not None:
+            self.seg_M_flat = seg_M_flat
         if level is not None:
             self.level = level
 
@@ -62,11 +62,11 @@ class Slice:
         s = '\nSlice #' + str(self.id)
         if self.level is not None:
             s += 'Level : ' + str(self.level)
-        s += '\nAtlas : \n' + str(self.A) + '\nDecision : \n' + str(self.D) + '\nTransfor;ation to model space : ' + self.RtoM
-        if self.AM is not None:
-            s += '\nAtlas in the common model space: \n' + str(self.AM)
-        if self.DM is not None:
-             s += '\nDecision in the common model space: \n' + str(self.DM)
+        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.seg) + '\nTransfor;ation to model space : ' + self.RtoM
+        if self.im_M is not None:
+            s += '\nAtlas in the common model space: \n' + str(self.im_M)
+        if self.seg_M is not None:
+             s += '\nDecision in the common model space: \n' + str(self.seg_M)
         return s
 
 
