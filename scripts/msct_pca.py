@@ -5,11 +5,11 @@
 # http://sebastianraschka.com/Articles/2014_pca_step_by_step.html#sc_matrix
 #
 #
-# Step 1: Take the whole dataset consisting of J N-dimensional flattened images [NxJ], N=nb of vox
+# Step 1: Take the whole dictionary consisting of J N-dimensional flattened images [NxJ], N=nb of vox
 #
 # Step 2: Compute the mean image: PSI (called mean_data_vect in the code)
 #
-# Step 3: Compute the covariance matrix of the dataset
+# Step 3: Compute the covariance matrix of the dictionary
 #
 # Step 4: Compute the eigenvectors and corresponding eigenvalues (from the covariance matrix)
 #
@@ -78,7 +78,7 @@ class PCA:
         print '\n-> W:', self.W
         print '\n-> kept:', self.kept
         # omega is a matrix of k rows and J columns, each columns correspond to a vector projection of an image from
-        # the dataset
+        # the dictionary
         self.omega = self.project_dataset()
 
     # STEP 2
@@ -137,7 +137,7 @@ class PCA:
         return W, kept
 
     # STEP 6
-    # Project the all dataset in order to get images "close" to the target & to plot the dataset
+    # Project the all dictionary in order to get images "close" to the target & to plot the dictionary
     def project_dataset(self):
         omega = []
         for column in self.dataset.T:
@@ -307,7 +307,7 @@ class PCA:
 
 
 
-    # plot the projected dataset on nb_mode modes, if target is provided then it will also add its coord in the graph
+    # plot the projected dictionary on nb_mode modes, if target is provided then it will also add its coord in the graph
     def plot_omega(self, nb_mode=1, target_coord=None, to_highlight=None):
         if self.kept < nb_mode:
             print "Can't plot {} modes, not enough modes kept. " \
@@ -316,17 +316,17 @@ class PCA:
         assert self.omega.shape == (self.kept, self.J), "The matrix is {}".format(self.omega.shape)
         for i in range(nb_mode):
             for j in range(i,nb_mode):
-                # Plot the dataset
+                # Plot the dictionary
                 if j != i:
                     fig = plt.figure()
 
                     graph = fig.add_subplot(1,1,1)
                     graph.plot(self.omega[i, 0:self.J], self.omega[j, 0:self.J],
-                             'o', markersize=7, color='blue', alpha=0.5, label='dataset')
+                             'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
 
                     if to_highlight is not None:
                         graph.plot(self.omega[i, to_highlight[1]], self.omega[j, to_highlight[1]],
-                             'o', markersize=7, color='black', alpha=0.5, label='chosen dataset')
+                             'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
 
                     # Plot the projected image's coord
                     if target_coord is not None:
