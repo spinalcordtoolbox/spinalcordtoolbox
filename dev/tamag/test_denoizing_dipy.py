@@ -1,25 +1,29 @@
 #!/usr/bin/env python
 
-
+import sys, commands
 import numpy as np
 from time import time
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
 import os
 
+
 import matplotlib.pyplot as plt
 
+#os.chdir('/Users/tamag/data/original_data/full/errsm_03/t2')
 os.chdir('/Users/tamag/data/sct_testing_data/data/t2')
 
 #os.remove('/Users/tamag/.dipy/sherbrooke_3shell')
-img = nib.load('t2_straight.nii.gz')
+
+#img = nib.load('data.nii.gz')
+img = nib.load('t2.nii.gz')
 
 data = img.get_data()
 aff = img.get_affine()
 
-mask = data[..., 0] > 80
+mask = data[:, :, :] > 80
 
-data = data[..., 0]
+data = data[:, :, :]
 
 print("vol size", data.shape)
 
