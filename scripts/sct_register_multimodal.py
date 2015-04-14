@@ -77,6 +77,9 @@ class Paramreg(object):
     def update(self, paramreg_user):
         list_objects = paramreg_user.split(',')
         for object in list_objects:
+            if len(object)<2:
+                sct.printv('Please check parameter -p (usage changed)',1,type='error')
+
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
@@ -207,10 +210,11 @@ def main():
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
-    paramreg_user = arguments['-p']
-    # update registration parameters
-    for paramStep in paramreg_user:
-        paramreg.addStep(paramStep)
+    if "-p" in arguments:
+        paramreg_user = arguments['-p']
+        # update registration parameters
+        for paramStep in paramreg_user:
+            paramreg.addStep(paramStep)
 
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
