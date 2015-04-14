@@ -451,7 +451,7 @@ if affine_transform == 1
     
     %  modify pixdim and originator
     %
-    hdr.dime.pixdim(2:4) = voxel_size;
+    %hdr.dime.pixdim(2:4) = voxel_size;
     hdr.hist.originator(1:3) = originator;
     
     %  set sform or qform to non-use, because they have been
