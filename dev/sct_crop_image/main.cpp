@@ -647,8 +647,8 @@ int transform(string inputFilename, string outputFilename, string maskFilename, 
 		it.GoToBegin();
 		while(!it.IsAtEnd()) {
             bool isOutsideBox = false;
-            for (int i=0; i<dims.size(); i++) {
-                if (it.GetIndex()[dims[i]] > endSlices[i] || it.GetIndex()[dims[i]] < startSlices[i]) {
+            for (int i=0; i<N; i++) {
+                if (it.GetIndex()[i] > endSlices[i] || it.GetIndex()[i] < startSlices[i]) {
                     isOutsideBox = true;
                     break;
                 }

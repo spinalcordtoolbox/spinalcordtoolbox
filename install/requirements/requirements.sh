@@ -7,18 +7,13 @@
 #		scipy
 #		sympy
 #		matplotlib
-#		pip
-#
-#	using pip:
-#		nibadel
 echo "-------------------------------"
 echo "INSTALLER FOR SOME REQUIREMENTS"
 echo "-------------------------------"
 if which conda >/dev/null; then
     echo "* CONDA *"
     conda install --yes --file requirementsConda.txt
-    echo "* PIP *"
-    pip install -r requirementsPip.txt
+    easy_install nibabel
 else
     echo "Conda is not installed"
     echo "Cannot install requirements "

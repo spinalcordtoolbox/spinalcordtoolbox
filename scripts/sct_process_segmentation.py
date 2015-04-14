@@ -33,6 +33,8 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -52,7 +54,7 @@ class Param:
         self.vertebral_levels = ''
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
-        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
 
         
 # MAIN
@@ -93,7 +95,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -124,6 +126,8 @@ def main():
             elif opt in ('-v'):
                 verbose = int(arg)
                 volume_output = 1
+            elif opt in ('-w'):
+                param.window_length = int(arg)
             elif opt in ('-z'):
                 slices = arg
 
@@ -383,7 +387,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     sct.printv('\nCompute CSA...', verbose)
 
     # Empty arrays in which CSA for each z slice will be stored
-    csa = [0 for i in xrange(0,max_z_index-min_z_index+1)]
+    csa = [0.0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_ortho_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_ortho_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
     # sections_z_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
@@ -479,17 +483,21 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         if name_method == 'counting_z_plane' or name_method == 'ellipse_z_plane':
 
             # getting the segmentation for each z plane
-            x_seg, y_seg = (data_seg[:,:,iz+min_z_index]>0).nonzero()
-            seg = [[x_seg[i],y_seg[i]] for i in range(0,len(x_seg))]
+            x_seg, y_seg = (data_seg[:, :, iz+min_z_index] > 0).nonzero()
+            seg = [[x_seg[i], y_seg[i]] for i in range(0, len(x_seg))]
 
-            plane = np.zeros((max(Xp),max(Yp)))
+            plane = np.zeros((max(Xp), max(Yp)))
 
             for i in seg:
                 # filling the plane with 0 and 1 regarding to the segmentation
-                plane[i[0] - 1][i[1] - 1] = 1
+                plane[i[0] - 1][i[1] - 1] = data_seg[i[0] - 1, i[1] - 1, iz+min_z_index]
 
-            if name_method == 'counting_z_plane' :
-                csa[iz] = len((plane>0).nonzero()[0])*px*py*np.cos(angle)
+            if name_method == 'counting_z_plane':
+                x, y = (plane > 0.0).nonzero()
+                len_x = len(x)
+                for i in range(0, len_x):
+                    csa[iz] += plane[x[i], y[i]]*px*py
+                csa[iz] *= np.cos(angle)
 
             # if verbose == 1 and name_method == 'counting_z_plane':
             #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
@@ -769,6 +777,7 @@ OPTIONAL ARGUMENTS
   -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
   -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
+  -w <smoothing>        Smoothing window size. Only used with 'centerline'
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
   -h                    Help. Show this message
