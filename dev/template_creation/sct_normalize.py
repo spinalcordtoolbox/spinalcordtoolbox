@@ -20,8 +20,7 @@ class param:
         self.verbose = 0
         self.mean_intensity = 1000  # value to assign to the spinal cord
         self.padding = 3 # vox
-        self.window_length = 80 # size of the smoothing window
-        
+
 # check if needed Python libraries are already installed or not
 import sys
 import commands
@@ -41,7 +40,6 @@ from time import strftime
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
 from scipy import ndimage
-from msct_smooth import smooth_curve
 
 
 
@@ -53,10 +51,9 @@ def main():
     mean_intensity = param.mean_intensity
     verbose = param.verbose
     padding = param.padding
-    window_length = param.window_length
-    
+
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:c:v:p:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:c:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -66,8 +63,6 @@ def main():
             fname = arg
         elif opt in ("-c"):
             fname_centerline = arg
-        elif opt in ("-p"):
-            window_length = int(arg)
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -106,7 +101,7 @@ def main():
     data_c = file_c.get_data()
     
     
-    #X,Y,Z = (data_c>0).nonzero()
+    X,Y,Z = (data_c>0).nonzero()
     
     #min_z_index, max_z_index = min(Z), max(Z)
     
@@ -134,32 +129,15 @@ def main():
     #print("means=", means)
 
     print('\nSmoothing results with spline...')
-    # Smoothing with scipy library (Julien Touati's code)
-    #m =np.mean(means)
-    #sigma = np.std(means)
-    #smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
-    #Equivalent to : m*sigma**2
-    #tck = splrep(z_centerline, means, s=smoothing_param)
-    #means_smooth = splev(z_centerline, tck)
-
-    #Test smoothing with nurbs
-    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
-    #nurbs = NURBS(3,1000,points)
-    #P = nurbs.getCourbe3D()
-    #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
-
-    #Smoothing with hanning
-    means = np.asarray(means)
-    means_smooth = smooth_curve(means, window_length=window_length)
-    print means.shape[0], means_smooth.shape[0]
-
+    m =np.mean(means)
+    sigma = np.std(means)
+    smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+    tck = splrep(z_centerline, means, s=smoothing_param)
+    means_smooth = splev(z_centerline, tck)
     if verbose :
         plt.figure()
-        #plt.subplot(2,1,1)
-        plt.plot(z_centerline,means, "ro")
-        #plt.subplot(2,1,2)
-        plt.plot(means_smooth)
-        plt.title("Mean intensity: Type of window: hanning     Window_length= %d mm" % window_length)
+        plt.plot(z_centerline,means)
+        plt.plot(z_centerline,means_smooth)
         plt.show()
     print('\nNormalizing intensity along centerline...')
 
@@ -175,7 +153,7 @@ def main():
     X_means_smooth_extended = np.nonzero(means_smooth_extended)
     X_means_smooth_extended = np.transpose(X_means_smooth_extended)
 
-    #initialization: we set the extrem values to avoid edge effects
+    #initialization: we fixe the extrem values to avoid edge effects
     means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
     means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
 
@@ -198,18 +176,10 @@ def main():
             count_zeros += 1
     if verbose :
         plt.figure()
-
-        plt.subplot(2,1,1)
-        plt.plot(z_centerline,means)
-        plt.plot(z_centerline,means_smooth)
-        plt.title("Mean intensity")
-
-        plt.subplot(2,1,2)
-        plt.plot(z_centerline,means)
         plt.plot(means_smooth_extended)
         plt.title("Extended mean intensity")
-
         plt.show()
+    #print means_smooth_extended
 
     for i in range(data.shape[2]):
         data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
@@ -230,7 +200,6 @@ def main():
     print '\nDone !'
     print '\nTo view results, type:'
     print 'fslview '+output_name+' &\n'
-
 
 
     
