@@ -210,10 +210,11 @@ def main():
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
-    paramreg_user = arguments['-p']
-    # update registration parameters
-    for paramStep in paramreg_user:
-        paramreg.addStep(paramStep)
+    if "-p" in arguments:
+        paramreg_user = arguments['-p']
+        # update registration parameters
+        for paramStep in paramreg_user:
+            paramreg.addStep(paramStep)
 
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])

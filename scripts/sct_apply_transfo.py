@@ -45,6 +45,7 @@ def main():
     fname_src_reg = ''
     verbose = 1
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
+    crop_reference = 0 # if = 1, put 0 everywhere around warping field, if = 2, real crop
 
     # Parameters for debug mode
     if param.debug:
@@ -58,7 +59,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:x:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:d:o:v:w:x:c:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -78,6 +79,8 @@ def main():
                 verbose = int(arg)
             elif opt in ('-w'):
                 fname_warp_list = arg
+            elif opt in ('-c'):
+                crop_reference = int(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_src == '' or fname_warp_list == '' or fname_dest == '':
@@ -191,8 +194,10 @@ def main():
     # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
     if isLastAffine:
         sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',1,'warning')
-    else:
+    elif crop_reference == 1:
         sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
+    elif crop_reference == 2:
+        sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field)
 
     # display elapsed time
     sct.printv('\nDone! To view results, type:', verbose)
