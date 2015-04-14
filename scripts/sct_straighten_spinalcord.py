@@ -40,6 +40,8 @@ from sct_orientation import set_orientation
 
 
 
+
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -481,7 +483,7 @@ def usage():
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -a {hanning,nurbs}Algorithm for curve fitting. Default='+str(param_default.algo_fitting)+'\n' \
-        '  -v {0,1,2,3}      Verbose. 0: nothing, 1: basic, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
+        '  -v {0,1,2}        Verbose. 0: nothing, 1: basic, 2: extended. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -524,6 +526,15 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
     for iz in range(0, nz_nonz, 1):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
 
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # data_tmp = data
+        # data_tmp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 10
+        # implot = ax.imshow(data_tmp[:, :, z_centerline[iz]].T)
+        # implot.set_cmap('gray')
+        # plt.show()
+
     sct.printv('.. Smoothing algo = '+algo_fitting, param.verbose)
     if algo_fitting == 'hanning':
         # 2D smoothing
@@ -541,25 +552,25 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
         x_centerline = asarray(x_centerline)
         y_centerline = asarray(y_centerline)
 
-        # Extension of the curve to smooth, to avoid edge effects
+        # Extend the curve before smoothing to avoid edge effects
         x_centerline_extended = x_centerline
-        for i in range(int(window_length/(2.0*pz))+1):
+        size_centerline = x_centerline.shape[0]
+        size_padding = int(window_length/(2.0*pz))
+        for i in range(size_padding+1):
             x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-2-i])
             x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
-
         y_centerline_extended = y_centerline
-        for i in range(int(window_length/(2.0*pz))+1):
+        for i in range(size_padding+1):
             y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-2-i])
             y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
 
-        # Smoothing of the extended curve
+        # Smooth the extended curve
         x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
         y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
 
-        # Selection of the part of interest of the extended curve
-        x_centerline_final = x_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + x_centerline.shape[0]]
-        #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
-        y_centerline_final = y_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + y_centerline.shape[0]]
+        # Crop the curve back to its original size
+        x_centerline_final = x_centerline_temp[size_padding+1:size_padding+size_centerline+1]
+        y_centerline_final = y_centerline_temp[size_padding+1:size_padding+size_centerline+1]
 
         # convert to list final result
         x_centerline_final = x_centerline_final.tolist()
@@ -600,7 +611,7 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
             plt.figure(1)
             # plot x = f(z)
             plt.subplot(211)
-            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm, 'bo')
+            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_extended_mm, 'bo')
             pltx, = plt.plot(z_centerline_mm, x_centerline_mm, 'ro')
             pltx_fit, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm)
             plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
@@ -610,7 +621,7 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
             plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
             # plot y = f(z)
             plt.subplot(212)
-            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm, 'bo')
+            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_extended_mm, 'bo')
             plty, = plt.plot(z_centerline_mm, y_centerline_mm, 'ro')
             plty_fit, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm)
             plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
