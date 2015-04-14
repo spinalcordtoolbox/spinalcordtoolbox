@@ -34,6 +34,7 @@ from sct_straighten_spinalcord import smooth_centerline
 
 
 
+
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
@@ -279,7 +280,7 @@ def extract_centerline(fname_segmentation, param, remove_temp_files):
     # extract centerline and smooth it
     x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 1)
 
-    if param.verbose == 1 :
+    if param.verbose == 2:
             #import matplotlib.pyplot as plt
             from matplotlib.pyplot import *
 
