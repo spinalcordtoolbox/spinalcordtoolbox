@@ -17,7 +17,7 @@ for level=1:size(t2.img,3);
     se = strel('disk',2);
     BW=imdilate(mask.img(:,:,level),se);
     
-    [initialArray(:,:,level), SC(:,:,level)] = myelinInitialSegmention(255*(double(t2.img(:,:,level))/double(max(max(t2.img(:,:,level))))), BW, false(dims(1:2)),0);
+    [initialArray(:,:,level), SC(:,:,level)] = myelinInitialSegmention(255*(double(t2.img(:,:,level))/double(max(max(t2.img(:,:,level)))))+1, BW, false(dims(1:2)),0,1,1/5,1);
 end
 
 
@@ -26,7 +26,7 @@ for level=1:size(t2.img,3);
     BW=imerode(SC(:,:,level),se);
     if length(find(BW))<10, BW=SC(:,:,level); end
     BW=bwconvhull(BW);
-    [initialArray(:,:,level), SC(:,:,level)] = myelinInitialSegmention(255*(double(t2.img(:,:,level))/double(max(max(t2.img(:,:,level))))), BW, false(dims(1:2)),0,0,1/3);
+    [initialArray(:,:,level), SC(:,:,level)] = myelinInitialSegmention(255*(double(t2.img(:,:,level))/double(max(max(t2.img(:,:,level)))))+1, BW, false(dims(1:2)),0,1,1/5,1);
 end
 
 mask.img=initialArray;
