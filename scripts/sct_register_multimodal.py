@@ -77,6 +77,9 @@ class Paramreg(object):
     def update(self, paramreg_user):
         list_objects = paramreg_user.split(',')
         for object in list_objects:
+            if len(object)<2:
+                sct.printv('Please check parameter -p (usage changed)',1,type='error')
+
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
