@@ -8,7 +8,6 @@ import commands, sys
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
-sys.path.append('/home/tamag/code')
 
 from msct_parser import Parser
 from nibabel import load, save, Nifti1Image
@@ -70,6 +69,9 @@ def main(list_file, param, output_file_name=None, parameter = "binary_centerline
     fname_output = extract_centerline('concatenation_file.nii.gz', param, remove_temp_files=1)
 
     # Rename files after processing
+    if output_file_name != None:
+        output_file_name = output_file_name
+    else : output_file_name = "generated_centerline.nii.gz"
     os.rename(fname_output, output_file_name)
     path_binary, file_binary, ext_binary = sct.extract_fname(output_file_name)
     os.rename('concatenation_file_centerline.txt', file_binary+'.txt')
@@ -127,8 +129,7 @@ if __name__ == "__main__":
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Name of the output NIFTI image with the centerline, or of the output text file with the coordinates according to z.",
-                      mandatory=False,
-                      default_value="labels.nii.gz")
+                      mandatory=False)
 
     parser.add_option(name="-r",
                       type_value="multiple_choice",
