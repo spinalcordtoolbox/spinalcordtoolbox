@@ -20,7 +20,7 @@ class param:
         self.verbose = 0
         self.mean_intensity = 1000  # value to assign to the spinal cord
         self.padding = 3 # vox
-       self.window_length = 80 # size of the smoothing window
+        self.window_length = 80 # size of the smoothing window
 
 # check if needed Python libraries are already installed or not
 import sys
