@@ -24,3 +24,18 @@ save_nii(nii,output_fname)
 %% display image
 cmd=['fslview ' output_fname]
 unix(cmd)
+
+%% parser
+function(varargin)
+p=inputParser
+addOptional('file','fds.nii',@isstr)
+addOptional('page',1,@isnumeric)
+addOptional('file','fds.nii',@isstr)
+addOptional('file','fds.nii',@isstr)
+
+parse(p,varargin{:})
+
+in=p.Results;
+
+in.file
+
