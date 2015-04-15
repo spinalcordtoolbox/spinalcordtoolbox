@@ -550,87 +550,17 @@ def smooth_centerline(fname_centerline, param, verbose=1):
         x_centerline = asarray(x_centerline)
         y_centerline = asarray(y_centerline)
 
-        # Extend the curve before smoothing to avoid edge effects
-        x_centerline_extended = x_centerline
-        size_centerline = x_centerline.shape[0]
-        size_padding = int(window_length/(2.0*pz))
-        for i in range(size_padding+1):
-            x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-2-i])
-            x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
-        y_centerline_extended = y_centerline
-        for i in range(size_padding+1):
-            y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-2-i])
-            y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
 
-        # Smooth the extended curve
-        x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
-        y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
-
-        # Crop the curve back to its original size
-        x_centerline_final = x_centerline_temp[size_padding+1:size_padding+size_centerline+1]
-        y_centerline_final = y_centerline_temp[size_padding+1:size_padding+size_centerline+1]
+        # Smooth the curve
+        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window, verbose = param.verbose)
+        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window, verbose = param.verbose)
 
         # convert to list final result
-        x_centerline_final = x_centerline_final.tolist()
-        y_centerline_final = y_centerline_final.tolist()
+        x_centerline_smooth = x_centerline_smooth.tolist()
+        y_centerline_smooth = y_centerline_smooth.tolist()
 
-        if param.verbose == 2:
-            # convert to physical coordinates
-            x_centerline_mm = [i*px for i in x_centerline]
-            y_centerline_mm = [i*py for i in y_centerline]
-            z_centerline_mm = [i*pz + int(window_length/(2.0*pz)+1)*pz for i in z_centerline]
-            x_centerline_temp_mm = [i*px for i in x_centerline_temp]
-            y_centerline_temp_mm = [i*py for i in y_centerline_temp]
-            x_centerline_extended_mm = [i*px for i in x_centerline_extended]
-            y_centerline_extended_mm = [i*py for i in y_centerline_extended]
-            z_centerline_extended = [i for i in range(0, x_centerline_extended.shape[0])]
-            z_centerline_extended_mm = [i*pz for i in z_centerline_extended]
-
-            import matplotlib.pyplot as plt
-            # plt.figure(1)
-            # #ax = plt.subplot(211)
-            # plt.subplot(211)
-            # plt.plot(z_centerline, x_centerline, 'ro')
-            # plt.plot(z_centerline, x_centerline_final)
-            # plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            # #ax.set_aspect('equal')
-            # plt.xlabel('z')
-            # plt.ylabel('x')
-            # #ay = plt.subplot(212)
-            # plt.subplot(212)
-            # plt.plot(z_centerline, y_centerline, 'ro')
-            # plt.plot(z_centerline, y_centerline_final)
-            # plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            # #ay.set_aspect('equal')
-            # plt.xlabel('z')
-            # plt.ylabel('y')
-            # plt.show()
-
-            plt.figure(1)
-            # plot x = f(z)
-            plt.subplot(211)
-            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_extended_mm, 'bo')
-            pltx, = plt.plot(z_centerline_mm, x_centerline_mm, 'ro')
-            pltx_fit, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm)
-            plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ax.set_aspect('equal')
-            plt.xlabel('z (mm)')
-            plt.ylabel('x (mm)')
-            plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-            # plot y = f(z)
-            plt.subplot(212)
-            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_extended_mm, 'bo')
-            plty, = plt.plot(z_centerline_mm, y_centerline_mm, 'ro')
-            plty_fit, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm)
-            plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ay.set_aspect('equal')
-            plt.xlabel('z (mm)')
-            plt.ylabel('y (mm)')
-            plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-            plt.show()
-
-        x_centerline = x_centerline_final
-        y_centerline = y_centerline_final
+        x_centerline = x_centerline_smooth
+        y_centerline = y_centerline_smooth
 
         # clear variable
         del data
