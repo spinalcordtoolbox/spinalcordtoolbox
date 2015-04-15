@@ -27,16 +27,16 @@ class Param:
         self.verbose = 1  # verbose
         self.remove_temp_files = 1
         self.parameter = "Rician"
-        self.file_to_denoize = ''
+        self.file_to_denoise = ''
         self.output_file_name = ''
 
 
 
-def main(file_to_denoize, param, output_file_name) :
+def main(file_to_denoise, param, output_file_name) :
 
-    path, file, ext = sct.extract_fname(file_to_denoize)
+    path, file, ext = sct.extract_fname(file_to_denoise)
 
-    img = nib.load(file_to_denoize)
+    img = nib.load(file_to_denoise)
     hdr_0 = img.get_header()
 
     data = img.get_data()
@@ -88,7 +88,7 @@ def main(file_to_denoize, param, output_file_name) :
     img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
     if output_file_name != None :
         output_file_name =output_file_name
-    else: output_file_name = file + '_denoized' + ext
+    else: output_file_name = file + '_denoised' + ext
     nib.save(img_denoize,output_file_name)
     nib.save(img_diff, file + '_difference' +ext)
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                       mandatory=True)
     parser.add_option(name="-p",
                       type_value="multiple_choice",
-                      description="Type of supposed noize: Rician or Gaussian. Default is Rician.",
+                      description="Type of supposed noise: Rician or Gaussian. Default is Rician.",
                       mandatory=False,
                       example=["Rician","Gaussian"],
                       default_value="Rician")
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     verbose = int(arguments["-v"])
 
     if "-i" in arguments:
-        file_to_denoize = arguments["-i"]
+        file_to_denoise = arguments["-i"]
     else: file_to_denoize = None
     if "-o" in arguments:
         output_file_name = arguments["-o"]
@@ -150,4 +150,4 @@ if __name__ == "__main__":
     param.remove_temp_files =remove_temp_files
     param.parameter = parameter
 
-    main(file_to_denoize, param, output_file_name)
+    main(file_to_denoise, param, output_file_name)
