@@ -33,7 +33,6 @@ class Param:
 
 def main(list_file, param, output_file_name=None, parameter = "binary_centerline", remove_temp_files = 1, verbose = 0):
 
-
     path, file, ext = sct.extract_fname(list_file[0])
 
     # create temporary folder
@@ -66,7 +65,7 @@ def main(list_file, param, output_file_name=None, parameter = "binary_centerline
 
 
     # Applying nurbs to the concatenation and save file as binary file
-    fname_output = extract_centerline('concatenation_file.nii.gz', param, remove_temp_files=1)
+    fname_output = extract_centerline('concatenation_file.nii.gz', remove_temp_files = remove_temp_files, verbose = verbose, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length)
 
     # Rename files after processing
     if output_file_name != None:
@@ -89,6 +88,7 @@ def main(list_file, param, output_file_name=None, parameter = "binary_centerline
         #Copy txt file into parent folder
         sct.run('cp '+file_binary+ '.txt'+ ' ../')
 
+    os.chdir('../')
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
