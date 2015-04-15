@@ -55,7 +55,7 @@ class Param:
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
-        self.algo_fitting = 'nurbs'
+        self.algo_fitting = 'hanning'  # nurbs, hanning
 
         
 # MAIN
