@@ -123,6 +123,7 @@ class NURBS():
                     w[i] = (dist_before+dist_after)/2.0
                 w[0], w[-1] = w[1], w[-2]
 
+                list_param_that_worked = []
                 last_error_curve = 0.0
                 while abs(error_curve-last_error_curve) > self.tolerance and self.nbControle < len(P_x) and self.nbControle <= self.maxControlPoints:
                     last_error_curve = error_curve
@@ -149,6 +150,9 @@ class NURBS():
                         if verbose >= 1:
                             print 'Error on approximation = ' + str(round(error_curve, 2)) + ' mm'
 
+                        # Create a list of parameters that have worked in order to call back the last one that has worked
+                        list_param_that_worked.append([self.nbControle, self.pointsControle, error_curve])
+
                     except Exception as ex:
                         if verbose >= 1:
                             print ex
@@ -159,9 +163,17 @@ class NURBS():
                     self.nbControle += 1
                 self.nbControle -= 1  # last addition does not count
 
-                self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
+                #self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
+                nbControle_that_last_worked = list_param_that_worked[-1][0]
+                pointsControle_that_last_worked = list_param_that_worked[-1][1]
+                error_curve_that_last_worked = list_param_that_worked[-1][2]
+                self.courbe3D, self.courbe3D_deriv = self.construct3D(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
+
                 if verbose >= 1:
-                    print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
+                    if self.nbControle != nbControle_that_last_worked:
+                        print 'The number of points was too low. The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the last number that worked. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                    else:
+                        print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
                 if verbose >= 1:
                     print 'In NURBS we get nurbs_ctl_points = ',nbControl
