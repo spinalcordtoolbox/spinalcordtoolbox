@@ -20,7 +20,7 @@ import commands
 import subprocess
 import re
 
-# TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
@@ -424,7 +424,7 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
+    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' or program == 'isct_antsSliceRegularizedRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
         elif interp == 'linear':

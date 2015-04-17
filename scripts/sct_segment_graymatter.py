@@ -82,12 +82,12 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.run("sct_c3d "+fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
-    sct.run("sct_c3d "+fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
+    sct.run("isct_c3d "+fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
+    sct.run("isct_c3d "+fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
     if fname_seg_moving != '':
-        sct.run("sct_c3d "+fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
+        sct.run("isct_c3d "+fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
     if fname_seg_fixed != '':
-        sct.run("sct_c3d "+fname_seg_fixed+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
+        sct.run("isct_c3d "+fname_seg_fixed+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -119,17 +119,17 @@ def main():
     # padding the images
     moving_name_temp = moving_name+"_pad"
     fixed_name_temp = fixed_name+"_pad"
-    sct.run("sct_c3d "+moving_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_name_temp+".nii")
-    sct.run("sct_c3d "+fixed_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_name_temp+".nii")
+    sct.run("isct_c3d "+moving_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_name_temp+".nii")
+    sct.run("isct_c3d "+fixed_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_name_temp+".nii")
     moving_name = moving_name_temp
     fixed_name = fixed_name_temp
     if fname_seg_moving != '':
         moving_seg_name_temp = moving_seg_name+"_pad"
-        sct.run("sct_c3d "+moving_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_seg_name_temp+".nii")
+        sct.run("isct_c3d "+moving_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_seg_name_temp+".nii")
         moving_seg_name = moving_seg_name_temp
     if fname_seg_fixed != '':
         fixed_seg_name_temp = fixed_seg_name+"_pad"
-        sct.run("sct_c3d "+fixed_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_seg_name_temp+".nii")
+        sct.run("isct_c3d "+fixed_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_seg_name_temp+".nii")
         fixed_seg_name = fixed_seg_name_temp
 
     # binarise the moving image
@@ -174,7 +174,7 @@ def main():
     # registration of the grey matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence "+iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "isct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence "+iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if fname_seg_moving != '':
         cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
@@ -188,8 +188,8 @@ def main():
 
     # TODO change "fixed.nii"
     moving_name_temp = file_output+ext_output
-    #sct.run("sct_c3d "+fixed_name+".nii "+file_output+ext_output+" -reslice-identity  -o "+file_output+'_register'+ext_output)
-    sct.run("sct_c3d fixed.nii "+moving_name+".nii -reslice-identity -o "+file_output+ext_output)
+    #sct.run("isct_c3d "+fixed_name+".nii "+file_output+ext_output+" -reslice-identity  -o "+file_output+'_register'+ext_output)
+    sct.run("isct_c3d fixed.nii "+moving_name+".nii -reslice-identity -o "+file_output+ext_output)
 
     # move output files to initial folder
     sct.run("cp "+file_output+"* ../")
