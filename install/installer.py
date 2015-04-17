@@ -689,14 +689,16 @@ class Installer:
                 status, output = runProcess(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
-
-                print "  Deleting previous SCT entries in .bash_profile"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-                print ">> " + cmd
-                status, output = runProcess(cmd)
-                #status, output = commands.getstatusoutput(cmd)
-                if status != 0:
-                    print '\nERROR! \n' + output + '\nExit program.\n'
+                # test if .bash_profile exists
+                if os.path.isfile(self.home+"/.bash_profile"):
+                    # delete previous entries in .bash_profile
+                    print "  Deleting previous SCT entries in .bash_profile"
+                    cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
+                    print ">> " + cmd
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print '\nERROR! \n' + output + '\nExit program.\n'
 
         # edit .bashrc. Add bin
         with open(self.home+"/.bashrc", "a") as bashrc:
