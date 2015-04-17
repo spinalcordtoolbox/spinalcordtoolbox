@@ -204,12 +204,7 @@ def create_mask():
     cy = [0] * nz
     for iz in range(0, nz, 1):
         cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline[iz]]))
-
-    # cx, cy, cz = numpy.where(data_centerline > 0)
-    # arg = numpy.argsort(cz)
-    # cz = cz[arg]
-    # cx = cx[arg]
-    # cy = cy[arg]
+    # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
@@ -256,7 +251,8 @@ def create_line(fname, coord, nz):
 
     # loop across z and create a voxel at a given XY coordinate
     for iz in range(nz):
-        sct.run('isct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
+        # sct.run('isct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
+        sct.run('sct_label_utils -i line.nii -o line.nii -t create -x '+str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1', param.verbose)
 
     return 'line.nii'
 
