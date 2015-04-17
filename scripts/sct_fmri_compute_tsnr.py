@@ -44,7 +44,8 @@ class Tsnr:
         sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
         path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
         fname_fmri_moco = fname_fmri + '_moco'
-        sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri) + fname_fmri + ' -out ' + fname_fmri_moco)
+        print sct.slash_at_the_end(path_fmri) + fname_fmri
+        sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
 
         # compute tsnr
         sct.printv('\nCompute the tSNR...', self.param.verbose, 'normal')
