@@ -195,34 +195,37 @@ def main():
         print '  '+path_fsl
     else:
         print_fail()
-        print '  FSL is not working!'
+        print '  FSL is either not installed or not declared.'
+        print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
+        print '  - To declare it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup'
         e = 1
 
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
 
-    # check if FSL is installed
-    if not fsl_is_working:
-        print_line('Check if FSL is installed ')
-        # check first under /usr for faster search
-        (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
-        if output:
-            print_ok()
-            path_fsl = output[:-10]
-            print '  '+path_fsl
-        else:
-            # some users might have installed it under /home, so check it...
-            (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
-            if output:
-                print_ok()
-                path_fsl = output[:-10]
-                print '  '+path_fsl
-            else:
-                print_fail()
-                print '  FSL does not seem to be installed! Install it from: http://fsl.fmrib.ox.ac.uk/'
-                fsl_is_installed = 0
-                install_software = 1
+    # # check if FSL is installed
+    # if not fsl_is_working:
+    #     print_line('Check if FSL is installed ')
+    #     # check first under /usr for faster search
+    #     (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
+    #     if output:
+    #         print_ok()
+    #         path_fsl = output[:-10]
+    #         print '  '+path_fsl
+    #     else:
+    #         # some users might have installed it under /home, so check it...
+    #         (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
+    #         if output:
+    #             print_ok()
+    #             path_fsl = output[:-10]
+    #             print '  '+path_fsl
+    #         else:
+    #             print_fail()
+    #             print '  FSL is either not installed.'
+    #             print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
+    #             fsl_is_installed = 0
+    #             install_software = 1
 
     # check ANTs
     print_line('Check which ANTs is running ')
