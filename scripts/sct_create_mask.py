@@ -251,8 +251,7 @@ def create_line(fname, coord, nz):
 
     # loop across z and create a voxel at a given XY coordinate
     for iz in range(nz):
-        # sct.run('isct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
-        sct.run('sct_label_utils -i line.nii -o line.nii -t create -x '+str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1', param.verbose)
+        sct.run('sct_label_utils -i line.nii -o line.nii -t add -x '+str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1', param.verbose)
 
     return 'line.nii'
 
