@@ -139,7 +139,7 @@ USAGE
 
 MANDATORY ARGUMENTS
   -i <data>         input image name
-  -t <filename>     output image name
+  -o <filename>     output image name
 
 OPTIONAL ARGUMENTS
   -t <type>         type of output image. default: int32
