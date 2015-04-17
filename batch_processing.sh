@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord
 # For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
