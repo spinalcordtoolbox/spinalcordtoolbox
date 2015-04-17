@@ -80,7 +80,7 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if process.returncode:
         # from inspect import stack
-        printv(output_final[0:-1], 1,'warning')
+        printv(output_final[0:-1], 1, 'error')
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
     else:
@@ -274,9 +274,6 @@ def find_file_within_folder(fname, directory):
 # Get dimensions of a nifti file using FSL
 def get_dimension(fname):
     # apply fslsize on data
-    if not check_file_exist(fname):
-        raise "ERROR: file "+str(fname)+" does not exist."
-
     cmd = 'fslsize '+fname
     status, output = commands.getstatusoutput(cmd)
     # split output according to \n field
@@ -297,6 +294,7 @@ def get_dimension(fname):
             pt = float(output_split[15])
             return nx, ny, nz, nt, px, py, pz, pt
         except Exception, e:
+            print "Output of the command: \n", output_split
             raise Exception
 
 
