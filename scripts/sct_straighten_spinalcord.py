@@ -75,6 +75,8 @@ def main():
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
     algo_fitting = param.algo_fitting
+    window_length = param.window_length
+    type_window = param.type_window
 
     # start timer
     start_time = time.time()
@@ -172,7 +174,7 @@ def main():
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param, verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length,verbose=verbose)
 
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -494,16 +496,16 @@ def usage():
 
 # Smooth centerline
 #=======================================================================================================================
-def smooth_centerline(fname_centerline, param, verbose=1):
+def smooth_centerline(fname_centerline, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, verbose = 0):
     """
     :param fname_centerline: centerline in RPI orientation
     :return: a bunch of useful stuff
     """
-    window_length = param.window_length
-    type_window = param.type_window
-    algo_fitting = param.algo_fitting
+    # window_length = param.window_length
+    # type_window = param.type_window
+    # algo_fitting = param.algo_fitting
 
-    sct.printv('\nSmooth centerline/segmentation...', param.verbose)
+    sct.printv('\nSmooth centerline/segmentation...', verbose)
 
     # get dimensions (again!)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
@@ -523,7 +525,7 @@ def smooth_centerline(fname_centerline, param, verbose=1):
     z_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
 
     # get center of mass of the centerline/segmentation
-    sct.printv('.. Get center of mass of the centerline/segmentation...', param.verbose)
+    sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
 
@@ -536,107 +538,29 @@ def smooth_centerline(fname_centerline, param, verbose=1):
         # implot.set_cmap('gray')
         # plt.show()
 
-    sct.printv('.. Smoothing algo = '+algo_fitting, param.verbose)
+    sct.printv('.. Smoothing algo = '+algo_fitting, verbose)
     if algo_fitting == 'hanning':
         # 2D smoothing
-        sct.printv('.. Windows length = '+str(window_length), param.verbose)
-
-        #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-        if window_length >= int(2*nz_nonz * pz):
-            window_length = int(2*nz_nonz * pz)
-            sct.printv("WARNING: The ponderation window's length was too high compared to the number of z slices. The value is now of: "+str(window_length), param.verbose, 'warning')
+        sct.printv('.. Windows length = '+str(window_length), verbose)
 
         # change to array
         x_centerline = asarray(x_centerline)
         y_centerline = asarray(y_centerline)
 
-        # Extend the curve before smoothing to avoid edge effects
-        x_centerline_extended = x_centerline
-        size_centerline = x_centerline.shape[0]
-        size_padding = int(window_length/(2.0*pz))
-        for i in range(size_padding+1):
-            x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-2-i])
-            x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
-        y_centerline_extended = y_centerline
-        for i in range(size_padding+1):
-            y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-2-i])
-            y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
 
-        # Smooth the extended curve
-        x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
-        y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
-
-        # Crop the curve back to its original size
-        x_centerline_final = x_centerline_temp[size_padding+1:size_padding+size_centerline+1]
-        y_centerline_final = y_centerline_temp[size_padding+1:size_padding+size_centerline+1]
+        # Smooth the curve
+        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window, verbose = verbose)
+        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window, verbose = verbose)
 
         # convert to list final result
-        x_centerline_final = x_centerline_final.tolist()
-        y_centerline_final = y_centerline_final.tolist()
-
-        if param.verbose == 2:
-            # convert to physical coordinates
-            x_centerline_mm = [i*px for i in x_centerline]
-            y_centerline_mm = [i*py for i in y_centerline]
-            z_centerline_mm = [i*pz + int(window_length/(2.0*pz)+1)*pz for i in z_centerline]
-            x_centerline_temp_mm = [i*px for i in x_centerline_temp]
-            y_centerline_temp_mm = [i*py for i in y_centerline_temp]
-            x_centerline_extended_mm = [i*px for i in x_centerline_extended]
-            y_centerline_extended_mm = [i*py for i in y_centerline_extended]
-            z_centerline_extended = [i for i in range(0, x_centerline_extended.shape[0])]
-            z_centerline_extended_mm = [i*pz for i in z_centerline_extended]
-
-            import matplotlib.pyplot as plt
-            # plt.figure(1)
-            # #ax = plt.subplot(211)
-            # plt.subplot(211)
-            # plt.plot(z_centerline, x_centerline, 'ro')
-            # plt.plot(z_centerline, x_centerline_final)
-            # plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            # #ax.set_aspect('equal')
-            # plt.xlabel('z')
-            # plt.ylabel('x')
-            # #ay = plt.subplot(212)
-            # plt.subplot(212)
-            # plt.plot(z_centerline, y_centerline, 'ro')
-            # plt.plot(z_centerline, y_centerline_final)
-            # plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            # #ay.set_aspect('equal')
-            # plt.xlabel('z')
-            # plt.ylabel('y')
-            # plt.show()
-
-            plt.figure(1)
-            # plot x = f(z)
-            plt.subplot(211)
-            pltx_ext, = plt.plot(z_centerline_extended_mm, x_centerline_extended_mm, 'bo')
-            pltx, = plt.plot(z_centerline_mm, x_centerline_mm, 'ro')
-            pltx_fit, = plt.plot(z_centerline_extended_mm, x_centerline_temp_mm)
-            plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ax.set_aspect('equal')
-            plt.xlabel('z (mm)')
-            plt.ylabel('x (mm)')
-            plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-            # plot y = f(z)
-            plt.subplot(212)
-            plty_ext, = plt.plot(z_centerline_extended_mm, y_centerline_extended_mm, 'bo')
-            plty, = plt.plot(z_centerline_mm, y_centerline_mm, 'ro')
-            plty_fit, = plt.plot(z_centerline_extended_mm, y_centerline_temp_mm)
-            plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ay.set_aspect('equal')
-            plt.xlabel('z (mm)')
-            plt.ylabel('y (mm)')
-            plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-            plt.show()
-
-        x_centerline = x_centerline_final
-        y_centerline = y_centerline_final
+        x_centerline_smooth = x_centerline_smooth.tolist()
+        y_centerline_smooth = y_centerline_smooth.tolist()
 
         # clear variable
         del data
 
-        x_centerline_fit = x_centerline
-        y_centerline_fit = y_centerline
+        x_centerline_fit = x_centerline_smooth
+        y_centerline_fit = y_centerline_smooth
         z_centerline_fit = z_centerline
 
         # get derivative
