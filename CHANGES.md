@@ -1,7 +1,7 @@
 
 # CHANGES TO RELEASE
 
-##1.2 (TBD)
+##2.0 (2015-04-17)
 
 - NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
 - OPT: **sct_straighten_spinalcord**: now MUCH faster and more accurate (issue #240)
@@ -27,7 +27,6 @@
 - INST: new installer in python, simpler to use and check for latest patches
 - REF: msct_parser: new parser that generate documentation/usage
 - REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
-
 
 ##1.1.2_beta (2014-12-25)
 
