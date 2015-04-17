@@ -148,7 +148,7 @@ def create_mask():
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
-        sct.run('sct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
+        sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -252,11 +252,11 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('sct_c3d line.nii -scale 0 -o line.nii', param.verbose)
+    sct.run('isct_c3d line.nii -scale 0 -o line.nii', param.verbose)
 
     # loop across z and create a voxel at a given XY coordinate
     for iz in range(nz):
-        sct.run('sct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
+        sct.run('isct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
 
     return 'line.nii'
 

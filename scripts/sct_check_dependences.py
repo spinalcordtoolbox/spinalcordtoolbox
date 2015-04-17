@@ -49,7 +49,7 @@ def main():
     # initialization
     fsl_is_working = 1
     # ants_is_installed = 1
-    # sct_c3d_is_installed = 1
+    # isct_c3d_is_installed = 1
     install_software = 0
     e = 0
     restart_terminal = 0
@@ -229,8 +229,8 @@ def main():
 
     # check ANTs
     print_line('Check which ANTs is running ')
-    # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    cmd = 'which sct_antsRegistration'
+    # (status, output) = commands.getstatusoutput('command -v isct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    cmd = 'which isct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
@@ -246,7 +246,7 @@ def main():
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS ')
-    cmd = 'sct_antsRegistration'
+    cmd = 'isct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
         print_ok()
@@ -257,24 +257,24 @@ def main():
         print '>> '+cmd
         print (status, output), '\n'
 
-    # check sct_c3d
-    print_line('Check which sct_c3d is running ')
-    # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    status, output = commands.getstatusoutput('which sct_c3d')
+    # check isct_c3d
+    print_line('Check which isct_c3d is running ')
+    # (status, output) = commands.getstatusoutput('command -v isct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
+    status, output = commands.getstatusoutput('which isct_c3d')
     if output:
         print_ok()
-        path_sct_c3d = output[:-7]
-        print '  '+path_sct_c3d
+        path_isct_c3d = output[:-7]
+        print '  '+path_isct_c3d
     else:
         print_warning()
-        print '  sct_c3d is not installed or not declared.'
+        print '  isct_c3d is not installed or not declared.'
         install_software = 1
     if complete_test:
         print (status, output), '\n'
 
-    # check sct_c3d compatibility with OS
-    print_line('Check sct_c3d compatibility with OS ')
-    (status, output) = commands.getstatusoutput('sct_c3d -h')
+    # check isct_c3d compatibility with OS
+    print_line('Check isct_c3d compatibility with OS ')
+    (status, output) = commands.getstatusoutput('isct_c3d -h')
     if status in [0, 256]:
         print_ok()
     else:
