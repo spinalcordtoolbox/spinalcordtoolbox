@@ -149,7 +149,6 @@ def fill_functions():
     #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
-    functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
     functions.append('sct_dmri_moco')
@@ -162,7 +161,6 @@ def fill_functions():
     functions.append('sct_get_centerline_from_labels')
     functions.append('sct_label_utils')
     functions.append('sct_orientation')
-    functions.append('sct_otsu')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
