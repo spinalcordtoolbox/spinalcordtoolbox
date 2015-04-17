@@ -344,7 +344,10 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
                 type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                description = self.arguments[opt].description
+                if self.arguments[opt].default_value:
+                    description += " Default value = "+self.arguments[opt].default_value
+                line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
@@ -546,7 +549,7 @@ class DocSourceForge:
             '`'+basename(self.file)
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        for opt in [opt[0] for opt in sorted_arguments if (self.arguments[opt[0]].example)]:
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example]:
             if type(self.arguments[opt].example) is list:
                 self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
             else:
