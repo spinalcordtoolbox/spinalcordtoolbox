@@ -845,7 +845,7 @@ If you noticed errors during installation, please start a new Terminal and run:
 sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-To get started, open a new Terminal, go back to the installation folder and run: ./batch_processing.sh
+To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
 
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
