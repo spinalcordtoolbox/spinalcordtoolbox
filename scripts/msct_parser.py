@@ -13,7 +13,7 @@
 # - str, int, float, long, complex (check if input is the correct type)
 # - multiple_choice
 # - coordinate [x, y, z, value]
-# - lists, for example list of coordinate: [[','],'Coordinate']
+# - lists, for example list of coordinate:
 # - None, return True when detected (example of boolean)
 #
 # The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
@@ -316,10 +316,13 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
         for opt in mandatory:
-            if self.arguments[opt].type_value == 'multiple_choice':
-                self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
-            else:
-                self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
+            self.usage += ' ' + opt + ' ' + self.refactor_type_value(opt)
+            # if self.arguments[opt].type_value == 'multiple_choice':
+            #     self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
+            # elif isinstance(self.arguments[opt].type_value, list):
+            #     self.usage += ' ' + opt + ' <list of: ' + str(self.arguments[opt].type_value[1]) + '>'
+            # else:
+            #     self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
         self.usage += '\n'
 
     def set_arguments(self):
@@ -356,7 +359,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         elif self.arguments[opt].type_value == 'multiple_choice':
             type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
-            type_value = '<list>'
+            type_value = '<list of: ' + str(self.arguments[opt].type_value[1]) + '>'
         else:
             type_value = '<' + self.arguments[opt].type_value + '>'
         return type_value
