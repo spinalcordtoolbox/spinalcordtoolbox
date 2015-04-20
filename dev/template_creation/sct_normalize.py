@@ -41,7 +41,7 @@ from time import strftime
 import matplotlib.pyplot as plt
 from scipy.interpolate import splrep,splev
 from scipy import ndimage
-from msct_smooth import smooth_curve
+from msct_smooth import smoothing_window
 
 
 
@@ -150,7 +150,7 @@ def main():
 
    #Smoothing with hanning
    means = np.asarray(means)
-   means_smooth = smooth_curve(means, window_length=window_length)
+   means_smooth = smoothing_window(means, window_len=window_length)
    print means.shape[0], means_smooth.shape[0]
 
    if verbose :
