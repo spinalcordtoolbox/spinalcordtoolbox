@@ -91,7 +91,7 @@ hdr = anat_file_nibabel.get_header()
 img = Nifti1Image(landmarks_anat, None, hdr)
 save(img, anat_file_reorient_masked + '.nii.gz')
 
-cmd = 'sct_c3d ' + anat_file_reorient + ext + ' ' + anat_file_reorient_masked + ext + ' -copy-transform -o ' + anat_file_reorient_masked + ext
+cmd = 'isct_c3d ' + anat_file_reorient + ext + ' ' + anat_file_reorient_masked + ext + ' -copy-transform -o ' + anat_file_reorient_masked + ext
 print('>> '+ cmd)
 status, PWD = getstatusoutput(cmd)
 
@@ -127,7 +127,7 @@ hdr = anat_file_nibabel.get_header()
 img = Nifti1Image(landmarks_template, None, hdr)
 save(img, template_file_masked + '.nii.gz')
 
-cmd = 'sct_c3d ' + template_file + ext + ' ' + template_file_masked + ext + ' -copy-transform -o ' + template_file_masked + ext
+cmd = 'isct_c3d ' + template_file + ext + ' ' + template_file_masked + ext + ' -copy-transform -o ' + template_file_masked + ext
 print('>> '+ cmd)
 status, PWD = getstatusoutput(cmd)
 

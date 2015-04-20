@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Concatenate transformations. This function is a wrapper for sct_ComposeMultiTransform
+# Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -101,9 +101,9 @@ def main():
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
-    cmd = 'sct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
+    cmd = 'isct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
-    commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in sct_ComposeMultiTransform
+    commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
@@ -121,7 +121,7 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-  Concatenate transformations. This function is a wrapper for sct_ComposeMultiTransform (ANTs).
+  Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs).
   N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and
   B->C to yield A->C, then you have to input warping fields like that: A->B,B->C
 

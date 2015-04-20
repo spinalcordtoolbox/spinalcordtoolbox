@@ -18,7 +18,7 @@ from scipy.interpolate import splrep, splev
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('sct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+    sct.run('isct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
 
 
 
