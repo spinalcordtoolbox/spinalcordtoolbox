@@ -52,6 +52,7 @@ def main(file_to_denoise, param, output_file_name) :
 
     sigma = np.std(data[~mask])
 
+    print 'Applying Non-local mean filter...'
     if param.parameter == 'Rician':
         den = nlmeans(data, sigma=sigma, mask=mask, rician=True)
     else : den = nlmeans(data, sigma=sigma, mask=mask, rician=False)
