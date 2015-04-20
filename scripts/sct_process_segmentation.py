@@ -365,7 +365,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_c3d '+fname_segmentation+' -o '+path_tmp+'segmentation.nii')
+    sct.run('isct_c3d '+fname_segmentation+' -o '+path_tmp+'segmentation.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
