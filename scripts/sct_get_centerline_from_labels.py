@@ -120,7 +120,8 @@ if __name__ == "__main__":
    parser.add_option(name="-i",
                      type_value=[[','],'file'],
                      description="List containing segmentation NIFTI file and label NIFTI files. They must be 3D. Names must be separated by commas without spaces.",
-                     mandatory=True)
+                     mandatory=True,
+                     example= "data_seg.nii.gz,label1.nii.gz,label2.nii.gz")
    parser.add_option(name="-o",
                      type_value="file_output",
                      description="Name of the output NIFTI image with the centerline and of the output text file with the coordinates (z, x, y) (but text file will have '.txt' extension).",
