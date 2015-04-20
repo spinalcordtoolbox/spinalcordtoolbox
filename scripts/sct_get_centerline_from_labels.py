@@ -49,6 +49,7 @@ def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose
     # go to tmp folder
     os.chdir(path_tmp)
 
+    ## Concatenation of the files
 
     # Concatenation : sum of matrices
     file_0 = load(list_file[0])
@@ -59,7 +60,8 @@ def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose
        for i in range(1, len(list_file)):
            orientation_file_temp = get_orientation(list_file[i])
            if orientation_file_0 != orientation_file_temp :
-               raise Exception("The files ", list_file[0], " and ", list_file[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file.")
+               print "ERROR: The files ", list_file[0], " and ", list_file[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file."
+               sys.exit(2)
            file_temp = load(list_file[i])
            data_temp = file_temp.get_data()
            data_concatenation = data_concatenation + data_temp
@@ -109,7 +111,7 @@ def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-   # initialize parameters
+    # initialize parameters
 
 
    # Initialize the parser
@@ -121,9 +123,9 @@ if __name__ == "__main__":
                      mandatory=True)
    parser.add_option(name="-o",
                      type_value="file_output",
-                     description="Name of the output NIFTI image with the centerline and of the output text file with the coordinates (z, x, y). The orientation is RPI.",
-                     mandatory=False)
-
+                     description="Name of the output NIFTI image with the centerline and of the output text file with the coordinates (z, x, y) (but text file will have '.txt' extension).",
+                     mandatory=False,
+                     default_value='generated_centerline.nii.gz')
    parser.add_option(name="-r",
                      type_value="multiple_choice",
                      description="Remove temporary files. Specify 0 to get access to temporary files.",

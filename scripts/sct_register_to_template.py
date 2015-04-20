@@ -209,12 +209,12 @@ def main():
 
     # copy files to temporary folder
     sct.printv('\nCopy files...', verbose)
-    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    sct.run('sct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    sct.run('sct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
-    sct.run('sct_c3d '+fname_template+' -o '+path_tmp+'/template.nii')
-    sct.run('sct_c3d '+fname_template_label+' -o '+path_tmp+'/template_labels.nii.gz')
-    sct.run('sct_c3d '+fname_template_seg+' -o '+path_tmp+'/template_seg.nii.gz')
+    sct.run('isct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    sct.run('isct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
+    sct.run('isct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
+    sct.run('isct_c3d '+fname_template+' -o '+path_tmp+'/template.nii')
+    sct.run('isct_c3d '+fname_template_label+' -o '+path_tmp+'/template_labels.nii.gz')
+    sct.run('isct_c3d '+fname_template_seg+' -o '+path_tmp+'/template_seg.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -241,7 +241,7 @@ def main():
 
     # Make sure landmarks are INT
     sct.printv('\nConvert landmarks to INT...', verbose)
-    sct.run('sct_c3d template_label.nii.gz -type int -o template_label.nii.gz', verbose)
+    sct.run('isct_c3d template_label.nii.gz -type int -o template_label.nii.gz', verbose)
 
     # Create a cross for the template labels - 5 mm
     sct.printv('\nCreate a 5 mm cross for the template labels...', verbose)
@@ -257,11 +257,11 @@ def main():
 
     # Convert landmarks from FLOAT32 to INT
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
-    sct.run('sct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+    sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
 
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)

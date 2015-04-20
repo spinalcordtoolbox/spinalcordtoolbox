@@ -156,12 +156,12 @@ def resample():
 
         # resample volume
         sct.printv(('\nResample volume '+str((it+1))+'/'+str(nt)+':'), param.verbose)
-        sct.run('sct_c3d '+file_data_splitT+ext+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
+        sct.run('isct_c3d '+file_data_splitT+ext+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
 
         # pad data (for ANTs)
         # # TODO: check if need to pad also for the estimate_and_apply
         # if program == 'ants' and todo == 'estimate' and slicewise == 0:
-        #     sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
+        #     sct.run('isct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
         #     file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
     # merge data back along T
