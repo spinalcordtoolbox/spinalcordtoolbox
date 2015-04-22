@@ -16,11 +16,11 @@ import time
 from shutil import copy
 
 
-os.chdir('/Users/tamag/data/data_for_template/marseille')
-list_dir = os.listdir('/Users/tamag/data/data_for_template/marseille')
+os.chdir('/Users/tamag/data/data_for_template/montreal')
+list_dir = os.listdir('/Users/tamag/data/data_for_template/montreal')
 
-for i in range(13, len(list_dir)):
-    list_dir_2 = os.listdir('/Users/tamag/data/data_for_template/marseille'+'/'+list_dir[i])
+for i in range(2, len(list_dir)):
+    list_dir_2 = os.listdir('/Users/tamag/data/data_for_template/montreal'+'/'+list_dir[i])
     for j in range(len(list_dir_2)):
         if list_dir_2[j] == 'T1':
             print '\nCompute data from: '+ list_dir[i]+ '/' + list_dir_2[j] + ' ...'
@@ -54,11 +54,11 @@ for i in range(13, len(list_dir)):
             print '\nStraightening the image ' + name_anatomy_file + ' using the fitted centerline ' + 'generated_centerline.nii.gz'+ ' ...'
             sct.run('sct_straighten_spinalcord -i ' + name_anatomy_file + ' -c ' + 'generated_centerline.nii.gz')
             path, file, ext = sct.extract_fname(name_anatomy_file)
-            output_straighten_name = name_anatomy_file + '_straight' +ext
+            output_straighten_name = file + '_straight' +ext
 
             # Aplly transfo to the centerline
             print '\nApplying transformation to the centerline...'
-            sct.run('sct_apply_transfo -i ' + 'generated_centerline.nii.gz' + ' -d ' + output_straighten_name + ' -w ' + 'warp_curve2straight.nii.gz' + ' -x ' + 'linear' + ' -v ' + str(verbose))
+            sct.run('sct_apply_transfo -i ' + 'generated_centerline.nii.gz' + ' -d ' + output_straighten_name + ' -w ' + 'warp_curve2straight.nii.gz' + ' -x ' + 'linear')
 
             # Normalize intensity of the image using the straightened centerline
             print '\nNormalizing intensity of the straightened image...'
@@ -69,8 +69,8 @@ for i in range(13, len(list_dir)):
 
             # Copy resulting files into Results folder
             print '\nCopy output files into:/Users/tamag/data/data_for_template/Results_preprocess/T1'
-            copy(name_output_straight, '/Users/tamag/data/data_for_template/Results_preprocess/T1/' + list_dir[i]+'_crop_straight.nii.gz')
-            copy(name_output_straight_normalized, '/Users/tamag/data/data_for_template/Results_preprocess/T1/' + list_dir[i]+'_crop_straight_normalized.nii.gz')
+            copy(name_output_straight, '/Users/tamag/data/data_for_template/Results_preprocess/T1/t1_' + list_dir[i]+'_crop_straight.nii.gz')
+            copy(name_output_straight_normalized, '/Users/tamag/data/data_for_template/Results_preprocess/T1/t1_' + list_dir[i]+'_crop_straight_normalized.nii.gz')
 
             # Remove temporary file
             print('\nRemove temporary files...')

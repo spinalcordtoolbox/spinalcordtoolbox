@@ -5,6 +5,7 @@ import numpy as np
 from time import time
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
+from dipy.denoise.noise_estimate import piesno
 import os
 
 # Get path of the toolbox
@@ -16,6 +17,7 @@ from msct_parser import Parser
 import sct_utils as sct
 
 import matplotlib.pyplot as plt
+
 
 
 
@@ -42,6 +44,8 @@ def main(file_to_denoise, param, output_file_name) :
     data = img.get_data()
     aff = img.get_affine()
 
+
+    # Process for manual detecting of background
     mask = data[:, :, :] > 80
 
     data = data[:, :, :]
@@ -52,6 +56,15 @@ def main(file_to_denoise, param, output_file_name) :
 
     sigma = np.std(data[~mask])
 
+    # Process for automatic detection of background (PIESNO)
+    # sigma, mask = piesno(data, 2, return_mask=True)
+    #
+    # print("vol size", data.shape)
+    #
+    # t = time()
+
+
+    # Application of NLM filter to the image
     print 'Applying Non-local mean filter...'
     if param.parameter == 'Rician':
         den = nlmeans(data, sigma=sigma, mask=mask, rician=True)
