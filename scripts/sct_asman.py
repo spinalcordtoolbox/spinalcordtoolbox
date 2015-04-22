@@ -2,7 +2,7 @@
 ########################################################################################################################
 #
 # Asman et al. groupwise multi-atlas segmentation method implementation
-# The name of the attributes of each class correspond to the names in Asman et al. paper
+#
 #
 # ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -13,34 +13,31 @@
 ########################################################################################################################
 
 # TODO change 'target' by 'input'
-#TODO : make it faster
+# TODO : make it faster
 
-
-
-import os
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-
+# import os
+# import sys
+# import numpy as np
+# import matplotlib.pyplot as plt
 
 from msct_pca import PCA
-from msct_image import Image
-from msct_parser import *
+# from msct_image import Image
+# from msct_parser import *
 from msct_gmseg_utils import *
 import sct_utils as sct
 
 from math import sqrt
 from math import exp
-from math import fabs
-
+# from math import fabs
 
 
 class Param:
     def __init__(self):
         self.debug = 0
-        self.path_dictionary = '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
-        self.todo_model = 'compute'
+        self.path_dictionary = None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
+        self.todo_model = None  # 'compute'
         self.target_fname = ''
+        self.reg = None  # TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.verbose = 1
 
 
@@ -54,11 +51,16 @@ class ModelDictionary:
     """
     Dictionary used by the supervised gray matter segmentation method
     """
-    def __init__(self, param=None):
-        if param is None:
+    def __init__(self, dic_param=None):
+        """
+        model dictionary constructor
+
+        :param dic_param: dictionary parameters, type: Param
+        """
+        if dic_param is None:
             self.param = Param()
         else:
-            self.param = param
+            self.param = dic_param
 
         # list of the slices of the dictionary
         self.slices = []  # type: list of slices
@@ -73,36 +75,56 @@ class ModelDictionary:
         # mean image of the dictionary
         self.mean_image = None  # type: numpy array
 
+        # dictionary containing information about the data dictionary slices by subject : used to save the model only
+        # self.dic_data_info[subject] = {'n_slices': 0, 'inverted_gm_seg': [], 'im_M': [], 'seg_M': []}
+        self.dic_data_info = {}  # type: dictionary
+
+        # list of transformation to apply to each slice to co-register the data into the common groupwise space
+        if self.param.reg is not None:
+            self.coregistration_transfos = self.param.reg
+        else:
+            self.coregistration_transfos = ['Affine']
+
+        suffix = ''
+        for transfo in self.coregistration_transfos:
+            suffix += '_' + transfo
+        # self.coregistration_transfos = ['SyN']
+
         # folder containing the saved model
         self.model_dic_name = ''
         if self.param.todo_model == 'compute':
-            self.model_dic_name = './gmseg_model_dictionary'
+            self.model_dic_name = './gmseg_model_dictionary' + suffix  # TODO: remove suffix
             self.compute_model_dictionary()
         elif self.param.todo_model == 'load':
-            self.model_dic_name = self.param.path_dictionary # TODO change the path by the name of the dic ?? ...
+            self.model_dic_name = self.param.path_dictionary  # TODO change the path by the name of the dic ?? ...
             self.load_model_dictionary()
+        else:
+            sct.printv('WARNING: no todo_model param', self.param.verbose, 'warning')
 
         # save all the dictionary slices
-        ##### --> not used by the model, only for visualization
+        # TODO: --> not used by the model, only for visualization
+        '''
         if 'data_by_slice' not in os.listdir('.'):
             sct.run('mkdir ./data_by_slice')
         os.chdir('./data_by_slice')
         for j in range(self.J):
-            save_image(self.slices[j].im,'slice_'+str(j) + '_im')
-            save_image(self.slices[j].im_M,'slice_'+str(j) + '_registered_im')
+            save_image(self.slices[j].im, 'slice_'+str(j) + '_im')
+            save_image(self.slices[j].im_M, 'slice_'+str(j) + '_registered_im')
 
-            save_image(self.slices[j].seg,'slice_'+str(j) + '_seg')
-            save_image(self.slices[j].seg_M,'slice_'+str(j) + '_registered_seg')
+            save_image(self.slices[j].seg, 'slice_'+str(j) + '_seg')
+            save_image(self.slices[j].seg_M, 'slice_'+str(j) + '_registered_seg')
         os.chdir('..')
+        '''
 
+        '''
         if self.param.verbose == 2:
             self.show_data()
+        '''
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_model_dictionary(self):
         """
         Compute the model dictionary using the provided data set
-        :return:
         """
         sct.printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         # Load all the images' slices from param.path_dictionary
@@ -111,43 +133,42 @@ class ModelDictionary:
 
         sct.run('mkdir ' + self.model_dic_name)
 
-        self.slices, dic_data_info = self.load_data_dictionary()
+        self.slices = self.load_data_dictionary()
 
         # number of slices in the data set
-        self.J = len([slice.im for slice in self.slices])
+        self.J = len([dic_slice.im for dic_slice in self.slices])
         # dimension of the data (flatten slices)
         self.N = len(self.slices[0].im.flatten())
 
         # inverts the segmentation slices : the model uses segmentation of the WM instead of segmentation of the GM
         self.invert_seg()
-        dic_data_info = self.save_model_data(dic_data_info, 'inverted_seg')
+        self.save_model_data('inverted_gm_seg')
 
         # set of possible labels that can be assigned to a given voxel in the segmentation
         self.L = [0, 1]  # 1=WM, 0=GM or CSF
 
-        sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space ...', self.param.verbose, 'normal')
+        sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space ...',
+                   self.param.verbose, 'normal')
 
-        # list of transformation to apply to each slice to co-register the data into the common groupwise space
-        coregistration_transfos = ['Affine'] #'Rigid',
-        # coregistration_transfos = ['SyN']
-
-        self.mean_seg = self.seg_coregistration(transfo_to_apply=coregistration_transfos)
-        dic_data_info = self.save_model_data(dic_data_info, 'seg_M')
+        self.mean_seg = self.seg_coregistration(transfo_to_apply=self.coregistration_transfos)
+        self.save_model_data('seg_M')
 
         sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
 
-        # List of images (im_M) and their label decision (seg_M) (=segmentation of the gray matter), slice by slice in the common groupwise space
-        self.coregister_data(transfo_to_apply=coregistration_transfos)
+        # List of images (im_M) and their label decision (seg_M) (=segmentation of the gray matter),
+        #  --> slice by slice in the common groupwise space
+        self.coregister_data(transfo_to_apply=self.coregistration_transfos)
 
         '''
         TESTING
-        '''
+
         self.crop_data()
+        '''
 
-        dic_data_info = self.save_model_data(dic_data_info, 'im_M')
+        self.save_model_data('im_M')
 
-        self.mean_image = self.compute_mean_dic_image(np.asarray([slice.im_M for slice in self.slices]))
-        save_image(self.mean_image, 'mean_image', path=self.model_dic_name+'/', type='uint8')
+        self.mean_image = self.compute_mean_dic_image(np.asarray([dic_slice.im_M for dic_slice in self.slices]))
+        save_image(self.mean_image, 'mean_image', path=self.model_dic_name+'/', im_type='uint8')
 
     # ------------------------------------------------------------------------------------------------------------------
     # FUNCTIONS USED TO COMPUTE THE MODEL
@@ -157,20 +178,23 @@ class ModelDictionary:
     def load_data_dictionary(self):
         """
         each slice of each subject will be loaded separately in a Slice object containing :
+
         - a slice id
+
         - the original T2star image crop around the spinal cord: im
+
         - a manual segmentation of the gray matter: seg
-        :return:
+
+        :return slices: numpy array of all the slices of the data dictionary
         """
         # initialization
         slices = []
         j = 0
-        data_info = {}
-        #TODO: change the name of files to find to a more general structure
+        # TODO: change the name of files to find to a more general structure
         for subject_dir in os.listdir(self.param.path_dictionary):
             subject_path = self.param.path_dictionary + '/' + subject_dir
             if os.path.isdir(subject_path):
-                data_info[subject_dir] = {'n_slices':0,'inverted_seg':[],'im_M':[], 'seg_M':[]}
+                self.dic_data_info[subject_dir] = {'n_slices': 0, 'inverted_gm_seg': [], 'im_M': [], 'seg_M': []}
 
                 subject_seg_in = ''
                 subject_gm_seg = ''
@@ -178,99 +202,96 @@ class ModelDictionary:
                 for file_name in os.listdir(subject_path):
                     if 'GM' in file_name or 'gmseg' in file_name:
                         subject_gm_seg = file_name
-                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_seg.nii.gz')
+                        # copy of the seg image in the saved model folder
+                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name
+                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_seg.nii.gz')
                     if 'seg_in' in file_name and 'gm' not in file_name.lower():
                         subject_seg_in = file_name
-                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_im.nii.gz')
+                        # copy of the slice image in the saved model folder
+                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name
+                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_im.nii.gz')
 
                 im = Image(subject_path + '/' + subject_seg_in)
                 seg = Image(subject_path + '/' + subject_gm_seg)
 
                 for im_slice, seg_slice in zip(im.data, seg.data):
-                    data_info[subject_dir]['n_slices'] += 1
-                    if self.param.split_data:
-                        left_slice, right_slice = split(im_slice)
+                    self.dic_data_info[subject_dir]['n_slices'] += 1
+                    slices.append(Slice(slice_id=j, im=im_slice, seg=seg_slice, reg_to_m=[]))
+                    j += 1
 
-                        left_slice_seg, right_slice_seg = split(seg_slice)
-
-                        slices.append(Slice(id=j, im=left_slice, seg=left_slice_seg))
-                        slices.append(Slice(id=j+1, im=right_slice, seg=right_slice_seg))
-                        j += 2
-
-                    else:
-                        slices.append(Slice(id=j, im=im_slice, seg=seg_slice))
-                        j += 1
-
-        return np.asarray(slices), data_info
+        return np.asarray(slices)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def save_model_data(self,data_info,what_to_save):
+    def save_model_data(self, what_to_save):
         """
-        save images of the model dictionary
-        :param data_info: dictionary containing information about the data
+        save 3D images of the model dictionary using the dictionary of information about the data slices by subject
+
         :param what_to_save: type of data to be saved
-        :return:
         """
         suffix = ''
         data_to_save = []
         total_n_slices = 0
-        if what_to_save == 'inverted_seg':
+        if what_to_save == 'inverted_gm_seg':
             suffix = '_seg'
-            data_to_save = [slice.seg for slice in self.slices]
+            data_to_save = [dic_slice.seg for dic_slice in self.slices]
         elif what_to_save == 'im_M':
             suffix = '_im_model_space'
-            data_to_save = [slice.im_M for slice in self.slices]
+            data_to_save = [dic_slice.im_M for dic_slice in self.slices]
         elif what_to_save == 'seg_M':
             suffix = '_seg_model_space'
-            data_to_save = [slice.seg_M for slice in self.slices]
+            data_to_save = [dic_slice.seg_M for dic_slice in self.slices]
 
-        for subject_name in sorted(data_info.keys()):
-            data_info[subject_name][what_to_save] = data_to_save[total_n_slices:total_n_slices+data_info[subject_name]['n_slices']]
-            total_n_slices += data_info[subject_name]['n_slices']
+        for subject_name in sorted(self.dic_data_info.keys()):
+            first_subject_slice = total_n_slices
+            last_subject_slice = first_subject_slice + self.dic_data_info[subject_name]['n_slices']
+            self.dic_data_info[subject_name][what_to_save] = data_to_save[first_subject_slice:last_subject_slice]
+            total_n_slices += self.dic_data_info[subject_name]['n_slices']
 
-        for subject_name, info in zip(data_info.keys(), data_info.values()):
+        for subject_name, info in zip(self.dic_data_info.keys(), self.dic_data_info.values()):
             im_inverted_seg = Image(param=np.asarray(info[what_to_save]))
             im_inverted_seg.path = self.model_dic_name + '/' + subject_name + '/'
 
             im_inverted_seg.file_name = subject_name + suffix
             im_inverted_seg.ext = '.nii.gz'
             im_inverted_seg.save(type='minimize')
-        return data_info
 
     # ------------------------------------------------------------------------------------------------------------------
     def invert_seg(self):
         """
         Invert the gray matter segmentation to get segmentation of the white matter instead
         keeps more information, theoretically better results
-        :return:
         """
-        for slice in self.slices:
-            im_a = Image(param=slice.im)
-            sc = im_a.copy()
+        for dic_slice in self.slices:
+            im_dic = Image(param=dic_slice.im)
+            sc = im_dic.copy()
             nz_coord_sc = sc.getNonZeroCoordinates()
-            im_d = Image(param=slice.seg)
-            nz_coord_d = im_d.getNonZeroCoordinates()
+            im_seg = Image(param=dic_slice.seg)
+            nz_coord_d = im_seg.getNonZeroCoordinates()
             for coord in nz_coord_sc:
                 sc.data[coord.x, coord.y] = 1
             for coord in nz_coord_d:
-                im_d.data[coord.x, coord.y] = 1
+                im_seg.data[coord.x, coord.y] = 1
             # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
-            inverted_slice_decision = np.absolute(sc.data - im_d.data).astype(int)
-            slice.set(seg=inverted_slice_decision)
+            inverted_slice_decision = np.absolute(sc.data - im_seg.data).astype(int)
+            dic_slice.set(seg=inverted_slice_decision)
 
     # ------------------------------------------------------------------------------------------------------------------
     def seg_coregistration(self, transfo_to_apply=None):
         """
         For all the segmentation slices, do a registration of the segmentation slice to the mean segmentation
          applying all the transformations in transfo_to_apply
+
         Compute, apply and save each transformation warping field for all the segmentation slices
+
         Compute the new mean segmentation at each step and update self.mean_seg
+
         :param transfo_to_apply: list of string
         :return:
         """
-        current_mean_seg = self.compute_mean_seg(np.asarray([slice.seg for slice in self.slices]))
+        current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.seg for dic_slice in self.slices]))
         for transfo in transfo_to_apply:
-            sct.printv('Doing a ' + transfo + ' registration of each segmentation slice to the mean segmentation ...', self.param.verbose, 'normal')
+            sct.printv('Doing a ' + transfo + ' registration of each segmentation slice to the mean segmentation ...',
+                       self.param.verbose, 'normal')
             current_mean_seg = self.find_coregistration(mean_seg=current_mean_seg, transfo_type=transfo)
 
         '''
@@ -284,8 +305,8 @@ class ModelDictionary:
         plt.title('slice 0...')
         plt.plot()
 
-
-        mean_white_pix = self.nb_w_pixels() #mean number of white pixels in the manual segmentation slices of the dictionary
+        # mean number of white pixels in the manual segmentation slices of the dictionary
+        mean_white_pix = self.nb_w_pixels()
         print mean_white_pix
 
 
@@ -316,37 +337,49 @@ class ModelDictionary:
         """
         For each segmentation slice, apply and save a registration of the specified type of transformation
         the name of the registration file (usually a matlab matrix) is saved in self.RtoM
+
         :param mean_seg: current mean segmentation
+
         :param transfo_type: type of transformation for the registration
+
         :return mean seg: updated mean segmentation
         """
-        # initialization
-        for slice in self.slices:
-            name_j_transform = 'transform_slice_' + str(slice.id) + '.mat'
-            slice.set(RtoM=name_j_transform)
-            decision_M = apply_ants_transfo(mean_seg, slice.seg,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-            slice.set(seg_M=decision_M.astype(int))
-            slice.set(seg_M_flat=decision_M.flatten().astype(int))
-        mean_seg = self.compute_mean_seg([slice.seg_M for slice in self.slices])
+        for dic_slice in self.slices:
+            name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_transfo_name(transfo_type)[0]
+            new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
+            dic_slice.set(reg_to_m=new_reg_list)
+            seg_m = apply_ants_transfo(mean_seg, dic_slice.seg,  transfo_name=name_j_transform,
+                                       path=self.model_dic_name + '/', transfo_type=transfo_type)
+            dic_slice.set(seg_m=seg_m.astype(int))
+            dic_slice.set(seg_m_flat=seg_m.flatten().astype(int))
 
-        save_image(mean_seg, 'mean_seg', path=self.model_dic_name+'/', type='uint8')
+        mean_seg = compute_majority_vote_mean_seg([dic_slice.seg_M for dic_slice in self.slices])
+
+        save_image(mean_seg, 'mean_seg', path=self.model_dic_name+'/', im_type='uint8')
 
         return mean_seg
 
+    '''
     # ------------------------------------------------------------------------------------------------------------------
-    def compute_mean_seg(self, seg_data_set):
+    def compute_majority_vote_mean_seg_old_version(self, seg_data_set):
         """
-        Compute the mean segmentation image for a given segmentation data set seg_data_set
+        Compute the mean segmentation image for a given segmentation data set seg_data_set by Majority Vote
+
         :param seg_data_set:
         :return:
         """
         mean_seg = []
+        # dictionary containing for each possible label value :
+        #  the sum of all the flatten segmentation in seg_data_set = vector of the sum for each pixel
         choose_maj_vote = {}
+        # for 0 and for 1 :
         for l in self.L:
             to_be_summed = []
-            for slice in seg_data_set:
+            for dic_slice in seg_data_set:
+                # vector of the pixel corresponding to the label value l in this slice
+                # 0 if the pixel is different than the label value, 1 if it's the same
                 consistent_vox = []
-                for row in slice:
+                for row in dic_slice:
                     for i in row:
                         try:
                             if i > 0.2:
@@ -357,10 +390,13 @@ class ModelDictionary:
                         consistent_vox.append(kronecker_delta(i, l))
                 to_be_summed.append(consistent_vox)
             summed_vector = np.zeros(len(to_be_summed[0]), dtype=np.int)
+            # adding all the vectors of consistent_vox
             for v in to_be_summed:
                 summed_vector = np.add(summed_vector, v)
             choose_maj_vote[l] = summed_vector
 
+        # for each pixel :
+        # the value chosen for mean_seg is the value that was the most present in the data set for this pixel
         for vote_tuple in zip(choose_maj_vote[0], choose_maj_vote[1]):
             if vote_tuple[0] >= vote_tuple[1]:
                 mean_seg.append(0)
@@ -368,37 +404,43 @@ class ModelDictionary:
                 mean_seg.append(1)
         n = int(sqrt(self.N))
         return np.asarray(mean_seg).reshape(n, n)
+    '''
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_mean_dic_image(self, im_data_set):
         """
         Compute the mean image of the dictionary
+
         Used to co-register the dictionary images into teh common groupwise space
+
         :param im_data_set:
-        :return:
+        :return mean: mean image of the input data set
         """
-        sum = np.zeros(im_data_set[0].shape)
-        for slice_im in im_data_set:
-            for k,row in enumerate(slice_im):
-                sum[k] = np.add(sum[k],row)
-        mean = sum/self.J
+        mean = np.sum(im_data_set, axis=0)
+
+        mean /= float(self.J)
+
         return mean
 
     # ------------------------------------------------------------------------------------------------------------------
     def coregister_data(self,  transfo_to_apply=None):
         """
-        Apply to each image slice of the dictionary the transformations found registering the segmentation slices
+        Apply to each image slice of the dictionary the transformations found registering the segmentation slices.
         The co_registered images are saved for each slice as im_M
+
         :param transfo_to_apply: list of string
         :return:
         """
-        list_im = [slice.im for slice in self.slices]
-        for slice in self.slices:
-            for transfo in transfo_to_apply:
-                im_M = apply_ants_transfo(self.compute_mean_dic_image(list_im), slice.im, search_reg=False, transfo_name=slice.RtoM, binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
-                #apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
-            slice.set(im_M=im_M)
-            slice.set(im_M_flat=im_M.flatten())
+        list_im = [dic_slice.im for dic_slice in self.slices]
+        
+        for dic_slice in self.slices:
+            for n_transfo, transfo in enumerate(transfo_to_apply):
+                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False,
+                                          transfo_name=dic_slice.reg_to_M[n_transfo], binary=False,
+                                          path=self.model_dic_name+'/', transfo_type=transfo)
+                # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
+            dic_slice.set(im_m=im_m)
+            dic_slice.set(im_m_flat=im_m.flatten())
 
     '''
     def crop_data_new_ellipse(self):
@@ -474,9 +516,13 @@ class ModelDictionary:
     def crop_data(self):
         """
         Crop the model images (im_M) to an ellipse shape to get rid of the size/shape variability between slices
-        :return:
         """
         im_mean_seg = Image(param=self.mean_seg)
+
+        '''
+        im_mean_seg = Image(param=compute_mutual_information_seg([dic_slice.seg_M for dic_slice in self.slices]))
+        save_image(im_mean_seg.data, 'mutual_info_seg', path=self.model_dic_name+'/', type='uint8')
+        '''
 
         nz_coord = im_mean_seg.getNonZeroCoordinates()
         nz_coord_dic = {}
@@ -493,11 +539,11 @@ class ModelDictionary:
                 for y in full_y_list:
                     ellipse_mask[x, y] = 1
 
-        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', type='uint8')
+        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', im_type='uint8')
 
-        for slice in self.slices:
-            new_im_m = np.einsum('ij,ij->ij', ellipse_mask, slice.im_M)
-            slice.set(im_M=new_im_m)
+        for dic_slice in self.slices:
+            new_im_m = np.einsum('ij,ij->ij', ellipse_mask, dic_slice.im_M)
+            dic_slice.set(im_m=new_im_m)
 
     # ------------------------------------------------------------------------------------------------------------------
     # END OF FUNCTIONS USED TO COMPUTE THE MODEL
@@ -507,7 +553,6 @@ class ModelDictionary:
     def load_model_dictionary(self):
         """
         Load the model dictionary from a saved one
-        :return:
         """
 
         sct.printv('\nLoading the model dictionary ...', self.param.verbose, 'normal')
@@ -537,19 +582,12 @@ class ModelDictionary:
                 seg_m = Image(subject_path + '/' + subject_seg_m)
 
                 for im_slice, seg_slice, im_m_slice, seg_m_slice in zip(im.data, seg.data, im_m.data, seg_m.data):
-                    if self.param.split_data:
-                        left_slice, right_slice = split(im_slice)
-                        left_slice_seg, right_slice_seg = split(seg_slice)
-                        left_slice_m, right_slice_m = split(im_m_slice)
-                        left_slice_seg_m, right_slice_seg_m = split(seg_m_slice)
-
-                        self.slices.append(Slice(id=j, im=left_slice, seg=left_slice_seg, im_M=left_slice_m, seg_M=left_slice_seg_m, im_M_flat=left_slice_m.flatten(), seg_M_flat=left_slice_seg_m.flatten(), RtoM='transform_slice_' + str(j) + '.mat'))
-                        self.slices.append(Slice(id=j+1, im=right_slice, seg=right_slice_seg, im_M=right_slice_m, seg_M=right_slice_seg_m, im_M_flat=right_slice_m.flatten(), seg_M_flat=right_slice_seg_m.flatten(), RtoM='transform_slice_' + str(j+1) + '.mat'))
-                        j += 2
-
-                    else:
-                        self.slices.append(Slice(id=j, im=im_slice, seg=seg_slice, im_M=im_m_slice, seg_M=seg_m_slice, im_M_flat=im_m_slice.flatten(), seg_M_flat=seg_m_slice.flatten(), RtoM='transform_slice_' + str(j) + '.mat'))
-                        j += 1
+                    reg_list = ['transform_slice_' + str(j) + find_transfo_name(transfo_type)[0]
+                                for transfo_type in self.coregistration_transfos]
+                    self.slices.append(Slice(slice_id=j, im=im_slice, seg=seg_slice, im_m=im_m_slice, seg_m=seg_m_slice,
+                                             im_m_flat=im_m_slice.flatten(), seg_m_flat=seg_m_slice.flatten(),
+                                             reg_to_m=reg_list))
+                    j += 1
 
         # number of atlases in the dictionary
         self.J = len(self.slices)  # len([slice.im for slice in self.slices])
@@ -567,42 +605,41 @@ class ModelDictionary:
     def show_data(self):
         """
         show the 10 first slices of the model dictionary
-        :return:
         """
-        for slice in self.slices[:10]:
+        for dic_slice in self.slices[:10]:
             fig = plt.figure()
 
-            seg_subplot = fig.add_subplot(2,3, 1)
+            seg_subplot = fig.add_subplot(2, 3, 1)
             seg_subplot.set_title('Original space - seg')
-            im_seg = seg_subplot.imshow(slice.seg)
+            im_seg = seg_subplot.imshow(dic_slice.seg)
             im_seg.set_interpolation('nearest')
             im_seg.set_cmap('gray')
 
-            seg_m_subplot = fig.add_subplot(2,3, 2)
+            seg_m_subplot = fig.add_subplot(2, 3, 2)
             seg_m_subplot.set_title('Common groupwise space - seg')
-            im_seg_m = seg_m_subplot.imshow(slice.seg_M)
+            im_seg_m = seg_m_subplot.imshow(dic_slice.seg_M)
             im_seg_m.set_interpolation('nearest')
             im_seg_m.set_cmap('gray')
 
-            mean_seg_subplot = fig.add_subplot(2,3, 3)
+            mean_seg_subplot = fig.add_subplot(2, 3, 3)
             mean_seg_subplot.set_title('Mean seg')
             im_mean_seg = mean_seg_subplot.imshow(np.asarray(self.mean_seg))
             im_mean_seg.set_interpolation('nearest')
             im_mean_seg.set_cmap('gray')
 
-            slice_im_subplot = fig.add_subplot(2,3, 4)
+            slice_im_subplot = fig.add_subplot(2, 3, 4)
             slice_im_subplot.set_title('Original space - data ')
-            im_slice_im = slice_im_subplot.imshow(slice.im)
+            im_slice_im = slice_im_subplot.imshow(dic_slice.im)
             im_slice_im.set_interpolation('nearest')
             im_slice_im.set_cmap('gray')
 
-            slice_im_m_subplot = fig.add_subplot(2,3, 5)
+            slice_im_m_subplot = fig.add_subplot(2, 3, 5)
             slice_im_m_subplot.set_title('Common groupwise space - data ')
-            im_slice_im_m = slice_im_m_subplot.imshow(slice.im_M)
+            im_slice_im_m = slice_im_m_subplot.imshow(dic_slice.im_M)
             im_slice_im_m.set_interpolation('nearest')
             im_slice_im_m.set_cmap('gray')
 
-            plt.suptitle('Slice ' + str(slice.id))
+            plt.suptitle('Slice ' + str(dic_slice.id))
             plt.show()
 
 
@@ -613,46 +650,66 @@ class Model:
     Model used by the supervised gray matter segmentation method
 
     """
-    def __init__(self, param=None, dictionary=None, k=0.8):
-        if param is None:
-            self.param = Param()
+    def __init__(self, model_param=None, dictionary=None, k=0.8):
+        """
+        Model constructor
+
+        :param model_param: model parameters, type: Param
+
+        :param dictionary: type: ModelDictionary
+
+        :param k: Amount of variability to keep in the PCA reduced space, type: float
+        """
+        if model_param is None:
+            if dictionary is not None:
+                self.param = dictionary.param
+            else:
+                self.param = Param()
         else:
-            self.param = param
+            self.param = model_param
 
         self.dictionary = dictionary
 
-        sct.printv("The shape of the dictionary used for the PCA is (" + str(self.dictionary.N) + ',' + str(self.dictionary.J) + ')', verbose=self.param.verbose)
+        sct.printv("The shape of the dictionary used for the PCA is "
+                   "(" + str(self.dictionary.N) + "," + str(self.dictionary.J) + ")", verbose=self.param.verbose)
 
         # Instantiate a PCA object given the dictionary just build
         sct.printv('\nCreating a reduced common space (using a PCA) ...', self.param.verbose, 'normal')
 
         '''
-        print '######################################################################################################\n' \
-              '######################################################################################################\n' \
-              'TODO MODEL : ' + self.dictionary.param.todo_model+ \
-              ' \n######################################################################################################\n' \
-              '######################################################################################################\n' \
-              'seg_M_FLAT :\n ', self.dictionary.slices[0].seg_M_flat, '\nseg_M NOT FLAT :\n', self.dictionary.slices[0].seg_M
+        print '###################################################################################################\n' \
+              '###################################################################################################\n' \
+              'TODO MODEL : ' + self.dictionary.model_param.todo_model+ \
+              ' \n################################################################################################\n' \
+              '###################################################################################################\n' \
+              'seg_M_FLAT :\n ', self.dictionary.slices[0].seg_M_flat,
+              '\nseg_M NOT FLAT :\n', self.dictionary.slices[0].seg_M
         '''
 
         if self.param.todo_model == 'compute':
-            self.pca = PCA(np.asarray([slice.im_M_flat for slice in self.dictionary.slices]).T, k=k)
+            # creation of a PCA
+            self.pca = PCA(np.asarray([dic_slice.im_M_flat for dic_slice in self.dictionary.slices]).T, k=k)
+            # updating the dictionary mean_image 
             self.dictionary.mean_image = self.pca.mean_image
 
-            save_image(self.pca.mean_image, 'mean_image', path=self.dictionary.model_dic_name+'/')#, type='uint8')
+            save_image(self.pca.mean_image, 'mean_image', path=self.dictionary.model_dic_name+'/')
+            # saving the PCA data into a text file
             self.pca.save_data(self.dictionary.model_dic_name)
 
         elif self.param.todo_model == 'load':
+            # loading PCA data from file
             pca_mean_data, pca_eig_pairs = self.load_pca_file()
 
-            self.pca = PCA(np.asarray([slice.im_M_flat for slice in self.dictionary.slices]).T, mean_vect=pca_mean_data, eig_pairs=pca_eig_pairs, k=k)
+            # creation of a PCA from the loaded data
+            self.pca = PCA(np.asarray([dic_slice.im_M_flat for dic_slice in self.dictionary.slices]).T,
+                           mean_vect=pca_mean_data, eig_pairs=pca_eig_pairs, k=k)
 
     # ----------------------------------------------------------------------------------------------------------------------
     def load_pca_file(self, file_name='data_pca.txt'):
         """
         Load a PCA from a text file containing the appropriate information (previously saved)
+
         :param file_name: name of the PCA text file
-        :return:
         """
         fic_data_pca = open(self.param.path_dictionary + file_name, 'r')
         mean_data_list = fic_data_pca.readline().split(',')
@@ -670,8 +727,8 @@ class Model:
             eig_vect_str = eig_vect_str.split(' ')
             # eig_vect_str[-1] = eig_vect_str[-1][:-1]
             eig_vect = []
-            for i,v in enumerate(eig_vect_str):
-                 if v != '' and v != '\n':
+            for i, v in enumerate(eig_vect_str):
+                if v != '' and v != '\n':
                     eig_vect.append(float(v))
             eig_pairs_vect.append((float(eig_val_str), eig_vect))
 
@@ -679,16 +736,29 @@ class Model:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# TARGET SEGMENTATION ---------------------------------------------------------------------------------------------------
+# TARGET SEGMENTATION --------------------------------------------------------------------------------------------------
 class TargetSegmentation:
     """
     Contains all the function to segment the gray matter an a target image given a model
-        - registration of the target to the model space
-        - projection of the target slices on the reduced model space
-        - selection of the model data most similar to the target slices
 
+        - registration of the target to the model space
+
+        - projection of the target slices on the reduced model space
+
+        - selection of the model slices most similar to the target slices
+
+        - computation of the resulting target segmentation by label fusion of their segmentation
     """
     def __init__(self, model, target_image=None, tau=None):
+        """
+        Target gray matter segmentation constructor
+
+        :param model: Model used to compute the segmentation, type: Model
+
+        :param target_image: Target image to segment gray matter on, type: Image
+
+        :param tau: Weighting parameter associated with the geodesic distances in the model dictionary, type: float
+        """
         self.model = model
 
         # Get the target image
@@ -715,178 +785,325 @@ class TargetSegmentation:
         print '----COORD PROJECTED TARGET -----', self.coord_projected_target
         '''
 
-        self.epsilon = round(1.0/self.model.dataset.J,4) - 0.001
+        self.epsilon = round(1.0/self.model.dictionary.J, 4)/2
         print 'epsilon : ', self.epsilon
 
-        if tau is None :
+        if tau is None:
             self.tau = self.compute_tau()
         else:
             self.tau = tau
+
         self.beta = self.compute_beta(self.coord_projected_target, tau=self.tau)
-        #print '----------- BETAS :', self.beta
-        #self.beta = self.compute_beta(self.coord_projected_target, tau=0.00114)
+        '''
+        print '----------- BETAS :', self.beta
+        self.beta = self.compute_beta(self.coord_projected_target, tau=0.00114)
+        '''
+        sct.printv('\nSelecting the dictionary slices most similar to the target ...', model.param.verbose, 'normal')
 
-        sct.printv('\nSelecting the atlases closest to the target ...', model.param.verbose, 'normal')
-
-        self.selected_K = self.select_K(self.beta)
-        #print '----SELECTED K -----', self.selected_K
-        #print '----SHAPE SELECTED K -----', self.selected_K.shape
+        self.selected_k_slices = self.select_k_slices(self.beta)
+        '''
+        print '----SELECTED K -----', self.selected_k_slices
+        print '----SHAPE SELECTED K -----', self.selected_k_slices.shape
+        '''
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
-        self.target_GM_seg_M = self.label_fusion(self.selected_K)
+        self.target_GM_seg_M = self.label_fusion(self.selected_k_slices)
+        sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
+                   model.param.verbose, 'normal')
         self.target_GM_seg = self.inverse_register_target()
 
     # ------------------------------------------------------------------------------------------------------------------
-    #
     def register_target_to_model_space(self):
-        target_M = []
-        for i,slice in enumerate(self.target.data):
-            #slice_M = apply_ants_transfo(self.model.dictionary.mean_image, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
-            n = int(sqrt(self.model.pca.N))
-            mean_vect = self.model.pca.mean_data_vect.reshape(len(self.model.pca.mean_data_vect),)
-            im = mean_vect.reshape(n, n).astype(np.float)
-            slice_M = apply_ants_transfo(im, slice, binary=False, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
-            target_M.append(slice_M)
-        return Image(param=np.asarray(target_M))
+        """
+        Register the target image into the model space
+
+        Affine registration of the target on the mean model image --> pairwise
+        """
+        target_model_space = []
+        mean_dic_im = self.model.pca.mean_image
+        for i, target_slice in enumerate(self.target.data):
+            moving_target_slice = target_slice
+            for transfo in self.model.dictionary.coregistration_transfos:
+                transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_transfo_name(transfo)[0]
+
+                moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False,
+                                                         transfo_type=transfo, transfo_name=transfo_name)
+            target_model_space.append(moving_target_slice)
+        return Image(param=np.asarray(target_model_space))
 
     # ------------------------------------------------------------------------------------------------------------------
-    #
     def inverse_register_target(self):
+        """
+        Apply the inverse warping field of the registration target -> model space
+        to the result gray matter segmentation of the target
+        (put it back in it's original space)
+        :return:
+        """
         res_seg = []
-        for i,slice_M in enumerate(self.target_GM_seg_M.data):
-            #slice = apply_ants_transfo(self.model.dictionary.mean_image, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
-            n = int(sqrt(self.model.pca.N))
-            mean_vect = self.model.pca.mean_data_vect.reshape(len(self.model.pca.mean_data_vect),)
-            im = mean_vect.reshape(n, n).astype(np.float)
-            slice = apply_ants_transfo(im, slice_M, search_reg=False ,binary=True, inverse=1, transfo_type='Affine', transfo_name='transfo_target_to_model_space_slice_' + str(i) + '.mat')
-            res_seg.append(slice)
+        # mean_dic_im = self.model.pca.mean_image
+
+        for i, slice_M in enumerate(self.target_GM_seg_M.data):
+            moving_seg_slice = slice_M
+            for transfo in self.model.dictionary.coregistration_transfos:
+                transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_transfo_name(transfo)[0]
+
+                moving_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_seg_slice,
+                                                      search_reg=False, binary=True, inverse=1, transfo_type=transfo,
+                                                      transfo_name=transfo_name)
+
+            res_seg.append(moving_seg_slice)
         return Image(param=np.asarray(res_seg))
 
-
-
     # ------------------------------------------------------------------------------------------------------------------
-    # beta is the model similarity between all the individual images and our input image
-    # beta = (1/Z)exp(-tau*square_norm(omega-omega_j))
-    # Z is the partition function that enforces the constraint tha sum(beta)=1
-    def compute_beta(self, coord_target, tau=0.01):
+    def compute_beta(self, coord_target, dataset_coord=None, tau=0.01):
+        """
+        Compute the model similarity (beta) between each model slice and each target image slice
+
+        beta_j = (1/Z)exp(-tau*square_norm(target_coordinate - slice_j_coordinate))
+
+        Z is the partition function that enforces the constraint that sum(beta)=1
+
+        :param coord_target: coordinates of the target image in the reduced model space
+
+        :param tau: weighting parameter indicating the decay constant associated with a geodesic distance
+        between a given dictionary slice and a projected target image slice
+
+        :return:
+        """
+        if dataset_coord is None:
+            # in the dataset_coord matrix, each column correspond to the projection of one of the original data image,
+            # the transpose operator .T enable the loop to iterate over all the images coord
+            dataset_coord = self.model.pca.dataset_coord.T
+
         beta = []
-        #sct.printv('----------- COMPUTING BETA --------------', 1, 'info')
-        #print '------ TAU = ', tau
-        #print '---------- IN BETA : coord_target ---------------->', coord_target
-        #print '---------- IN BETA : shape coord_target ---------------->', coord_target.shape, ' len = ', len(coord_target.shape)
-        #print '---------- IN BETA : type coord_target[0][0] ---------------->', type(coord_target[0][0])
-        if isinstance(coord_target[0][0], (list, np.ndarray)): # SEE IF WE NEED TO CHECK TEH SECOND DIMENSION OF COORD TARGET OR THE FIRST ...
-            for i,coord_projected_slice in enumerate(coord_target):
+        '''
+        sct.printv('----------- COMPUTING BETA --------------', 1, 'info')
+        print '------ TAU = ', tau
+        print '---------- IN BETA : coord_target ---------------->', coord_target
+        print '---------- IN BETA : shape coord_target ---------------->', coord_target.shape, ' len = ',
+         len(coord_target.shape)
+        print '---------- IN BETA : type coord_target[0][0] ---------------->', type(coord_target[0][0])
+        '''
+        # TODO: SEE IF WE NEED TO CHECK THE SECOND DIMENSION OF COORD TARGET OR THE FIRST ...
+        if isinstance(coord_target[0][0], (list, np.ndarray)):
+            for i_target, coord_projected_slice in enumerate(coord_target):
                 beta_slice = []
-                # in omega matrix, each column correspond to the projection of one of the original data image,
-                # the transpose operator .T enable the loop to iterate over all the images coord
-                for omega_j in self.model.pca.omega.T:
-                    square_norm = np.linalg.norm((coord_projected_slice - omega_j), 2)
+                for coord_slice_j in dataset_coord:
+                    square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
                     beta_slice.append(exp(-tau*square_norm))
 
-                Z = sum(beta_slice)
                 '''
                 print 'beta case 1 :', beta
                 print '--> sum beta ', Z
                 '''
-                for i, b in enumerate(beta_slice):
-                    beta_slice[i] = (1/Z) * b
+                try:
+                    beta_slice /= np.sum(beta_slice)
+                except ZeroDivisionError:
+                    sct.printv('WARNING : similarities are null', self.model.param.verbose, 'warning')
+                    print beta_slice
 
                 beta.append(beta_slice)
         else:
-            # in omega matrix, each column correspond to the projection of one of the original data image,
-            # the transpose operator .T enable the loop to iterate over all the images coord
-            for omega_j in self.model.pca.omega.T:
-                square_norm = np.linalg.norm((coord_target - omega_j), 2)
+            for coord_slice_j in dataset_coord:
+                square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
                 beta.append(exp(-tau*square_norm))
 
-            Z = sum(beta)
-            '''
-            print 'beta case 2 :', beta
-            print '--> sum beta ', Z
-            '''
-            for i, b in enumerate(beta):
-                beta[i] = (1/Z) * b
+            try:
+                beta /= np.sum(beta)
+            except ZeroDivisionError:
+                sct.printv('WARNING : similarities are null', self.model.param.verbose, 'warning')
+                print beta
 
         return np.asarray(beta)
 
-
     # ------------------------------------------------------------------------------------------------------------------
-    # decay constant associated with the geodesic distance between a given atlas and the projected target image in model space.
     def compute_tau(self):
+        """
+        Compute the weighting parameter indicating the decay constant associated with a geodesic distance
+        between a given dictionary slice and a projected target image slice
+        :return:
+        """
         sct.printv('\nComputing Tau ... \n'
-                   '(Tau is a parameter indicating the decay constant associated with a geodesic distance between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
+                   '(Tau is a weighting parameter indicating the decay constant associated with a geodesic distance '
+                   'between a given atlas and a projected target image, see Asman paper, eq (16))', 1, 'normal')
         from scipy.optimize import minimize
+
         def to_minimize(tau):
+            """
+            Compute the sum of the L0 norm between a slice segmentation and the resulting segmentation that would be
+            found if the slice was a target image for a given tau
+
+            For a given model, Tau is the parameter that would minimize this function
+
+            :param tau:
+
+            :return sum_norm:
+
+            """
             sum_norm = 0
-            for slice in self.model.dataset.slices:
-                Kj = self.select_K(self.compute_beta(self.model.pca.project_array(slice.im_M_flat), tau=tau)) #in project : Image(param=Amj)
-                est_dmj = self.label_fusion(Kj)
-                sum_norm += l0_norm(slice.seg_M, est_dmj.data)
+            for dic_slice in self.model.dictionary.slices:
+                projected_dic_slice_coord = self.model.pca.project_array(dic_slice.im_M_flat)
+                coord_dic_slice_dataset = np.delete(self.model.pca.dataset_coord.T, dic_slice.id, 0)
+                beta_dic_slice = self.compute_beta(projected_dic_slice_coord, dataset_coord=coord_dic_slice_dataset,
+                                                   tau=tau)
+                kj = self.select_k_slices(beta_dic_slice, poped=dic_slice.id)
+                est_segm_j = self.label_fusion(kj)
+
+                sum_norm += l0_norm(dic_slice.seg_M, est_segm_j.data)
             return sum_norm
-        est_tau = minimize(to_minimize, 0, method='Nelder-Mead', options={'xtol':0.0005})
+
+        est_tau = minimize(to_minimize, 0, method='Nelder-Mead', options={'xtol': 0.0005})
         sct.printv('Estimated tau : ' + str(est_tau.x[0]))
         if self.model.param.todo_model == 'compute':
-            fic = open(self.model.dataset.model_dic_name + '/tau.txt','w')
+            fic = open(self.model.dictionary.model_dic_name + '/tau.txt', 'w')
             fic.write(str(est_tau.x[0]))
             fic.close()
         return float(est_tau.x[0])
 
-
-
-
+    '''
     # ------------------------------------------------------------------------------------------------------------------
-    # returns the index of the selected slices of the dictionary to do label fusion and compute the graymater segmentation
-    def select_K(self, beta):#0.015
+    def select_k_slices_old(self, beta, poped=None):
+        """
+        Select the K dictionary slices most similar to the target slice
+
+        :param beta: Dictionary similarities
+
+        :return selected: numpy array of index of the selected dictionary slices
+        """
         selected = []
-        #print '---------- IN SELECT_K : shape beta ---------------->', beta.shape, ' len = ', len(beta.shape)
-        #print '---------- IN SELECT_K : type beta[0] ---------------->', type(beta[0])
+
+        slices_index = range(self.model.dictionary.J)
+        if poped is not None:
+            slices_index.pop(poped)
+
         if isinstance(beta[0], (list, np.ndarray)):
             for beta_slice in beta:
-                selected_by_slice=[]
-                for j, beta_j in enumerate(beta_slice):
+                selected_by_slice = []
+                for j, beta_j in zip(slices_index, beta_slice):
                     if beta_j > self.epsilon:
                         selected_by_slice.append(j)
                 # selected.append(np.asarray(selected_by_slice))
                 selected.append(selected_by_slice)
         else:
-            for j, beta_j in enumerate(beta):
+            for j, beta_j in zip(slices_index, beta):
                 if beta_j > self.epsilon:
                     selected.append(j)
 
         return np.asarray(selected)
 
-    def label_fusion(self, selected_K):
-        res_seg_M = []
-        #print '---------- IN LABEL_FUSION : shape selected_K ---------------->', selected_K.shape, ' len = ', len(selected_K.shape)
-        #print '---------- IN LABEL_FUSION : type selected_K[0] ---------------->', type(selected_K[0])
-        if isinstance(selected_K[0], (list, np.ndarray)):
-            for i, selected_by_slice in enumerate(selected_K):
-                kept_decision_dataset = []
+    def label_fusion_old(self, selected_slices):
+        """
+        Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
+
+        :param selected_slices: array of indexes of the selected dictionary slices
+
+        :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
+        """
+        res_seg_model_space = []
+
+        if isinstance(selected_slices[0], (list, np.ndarray)):
+            for i_target, selected_by_slice in enumerate(selected_slices):
+                kept_slices_segmentation = []
                 for j in selected_by_slice:
-                    kept_decision_dataset.append(self.model.dataset.slices[j].seg_M)
-                slice_seg = self.model.dataset.compute_mean_seg(kept_decision_dataset)
-                res_seg_M.append(slice_seg)
+                    kept_slices_segmentation.append(self.model.dictionary.slices[j].seg_M)
+                slice_seg = compute_majority_vote_mean_seg(kept_slices_segmentation)
+                res_seg_model_space.append(slice_seg)
         else:
-            kept_decision_dataset = []
-            for j in selected_K:
-                kept_decision_dataset.append(self.model.dataset.slices[j].seg_M)
-            slice_seg = self.model.dataset.compute_mean_seg(kept_decision_dataset)
-            res_seg_M = slice_seg
+            kept_slices_segmentation = []
+            for j in selected_slices:
+                kept_slices_segmentation.append(self.model.dictionary.slices[j].seg_M)
+            slice_seg = compute_majority_vote_mean_seg(kept_slices_segmentation)
+            res_seg_model_space = slice_seg
 
-        res_seg_M = np.asarray(res_seg_M)
-        #save_image(res_seg_M, 'res_GM_seg_model_space')
+        res_seg_model_space = np.asarray(res_seg_model_space)
+        # save_image(res_seg_model_space, 'res_GM_seg_model_space')
 
-        return Image(res_seg_M)
-
+        return Image(res_seg_model_space)
+    '''
 
     # ------------------------------------------------------------------------------------------------------------------
-    # plot the pca and the target projection if target is provided
-    def plot_omega(self,nb_modes=3):
-        self.model.pca.plot_omega(nb_mode=nb_modes, target_coord=self.coord_projected_target) if self.coord_projected_target is not None \
-            else self.model.pca.plot_omega()
-        self.model.pca.plot_omega(nb_mode=nb_modes, target_coord=self.coord_projected_target, to_highlight=(5, self.selected_K[5])) if self.coord_projected_target is not None \
-            else self.model.pca.plot_omega()
+    def select_k_slices(self, beta, poped=None):
+        """
+        Select the K dictionary slices most similar to the target slice
 
+        :param beta: Dictionary similarities
+
+        :return selected: numpy array of segmentation of the selected dictionary slices
+        """
+
+        kept_slice_index = []
+
+        if isinstance(beta[0], (list, np.ndarray)):
+            for beta_slice in beta:
+                selected_index = beta_slice > self.epsilon
+                '''
+                if poped is not None:
+                    selected_index = np.delete(selected_index, poped)
+                '''
+                # kept_seg_slices.append(segmentation_slices[selected_index])
+                kept_slice_index.append(selected_index)
+
+        else:
+            kept_slice_index = beta > self.epsilon
+            '''
+            if poped is not None:
+                selected_index = np.delete(selected_index, poped)
+            '''
+            # kept_seg_slices = segmentation_slices[selected_index]
+
+        return np.asarray(kept_slice_index)
+
+    def label_fusion(self, selected_index):
+        """
+        Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
+
+        :param selected_slices: array of segmentation of the selected dictionary slices
+
+        :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
+        """
+        segmentation_slices = np.asarray([dic_slice.seg_M for dic_slice in self.model.dictionary.slices])
+
+
+        res_seg_model_space = []
+        '''
+        print '---------- IN LABEL_FUSION : shape selected_k_slices ---------------->', selected_k_slices.shape,
+         ' len = ', len(selected_k_slices.shape)
+        print '---------- IN LABEL_FUSION : type selected_k_slices[0] ---------------->', type(selected_k_slices[0])
+        '''
+        # if isinstance(selected_slices[0][0][0], (list, np.ndarray)):
+        # if len(selected_slices[0].shape) == 3:
+        if isinstance(selected_index[0], (list, np.ndarray)):
+
+            for selected_ind_by_slice in selected_index:  # selected_slices:
+                slice_seg = compute_majority_vote_mean_seg(segmentation_slices[selected_ind_by_slice])
+                res_seg_model_space.append(slice_seg)
+            # res_seg_model_space = map(compute_majority_vote_mean_seg, selected_slices)
+
+        else:
+            # res_seg_model_space = compute_majority_vote_mean_seg(selected_slices)
+            res_seg_model_space = compute_majority_vote_mean_seg(segmentation_slices[selected_index])
+
+        res_seg_model_space = np.asarray(res_seg_model_space)
+        # save_image(res_seg_model_space, 'res_GM_seg_model_space')
+
+        return Image(param=res_seg_model_space)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def plot_projected_dic(self, nb_modes=3):
+        """
+        plot the pca first modes and the target projection if target is provided.
+
+        on a second plot, highlight the selected dictionary slices for one target slice in particular
+
+        :param nb_modes:
+        :return:
+        """
+        self.model.pca.plot_projected_dic(nb_mode=nb_modes, target_coord=self.coord_projected_target) if self.coord_projected_target is not None \
+            else self.model.pca.plot_projected_dic()
+
+        self.model.pca.plot_projected_dic(nb_mode=nb_modes, target_coord=self.coord_projected_target, to_highlight=(5, self.selected_k_slices[5])) if self.coord_projected_target is not None \
+            else self.model.pca.plot_projected_dic()
+
+    '''
     # ------------------------------------------------------------------------------------------------------------------
     def show_projected_target(self):
         # Retrieving projected image from the mean image & its coordinates
@@ -900,7 +1117,7 @@ class TargetSegmentation:
             img_reducted = copy.copy(self.model.pca.mean_data_vect)
             # loop across coord and build projected image
             for i in range(0, coord.shape[0]):
-                img_reducted += int(coord[i][0]) * self.model.pca.W.T[i].reshape(self.model.pca.N, 1)
+                img_reducted += int(coord[i][0]) * self.model.pca.kept_modes.T[i].reshape(self.model.pca.N, 1)
 
             if self.model.param.split_data:
                 n = int(sqrt(self.model.pca.N * 2))
@@ -934,83 +1151,80 @@ class TargetSegmentation:
             # plt.title('Projected Image')
             # plt.show()
         plt.show()
-
+    '''
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# ASMAN METHOD ---------------------------------------------------------------------------------------------------
-class Asman():
-    def __init__(self, param=None):
+# GRAY MATTER SEGMENTATION SUPERVISED METHOD ---------------------------------------------------------------------------
+class GMsegSupervisedMethod():
+    """
+    Gray matter segmentation supervised method:
 
-        self.dataset = ModelDictionary(param=param)
+    Load a dictionary (training data set), compute or load a model from this dictionary
+sct_Image
+    Load a target image to segment and do the segmentation using the model
+    """
+    def __init__(self, gm_seg_param=None):
 
-        sct.printv('\nBuilding the appearance model...', verbose=param.verbose, type='normal')
+        self.dictionary = ModelDictionary(dic_param=gm_seg_param)
+
+        sct.printv('\nBuilding the appearance model...', verbose=gm_seg_param.verbose, type='normal')
         # build the appearance model
-        self.appearance_model = Model(param=param, dataset=self.dataset, k=0.8) #WARNING : K IS USUALLY 0.8
+        self.model = Model(model_param=gm_seg_param, dictionary=self.dictionary, k=0.8)
 
-        sct.printv('\nConstructing target image ...', verbose=param.verbose, type='normal')
+        sct.printv('\nConstructing target image ...', verbose=gm_seg_param.verbose, type='normal')
         # construct target image
-        self.target_image = Image(param.target_fname)
+        self.target_image = Image(gm_seg_param.target_fname)
 
-        #print '---TARGET IMAGE IN CLASS ASMAN : ', self.target_image.data
-        #save_image(self.target_image.data[0],'target_slice0_asman_'+param.todo_model)
+        '''
+        print '---TARGET IMAGE IN CLASS ASMAN : ', self.target_image.data
+        save_image(self.target_image.data[0], 'target_slice0_asman_' + gm_seg_param.todo_model)
+        '''
 
+        tau = None  # 0.000765625  # 0.00025  # 0.000982421875  # 0.00090625  # None
 
-        if param.split_data:
-            splited_target = []
-            for slice in self.target_image.data:
-                left_slice, right_slice = split(slice)
-                splited_target.append(left_slice)
-                splited_target.append(right_slice)
-            self.target_image = Image(np.asarray(splited_target))
-
-        tau = None #0.000765625 #0.00025 #0.000982421875 #0.00090625 #None
-
-        if param.todo_model == 'load' :
-            fic = open(self.appearance_model.dictionary.model_dic_name + '/tau.txt','r')
+        if gm_seg_param.todo_model == 'load':
+            fic = open(self.model.dictionary.model_dic_name + '/tau.txt', 'r')
             tau = float(fic.read())
             fic.close()
 
+        # build a target segmentation
+        self.target_seg_methods = TargetSegmentation(self.model, target_image=self.target_image, tau=tau)
 
-        #build a rigid registration
-        self.rigid_reg = TargetSegmentation(self.appearance_model, target_image=self.target_image, tau=tau)
+        suffix = '_'
+        for transfo in self.dictionary.coregistration_transfos:
+            suffix += '_' + transfo
 
-        self.res_GM_seg = self.rigid_reg.target_GM_seg
-        name_res = sct.extract_fname(param.target_fname)[1] + '_graymatterseg'
+        # save the result gray matter segmentation
+        self.res_GM_seg = self.target_seg_methods.target_GM_seg
+        name_res = sct.extract_fname(gm_seg_param.target_fname)[1] + '_graymatterseg' + suffix  # TODO: remove suffix
         save_image(self.res_GM_seg.data, name_res)
 
-        inverted_res_seg=[]
-        for slice in self.res_GM_seg.data:
-            inverted_res_seg.append(np.absolute(slice-1))
-        inverted_res_seg_image = Image(param=np.asarray(inverted_res_seg))
-        inverted_res_seg_image.file_name = name_res + '_inv'
-        inverted_res_seg_image.ext = '.nii.gz'
-        inverted_res_seg_image.save()
+        # inverse_wmseg_to_gmseg(self.res_GM_seg, self.target_image, name_res)
 
-        sct.printv('Done! \nTo see the result, type : fslview ' + param.target_fname + ' ' + name_res + '.nii.gz -l Red -t 0.4 &')
+        sct.printv('Done! \nTo see the result, type : fslview ' + gm_seg_param.target_fname + ' '
+                   + name_res + '.nii.gz -l Red -t 0.4 &')
 
     def show(self):
 
         sct.printv('\nShowing the pca modes ...')
-        self.appearance_model.pca.show_all_modes()
-
+        self.model.pca.show_all_modes()
 
         sct.printv('\nPloting Omega ...')
-        self.rigid_reg.plot_omega(nb_modes=3)
+        self.target_seg_methods.plot_projected_dic(nb_modes=3)
 
         sct.printv('\nShowing PCA mode graphs ...')
-        self.appearance_model.pca.show_mode()
-        print 'J :',self.dataset.J
+        self.model.pca.show_mode_variation()
+        print 'J :', self.dictionary.J
 
         '''
         sct.printv('\nShowing the projected target ...')
-        self.rigid_reg.show_projected_target()
+        self.target_seg_methods.show_projected_target()
         '''
 
 
-
 ########################################################################################################################
-######-------------------------------------------------  MAIN   --------------------------------------------------######
+# ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
 
 if __name__ == "__main__":
@@ -1040,16 +1254,18 @@ if __name__ == "__main__":
                           type_value="multiple_choice",
                           description="Load or compute the model",
                           mandatory=True,
-                          example=['load','compute'])
-        parser.add_option(name="-split",
-                          type_value="int",
-                          description="1 will split all images from dictionary in the right-left direction in order to have more dictionary for the PCA",
+                          example=['load', 'compute'])
+        parser.add_option(name="-reg",
+                          type_value=[[','], 'str'],
+                          description="list of transformations to apply to co-register the dictionary data",
                           mandatory=False,
-                          example='0')
+                          default_value=['Affine'],
+                          example=['Rigid', 'Affine'])
         parser.add_option(name="-v",
                           type_value="int",
-                          description="verbose",
+                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
                           mandatory=False,
+                          default_value=0,
                           example='1')
 
         arguments = parser.parse(sys.argv[1:])
@@ -1057,13 +1273,13 @@ if __name__ == "__main__":
         param.path_dictionary = arguments["-dic"]
         param.todo_model = arguments["-model"]
 
-        if "-split" in arguments:
-            param.split_data = arguments["-split"]
+        if "-reg" in arguments:
+            param.reg = arguments["-reg"]
+
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
+    gm_seg_method = GMsegSupervisedMethod(gm_seg_param=param)
 
-    asman_seg = Asman(param=param)
-
-    asman_seg.show()
-
+    if param.verbose == 2:
+        gm_seg_method.show()
