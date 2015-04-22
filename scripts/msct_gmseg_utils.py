@@ -27,34 +27,87 @@ from msct_parser import Parser
 
 
 class Slice:
-    def __init__(self, id=None, im=None, seg=None, RtoM='', im_M=None, seg_M=None, im_M_flat=None, seg_M_flat=None, level=None):
-        self.id = id
+    """
+    Slice instance used in the model dictionary for the segmentation of the gray matter
+    """
+    def __init__(self, slice_id=None, im=None, seg=None, reg_to_m=None, im_m=None, seg_m=None,
+                 im_m_flat=None, seg_m_flat=None, level=None):
+        """
+        Slice constructor
+
+        :param slice_id: slice ID number, type: int
+
+        :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
+
+        :param seg: manual segmentation of the original image, type: numpy array
+
+        :param reg_to_m: name of the file containing the transformation for this slice to go
+        from the image original space to the model space, type: string
+
+        :param im_m: image in the model space, type: numpy array
+
+        :param seg_m: manual segmentation in the model space, type: numpy array
+
+        :param im_m_flat: flatten image in the model space, type: numpy array
+
+        :param seg_m_flat: flatten manual segmentation in the model space, type: numpy array
+
+        :param level: spinal AND\OR ? vertebral level of the slice, type: ??
+
+        **WARNING : the level isn't used yet in the gm segmentation method**
+        """
+        self.id = slice_id
         self.im = im
         self.seg = seg
-        self.RtoM = RtoM
-        self.im_M = im_M
-        self.seg_M = seg_M
-        self.im_M_flat = im_M_flat
-        self.seg_M_flat = seg_M_flat
+        self.reg_to_M = reg_to_m
+        self.im_M = im_m
+        self.seg_M = seg_m
+        self.im_M_flat = im_m_flat
+        self.seg_M_flat = seg_m_flat
         self.level = level
 
-    def set(self, id=None, im=None, seg=None, RtoM='', im_M=None, seg_M=None, im_M_flat=None, seg_M_flat=None, level=None):
-        if id is not None:
-            self.id = id
+    def set(self, slice_id=None, im=None, seg=None, reg_to_m=None, im_m=None, seg_m=None,
+            im_m_flat=None, seg_m_flat=None, level=None):
+        """
+        Slice setter, only the specified parameters are set
+
+        :param slice_id: slice ID number, type: int
+
+        :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
+
+        :param seg: manual segmentation of the original image, type: numpy array
+
+        :param reg_to_m: name of the file containing the transformation for this slice to go
+        from the image original space to the model space, type: string
+
+        :param im_m: image in the model space, type: numpy array
+
+        :param seg_m: manual segmentation in the model space, type: numpy array
+
+        :param im_m_flat: flatten image in the model space, type: numpy array
+
+        :param seg_m_flat: flatten manual segmentation in the model space, type: numpy array
+
+        :param level: spinal AND\OR ? vertebral level of the slice, type: ??
+
+        **WARNING : the level isn't used yet in the gm segmentation method**
+        """
+        if slice_id is not None:
+            self.id = slice_id
         if im is not None:
             self.im = im
         if seg is not None:
             self.seg = seg
-        if RtoM != '':
-            self.RtoM = RtoM
-        if im_M is not None:
-            self.im_M = im_M
-        if seg_M is not None:
-            self.seg_M = seg_M
-        if im_M_flat is not None:
-            self.im_M_flat = im_M_flat
-        if seg_M_flat is not None:
-            self.seg_M_flat = seg_M_flat
+        if reg_to_m is not None:
+            self.reg_to_M = reg_to_m
+        if im_m is not None:
+            self.im_M = im_m
+        if seg_m is not None:
+            self.seg_M = seg_m
+        if im_m_flat is not None:
+            self.im_M_flat = im_m_flat
+        if seg_m_flat is not None:
+            self.seg_M_flat = seg_m_flat
         if level is not None:
             self.level = level
 
@@ -62,22 +115,28 @@ class Slice:
         s = '\nSlice #' + str(self.id)
         if self.level is not None:
             s += 'Level : ' + str(self.level)
-        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.seg) + '\nTransfor;ation to model space : ' + self.RtoM
+        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.seg) +\
+             '\nTransformation to model space : ' + self.reg_to_M
         if self.im_M is not None:
             s += '\nAtlas in the common model space: \n' + str(self.im_M)
         if self.seg_M is not None:
-             s += '\nDecision in the common model space: \n' + str(self.seg_M)
+            s += '\nDecision in the common model space: \n' + str(self.seg_M)
         return s
 
 
 ########################################################################################################################
-######------------------------------------------------ FUNCTIONS -------------------------------------------------######
+# ---------------------------------------------------- FUNCTIONS ----------------------------------------------------- #
 ########################################################################################################################
 
-
+'''
 # ----------------------------------------------------------------------------------------------------------------------
-# Split a slice in two slices, used to deal with actual loss of data
 def split(slice):
+    """
+    Split a given slice in two
+
+    :param slice: slice to split, type: numpy array
+    :return:
+    """
     left_slice = []
     right_slice = []
     column_length = slice.shape[1]
@@ -94,70 +153,111 @@ def split(slice):
         str(left_slice.shape) + '==' + str(right_slice.shape) + \
         'You should check that the first dim of your image (or slice) is an odd number'
     return left_slice, right_slice
+'''
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def show(coord_projected_img, pca, target, split=0):
-    # Retrieving projected image from the mean image & its coordinates
+def show(coord_projected_img, pca, target):
+    """
+    Display an image projected in the reduced PCA space
+
+    :param coord_projected_img: Coordinates of the target image in the PCA reduced space
+
+    :param pca: PCA instance (used to get the mean image)
+
+    :param target: image to display
+    """
     import copy
 
-    img_reducted = copy.copy(pca.mean_image)
+    img_reduced_space = copy.copy(pca.mean_image)
     for i in range(0, coord_projected_img.shape[0]):
-        img_reducted += int(coord_projected_img[i][0]) * pca.W.T[i].reshape(pca.N, 1)
+        img_reduced_space += int(coord_projected_img[i][0]) * pca.kept_modes.T[i].reshape(pca.N, 1)
 
-    if split :
-        n = int(sqrt(pca.N * 2))
-    else:
-        n = int(sqrt(pca.N))
-    if split:
-        imgplot = plt.imshow(pca.mean_image.reshape(n, n / 2))
-    else:
-        imgplot = plt.imshow(pca.mean_image.reshape(n, n))
+    n = int(sqrt(pca.N))
+    imgplot = plt.imshow(pca.mean_image)
     imgplot.set_interpolation('nearest')
     imgplot.set_cmap('gray')
-    plt.title('Mean Image')
-    plt.show()
-    if split:
-        imgplot = plt.imshow(target.reshape(n, n / 2))
-    else:
-        imgplot = plt.imshow(target.reshape(n, n))
-    imgplot.set_interpolation('nearest')
-    #imgplot.set_cmap('gray')
-    plt.title('Original Image')
-    plt.show()
-    if split:
-        imgplot = plt.imshow(img_reducted.reshape(n, n / 2))
-    else:
-        imgplot = plt.imshow(img_reducted.reshape(n, n))
-    imgplot.set_interpolation('nearest')
-    #imgplot.set_cmap('gray')
-    plt.title('Projected Image')
+    plt.title('Mean PCA Image')
     plt.show()
 
+    imgplot = plt.imshow(target.reshape(n, n))
+    imgplot.set_interpolation('nearest')
+    # imgplot.set_cmap('gray')
+    plt.title('Original Image')
+    plt.show()
+
+    imgplot = plt.imshow(img_reduced_space.reshape(n, n))
+    imgplot.set_interpolation('nearest')
+    # imgplot.set_cmap('gray')
+    plt.title('Projected Image (projected in the PCA reduced space)')
+    plt.show()
+
+
 # ----------------------------------------------------------------------------------------------------------------------
-# save an image from an array, if the array correspond to a flatten image, the saved image will be square shaped
-def save_image(im_array, im_name, path='', type='', verbose=1):
+def save_image(im_array, im_name, path='', im_type='', verbose=1):
+    """
+    Save an image from an array,
+    if the array is a flatten image, the saved image will be square shaped
+
+    :param im_array: image to save
+
+    :param im_name: name of the image
+
+    :param path: path where to save it
+
+    :param im_type: type of image
+
+    :param verbose:
+    """
     if isinstance(im_array, list):
         n = int(sqrt(len(im_array)))
-        im_data = np.asarray(im_array).reshape(n,n)
+        im_data = np.asarray(im_array).reshape(n, n)
     else:
         im_data = np.asarray(im_array)
-    im = Image(param=im_data,verbose=verbose)
+    im = Image(param=im_data, verbose=verbose)
     im.file_name = im_name
     im.ext = '.nii.gz'
     if path != '':
         im.path = path
-    im.save(type=type)
+    im.save(type=im_type)
 
-def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary = True, path='./', inverse=0, verbose=0):
+
+# ----------------------------------------------------------------------------------------------------------------------
+def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='',
+                       binary=True, path='./', inverse=0, verbose=0):
+    """
+    Compute and/or apply a registration using ANTs
+
+    :param fixed_im: fixed image for the registration, type: numpy array
+
+    :param moving_im: moving image for the registration, type: numpy array
+
+    :param search_reg: compute (search) or load (from a file) the transformation to do, type: boolean
+
+    :param transfo_type: type of transformation to apply, type: string
+
+    :param apply_transfo: apply or not the transformation, type: boolean
+
+    :param transfo_name: name of the file containing the transformation information (to load or save the transformation,
+     type: string
+
+    :param binary: if the image to register is binary, type: boolean
+
+    :param path: path where to load/save the transformation
+
+    :param inverse: apply inverse transformation
+
+    :param verbose: verbose
+    """
     import time
+    res_im = None
     try:
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
             sct.run('mkdir ' + path + transfo_dir)
-        dir_name = 'tmp_reg_' +str(time.time())
+        dir_name = 'tmp_reg_' + str(time.time())
         sct.run('mkdir ' + dir_name, verbose=verbose)
-        os.chdir('./'+ dir_name)
+        os.chdir('./' + dir_name)
 
         if binary:
             t = 'uint8'
@@ -165,16 +265,11 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             t = ''
 
         fixed_im_name = 'fixed_im'
-        save_image(fixed_im, fixed_im_name, type=t, verbose=verbose)
+        save_image(fixed_im, fixed_im_name, im_type=t, verbose=verbose)
         moving_im_name = 'moving_im'
-        save_image(moving_im, moving_im_name, type=t, verbose=verbose)
+        save_image(moving_im, moving_im_name, im_type=t, verbose=verbose)
 
-        if transfo_type == 'Rigid' or transfo_type == 'Affine':
-            mat_name = 'reg0GenericAffine.mat'
-        elif transfo_type == 'BSpline':
-            mat_name = 'reg0BSpline.txt'
-        elif transfo_type == 'BSplineSyN' or transfo_type == 'SyN':
-            mat_name = 'reg0Warp.nii.gz'
+        mat_name, inverse_mat_name = find_transfo_name(transfo_type)
 
         if search_reg:
             reg_interpolation = 'BSpline'
@@ -188,77 +283,249 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             gradientstep = 0.3  # 0.5
             metric = 'MeanSquares'
             metric_params = ',5'
-            #metric = 'MI'
-            #metric_params = ',1,2'
+            # metric = 'MI'
+            # metric_params = ',1,2'
             niter = 20
             smooth = 0
             shrink = 1
-            cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params +  '] ' \
-                      '-m ' + metric + '[' + fixed_im_name +'.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params  + '] -o reg  -c ' + str(niter) + \
+            cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
+                      '-m ' + metric + '[' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)
 
             sct.run(cmd_reg, verbose=verbose)
 
             sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
-
+            if transfo_type == 'SyN':
+                sct.run('cp ' + inverse_mat_name + ' ../' + path + transfo_dir + '/'+transfo_name + '_inversed',
+                        verbose=verbose)
 
         if apply_transfo:
             if not search_reg:
-                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./'+ mat_name , verbose=verbose)
+                sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./' + mat_name, verbose=verbose)
+                if transfo_type == 'SyN':
+                    sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + inverse_mat_name,
+                            verbose=verbose)
 
             if binary:
-                applyTransfo_interpolation = 'NearestNeighbor'
+                apply_transfo_interpolation = 'NearestNeighbor'
             else:
-                applyTransfo_interpolation = 'BSpline'
+                apply_transfo_interpolation = 'BSpline'
 
-            cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name +'.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
-                        '-n ' + applyTransfo_interpolation + ' -t ['+ mat_name +','+ str(inverse) +']  -r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
+            if transfo_type == 'SyN' and inverse:
+                cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                            '-n ' + apply_transfo_interpolation + ' -t [' + inverse_mat_name + '] ' \
+                            '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
-            status, output = sct.run(cmd_apply, verbose=verbose)
+            else:
+                cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                            '-n ' + apply_transfo_interpolation + ' -t [' + mat_name + ',' + str(inverse) + '] ' \
+                            '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
+
+            sct.run(cmd_apply, verbose=verbose)
 
             res_im = Image(moving_im_name + '_moved.nii.gz')
     except Exception, e:
-        sct.printv('WARNING: AN ERROR OCCURRED WHEN DOING RIGID REGISTRATION USING ANTs',1 ,'warning')
+        sct.printv('WARNING: AN ERROR OCCURRED WHEN DOING RIGID REGISTRATION USING ANTs', 1, 'warning')
         print e
     else:
-        sct.printv('Removing temporary files ...',verbose = verbose, type='normal')
+        sct.printv('Removing temporary files ...', verbose=verbose, type='normal')
         os.chdir('..')
         sct.run('rm -rf ' + dir_name + '/', verbose=verbose)
 
-    if apply_transfo:
+    if apply_transfo and res_im is not None:
         return res_im.data
 
+
 # ----------------------------------------------------------------------------------------------------------------------
-# Kronecker delta function
+def find_transfo_name(transfo_type):
+    """
+    find the name of the transformation file automatically saved by ANTs for a type of transformation
+
+    :param transfo_type: type of transformation
+
+    :return transfo_name, inverse_transfo_name:
+    """
+    transfo_name = ''
+    inverse_transfo_name = ''
+    if transfo_type == 'Rigid' or transfo_type == 'Affine':
+        transfo_name = 'reg0GenericAffine.mat'
+    elif transfo_type == 'BSpline':
+        transfo_name = 'reg0BSpline.txt'
+    elif transfo_type == 'BSplineSyN' or transfo_type == 'SyN':
+        transfo_name = 'reg0Warp.nii.gz'
+        inverse_transfo_name = 'reg0InverseWarp.nii.gz'
+    return transfo_name, inverse_transfo_name
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 def kronecker_delta(x, y):
+    """
+    Kronecker delta function
+    :param x: float
+    :param y: float
+    :return: 0 if x=y, 1 if x and y are different
+    """
     if x == y:
         return 1
     else:
         return 0
 
+
+'''
 # ------------------------------------------------------------------------------------------------------------------
-# label-based cost function
-def l0_norm(X, Y):
-    return np.linalg.norm(X.flatten() - Y.flatten(), 0)
+def compute_mutual_information_seg(seg_data_set):
+    """
+    Compute the mean segmentation image for a given segmentation data set
+    keeping only the pixels that are present in ALL the data set
+    :param seg_data_set:
+    :return:
+    """
+    seg_sum = np.asarray(seg_data_set[0])
+    n_seg = len(seg_data_set)
+
+    for dic_slice in seg_data_set[1:]:
+        seg_sum += np.asarray(dic_slice)
+
+    index_to_keep = seg_sum == n_seg
+    mean_seg = index_to_keep.astype(int)
+
+    return mean_seg
+'''
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def l0_norm(x, y):
+    """
+    L0 norm of two images x and y
+    :param x:
+    :param y:
+    :return: l0 norm
+    """
+    return np.linalg.norm(x.flatten() - y.flatten(), 0)
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def inverse_wmseg_to_gmseg(wm_seg, original_im, name_wm_seg):
+    """
+    Inverse a white matter segmentation array image to get a gray matter segmentation image and save it
+
+    :param wm_seg: white matter segmentation to inverse, type: Image
+
+    :param original_im: original image croped around the spinal cord
+
+    :param name_wm_seg: name of the white matter segmentation (to save the associated gray matter segmentation),
+     type: string
+
+    :return inverted_seg: gray matter segmentation array
+    """
+    import copy
+
+    inverted_seg = []
+    sc = Image(param=original_im.data)
+    nz_coord_sc = sc.getNonZeroCoordinates()
+    for coord in nz_coord_sc:
+        sc.data[coord.x, coord.y, coord.z] = 1
+    sc.file_name = 'original_target_sc'
+    sc.ext = '.nii.gz'
+    sc.save()
+
+    # erosion of the spinal cord segmentation
+    new_sc_dat = copy.deepcopy(sc.data)
+
+    for i_slice, sc_slice in enumerate(sc.data):
+        for i_row, row in enumerate(sc_slice):
+            for i_pix, pix in enumerate(row):
+                if pix == 1:
+                    if row[i_pix-1] == 0 or row[i_pix+1] == 0 \
+                            or sc_slice[i_row+1, i_pix] == 0 or sc_slice[i_row-1, i_pix] == 0:
+                        new_sc_dat[i_slice, i_row, i_pix] = 0
+
+    for seg_slice, sc_slice in zip(wm_seg.data, new_sc_dat):
+        inverted_seg.append(sc_slice-seg_slice)
+
+    inverted_seg_pos = (np.asarray(inverted_seg) > 0).astype(int)
+
+    inverted_seg_pos_image = Image(param=np.asarray(inverted_seg_pos))
+    inverted_seg_pos_image.file_name = name_wm_seg + '_inv_to_gm'
+    inverted_seg_pos_image.ext = '.nii.gz'
+    inverted_seg_pos_image.save()
+
+    return inverted_seg_pos
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
+    """
+    Inverse a gray matter segmentation array image to get a white matter segmentation image and save it
+
+    :param gm_seg: gray matter segmentation to inverse, type: Image
+
+    :param original_im: original image croped around the spinal cord
+
+    :param name_gm_seg: name of the gray matter segmentation (to save the associated white matter segmentation),
+     type: string
+
+    :return inverted_seg: white matter segmentation array
+    """
+    gm_seg_copy = gm_seg.copy()
+    sc = original_im.copy()
+    nz_coord_sc = sc.getNonZeroCoordinates()
+
+    nz_coord_seg = gm_seg.getNonZeroCoordinates()
+    for coord in nz_coord_sc:
+        sc.data[coord.x, coord.y, coord.z] = 1
+    for coord in nz_coord_seg:
+        gm_seg_copy.data[coord.x, coord.y, coord.z] = 1
+    # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
+    res_wm_seg = np.absolute(sc.data - gm_seg_copy.data).astype(int)
+
+    res_wm_seg_im = Image(param=np.asarray(res_wm_seg), absolutepath=name_gm_seg + '_inv_to_wm.nii.gz')
+    res_wm_seg_im.save()
+
+    return res_wm_seg
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5):
+    """
+    Compute the mean segmentation image for a given segmentation data set seg_data_set by Majority Vote
+
+    :param seg_data_set: data set of segmentation slices (2D)
+
+    :param threshold: threshold to select the value of a pixel
+    :return:
+    """
+    dec_votes = np.sum(seg_data_set, axis=0)
+
+    dec_votes /= float(len(seg_data_set))
+
+    mean_seg = (dec_votes >= threshold).astype(int)
+
+    return mean_seg
 
 ########################################################################################################################
-######---------------------------------------------- PRETREATMENTS -----------------------------------------------######
+# -------------------------------------------------- PRETREATMENTS --------------------------------------------------- #
 ########################################################################################################################
-def crop_T2_star(dir):
-    for subject_dir in os.listdir(dir):
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def crop_t2_star(path):
+    for subject_dir in os.listdir(path):
         if os.path.isdir(subject_dir):
             t2star = ''
             sc_seg = ''
             seg_in = ''
+            seg_in_name = ''
             manual_seg = ''
+            manual_seg_name = ''
             mask_box = ''
             seg_in_croped = ''
             manual_seg_croped = ''
 
-            #print subject_dir
+            # print subject_dir
 
             '''
-            #VERSION 1 OF THE PRE TREATMENTS
+            # VERSION 1 OF THE PRE TREATMENTS
 
             mask_centerline = ''
             centerline = ''
@@ -286,14 +553,13 @@ def crop_T2_star(dir):
                 if mask_box == '':
                     sct.run('sct_create_mask -i '  + t2star + ' -m centerline,'  + centerline +' -s 40 -f box' )
                 if croped == '':
-                    sct.run('sct_crop_image -i '  + t2star + ' -o '  + t2star_name + '_croped' + ext+ ' -m mask_' + t2star)
+                    sct.run('sct_crop_image -i '  + t2star + ' -o '  + t2star_name + '_croped' + ext+
+                    ' -m mask_' + t2star)
                 os.chdir('..')
             '''
 
-
-
             '''
-            #VERSION 2 OF THE PRE TREATMENTS
+            # VERSION 2 OF THE PRE TREATMENTS
 
 
 
@@ -318,14 +584,17 @@ def crop_T2_star(dir):
                 try:
 
                     if seg_in == '':
-                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o '
+                        + t2star_name + '_seg_in')
                         seg_in = t2star_name + '_seg_in.nii.gz'
                         seg_in_name = t2star_name + '_seg_in'
                     if mask_box == '':
-                        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o ' + t2star_name + '_square_mask.nii.gz -f box' )
+                        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o '
+                         + t2star_name + '_square_mask.nii.gz -f box' )
                         mask_box = t2star_name + '_square_mask.nii.gz'
                     if seg_in_croped == '':
-                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o '
+                        + seg_in_name + '_croped')
                     #os.chdir('..')
 
                 except Exception,e:
@@ -336,31 +605,32 @@ def crop_T2_star(dir):
                 os.chdir('..')
             '''
 
-
-            #VERSION 3 OF THE PRE TREATMENTS
-            for file in os.listdir(dir + '/' + subject_dir):
-                file_low = file.lower()
-                if 't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
-                    t2star = file
-                    t2star_path,t2star_name,ext = sct.extract_fname(t2star)
+            # VERSION 3 OF THE PRE TREATMENTS
+            for subject_file in os.listdir(path + '/' + subject_dir):
+                file_low = subject_file.lower()
+                if 't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low \
+                        and 'IRP' not in file_low:
+                    t2star = subject_file
+                    t2star_path, t2star_name, ext = sct.extract_fname(t2star)
                 elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
-                    mask_box = file
-                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
-                    sc_seg = file
+                    mask_box = subject_file
+                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low \
+                        and 'IRP' not in file_low:
+                    sc_seg = subject_file
                 elif '_seg_in' in file_low and 'croped' not in file_low and 'IRP' not in file_low:
-                    seg_in = file
+                    seg_in = subject_file
                     seg_in_name = sct.extract_fname(seg_in)[1]
                 elif 'gm' in file_low and 'croped.nii' not in file_low and 'IRP' not in file_low:
-                    manual_seg = file
+                    manual_seg = subject_file
                     print manual_seg
                     manual_seg_name = sct.extract_fname(manual_seg)[1]
                 elif '_croped.nii' in file_low and 'IRP' not in file_low and 'gm' not in file_low:
-                    seg_in_croped = file
+                    seg_in_croped = subject_file
                 elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
-                    manual_seg_croped = file
+                    manual_seg_croped = subject_file
                     print manual_seg_croped
             if t2star != '' and sc_seg != '':
-                path = dir + '/' + subject_dir + '/'
+                path = path + '/' + subject_dir + '/'
                 print 'path : ', path
                 os.chdir(path)
                 '''
@@ -373,43 +643,125 @@ def crop_T2_star(dir):
                 try:
 
                     if seg_in == '':
-                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
+                                '-o ' + t2star_name + '_seg_in')
                         seg_in = t2star_name + '_seg_in.nii.gz'
                         seg_in_name = t2star_name + '_seg_in'
+
                     if mask_box == '':
-                        #sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70 -o ' + t2star_name + '_square_mask.nii.gz -f box' )
-                        #sct_create_mask -i errsm_05_t2star_seg_in.nii.gz -m centerline,errsm_05_t2star_seg_corrected.nii.gz -s 45 -f box -o errsm_05_t2star_mask_from_sc_seg.nii.gz
-                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,'+ sc_seg +' -s 43 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box' )
+                        '''
+                        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70'
+                                ' -o ' + t2star_name + '_square_mask.nii.gz -f box' )
+                        '''
+
+                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s 43 '
+                                '-o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
                         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+
                     if seg_in_croped == '':
-                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 '
+                                '-o ' + seg_in_name + '_croped')
+
                     if manual_seg_croped == '':
-                        sct.run('sct_crop_over_mask.py -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1 -o ' + manual_seg_name + '_croped')
+                        sct.run('sct_crop_over_mask.py -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1'
+                                ' -o ' + manual_seg_name + '_croped')
 
-                    #os.chdir('..')
+                    # os.chdir('..')
 
-                except Exception,e:
-                    sct.printv('WARNING: an error occured ... \n ' + str(e) ,1, 'warning')
+                except Exception, e:
+                    sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
                 else:
                     print 'Done !'
-                    #sct.run('rm -rf ./tmp_' + now)
+                    # sct.run('rm -rf ./tmp_' + now)
                 os.chdir('..')
 
 
+########################################################################################################################
+# -------------------------------------------------- LEAVE ONE OUT --------------------------------------------------- #
+########################################################################################################################
+
+# ------------------------------------------------------------------------------------------------------------------
+def leave_one_out(dic_path, reg=None):
+    dice_file = open('dice_coeff.txt', 'w')
+    dice_sum = 0
+    n_subject = 0
+    e = None
+
+    for subject_dir in os.listdir(dic_path):
+        subject_path = dic_path + '/' + subject_dir
+        if os.path.isdir(subject_path):
+            try:
+                tmp_dir = 'tmp_' + subject_dir + '_as_target'
+                sct.run('mkdir ' + tmp_dir)
+
+                tmp_dic_name = 'dic'
+                sct.run('cp -r ' + dic_path + ' ./' + tmp_dir + '/' + tmp_dic_name + '/')
+                sct.run('mv ./' + tmp_dir + '/' + tmp_dic_name + '/' + subject_dir + ' ./' + tmp_dir)
+
+                # gray matter segmentation using this subject as target
+                os.chdir(tmp_dir)
+                target = ''
+                ref_gm_seg = ''
+                res = ''
+
+                for file_name in os.listdir(subject_dir):
+                    if 'seg_in' in file_name:
+                        target = subject_dir + '/' + file_name
+                    elif 'manual' in file_name:
+                        ref_gm_seg = subject_dir + '/' + file_name
+
+                cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute'
+                if reg is not None:
+                    cmd_gm_seg += ' -reg ' + reg
+                sct.run(cmd_gm_seg)
+
+                for file_name in os.listdir('.'):
+                    if 'graymatterseg' in file_name and 'manual' not in file_name:
+                        res = file_name
+
+                ref_gm_seg_im = Image(ref_gm_seg)
+                target_im = Image(target)
+
+                inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
+
+                ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
+
+                status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref_wm_seg)
+                dice = dice_output[-9:]
+                os.chdir('..')
+
+                dice_sum += float(dice)
+                n_subject += 1
+                dice_file.write(subject_dir + ': ' + dice)
+            except Exception, e:
+                sct.printv('WARNING: an error occured ...', 1, 'warning')
+                print e
+            # else:
+            #    sct.run('rm -rf ' + tmp_dir)
+    if e is None:
+        dice_file.write('\nmean dice: ' + str(dice_sum/n_subject))
+        dice_file.close()
 
 
 if __name__ == "__main__":
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.usage.set_description('Utility functions for the gray matter segmentation')
         parser.add_option(name="-crop",
                           type_value="folder",
-                          description="Path to the folder containing all your subjects' data",
+                          description="Path to the folder containing all your subjects' data "
+                                      "to be croped as pretreatment",
+                          mandatory=False,
+                          example='dictionary/')
+        parser.add_option(name="-loo-validation",
+                          type_value="folder",
+                          description="Path to a dictionary folder to do 'Leave One Out Validation' on",
                           mandatory=False,
                           example='dictionary/')
 
         arguments = parser.parse(sys.argv[1:])
 
         if "-crop" in arguments:
-            crop_T2_star(arguments['-crop'])
-
+            crop_t2_star(arguments['-crop'])
+        if "-loo-validation" in arguments:
+            leave_one_out(arguments['-loo-validation'])
