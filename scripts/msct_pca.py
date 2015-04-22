@@ -14,14 +14,14 @@
 # Step 4: Compute the eigenvectors and corresponding eigenvalues (from the covariance matrix)
 #
 # Step 5: Sort the eigenvectors by decreasing eigenvalues and choose k in order to keep V of them such as:
-#       sum(kept eigenvalues)/sum(all eigenvalues) < k (kappa in asman article)
-#           This gives W, a NxV matrix with N=nb_vox and V=nb of kept eigenvectors
+#       sum(kept_eigenval eigenvalues)/sum(all eigenvalues) < k (kappa in asman article)
+#           This gives kept_modes, a NxV matrix with N=nb_vox and V=nb of kept_eigenval eigenvectors
 #
 # Step 6: Transform the input image onto the new subspace, this can be done by:
-#       y = W.T*(x - mean)  where:
+#       y = kept_modes.T*(x - mean)  where:
 #           x is the input N*1 flatened image
 #           .T: transpose operator
-#           W [NxV]
+#           kept_modes [NxV]
 #           y is x projected in the PCA space
 #
 #   TODO: add datashape arg in __init__ in order to remove if split etc...
@@ -41,48 +41,102 @@ import os
 
 
 class PCA:
+    """
+    Principal Component Analysis for a data set of images
 
-    def __init__(self, dataset, mean_vect=None, eig_pairs=None, k=0.80):
+    Each dimension of the original data set space represent the variation of intensity of one pixel among the data set.
+    The new space (PCA space) axes are linear combinations of the original space axes.
+    The axes (or modes) of the PCA are the eigenvectors of the covariance matrix of the data set
+    Each eigenvector is associated with an eigenvalue,
+    the eigenvalue indicates the amount of the data set variability explained by this mode
+
+    (eigenvalue/sum(eigenvalues)) = percentage of variability explained by this axis
+
+    The reduced PCA space is the space composed of the eigenvectors that explain in total k% of the variability
+    """
+
+    def __init__(self, dataset, mean_vect=None, eig_pairs=None, k=0.80, verbose=1):
+        """
+        Principal Components Analysis constructor
+
+        :param dataset: data set used to do the PCA
+
+        :param mean_vect: flatten mean image -> if you want to load a PCA instead of compute it
+
+        :param eig_pairs: list of tuples (eigenvalue, eigenvector) -> if you want to load a PCA instead of compute it
+
+        :param k: percentage of variability to keep in the reduced PCA space
+
+        :param verbose: 0: displays nothing, 1: displays text, 2: displays text and figures
+
+        """
+        self.verbose = verbose
         # STEP 1
-        self.dataset = dataset  # This should be a J*N dimensional matrix of J N-dimensional flattened images
-        self.N = dataset.shape[0]  # The number of rows is the dimension of flattened images
-        self.J = dataset.shape[1]  # The number of columns is the number of images
+        # The data set should be a J*N dimensional matrix of J N-dimensional flattened images
+        self.dataset = dataset  # type: list of flatten images
+        # The number of rows in self.dataset is the dimension of flattened images
+        self.N = dataset.shape[0]  # type: int
+        # The number of columns in self.datatset is the number of images
+        self.J = dataset.shape[1]  # type: int
+
         # STEP 2
         if mean_vect is not None:
             self.mean_data_vect = mean_vect
         else:
             self.mean_data_vect = self.mean()
 
-
+        # unflatten mean image
         n = int(sqrt(self.N))
-        self.mean_image = self.mean_data_vect.reshape(n,n)
+        self.mean_image = self.mean_data_vect.reshape(n, n)
 
-        fig=plt.figure()
+        plt.figure()
         plt.imshow(self.mean_image.astype(np.float))
+        plt.set_cmap('gray')
         plt.plot()
 
-        if eig_pairs == None:
+        # compute the the eigenvalues and eigenvectors from the data
+        if eig_pairs is None:
             # STEP 3
             self.covariance_matrix = self.covariance_matrix()
-            # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
-            self.eig_pairs = self.sorted_eig()
+
+            # STEP 4
+            # eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
+            self.eig_pairs = self.sort_eig()
+
+        # or get the eigenvalues and eigenvectors from the arguments
         else:
-             # STEP 3
+            # STEP 3
             self.covariance_matrix = None
-            # STEP 4 eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
+            # STEP 4
+            # eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
             self.eig_pairs = eig_pairs
+
+        # --> The eigenvectors are the modes of the PCA
+
         # STEP 5
-        self.k = k
-        self.W, self.kept = self.generate_W(modes_to_ignore=0)
-        print '\n\n-------> IN PCA : '
-        print '\n-> W:', self.W
-        print '\n-> kept:', self.kept
-        # omega is a matrix of k rows and J columns, each columns correspond to a vector projection of an image from
-        # the dictionary
-        self.omega = self.project_dataset()
+        self.k = k  # type: float
+        self.kept_modes, self.kept_eigenval = self.select_kept_modes(modes_to_ignore=0)
+
+        sct.printv('\n\n-------> IN PCA : ', self.verbose, 'normal')
+        sct.printv('\n-> kept_modes:' + str(self.kept_modes), self.verbose, 'normal')
+        sct.printv('\n-> kept_eigenval:' + str(len(self.kept_eigenval)), self.verbose, 'normal')
+
+        # dataset_coord is a matrix of len(self.kept_eigenval) rows and J columns,
+        # each columns correspond to a vector projection of an image from the dictionary
+        self.dataset_coord = self.project_dataset()
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # FUNCTIONS
+    # ------------------------------------------------------------------------------------------------------------------
 
     # STEP 2
+    # ------------------------------------------------------------------------------------------------------------------
     def mean(self):
+        """
+        Compute the mean data set image as a vector (flatten image)
+
+        :return mean_im: mean image flatten (vector)
+        """
         mean_im = []
         for row in self.dataset:
             m = sum(row)/self.J
@@ -91,7 +145,13 @@ class PCA:
         return mean_im
 
     # STEP 3
+    # ------------------------------------------------------------------------------------------------------------------
     def covariance_matrix(self):
+        """
+        Compute the covariance matrix of the data set
+
+        :return covariance_matrix:
+        """
         covariance_matrix = np.zeros((self.N, self.N))
         for j in range(0, self.J):
             covariance_matrix += float(1)/self.J*(self.dataset[:, j].reshape(self.N, 1) - self.mean_data_vect)\
@@ -99,7 +159,13 @@ class PCA:
         return covariance_matrix
 
     # STEP 4
-    def sorted_eig(self):
+    # ------------------------------------------------------------------------------------------------------------------
+    def sort_eig(self):
+        """
+        Sort the eigenvalues and eigenvectors by decreasing eigenvalues
+
+        :return eig_pairs: sorted list of tuples (eigenvalue, eigenvector)
+        """
         eigenvalues, eigenvectors = np.linalg.eig(self.covariance_matrix)
 
         eigenvectors = eigenvectors.astype(np.float)
@@ -107,249 +173,277 @@ class PCA:
         # Create a list of (eigenvalue, eigenvector) tuple
         eig_pairs = [(np.abs(eigenvalues[i]), eigenvectors[:, i]) for i in range(len(eigenvalues))
                      if np.abs(eigenvalues[i]) > 0.0000001]
-        # Sort the (eigenvalue, eigenvector) tuples from high to low
 
-        def getKey(item):
-            return item[0] #sorting by eigenvalues
-        eig_pairs = sorted(eig_pairs, key=getKey, reverse=True)
+        # Sort the (eigenvalue, eigenvector) tuples from high eigenvalues to low eigenvalues
+        def get_key(item):
+            """
+            indicate the key to use to sort a tuple list 9here : first element
+            :param item: tuple
+            :return item[0]: first element of tuple
+            """
+            return item[0]  # sorting by eigenvalues
+        eig_pairs = sorted(eig_pairs, key=get_key, reverse=True)
         return eig_pairs
 
     # STEP 5
-    def generate_W(self, modes_to_ignore=0):
-        eigenvalues_kept = []
+    # ------------------------------------------------------------------------------------------------------------------
+    def select_kept_modes(self, modes_to_ignore=0):
+        """
+        select the modes to keep according the percentage of variability to keep (self.k)
+
+        :param modes_to_ignore: if not 0 the specified number of first modes will be ignored
+
+        :return kept_modes, kept_eigenvalues: list of the kept modes vectors and list of the kept eigenvalues
+        """
+        kept_eigenvalues = []
         s = sum([eig[0] for eig in self.eig_pairs])
-        print '\n####################################\n ---> sum of eigenvalues : ', s
+        sct.printv('\n ---> sum of eigenvalues : ' + str(s), self.verbose, 'normal')
         first = 1
-        start=modes_to_ignore
+        start = modes_to_ignore
+        kept_modes = []
         for eig in self.eig_pairs[start:]:
             if first:
-                W = np.asarray(eig[1]).reshape(self.N, 1)
-                eigenvalues_kept.append(eig[0])
+                kept_modes = np.asarray(eig[1]).reshape(self.N, 1)
+                kept_eigenvalues.append(eig[0])
                 first = 0
             else:
-                if (sum(eigenvalues_kept) + eig[0])/s <= self.k:
-                    eigenvalues_kept.append(eig[0])
-                    W = np.hstack((W, np.asarray(eig[1]).reshape(self.N, 1)))
+                if (sum(kept_eigenvalues) + eig[0])/s <= self.k:
+                    kept_eigenvalues.append(eig[0])
+                    kept_modes = np.hstack((kept_modes, np.asarray(eig[1]).reshape(self.N, 1)))
                 else:
                     break
-        kept = len(eigenvalues_kept)
-        print 'kept eigenvalues (PCA space dimension)  : ', kept
-        return W, kept
+
+        sct.printv('kept eigenvalues (PCA space dimension)  : ' + str(len(kept_eigenvalues)), self.verbose, 'normal')
+        return kept_modes, kept_eigenvalues
 
     # STEP 6
-    # Project the all dictionary in order to get images "close" to the target & to plot the dictionary
+    # ------------------------------------------------------------------------------------------------------------------
     def project_dataset(self):
-        omega = []
-        for column in self.dataset.T:
-            omega.append(self.project_array(column).reshape(self.kept,))
-        return np.asarray(omega).T
+        """
+        project all the images of the data set into the PCA reduced space
 
-    def project(self, target):
+        :return dataset_coord: coordinates of the data set as a list of vectors
+        """
+        dataset_coord = []
+        for column in self.dataset.T:
+            dataset_coord.append(self.project_array(column).reshape(len(self.kept_eigenval),))
+        return np.asarray(dataset_coord).T
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def project(self, image):
+        """
+        project a 3D image into the PCA reduced space
+
+        :param image: image to project
+
+        :return coord_projected_img: numpy array containing the coordinates of the image in the PCA reduced space
+        """
         # check if the target is a volume or a flat image
         coord_projected_slices = []
         # loop across all the slice
-        for slice in target.data:
-            coord_projected_slices.append(self.project_array(slice.flatten()))
+        for image_slice in image.data:
+            coord_projected_slices.append(self.project_array(image_slice.flatten()))
         return np.asarray(coord_projected_slices)
 
-    def project_array(self, target_as_array):
-        if target_as_array.shape == (self.N,):
-            target = target_as_array.reshape(self.N, 1)
-            coord_projected_img = self.W.T.dot(target - self.mean_data_vect)
+    # ------------------------------------------------------------------------------------------------------------------
+    def project_array(self, image_as_array):
+        """
+        project a flatten image into the PCA reduced space
+
+        :param image_as_array: flatten image to project
+
+        :return coord_projected_img: coordinates of the image in the PCA reduced space
+        """
+        if image_as_array.shape == (self.N,):
+            target = image_as_array.reshape(self.N, 1)
+            coord_projected_img = self.kept_modes.T.dot(target - self.mean_data_vect)
             return coord_projected_img
         else:
-            print "target dimension is {}, must be {}.\n".format(target_as_array.shape, self.N)
+            print "target dimension is {}, must be {}.\n".format(image_as_array.shape, self.N)
 
-
+    # ------------------------------------------------------------------------------------------------------------------
     def save_data(self, path):
+        """
+        Save the PCA data (vector of the mean image, eigenvalues and eigenvectors) into a text file
+
+        :param path: path where save the data
+        """
         previous_path = os.getcwd()
         os.chdir(path)
         fic_data = open('data_pca.txt', 'w')
-        for i,m in enumerate(self.mean_data_vect):
+
+        for i, m in enumerate(self.mean_data_vect):
             if i == len(self.mean_data_vect) - 1:
                 fic_data.write(str(m[0]))
             else:
                 fic_data.write(str(m[0]) + ' , ')
         fic_data.write('\n')
-        for i,eig in enumerate(self.eig_pairs):
+
+        for i, eig in enumerate(self.eig_pairs):
             eig_vect_string = ''
             for v in eig[1]:
                 eig_vect_string += str(v) + ' '
             if i == len(self.eig_pairs) - 1:
                 fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string)
             else:
-
                 fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string + ' , ')
         fic_data.write('\n')
+
         fic_data.close()
         os.chdir(previous_path)
 
-
-    #
-    # Show all the mode
-    def show_all_modes(self, split=0):
+    # ------------------------------------------------------------------------------------------------------------------
+    def show_all_modes(self):
+        """
+        Displays the kept PCA modes as images
+        """
         from math import sqrt
-        if split:
-            n = int(sqrt(2*self.N))
-        else:
-            n = int(sqrt(self.N))
+
+        n = int(sqrt(self.N))
         fig = plt.figure()
-        for i_fig in range(0, self.kept):
-            eigen_V = self.W.T[i_fig, :]
-            #dimensions of the subfigure
-            x = int(sqrt(self.kept))
-            y = int(self.kept/x)
+        for i_fig in range(0, len(self.kept_eigenval)):
+            eigenvect = self.kept_modes.T[i_fig, :]
+
+            # dimensions of the subfigure
+            x = int(sqrt(len(self.kept_eigenval)))
+            y = int(len(self.kept_eigenval)/x)
             x += 1
             a = fig.add_subplot(x, y, i_fig + 1)
             a.set_title('Mode {}'.format(i_fig))
-            if split:
-                #TODO: check if casting complex values to float isn't a too big loss of information ...
-                imgplot = a.imshow(eigen_V.reshape(n/2, n).astype(np.float))
-            else:
-                imgplot = a.imshow(eigen_V.reshape(n, n).astype(np.float))
+
+            imgplot = a.imshow(eigenvect.reshape(n, n).astype(np.float))
             imgplot.set_interpolation('nearest')
             imgplot.set_cmap('gray')
         plt.show()
 
-        #
-    # Show one mode
-    def show_mode(self, mode=0, split=0):
+    # ------------------------------------------------------------------------------------------------------------------
+    def show_mode_variation(self, mode=0):
+        """
+        Displays a mode variation as 5 images
+
+        WARNING: NOT WORKING PROPERLY FOR NOW
+
+        :param mode: mode to display
+        """
         from math import sqrt
-        if split:
-            n = int(sqrt(2*self.N))
-        else:
-            n = int(sqrt(self.N))
+        # TODO: improve mode visualization
+        n = int(sqrt(self.N))
         fig = plt.figure()
-        eigen_V = self.W.T[mode, :]
+        eigen_vector = self.kept_modes.T[mode, :]
         eigen_value = self.eig_pairs[mode][0]
         mean_vect = self.mean_data_vect.reshape(len(self.mean_data_vect),)
 
-
-        minus_3vect = mean_vect -  3 * eigen_value *eigen_V
-
+        minus_3vect = np.asarray(mean_vect - 3 * eigen_value * eigen_vector)
+        minus_3vect /= (max(minus_3vect) - min(minus_3vect))
 
         print '\n\n-------> minus_3vect min :', min(minus_3vect), ' max :', max(minus_3vect)
         print 'mean  min :', min(mean_vect), ' max : ', max(mean_vect)
-        print 'eig  min :', min(eigen_V), ' max : ', max(eigen_V)
-
+        print 'eig  min :', min(eigen_vector), ' max : ', max(eigen_vector)
 
         print 'eig Val', self.eig_pairs[mode][0]
 
         plot_minus3 = fig.add_subplot(1, 5, 1)
         plot_minus3.set_title('Mean - 3 lambda * eigen vector')
-        if split:
-            #TODO: check if casting complex values to float isn't a too big loss of information ...
-            im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n/2, n).astype(np.float))
-        else:
-            im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n, n).astype(np.float))
+        im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n, n).astype(np.float))
         im_minus3.set_interpolation('nearest')
         im_minus3.set_cmap('gray')
 
-        minus_3vect /= (max(minus_3vect) - min(minus_3vect))
-
-
-        minus_vect = mean_vect - eigen_value *eigen_V
-
+        minus_vect = mean_vect - eigen_value * eigen_vector
         minus_vect /= (max(minus_vect) - min(minus_vect))
         '''
         print '\n\n-------> minus_vect', minus_vect
         print 'mean ', mean_vect
         print 'eig ', eigen_V
         '''
-
         plot_minus = fig.add_subplot(1, 5, 2)
         plot_minus.set_title('Mean - 1 lambda * eigen vector')
-        if split:
-            #TODO: check if casting complex values to float isn't a too big loss of information ...
-            im_minus = plot_minus.imshow(minus_vect.reshape(n/2, n).astype(np.float))
-        else:
-            im_minus = plot_minus.imshow(minus_vect.reshape(n, n).astype(np.float))
+        im_minus = plot_minus.imshow(minus_vect.reshape(n, n).astype(np.float))
         im_minus.set_interpolation('nearest')
         im_minus.set_cmap('gray')
 
         plot_mean = fig.add_subplot(1, 5, 3)
         plot_mean.set_title('Mean')
-        if split:
-            #TODO: check if casting complex values to float isn't a too big loss of information ...
-            im_mean = plot_mean.imshow(mean_vect.reshape(n/2, n).astype(np.float))
-        else:
-            im_mean = plot_mean.imshow(mean_vect.reshape(n, n).astype(np.float))
+        im_mean = plot_mean.imshow(mean_vect.reshape(n, n).astype(np.float))
         im_mean.set_interpolation('nearest')
         im_mean.set_cmap('gray')
 
-        plus_vect = mean_vect + eigen_value*eigen_V
+        plus_vect = mean_vect + eigen_value*eigen_vector
         plot_plus = fig.add_subplot(1, 5, 4)
         plot_plus.set_title('Mean + 1 lambda * eigen vector')
-        if split:
-            #TODO: check if casting complex values to float isn't a too big loss of information ...
-            im_plus = plot_plus.imshow(plus_vect.reshape(n/2, n).astype(np.float))
-        else:
-            im_plus = plot_plus.imshow(plus_vect.reshape(n, n).astype(np.float))
+        im_plus = plot_plus.imshow(plus_vect.reshape(n, n).astype(np.float))
         im_plus.set_interpolation('nearest')
         im_plus.set_cmap('gray')
 
-        plus_3vect = mean_vect +  3 * eigen_value *eigen_V
-
+        plus_3vect = np.asarray(mean_vect + 3 * eigen_value * eigen_vector)
         plot_plus3 = fig.add_subplot(1, 5, 5)
         plot_plus3.set_title('Mean + 3 lambda * eigen vector')
-        if split:
-            #TODO: check if casting complex values to float isn't a too big loss of information ...
-            im_plus3 = plot_plus3.imshow(plus_3vect.reshape(n/2, n).astype(np.float))
-        else:
-            im_plus3 = plot_plus3.imshow(plus_3vect.reshape(n, n).astype(np.float))
+        im_plus3 = plot_plus3.imshow(plus_3vect.reshape(n, n).astype(np.float))
         im_plus3.set_interpolation('nearest')
         im_plus3.set_cmap('gray')
-
-
 
         plt.suptitle('Mode ' + str(mode))
         plt.show()
 
+    # ------------------------------------------------------------------------------------------------------------------
+    def plot_projected_dic(self, nb_mode=1, target_coord=None, to_highlight=None):
+        """
+        plot the projected dictionary (data set) in a graph mode_x=f(mode_x-1)
 
+        if a target is provided, the target slices will be plotted in the same graph
 
-    # plot the projected dictionary on nb_mode modes, if target is provided then it will also add its coord in the graph
-    def plot_omega(self, nb_mode=1, target_coord=None, to_highlight=None):
-        if self.kept < nb_mode:
+        :param nb_mode: maximum number of modes to display graph of
+
+        :param target_coord: coordinates of a target image (ie. that wasn't in the PCA data set)
+
+        :param to_highlight: indexes of some points to highlight as a tuple (target_slice, [list of data slices])
+        """
+        if len(self.kept_eigenval) < nb_mode:
             print "Can't plot {} modes, not enough modes kept. " \
                   "Try to increase k, which is curently {}".format(nb_mode, self.k)
             exit(2)
-        assert self.omega.shape == (self.kept, self.J), "The matrix is {}".format(self.omega.shape)
+        assert self.dataset_coord.shape == (len(self.kept_eigenval), self.J), \
+            "The matrix is {}".format(self.dataset_coord.shape)
+
         for i in range(nb_mode):
-            for j in range(i,nb_mode):
-                # Plot the dictionary
+            for j in range(i, nb_mode):
+
+                # Plot the PCA data set slices
                 if j != i:
                     fig = plt.figure()
 
-                    graph = fig.add_subplot(1,1,1)
-                    graph.plot(self.omega[i, 0:self.J], self.omega[j, 0:self.J],
-                             'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
+                    graph = fig.add_subplot(1, 1, 1)
+                    graph.plot(self.dataset_coord[i, 0:self.J], self.dataset_coord[j, 0:self.J],
+                               'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
+
+                    for j_point, (x, y) in enumerate(zip(self.dataset_coord[i, 0:self.J],
+                                                         self.dataset_coord[j, 0:self.J])):
+                        graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
 
                     if to_highlight is not None:
-                        graph.plot(self.omega[i, to_highlight[1]], self.omega[j, to_highlight[1]],
-                             'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
+                        graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]],
+                                   'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
 
                     # Plot the projected image's coord
                     if target_coord is not None:
                         # target coord is a numpy array of either dimension of all the slices or just one slice
                         if len(target_coord.shape) == 2:
                             graph.plot(target_coord[i], target_coord[j],
-                                     '^', markersize=7, color='red', alpha=0.5, label='target')
+                                       '^', markersize=7, color='red', alpha=0.5, label='target')
 
                         elif len(target_coord.shape) == 3:
-                            for j_slice,slice_coord in enumerate(target_coord):
+                            for j_slice, slice_coord in enumerate(target_coord):
                                 graph.plot(slice_coord[i], slice_coord[j],
-                                         '^', markersize=7, color='red', alpha=0.5, label='target')
+                                           '^', markersize=7, color='red', alpha=0.5, label='target')
 
                                 if to_highlight is not None and j_slice == to_highlight[0]:
                                     graph.plot(slice_coord[i], slice_coord[j],
-                                             '^', markersize=7, color='black', alpha=0.5, label='this target')
+                                               '^', markersize=7, color='black', alpha=0.5, label='this target')
 
                         else:
                             sct.printv('Cannot plot projected target.', 1, 'error')
 
-                    plt.title('Atlas and target slices in the PCA space. (' + str(self.kept) + ' modes in total)')
+                    plt.title('Dictionary images and target slices in the PCA space. (' + str(len(self.kept_eigenval))
+                              + ' modes in total)')
                     plt.xlabel('Mode ' + str(i))
                     plt.ylabel('Mode ' + str(j))
         plt.show()
-
-
