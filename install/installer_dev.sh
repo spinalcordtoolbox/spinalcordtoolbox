@@ -27,7 +27,6 @@ USAGE
 `basename ${0}` -p <path>
 
 MANDATORY ARGUMENTS
--p <path>                   installation path
 -h                          display this help
 
 EOF
@@ -40,7 +39,7 @@ echo "============================="
 
 # check if user is sudoer
 if [ "$(whoami)" == "root" ]; then
-  echo "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later."
+  echo "Sorry, you are root. Please type: ./installer_dev.sh without sudo. Your password will be required later."
   echo
   exit 1
 fi
