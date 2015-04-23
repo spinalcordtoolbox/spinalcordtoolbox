@@ -86,10 +86,12 @@ def main():
         print sct.run('date', verbose)
         print sct.run('whoami', verbose)
         print sct.run('pwd', verbose)
-        (status, output) = sct.run('more ~/.bash_profile', verbose)
-        print output
-        (status, output) = sct.run('more ~/.bashrc', verbose)
-        print output
+        if os.path.isfile('~/.bash_profile'):
+            (status, output) = sct.run('more ~/.bash_profile', verbose)
+            print output
+        if os.path.isfile('~/.bashrc'):
+            (status, output) = sct.run('more ~/.bashrc', verbose)
+            print output
 
     # check if user is root (should not be!)
     if os.geteuid() == 0:
