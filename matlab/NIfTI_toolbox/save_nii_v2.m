@@ -48,8 +48,8 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_nii_fname,datatype)
-   
+function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
+   dbstop if error
    if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
 	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
 
@@ -76,6 +76,7 @@ function save_nii(nii, fileprefix, old_nii_fname,datatype)
    end
    
    nii.hdr.dime.dim(1:length(size(nii.img))+1)=[length(size(nii.img)) size(nii.img)];
+   nii.hdr.dime.dim(length(size(nii.img))+2:end)=1;
 
   if exist('datatype','var')
       bittable=  [0 0; % DT_NONE, DT_UNKNOWN
