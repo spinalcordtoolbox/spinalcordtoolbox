@@ -66,6 +66,8 @@ class ProcessLabels(object):
             self.fname_output = None
         elif type_process == 'create':
             self.output_image = self.create_label()
+        elif type_process == 'add':
+            self.output_image = self.create_label(add=True)
         elif type_process == 'diff':
             self.diff()
             self.fname_output = None
@@ -205,7 +207,7 @@ class ProcessLabels(object):
 
         return result
 
-    def create_label(self):
+    def create_label(self, add=False):
         """
         This function create an image with labels listed by the user.
         This method works only if the user inserted correct coordinates.
@@ -218,12 +220,14 @@ class ProcessLabels(object):
         For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and coordi2 are 'Coordinate' objects from msct_types
         """
         image_output = self.image_input.copy()
-        image_output.data *= 0
+        if not add:
+            image_output.data *= 0
 
         # loop across labels
-        for i,coord in enumerate(self.coordinates):
+        for i, coord in enumerate(self.coordinates):
             # display info
-            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' + str(coord.value), 1)
+            sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
+                       str(coord.value), 1)
             image_output.data[coord.x, coord.y, coord.z] = int(coord.value)
 
         return image_output
@@ -345,7 +349,7 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r""",
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r" """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",

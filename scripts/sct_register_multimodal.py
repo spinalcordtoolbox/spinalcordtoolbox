@@ -11,7 +11,7 @@
 # none
 #
 # EXTERNAL SOFTWARE
-# - itksnap/sct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
+# - itksnap/isct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
 # - ants <http://stnava.github.io/ANTs/>
 #
 #
@@ -275,13 +275,13 @@ def main():
 
     # copy files to temporary folder
     sct.printv('\nCopy files...', verbose)
-    sct.run('sct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
-    sct.run('sct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
+    sct.run('isct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
+    sct.run('isct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
     if fname_src_seg:
-        sct.run('sct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii', verbose)
-        sct.run('sct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
+        sct.run('isct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii', verbose)
+        sct.run('isct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
     if not fname_mask == '':
-        sct.run('sct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
+        sct.run('isct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -291,7 +291,7 @@ def main():
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
     # sct.printv('\nPut source into destination space using header...', verbose)
-    # sct.run('sct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
+    # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
     # loop across registration steps
@@ -394,7 +394,7 @@ def register(src, dest, paramreg, param, i_step_str):
         src = src_crop
         dest = dest_crop
         # estimate transfo
-        cmd = ('sct_antsSliceRegularizedRegistration '
+        cmd = ('isct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
                '-m '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+',Regular,0.2] '
                '-p '+paramreg.steps[i_step_str].poly+' '
@@ -416,7 +416,7 @@ def register(src, dest, paramreg, param, i_step_str):
             pad_image(dest, dest_pad, param.padding)
             dest = dest_pad
 
-        cmd = ('sct_antsRegistration '
+        cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
                '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
@@ -451,7 +451,7 @@ def register(src, dest, paramreg, param, i_step_str):
 # pad an image
 # ==========================================================================================
 def pad_image(fname_in, file_out, padding):
-    sct.run('sct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
+    sct.run('isct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
     return
 
 
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 #===========
 #if convertDeformation:
 #    print('\nConvert deformation field...')
-#    cmd = 'sct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+#    cmd = 'isct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
 #    print(">> "+cmd)
 #    os.system(cmd)
 #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'

@@ -175,11 +175,12 @@ class Option:
 
 class Parser:
     ## Constructor
-    def __init__(self, __file__):
+    def __init__(self, file_name):
+        self.file_name = file_name
         self.options = dict()
         self.spelling = SpellingChecker()
         self.errors = ''
-        self.usage = Usage(self, __file__)
+        self.usage = Usage(self, file_name)
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
         order = len(self.options)+1
@@ -193,6 +194,11 @@ class Parser:
         # check if help is asked by the user
         if "-h" in arguments:
             print self.usage.generate()
+            exit(1)
+
+        if "-sf" in arguments:
+            doc_sourceforge = DocSourceForge(self, self.file_name)
+            doc_sourceforge.generate()
             exit(1)
 
         # initialize results
@@ -277,7 +283,7 @@ class Parser:
 class Usage:
     # Constructor
     def __init__(self, parser, file):
-        self.file = (file)
+        self.file = file
         self.header = ''
         self.version = ''
         self.usage = ''
@@ -291,7 +297,7 @@ class Usage:
     def set_header(self):
         from time import gmtime
         from os.path import basename, getmtime
-        creation = gmtime(getmtime(__file__))
+        creation = gmtime(getmtime(self.file))
         self.header = """
 """+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -310,10 +316,13 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
         mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
         for opt in mandatory:
-            if self.arguments[opt].type_value == 'multiple_choice':
-                self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
-            else:
-                self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
+            self.usage += ' ' + opt + ' ' + self.refactor_type_value(opt)
+            # if self.arguments[opt].type_value == 'multiple_choice':
+            #     self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
+            # elif isinstance(self.arguments[opt].type_value, list):
+            #     self.usage += ' ' + opt + ' <list of: ' + str(self.arguments[opt].type_value[1]) + '>'
+            # else:
+            #     self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
         self.usage += '\n'
 
     def set_arguments(self):
@@ -338,7 +347,10 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
                 type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value, self.align(self.arguments[opt].description)]
+                description = self.arguments[opt].description
+                if self.arguments[opt].default_value:
+                    description += " Default value = "+self.arguments[opt].default_value
+                line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
@@ -347,7 +359,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         elif self.arguments[opt].type_value == 'multiple_choice':
             type_value = self.print_list_with_brackets(self.arguments[opt].example)
         elif type(self.arguments[opt].type_value) is list:
-            type_value = '<list>'
+            type_value = '<list of: ' + str(self.arguments[opt].type_value[1]) + '>'
         else:
             type_value = '<' + self.arguments[opt].type_value + '>'
         return type_value
@@ -451,6 +463,189 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
             if i != len(strings)-1:
                 s += '\n'
         return s
+
+########################################################################################################################
+# GENERATION OF SOURCEFORGE GENERATED DOC
+########################################################################################################################
+
+class DocSourceForge:
+    # Constructor
+    def __init__(self, parser, file):
+        self.file = file
+        self.header = ''
+        self.version = ''
+        self.usage = ''
+        self.example = ''
+        self.description = ''
+        self.arguments = parser.options
+        #self.error = parser.errors
+        self.arguments_string = ''
+        self.section = dict()
+
+    def set_header(self):
+        from time import gmtime
+        from os.path import basename, getmtime
+        creation = gmtime(getmtime(self.file))
+        self.header = """
+"""+basename(self.file)+"""
+------"""
+
+    def set_description(self, description):
+        self.description = '-----------\n#####DESCRIPTION#####\n' + self.align(description, length=100, pad=0)
+
+    def addSection(self, section):
+        self.section[len(self.arguments)+1] = section
+
+    def set_usage(self):
+        from os.path import basename
+        self.usage = '\n\n#####USAGE#####\n`' + basename(self.file)
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        for opt in mandatory:
+            if self.arguments[opt].type_value == 'multiple_choice':
+                self.usage += ' ' + opt + ' ' + str(self.arguments[opt].example)
+            else:
+                self.usage += ' ' + opt + ' <' + str(self.arguments[opt].type_value) + '>'
+        self.usage += '`\n'
+
+    def set_arguments(self):
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory]
+        if mandatory:
+            self.arguments_string = '\n\nMANDATORY ARGUMENTS  |` `\n--------------------|---\n'
+            for opt in mandatory:
+                self.arguments_string += '`'
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
+                type_value = self.refactor_type_value(opt)
+                line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                self.arguments_string += self.tab(line) + '\n'
+        if optional:
+            self.arguments_string += '\n\nOPTIONAL ARGUMENTS  |` `\n--------------------|---\n'
+            for opt in optional:
+                self.arguments_string += '`'
+                # check if section description has to been displayed
+                if self.arguments[opt].order in self.section:
+                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                # display argument
+                type_value = self.refactor_type_value(opt)
+                line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                self.arguments_string += self.tab(line) + '\n'
+
+    def refactor_type_value(self, opt):
+        if self.arguments[opt].type_value is None:
+            type_value = ''
+        elif self.arguments[opt].type_value == 'multiple_choice':
+            type_value = self.print_list_with_brackets(self.arguments[opt].example)
+        elif type(self.arguments[opt].type_value) is list:
+            type_value = '<list>'
+        else:
+            type_value = '<' + self.arguments[opt].type_value + '>'
+        return type_value
+
+    def set_example(self):
+        from os.path import basename
+        self.example = '\n\n#####EXAMPLE#####\n' + \
+            '`'+basename(self.file)
+        sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
+        for opt in [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].example]:
+            if type(self.arguments[opt].example) is list:
+                self.example += ' ' + opt + ' ' + str(self.arguments[opt].example[0])
+            else:
+                self.example += ' ' + opt + ' ' + str(self.arguments[opt].example)
+        self.example += '`'
+
+    def generate(self, error=None):
+        self.set_header()
+        self.set_arguments()
+        self.set_usage()
+        self.set_example()
+        doc = self.header + self.description + self.usage + self.arguments_string + self.example
+        from os.path import basename
+        file_doc_sf = open('doc_sf_'+basename(self.file)[:-3]+'.txt', 'w')
+        file_doc_sf.write(doc)
+        file_doc_sf.close()
+
+        print doc
+
+    def error(self, error=None):
+        if error:
+            self.generate(error)
+        else:
+            print self.generate()
+            from sys import exit
+            exit(0)
+
+    def print_list_with_brackets(self, l):
+        type_value = '{'
+        for char in l:
+            type_value += str(char) + ','
+        type_value = type_value[:-1]
+        type_value += '}'
+        return type_value
+
+    def tab(self, strings):
+        """
+        This function is used for arguments usage's field to vertically align words
+        :param strings: list of string to align vertically
+        :return: string with aligned strings
+        """
+        tab = ''
+        for string in strings:
+            if len(string) < 30:
+                spaces = ' '*(30 - len(string))
+                string += spaces
+            tab += string
+
+        return tab
+
+
+    def align(self, string, length=70, pad=30):
+        """
+        This function split a string into a list of 100 char max strings
+        :param string: string to split
+        :param length: maximum length of a string, default=70
+        :param pad: blank space in front of the string, default=30
+        :return: string with \n separator
+        """
+        s = ''
+        strings = []
+
+        # check if "\n" are present in the string. If so, decompose the string.
+        string_split_line = string.split('\n')
+        if len(string_split_line) > 1:
+            for i in range(0,len(string_split_line)):
+                if i != 0:
+                    string_split_line[i] = '  ' + string_split_line[i]
+
+        # check if a string length is over "length"
+        for k,stri in enumerate(string_split_line):
+            i = 0
+            for c in stri:
+                i += 1
+                if c == ' ':
+                    last_space = i
+                if i%length == 0:
+                    strings.append(stri[0:last_space])
+                    stri = stri[last_space:]
+                    if k != 0:
+                        stri = '    '+stri
+                    i = i - last_space
+            strings.append(stri)
+
+        # Concatenate strings
+        for i,yes in enumerate(strings):
+            if i != 0:
+                s += ' '*pad
+            s += yes
+            if i != len(strings)-1:
+                s += '\n'
+        return s
+
 
 ########################################################################################################################
 ####### SPELLING CHECKER

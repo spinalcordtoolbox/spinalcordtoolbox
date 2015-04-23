@@ -20,7 +20,7 @@ import commands
 import subprocess
 import re
 
-# TODO: under run(): add a flag "ignore error" for sct_ComposeMultiTransform
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
@@ -80,7 +80,7 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if process.returncode:
         # from inspect import stack
-        printv(output_final[0:-1], 1,'warning')
+        printv(output_final[0:-1], 1, 'error')
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
     else:
@@ -280,18 +280,22 @@ def get_dimension(fname):
     output_split = output.split()
 
     if output_split[0] == 'ERROR:':
-        printv('\n'+output,1,'error')
+        printv('\n'+output, 1, 'error')
     else:
         # extract dimensions as integer
-        nx = int(output_split[1])
-        ny = int(output_split[3])
-        nz = int(output_split[5])
-        nt = int(output_split[7])
-        px = float(output_split[9])
-        py = float(output_split[11])
-        pz = float(output_split[13])
-        pt = float(output_split[15])
-        return nx, ny, nz, nt, px, py, pz, pt
+        try:
+            nx = int(output_split[1])
+            ny = int(output_split[3])
+            nz = int(output_split[5])
+            nt = int(output_split[7])
+            px = float(output_split[9])
+            py = float(output_split[11])
+            pz = float(output_split[13])
+            pt = float(output_split[15])
+            return nx, ny, nz, nt, px, py, pz, pt
+        except Exception, e:
+            print "Output of the command: \n", output_split
+            raise Exception
 
 
 #=======================================================================================================================
@@ -424,7 +428,7 @@ def get_interpolation(program, interp):
         elif interp == 'spline':
             interp_program = ' -interp spline'
     # ANTs
-    elif program == 'ants' or program == 'ants_affine' or program == 'sct_antsApplyTransforms' or program == 'sct_antsSliceRegularizedRegistration':
+    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' or program == 'isct_antsSliceRegularizedRegistration':
         if interp == 'nn':
             interp_program = ' -n NearestNeighbor'
         elif interp == 'linear':
