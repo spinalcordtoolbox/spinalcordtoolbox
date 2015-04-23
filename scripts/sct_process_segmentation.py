@@ -55,6 +55,7 @@ class Param:
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
+        self.algo_fitting = 'hanning'  # nurbs, hanning
 
         
 # MAIN
@@ -95,7 +96,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -130,6 +131,8 @@ def main():
                 param.window_length = int(arg)
             elif opt in ('-z'):
                 slices = arg
+            elif opt in ('-a'):
+                param.algo_fitting = str(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
@@ -158,14 +161,14 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation,remove_temp_files)
+        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose = param.verbose, algo_fitting = param.algo_fitting)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
 
     if name_process == 'csa':
         volume_output = 1
-        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template)
+        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
         if (volume_output):
@@ -173,7 +176,7 @@ def main():
         sct.printv('Output CSA file: '+param.fname_csa+'\n', param.verbose, 'info')
 
     if name_process == 'length':
-        result_length = compute_length(fname_segmentation,remove_temp_files)
+        result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
         sct.printv('\nLength of the segmentation = '+str(round(result_length,2))+' mm\n', verbose, 'info')
 
     # End of Main
@@ -182,7 +185,7 @@ def main():
 
 # compute the length of the spinal cord
 # ==========================================================================================
-def compute_length(fname_segmentation, remove_temp_files):
+def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     from math import sqrt
 
     # Extract path, file and extension
@@ -211,8 +214,8 @@ def compute_length(fname_segmentation, remove_temp_files):
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
     # smooth segmentation/centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
-
+    #x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window='hanning', window_length=80, algo_fitting='hanning', verbose = verbose)
     # compute length of centerline
     result_length = 0.0
     for i in range(len(x_centerline_fit)-1):
@@ -224,7 +227,7 @@ def compute_length(fname_segmentation, remove_temp_files):
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files):
+def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -241,21 +244,21 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
-    sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    sct.printv('\nOrient centerline to RPI orientation...', verbose)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
     set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
 
     # Get dimension
-    sct.printv('\nGet dimensions...', param.verbose)
+    sct.printv('\nGet dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
-    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
-    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
+    sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+    sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # Extract orientation of the input segmentation
     orientation = get_orientation(file_data+ext_data)
-    sct.printv('\nOrientation of segmentation image: ' + orientation, param.verbose)
+    sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
 
-    sct.printv('\nOpen segmentation volume...', param.verbose)
+    sct.printv('\nOpen segmentation volume...', verbose)
     file = nibabel.load(fname_segmentation_orient)
     data = file.get_data()
     hdr = file.get_header()
@@ -275,20 +278,57 @@ def extract_centerline(fname_segmentation, remove_temp_files):
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+
+    if verbose == 2:
+            import matplotlib.pyplot as plt
+
+            #Creation of a vector x that takes into account the distance between the labels
+            nz_nonz = len(z_centerline)
+            x_display = [0 for i in range(x_centerline_fit.shape[0])]
+            y_display = [0 for i in range(y_centerline_fit.shape[0])]
+            for i in range(0, nz_nonz, 1):
+                x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
+                y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
+
+
+            plt.figure(1)
+            plt.subplot(2,1,1)
+            plt.plot(z_centerline_fit, x_display, 'ro')
+            plt.plot(z_centerline_fit, x_centerline_fit)
+            plt.xlabel("Z")
+            plt.ylabel("X")
+            plt.title("x and x_fit coordinates")
+
+            plt.subplot(2,1,2)
+            plt.plot(z_centerline_fit, y_display, 'ro')
+            plt.plot(z_centerline_fit, y_centerline_fit)
+            plt.xlabel("Z")
+            plt.ylabel("Y")
+            plt.title("y and y_fit coordinates")
+            plt.show()
+
 
     # Create an image with the centerline
     for iz in range(min_z_index, max_z_index+1):
-        data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1
+        data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
     hdr.set_data_dtype('uint8') # set imagetype to uint8
-    sct.printv('\nWrite NIFTI volumes...', param.verbose)
+    sct.printv('\nWrite NIFTI volumes...', verbose)
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'centerline.nii.gz')
-    sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, param.verbose)
+    sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, verbose)
 
     # create a txt file with the centerline
-    # TODO
+    file_name = file_data+'_centerline'+'.txt'
+    sct.printv('\nWrite text file...', verbose)
+    file_results = open(file_name, 'w')
+    for i in range(min_z_index, max_z_index+1):
+        file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
+    file_results.close()
+
+    # Copy result into parent folder
+    sct.run('cp '+file_name+' ../')
 
     del data
 
@@ -296,21 +336,23 @@ def extract_centerline(fname_segmentation, remove_temp_files):
     os.chdir('..')
 
     # Change orientation of the output centerline into input orientation
-    sct.printv('\nOrient centerline image to input orientation: ' + orientation, param.verbose)
+    sct.printv('\nOrient centerline image to input orientation: ' + orientation, verbose)
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
     set_orientation(path_tmp+'/'+file_data+'_centerline'+ext_data, orientation, file_data+'_centerline'+ext_data)
 
    # Remove temporary files
     if remove_temp_files:
-        sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        sct.printv('\nRemove temporary files...', verbose)
+        sct.run('rm -rf '+path_tmp, verbose)
 
     return file_data+'_centerline'+ext_data
 
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template):
+def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+
+    #param.algo_fitting = 'hanning'
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -323,7 +365,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('sct_c3d '+fname_segmentation+' -o '+path_tmp+'segmentation.nii')
+    sct.run('isct_c3d '+fname_segmentation+' -o '+path_tmp+'segmentation.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -364,7 +406,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     # x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, param, 'hanning', 1)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose = verbose)
     z_centerline_scaled = [x*pz for x in z_centerline]
 
    # # 3D plot of the fit
@@ -780,6 +822,7 @@ OPTIONAL ARGUMENTS
   -w <smoothing>        Smoothing window size. Only used with 'centerline'
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
+  -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
   -h                    Help. Show this message
 
 EXAMPLE

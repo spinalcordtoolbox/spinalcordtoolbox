@@ -100,7 +100,7 @@ def main():
 
     # copy files to temporary folder
     print('\nCopy files...')
-    sct.run('sct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    sct.run('isct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -112,7 +112,7 @@ def main():
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('sct_c3d data.nii -interpolation Linear -resample '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+'vox -o data_up.nii', verbose)
+    sct.run('isct_c3d data.nii -interpolation Linear -resample '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+'vox -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
@@ -120,7 +120,7 @@ def main():
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('sct_c3d data_up_smooth.nii -interpolation Linear -resample '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox -o data_up_smooth_down.nii', verbose)
+    sct.run('isct_c3d data_up_smooth.nii -interpolation Linear -resample '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
