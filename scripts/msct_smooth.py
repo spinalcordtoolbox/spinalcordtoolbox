@@ -18,7 +18,7 @@ from scipy.interpolate import splrep, splev
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('sct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+    sct.run('isct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
 
 
 
@@ -454,7 +454,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x, window_len=11, window='hanning'):
+def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -483,25 +483,33 @@ def smoothing_window(x, window_len=11, window='hanning'):
     scipy.signal.lfilter
 
     TODO: the window parameter could be the window itself if an array instead of a string
-    NOTE: length(output) != length(input), to correct this:
+
+    NOTE: If in 'convolve', the mode is not 'same' then: length(output) != length(input), to correct this:
     return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
     return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
-    from numpy import ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
+    from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
     from math import ceil
     import sct_utils as sct
 
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
-    if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
+    # if x.size < window_len:
+    #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
         sct.printv('Window size is too small. No smoothing was applied.', 1, 'warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
 
-    # make window_len as odd integer
+    ## Checking the window's size
+    nb_points = x.shape[0]
+    #The number of points of the curve must be superior to int(window_length/(2.0*pz))
+    if window_len > int(2*nb_points):
+        window_len = int(2*nb_points)
+        sct.printv("WARNING: The ponderation window's length was too high compared to the number of points. The value is now of: "+str(window_len) +'warning')
+
+    # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((window_len + 1)/2)*2 - 1
 
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
@@ -512,9 +520,46 @@ def smoothing_window(x, window_len=11, window='hanning'):
     else:
         w = eval(window+'(window_len_int)')
 
-    # Convolution of the window with the input signal
-    y = convolve(x, w/w.sum(), mode='same')
+    ##Implementation of an extended curve to apply the smoothing on in order to avoid edge effects
+    # Extend the curve before smoothing
+    x_extended = x
+    size_curve = x.shape[0]
+    size_padding = int(window_len/2.0)
+    for i in range(size_padding+1):
+        x_extended = append(x_extended, 2*x[-1] - x[-2-i])
+        x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
+
+    # Convolution of the window with the extended signal
+    y_temp = convolve(x_extended, w/w.sum(), mode='same')
     # y = convolve(w/w.sum(), s, mode='full')
+
+    # Crop the curve back to its original size
+    y = y_temp[size_padding + 1:size_padding + size_curve + 1]
+
+    # Display smoothing
+    if verbose == 2:
+        import matplotlib.pyplot as plt
+        from copy import copy
+
+        z_extended = [i for i in range(x_extended.shape[0])]
+        # Create x_display to visualize concording results
+        x_display = copy(x_extended)
+        for i in range(size_padding + 1):
+            x_display[i] = 0
+            x_display[-i-1] = 0
+
+        plt.figure()
+        pltx_ext, = plt.plot(z_extended, x_extended, 'bo')
+        pltx, = plt.plot(z_extended, x_display, 'ro')
+        pltx_fit, = plt.plot(z_extended, y_temp)
+
+        plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
+        #ax.set_aspect('equal')
+        plt.xlabel('z')
+        plt.ylabel('x')
+        plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
+
+        plt.show()
 
     return y
     # if window_len_int%2 == 0:
