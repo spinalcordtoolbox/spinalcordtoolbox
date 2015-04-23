@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Example of commands to process multi-parametric data of the spinal cord
 # For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
@@ -170,9 +170,5 @@ sct_concat_transfo -w warp_fmri_moco_mean2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 # check results
-fslview -m lightbox fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 &
-fslview -m lightbox fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 &
-fslview -m lightbox fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 &
-fslview -m lightbox fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 &
-fslview -m lightbox fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
+fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
 # also see: https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/result_batch_processing_fmri.png

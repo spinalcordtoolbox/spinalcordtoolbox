@@ -97,7 +97,7 @@ def moco(param):
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
         if param.iterative_averaging and indice_index<10 and failed_transfo[it] == 0:
-            sct.run('sct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
+            sct.run('isct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one
     sct.printv(('\nReplace failed transformations...'), verbose)
@@ -143,7 +143,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
 
     # register file_src to file_dest
     if param.todo == 'estimate' or param.todo == 'estimate_and_apply':
-        cmd = 'sct_antsSliceRegularizedRegistration' \
+        cmd = 'isct_antsSliceRegularizedRegistration' \
               ' -p '+param.param[0]+ \
               ' --transform Translation['+param.param[2]+']' \
               ' --metric '+param.param[3]+'['+file_dest+'.nii, '+file_src+'.nii, 1, '+metric_radius+', Regular, 0.2]' \
@@ -151,7 +151,7 @@ def register(param, file_src, file_dest, file_mat, file_out):
               ' --shrinkFactors 1' \
               ' --smoothingSigmas '+param.param[1]+ \
               ' --output ['+file_mat+','+file_out+'.nii]' \
-              +sct.get_interpolation('sct_antsSliceRegularizedRegistration', param.interp)
+              +sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
         if not param.fname_mask == '':
             cmd += ' -x '+param.fname_mask
     if param.todo == 'apply':

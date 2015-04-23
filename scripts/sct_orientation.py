@@ -234,11 +234,11 @@ USAGE
   Set orientation: """+os.path.basename(__file__)+""" -i <data> -s <orient>
 
 MANDATORY ARGUMENTS
-  -i <data>        image to get or set orientation from. Can be 3D or 4D.
+  -i <file>        image to get or set orientation from. Can be 3D or 4D.
 
 OPTIONAL ARGUMENTS
   -s <orient>      orientation. Default=None.
-  -o <fname_out>   output file name. Default=None.
+  -o <fname_out>   output file name. Default=<file>_<orient>.<ext>.
   -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
   -h               help. Show this message
