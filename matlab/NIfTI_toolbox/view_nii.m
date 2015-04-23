@@ -1086,12 +1086,11 @@ function fig = init(nii, fig, area, setunit, setviewpoint, setscanid, buttondown
       minvalue = glblocminmax(1);
       maxvalue = glblocminmax(2);
    else
-      minvalue = nii.img(:,:,:,setscanid);
-      minvalue = double(minvalue(:));
-      minvalue = min(minvalue(~isnan(minvalue)));
-      maxvalue = nii.img(:,:,:,setscanid);
-      maxvalue = double(maxvalue(:));
-      maxvalue = max(maxvalue(~isnan(maxvalue)));
+      value = nii.img(:,:,:,setscanid);
+      value = double(value(:));
+      minvalue = prctile(value(~isnan(value)),5);
+      maxvalue = prctile(value(~isnan(value)),95);
+      clear value
    end
 
    if ~isempty(setvalue)
