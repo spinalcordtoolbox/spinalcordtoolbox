@@ -349,7 +349,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+self.arguments[opt].default_value
+                    description += " Default value = "+str(self.arguments[opt].default_value)
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
