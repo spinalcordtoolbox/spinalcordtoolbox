@@ -685,7 +685,10 @@ def leave_one_out(dic_path, reg=None):
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
     n_subject = 0
+    n_slices = 0
     e = None
+    error_map_sum = None
+    first = True
 
     for subject_dir in os.listdir(dic_path):
         subject_path = dic_path + '/' + subject_dir
@@ -698,7 +701,7 @@ def leave_one_out(dic_path, reg=None):
                 sct.run('cp -r ' + dic_path + ' ./' + tmp_dir + '/' + tmp_dic_name + '/')
                 sct.run('mv ./' + tmp_dir + '/' + tmp_dic_name + '/' + subject_dir + ' ./' + tmp_dir)
 
-                # gray matter segmentation using this subject as target
+                # Gray matter segmentation using this subject as target
                 os.chdir(tmp_dir)
                 target = ''
                 ref_gm_seg = ''
@@ -719,13 +722,18 @@ def leave_one_out(dic_path, reg=None):
                     if 'graymatterseg' in file_name and 'manual' not in file_name:
                         res = file_name
 
+                # Validation
                 ref_gm_seg_im = Image(ref_gm_seg)
                 target_im = Image(target)
 
                 inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
 
                 ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
+                ref_wm_seg_im = Image(ref_wm_seg)
 
+                res_im = Image(res)
+
+                # Dice coefficient
                 status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref_wm_seg)
                 dice = dice_output[-9:]
                 os.chdir('..')
@@ -733,15 +741,25 @@ def leave_one_out(dic_path, reg=None):
                 dice_sum += float(dice)
                 n_subject += 1
                 dice_file.write(subject_dir + ': ' + dice)
+
+                # Error map
+                if first:
+                    error_map_sum = np.zeros(ref_wm_seg_im.data[0].shape)
+                    first = False
+
+                error_3d = ref_wm_seg_im.data - res_im.data
+                error_map_sum += np.sum(error_3d, axis=0)
+                n_slices += ref_wm_seg_im.data.shape[0]
+
             except Exception, e:
-                sct.printv('WARNING: an error occured ...', 1, 'warning')
+                sct.printv('WARNING: an error occurred ...', 1, 'warning')
                 print e
             # else:
             #    sct.run('rm -rf ' + tmp_dir)
     if e is None:
         dice_file.write('\nmean dice: ' + str(dice_sum/n_subject))
         dice_file.close()
-
+        Image(param=error_map_sum/n_slices, absolutepath='error_map.nii.gz').save()
 
 if __name__ == "__main__":
         # Initialize the parser
@@ -753,7 +771,7 @@ if __name__ == "__main__":
                                       "to be croped as pretreatment",
                           mandatory=False,
                           example='dictionary/')
-        parser.add_option(name="-loo-validation",
+        parser.add_option(name="-loocv",
                           type_value="folder",
                           description="Path to a dictionary folder to do 'Leave One Out Validation' on",
                           mandatory=False,
@@ -763,5 +781,5 @@ if __name__ == "__main__":
 
         if "-crop" in arguments:
             crop_t2_star(arguments['-crop'])
-        if "-loo-validation" in arguments:
-            leave_one_out(arguments['-loo-validation'])
+        if "-loocv" in arguments:
+            leave_one_out(arguments['-loocv'])
