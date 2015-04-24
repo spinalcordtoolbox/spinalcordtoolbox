@@ -945,7 +945,7 @@ class TargetSegmentation:
                 coord_dic_slice_dataset = np.delete(self.model.pca.dataset_coord.T, dic_slice.id, 0)
                 beta_dic_slice = self.compute_beta(projected_dic_slice_coord, dataset_coord=coord_dic_slice_dataset,
                                                    tau=tau)
-                kj = self.select_k_slices(beta_dic_slice, poped=dic_slice.id)
+                kj = self.select_k_slices(beta_dic_slice)  # , poped=dic_slice.id)
                 est_segm_j = self.label_fusion(kj)
 
                 sum_norm += l0_norm(dic_slice.seg_M, est_segm_j.data)
@@ -1021,7 +1021,7 @@ class TargetSegmentation:
     '''
 
     # ------------------------------------------------------------------------------------------------------------------
-    def select_k_slices(self, beta, poped=None):
+    def select_k_slices(self, beta):
         """
         Select the K dictionary slices most similar to the target slice
 
@@ -1056,12 +1056,11 @@ class TargetSegmentation:
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
 
-        :param selected_slices: array of segmentation of the selected dictionary slices
+        :param selected_index: array of indexes (as a boolean array) of the selected dictionary slices
 
         :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
         """
         segmentation_slices = np.asarray([dic_slice.seg_M for dic_slice in self.model.dictionary.slices])
-
 
         res_seg_model_space = []
         '''
