@@ -269,7 +269,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
         moving_im_name = 'moving_im'
         save_image(moving_im, moving_im_name, im_type=t, verbose=verbose)
 
-        mat_name, inverse_mat_name = find_transfo_name(transfo_type)
+        mat_name, inverse_mat_name = find_ants_transfo_name(transfo_type)
 
         if search_reg:
             reg_interpolation = 'BSpline'
@@ -337,7 +337,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def find_transfo_name(transfo_type):
+def find_ants_transfo_name(transfo_type):
     """
     find the name of the transformation file automatically saved by ANTs for a type of transformation
 
@@ -355,6 +355,34 @@ def find_transfo_name(transfo_type):
         transfo_name = 'reg0Warp.nii.gz'
         inverse_transfo_name = 'reg0InverseWarp.nii.gz'
     return transfo_name, inverse_transfo_name
+
+
+'''
+#######################  DEVELOPING GROUPWISE  #######################
+# ----------------------------------------------------------------------------------------------------------------------
+# To apply a rigid transformation defined by tx, ty and theta to an image, with tx, ty, the translation along x and y and theta the rotation angle
+def apply_2D_rigid_transformation(matrix, tx, ty, theta):
+    from math import cos
+    from math import sin
+    xlim, ylim = matrix.shape
+    transformed_im = np.zeros((xlim, ylim))
+    for i,row in enumerate(matrix):
+        for j,pixel_value in enumerate(row):
+            #translation
+            x = i + tx
+            y = j + ty
+
+            #rotation
+            x = x*cos(theta) + y*sin(theta)
+            y = -x*sin(theta) + y*cos(theta)
+
+            x = fabs(x)
+            y = fabs(y)
+
+            if x < xlim and x >= 0 and y < ylim and y >= 0:
+                transformed_im[x,y] = pixel_value
+    return transformed_im
+'''
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -682,8 +710,11 @@ def crop_t2_star(path):
 
 # ------------------------------------------------------------------------------------------------------------------
 def leave_one_out(dic_path, reg=None):
+    import time
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
+    time_file = open('conmputation_time.txt', 'w')
+    time_sum = 0
     n_subject = 0
     n_slices = 0
     e = None
@@ -716,7 +747,10 @@ def leave_one_out(dic_path, reg=None):
                 cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute'
                 if reg is not None:
                     cmd_gm_seg += ' -reg ' + reg
+
+                before_seg = time.time()
                 sct.run(cmd_gm_seg)
+                seg_time = time.time() - before_seg
 
                 for file_name in os.listdir('.'):
                     if 'graymatterseg' in file_name and 'manual' not in file_name:
@@ -749,7 +783,13 @@ def leave_one_out(dic_path, reg=None):
 
                 error_3d = ref_wm_seg_im.data - res_im.data
                 error_map_sum += np.sum(error_3d, axis=0)
+
                 n_slices += ref_wm_seg_im.data.shape[0]
+
+                # Time of computation
+                time_file.write(subject_dir + ' as target: ' + str(seg_time) + ' sec '
+                                '- ' + str(seg_time / ref_wm_seg_im.data.shape[0]) + ' sec/target_slice')
+                time_sum += seg_time
 
             except Exception, e:
                 sct.printv('WARNING: an error occurred ...', 1, 'warning')
@@ -759,7 +799,11 @@ def leave_one_out(dic_path, reg=None):
     if e is None:
         dice_file.write('\nmean dice: ' + str(dice_sum/n_subject))
         dice_file.close()
+
         Image(param=error_map_sum/n_slices, absolutepath='error_map.nii.gz').save()
+
+        time_file.write('\nmean computation time: ' + str(time_sum/n_subject) + ' sec')
+        time_file.close()
 
 if __name__ == "__main__":
         # Initialize the parser
