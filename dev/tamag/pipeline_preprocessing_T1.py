@@ -50,6 +50,9 @@ for i in range(2, len(list_dir)):
             # Preprocess data for template registration: straightening and intensity normalization of anatomic image (using generated_centerline from T2)
             print '\nPreprocessing data from: '+ list_dir[i]+ '/' + list_dir_2[j] + ' ...'
 
+            # Denoise image
+
+
             # Straighten the image using the fitted centerline
             print '\nStraightening the image ' + name_anatomy_file + ' using the fitted centerline ' + 'generated_centerline.nii.gz'+ ' ...'
             sct.run('sct_straighten_spinalcord -i ' + name_anatomy_file + ' -c ' + 'generated_centerline.nii.gz')
