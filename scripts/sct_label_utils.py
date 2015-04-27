@@ -54,6 +54,8 @@ class ProcessLabels(object):
             self.output_image = self.plan_ref()
         elif type_process == 'increment':
             self.output_image = self.increment_z_inverse()
+        elif type_process == 'disks':
+            self.output_image = self.labelize_from_disks()
         elif type_process == 'MSE':
             self.MSE()
             self.fname_output = None
@@ -162,11 +164,60 @@ class ProcessLabels(object):
         """
         image_output = Image(self.image_input)
         image_output.data *= 0
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorted='z',reverse_coord=True)
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i,coord in enumerate(coordinates_input):
+        for i, coord in enumerate(coordinates_input):
             image_output.data[coord.x, coord.y, coord.z] = i + 1
+
+        return image_output
+
+    def labelize_from_disks(self):
+        """
+        This function creates an image with regions labelized depending on values from reference.
+        Typically, user inputs an segmentation image, and labels with disks position, and this function produces
+        a segmentation image with vertebral levels labelized.
+        Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+        """
+        image_output = Image(self.image_input)
+        image_output.data *= 0
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
+
+        # for all points in input, find the value that has to be set up, depending on the vertebral level
+        for i, coord in enumerate(coordinates_input):
+            for j in range(0, len(coordinates_ref)-1):
+                if coordinates_ref[j+1].z < coord.z <= coordinates_ref[j].z:
+                    image_output.data[coord.x, coord.y, coord.z] = coordinates_ref[j].value
+
+        return image_output
+
+    def symmetrizer(self, side='left'):
+        """
+        This function symmetrize the input image. One side of the image will be copied on the other side. We assume a
+        RPI orientation.
+        :param side: string 'left' or 'right'. Side that will be copied on the other side.
+        :return:
+        """
+        image_output = Image(self.image_input)
+
+        image_output[0:]
+
+        """inspiration: (from atlas creation matlab script)
+        temp_sum = temp_g + temp_d;
+        temp_sum_flip = temp_sum(end:-1:1,:);
+        temp_sym = (temp_sum + temp_sum_flip) / 2;
+
+        temp_g(1:end / 2,:) = 0;
+        temp_g(1 + end / 2:end,:) = temp_sym(1 + end / 2:end,:);
+        temp_d(1:end / 2,:) = temp_sym(1:end / 2,:);
+        temp_d(1 + end / 2:end,:) = 0;
+
+        tractsHR
+        {label_l}(:,:, num_slice_ref) = temp_g;
+        tractsHR
+        {label_r}(:,:, num_slice_ref) = temp_d;
+        """
 
         return image_output
 
