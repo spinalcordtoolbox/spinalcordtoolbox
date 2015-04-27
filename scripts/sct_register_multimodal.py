@@ -360,6 +360,11 @@ def main():
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
 
+    # initiate default parameters of antsRegistration transformation
+    ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
+                                'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',3,32'}
+
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
 
     # set metricSize
@@ -407,7 +412,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
-    elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
 
         # Pad the destination image (because ants doesn't deform the extremities)
         # N.B. no need to pad if iter = 0
@@ -418,7 +423,8 @@ def register(src, dest, paramreg, param, i_step_str):
 
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
-               '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
+               '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
+               ants_registration_params[paramreg.steps[i_step_str].algo.lower()]+'] '
                '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
