@@ -84,11 +84,12 @@ def main():
 
 
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + ' '+ landmarks_native + ' affine ' + transfo)
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + '  '+ landmarks_native + ' affine ' + transfo)
     
     # Apply rigid transformation
     print '\nApply affine transformation to native landmarks...'
-    sct.run('WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + reference + ' ' + transfo)
+    sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + reference + ' -w ' + transfo)
+    # sct.run('WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + reference + ' ' + transfo)
     
     print '\nFile created : ' + output_name
   

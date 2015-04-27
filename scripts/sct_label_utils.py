@@ -162,7 +162,7 @@ class ProcessLabels(object):
         """
         image_output = Image(self.image_input)
         image_output.data *= 0
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorted='z',reverse_coord=True)
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z',reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
         for i,coord in enumerate(coordinates_input):
