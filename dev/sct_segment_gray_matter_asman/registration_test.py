@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     transformations_to_try = ['Rigid', 'Affine', 'SyN', 'Rigid,Affine']
     if target_fname is not None:
-        cmd_gmseg = 'sct_asman -i ' + target_fname + ' -dic ' + path_dictionary + ' -model compute '
+        cmd_gmseg = 'sct_asman -i ' + target_fname + ' -dic ' + path_dictionary + ' -model compute -target-reg pairwise'
 
     for transformation in transformations_to_try:
         if target_fname is not None:
