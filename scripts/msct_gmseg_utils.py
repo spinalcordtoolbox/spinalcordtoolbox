@@ -357,32 +357,36 @@ def find_ants_transfo_name(transfo_type):
     return transfo_name, inverse_transfo_name
 
 
-'''
 #######################  DEVELOPING GROUPWISE  #######################
 # ----------------------------------------------------------------------------------------------------------------------
-# To apply a rigid transformation defined by tx, ty and theta to an image, with tx, ty, the translation along x and y and theta the rotation angle
-def apply_2D_rigid_transformation(matrix, tx, ty, theta):
-    from math import cos
-    from math import sin
-    xlim, ylim = matrix.shape
-    transformed_im = np.zeros((xlim, ylim))
-    for i,row in enumerate(matrix):
-        for j,pixel_value in enumerate(row):
-            #translation
-            x = i + tx
-            y = j + ty
+def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, scx=1, scy=1, transfo=None, inverse=False):
+    """
+    Apply an Affine transformation defined a translation, a rotation and a scaling
 
-            #rotation
-            x = x*cos(theta) + y*sin(theta)
-            y = -x*sin(theta) + y*cos(theta)
+    :param matrix: image to apply transformation on, type: numpy ndarray
 
-            x = fabs(x)
-            y = fabs(y)
+    :param tx: translation along the x-axis, type: float
 
-            if x < xlim and x >= 0 and y < ylim and y >= 0:
-                transformed_im[x,y] = pixel_value
-    return transformed_im
-'''
+    :param ty: translation along the y-axis, type: float
+
+    :param theta: rotation angle in counter-clockwise direction as radians, type: float
+
+    :param scx: scaling factor along the x-axis, type: float
+
+    :param scy: scaling factor along the y-axis, type: float
+
+    :return transformed_mat, transfo: transformed matrix, transformation used
+    """
+    from skimage import transform as tf
+    if transfo is None:
+        transfo = tf.AffineTransform(scale=[scx, scy], rotation=theta, translation=(tx, ty))
+
+    if inverse:
+        transformed_mat = tf.warp(matrix.astype('uint32'), transfo.inverse, preserve_range=True)
+    else:
+        transformed_mat = tf.warp(matrix.astype('uint32'), transfo, preserve_range=True)
+
+    return transformed_mat, transfo
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -523,13 +527,7 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5):
     :param threshold: threshold to select the value of a pixel
     :return:
     """
-    dec_votes = np.sum(seg_data_set, axis=0)
-
-    dec_votes /= float(len(seg_data_set))
-
-    mean_seg = (dec_votes >= threshold).astype(int)
-
-    return mean_seg
+    return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set)) >= threshold).astype(int)
 
 ########################################################################################################################
 # -------------------------------------------------- PRETREATMENTS --------------------------------------------------- #
@@ -713,12 +711,13 @@ def leave_one_out(dic_path, reg=None):
     import time
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
-    time_file = open('conmputation_time.txt', 'w')
+    time_file = open('computation_time.txt', 'w')
     time_sum = 0
     n_subject = 0
     n_slices = 0
     e = None
     error_map_sum = None
+    error_map_abs_sum = None
     first = True
 
     for subject_dir in os.listdir(dic_path):
@@ -779,16 +778,20 @@ def leave_one_out(dic_path, reg=None):
                 # Error map
                 if first:
                     error_map_sum = np.zeros(ref_wm_seg_im.data[0].shape)
+                    error_map_abs_sum = np.zeros(ref_wm_seg_im.data[0].shape)
                     first = False
 
-                error_3d = ref_wm_seg_im.data - res_im.data
+                error_3d = (ref_wm_seg_im.data - res_im.data) + 1
+                error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
+
                 error_map_sum += np.sum(error_3d, axis=0)
+                error_map_abs_sum += np.sum(error_3d_abs, axis=0)
 
                 n_slices += ref_wm_seg_im.data.shape[0]
 
                 # Time of computation
                 time_file.write(subject_dir + ' as target: ' + str(seg_time) + ' sec '
-                                '- ' + str(seg_time / ref_wm_seg_im.data.shape[0]) + ' sec/target_slice')
+                                '- ' + str(seg_time / ref_wm_seg_im.data.shape[0]) + ' sec/target_slice\n')
                 time_sum += seg_time
 
             except Exception, e:
@@ -800,9 +803,11 @@ def leave_one_out(dic_path, reg=None):
         dice_file.write('\nmean dice: ' + str(dice_sum/n_subject))
         dice_file.close()
 
-        Image(param=error_map_sum/n_slices, absolutepath='error_map.nii.gz').save()
+        Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
+        Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
 
         time_file.write('\nmean computation time: ' + str(time_sum/n_subject) + ' sec')
+        time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
         time_file.close()
 
 if __name__ == "__main__":
