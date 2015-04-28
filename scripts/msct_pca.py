@@ -257,7 +257,7 @@ class PCA:
         if image_as_array.shape == (self.N,):
             target = image_as_array.reshape(self.N, 1)
             coord_projected_img = self.kept_modes.T.dot(target - self.mean_data_vect)
-            return coord_projected_img
+            return coord_projected_img.reshape(coord_projected_img.shape[:-1])
         else:
             print "target dimension is {}, must be {}.\n".format(image_as_array.shape, self.N)
 
