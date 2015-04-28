@@ -25,7 +25,7 @@ Image(param=im_moved, absolutepath='moved_slice_0.nii.gz').save()
 
 text = data.text()
 
-seg0.changeType('uint32')
+seg0.changeType('uint8')
 test = seg0.data
 
 Image(param=test, absolutepath='converted_slice_0_seg.nii.gz').save()
@@ -33,17 +33,18 @@ Image(param=test, absolutepath='converted_slice_0_seg.nii.gz').save()
 im0.changeType('uint32')
 test_im = im0.data
 
-Image(param=test_im, absolutepath='converted_slice_0_seg.nii.gz').save()
+Image(param=test_im, absolutepath='converted_slice_0.nii.gz').save()
 
 
-tform = tf.AffineTransform(scale=[1, 2], rotation=pi / 4, translation=(test.shape[0] / 2, -1))
+tform = tf.AffineTransform(scale=[1.5, 2], rotation=pi / 4, translation=(test.shape[0] / 2, -1.2))
+tform2 = tf.AffineTransform(scale=[1, 1], rotation=0, translation=(0, 0))
 
-seg_rotated = tf.warp(test, tform)
-seg_back_rotated = tf.warp(seg_rotated, tform.inverse)
+seg_rotated = tf.warp(test, tform2)
+seg_back_rotated = tf.warp(seg_rotated, tform2.inverse)
 
 
 Image(param=seg_rotated, absolutepath='affine_moved_slice_0_seg.nii.gz').save()
-Image(param=seg_back_rotated, absolutepath='affine_back_moved_slice_0_seg.nii.gz').save()
+seg_back = Image(param=seg_back_rotated, absolutepath='affine_back_moved_slice_0_seg.nii.gz').save()
 
 im_rotated = tf.warp(test_im, tform)
 im_back_rotated = tf.warp(im_rotated, tform.inverse)
