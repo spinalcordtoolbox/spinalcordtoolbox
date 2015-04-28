@@ -433,8 +433,12 @@ def register(src, dest, paramreg, param, i_step_str):
                '--output [step'+i_step_str+'] '
                '--interpolation BSpline[3] '
                +masking)
-        warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
+        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+            warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
+            warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
+        else:
+            warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
+            warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
         sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')
 
@@ -442,10 +446,15 @@ def register(src, dest, paramreg, param, i_step_str):
     status, output = sct.run(cmd, param.verbose)
     if os.path.isfile(warp_forward_out):
         # rename warping fields
-        warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
-        os.rename(warp_forward_out, warp_forward)
-        warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
-        os.rename(warp_inverse_out, warp_inverse)
+        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+            warp_forward = 'warp_forward_'+i_step_str+'.mat'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_'+i_step_str+'.mat'
+        else:
+            warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
+            warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
+            os.rename(warp_forward_out, warp_forward)
+            os.rename(warp_inverse_out, warp_inverse)
     else:
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
