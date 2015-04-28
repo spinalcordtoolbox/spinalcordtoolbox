@@ -1,6 +1,10 @@
 
 # CHANGES TO RELEASE
 
+##2.0.1 (2015-04-28)
+
+- BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
+
 ##2.0 (2015-04-17)
 
 - NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
