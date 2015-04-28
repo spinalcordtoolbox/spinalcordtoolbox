@@ -25,6 +25,9 @@ sys.path.append(path_sct + '/scripts')
 
 import sct_utils as sct
 import nibabel
+from sct_orientation import get_orientation, set_orientation
+from scipy import ndimage
+from numpy import array
 
 # add path to scripts
 PATH_DICOM= '/Volumes/data_shared/'
@@ -45,38 +48,56 @@ normalize_levels_T2 = 0
 if do_preprocessing_T2:
 
     # loop across subjects
-    for i in range(len(SUBJECTS_LIST)):
+    for i in range(2,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # create and go to output folder
-        #os.makedirs(PATH_OUTPUT + '/'+subject)
+        print '\nCreate and go to output folder '+ PATH_OUTPUT + '/'+subject+'/'+'T2'
+        os.makedirs(PATH_OUTPUT + '/'+subject)
+        os.makedirs(PATH_OUTPUT + '/'+subject+'/'+'T2')
         os.chdir(PATH_OUTPUT + '/'+subject+'/'+'T2')
 
         # convert to nii
+        print '\nConvert to nii'
         sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
 
         # change file name
+        print '\nChange file name to data.nii.gz...'
         sct.run('mv *.nii.gz data.nii.gz')
 
         # Get info from txt file
+        print '\nRecover infos from text file' + PATH_INFO + '/' + subject+ '/' + 'crop.txt'
         file_name = 'crop.txt'
         os.chdir(PATH_INFO + '/' + subject)
-        file_results = open(file_name, 'r')
+        file_results = open(PATH_INFO+ '/' +subject+ '/' +file_name, 'r')
         for line in file_results:
             zmin_anatomic = line.split(',')[0]
             zmax_anatomic = line.split(',')[1]
             zmin_seg = line.split(',')[2]
             zmax_seg = line.split(',')[3]
         file_results.close()
+
+        os.chdir(PATH_OUTPUT + '/'+subject+'/'+'T2')
+
+        # Convert to RPI
+        # Input:
+        # - data.nii.gz
+        # - data_RPI.nii.gz
+        print '\nConvert to RPI'
+        orientation = get_orientation('data.nii.gz')
+        sct.run('sct_orientation -i data.nii.gz -s RPI')
         # Crop image
-        sct.run('sct_crop_image -i data.nii.gz -o data_crop.nii.gz -dim 2 -start ' + zmin_anatomic + ' -end ' + zmax_anatomic )
+        sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start ' + zmin_anatomic + ' -end ' + zmax_anatomic )
+        # sct.run('sct_orientation -i data_RPI_crop.nii.gz -o data_crop.nii.gz -s '+ orientation)
 
         # denoising
         # input:
         # - data_crop.nii.gz
         # output:
         # - data_crop_denoised.nii.gz
-        sct.run('sct_denoising_nlm.py -i data_crop.nii.gz')
+        print '\nDenoising image data_RPI_crop.nii.gz...'
+        sct.printv('sct_denoising_nlm.py -i data_RPI_crop.nii.gz')
+        os.system('sct_denoising_nlm.py -i data_RPI_crop.nii.gz')
 
         # propseg
         # input:
@@ -84,13 +105,15 @@ if do_preprocessing_T2:
         # - labels_propseg.nii.gz
         # output:
         # - data_crop_denoised_seg.nii.gz
-        sct.printv('sct_propseg -i data_crop_denoised.nii.gz -t t2 -init-centerline centerline_propseg.nii.gz')
-        os.system('sct_propseg -i data_crop_denoised.nii.gz -t t2 -init-centerline centerline_propseg.nii.gz')
+        print '\nExtracting segmentation...'
+        sct.printv('sct_propseg -i data_RPI_crop_denoised.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+        os.system('sct_propseg -i data_RPI_crop_denoised.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + subject + '/centerline_propseg_RPI.nii.gz')
 
         # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects
-        path_seg, file_seg, ext_seg = sct.extract_fname('data_crop_denoised_seg.nii.gz')
-        image_seg = nibabel.load('data_crop_denoised_seg.nii.gz')
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_crop_denoised_seg.nii.gz')
+        print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects...'
+        path_seg, file_seg, ext_seg = sct.extract_fname('data_RPI_crop_denoised_seg.nii.gz')
+        image_seg = nibabel.load('data_RPI_crop_denoised_seg.nii.gz')
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_denoised_seg.nii.gz')
         data_seg = image_seg.get_data()
         hdr_seg = image_seg.get_header()
            # List slices that contain non zero values
@@ -101,8 +124,8 @@ if do_preprocessing_T2:
             if z_centerline[0]+k < nz:
                 data_seg[:,:,z_centerline[0]+k] = 0
         img_seg = nibabel.Nifti1Image(data_seg, None, hdr_seg)
-        #nibabel.save(img_seg, file_seg + '_mod' + ext_seg)
-        nibabel.save(img_seg, file_seg + ext_seg)
+        nibabel.save(img_seg, file_seg + '_mod' + ext_seg)
+        #nibabel.save(img_seg, file_seg + ext_seg)
 
         # crop segmentation (but keep same dimension)
         # input:
@@ -110,10 +133,12 @@ if do_preprocessing_T2:
         # - crop.txt
         # output:
         # - data_crop_denoised_seg_crop.nii.gz
+        print '\nCrop segmentation...'
         if zmax_seg == 'max':
-            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_crop_denoised_seg.nii.gz')
-            sct.run('sct_crop_image -i data_crop_denoised_seg.nii.gz -o data_crop_denoised_seg_crop.nii.gz -start ' + zmin_seg + ' -end ' + nz + ' -dim 2 -b 0')
-        else: sct.run('sct_crop_image -i data_crop_denoised_seg.nii.gz -o data_crop_denoised_seg_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
+            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_denoised_seg.nii.gz')
+            sct.printv('sct_crop_image -i data_RPI_crop_denoised_seg_mod.nii.gz -o data_RPI_crop_denoised_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
+            os.system('sct_crop_image -i data_RPI_crop_denoised_seg_mod.nii.gz -o data_RPI_crop_denoised_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
+        else: sct.run('sct_crop_image -i data_RPI_crop_denoised_seg_mod.nii.gz -o data_RPI_crop_denoised_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
 
         # extract centerline
         # function: sct_get_centerline_from_labels
@@ -122,7 +147,9 @@ if do_preprocessing_T2:
         # - labels_updown.nii.gz
         # output:
         # - centeline.nii.gz
-        sct.run('sct_get_centerline_from_labels -i data_crop_denoised_seg_crop.nii.gz,up.nii.gz,down.nii.gz -o centerline.nii.gz')
+        print '\nExtracting centerline...'
+        sct.printv('sct_get_centerline_from_labels -i data_RPI_crop_denoised_seg_mod_crop.nii.gz,'+ PATH_INFO + '/' + subject + '/up.nii.gz,'+ PATH_INFO + '/' + subject + '/down.nii.gz -o centerline_RPI.nii.gz')
+        os.system('sct_get_centerline_from_labels -i data_RPI_crop_denoised_seg_mod_crop.nii.gz,'+ PATH_INFO + '/' + subject + '/up.nii.gz,'+ PATH_INFO + '/' + subject + '/down.nii.gz -o centerline_RPI.nii.gz')
 
         # straighten image using centerline
         # function: sct_straighten_spinalcord (option: hanning)
@@ -132,7 +159,9 @@ if do_preprocessing_T2:
         # output:
         # - warp_curve2straight.nii.gz
         # - data_crop_denoised_straight.nii.gz
-        sct.run('sct_straighten_spinalcord -i data_crop_denoised.nii.gz -c centerline.nii.gz')
+        print '\nStraighten image using centerline'
+        sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz')
+        os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz')
 
         # apply straightening to centerline and to labels_vertebral.nii.gz
         # function: sct_apply_transfo
@@ -141,13 +170,65 @@ if do_preprocessing_T2:
         # - warp_curve2straight.nii.gz
         # output:
         # - centerline_straight.nii.gz
-        sct.run('sct_straighten_spinalcord -i centerline.nii.gz -c centerline.nii.gz')
+        print '\nApply straightening to centerline and to labels_vertebral.nii.gz'
+        # sct.printv('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
+        # os.system('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
+        sct.printv('sct_apply_transfo -i ' + PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -d data_RPI_crop_denoised_straight.nii.gz -w warp_curve2straight.nii.gz -x linear')
+        os.system('sct_apply_transfo -i ' + PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -d data_RPI_crop_denoised_straight.nii.gz -w warp_curve2straight.nii.gz -x linear')
+
+        # sct.printv('sct_straighten_spinalcord -i centerline_RPI.nii.gz -c centerline_RPI.nii.gz')
+        # os.system('sct_straighten_spinalcord -i centerline_RPI.nii.gz -c centerline_RPI.nii.gz')
+        sct.printv('sct_apply_transfo -i centerline_RPI.nii.gz -d data_RPI_crop_denoised_straight.nii.gz -w warp_curve2straight.nii.gz -x linear')
+        os.system('sct_apply_transfo -i centerline_RPI.nii.gz -d data_RPI_crop_denoised_straight.nii.gz -w warp_curve2straight.nii.gz -x linear')
 
         # normalize intensity
         print '\nNormalizing intensity of the straightened image...'
-        sct.run('sct_normalize.py -i data_crop_denoised_straight.nii.gz -c centerline_straight.nii.gz')
+        sct.printv('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz -c centerline_RPI_reg.nii.gz')
+        os.system('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz -c centerline_RPI_reg.nii.gz')
 
 
+# Calculate mean labels
+#os.system('sct_average_levels.py   ')
+
+if normalize_levels_T2:
+    for i in range(2,len(SUBJECTS_LIST)):
+        subject = SUBJECTS_LIST[i][0]
+
+        # go to output folder
+        print '\nGo to output folder '+ PATH_OUTPUT + '/'+subject+'/'+'T2'
+        os.chdir(PATH_OUTPUT + '/'+subject+'/'+'T2')
+
+        ## Create a cross after recropping (cross in landmark_native.nii.gz)
+        # Detect extrema: (same code as sct_detect_extrema except for the detection of the center of mass)
+        file = nibabel.load('centerline_RPI_reg.nii.gz')
+        data_c = file.get_data()
+        hdr = file.get_header()
+
+        #Get center of mass of the centerline
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('centerline_RPI_reg.nii.gz')
+        z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
+        nz_nonz = len(z_centerline)
+        x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        for iz in xrange(len(z_centerline)):
+            x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
+
+        X,Y,Z = (data_c>0).nonzero()
+
+        x_max,y_max = (data_c[:,:,max(Z)]).nonzero()
+        x_max = x_max[0]
+        y_max = y_max[0]
+        z_max = max(Z)
+
+        x_min,y_min = (data_c[:,:,min(Z)]).nonzero()
+        x_min = x_min[0]
+        y_min = y_min[0]
+        z_min = min(Z)
+
+        # Crop image one last time
+        os.system('sct_crop_image -i data_RPI_crop_denoised_straight.nii.gz -o data_RPI_crop_denoised_straight_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
+        os.system('sct_create_cross.py -i data_RPI_crop_denoised_straight_crop.nii.gz -x ' +str(x_min)+' -y '+str(y_min))
 
 
-#if normalize_levels:
+        # Push into template
+        os.system('sct_push_into_template_space.py -i data_RPI_crop_denoised_straight_crop.nii.gz -n landmark_native.nii.gz')
