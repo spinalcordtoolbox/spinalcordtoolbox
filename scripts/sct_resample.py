@@ -29,6 +29,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
+        self.fname_out = ''
         self.factor = ''
         self.file_suffix = 'r'  # output suffix
         self.verbose = 1
@@ -51,7 +52,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:r:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:o:r:v:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -63,6 +64,8 @@ def main():
                 param.factor = arg
             elif opt in '-i':
                 param.fname_data = arg
+            elif opt in '-o':
+                param.fname_out = arg
             elif opt in '-r':
                 param.remove_tmp_files = int(arg)
             elif opt in '-v':
@@ -177,7 +180,9 @@ def resample():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+file_data_resample+ext, path_out+file_out+param.file_suffix+ext_out)
+    if not param.fname_out:
+        param.fname_out = path_out+file_out+param.file_suffix+ext_out
+    sct.generate_output_file(path_tmp+file_data_resample+ext, param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
@@ -186,7 +191,7 @@ def resample():
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+path_out+file_out+param.file_suffix+ext_out+' &', param.verbose, 'code')
+    sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
     print
 
 
@@ -210,6 +215,7 @@ MANDATORY ARGUMENTS
                    For 2x upsampling, set to 2. For 2x downsampling set to 0.5
 
 OPTIONAL ARGUMENTS
+  -o <file>        output file name.
   -r {0,1}         remove temporary files. Default="""+str(param_debug.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_debug.verbose)+"""
   -h               help. Show this message
