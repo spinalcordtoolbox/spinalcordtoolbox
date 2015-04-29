@@ -407,7 +407,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '-f 1 '
                '-s '+paramreg.steps[i_step_str].smooth+' '
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-               '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               '-o [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
@@ -430,7 +430,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+'] '
+               '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
                '--interpolation BSpline[3] '
                +masking)
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
