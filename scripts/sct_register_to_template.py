@@ -267,7 +267,7 @@ def main():
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
-    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz')
+    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
     # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
 
     # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
@@ -285,6 +285,8 @@ def main():
     # sub-sample in z-direction
     sct.run('sct_resample -i template_crop.nii -o template_crop.nii -f 1x1x0.25')
     sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop.nii.gz -f 1x1x0.25')
+    sct.run('sct_resample -i data_rpi_straight2templateAffine.nii -o data_rpi_straight2templateAffine.nii -f 1x1x0.25')
+    sct.run('sct_resample -i segmentation_rpi_straight2templateAffine.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -f 1x1x0.25')
     # sct.run('cp template.nii template_crop.nii')
     # sct.run('cp template_seg.nii.gz template_seg_crop.nii.gz')
     # ===
