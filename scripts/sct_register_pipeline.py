@@ -102,7 +102,9 @@ class Pipeline:
     """
 
     # The constructor
-    def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None, seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None, dice=False, dice_on=None):
+    def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
+                 seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
+                 dice=False, dice_on=None):
         self.path_data = path_data  # type: folder
         os.chdir(self.path_data)
         self.t = t   # type: string
@@ -132,7 +134,7 @@ class Pipeline:
         # each directory in "path_data" is a subject
         for subject_dir in os.listdir('./'):
             if not os.path.isdir(subject_dir):
-                sct.printv("WARNING : Found a file, data should be organized in folders ... ", verbose=1, type="warning")
+                sct.printv("WARNING : Found a file, data should be organized in folders ...", verbose=1, type="warning")
             else:
                 os.chdir(subject_dir)
 
@@ -165,76 +167,92 @@ class Pipeline:
                 # T1 data
                 if dir_t1 is not '':
                     for file_name in os.listdir(dir_t1):
-                        if "t1.nii" in file_name.lower() and self.check_nii_gz(file_name) and 'warp' not in file_name:
+                        if "t1.nii" in file_name.lower() and check_nii_gz(file_name) and 'warp' not in file_name:
                             name_t1 = file_name
-                        if "landmark" in file_name.lower() and self.check_nii_gz(file_name):
+                        if "landmark" in file_name.lower() and check_nii_gz(file_name):
                             name_landmarks_t1 = file_name
-                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower() or 'ref' in file_name.lower():
-                            if self.check_nii_gz(file_name):
+                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
+                                or 'ref' in file_name.lower():
+                            if check_nii_gz(file_name):
                                 name_t1_ref = file_name
                         elif not self.seg:
-                            if "seg" in file_name.lower() and self.check_nii_gz(file_name):
+                            if "seg" in file_name.lower() and check_nii_gz(file_name):
                                 name_t1_seg = file_name
 
                     if name_t1 == '':
-                        sct.printv("WARNING: could not find t1 file in folder " + dir_t1, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t1 file in folder" + dir_t1, verbose=1, type='warning')
                     if name_landmarks_t1 == '':
-                        sct.printv("WARNING: could not find landmarks file in folder " + dir_t1, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find landmarks file in folder" + dir_t1,
+                                   verbose=1, type='warning')
                     if name_t1_ref == '':
-                        sct.printv("WARNING: could not find t1 reference segmentation file in folder " + dir_t1, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t1 reference segmentation file in folder" + dir_t1,
+                                   verbose=1, type='warning')
                     if not self.seg and name_t1_seg == '':
-                        sct.printv("WARNING: could not find t1 segmentation file in folder " + dir_t1, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t1 segmentation file in folder " + dir_t1,
+                                   verbose=1, type='warning')
                 else:
                     sct.printv('WARNING: no t1 folder', 1, 'warning')
 
                 # T2 data
                 if dir_t2 is not '':
                     for file_name in os.listdir(dir_t2):
-                        if "t2.nii" in file_name.lower() and self.check_nii_gz(file_name) and 'warp' not in file_name:
+                        if "t2.nii" in file_name.lower() and check_nii_gz(file_name) and 'warp' not in file_name:
                             name_t2 = file_name
-                        if "landmark" in file_name.lower() and self.check_nii_gz(file_name):
+                        if "landmark" in file_name.lower() and check_nii_gz(file_name):
                             name_landmarks_t2 = file_name
-                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower() or 'ref' in file_name.lower():
-                            if self.check_nii_gz(file_name):
+                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
+                                or 'ref' in file_name.lower():
+                            if check_nii_gz(file_name):
                                 name_t2_ref = file_name
                         elif not self.seg:
-                            if "seg" in file_name.lower() and 'mask' not in file_name and 'warp' not in file_name and self.check_nii_gz(file_name):
+                            if "seg" in file_name.lower() and 'mask' not in file_name and 'warp' not in file_name \
+                                    and check_nii_gz(file_name):
                                 name_t2_seg = file_name
 
                     if name_t2 == '':
                         sct.printv("WARNING: could not find t2 file in folder " + dir_t2, verbose=1, type='warning')
                     if name_landmarks_t2 == '':
-                        sct.printv("WARNING: could not find landmarks file in folder " + dir_t2, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find landmarks file in folder " + dir_t2,
+                                   verbose=1, type='warning')
                     if name_t2_ref == '':
-                        sct.printv("WARNING: could not find t2 reference segmentation file in folder " + dir_t2, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2 reference segmentation file in folder " + dir_t2,
+                                   verbose=1, type='warning')
                     if not self.seg and name_t2_seg == '':
-                        sct.printv("WARNING: could not find t2 segmentation file in folder " + dir_t2, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2 segmentation file in folder " + dir_t2,
+                                   verbose=1, type='warning')
                 else:
                     sct.printv('WARNING: no t2 folder', 1, 'warning')
 
                 # T2star data
                 if dir_t2star is not '':
                     for file_name in os.listdir(dir_t2star):
-                        if 't2star.nii' in file_name and self.check_nii_gz(file_name) and 'warp' not in file_name:
+                        if 't2star.nii' in file_name and check_nii_gz(file_name) and 'warp' not in file_name:
                             name_t2star = file_name
-                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower() or 'ref' in file_name.lower():
-                            if self.check_nii_gz(file_name):
+                        if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
+                                or 'ref' in file_name.lower():
+                            if check_nii_gz(file_name):
                                 name_t2star_ref = file_name
                         elif not self.seg_t2star:
-                            if "seg" in file_name.lower() and 'mask' not in file_name and 'warp' not in file_name and self.check_nii_gz(file_name):
+                            if "seg" in file_name.lower() and 'mask' not in file_name and 'seg_in' not in file_name\
+                                    and 'warp' not in file_name and check_nii_gz(file_name):
                                 name_t2star_seg = file_name
 
                     if name_t2star == '':
-                        sct.printv("WARNING: could not find t2star file in folder " + dir_t2star, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2star file in folder " + dir_t2star,
+                                   verbose=1, type='warning')
                     if name_t2star_ref == '':
-                        sct.printv("WARNING: could not find t2star reference segmentation file in folder " + dir_t2star, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2star reference segmentation file in folder " + dir_t2star,
+                                   verbose=1, type='warning')
                     if not self.seg_t2star and name_t2star_seg == '':
-                        sct.printv("WARNING: could not find t2star segmentation file in folder " + dir_t2star, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2star segmentation file in folder " + dir_t2star,
+                                   verbose=1, type='warning')
                 else:
                     sct.printv('WARNING: no t2star folder', 1, 'warning')
 
                 # creation of a subject for each directory
-                data.append(Subject(subject_dir, dir_t1, name_t1, name_t1_seg, name_t1_ref, name_landmarks_t1, dir_t2, name_t2, name_t2_seg, name_t2_ref, name_landmarks_t2, dir_t2star, name_t2star, name_t2star_seg, name_t2star_ref))
+                data.append(Subject(subject_dir, dir_t1, name_t1, name_t1_seg, name_t1_ref, name_landmarks_t1,
+                                    dir_t2, name_t2, name_t2_seg, name_t2_ref, name_landmarks_t2,
+                                    dir_t2star, name_t2star, name_t2star_seg, name_t2star_ref))
                 sct.printv('\nFiles for subject ' + subject_dir +
                            '\nT1: .................. ' + name_t1 +
                            '\nT1 seg: .............. ' + name_t1_seg +
@@ -252,19 +270,6 @@ class Pipeline:
             sct.printv("ERROR : Data should be organized in folders ... ", verbose=1, type="error")
 
         return data
-
-    def check_nii_gz(self, full_file):
-        """
-        Check if file extension is .nii.gz, if yes, return True, else, print a warning message and return False
-        :param full_file:
-        :return Boolean:
-        """
-        file_path, file_name, file_ext = sct.extract_fname(full_file)
-        if file_ext != '.nii.gz':
-            sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + ' ...', 1, 'warning')
-            return False
-        else:
-            return True
 
     def segmentation(self, t, init=0.5, up=None, down=None, centerline=None, init_mask=None, radius=None):
         """
@@ -310,7 +315,8 @@ class Pipeline:
                 if radius is not None:
                     cmd = cmd + " -radius " + str(radius)
 
-                sct.printv("\nDoing segmentation on " + subject.dir_name + '/' + path + "/" + name + " using sct_propseg ...", verbose=1, type="normal")
+                sct.printv("\nDoing segmentation on " + subject.dir_name + '/' + path + "/" + name +
+                           " using sct_propseg ...", verbose=1, type="normal")
                 sct.run(cmd)
                 for file_name in os.listdir('./'):
                             if "_seg.nii" in file_name:
@@ -335,6 +341,7 @@ class Pipeline:
         """
         for subject in self.data:
             os.chdir(subject.dir_name)
+            name_seg = None
             if t == 't1':
                 path = subject.dir_t1
                 name = subject.name_t1
@@ -347,15 +354,18 @@ class Pipeline:
             os.chdir(path)
 
             try:
-                cmd_register = 'sct_register_to_template -i ' + name + ' -s ' + name_seg + ' -l ' + subject.name_landmarks_t2
+                cmd_register = 'sct_register_to_template -i ' + name + ' -s ' + name_seg + ' -l ' \
+                               + subject.name_landmarks_t2
 
                 if self.reg_template_params is not None:
                     cmd_register = cmd_register + " -p " + str(self.reg_template_params)
 
-                sct.printv("\nDoing registration to template on " + subject.dir_name + '/' + path + '/' + subject.name_t2 + " using sct_register_to_template ...", verbose=1, type="normal")
+                sct.printv("\nDoing registration to template on " + subject.dir_name + '/' + path + '/'
+                           + subject.name_t2 + " using sct_register_to_template ...", verbose=1, type="normal")
                 sct.run(cmd_register)
             except Exception, e:
-                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO' + t.upper() + ' : ', 1, 'warning')
+                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO' + t.upper() + ' : ',
+                               1, 'warning')
                     print e
                     sct.printv('Continuing program ...', 1, 'warning')
             else:
@@ -363,14 +373,15 @@ class Pipeline:
                     # TODO change name of the warping field by a Subject attribute ??
                     cmd_warp = 'sct_warp_template -d ' + name + ' -w warp_template2anat.nii.gz'
 
-                    sct.printv("\nWarping Template to T2 on " + subject.dir_name + '/' + path + "/" + name + " using sct_warp_template ...", verbose=1, type="normal")
+                    sct.printv("\nWarping Template to T2 on " + subject.dir_name + '/' + path + "/"
+                               + name + " using sct_warp_template ...", verbose=1, type="normal")
                     sct.run(cmd_warp)
                 except Exception, e:
-                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO ' + t.upper() + ' : ', 1, 'warning')
+                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO ' + t.upper() + ' : ',
+                               1, 'warning')
                     print e
                     sct.printv('Continuing program ...', 1, 'warning')
             os.chdir('../..')
-
 
     def register_warp_multimodal(self, t, src='template2anat.nii.gz'):
         """
@@ -387,33 +398,40 @@ class Pipeline:
                 elif t == 't2':
                     path_anat = '../' + subject.dir_t2
 
-
                 try:
                     os.chdir(subject.dir_t2star)
 
                     # Register
-                    cmd_register = 'sct_register_multimodal -i ' + path_anat + '/' + src + ' -d ' + subject.name_t2star + ' -iseg ' + path_anat + '/label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + subject.name_t2star_seg
+                    cmd_register = 'sct_register_multimodal -i ' + path_anat + '/' + src + ' -d ' + subject.name_t2star \
+                                   + ' -iseg ' + path_anat + '/label/template/MNI-Poly-AMU_cord.nii.gz' \
+                                   ' -dseg ' + subject.name_t2star_seg
                     if self.reg_multimodal_params is not None:
                         cmd_register = cmd_register + " -p " + str(self.reg_multimodal_params)
 
-                    sct.printv("\nDoing multimodal registration of " + src + " to " + subject.dir_name + '/' + subject.dir_t2star + "/" + subject.name_t2star + " using sct_register_multimodal ...", verbose=1, type="normal")
+                    sct.printv("\nDoing multimodal registration of " + src + " to " + subject.dir_name + '/'
+                               + subject.dir_t2star + "/" + subject.name_t2star + " using sct_register_multimodal ...",
+                               verbose=1, type="normal")
                     sct.run(cmd_register)
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO T2STAR : ', 1, 'warning')
                     print e
                     sct.printv('Continuing program ...', 1, 'warning')
                 else:
+
                     try:
                         # concatenate transformations
                         src_name = sct.extract_fname(src)[1]
                         multimodal_warp_name = 'warp_' + src_name + '2' + subject.name_t2star
                         total_warp_name = 'warp_template2t2star.nii.gz'
 
-                        cmd_concat = 'sct_concat_transfo -w ' + path_anat + '/warp_template2anat.nii.gz,' + multimodal_warp_name + ' -d ' + subject.name_t2star + ' -o ' + total_warp_name
-                        sct.printv("\nConcatenate transformations using sct_concat_transfo ...", verbose=1, type="normal")
+                        cmd_concat = 'sct_concat_transfo -w ' + path_anat + '/warp_template2anat.nii.gz,'\
+                                     + multimodal_warp_name + ' -d ' + subject.name_t2star + ' -o ' + total_warp_name
+                        sct.printv("\nConcatenate transformations using sct_concat_transfo ...",
+                                   verbose=1, type="normal")
                         sct.run(cmd_concat)
                     except Exception, e:
-                        sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO CONCATENATE TRANSFORMATIONS : ', 1, 'warning')
+                        sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO CONCATENATE TRANSFORMATIONS : ',
+                                   1, 'warning')
                         print e
                         sct.printv('Continuing program ...', 1, 'warning')
 
@@ -422,21 +440,25 @@ class Pipeline:
                             # warp template to t2star
                             cmd_warp = 'sct_warp_template -d ' + subject.name_t2star + ' -w ' + total_warp_name
 
-                            sct.printv("\nWarping Template to T2star on " + subject.dir_name + "/" + subject.dir_t2star + "/" + subject.name_t2star + " using sct_warp_template ...", verbose=1, type="normal")
+                            sct.printv("\nWarping Template to T2star on " + subject.dir_name + "/" + subject.dir_t2star
+                                       + "/" + subject.name_t2star + " using sct_warp_template ...",
+                                       verbose=1, type="normal")
                             sct.run(cmd_warp)
                         except Exception, e:
-                            sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO T2STAR : ', 1, 'warning')
+                            sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO T2STAR : ',
+                                       1, 'warning')
                             print e
                             sct.printv('Continuing program ...', 1, 'warning')
                 os.chdir('..')
 
             else:
-                sct.printv('WARNING: no t2star folder, did not apply sct_register_multimodal to subject ' + subject.dir_name, 1, 'warning')
+                sct.printv('WARNING: no t2star folder, did not apply sct_register_multimodal to subject '
+                           + subject.dir_name, 1, 'warning')
             os.chdir('..')
 
     def compute_dice(self, t, type_res):
         """
-        compute the dice coefficient of all subjects in the data folder for the type of image in input (t1, t2 or t2star)
+        compute the dice coefficient of all subjects in the data folder for the type of image in input(t1, t2 or t2star)
         :param t: type of data to compute dice on
         :param type_res: type of results to validate by computing dice (segmentation or registration)
         :return:
@@ -452,7 +474,8 @@ class Pipeline:
             name_res = ' registration'
         else:
             name_res = ''
-            sct.printv('WARNING: input type of results to compute dice coefficient on is unrecognized ...', 1, 'warning')
+            sct.printv('WARNING: input type of results to compute dice coefficient on is unrecognized ...',
+                       1, 'warning')
         res_file.write('Dice coefficient for ' + t.upper() + name_res + ' data in file ' + self.path_data + '\n')
         for subject in self.data:
             os.chdir(subject.dir_name)
@@ -473,14 +496,15 @@ class Pipeline:
                 if type_res == 'seg':
                     res = subject.name_t2star_seg
 
-            if type_res == 'reg' :
+            if type_res == 'reg':
                 res = './label/template/MNI-Poly-AMU_cord.nii.gz'
 
             if ref is not '':
                 try:
                     os.chdir(path)
                     cmd_dice = 'sct_dice_coefficient ' + res + ' ' + ref
-                    sct.printv("\nComputing the dice coefficient for the " + t + " image(s) of subject " + subject.dir_name + "  ...", verbose=1, type="normal")
+                    sct.printv("\nComputing the dice coefficient for the " + t + " image(s) of subject "
+                               + subject.dir_name + "  ...", verbose=1, type="normal")
                     status, output = sct.run(cmd_dice)
 
                     dice_dictionary[subject.dir_name] = float(output.split(' ')[-1][:-2])
@@ -489,14 +513,17 @@ class Pipeline:
                     sum_dice += dice_dictionary[subject.dir_name]
 
                 except Exception, e:
-                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO COMPUTE DICE BETWEEN ' + subject.dir_name + '/' + t + '/' + ref + ' AND ' + subject.dir_name + '/' + t + '/' + res + ' :',1,'warning')
+                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO COMPUTE DICE BETWEEN ' + subject.dir_name
+                               + '/' + t + '/' + ref + ' AND ' + subject.dir_name + '/' + t + '/' + res + ' :',
+                               1, 'warning')
                     print e
                     sct.printv('Continuing program ...\n', 1, 'warning')
                 finally:
                     os.chdir('..')
 
             else:
-                sct.printv('WARNING: no reference segmentation for the ' + t + ' image of subject ' + subject.dir_name + ', did not compute dice.', verbose=1, type='warning')
+                sct.printv('WARNING: no reference segmentation for the ' + t + ' image of subject ' + subject.dir_name
+                           + ', did not compute dice.', verbose=1, type='warning')
             os.chdir('..')
         mean_dice = sum_dice / n_subjects
         res_file.write('Mean Dice coefficient : ' + str(mean_dice) + '\n')
@@ -505,34 +532,31 @@ class Pipeline:
 
     def write_infos(self):
         time_now = time.localtime()
-        now = str(time_now.tm_year) + '-' + str(time_now.tm_mon) + '-' + str(time_now.tm_mday) + '_' + str(time_now.tm_hour) + 'H' + str(time_now.tm_min)
+        now = str(time_now.tm_year) + '-' + str(time_now.tm_mon) + '-' + str(time_now.tm_mday) + '_' \
+            + str(time_now.tm_hour) + 'H' + str(time_now.tm_min)
         name_infos = now + '_parameters_info.txt'
         infos = open(name_infos, 'w')
         infos.write('Data treated using the sct_register_pipeline \n'
                     'Path to data : ' + self.path_data + '\n'
                     'Type of anatomic data : ' + self.t + '\n')
         infos.write('\n\nTreatments applied : \n'
-                    ' - Segmentation of anatomic image : ' + self.yesNo(self.seg) + '\n')
+                    ' - Segmentation of anatomic image : ' + yes_no(self.seg) + '\n')
         if self.seg:
             infos.write('   --> Parameters : ' + str(self.seg_params) + '\n')
-        infos.write(' - Registration of anat to template and warping of template to anat : ' + self.yesNo(self.reg_template) + '\n')
+        infos.write(' - Registration of anat to template and warping of template to anat : '
+                    + yes_no(self.reg_template) + '\n')
         if self.reg_template:
             infos.write('   --> Parameters : ' + str(self.reg_template_params) + '\n')
-        infos.write(' - Segmentation of T2star image : ' + self.yesNo(self.seg_t2star) + '\n')
+        infos.write(' - Segmentation of T2star image : ' + yes_no(self.seg_t2star) + '\n')
         if self.seg_t2star:
             infos.write('   --> Parameters : ' + str(self.seg_t2star_params) + '\n')
-        infos.write(' - Registration of T2star to Template2anat and warping of Template2anat to T2star : ' + self.yesNo(self.reg_multimodal) + '\n')
+        infos.write(' - Registration of T2star to Template2anat and warping of Template2anat to T2star : '
+                    + yes_no(self.reg_multimodal) + '\n')
         if self.reg_multimodal:
             infos.write('   --> Parameters : ' + str(self.reg_multimodal_params) + '\n')
         if self.dice:
             infos.write(' - Computed Dice coefficient\n')
         infos.close()
-
-    def yesNo(self, bool):
-        if bool:
-            return 'YES'
-        else:
-            return 'NO'
 
     def compute(self):
         """
@@ -542,14 +566,20 @@ class Pipeline:
         # segmentation of the anatomical image
         if self.seg:
             if self.t == 'both' or self.t == 'b':
-                self.segmentation('t1', init=self.seg_params['init'], up=self.seg_params['up'], down=self.seg_params['down'], centerline=self.seg_params['centerline'], init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
-                self.segmentation('t2', init=self.seg_params['init'], up=self.seg_params['up'], down=self.seg_params['down'], centerline=self.seg_params['centerline'], init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
+                self.segmentation('t1', init=self.seg_params['init'], up=self.seg_params['up'],
+                                  down=self.seg_params['down'], centerline=self.seg_params['centerline'],
+                                  init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
+                self.segmentation('t2', init=self.seg_params['init'], up=self.seg_params['up'],
+                                  down=self.seg_params['down'], centerline=self.seg_params['centerline'],
+                                  init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
                 if self.dice:
                     self.compute_dice('t1', 'seg')
                     self.compute_dice('t2', 'seg')
 
             else:
-                self.segmentation(self.t, init=self.seg_params['init'], up=self.seg_params['up'], down=self.seg_params['down'], centerline=self.seg_params['centerline'], init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
+                self.segmentation(self.t, init=self.seg_params['init'], up=self.seg_params['up'],
+                                  down=self.seg_params['down'], centerline=self.seg_params['centerline'],
+                                  init_mask=self.seg_params['init-mask'], radius=self.seg_params['radius'])
                 if self.dice:
                     self.compute_dice(self.t, 'seg')
 
@@ -568,7 +598,9 @@ class Pipeline:
 
         # segmentation of the T2star image
         if self.seg_t2star:
-            self.segmentation('t2star', init=self.seg_t2star_params['init'], up=self.seg_t2star_params['up'], down=self.seg_t2star_params['down'], centerline=self.seg_t2star_params['centerline'], init_mask=self.seg_t2star_params['init-mask'], radius=self.seg_t2star_params['radius'])
+            self.segmentation('t2star', init=self.seg_t2star_params['init'], up=self.seg_t2star_params['up'],
+                              down=self.seg_t2star_params['down'], centerline=self.seg_t2star_params['centerline'],
+                              init_mask=self.seg_t2star_params['init-mask'], radius=self.seg_t2star_params['radius'])
             if self.dice:
                 self.compute_dice('t2star', 'seg')
 
@@ -584,12 +616,36 @@ class Pipeline:
 
         # compute dice on other results
         for arg in self.dice_on:
-            type_res,type_image = arg.split(":")
-            self.compute_dice(type_image,type_res)
+            type_res, type_image = arg.split(":")
+            self.compute_dice(type_image, type_res)
 
         self.write_infos()
 
+
 # =======================================================================================================================
+# Static functions
+# =======================================================================================================================#
+def yes_no(bool_param):
+    if bool_param:
+        return 'YES'
+    else:
+        return 'NO'
+
+
+def check_nii_gz(full_file):
+    """
+    Check if file extension is .nii.gz, if yes, return True, else, print a warning message and return False
+    :param full_file:
+    :return Boolean:
+    """
+    file_path, file_name, file_ext = sct.extract_fname(full_file)
+    if file_ext != '.nii.gz':
+        sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + '...', 1, 'warning')
+        return False
+    else:
+        return True
+
+#  =======================================================================================================================
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
@@ -602,8 +658,8 @@ if __name__ == "__main__":
     parser = Parser(__file__)
     parser.usage.set_description('Pipeline to do Template --> Anatomical image registration on a lot of data\n '
                                  'Your data should be organized with one folder per subject\n'
-                                 'each subject folder should contain t1, t2 and more folders with the appropriate data\n'
-                                 't1 and t2 files should be named "your_prefix_t1.nii.gz" and "your_prefix_t2.nii.gz"\n')
+                                 'each subject folder should contain a folder per data type (t1, t2, etc)\n'
+                                 't1 and t2 files should be named "anything_t1.nii.gz" and "anything_t2.nii.gz"\n')
     parser.add_option(name="-data",
                       type_value="folder",
                       description="Path to the data you want to register template on",
@@ -616,52 +672,66 @@ if __name__ == "__main__":
                       example='t2')
     parser.add_option(name="-seg",
                       description='Segmentation of the spinal cord on anatomic data using sct_propseg\n'
-                                  'If not used, a segmentation file should be provided in the anatomic data folder with a name containing "seg"',
+                                  'If not used, a segmentation file should be provided in the anatomic data folder'
+                                  ' with a name containing "seg"',
                       mandatory=False)
     parser.add_option(name="-seg-params",
                       type_value=[[','], 'str'],
                       description='Parameters for sct_propseg (only if the -seg flag is used)\n'
                                   'Parameters available : \n'
-                                  '- init : int, axial slice where the propagation starts, default is middle axial slice\n'
+                                  '- init : int, axial slice where the propagation starts,'
+                                  ' default is middle axial slice\n'
                                   '- down : int, down limit of the propagation, default is 0\n'
                                   '- up : int, up limit of the propagation, default is the higher slice of the image\n'
-                                  '- centerline : filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation\n'
-                                  '- init-mask : string, mask containing three center of the spinal cord, used to initiate the propagation\n'
+                                  '- centerline : filename of centerline to use for the propagation, '
+                                  'format .txt or .nii, see file structure in documentation\n'
+                                  '- init-mask : string, mask containing three center of the spinal cord,'
+                                  ' used to initiate the propagation\n'
                                   '- radius : double, approximate radius of the spinal cord, default is 4 mm\n',
                       mandatory=False,
                       example='init:0.5,up:8,centerline:my_centerline.nii.gz,radius:6')
     parser.add_option(name="-reg-template",
                       description='Registration of anatomic data to template and warping template on anatomic data,\n'
                                   'WARNING : OPTION NOT READY TO USE YET FOR T1 DATA \n'
-                                  'A landmarks file containing appropriate labels at spinal cord center should be in the anatomic data folder \n'
+                                  'A landmarks file containing appropriate labels at spinal cord center should be'
+                                  ' in the anatomic data folder \n'
                                   'See: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/',
                       mandatory=False)
     parser.add_option(name="-reg-template-params",
                       type_value='str',
-                      description='Parameters for the registration of anatomic data to template (only if the -reg-template flag is used),\n'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.'
-                                  'Default=5,SyN,0.5,MI'
-                                  '1) number of iterations for last stage.'
-                                  '2) algo: {SyN, BSplineSyN}'
-                                  '3) gradient step. The larger the more deformation.'
-                                  '4) metric: {MI,MeanSquares}.'
+                      description='Parameters for the registration of anatomic data to template'
+                                  ' (only if the -reg-template flag is used).'
+                                  'step: number og the step this parameters are for'
+                                  'type: {im, seg} type of data used for this step'
+                                  'algo: {syn, bsplinesyn, slicereg}'
+                                  'metric: {MI,MeanSquares}'
+                                  'iter: number of iterations'
+                                  'shrink: shrinkage factor, >1 may fasten the computation'
+                                  'smooth: smoothing factor'
+                                  'gradStep: gradient step, the larger the more deformation'
                                   'If you find very large deformations, switching to MeanSquares can help.',
                       mandatory=False,
-                      example='10,SyN,0.5,MeanSquares')
+                      example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
+                              'metric=MeanSquares,iter=5')
     parser.add_option(name="-seg-t2star",
                       description='Segmentation of the spinal cord on t2star using sct_propseg\n'
-                                  'If used, a 3 point mask can be used to help sct_propseg : the mask file should be in the t2star folder with a name containing "mask"\n'
-                                  'If not used, a segmentation file should be provided in the anatomic data folder with a name containing "seg"',
+                                  'If used, a 3 point mask can be used to help sct_propseg : the mask file should be '
+                                  'in the t2star folder with a name containing "mask"\n'
+                                  'If not used, a segmentation file should be provided in the anatomic data folder'
+                                  ' with a name containing "seg"',
                       mandatory=False)
     parser.add_option(name="-seg-t2star-params",
                       type_value=[[','], 'str'],
                       description='Parameters for sct_propseg on T2star (only if the -seg-t2star flag is used)\n'
                                   'Parameters available : \n'
-                                  '- init : int, axial slice where the propagation starts, default is middle axial slice\n'
+                                  '- init : int, axial slice where the propagation starts,'
+                                  ' default is middle axial slice\n'
                                   '- down : int, down limit of the propagation, default is 0\n'
                                   '- up : int, up limit of the propagation, default is the higher slice of the image\n'
-                                  '- centerline : filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation\n'
-                                  '- init-mask : string, mask containing three center of the spinal cord, used to initiate the propagation\n'
+                                  '- centerline : filename of centerline to use for the propagation,'
+                                  ' format .txt or .nii, see file structure in documentation\n'
+                                  '- init-mask : string, mask containing three center of the spinal cord, '
+                                  'used to initiate the propagation\n'
                                   '- radius : double, approximate radius of the spinal cord, default is 4 mm\n',
                       mandatory=False,
                       example='init:0.5,up:8,centerline:my_centerline.nii.gz,radius:6')
@@ -670,22 +740,28 @@ if __name__ == "__main__":
                       mandatory=False)
     parser.add_option(name="-reg-multimodal-params",
                       type_value='str',
-                      description='Parameters for the registration of template to to T2star (only if the -reg-multimodal flag is used),\n'
-                                  'ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma WITHOUT WHITESPACE IN BETWEEN.'
-                                  'Default=5,SyN,0.5,MI'
-                                  '1) number of iterations for last stage.'
-                                  '2) algo: {SyN, BSplineSyN}'
-                                  '3) gradient step. The larger the more deformation.'
-                                  '4) metric: {MI,MeanSquares}.'
+                      description='Parameters for the registration of template to to T2star'
+                                  ' (only if the -reg-multimodal flag is used),\n'
+                                  'step: number og the step this parameters are for'
+                                  'type: {im, seg} type of data used for this step'
+                                  'algo: {syn, bsplinesyn, slicereg}'
+                                  'metric: {MI,MeanSquares}'
+                                  'iter: number of iterations'
+                                  'shrink: shrinkage factor, >1 may fasten the computation (only for SyN)'
+                                  'smooth: smoothing factor (only for SyN)'
+                                  'gradStep: gradient step, the larger the more deformation (only for SyN)'
+                                  'poly: polynomial degree (only for slicereg)'
                                   'If you find very large deformations, switching to MeanSquares can help.',
                       mandatory=False,
-                      example='10,SyN,0.5,MeanSquares')
+                      example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
+                              'metric=MeanSquares,iter=5')
     parser.add_option(name="-dice",
                       description='Compute the Dice coefficient on the results of the operations you did',
                       mandatory=False)
     parser.add_option(name="-dice-on",
                       type_value=[[','], 'str'],
-                      description='Compute the Dice coefficient on the specified results : usefull if you didn\'t just do any operations but want to compute dice on previous results\n'
+                      description='Compute the Dice coefficient on the specified results : usefull if you didn\'t '
+                                  'just do any operations but want to compute dice on previous results\n'
                                   'Has to be type_results:type_image, separated with coma, without any white spaces',
                       mandatory=False,
                       example="seg:t2,reg:t2star")
@@ -694,13 +770,16 @@ if __name__ == "__main__":
     input_path_data = arguments["-data"]
     input_t = arguments["-t"]
     input_seg = False
-    input_seg_params = {'init':0.5,'up':None,'down':None,'centerline':None,'init-mask':None,'radius':4}
+    input_seg_params = {'init': 0.5, 'up': None, 'down': None, 'centerline': None, 'init-mask': None, 'radius': 4}
     input_reg_template = False
-    input_reg_template_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    input_reg_template_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,' \
+                                'metric=MeanSquares,iter=5'
     input_seg_t2star = False
-    input_seg_t2star_params = {'init':0.5,'up':None,'down':None,'centerline':None,'init-mask':None,'radius':4}
+    input_seg_t2star_params = {'init': 0.5, 'up': None, 'down': None, 'centerline': None, 'init-mask': None,
+                               'radius': 4}
     input_reg_multimodal = False
-    input_reg_multimodal_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    input_reg_multimodal_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,' \
+                                  'metric=MeanSquares,iter=5'
     input_dice = False
     input_dice_on = []
     if "-seg" in arguments:
@@ -728,10 +807,13 @@ if __name__ == "__main__":
     if "-dice-on" in arguments:
         input_dice_on = arguments["-dice-on"]
 
-
-    pipeline_test = Pipeline(input_path_data, input_t, seg=input_seg, seg_params=input_seg_params,  reg_template=input_reg_template, reg_template_params=input_reg_template_params, seg_t2star=input_seg_t2star, seg_t2star_params=input_seg_t2star_params, reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params, dice=input_dice, dice_on=input_dice_on)
+    pipeline_test = Pipeline(input_path_data, input_t, seg=input_seg, seg_params=input_seg_params,
+                             reg_template=input_reg_template, reg_template_params=input_reg_template_params,
+                             seg_t2star=input_seg_t2star, seg_t2star_params=input_seg_t2star_params,
+                             reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params,
+                             dice=input_dice, dice_on=input_dice_on)
     pipeline_test.compute()
 
     elapsed_time = round(time.time() - begin, 2)
 
-    sct.printv('Finished ! \nElapsed time : ' + str(elapsed_time) + ' sec', 1, 'info' )
+    sct.printv('Finished ! \nElapsed time : ' + str(elapsed_time) + ' sec', 1, 'info')
