@@ -69,8 +69,6 @@ class ModelDictionary:
         self.J = 0  # type: int
         # dimension of the slices (flattened)
         self.N = 0  # type: int
-        # list of the possible label decisions in a segmentation image (if only 1 label L=[0,1])
-        self.L = []  # type: list
         # mean segmentation image of the dictionary
         self.mean_seg = None  # type: numpy array
         # mean image of the dictionary
@@ -116,8 +114,10 @@ class ModelDictionary:
             save_image(self.slices[j].seg_M, 'slice_'+str(j) + '_registered_seg')
         os.chdir('..')
 
+        '''
         if self.param.verbose == 2:
             self.show_data()
+        '''
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_model_dictionary(self):
@@ -141,9 +141,6 @@ class ModelDictionary:
         # inverts the segmentation slices : the model uses segmentation of the WM instead of segmentation of the GM
         self.invert_seg()
         self.save_model_data('inverted_gm_seg')
-
-        # set of possible labels that can be assigned to a given voxel in the segmentation
-        self.L = [0, 1]  # 1=WM, 0=GM or CSF
 
         sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space ...',
                    self.param.verbose, 'normal')
@@ -618,9 +615,6 @@ class ModelDictionary:
         # dimension of the data (flatten slices)
         self.N = len(self.slices[0].im_M.flatten())
 
-        # set of possible labels that can be assigned to a given pixel in the segmentation
-        self.L = [0, 1]  # 1=WM, 0=GM or CSF
-
         self.mean_image = Image(self.model_dic_name + 'mean_image.nii.gz').data
         self.mean_seg = Image(self.model_dic_name + 'mean_seg.nii.gz').data
 
@@ -908,7 +902,7 @@ class TargetSegmentationPairwise:
         print '---------- IN BETA : type coord_target[0][0] ---------------->', type(coord_target[0][0])
         '''
         # TODO: SEE IF WE NEED TO CHECK THE SECOND DIMENSION OF COORD TARGET OR THE FIRST ...
-        if isinstance(coord_target[0][0], (list, np.ndarray)):
+        if isinstance(coord_target[0], (list, np.ndarray)):
             for i_target, coord_projected_slice in enumerate(coord_target):
                 beta_slice = []
                 for coord_slice_j in dataset_coord:
@@ -1437,7 +1431,7 @@ class TargetSegmentationGroupwise:
                 moved_target_slice = Image(param=np.asarray(apply_2d_transformation(self.target.data[n_slice],
                                                                                     tx=t_param[0], ty=t_param[1],
                                                                                     theta=t_param[2],
-                                                                                    scx=t_param[3], scy=t_param[4])[0]))
+                                                                                    s=t_param[3])[0]))
 
                 coord_moved_target = self.model.pca.project_array(moved_target_slice.data.flatten())
                 coord_moved_target = coord_moved_target.reshape(coord_moved_target.shape[0],)
@@ -1448,18 +1442,18 @@ class TargetSegmentationGroupwise:
 
                 target_th_slice = np.sum((np.asarray([dic_slice.im_M for dic_slice in self.model.dictionary.slices]).T
                                           * beta[n_slice]).T, axis=0)
-                sq_norm = np.linalg.norm(target_th_slice - moved_target_slice.data, 2)
+                sq_norm = np.linalg.norm(target_th_slice - moved_target_slice.data, 2)**2
 
                 gauss = np.sum(((coord_moved_target - mu[n_slice])/sigma[n_slice])**2)
                 return sq_norm*gauss
 
             r_target_to_m = []
             for i_slice, target_slice in enumerate(self.target.data):
-                x0 = [0, 0, 0, 1, 1]
+                x0 = [0, 0, 0, 1]
                 est_transfo = minimize(to_minimize, x0, args=i_slice, method='Nelder-Mead', options={'xtol': 0.00005})
                 target_m_slice, r_slice = apply_2d_transformation(target_slice, tx=est_transfo.x[0],
                                                                   ty=est_transfo.x[1], theta=est_transfo.x[2],
-                                                                  scx=est_transfo.x[3], scy=est_transfo.x[4])
+                                                                  s=est_transfo.x[3])
                 print est_transfo.x
                 target_m.append(target_m_slice)
                 r_target_to_m.append(r_slice)
@@ -1521,13 +1515,13 @@ class TargetSegmentationGroupwise:
         if isinstance(selected_index[0], (list, np.ndarray)):
 
             for selected_ind_by_slice in selected_index:  # selected_slices:
-                slice_seg = compute_majority_vote_mean_seg(segmentation_slices[selected_ind_by_slice])
+                slice_seg = compute_majority_vote_mean_seg(segmentation_slices[selected_ind_by_slice], threshold=0.3)
                 res_seg_model_space.append(slice_seg)
             # res_seg_model_space = map(compute_majority_vote_mean_seg, selected_slices)
 
         else:
             # res_seg_model_space = compute_majority_vote_mean_seg(selected_slices)
-            res_seg_model_space = compute_majority_vote_mean_seg(segmentation_slices[selected_index])
+            res_seg_model_space = compute_majority_vote_mean_seg(segmentation_slices[selected_index], threshold=0.3)
 
         res_seg_model_space = np.asarray(res_seg_model_space)
         # save_image(res_seg_model_space, 'res_GM_seg_model_space')
@@ -1588,8 +1582,10 @@ sct_Image
 
         # build a target segmentation
         if gm_seg_param.target_reg == 'pairwise':
+            print 'PAIRWISE REGISTRATION OF THE TARGET'
             self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image, tau=tau)
         elif gm_seg_param.target_reg == 'groupwise':
+            print 'GROUPWISE REGISTRATION OF THE TARGET'
             self.target_seg_methods = TargetSegmentationGroupwise(self.model, target_image=self.target_image, tau=tau)
 
         suffix = '_'
