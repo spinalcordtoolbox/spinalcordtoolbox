@@ -4,6 +4,7 @@
 ##2.0.1 (2015-04-28)
 
 - BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
+- BUG: fixed issue with parser when typing a command to see usage (it crashed)
 
 ##2.0 (2015-04-17)
 
