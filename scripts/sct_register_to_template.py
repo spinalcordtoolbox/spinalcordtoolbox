@@ -265,8 +265,29 @@ def main():
 
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
-    sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
-    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
+    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
+    sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
+    sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz')
+    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
+
+    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
+    # sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w straight2templateAffine.txt')
+    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight.nii.gz -d template.nii -w warp_curve2straight.nii.gz -x nn -c 1')
+    # sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w straight2templateAffine.txt -x nn')
+    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt -c 1')
+    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
+    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
+
+    # JULIEN ===
+    # crop template in z-direction (for faster processing)
+    sct.run('sct_crop_image -i template.nii -o template_crop.nii -dim 2 -start 50 -end 480')
+    sct.run('sct_crop_image -i template_seg.nii.gz -o template_seg_crop.nii.gz -dim 2 -start 50 -end 480')
+    # sub-sample in z-direction
+    sct.run('sct_resample -i template_crop.nii -o template_crop.nii -f 1x1x0.25')
+    sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop.nii.gz -f 1x1x0.25')
+    # sct.run('cp template.nii template_crop.nii')
+    # sct.run('cp template_seg.nii.gz template_seg_crop.nii.gz')
+    # ===
 
     # Registration straight spinal cord to template
     sct.printv('\nRegister straight spinal cord to template...', verbose)
@@ -279,16 +300,17 @@ def main():
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
             src = 'data_rpi_straight2templateAffine.nii'
-            dest = 'template.nii'
+            dest = 'template_crop.nii'
             interp_step = 'linear'
         elif paramreg.steps[str(i_step)].type == 'seg':
             src = 'segmentation_rpi_straight2templateAffine.nii.gz'
-            dest = 'template_seg.nii.gz'
+            dest = 'template_seg_crop.nii.gz'
             interp_step = 'nn'
         else:
             sct.run('ERROR: Wrong image type.', 1, 'error')
         # if step>1, apply warp_forward_concat to the src image to be used
         if i_step > 1:
+            # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
             sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
             src = sct.add_suffix(src, '_reg')
         # register src --> dest
@@ -298,7 +320,8 @@ def main():
 
     # Concatenate transformations:
     sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-    sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+    sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+    # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
     warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
