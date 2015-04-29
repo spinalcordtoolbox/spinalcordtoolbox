@@ -30,8 +30,16 @@ class param:
         self.compose = 0
         
 # check if needed Python libraries are already installed or not
-import sys
+import sys,commands
 import getopt
+
+
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
+
 import sct_utils as sct
 import os
 import time
