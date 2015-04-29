@@ -43,9 +43,10 @@ def main():
     landmarks_template = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
     reference = path_sct + '/dev/template_creation/template_shape.nii.gz'
     verbose = param.verbose
+    interpolation_method = 'spline'
         
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:n:t:R:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:n:t:R:v:a:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -61,6 +62,8 @@ def main():
             reference = arg                
         elif opt in ('-v'):
             verbose = int(arg)
+        elif opt in ('-a'):
+            interpolation_method = str(arg)
     
     # display usage if a mandatory argument is not provided
     if fname == '' :
@@ -94,7 +97,7 @@ def main():
     
     # Apply rigid transformation
     print '\nApply affine transformation to native landmarks...'
-    sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + reference + ' -w ' + transfo)
+    sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + reference + ' -w ' + transfo +' -x ' + interpolation_method)
     # sct.run('WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + reference + ' ' + transfo)
     
     print '\nFile created : ' + output_name
@@ -122,6 +125,7 @@ MANDATORY ARGUMENTS
   
 OPTIONAL ARGUMENTS
   -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
+  -a {nn, linear, spline}    interpolation method. Default=spline.
   -h                         help. Show this message
 
 EXAMPLE
