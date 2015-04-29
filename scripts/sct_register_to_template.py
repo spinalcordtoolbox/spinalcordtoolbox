@@ -26,7 +26,7 @@ import time
 
 import sct_utils as sct
 from sct_orientation import set_orientation
-from sct_register_multimodal import Paramreg, ParamregMultiStep, register
+from sct_register_multimodal import Paramreg, ParamregMultiStep, register, find_zmin_zmax
 from msct_parser import Parser
 from msct_image import Image
 
@@ -268,27 +268,19 @@ def main():
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
 
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight.nii -d '+fname_template+' -w warp_curve2straight.nii.gz -c 1')
-    # sct.run('sct_apply_transfo -i data_rpi_straight.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w straight2templateAffine.txt')
-    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight.nii.gz -d template.nii -w warp_curve2straight.nii.gz -x nn -c 1')
-    # sct.run('sct_apply_transfo -i segmentation_rpi_straight.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w straight2templateAffine.txt -x nn')
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt -c 1')
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d '+fname_template+' -w warp_curve2straight.nii.gz,straight2templateAffine.txt')
-    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straight.nii.gz,straight2templateAffine.txt -x nn')
+    # find min-max of anat2template (for subsequent cropping)
+    sct.run('export FSLOUTPUTTYPE=NIFTI; fslmaths segmentation_rpi_straight2templateAffine.nii.gz -thr 0.5 segmentation_rpi_straight2templateAffine_th.nii.gz', param.verbose)
+    zmin_template, zmax_template = find_zmin_zmax('segmentation_rpi_straight2templateAffine_th.nii.gz')
 
-    # JULIEN ===
     # crop template in z-direction (for faster processing)
-    sct.run('sct_crop_image -i template.nii -o template_crop.nii -dim 2 -start 50 -end 480')
-    sct.run('sct_crop_image -i template_seg.nii.gz -o template_seg_crop.nii.gz -dim 2 -start 50 -end 480')
+    sct.run('sct_crop_image -i template.nii -o template_crop.nii -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
+    sct.run('sct_crop_image -i template_seg.nii.gz -o template_seg_crop.nii.gz -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
     # sub-sample in z-direction
-    sct.run('sct_resample -i template_crop.nii -o template_crop.nii -f 1x1x0.25')
-    sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop.nii.gz -f 1x1x0.25')
-    sct.run('sct_resample -i data_rpi_straight2templateAffine.nii -o data_rpi_straight2templateAffine.nii -f 1x1x0.25')
-    sct.run('sct_resample -i segmentation_rpi_straight2templateAffine.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -f 1x1x0.25')
-    # sct.run('cp template.nii template_crop.nii')
-    # sct.run('cp template_seg.nii.gz template_seg_crop.nii.gz')
+    sct.run('sct_resample -i template_crop.nii -o template_crop_r.nii -f 1x1x0.25')
+    sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop_r.nii.gz -f 1x1x0.25')
+    sct.run('sct_resample -i data_rpi_straight2templateAffine.nii -o data_rpi_straight2templateAffine_r.nii -f 1x1x0.25')
+    sct.run('sct_resample -i segmentation_rpi_straight2templateAffine.nii.gz -o segmentation_rpi_straight2templateAffine_r.nii.gz -f 1x1x0.25')
     # ===
 
     # Registration straight spinal cord to template
@@ -301,12 +293,12 @@ def main():
         sct.printv('\nEstimate transformation for step #'+str(i_step)+'...', verbose)
         # identify which is the src and dest
         if paramreg.steps[str(i_step)].type == 'im':
-            src = 'data_rpi_straight2templateAffine.nii'
-            dest = 'template_crop.nii'
+            src = 'data_rpi_straight2templateAffine_r.nii'
+            dest = 'template_crop_r.nii'
             interp_step = 'linear'
         elif paramreg.steps[str(i_step)].type == 'seg':
-            src = 'segmentation_rpi_straight2templateAffine.nii.gz'
-            dest = 'template_seg_crop.nii.gz'
+            src = 'segmentation_rpi_straight2templateAffine_r.nii.gz'
+            dest = 'template_seg_crop_r.nii.gz'
             interp_step = 'nn'
         else:
             sct.run('ERROR: Wrong image type.', 1, 'error')
