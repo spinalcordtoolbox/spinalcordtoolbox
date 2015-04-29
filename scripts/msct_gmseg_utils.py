@@ -357,9 +357,9 @@ def find_ants_transfo_name(transfo_type):
     return transfo_name, inverse_transfo_name
 
 
-#######################  DEVELOPING GROUPWISE  #######################
+# ######################  DEVELOPING GROUPWISE  #######################
 # ----------------------------------------------------------------------------------------------------------------------
-def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, scx=1, scy=1, transfo=None, inverse=False):
+def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, s=1, transfo=None, inverse=False):
     """
     Apply an Affine transformation defined a translation, a rotation and a scaling
 
@@ -371,15 +371,14 @@ def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, scx=1, scy=1, transfo=N
 
     :param theta: rotation angle in counter-clockwise direction as radians, type: float
 
-    :param scx: scaling factor along the x-axis, type: float
-
-    :param scy: scaling factor along the y-axis, type: float
+    :param s: scaling factor, type: float
 
     :return transformed_mat, transfo: transformed matrix, transformation used
     """
     from skimage import transform as tf
     if transfo is None:
-        transfo = tf.AffineTransform(scale=[scx, scy], rotation=theta, translation=(tx, ty))
+        # transfo = tf.AffineTransform(scale=[scx, scy], rotation=theta, translation=(tx, ty))
+        transfo = tf.SimilarityTransform(scale=s, rotation=theta, translation=(tx, ty))
 
     if inverse:
         transformed_mat = tf.warp(matrix.astype('uint32'), transfo.inverse, preserve_range=True)
@@ -707,7 +706,7 @@ def crop_t2_star(path):
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out(dic_path, reg=None):
+def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
     import time
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
@@ -743,7 +742,7 @@ def leave_one_out(dic_path, reg=None):
                     elif 'manual' in file_name:
                         ref_gm_seg = subject_dir + '/' + file_name
 
-                cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute'
+                cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg
                 if reg is not None:
                     cmd_gm_seg += ' -reg ' + reg
 
