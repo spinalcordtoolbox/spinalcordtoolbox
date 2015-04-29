@@ -74,6 +74,8 @@ class ProcessLabels(object):
         elif type_process == 'dist-inter':  # second argument is in pixel distance
             self.distance_interlabels(5)
             self.fname_output = None
+        elif type_process == 'cubic-to-point':
+            self.output_image = self.cubic_to_point()
         else:
             sct.printv('Error: The chosen process is not available.',1,'error')
 
@@ -95,8 +97,7 @@ class ProcessLabels(object):
         # for all points with non-zeros neighbors, force the neighbors to 0
         for coord in coordinates_input:
             image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
-            image_output.data[coord.x][coord.y + dy][
-                coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
+            image_output.data[coord.x][coord.y + dy][coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
             image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
             image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
             image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
@@ -151,6 +152,76 @@ class ProcessLabels(object):
         # for all points with non-zeros neighbors, force the neighbors to 0
         for coord in coordinates_input:
             image_output.data[:, :, coord.z] = coord.value
+
+        return image_output
+    def cubic_to_point(self):
+        """
+        This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
+        It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
+        :return:
+        """
+        from scipy import ndimage
+        from numpy import array
+        data = self.image_input.data
+
+        image_output = self.image_input.copy()
+        data_output = image_output.data
+        data_output *= 0
+        nx = image_output.data.shape[0]
+        ny = image_output.data.shape[1]
+        nz = image_output.data.shape[2]
+        print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
+
+        z_centerline = [iz for iz in range(0, nz, 1) if data[:,:,iz].any() ]
+        nz_nonz = len(z_centerline)
+        if nz_nonz==0 :
+            print '\nERROR: Label file is empty'
+            sys.exit()
+        x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        print '\nGet center of mass for each slice of the label file ...'
+        for iz in xrange(len(z_centerline)):
+            x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:,:,z_centerline[iz]]))
+
+        ## Calculate mean coordinate according to z for each cube of labels:
+        list_cube_labels_x = [[]]
+        list_cube_labels_y = [[]]
+        list_cube_labels_z = [[]]
+        count = 0
+        for i in range(nz_nonz-1):
+            # Make a list of group of slices that contains a non zero value
+            if z_centerline[i] - z_centerline[i+1] == -1:
+                # Verify if the value has already been recovered and add if not
+                #If the group is empty add first value do not if it is not empty as it will copy it for a second time
+                if len(list_cube_labels_z[count]) == 0 :#or list_cube_labels[count][-1] != z_centerline[i]:
+                    list_cube_labels_z[count].append(z_centerline[i])
+                    list_cube_labels_x[count].append(x_centerline[i])
+                    list_cube_labels_y[count].append(y_centerline[i])
+                list_cube_labels_z[count].append(z_centerline[i+1])
+                list_cube_labels_x[count].append(x_centerline[i+1])
+                list_cube_labels_y[count].append(y_centerline[i+1])
+                if i+2 < nz_nonz-1 and z_centerline[i+1] - z_centerline[i+2] != -1:
+                    list_cube_labels_z.append([])
+                    list_cube_labels_x.append([])
+                    list_cube_labels_y.append([])
+                    count += 1
+
+        z_label_mean = [0 for i in range(len(list_cube_labels_z))]
+        x_label_mean = [0 for i in range(len(list_cube_labels_z))]
+        y_label_mean = [0 for i in range(len(list_cube_labels_z))]
+        for i in range(len(list_cube_labels_z)):
+            for j in range(len(list_cube_labels_z[i])):
+                z_label_mean[i] += list_cube_labels_z[i][j]
+                x_label_mean[i] += list_cube_labels_x[i][j]
+                y_label_mean[i] += list_cube_labels_y[i][j]
+            z_label_mean[i] = int(round(z_label_mean[i]/len(list_cube_labels_z[i])))
+            x_label_mean[i] = int(round(x_label_mean[i]/len(list_cube_labels_x[i])))
+            y_label_mean[i] = int(round(y_label_mean[i]/len(list_cube_labels_y[i])))
+
+
+        ## Put labels of value one into mean coordinates
+        for i in range(len(z_label_mean)):
+            data_output[x_label_mean[i],y_label_mean[i], z_label_mean[i]] = 1
 
         return image_output
 
