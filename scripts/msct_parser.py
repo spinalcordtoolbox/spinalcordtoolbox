@@ -381,7 +381,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        usage = self.header + self.description + self.usage + self.arguments_string + self.example
+        usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
 
         if error:
             sct.printv(error+'\nAborted...',type='warning')
