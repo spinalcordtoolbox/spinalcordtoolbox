@@ -154,6 +154,7 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
+
     def cubic_to_point(self):
         """
         This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
@@ -161,8 +162,26 @@ class ProcessLabels(object):
         :return:
         """
         from scipy import ndimage
-        from numpy import array
+        from numpy import array, mean
         data = self.image_input.data
+        #
+        # image_output = self.image_input.copy()
+        # data_output = image_output.data
+        # data_output *= 0
+        # coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
+        # #list of present values
+        # list_values = []
+        # for i,coord in enumerate(coordinates):
+        #     if i == 0 or coord.value == coordinates[i-1].value:
+        #         list_values.append(coord.value)
+        #
+        # # make list of group of labels by value
+        # for i in range(0, len(list_values)):
+        #     mean_coord = mean(array([[coord.x, coord.y, coord.z] for coord in coordinates if coord.value==i]))
+        #
+        # # evaluate center of mass for each group and save into output image
+
+
 
         image_output = self.image_input.copy()
         data_output = image_output.data
