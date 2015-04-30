@@ -56,6 +56,7 @@ class Param:
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        self.zsubsample = '0.25'
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
@@ -146,6 +147,7 @@ def main():
     file_template_label = param.file_template_label
     file_template_seg = param.file_template_seg
     output_type = param.output_type
+    zsubsample = param.zsubsample
     # smoothing_sigma = param.smoothing_sigma
 
     # start timer
@@ -277,11 +279,10 @@ def main():
     sct.run('sct_crop_image -i template.nii -o template_crop.nii -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
     sct.run('sct_crop_image -i template_seg.nii.gz -o template_seg_crop.nii.gz -dim 2 -start '+str(zmin_template)+' -end '+str(zmax_template))
     # sub-sample in z-direction
-    sct.run('sct_resample -i template_crop.nii -o template_crop_r.nii -f 1x1x0.25')
-    sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop_r.nii.gz -f 1x1x0.25')
-    sct.run('sct_resample -i data_rpi_straight2templateAffine.nii -o data_rpi_straight2templateAffine_r.nii -f 1x1x0.25')
-    sct.run('sct_resample -i segmentation_rpi_straight2templateAffine.nii.gz -o segmentation_rpi_straight2templateAffine_r.nii.gz -f 1x1x0.25')
-    # ===
+    sct.run('sct_resample -i template_crop.nii -o template_crop_r.nii -f 1x1x'+zsubsample)
+    sct.run('sct_resample -i template_seg_crop.nii.gz -o template_seg_crop_r.nii.gz -f 1x1x'+zsubsample)
+    sct.run('sct_resample -i data_rpi_straight2templateAffine.nii -o data_rpi_straight2templateAffine_r.nii -f 1x1x'+zsubsample)
+    sct.run('sct_resample -i segmentation_rpi_straight2templateAffine.nii.gz -o segmentation_rpi_straight2templateAffine_r.nii.gz -f 1x1x'+zsubsample)
 
     # Registration straight spinal cord to template
     sct.printv('\nRegister straight spinal cord to template...', verbose)
