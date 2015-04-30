@@ -42,9 +42,9 @@ SUBJECTS_LIST=[['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
-do_preprocessing_T2 = 0
-normalize_levels_T2 = 0
-average_level = 0
+do_preprocessing_T2 = 1
+normalize_levels_T2 = 1
+average_level = 1
 align_vertebrae_T2 = 1
 
 if do_preprocessing_T2:
@@ -176,8 +176,8 @@ if do_preprocessing_T2:
 #         # sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
 #         # os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
 #
-#         sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
-#         os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
 #
 #         # normalize intensity
 #         print '\nNormalizing intensity of the straightened image...'
@@ -194,7 +194,7 @@ if do_preprocessing_T2:
         # - warp_curve2straight.nii.gz
         # output:
         # - centerline_straight.nii.gz
-        print '\nApply straightening to centerline and to labels_vertebral_dilated.nii.gz'
+        print '\nApply straightening to labels_vertebral_dilated.nii.gz'
         # sct.printv('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
         # os.system('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
         sct.printv('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_denoised_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
@@ -270,7 +270,7 @@ if normalize_levels_T2:
 if average_level:
     os.chdir(PATH_OUTPUT +'/labels_vertebral')
     template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
-    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n 19')
+    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n 10')
 
 # Aligning vertebrae for all subject
 if align_vertebrae_T2:
@@ -284,5 +284,5 @@ if align_vertebrae_T2:
         # os.chdir(PATH_OUTPUT + '/'+'errsm_14'+'/'+'T2')
         # subject = 'errsm_14'
         print '\nAlign vertebrae for subject '+subject+'...'
-        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_denoised_straight_crop.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_straight_in_template_space.nii.gz  -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t affine -w spline')
-        os.system('sct_align_vertebrae.py -i data_RPI_crop_denoised_straight_crop.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_straight_in_template_space.nii.gz  -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t affine -w spline')
+        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_denoised_straight_crop.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_straight_in_template_space.nii.gz  -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        os.system('sct_align_vertebrae.py -i data_RPI_crop_denoised_straight_crop.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_straight_in_template_space.nii.gz  -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
