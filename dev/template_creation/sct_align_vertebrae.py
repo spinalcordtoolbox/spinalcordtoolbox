@@ -125,31 +125,34 @@ def main():
         tmp_name = 'tmp.'+time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir '+tmp_name)
         os.chdir(tmp_name)
-        sct.run('sct_label_utils -i ../'+landmark+' -t dist-inter')
-        sct.run('sct_label_utils -i ../'+template_landmark+' -t plan -o template_landmarks_plan.nii.gz -c 5')
+        sct.run('sct_label_utils -i '+landmark+' -t dist-inter')
+        sct.run('sct_label_utils -i '+template_landmark+' -t plan -o template_landmarks_plan.nii.gz -c 5')
         sct.run('sct_crop_image -i template_landmarks_plan.nii.gz -o template_landmarks_plan_cropped.nii.gz -start 0.35,0.35 -end 0.65,0.65 -dim 0,1')
-        sct.run('sct_label_utils -i ../'+landmark+' -t plan -o landmarks_plan.nii.gz -c 5')
+        sct.run('sct_label_utils -i '+landmark+' -t plan -o landmarks_plan.nii.gz -c 5')
         sct.run('sct_crop_image -i landmarks_plan.nii.gz -o landmarks_plan_cropped.nii.gz -start 0.35,0.35 -end 0.65,0.65 -dim 0,1')
         sct.run('isct_antsRegistration --dimensionality 3 --transform SyN[0.5,3,0] --metric MeanSquares[template_landmarks_plan_cropped.nii.gz,landmarks_plan_cropped.nii.gz,1] --convergence 400x200 --shrink-factors 4x2 --smoothing-sigmas 4x2mm --restrict-deformation 0x0x1 --output [landmarks_reg,landmarks_reg.nii.gz] --interpolation NearestNeighbor --float')
         sct.run('isct_c3d -mcs landmarks_reg0Warp.nii.gz -oo warp_vecx.nii.gz warp_vecy.nii.gz warp_vecz.nii.gz')
         sct.run('isct_c3d warp_vecz.nii.gz -resample 200% -o warp_vecz_r.nii.gz')
         sct.run('isct_c3d warp_vecz_r.nii.gz -smooth 0x0x3mm -o warp_vecz_r_sm.nii.gz')
         sct.run('sct_crop_image -i warp_vecz_r_sm.nii.gz -o warp_vecz_r_sm_line.nii.gz -start 0.5,0.5 -end 0.5,0.5 -dim 0,1 -b 0')
-        sct.run('sct_label_utils -i warp_vecz_r_sm_line.nii.gz -t plan_ref -o warp_vecz_r_sm_line_extended.nii.gz -c 0 -r ../'+template_landmark)
-        sct.run('isct_c3d ../'+template_landmark+' warp_vecx.nii.gz -reslice-identity -o warp_vecx_res.nii.gz')
-        sct.run('isct_c3d ../'+template_landmark+' warp_vecy.nii.gz -reslice-identity -o warp_vecy_res.nii.gz')
-        sct.run('c3d warp_vecy_res.nii.gz warp_vecy_res.nii.gz warp_vecz_r_sm_line_extended.nii.gz -omc 3 ../'+warping)
+        sct.run('sct_label_utils -i warp_vecz_r_sm_line.nii.gz -t plan_ref -o warp_vecz_r_sm_line_extended.nii.gz -c 0 -r '+template_landmark)
+        sct.run('isct_c3d '+template_landmark+' warp_vecx.nii.gz -reslice-identity -o warp_vecx_res.nii.gz')
+        sct.run('isct_c3d '+template_landmark+' warp_vecy.nii.gz -reslice-identity -o warp_vecy_res.nii.gz')
+        sct.run('isct_c3d warp_vecy_res.nii.gz warp_vecy_res.nii.gz warp_vecz_r_sm_line_extended.nii.gz -omc 3 '+warping)
         
         # check results
-        sct.run('sct_apply_transfo -i ../'+landmark+' -o label_moved.nii.gz -d ../'+template_landmark+' -w ../'+warping+' -x nn')
-        sct.run('sct_label_utils -i ../'+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
+        sct.run('sct_apply_transfo -i '+landmark+' -o label_moved.nii.gz -d '+template_landmark+' -w '+warping+' -x nn')
+        sct.run('sct_label_utils -i '+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
         status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t MSE')
         sct.printv(output,1,'info')
         remove_temp_files = True
         if os.path.isfile('error_log_label_moved.txt'):
             remove_temp_files = False
-            with open('../log.txt', 'a') as log_file:
+            with open('log.txt', 'a') as log_file:
                 log_file.write('Error for '+fname+'\n')
+
+        # Copy warping into parent folder
+        sct.run('cp '+ warping+' ../'+warping)
 
         os.chdir('..')
         if remove_temp_files:
@@ -173,7 +176,9 @@ def main():
         print 'Apply transfo to input image\n...'
         sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + template_landmark + ' -w ' + warping + ' -x spline')
             
-    
+    # Remove warping
+    os.remove(warping)
+
     # if compose :
         
     #     print 'Computing affine transformation between subject and destination landmarks\n...'
