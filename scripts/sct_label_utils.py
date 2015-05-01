@@ -54,6 +54,8 @@ class ProcessLabels(object):
             self.output_image = self.plan_ref()
         elif type_process == 'increment':
             self.output_image = self.increment_z_inverse()
+        elif type_process == 'disks':
+            self.output_image = self.labelize_from_disks()
         elif type_process == 'MSE':
             self.MSE()
             self.fname_output = None
@@ -97,7 +99,8 @@ class ProcessLabels(object):
         # for all points with non-zeros neighbors, force the neighbors to 0
         for coord in coordinates_input:
             image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
-            image_output.data[coord.x][coord.y + dy][coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
+            image_output.data[coord.x][coord.y + dy][
+                coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
             image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
             image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
             image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
@@ -154,7 +157,6 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
-
     def cubic_to_point(self):
         """
         This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
@@ -162,26 +164,8 @@ class ProcessLabels(object):
         :return:
         """
         from scipy import ndimage
-        from numpy import array, mean
+        from numpy import array
         data = self.image_input.data
-        #
-        # image_output = self.image_input.copy()
-        # data_output = image_output.data
-        # data_output *= 0
-        # coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
-        # #list of present values
-        # list_values = []
-        # for i,coord in enumerate(coordinates):
-        #     if i == 0 or coord.value == coordinates[i-1].value:
-        #         list_values.append(coord.value)
-        #
-        # # make list of group of labels by value
-        # for i in range(0, len(list_values)):
-        #     mean_coord = mean(array([[coord.x, coord.y, coord.z] for coord in coordinates if coord.value==i]))
-        #
-        # # evaluate center of mass for each group and save into output image
-
-
 
         image_output = self.image_input.copy()
         data_output = image_output.data
@@ -252,11 +236,60 @@ class ProcessLabels(object):
         """
         image_output = Image(self.image_input)
         image_output.data *= 0
-        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z',reverse_coord=True)
+        coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for i,coord in enumerate(coordinates_input):
+        for i, coord in enumerate(coordinates_input):
             image_output.data[coord.x, coord.y, coord.z] = i + 1
+
+        return image_output
+
+    def labelize_from_disks(self):
+        """
+        This function creates an image with regions labelized depending on values from reference.
+        Typically, user inputs an segmentation image, and labels with disks position, and this function produces
+        a segmentation image with vertebral levels labelized.
+        Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+        """
+        image_output = Image(self.image_input)
+        image_output.data *= 0
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
+
+        # for all points in input, find the value that has to be set up, depending on the vertebral level
+        for i, coord in enumerate(coordinates_input):
+            for j in range(0, len(coordinates_ref)-1):
+                if coordinates_ref[j+1].z < coord.z <= coordinates_ref[j].z:
+                    image_output.data[coord.x, coord.y, coord.z] = coordinates_ref[j].value
+
+        return image_output
+
+    def symmetrizer(self, side='left'):
+        """
+        This function symmetrize the input image. One side of the image will be copied on the other side. We assume a
+        RPI orientation.
+        :param side: string 'left' or 'right'. Side that will be copied on the other side.
+        :return:
+        """
+        image_output = Image(self.image_input)
+
+        image_output[0:]
+
+        """inspiration: (from atlas creation matlab script)
+        temp_sum = temp_g + temp_d;
+        temp_sum_flip = temp_sum(end:-1:1,:);
+        temp_sym = (temp_sum + temp_sum_flip) / 2;
+
+        temp_g(1:end / 2,:) = 0;
+        temp_g(1 + end / 2:end,:) = temp_sym(1 + end / 2:end,:);
+        temp_d(1:end / 2,:) = temp_sym(1:end / 2,:);
+        temp_d(1 + end / 2:end,:) = 0;
+
+        tractsHR
+        {label_l}(:,:, num_slice_ref) = temp_g;
+        tractsHR
+        {label_r}(:,:, num_slice_ref) = temp_d;
+        """
 
         return image_output
 
@@ -439,7 +472,7 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r" """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels into a discrete single voxel label. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",

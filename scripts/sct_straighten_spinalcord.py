@@ -57,6 +57,7 @@ class Param:
         self.algo_fitting = 'hanning'  # 'hanning' or 'nurbs'
         self.type_window = 'hanning'  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
         self.window_length = 50
+        self.crop = 1
 
 
 
@@ -77,6 +78,7 @@ def main():
     algo_fitting = param.algo_fitting
     window_length = param.window_length
     type_window = param.type_window
+    crop = param.crop
 
     # start timer
     start_time = time.time()
@@ -96,7 +98,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:a:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:a:f:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -117,6 +119,8 @@ def main():
                 interpolation_warp = str(arg)
             elif opt in ('-a'):
                 algo_fitting = str(arg)
+            elif opt in ('-f'):
+                crop = int(arg)
             # elif opt in ('-f'):
             #     centerline_fitting = str(arg)
             elif opt in ('-v'):
@@ -376,9 +380,12 @@ def main():
     sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
 
     # remove padding for straight labels
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+    if crop == 1:
+        sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
+        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+    else:
+        sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
 
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
@@ -485,6 +492,7 @@ def usage():
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -a {hanning,nurbs}Algorithm for curve fitting. Default='+str(param_default.algo_fitting)+'\n' \
+        '  -f {0,1}          Crop option. 0: no crop, 1: crop around landmarks. Default=' + str(param_default.crop) + '\n' \
         '  -v {0,1,2}        Verbose. 0: nothing, 1: basic, 2: extended. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
