@@ -164,8 +164,49 @@ class ProcessLabels(object):
         :return:
         """
         from scipy import ndimage
-        from numpy import array
+        from numpy import array,mean
         data = self.image_input.data
+
+
+        # # pb: doesn't work if several groups have same value
+        # image_output = self.image_input.copy()
+        # data_output = image_output.data
+        # data_output *= 0
+        # coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
+        # #list of present values
+        # list_values = []
+        # for i,coord in enumerate(coordinates):
+        #     if i == 0 or coord.value != coordinates[i-1].value:
+        #         list_values.append(coord.value)
+        #
+        # # make list of group of labels coordinates per value
+        # list_group_labels = []
+        # list_barycenter = []
+        # for i in range(0, len(list_values)):
+        #     #mean_coord = mean(array([[coord.x, coord.y, coord.z] for coord in coordinates if coord.value==i]))
+        #     list_group_labels.append([])
+        #     list_group_labels[i] = [coordinates[j] for j in range(len(coordinates)) if coordinates[j].value == list_values[i]]
+        #     # find barycenter: first define each case as a coordinate instance then calculate the value
+        #     list_barycenter.append([0,0,0,0])
+        #     sum_x = 0
+        #     sum_y = 0
+        #     sum_z = 0
+        #     for j in range(len(list_group_labels[i])):
+        #         sum_x += list_group_labels[i][j].x
+        #         sum_y += list_group_labels[i][j].y
+        #         sum_z += list_group_labels[i][j].z
+        #     list_barycenter[i][0] = int(round(sum_x/len(list_group_labels[i])))
+        #     list_barycenter[i][1] = int(round(sum_y/len(list_group_labels[i])))
+        #     list_barycenter[i][2] = int(round(sum_z/len(list_group_labels[i])))
+        #     list_barycenter[i][3] = list_group_labels[i][0].value
+        #
+        # # put value of group at each center of mass
+        # for i in range(len(list_values)):
+        #     data_output[list_barycenter[i][0],list_barycenter[i][1], list_barycenter[i][2]] = list_barycenter[i][3]
+        #
+        # return image_output
+
+
 
         image_output = self.image_input.copy()
         data_output = image_output.data
@@ -212,6 +253,7 @@ class ProcessLabels(object):
         z_label_mean = [0 for i in range(len(list_cube_labels_z))]
         x_label_mean = [0 for i in range(len(list_cube_labels_z))]
         y_label_mean = [0 for i in range(len(list_cube_labels_z))]
+        v_label_mean = [0 for i in range(len(list_cube_labels_z))]
         for i in range(len(list_cube_labels_z)):
             for j in range(len(list_cube_labels_z[i])):
                 z_label_mean[i] += list_cube_labels_z[i][j]
@@ -220,11 +262,12 @@ class ProcessLabels(object):
             z_label_mean[i] = int(round(z_label_mean[i]/len(list_cube_labels_z[i])))
             x_label_mean[i] = int(round(x_label_mean[i]/len(list_cube_labels_x[i])))
             y_label_mean[i] = int(round(y_label_mean[i]/len(list_cube_labels_y[i])))
-
+            # We suppose that the labels' value of the group is the value of the barycentre
+            v_label_mean[i] = data[x_label_mean[i],y_label_mean[i], z_label_mean[i]]
 
         ## Put labels of value one into mean coordinates
         for i in range(len(z_label_mean)):
-            data_output[x_label_mean[i],y_label_mean[i], z_label_mean[i]] = 1
+            data_output[x_label_mean[i],y_label_mean[i], z_label_mean[i]] = v_label_mean[i]
 
         return image_output
 
