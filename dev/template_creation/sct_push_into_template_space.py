@@ -18,14 +18,8 @@ class param:
         self.verbose = 1
         
 # check if needed Python libraries are already installed or not
-import sys, commands
+import sys
 import getopt
-
-# Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-
 import sct_utils as sct
 import os
 from commands import getstatusoutput
@@ -44,7 +38,7 @@ def main():
     reference = path_sct + '/dev/template_creation/template_shape.nii.gz'
     verbose = param.verbose
     interpolation_method = 'spline'
-        
+
     try:
          opts, args = getopt.getopt(sys.argv[1:],'hi:n:t:R:v:a:')
     except getopt.GetoptError:
@@ -64,7 +58,7 @@ def main():
             verbose = int(arg)
         elif opt in ('-a'):
             interpolation_method = str(arg)
-    
+
     # display usage if a mandatory argument is not provided
     if fname == '' :
         usage()
@@ -93,7 +87,7 @@ def main():
 
 
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + '  '+ landmarks_native + ' affine ' + transfo)
+    sct.run('ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + ' '+ landmarks_native + ' affine ' + transfo)
     
     # Apply rigid transformation
     print '\nApply affine transformation to native landmarks...'
