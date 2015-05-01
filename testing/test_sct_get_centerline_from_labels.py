@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function for sct_get_centerline script
+# Test function for sct_get_centerline_from_labels script
 #
 #   replace the shell test script in sct 1.0
 #
@@ -21,11 +21,10 @@ def test(path_data):
 
     # parameters
     folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
+    file_data = ['t2_seg.nii.gz']
 
     # define command
     cmd = 'sct_get_centerline_from_labels -i '+path_data+folder_data+file_data[0] \
-          + ' -i '+path_data+folder_data+file_data[1] \
           + ' -v 1'
     # return
     #return sct.run(cmd, 0)
