@@ -170,9 +170,9 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {syn,bsplinesyn,slicereg}. Default="""+paramreg.steps['1'].algo+"""\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {slicereg,rigid,affine,syn,bsplinesyn}. Default="""+paramreg.steps['1'].algo+"""\n  For info about slicereg, see here: goo.gl/Sj3ZeU\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
                       mandatory=False,
-                      example="algo=slicereg,metric=MeanSquares,iter=20")
+                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
@@ -360,6 +360,11 @@ def main():
 # ==========================================================================================
 def register(src, dest, paramreg, param, i_step_str):
 
+    # initiate default parameters of antsRegistration transformation
+    ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
+                                'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',3,32'}
+
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI'
 
     # set metricSize
@@ -402,12 +407,12 @@ def register(src, dest, paramreg, param, i_step_str):
                '-f 1 '
                '-s '+paramreg.steps[i_step_str].smooth+' '
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-               '-o [step'+i_step_str+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               '-o [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
-    elif paramreg.steps[i_step_str].algo == 'syn' or paramreg.steps[i_step_str].algo == 'bsplinesyn':
+    elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
 
         # Pad the destination image (because ants doesn't deform the extremities)
         # N.B. no need to pad if iter = 0
@@ -418,17 +423,22 @@ def register(src, dest, paramreg, param, i_step_str):
 
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
-               '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep+',3,0] '
+               '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
+               ants_registration_params[paramreg.steps[i_step_str].algo.lower()]+'] '
                '--metric '+paramreg.steps[i_step_str].metric+'['+dest+','+src+',1,'+metricSize+'] '
                '--convergence '+paramreg.steps[i_step_str].iter+' '
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+'] '
+               '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
                '--interpolation BSpline[3] '
                +masking)
-        warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
+        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+            warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
+            warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
+        else:
+            warp_forward_out = 'step'+i_step_str+'0Warp.nii.gz'
+            warp_inverse_out = 'step'+i_step_str+'0InverseWarp.nii.gz'
     else:
         sct.printv('\nERROR: algo '+paramreg.steps[i_step_str].algo+' does not exist. Exit program\n', 1, 'error')
 
@@ -436,10 +446,15 @@ def register(src, dest, paramreg, param, i_step_str):
     status, output = sct.run(cmd, param.verbose)
     if os.path.isfile(warp_forward_out):
         # rename warping fields
-        warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
-        os.rename(warp_forward_out, warp_forward)
-        warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
-        os.rename(warp_inverse_out, warp_inverse)
+        if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
+            warp_forward = 'warp_forward_'+i_step_str+'.mat'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_'+i_step_str+'.mat'
+        else:
+            warp_forward = 'warp_forward_'+i_step_str+'.nii.gz'
+            warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
+            os.rename(warp_forward_out, warp_forward)
+            os.rename(warp_inverse_out, warp_inverse)
     else:
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')

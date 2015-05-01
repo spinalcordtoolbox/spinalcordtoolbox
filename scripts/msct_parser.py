@@ -302,7 +302,7 @@ class Usage:
 """+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[2])
+Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(creation[2]).zfill(2)
 
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
@@ -381,7 +381,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]) + '-' +str(creation[
         self.set_arguments()
         self.set_usage()
         self.set_example()
-        usage = self.header + self.description + self.usage + self.arguments_string + self.example
+        usage = self.header + self.description + self.usage + self.arguments_string + self.example + '\n'
 
         if error:
             sct.printv(error+'\nAborted...',type='warning')

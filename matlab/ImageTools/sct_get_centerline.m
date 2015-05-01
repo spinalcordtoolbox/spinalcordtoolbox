@@ -11,7 +11,7 @@ function m_center_line = sct_get_centerline(fname,interval)
 dbstop if error
 param=struct;
 nii=load_nii(fname); m_volume_raw=nii.img; dims=size(nii.img);
-if nargin<2,interval=round(size(m_volume_raw,3)/10); end
+if nargin<2,interval=max(round(size(m_volume_raw,3)/10),1); end
 if ~isfield(param,'close'), param.close = 1; end
 if ~isfield(param,'slices'), param.slices = [0 size(m_volume_raw,3)-1]; end
 if ~isfield(param,'save'), param.save = 1; end
