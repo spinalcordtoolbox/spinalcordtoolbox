@@ -22,7 +22,8 @@ import time
 
 import sct_utils as sct
 from sct_orientation import set_orientation
-
+from numpy import append, insert, nonzero, transpose
+from nibabel import load
 
 class Param:
     ## The constructor
@@ -107,7 +108,39 @@ def main():
     print '\nOrient centerline to RPI orientation...'
     set_orientation('centerline.nii', 'RPI', 'centerline_rpi.nii')
 
-    # Straighten the spinal cord
+    #
+    # # Verify that centerline file does not have halls
+    # data_c = load('centerline_rpi.nii')
+    # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('centerline_rpi.nii')
+    # z_centerline = [iz for iz in range(0, nz, 1)]
+    #    #
+    # means_smooth_extended = [0 for i in range(0, data_c.shape[2], 1)]
+    # for iz in range(len(z_centerline)):
+    #    means_smooth_extended[z_centerline[iz]] = means_smooth[iz]
+    #
+    #
+    # X_means_smooth_extended = nonzero(means_smooth_extended)
+    # X_means_smooth_extended = transpose(X_means_smooth_extended)
+    #
+    # # initialization: we set the extrem values to avoid edge effects
+    # means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
+    # means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
+    #
+    # # Add two rows to the vector X_means_smooth_extended:
+    # # one before as means_smooth_extended[0] is now diff from 0
+    # # one after as means_smooth_extended[-1] is now diff from 0
+    # X_means_smooth_extended = append(X_means_smooth_extended, len(means_smooth_extended)-1)
+    # X_means_smooth_extended = insert(X_means_smooth_extended, 0, 0)
+    #
+    # #recurrence
+    # count_zeros=0
+    # for i in range(1,len(means_smooth_extended)-1):
+    #    if means_smooth_extended[i]==0:
+    #        means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
+    #        count_zeros += 1
+    #
+
+   # Straighten the spinal cord
     print '\nStraighten the spinal cord...'
     sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -x spline -v '+str(verbose))
 
