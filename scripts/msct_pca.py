@@ -55,7 +55,7 @@ class PCA:
     The reduced PCA space is the space composed of the eigenvectors that explain in total k% of the variability
     """
 
-    def __init__(self, dataset, mean_vect=None, eig_pairs=None, k=0.80, verbose=1):
+    def __init__(self, slices, mean_vect=None, eig_pairs=None, k=0.80, verbose=1):
         """
         Principal Components Analysis constructor
 
@@ -73,11 +73,13 @@ class PCA:
         self.verbose = verbose
         # STEP 1
         # The data set should be a J*N dimensional matrix of J N-dimensional flattened images
-        self.dataset = dataset  # type: list of flatten images
+        self.slices = slices
+
+        self.dataset = np.asarray([dic_slice.im_M_flat for dic_slice in self.slices]).T  # type: list of flatten images
         # The number of rows in self.dataset is the dimension of flattened images
-        self.N = dataset.shape[0]  # type: int
+        self.N = self.dataset.shape[0]  # type: int
         # The number of columns in self.datatset is the number of images
-        self.J = dataset.shape[1]  # type: int
+        self.J = self.dataset.shape[1]  # type: int
 
         # STEP 2
         if mean_vect is not None:
@@ -230,18 +232,18 @@ class PCA:
         return np.asarray(dataset_coord).T
 
     # ------------------------------------------------------------------------------------------------------------------
-    def project(self, image):
+    def project(self, image_list):
         """
         project a 3D image into the PCA reduced space
 
-        :param image: image to project
+        :param image_list: image to project
 
         :return coord_projected_img: numpy array containing the coordinates of the image in the PCA reduced space
         """
         # check if the target is a volume or a flat image
         coord_projected_slices = []
         # loop across all the slice
-        for image_slice in image.data:
+        for image_slice in image_list:
             coord_projected_slices.append(self.project_array(image_slice.flatten()))
         return np.asarray(coord_projected_slices)
 
@@ -385,7 +387,7 @@ class PCA:
         plt.show()
 
     # ------------------------------------------------------------------------------------------------------------------
-    def plot_projected_dic(self, nb_mode=1, target_coord=None, to_highlight=None):
+    def plot_projected_dic(self, nb_mode=None, target_coord=None, to_highlight=None):
         """
         plot the projected dictionary (data set) in a graph mode_x=f(mode_x-1)
 
@@ -397,7 +399,11 @@ class PCA:
 
         :param to_highlight: indexes of some points to highlight as a tuple (target_slice, [list of data slices])
         """
-        if len(self.kept_eigenval) < nb_mode:
+        sct.run('mkdir ./mode_images')
+        if nb_mode is None:
+            nb_mode = int(round(len(self.kept_eigenval)/3))
+
+        elif len(self.kept_eigenval) < nb_mode:
             print "Can't plot {} modes, not enough modes kept. " \
                   "Try to increase k, which is curently {}".format(nb_mode, self.k)
             exit(2)
@@ -412,14 +418,18 @@ class PCA:
                     fig = plt.figure()
 
                     graph = fig.add_subplot(1, 1, 1)
-                    graph.plot(self.dataset_coord[i, 0:self.J], self.dataset_coord[j, 0:self.J],
-                               'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
+                    i_dat = self.dataset_coord[i, 0:self.J]
+                    j_dat = self.dataset_coord[j, 0:self.J]
+                    c_dat = np.asarray([dic_slice.level for dic_slice in self.slices])
+                    # graph.plot(i_dat, j_dat, 'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
 
-                    for j_point, (x, y) in enumerate(zip(self.dataset_coord[i, 0:self.J],
-                                                         self.dataset_coord[j, 0:self.J])):
-                        graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
+                    graph.scatter(i_dat, j_dat, c=c_dat, cmap='hsv', s=50, alpha=0.5)  # , alpha=0.5, label='dictionary')
 
                     if to_highlight is not None:
+                        for j_point, (x, y) in enumerate(zip(self.dataset_coord[i, 0:self.J],
+                                                             self.dataset_coord[j, 0:self.J])):
+                            graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
+
                         graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]],
                                    'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
 
@@ -446,4 +456,5 @@ class PCA:
                               + ' modes in total)')
                     plt.xlabel('Mode ' + str(i))
                     plt.ylabel('Mode ' + str(j))
+                    plt.savefig('mode_images/modes_' + str(i) + '_' + str(j) + '.png')
         plt.show()
