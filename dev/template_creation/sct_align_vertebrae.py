@@ -141,11 +141,20 @@ def main():
         sct.run('isct_c3d warp_vecy_res.nii.gz warp_vecy_res.nii.gz warp_vecz_r_sm_line_extended.nii.gz -omc 3 '+warping)
         
         # check results
-        sct.run('sct_apply_transfo -i '+landmark+' -o label_moved.nii.gz -d '+template_landmark+' -w '+warping+' -x nn')
-        sct.run('sct_label_utils -i '+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
-        status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t MSE')
+        #dilate first labels
+        sct.run('fslmaths '+landmark+' -dilF landmark_dilated.nii.gz')
+        sct.run('sct_apply_transfo -i landmark_dilated.nii.gz -o label_moved.nii.gz -d '+template_landmark+' -w '+warping+' -x nn')
+        #undilate
+        sct.run('sct_label_utils -i label_moved.nii.gz -t cubic-to-point -o label_moved_2point.nii.gz')
+        sct.run('sct_label_utils -i '+template_landmark+' -r label_moved_2point.nii.gz -o template_removed.nii.gz -t remove')
+
+        # sct.run('sct_apply_transfo -i '+landmark+' -o label_moved.nii.gz -d '+template_landmark+' -w '+warping+' -x nn')
+        # sct.run('sct_label_utils -i '+template_landmark+' -r label_moved.nii.gz -o template_removed.nii.gz -t remove')
+        #status, output = sct.run('sct_label_utils -i label_moved.nii.gz -r template_removed.nii.gz -t MSE')
+
+        status, output = sct.run('sct_label_utils -i label_moved_2point.nii.gz -r template_removed.nii.gz -t MSE')
         sct.printv(output,1,'info')
-        remove_temp_files = True
+        remove_temp_files = False
         if os.path.isfile('error_log_label_moved.txt'):
             remove_temp_files = False
             with open('log.txt', 'a') as log_file:
@@ -155,8 +164,8 @@ def main():
         sct.run('cp '+ warping+' ../'+warping)
 
         os.chdir('..')
-        if remove_temp_files:
-            sct.run('rm -rf '+tmp_name)
+        # if remove_temp_files:
+        #     sct.run('rm -rf '+tmp_name)
 
 
 
