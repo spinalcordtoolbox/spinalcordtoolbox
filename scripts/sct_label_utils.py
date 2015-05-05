@@ -150,10 +150,24 @@ class ProcessLabels(object):
         """
         image_output = Image(self.image_ref)
         image_output.data *= 0
-        coordinates_input = self.image_input.getNonZeroCoordinates()
+
+        image_input_neg = Image(self.image_input).copy()
+        data_input_neg = image_input_neg.data < 0
+        image_input_pos = Image(self.image_input).copy()
+        data_input_pos = image_input_pos.data > 0
+
+        image_input_neg.data[:,:,:] = -data_input_neg[:,:,:] # in order to apply getNonZeroCoordinates
+        image_input_pos.data[:,:,:] = data_input_pos[:,:,:]
+
+
+        coordinates_input_neg = image_input_neg.getNonZeroCoordinates()
+        coordinates_input_pos = image_input_pos.getNonZeroCoordinates()
+
 
         # for all points with non-zeros neighbors, force the neighbors to 0
-        for coord in coordinates_input:
+        for coord in coordinates_input_neg:
+            image_output.data[:, :, coord.z] = -coord.value
+        for coord in coordinates_input_pos:
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
