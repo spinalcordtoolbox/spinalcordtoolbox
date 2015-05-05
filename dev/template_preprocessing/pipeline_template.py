@@ -44,8 +44,10 @@ SUBJECTS_LIST=[['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-
 #export PATH_DICOM='/Volumes/data_shared/'
 do_preprocessing_T2 = 0
 normalize_levels_T2 = 0
-average_level = 1
+average_level = 0
 align_vertebrae_T2 = 1
+
+number_labels_for_template = 17
 
 if do_preprocessing_T2:
    # Create folder to gather all labels_vertebral.nii.gz files
@@ -172,20 +174,20 @@ if do_preprocessing_T2:
         # output:
         # - warp_curve2straight.nii.gz
         # - data_crop_denoised_straight.nii.gz
-        print '\nStraighten image using centerline'
+        # print '\nStraighten image using centerline'
         # sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
         # os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
-
-        sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
-        os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
         #
-        # # normalize intensity
-        print '\nNormalizing intensity of the straightened image...'
-        sct.printv('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
-        os.system('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
+        # sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        # os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        # #
+        # # # normalize intensity
+        # print '\nNormalizing intensity of the straightened image...'
+        # sct.printv('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
+        # os.system('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
 
        # TO DO: Dilating labels before applying straightening
-        sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral_mid_moelle.nii.gz -o labels_vertebral_crop.nii.gz -start ' + str(zmin_anatomic) + ' -end ' + str(zmax_anatomic) + ' -dim 2')
+        sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
         sct.run('fslmaths '+ PATH_OUTPUT + '/' + subject+ '/T2/labels_vertebral_crop.nii.gz -dilF labels_vertebral_dilated.nii.gz')
 
         # apply straightening to centerline and to labels_vertebral.nii.gz
@@ -268,12 +270,16 @@ if normalize_levels_T2:
        os.chdir(PATH_OUTPUT +'/labels_vertebral')
        os.rename('labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz', subject+'.nii.gz')
 
+# Check position of labels crop_2temp with image crop_2temp
+# if no good: check position of labels reg with image straight_normalized
+# if no good: check position of labels dilated with image crop
+
 
 # Calculate mean labels and save it into
 if average_level:
     os.chdir(PATH_OUTPUT +'/labels_vertebral')
     template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
-    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n 19')
+    sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
 # Aligning vertebrae for all subject
