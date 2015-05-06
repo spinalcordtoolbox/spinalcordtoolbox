@@ -155,14 +155,14 @@ def main():
         data_labels_middle *= 0
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(landmark)
         X,Y,Z = data_labels_input.nonzero()
-        x_middle = int(round(nx/2))
-        y_middle = int(round(ny/2))
+        x_middle = int(round(nx/2.0))
+        y_middle = int(round(ny/2.0))
         for i in range(len(Z)):
             data_labels_middle[x_middle, y_middle, Z[i]] = data_labels_input[X[i], Y[i], Z[i]]
         img = nibabel.Nifti1Image(data_labels_middle, None, hdr_labels_input)
         nibabel.save(img, 'labels_input_middle_xy.nii.gz')
 
-        #put labels of the template at the center of the image (for plan xOy)
+        #put labels of the template at the center of the image (for plan xOy)  #probably not necessary as already done by average labels
         file_labels_template = nibabel.load(template_landmark)
         hdr_labels_template = file_labels_template.get_header()
         data_labels_template = file_labels_template.get_data()
@@ -177,7 +177,7 @@ def main():
 
 
         #estimate Bspline transform to register to template
-        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 10*10*1 1 3 1')
+        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 40*40*1 2 5 1')
 
         # select centerline of warping field according to z and extend it
         sct.run('isct_c3d -mcs '+warping+' -oo warp_vecx.nii.gz warp_vecy.nii.gz warp_vecz.nii.gz')
@@ -224,7 +224,6 @@ def main():
             remove_temp_files = False
             with open('log.txt', 'a') as log_file:
                 log_file.write('Error for '+fname+'\n')
-
         # Copy warping into parent folder
         sct.run('cp '+ warping+' ../'+warping)
 
