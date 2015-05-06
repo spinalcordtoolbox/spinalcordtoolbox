@@ -32,7 +32,7 @@ def main(input_anatomy_file, list_files, param, remove_temp_files = 1, verbose =
 
     # Image denoising
     print '\nDenoising image ' + input_anatomy_file +'...'
-    sct.run('sct_denoising_nlm.py -i '+ input_anatomy_file + ' -p ' + type_noise + ' -r ' + str(remove_temp_files) + ' -v ' + str(verbose))
+    sct.run('sct_denoising_onlm.py -i '+ input_anatomy_file + ' -p ' + type_noise + ' -r ' + str(remove_temp_files) + ' -v ' + str(verbose))
 
     # Extract and fit centerline
     list_name_files = list_files[0]
