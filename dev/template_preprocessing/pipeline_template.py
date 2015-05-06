@@ -105,8 +105,8 @@ if do_preprocessing_T2:
         # # output:
         # # - data_crop_denoised.nii.gz
         # print '\nDenoising image data_RPI_crop.nii.gz...'
-        # sct.printv('sct_denoising_nlm.py -i data_RPI_crop.nii.gz')
-        # os.system('sct_denoising_nlm.py -i data_RPI_crop.nii.gz')
+        # sct.printv('sct_denoising_onlm.py -i data_RPI_crop.nii.gz')
+        # os.system('sct_denoising_onlm.py -i data_RPI_crop.nii.gz')
         #
         # # propseg
         # # input:
