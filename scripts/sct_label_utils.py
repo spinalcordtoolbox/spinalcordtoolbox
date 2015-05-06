@@ -84,7 +84,9 @@ class ProcessLabels(object):
         # save the output image as minimized integers
         if self.fname_output is not None:
             self.output_image.setFileName(self.fname_output)
-            self.output_image.save('minimize_int')
+            if type_process != 'plan_ref':
+                self.output_image.save('minimize_int')
+            else: self.output_image.save()
 
 
     def cross(self):
@@ -148,25 +150,27 @@ class ProcessLabels(object):
         """
         This function generate a plan in the reference space for each label present in the input image
         """
+
         image_output = Image(self.image_ref)
         image_output.data *= 0
 
         image_input_neg = Image(self.image_input).copy()
-        data_input_neg = image_input_neg.data < 0
         image_input_pos = Image(self.image_input).copy()
-        data_input_pos = image_input_pos.data > 0
-
-        image_input_neg.data[:,:,:] = -data_input_neg[:,:,:] # in order to apply getNonZeroCoordinates
-        image_input_pos.data[:,:,:] = data_input_pos[:,:,:]
-
+        image_input_neg.data *=0
+        image_input_pos.data *=0
+        X, Y, Z = (self.image_input.data< 0).nonzero()
+        for i in range(len(X)):
+            image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]] # in order to apply getNonZeroCoordinates
+        X_pos, Y_pos, Z_pos = (self.image_input.data> 0).nonzero()
+        for i in range(len(X_pos)):
+            image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = self.image_input.data[X_pos[i], Y_pos[i], Z_pos[i]]
 
         coordinates_input_neg = image_input_neg.getNonZeroCoordinates()
         coordinates_input_pos = image_input_pos.getNonZeroCoordinates()
 
-
-        # for all points with non-zeros neighbors, force the neighbors to 0
+        image_output.changeType('float32')
         for coord in coordinates_input_neg:
-            image_output.data[:, :, coord.z] = -coord.value
+            image_output.data[:, :, coord.z] = -coord.value #PB: takes the int value of coord.value
         for coord in coordinates_input_pos:
             image_output.data[:, :, coord.z] = coord.value
 
