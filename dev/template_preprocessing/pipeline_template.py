@@ -10,10 +10,10 @@
 # run: pipeline_template.sh
 #
 # REQUIRED DATA:
-# ~/subject/t2/labels_propseg.nii.gz --> a series of binary labels along the cord to help propseg
-# ~/subject/t2/crop.txt --> ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic zmax_anatomic zmin_seg zmax_seg
+# ~/subject/t2/centerline_propseg_RPI.nii.gz --> a series of binary labels along the cord to help propseg. To be done on the image cropped and in RPI orientation ! (Use command: "matlab_batcher.sh sct_get_centerline "'image_RPI_crop.nii.gz'" if image_RPI_crop.nii.gz is your anatomic image, cropped and in RPI orientation)
+# ~/subject/t2/crop.txt --> ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg
 # ~/subject/t2/labels_updown.nii.gz --> a series of binary labels to complete the centerline from brainstem to L2/L3.
-# ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level. These are placed in the middle of the cord and vertebral body. The value of the label corresponds to the level. I.e., Brainstem (PMJ)=1, C1=2, C2=3, etc.
+# ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level. These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 19 labels from PMJ to the frontier T12/L1 I.e., Brainstem (PMJ)=1, C2/C3=2, C3/C4=3, C4/C5=4, C5/C6=5, T1/T2=6, T2/T3=7, T3/T4=8 ... T11/T12=18, T12/L1=19.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
 import os, sys, commands
@@ -30,21 +30,23 @@ from scipy import ndimage
 from numpy import array
 
 # add path to scripts
-PATH_DICOM= '/Volumes/data_shared/'
-PATH_OUTPUT= '/Users/tamag/data/data_template/subject_test'
+PATH_DICOM= '/Volumes/data_shared/' #sert à rien
+PATH_OUTPUT= '/Users/tamag/data/data_template/subject_test' #folder where you want the results to be stored
 PATH_INFO = '/Users/tamag/code/spinalcordtoolbox/data'  # to be replaced by URL from github
 
 # define subject
 # SUBJECTS_LIST=[['errsm_14', ,'pathtodicomt1', 'pathtodicomt2']
 SUBJECTS_LIST=[['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_14/5003-SPINE_T2'], ['errsm_16', '/Volumes/data_shared/montreal_criugm/errsm_16/23-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_16/39-SPINE_T2'], ['errsm_17', '/Volumes/data_shared/montreal_criugm/errsm_17/41-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_17/42-SPINE_T2'], ['errsm_18', '/Volumes/data_shared/montreal_criugm/errsm_18/36-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_18/33-SPINE_T2']]
 
+SUBJECTS_LIST_final=[['errsm_02', '/Volumes/data_shared/montreal_criugm/errsm_02/28-SPINE_T1', '/Volumes/data_shared/montreal_criugm/errsm_02/28-SPINE_T2'], ['errsm_03', '/Volumes/data_shared/montreal_criugm/errsm_03/32-SPINE_all/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_03/38-SPINE_all_space'],['errsm_04', '/Volumes/data_shared/montreal_criugm/errsm_04/16-SPINE_memprage/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_04/18-SPINE_space'],['errsm_05', '/Volumes/data_shared/montreal_criugm/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_05/24-SPINE_SPACE'],['errsm_09', '/Volumes/data_shared/montreal_criugm/errsm_09/34-SPINE_MEMPRAGE2', '/Volumes/data_shared/montreal_criugm/errsm_09/33-SPINE_SPACE'],['errsm_10', '/Volumes/data_shared/montreal_criugm/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_10/20-SPINE_SPACE'], ['errsm_11', '/Volumes/data_shared/montreal_criugm/errsm_11/24-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_11/09-SPINE_T2'],['errsm_12', '/Volumes/data_shared/montreal_criugm/errsm_12/19-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_12/18-SPINE_T2'],['errsm_13', '/Volumes/data_shared/montreal_criugm/errsm_13/33-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_13/34-SPINE_T2'],['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_14/5003-SPINE_T2'], ['errsm_16', '/Volumes/data_shared/montreal_criugm/errsm_16/23-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_16/39-SPINE_T2'], ['errsm_17', '/Volumes/data_shared/montreal_criugm/errsm_17/41-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_17/42-SPINE_T2'], ['errsm_18', '/Volumes/data_shared/montreal_criugm/errsm_18/36-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_18/33-SPINE_T2'],['errsm_20', '/Volumes/data_shared/montreal_criugm/errsm_20/12-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_20/34-SPINE_T2'],['errsm_21', '/Volumes/data_shared/montreal_criugm/errsm_21/27-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_21/30-SPINE_T2'],['errsm_22', '/Volumes/data_shared/montreal_criugm/errsm_22/29-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_22/25-SPINE_T2'],['errsm_23', '/Volumes/data_shared/montreal_criugm/errsm_23/29-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_23/28-SPINE_T2'],['errsm_24', '/Volumes/data_shared/montreal_criugm/errsm_24/20-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_24/24-SPINE_T2'],['errsm_25', '/Volumes/data_shared/montreal_criugm/errsm_25/25-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_25/25-SPINE_T2'],['errsm_26', None, '/Volumes/data_shared/montreal_criugm/errsm_26/31-SPINE_T2'],['errsm_30', '/Volumes/data_shared/montreal_criugm/errsm_30/51-SPINE_T1', '/Volumes/data_shared/montreal_criugm/errsm_30/50-SPINE_T2'],['errsm_31', '/Volumes/data_shared/montreal_criugm/errsm_31/31-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_31/32-SPINE_T2'],['errsm_32', '/Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09 ', '/Volumes/data_shared/montreal_criugm/errsm_32/19-SPINE_T2'],['errsm_33', '/Volumes/data_shared/montreal_criugm/errsm_33/30-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_33/31-SPINE_T2'],['errsm_', '', ''],]
+
 # add path to scripts
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
-do_preprocessing_T2 = 0
-normalize_levels_T2 = 0
-average_level = 0
+do_preprocessing_T2 = 1
+normalize_levels_T2 = 1
+average_level = 1
 align_vertebrae_T2 = 1
 
 number_labels_for_template = 17
@@ -149,19 +151,6 @@ if do_preprocessing_T2:
         #     os.system('sct_crop_image -i data_RPI_crop_denoised_seg_mod.nii.gz -o data_RPI_crop_denoised_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
         # else: sct.run('sct_crop_image -i data_RPI_crop_denoised_seg_mod.nii.gz -o data_RPI_crop_denoised_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
         #
-        #
-        # # Deleting process extract centerline
-        # #         # extract centerline
-        # #         # function: sct_get_centerline_from_labels
-        # #         # input:
-        # #         # - data_crop_denoised_seg_crop.nii.gz
-        # #         # - labels_updown.nii.gz
-        # #         # output:
-        # #         # - centeline.nii.gz
-        # #         print '\nExtracting centerline...'
-        # #         sct.printv('sct_get_centerline_from_labels -i data_RPI_crop_denoised_seg_mod_crop.nii.gz,'+ PATH_INFO + '/' + subject + '/up.nii.gz,'+ PATH_INFO + '/' + subject + '/down.nii.gz -o centerline_RPI.nii.gz')
-        # #         os.system('sct_get_centerline_from_labels -i data_RPI_crop_denoised_seg_mod_crop.nii.gz,'+ PATH_INFO + '/' + subject + '/up.nii.gz,'+ PATH_INFO + '/' + subject + '/down.nii.gz -o centerline_RPI.nii.gz')
-        #
         # print '\n Concatenating segmentation and label files...'
         # sct.run('fslmaths data_RPI_crop_denoised_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
         #
@@ -174,20 +163,20 @@ if do_preprocessing_T2:
         # output:
         # - warp_curve2straight.nii.gz
         # - data_crop_denoised_straight.nii.gz
-        # print '\nStraighten image using centerline'
-        # sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
-        # os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c centerline_RPI.nii.gz -a nurbs')
-        #
-        # sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
-        # os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
-        # #
-        # # # normalize intensity
-        # print '\nNormalizing intensity of the straightened image...'
-        # sct.printv('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
-        # os.system('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
+        print '\nStraighten image using centerline'
 
-       # TO DO: Dilating labels before applying straightening
+        sct.printv('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        os.system('sct_straighten_spinalcord -i data_RPI_crop_denoised.nii.gz -c ' + PATH_OUTPUT + '/' + subject + '/T2/seg_and_labels.nii.gz -a nurbs')
+        #
+        # # normalize intensity
+        print '\nNormalizing intensity of the straightened image...'
+        sct.printv('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
+        os.system('sct_normalize.py -i data_RPI_crop_denoised_straight.nii.gz')
+
+        # Crop labels_vertebral file
         sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
+
+        #Dilate labels from labels_vertebral file
         sct.run('fslmaths '+ PATH_OUTPUT + '/' + subject+ '/T2/labels_vertebral_crop.nii.gz -dilF labels_vertebral_dilated.nii.gz')
 
         # apply straightening to centerline and to labels_vertebral.nii.gz
@@ -198,13 +187,10 @@ if do_preprocessing_T2:
         # output:
         # - centerline_straight.nii.gz
         print '\nApply straightening to labels_vertebral_dilated.nii.gz'
-
-        # sct.printv('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
-        # os.system('sct_straighten_spinalcord -i '+ PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -c centerline_RPI.nii.gz')
         sct.printv('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_denoised_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
         os.system('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_denoised_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
-        #sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg.nii.gz -t increment')
+        # Select center of mass of labels volume due to past dilatation
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
 
 
@@ -227,7 +213,7 @@ if normalize_levels_T2:
        data_c = file.get_data()
        hdr = file.get_header()
 
-       # Get center of mass of the centerline (no centerline anymore: to change by seg_and_labels_reg.nii.gz)
+       # Get center of mass of the centerline
        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('seg_and_labels_reg.nii.gz')
        z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
        nz_nonz = len(z_centerline)
@@ -260,12 +246,15 @@ if normalize_levels_T2:
        sct.run('sct_push_into_template_space.py -i data_RPI_crop_denoised_straight_normalized_crop.nii.gz -n landmark_native.nii.gz')
        sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point_crop.nii.gz -n landmark_native.nii.gz -a nn')
 
-       # Apply cubic to point to the label file as it now presents cubic group of labels instead of discrete labels (don't forget to increment)
+       # Apply cubic to point to the label file as it now presents cubic group of labels instead of discrete labels
        sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -t cubic-to-point')
-       #sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_straight_in_template_space.nii.gz -t increment')
        #os.rename('labels.nii.gz', 'labels_vertebral_straight_in_template_space.nii.gz')
 
        # Copy labels_vertebral_straight_in_template_space.nii.gz into a folder that will contain each subject labels_vertebral_straight_in_template_space.nii.gz file and rename them
+       # check if forlder exists and if not create it
+       if not os.path.isdir(PATH_OUTPUT +'/labels_vertebral'):
+           os.makedirs(PATH_OUTPUT + +'/labels_vertebral')
+
        sct.run('cp labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral')
        os.chdir(PATH_OUTPUT +'/labels_vertebral')
        os.rename('labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz', subject+'.nii.gz')
@@ -277,6 +266,7 @@ if normalize_levels_T2:
 
 # Calculate mean labels and save it into
 if average_level:
+    print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral\n'
     os.chdir(PATH_OUTPUT +'/labels_vertebral')
     template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
     sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n '+ str(number_labels_for_template))
@@ -288,11 +278,11 @@ if align_vertebrae_T2:
        subject = SUBJECTS_LIST[i][0]
 
        # go to output folder
-       print '\nGo to output folder '+ PATH_OUTPUT + '/'+subject+'/'+'T2'
+       print '\nGo to output folder '+ PATH_OUTPUT + '/'+subject+'/'+'T2\n'
        os.chdir(PATH_OUTPUT + '/'+subject+'/'+'T2')
-       # sct.run('sct_align_vertebrae.py -i errsm_03_normalized.nii.gz -l /home/django/jtouati/data/Align_VERTEBRES/less_landmarks/masks/errsm_03_preprocessed-mask.nii.gz -R /home/django/jtouati/data/Align_VERTEBRES/less_landmarks/masks/template_shape-mask -o errsm_03_aligned.nii.gz -t affine -w spline')
-       # os.chdir(PATH_OUTPUT + '/'+'errsm_14'+'/'+'T2')
-       # subject = 'errsm_14'
+
        print '\nAlign vertebrae for subject '+subject+'...'
        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_denoised_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
        os.system('sct_align_vertebrae.py -i data_RPI_crop_denoised_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/' + subject + '/T2/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+
+       #Normalize intensity of result
