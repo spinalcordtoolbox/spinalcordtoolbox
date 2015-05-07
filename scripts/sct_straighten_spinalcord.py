@@ -377,12 +377,19 @@ def main():
 
     # Estimate b-spline transformation curve --> straight
     sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 2 5 0', verbose)
 
     # remove padding for straight labels
     if crop == 1:
+        # crop from center at gapxy + 10 for y
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('tmp.landmarks_straight.nii.gz')
+        y_middle = int(round(ny/2.0))
+        dist_y_crop = gapxy +10
+        y_min_crop = y_middle - dist_y_crop
+        y_max_crop = y_middle + dist_y_crop
         sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
-        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+        #sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -start '+ str(y_min_crop)+' -end '+ str(y_max_crop), verbose)
         sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
     else:
         sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
@@ -398,7 +405,7 @@ def main():
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 2 5 0', verbose)
     
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
