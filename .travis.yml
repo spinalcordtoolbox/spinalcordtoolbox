@@ -41,7 +41,8 @@ install:
 script:
   - python ../scripts/sct_check_dependences.py
   - python test_all.py -d 1
-# - cd ../install
-# - python create_package.py -s linux
-# - cd ../spinalcordtoolbox_v*
-# - python installer.py
+  - cd ../install
+  - python create_package.py -s linux
+  - cd ../spinalcordtoolbox_v*
+  - python installer.py
+  - echo "DONE"
