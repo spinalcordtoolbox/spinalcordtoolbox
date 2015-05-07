@@ -177,7 +177,7 @@ def main():
 
 
         #estimate Bspline transform to register to template
-        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 40*40*1 2 5 1')
+        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 40*40*1 2 5 0')
 
         # select centerline of warping field according to z and extend it
         sct.run('isct_c3d -mcs '+warping+' -oo warp_vecx.nii.gz warp_vecy.nii.gz warp_vecz.nii.gz')
