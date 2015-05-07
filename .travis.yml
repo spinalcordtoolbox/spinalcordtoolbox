@@ -44,5 +44,5 @@ script:
   - cd ../install
   - python create_package.py -s linux
   - cd ../spinalcordtoolbox_v*
-  - python installer.py
+  - python installer.py -p ~/
   - echo "DONE"
