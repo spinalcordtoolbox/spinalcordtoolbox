@@ -306,14 +306,32 @@ class Image(object):
         buffer = []
         buffer_mask = []
 
-        for n_slice, slice in enumerate(data_mask):
+        if len(data_array.shape) == 3:
+            for n_slice, slice in enumerate(data_mask):
 
-            for n_row, row in enumerate(slice):
+                for n_row, row in enumerate(slice):
+                    if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
+                        buffer_mask.append(row)
+                        buffer.append(data_array[n_slice][n_row])
+
+
+
+                new_slice_mask = asarray(buffer_mask).T
+                new_slice = asarray(buffer).T
+                buffer = []
+                for n_row, row in enumerate(new_slice_mask):
+                    if sum(row) != 0:
+                        buffer.append(new_slice[n_row])
+                new_slice = asarray(buffer).T
+                buffer_mask = []
+                buffer = []
+                new_data.append(new_slice)
+
+        elif len(data_array.shape) == 2:
+            for n_row, row in enumerate(data_mask):
                 if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                     buffer_mask.append(row)
-                    buffer.append(data_array[n_slice][n_row])
-
-
+                    buffer.append(data_array[n_row])
 
             new_slice_mask = asarray(buffer_mask).T
             new_slice = asarray(buffer).T
@@ -321,11 +339,10 @@ class Image(object):
             for n_row, row in enumerate(new_slice_mask):
                 if sum(row) != 0:
                     buffer.append(new_slice[n_row])
-            #print buffer
-            new_slice = asarray(buffer).T
+            new_data = asarray(buffer).T
             buffer_mask = []
             buffer = []
-            new_data.append(new_slice)
+
         new_data = asarray(new_data)
         # print data_mask
         self.data = new_data
@@ -344,7 +361,11 @@ class Image(object):
         data_mask = asarray(data_mask)
 
         #Element-wise matrix multiplication:
-        new_data = einsum('ijk,ijk->ijk',data_mask,array)
+        new_data = None
+        if len(data_array.shape) == 3:
+            new_data = einsum('ijk,ijk->ijk', data_mask, array)
+        elif len(data_array.shape) == 2:
+            new_data = einsum('ij,ij->ij', data_mask, array)
         print 'SHAPE ', new_data.shape
         self.data = new_data
 
