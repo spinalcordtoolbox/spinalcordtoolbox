@@ -206,6 +206,12 @@ def get_orientation(fname):
     orientation = output[output.find('sform_xorient')+15:output.find('sform_xorient')+16]+ \
                   output[output.find('sform_yorient')+15:output.find('sform_yorient')+16]+ \
                   output[output.find('sform_zorient')+15:output.find('sform_zorient')+16]
+
+    # check if orientation is specified in an other part of the header
+    if orientation == 'UUU':
+        orientation = output[output.find('qform_xorient')+15:output.find('qform_xorient')+16]+ \
+                      output[output.find('qform_yorient')+15:output.find('qform_yorient')+16]+ \
+                      output[output.find('qform_zorient')+15:output.find('qform_zorient')+16]
     return orientation
 
 
