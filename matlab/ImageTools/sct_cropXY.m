@@ -1,7 +1,20 @@
 function sct_cropXY(data_file,varargin)
+%sct_cropXY(data_file [,method,param])
+% EXAMPLES:
 % sct_cropXY data_file.nii
+% sct_cropXY data_file.nii centerline 20
 % sct_cropXY data_file.nii autobox
 % sct_cropXY data_file.nii autobox 30
+% sct_cropXY('data_file.nii', 'autobox', '30')
+%
+% METHODS
+% 1- centerline (default)
+% 2- box (not functional)
+% 3- manual (not functional)
+% 4- autobox --> crop at the center of the image
+%
+% PARAM
+% margin around the spinal cord 30 --> crop around 3cm in X and Y
 
 dbstop if error
 
@@ -204,9 +217,7 @@ switch (crop_method)
         
         fname_datacrop = [data_path,data_file,'_crop'];
         
-        param.interval = floor(dims(3)/3);
-        param.img = file_data_1;
-        centerline = sct_get_centerline(param);
+        centerline = sct_get_centerline([file_data_1 '.nii']);
         
         if crop_margin < 3, margin=15; else margin = crop_margin; end % crop size around centerline
         minX = min(centerline(:,1))- margin;
