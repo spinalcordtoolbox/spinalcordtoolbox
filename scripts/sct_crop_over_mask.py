@@ -57,21 +57,28 @@ def main():
     if "-square" in arguments:
         square = arguments["-square"]
 
-    if square :
-        status, orientation_init = sct.run('sct_orientation -i ' + fname_input)
-        orientation_init = orientation_init[4:7]
-        print 'orientation init : ', orientation_init
-
-        if orientation_init != 'IRP':
-            status, output = sct.run('sct_orientation -i ' + fname_input + ' -s IRP ')
-            fname_input = sct.extract_fname(fname_input)[1] + '_IRP.nii.gz'
-            status, output = sct.run('sct_orientation -i ' + fname_mask + ' -s IRP ')
-            fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
-        elif sct.run('sct_orientation -i ' + fname_mask)[1][4:7] != 'IRP' :
-            fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
-
-
     input_img = Image(fname_input)
+    if len(input_img.data.shape) == 3:
+        if input_img.data.shape[2] == 1:
+            input_img.data = input_img.data.reshape(input_img.data.shape[:-1])
+
+    if square:
+        if len(input_img.data.shape) == 3:
+            status, orientation_init = sct.run('sct_orientation -i ' + fname_input)
+            orientation_init = orientation_init[4:7]
+            print 'orientation init : ', orientation_init
+
+            if orientation_init != 'IRP':
+                status, output = sct.run('sct_orientation -i ' + fname_input + ' -s IRP ')
+                fname_input = sct.extract_fname(fname_input)[1] + '_IRP.nii.gz'
+                input_img = Image(fname_input)
+                status, output = sct.run('sct_orientation -i ' + fname_mask + ' -s IRP ')
+                fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
+            elif sct.run('sct_orientation -i ' + fname_mask)[1][4:7] != 'IRP':
+                fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
+
+
+
     mask = Image(fname_mask)
 
     if square:
