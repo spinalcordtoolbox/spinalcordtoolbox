@@ -1,7 +1,9 @@
 function sct_dmri_moco(varargin)
 % process diffusion mri data
 %
-% if users does not provide data, calls a GUI to select data.
+% EXAMPLES:
+% >> sct_dmri_moco --> call a GUI
+% >> sct_dmri_moco('data','qspace.nii.gz','bvec','bvecs.txt','crop','none','eddy',0)
 %
 % INPUT
 %     method : 'b0','dwi'*,'dwi_lowbvalue'
@@ -11,22 +13,6 @@ function sct_dmri_moco(varargin)
 %     gaussian_mask : <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
 %     smooth_moco :   0 | 1*    
 
-% % JULIEN:  NOTES
-%	test slice-wise moco for dmri
-%	check disco.
-%	if we use the box option, make it by default centered, with a width of 31 voxels
-% have only ONE log file at the end
-% remove intermediate files in the dmri folder
-
-% NOTES FOR YOU:
-% DMRI: don't output FLOAT32 data otherwise processing is too long
-% estimate DTI parameters and register it to the anat.
-% include noise correction on the anat
-% checker generation bvals pour mri_convert
-% looks like it didn't run 'sct_register_2_anat'
-% --> register mtr and DTI metrics to the anat.
-
-% 2013-06-07  17.03
 
 dbstop if error
 p = inputParser;
@@ -48,21 +34,21 @@ addOptional(p,'slicewise',1,@isnumeric);
 addOptional(p,'ref',1,@isnumeric);
 
 parse(p,varargin{:})
-
-if isempty(p.Results.data)
+in=p.Results;
+if isempty(in.data)
     [sct.dmri.file,sct.dmri.path] = uigetfile('*.nii;*.nii.gz','Select 4D diffusion data') ;
     if sct.dmri.file==0, return; end
 else
-    [sct.dmri.path, sct.dmri.file, ext] = fileparts(p.Results.data); if ~isempty(sct.dmri.path), sct.dmri.path=[sct.dmri.path, filesep]; end; sct.dmri.file=[sct.dmri.file,ext];
+    [sct.dmri.path, sct.dmri.file, ext] = fileparts(in.data); if ~isempty(sct.dmri.path), sct.dmri.path=[sct.dmri.path, filesep]; end; sct.dmri.file=[sct.dmri.file,ext];
 end
-if isempty(p.Results.bvec)
+if isempty(in.bvec)
     [sct.dmri.file_bvecs,sct.dmri.path_bvecs] = uigetfile('*','Select bvecs file') ;
     if sct.dmri.file_bvecs==0, return; end
 else
-    [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(p.Results.bvec);  if ~isempty(sct.dmri.path_bvecs), sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; end; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
+    [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(in.bvec);  if ~isempty(sct.dmri.path_bvecs), sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; end; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
 end
 
-sct.dmri.file_bvals = p.Results.bval;
+sct.dmri.file_bvals = in.bval;
 
 % Add scripts to path
 batch_path= mfilename('fullpath');
@@ -113,14 +99,14 @@ sct.dmri.grad_nonlin.interp			= 'cubic';
 sct.dmri.grad_nonlin.JacDet			= '0';
 
 % eddy-current correction using the inverse polarity method. N.B. Opposite gradient directions should be acquired next to each other (to minimize the effect of subject motion).
-sct.dmri.eddy_correct.do			= p.Results.eddy;
+sct.dmri.eddy_correct.do			= in.eddy;
 sct.dmri.eddy_correct.swapXY		= 0; % Swap X-Y dimension (to have X as phase-encoding direction). If acquisition was axial: set to 1, if sagittal: set to 0.
 sct.dmri.eddy_correct.mask_brain	= 0; % Create mask automatically using BET and use the mask to register pairs of opposite directions.   
-sct.dmri.eddy_correct.slicewise		= p.Results.slicewise; % binary. Estimate transformation for each slice independently. If you assume eddy-current are not dependent of the Z direction, then put to 0, otherwise 1. Default=1.
+sct.dmri.eddy_correct.slicewise		= in.slicewise; % binary. Estimate transformation for each slice independently. If you assume eddy-current are not dependent of the Z direction, then put to 0, otherwise 1. Default=1.
 sct.dmri.eddy_correct.dof			= which('schedule_TxTy_2mm.sch'); % 'TxSx' | 'TxSxKx'*    Degree of freedom for coregistration of gradient inversed polarity. Tx = Translation along X, Sx = scaling along X, Kx = shearing along X. N.B. data will be temporarily X-Y swapped because FLIRT can only compute shearing parameter along X, not Y
 sct.dmri.eddy_correct.fit_transfo	= 0; % Fit transformation parameter (linear least square). Assumes linearity between transformation coefficient (Ty, Sy, Ky) and diffusion gradient amplitude (G). Default=0
 sct.dmri.eddy_correct.apply_jacobian= 0; % Apply Jacobian to correct for intensity modulation due to stretching/expansion. Default=1. 
-sct.dmri.eddy_correct.interpolation = p.Results.interp; % 'nearestneighbour' | 'spline'* | 'sinc'.
+sct.dmri.eddy_correct.interpolation = in.interp; % 'nearestneighbour' | 'spline'* | 'sinc'.
 sct.dmri.eddy_correct.outputsuffix	= '_eddy';
 sct.dmri.eddy_correct.display_fig	= 0; % 0 | 1*. Display figure of fitted parameters (only if fit_transfo=1). Turn it to 0 if running Matlab without JAVA.
 % sct.dmri.eddy_correct.eddy_first	= 1; % if pairs of inversed-polarity diffusion gradients ARE NOT adjacent in time, it is suggested to apply moco first (hence put the flag to 0). In that case, there will be TWO interpolations. TODO: Need to fix it
@@ -145,28 +131,28 @@ sct.dmri.gradients.referential		= 'PRS'; % 'PRS': patient referential -> no corr
 sct.dmri.gradients.flip				= [1 2 3]; % flip gradients along x, y or z. Put [1 2 3] for no flip. Examples: [-2 1 3] (axial @Bay8) ; [1 -2 3] (RL PA IS sagittal @Bay4, to use TrackVis afterwards, flip Y).
 
 % Cropping
-sct.dmri.crop.method				= p.Results.crop; % 'manual', 'box', 'none', 'centerline', 'autobox' --> NOTE: if there is no anatomic data proidedprovided, the center_line optino pops a box to select the center line on the DWI data
+sct.dmri.crop.method				= in.crop; % 'manual', 'box', 'none', 'centerline', 'autobox' --> NOTE: if there is no anatomic data proidedprovided, the center_line optino pops a box to select the center line on the DWI data
 sct.dmri.crop.file_crop				= 'mask_crop'; % ONLY USED WITH 'manual' METHOD. File name of the mask used for cropping. Put the mask in the first folder (in case of multiple averaging). N.B. The cropping is done on a slice-by-slice basis, i.e., it is possible to define a "non-parallelipipedic" shape.
 sct.dmri.crop.size					= '53 31 54 18 0 7'; % ONLY USED WITH 'box' METHOD. Enter numbers as to be used by fslroi. Example: '30 45 25 45 0 16'. 
-sct.dmri.crop.margin                = p.Results.crop_margin ; % ONLY USED WITH 'centerline' and 'auto box' METHOD. default : 15
-sct.dmri.crop.apply_moco            = p.Results.apply_moco_on_croped ; % Apply moco on croped data or raw data?
+sct.dmri.crop.margin                = in.crop_margin ; % ONLY USED WITH 'centerline' and 'auto box' METHOD. default : 15
+sct.dmri.crop.apply_moco            = in.apply_moco_on_croped ; % Apply moco on croped data or raw data?
 sct.dmri.suffix_crop                = '_crop';
 
 % Upsample
 sct.dmri.upsample.do                = 0; % use this if you have a malloc error in Flirt. Flirt may need more voxels to compute
 
 % Intra-run motion correction
-sct.dmri.moco_intra.method              = p.Results.method; % 'b0','dwi','dwi_lowbvalue','none' (N.B. 'b0' should only be used with data acquired with interspersed b0. Otherwise, PROVIDING SUFFICIENT SNR, use 'dwi').
-sct.dmri.moco_intra.smooth_motion       = p.Results.smooth_moco; % Apply a spline in time to estimated motion correction
+sct.dmri.moco_intra.method              = in.method; % 'b0','dwi','dwi_lowbvalue','none' (N.B. 'b0' should only be used with data acquired with interspersed b0. Otherwise, PROVIDING SUFFICIENT SNR, use 'dwi').
+sct.dmri.moco_intra.smooth_motion       = in.smooth_moco; % Apply a spline in time to estimated motion correction
 sct.dmri.schemefile                     = '';
-sct.dmri.moco_intra.gaussian_mask       = p.Results.gaussian_mask; % Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
+sct.dmri.moco_intra.gaussian_mask       = in.gaussian_mask; % Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
 sct.dmri.moco_intra.dwi_group_size      = 10; % number of images averaged for 'dwi' method.
 sct.dmri.moco_intra.program             = 'ANTS';% 'FLIRT' or 'SPM' (slicewise not available with SPM.... put slicewise = 0)
-sct.dmri.moco_intra.ref                 = num2str(p.Results.ref); % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
-sct.dmri.moco_intra.slicewise		    = p.Results.slicewise; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
+sct.dmri.moco_intra.ref                 = num2str(in.ref); % string. Either 'mean_b0' or 'X', X being the number of b0 to use for reference. E.g., sct.dmri.moco_intra.ref = '1' to register data to the first b=0 volume. !!! This flag is only valid if sct.dmri.moco_intra.method = 'b0'
+sct.dmri.moco_intra.slicewise		    = in.slicewise; % slice-by-slice motion correction. Put 0 for volume-based moco, 1 otherwise. 
 sct.dmri.moco_intra.cost_function_flirt	= 'normcorr'; % 'mutualinfo' | 'woods' | 'corratio' | 'normcorr' | 'normmi' | 'leastsquares'. Default is 'normcorr'.
 sct.dmri.moco_intra.cost_function_spm   = 'nmi'; % JULIEN: add other options
-sct.dmri.moco_intra.flirt_options       = ['-interp ' p.Results.interp]; % additional FLIRT options. Example: '-dof 6 -interp sinc'. N.B. If gradient non-linearities, it makes sense to use dof=12, otherwise dof=6.
+sct.dmri.moco_intra.flirt_options       = ['-interp ' in.interp]; % additional FLIRT options. Example: '-dof 6 -interp sinc'. N.B. If gradient non-linearities, it makes sense to use dof=12, otherwise dof=6.
 sct.dmri.moco_intra.correct_bvecs       = 0; % correct b-matrix along with motion correction.
 sct.dmri.moco_intra.dof                 = which('schedule_TxTy_2mm.sch'); % 'TxTyTzSxSySzKxKyKz' | 'TxSxKxKy' | 'TxSx' | 'TxSxKx'*    Degree of freedom for coregistration of gradient inversed polarity. Tx = Translation along X, Sx = scaling along X, Kx = shearing along X. N.B. data will be temporarily X-Y swapped because FLIRT can only compute shearing parameter along X, not Y
 sct.dmri.suffix_moco                    = '_moco';
@@ -237,7 +223,7 @@ save(fname_struct,'sct');
 % =========================================================================
 % process dmri
 % =========================================================================
-sct.dmri = j_dmri_initialization_v4(sct.dmri);
+sct.dmri = j_dmri_initialization(sct.dmri);
 
 j_disp(sct.log,['\n\n\n=========================================================================================================='])
 j_disp(sct.log,['   process diffusion data'])

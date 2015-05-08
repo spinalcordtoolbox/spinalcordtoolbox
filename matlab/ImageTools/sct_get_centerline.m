@@ -144,6 +144,7 @@ while strcmp(info{1},'no')
         info{1}='yes';
     end
     delete(f)
+    clear x y z
 end
 
 
