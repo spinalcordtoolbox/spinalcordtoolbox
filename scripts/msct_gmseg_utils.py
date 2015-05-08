@@ -498,15 +498,23 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
 
     :return inverted_seg: white matter segmentation array
     """
+    assert gm_seg.data.shape == original_im.data.shape
+
     gm_seg_copy = gm_seg.copy()
     sc = original_im.copy()
     nz_coord_sc = sc.getNonZeroCoordinates()
-
     nz_coord_seg = gm_seg.getNonZeroCoordinates()
-    for coord in nz_coord_sc:
-        sc.data[coord.x, coord.y, coord.z] = 1
-    for coord in nz_coord_seg:
-        gm_seg_copy.data[coord.x, coord.y, coord.z] = 1
+    if len(gm_seg_copy.data.shape) == 3:
+        for coord in nz_coord_sc:
+            sc.data[coord.x, coord.y, coord.z] = 1
+        for coord in nz_coord_seg:
+            gm_seg_copy.data[coord.x, coord.y, coord.z] = 1
+    elif len(gm_seg_copy.data.shape) == 2:
+        for coord in nz_coord_sc:
+            sc.data[coord.x, coord.y] = 1
+        for coord in nz_coord_seg:
+            gm_seg_copy.data[coord.x, coord.y] = 1
+
     # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
     res_wm_seg = np.absolute(sc.data - gm_seg_copy.data).astype(int)
 
@@ -531,6 +539,13 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5):
 
 # ------------------------------------------------------------------------------------------------------------------
 def get_key_from_val(dic, val):
+    """
+    inversed dictionary getter
+
+    :param dic: dictionary
+    :param val: value
+    :return k: associated key
+    """
     for k, v in dic.items():
         if v == val:
             return k
@@ -542,8 +557,15 @@ def get_key_from_val(dic, val):
 
 # ------------------------------------------------------------------------------------------------------------------
 def crop_t2_star(path):
+    """
+    Pretreatment pipeline croping the t2star file around the spinal cord and both croped t2star and gray matter manual
+    segmentation to a 45*45 squared image
+
+    :param path: path to the data
+    """
+
     for subject_dir in os.listdir(path):
-        if os.path.isdir(subject_dir):
+        if os.path.isdir(path + subject_dir + '/'):
             t2star = ''
             sc_seg = ''
             seg_in = ''
@@ -553,8 +575,6 @@ def crop_t2_star(path):
             mask_box = ''
             seg_in_croped = ''
             manual_seg_croped = ''
-
-            # print subject_dir
 
             '''
             # VERSION 1 OF THE PRE TREATMENTS
@@ -641,7 +661,10 @@ def crop_t2_star(path):
             for subject_file in os.listdir(path + '/' + subject_dir):
                 file_low = subject_file.lower()
 
-                if 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
+                if 't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
+                    t2star = subject_file
+                    t2star_path, t2star_name, ext = sct.extract_fname(t2star)
+                elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
                     mask_box = subject_file
                 elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low \
                         and 'IRP' not in file_low:
@@ -658,13 +681,11 @@ def crop_t2_star(path):
                 elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
                     manual_seg_croped = subject_file
                     print manual_seg_croped
-                else:  #  't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
-                    t2star = subject_file
-                    t2star_path, t2star_name, ext = sct.extract_fname(t2star)
+
             if t2star != '' and sc_seg != '':
-                path = path + '/' + subject_dir + '/'
-                print 'path : ', path
-                os.chdir(path)
+                subject_path = path + '/' + subject_dir + '/'
+                print 'path : ', subject_path
+                os.chdir(subject_path)
                 '''
                 now = str(time.time())
                 sct.run('mkdir tmp_'+ now)
@@ -709,7 +730,101 @@ def crop_t2_star(path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
+def crop_t2_star_by_slice(path):
+    """
+    ###################################################################################################################################################
+    DOES NOT WORK FOR NOW
+    Pretreatment pipeline croping the t2star file around the spinal cord and both croped t2star and gray matter manual
+    segmentation to a 45*45 squared image for AMU data
+
+    :param path: path to the data
+    """
+
+    for subject_dir in os.listdir(path):
+        if os.path.isdir(path + '/' + subject_dir):
+            os.chdir(path)
+            for subject_file in os.listdir(subject_dir):
+                file_low = subject_file.lower()
+                t2star = ''
+                sc_seg = ''
+                seg_in = ''
+                seg_in_name = ''
+                manual_seg = ''
+                manual_seg_name = ''
+                mask_box = ''
+                seg_in_croped = ''
+                manual_seg_croped = ''
+                ext = ''
+
+                if 'manual' not in file_low and 'seg' not in file_low and 'mask' not in file_low \
+                        and 'ds_store' not in file_low:
+                    t2star = subject_file
+                    t2star_path, t2star_name, ext = sct.extract_fname(t2star)
+
+                    sc_seg = t2star_name + '_manual_sc_seg.nii.gz'
+                    manual_seg = t2star_name + '_manual_gm_seg.nii.gz'
+                    manual_seg_name = t2star_name + '_manual_gm_seg'
+                if t2star != '' and sc_seg != '':
+                    subject_path = path + '/' + subject_dir + '/'
+                    print 'path : ', subject_path
+                    os.chdir(subject_dir)
+
+                    try:
+
+                        if seg_in == '':
+                            sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
+                                    '-o ' + t2star_name + '_seg_in')
+                            seg_in = t2star_name + '_seg_in' + ext
+                            seg_in_name = t2star_name + '_seg_in'
+
+                        if mask_box == '':
+                            '''
+                            status, seg_in_orientation = sct.run('sct_orientation -i ' + seg_in)
+                            seg_in_orientation = seg_in_orientation[4:7]
+                            if seg_in_orientation != 'RPI':
+
+                            sct.run('sct_orientation -i ' + seg_in + ' -s RAI ')
+                            seg_in = seg_in_name + '_RAI' + ext
+
+                            status, sc_seg_orientation = sct.run('sct_orientation -i ' + sc_seg)
+                            sc_seg_orientation = sc_seg_orientation[4:7]
+                            if sc_seg_orientation != 'RPI':
+
+                            sct.run('sct_orientation -i ' + sc_seg + ' -s RPI ')
+                            sc_seg = sct.extract_fname(sc_seg)[1] + '_RPI.nii.gz'
+                            sct.run('sct_orientation -i ' + manual_seg + ' -s RPI ')
+                            manual_seg = manual_seg_name + '_RPI.nii.gz'
+                            '''
+                            sct.run('sct_create_mask -i ' + manual_seg + ' -m centerline,' + sc_seg + ' -s 43 '
+                                    '-o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
+                            mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+
+                        if seg_in_croped == '':
+                            sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 '
+                                    '-o ' + seg_in_name + '_croped')
+
+                        if manual_seg_croped == '':
+                            sct.run('sct_crop_over_mask.py -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1'
+                                    ' -o ' + manual_seg_name + '_croped')
+                        os.chdir('..')
+                    except Exception, e:
+                        sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
+                    else:
+                        print 'Done !'
+                        # sct.run('rm -rf ./tmp_' + now)
+            os.chdir('..')
+
+
+# ------------------------------------------------------------------------------------------------------------------
 def save_by_slice(dic_dir):
+    """
+    from a dictionary containing for each subject a 3D image crop around the spinal cord,
+     a graymatter segmentation 3D image, and a level image (from the registration of the template to the T2star image)
+
+     save an image per slice including the level in the image name
+
+    :param dic_dir: dictionary directory
+    """
     dic_by_slice_dir = './' + dic_dir[:-1] + '_by_slice/'
     sct.run('mkdir ' + dic_by_slice_dir)
     for subject_dir in os.listdir(dic_dir):
@@ -787,6 +902,13 @@ def save_by_slice(dic_dir):
 
 # ------------------------------------------------------------------------------------------------------------------
 def amu_treatments(data_path):
+    """
+    get a segmentation image of the spinal cord an of the graymatter from a three level mask
+
+    :param data_path: path to the data
+
+    :return:
+    """
     for subject_dir in os.listdir(data_path):
         subject_path = data_path + '/' + subject_dir
         if os.path.isdir(subject_path):
@@ -795,15 +917,21 @@ def amu_treatments(data_path):
                 if 'mask' in file_name and ext != '.hdr':
                     mask_im = Image(subject_path + '/' + file_name)
 
-                    print file_name, ext
+                    sc_seg_im = mask_im.copy()
+                    sc_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg'
+                    sc_seg_im.ext = '.nii.gz'
+                    sc_seg_im.data = (sc_seg_im.data > 1).astype(int)
+                    # sc_seg_im = Image(param=sc_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg.nii.gz')
+                    # sc_seg_im.orientation = 'RPI'
+                    sc_seg_im.save()
 
-                    cord_seg = (mask_im.data > 1).astype(int)
-                    Image(param=cord_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5]
-                          + '_manual_cord_seg.nii.gz').save()
-
-                    gm_seg = (mask_im.data > 2).astype(int)
-                    Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5]
-                          + '_manual_gm_seg.nii.gz').save()
+                    gm_seg_im = mask_im.copy()
+                    gm_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg'
+                    gm_seg_im.ext = '.nii.gz'
+                    gm_seg_im.data = (gm_seg_im.data > 2).astype(int)
+                    # gm_seg_im = Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg.nii.gz')
+                    # gm_seg_im.orientation = 'RPI'
+                    gm_seg_im.save()
 
 
 ########################################################################################################################
@@ -812,6 +940,17 @@ def amu_treatments(data_path):
 
 # ------------------------------------------------------------------------------------------------------------------
 def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
+    """
+    Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
+    and computing the resulting dice coefficient, the time of computation and an error map
+
+    :param dic_path: path to the dictionary to use to do the model validation
+
+    :param reg: type of registration to apply to the data (only in pairwise)
+
+    :param target_reg: type of registration of the target to the model
+
+    """
     import time
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
@@ -916,13 +1055,23 @@ def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise'):
+def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True):
+    """
+    Leave one out cross validation taking 1 SLICE out of the dictionary at each step
+    and computing the resulting dice coefficient, the time of computation and an error map
+
+    :param dic_path: path to the dictionary to use to do the model validation
+
+    :param reg: type of registration to apply to the data (only in pairwise)
+
+    :param target_reg: type of registration of the target to the model
+
+    """
     import time
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
     time_file = open('computation_time.txt', 'w')
     time_sum = 0
-    n_subject = 0
     n_slices = 0
     e = None
     error_map_sum = None
@@ -943,7 +1092,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise'):
                         target_n_slice = target_name[-5:-3]
 
                         tmp_dir = 'tmp_' + subject_dir + '_slice' + target_n_slice + '_as_target'
-                        sct.run('mkdir ' + tmp_dir)
+                        sct.run('mkdir ./' + tmp_dir)
 
                         tmp_dic_name = 'dic'
 
@@ -956,7 +1105,10 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise'):
                         os.chdir(tmp_dir)
 
                         res = ''
-                        cmd_gm_seg = 'sct_asman -i ' + target + ' -l ' + slice_level + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg
+                        cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg
+
+                        if use_levels:
+                            cmd_gm_seg += ' -l ' + slice_level
                         if reg is not None:
                             cmd_gm_seg += ' -reg ' + reg
 
@@ -981,7 +1133,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise'):
 
                         # Dice coefficient
                         status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref_wm_seg)
-                        dice = dice_output[-9:]
+                        dice = dice_output.split(' ')[-1]
                         os.chdir('..')
 
                         dice_sum += float(dice)
@@ -1011,16 +1163,16 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise'):
                         print e
                     # else:
                     #    sct.run('rm -rf ' + tmp_dir)
-    if e is None:
-        dice_file.write('\nmean dice: ' + str(dice_sum/n_subject))
-        dice_file.close()
+    # if e is None:
+    dice_file.write('\nmean dice: ' + str(dice_sum/n_slices))
+    dice_file.close()
 
-        Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
-        Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+    Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
+    Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
 
-        time_file.write('\nmean computation time: ' + str(time_sum/n_subject) + ' sec')
-        time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
-        time_file.close()
+    time_file.write('\nmean computation time: ' + str(time_sum/n_slices) + ' sec')
+    time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
+    time_file.close()
 
 if __name__ == "__main__":
         # Initialize the parser
@@ -1051,7 +1203,7 @@ if __name__ == "__main__":
         arguments = parser.parse(sys.argv[1:])
 
         if "-crop" in arguments:
-            crop_t2_star(arguments['-crop'])
+            crop_t2_star_by_slice(arguments['-crop'])
         if "-loocv" in arguments:
             leave_one_out_by_slice(arguments['-loocv'])
         if "-save-dic-by-slice" in arguments:
