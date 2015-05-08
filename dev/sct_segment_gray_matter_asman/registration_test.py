@@ -2,7 +2,7 @@
 import sct_utils as sct
 import sys
 from msct_parser import Parser
-from msct_gmseg_utils import leave_one_out
+from msct_gmseg_utils import leave_one_out_by_slice
 import os
 
 if __name__ == '__main__':
@@ -38,7 +38,9 @@ if __name__ == '__main__':
         target_reg = arguments["-target-reg"]
     path_dictionary = arguments["-dic"]
 
-    transformations_to_try = ['Rigid', 'Affine', 'SyN', 'Rigid,Affine']
+    # transformations_to_try = ['Rigid', 'Affine', 'SyN', 'Rigid,Affine']
+    transformations_to_try = ['Affine', 'Rigid,Affine']
+
     if target_fname is not None:
         cmd_gmseg = 'sct_asman -i ' + target_fname + ' -dic ' + path_dictionary + ' -model compute -target-reg ' + target_reg
 
@@ -47,8 +49,14 @@ if __name__ == '__main__':
             cmd_gmseg += ' -reg ' + transformation
             sct.run(cmd_gmseg)
         else:
-            sct.run('mkdir ./' + transformation)
-            sct.run('cp -r ' + path_dictionary + ' ./' + transformation + '/dictionary')
-            os.chdir('./' + transformation)
-            leave_one_out('dictionary/', reg=transformation, target_reg=target_reg)
+            sct.run('mkdir ./' + transformation + '_with_levels')
+            sct.run('cp -r ' + path_dictionary + ' ./' + transformation + '_with_levels' + '/dictionary')
+            os.chdir('./' + transformation + '_with_levels')
+            leave_one_out_by_slice('dictionary/', reg=transformation, target_reg=target_reg, use_levels=True)
+            os.chdir('..')
+
+            sct.run('mkdir ./' + transformation + '_without_levels')
+            sct.run('cp -r ' + path_dictionary + ' ./' + transformation + '_without_levels' + '/dictionary')
+            os.chdir('./' + transformation + '_without_levels')
+            leave_one_out_by_slice('dictionary/', reg=transformation, target_reg=target_reg, use_levels=False)
             os.chdir('..')
