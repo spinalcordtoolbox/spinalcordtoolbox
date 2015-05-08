@@ -39,7 +39,7 @@ class Param:
         self.target_fname = ''
         self.reg = None  # TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = None  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
-        self.levels_fname = None
+        self.level_fname = None
         self.verbose = 1
 
 
@@ -723,7 +723,7 @@ class ModelDictionaryBySlice:
         # folder containing the saved model
         self.model_dic_name = ''
         if self.param.todo_model == 'compute':
-            self.model_dic_name = './gmseg_model_dictionary' + suffix  # TODO: remove suffix
+            self.model_dic_name = './gmseg_model_dictionary' + suffix  # TODO: remove suffix when reg is optimized
             self.compute_model_dictionary()
         elif self.param.todo_model == 'load':
             self.model_dic_name = self.param.path_dictionary  # TODO change the path by the name of the dic ?? ...
@@ -813,10 +813,18 @@ class ModelDictionaryBySlice:
                                             level=slice_level, reg_to_m=[]))
                         self.dic_data_info[subject_dir]['levels'].append(slice_level)
 
-                        j_im += 1
                         # copy of the slice image in the saved model folder
+                        if j_im < 10:
+                            j_im_str = str(j_im)
+                            j_im_str = '0' + j_im_str
+                        else:
+                            j_im_str = str(j_im)
+
+                        im_file_name = subject_dir + '_slice' + j_im_str + '_' + self.level_label[slice_level] + '_im.nii.gz'
                         sct.run('cp ./' + self.param.path_dictionary + '/' + subject_dir + '/' + file_name
-                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + file_name)
+                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + im_file_name)
+                        j_im += 1
+
                     if 'seg' in file_name:
                         slices[j_seg].set(seg=Image(subject_path + '/' + file_name).data)
                         j_seg += 1
@@ -1191,7 +1199,10 @@ class TargetSegmentationPairwise:
         self.model = model
 
         # Get the target image
-        self.target = [Slice(slice_id=i_slice, im=target_slice) for i_slice, target_slice in enumerate(target_image.data)]
+        if len(target_image.data.shape) == 3:
+            self.target = [Slice(slice_id=i_slice, im=target_slice) for i_slice, target_slice in enumerate(target_image.data)]
+        elif len(target_image.data.shape) == 2:
+            self.target = [Slice(slice_id=0, im=target_image.data)]
 
         # if levels_image is not None:
         if isinstance(levels_image, Image):
@@ -1243,9 +1254,13 @@ class TargetSegmentationPairwise:
         else:
             self.tau = tau
 
-        self.beta = self.compute_beta(self.coord_projected_target,
-                                      target_levels=np.asarray([target_slice.level for target_slice in self.target]),
-                                      tau=self.tau)
+        if levels_image is not None:
+            self.beta = self.compute_beta(self.coord_projected_target,
+                                          target_levels=np.asarray([target_slice.level for target_slice in self.target]),
+                                          tau=self.tau)
+        else:
+            self.beta = self.compute_beta(self.coord_projected_target, tau=self.tau)
+
         '''
         print '----------- BETAS :', self.beta
         self.beta = self.compute_beta(self.coord_projected_target, tau=0.00114)
@@ -1347,10 +1362,13 @@ class TargetSegmentationPairwise:
                 beta_slice = []
                 for j_slice, coord_slice_j in enumerate(dataset_coord):
                     square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
-                    if target_levels[i_target] == dataset_levels[j_slice]:
-                        beta_slice.append(exp(tau*square_norm))
+                    if target_levels is not None:
+                        if target_levels[i_target] == dataset_levels[j_slice]:
+                            beta_slice.append(exp(tau*square_norm))
+                        else:
+                            beta_slice.append(exp(-tau*square_norm)/1.2*(target_levels[i_target] - dataset_levels[j_slice]))
                     else:
-                        beta_slice.append(exp(-tau*square_norm)/1.2*(target_levels[i_target] - dataset_levels[j_slice]))
+                        beta_slice.append(exp(tau*square_norm))
 
                 '''
                 print 'beta case 1 :', beta
@@ -1366,10 +1384,13 @@ class TargetSegmentationPairwise:
         else:
             for j_slice, coord_slice_j in enumerate(dataset_coord):
                 square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
-                if target_levels == dataset_levels[j_slice]:
-                    beta.append(exp(tau*square_norm))
+                if target_levels is not None:
+                    if target_levels == dataset_levels[j_slice]:
+                        beta.append(exp(tau*square_norm))
+                    else:
+                        beta.append(exp(-tau*square_norm)/1.2*(target_levels - dataset_levels[j_slice]))
                 else:
-                    beta.append(exp(-tau*square_norm)/1.2*(target_levels - dataset_levels[j_slice]))
+                    beta.append(exp(tau*square_norm))
 
             try:
                 beta /= np.sum(beta)
@@ -2048,16 +2069,19 @@ sct_Image
 
         # build a target segmentation
         levels_im = None
-        if gm_seg_param.levels_fname is not None:
-            if isinstance(gm_seg_param.levels_fname, str):
+        if gm_seg_param.level_fname is not None:
+            if isinstance(gm_seg_param.level_fname, str):
                 # in this case the level is a string and not an image
-                levels_im = gm_seg_param.levels_fname
+                levels_im = gm_seg_param.level_fname
             else:
-                levels_im = Image(gm_seg_param.levels_fname)
+                levels_im = Image(gm_seg_param.level_fname)
         if gm_seg_param.target_reg == 'pairwise':
-            print 'PAIRWISE REGISTRATION OF THE TARGET'
-            self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image,
-                                                                 levels_image=levels_im, tau=tau)
+            if levels_im is not None:
+                self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image,
+                                                                     levels_image=levels_im, tau=tau)
+            else:
+                self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image,
+                                                                     tau=tau)
         elif gm_seg_param.target_reg == 'groupwise':
             print 'GROUPWISE REGISTRATION OF THE TARGET'
             self.target_seg_methods = TargetSegmentationGroupwise(self.model, target_image=self.target_image, tau=tau)
@@ -2068,7 +2092,11 @@ sct_Image
 
         # save the result gray matter segmentation
         # self.res_GM_seg = self.target_seg_methods.target_GM_seg
-        self.res_GM_seg = Image(param=np.asarray([target_slice.seg for target_slice in self.target_seg_methods.target]))
+        if len(self.target_seg_methods.target) == 1:
+            self.res_GM_seg = Image(param=np.asarray(self.target_seg_methods.target[0].seg))
+        else:
+            self.res_GM_seg = Image(param=np.asarray([target_slice.seg for target_slice in self.target_seg_methods.target]))
+
         name_res = sct.extract_fname(gm_seg_param.target_fname)[1] + '_graymatterseg' + suffix  # TODO: remove suffix
         self.res_GM_seg.file_name = name_res
         self.res_GM_seg.ext = '.nii.gz'
@@ -2079,8 +2107,9 @@ sct_Image
         '''
         # inverse_wmseg_to_gmseg(self.res_GM_seg, self.target_image, name_res)
 
-        sct.printv('Done! \nTo see the result, type : fslview ' + gm_seg_param.target_fname + ' '
-                   + name_res + '.nii.gz -l Red -t 0.4 &')
+        sct.printv('Done! \nTo see the result, type :')
+        sct.printv('fslview ' + gm_seg_param.target_fname + ' ' + name_res + '.nii.gz -l Red -t 0.4 &',
+                   gm_seg_param.verbose, 'info')
 
     def show(self):
 
@@ -2142,7 +2171,7 @@ if __name__ == "__main__":
                           type_value=[[','], 'str'],
                           description="list of transformations to apply to co-register the dictionary data",
                           mandatory=False,
-                          default_value=['Rigid', 'Affine'],
+                          default_value=['Affine'],
                           example=['SyN'])
         parser.add_option(name="-target-reg",
                           type_value='multiple_choice',
@@ -2169,7 +2198,7 @@ if __name__ == "__main__":
         if "-target-reg" in arguments:
             param.target_reg = arguments["-target-reg"]
         if "-l" in arguments:
-            param.levels_fname = arguments["-l"]
+            param.level_fname = arguments["-l"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
