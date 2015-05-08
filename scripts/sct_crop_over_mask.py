@@ -80,6 +80,10 @@ def main():
 
 
     mask = Image(fname_mask)
+    if len(mask.data.shape) == 3:
+        if mask.data.shape[2] == 1:
+            mask.data = mask.data.reshape(mask.data.shape[:-1])
+
 
     if square:
         input_img.crop_from_square_mask(mask)
