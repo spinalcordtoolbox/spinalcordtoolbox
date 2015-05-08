@@ -44,6 +44,7 @@ class param:
         self.remove_tmp_file = 0
         self.verbose = 1
         self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
+        self.path_tmp = ""
 
 
 # START MAIN
@@ -84,15 +85,7 @@ def main():
 
     # download data
     if param.download:
-        sct.printv('\nDownloading testing data...', param.verbose)
-        # remove data folder if exist
-        if os.path.exists('sct_testing_data'):
-            sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
-            sct.run('rm -rf sct_testing_data')
-        # clone git repos
-        sct.run('git clone '+param.url_git)
-        # update path_data field 
-        param.path_data = 'sct_testing_data/data'
+        downloaddata()
 
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
@@ -135,6 +128,17 @@ def main():
 
     sys.exit(e)
 
+
+def downloaddata():
+    sct.printv('\nDownloading testing data...', param.verbose)
+    # remove data folder if exist
+    if os.path.exists('sct_testing_data'):
+        sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
+        sct.run('rm -rf sct_testing_data')
+    # clone git repos
+    sct.run('git clone '+param.url_git)
+    # update path_data field
+    param.path_data = 'sct_testing_data/data'
 
 # list of all functions to test
 # ==========================================================================================
@@ -228,35 +232,52 @@ def test_function(script_name):
     if script_name == 'test_debug':
         return test_debug()  # JULIEN
     else:
-        # build script name
-        fname_log = script_name + ".log"
-        result_folder = "results_"+script_name
-        script_name = "test_"+script_name
-        # create folder and go in it
-        sct.create_folder(result_folder)
-        os.chdir(result_folder)
+        retest = 1;
+        # while condition values are arbitrary and are present to prevent infinite loop
+        while retest > 0 and retest < 3:
+            # build script name
+            fname_log = script_name + ".log"
+            tmp_script_name = script_name
+            result_folder = "results_"+script_name
+            script_name = "test_"+script_name
 
-        #fname_log = "sct_convert_binary_to_trilinear.log"
-        # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
+            # create folder and go in it
+            sct.create_folder(result_folder)
+            os.chdir(result_folder)
 
-        # display script name
-        print_line('Checking '+script_name)
-        # import function as a module        
-        script_tested = importlib.import_module(script_name)
-        # test function
-        status, output = script_tested.test(param.path_data)
-        # manage status
-        if status == 0:
-            print_ok()
-        else:
-            print_fail()
-            print output
+            #fname_log = "sct_convert_binary_to_trilinear.log"
+            # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
-        # log file
-        write_to_log_file(fname_log, output, 'w')
+            # display script name
+            print_line('Checking '+script_name)
+            # import function as a module
+            script_tested = importlib.import_module(script_name)
+            # test function
+            status, output = script_tested.test(param.path_data)
+            # returning script_name to its original name
+            script_name = tmp_script_name
+            # manage status
+            if status == 0:
+                print_ok()
+                retest = 0;
+            else:
+                print_fail()
+                print output
+                print "\nTest files missing, downloading them now \n"
+                # TODO : Find a more effiecient way to go up 2 folders
+                os.chdir(os.pardir)
+                os.chdir(os.pardir)
+                downloaddata()
+                param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
+                # check existence of testing data folder
+                sct.check_folder_exist(param.path_data)
+                os.chdir(param.path_tmp + result_folder)
+                retest += 1
+            # log file
+            write_to_log_file(fname_log, output, 'w')
 
-        # go back to parent folder
-        os.chdir('..')
+            # go back to parent folder
+            os.chdir('..')
 
         # return
         return status
