@@ -37,6 +37,7 @@ def main():
 
     # Initialization
     fsloutputdir = 'export FSLOUTPUTTYPE=NIFTI_GZ; '
+    file_ordering = 'alternate'
     start_time = time.time()
 
     # # get path of the toolbox
@@ -51,6 +52,12 @@ def main():
                       description="Path to dicom data.",
                       mandatory=True,
                       example="data/my_data")
+    parser.add_option(name="-ord",
+                      type_value="multiple_choice",
+                      description="""File ordering: \nalternate: spine,brain,spine,brain... (with custom coil)\nbloc: spine,spine... brain,brain... (with head-neck coil)\n""",
+                      mandatory=False,
+                      default_value='bloc',
+                      example=['alternate', 'bloc'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -68,6 +75,8 @@ def main():
 
     # get arguments
     path_data = sct.slash_at_the_end(arguments['-i'], 1)
+    if '-ord' in arguments:
+        file_ordering = arguments['-ord']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
 
@@ -100,11 +109,14 @@ def main():
         # increment file index
         i = i+1
 
-    # Merge spinal cord data
+    # Merge data
     nb_files = len(file_data_list)
-    sct.run(fsloutputdir+'fslmerge -t data_spine '+' '.join([file_nii[i] for i in range(0, nb_files, 2)]))
-    # Merge brain data
-    sct.run(fsloutputdir+'fslmerge -t data_brain '+' '.join([file_nii[i] for i in range(1, nb_files, 2)]))
+    if file_ordering == 'alternate':
+        sct.run(fsloutputdir+'fslmerge -t data_spine '+' '.join([file_nii[i] for i in range(0, nb_files, 2)]))
+        sct.run(fsloutputdir+'fslmerge -t data_brain '+' '.join([file_nii[i] for i in range(1, nb_files, 2)]))
+    if file_ordering == 'bloc':
+        sct.run(fsloutputdir+'fslmerge -t data_spine '+' '.join([file_nii[i] for i in range(0, nb_files/2)]))
+        sct.run(fsloutputdir+'fslmerge -t data_brain '+' '.join([file_nii[i] for i in range(nb_files/2+1, nb_files)]))
 
     # come back to parent folder
     os.chdir('..')
