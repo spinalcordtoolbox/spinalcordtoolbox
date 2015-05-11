@@ -87,11 +87,13 @@ def main():
     if param.download:
         downloaddata()
 
+    param.path_data = 'sct_testing_data/data'
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # check existence of testing data folder
-    sct.check_folder_exist(param.path_data)
+    if not sct.return_folder_exist(param.path_data):
+        downloaddata()
 
     # display path to data
     sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
@@ -138,7 +140,7 @@ def downloaddata():
     # clone git repos
     sct.run('git clone '+param.url_git)
     # update path_data field
-    param.path_data = 'sct_testing_data/data'
+
 
 # list of all functions to test
 # ==========================================================================================
@@ -247,8 +249,6 @@ def test_function(script_name):
                 sct.create_folder(result_folder)
 
             os.chdir(result_folder)
-            #fname_log = "sct_convert_binary_to_trilinear.log"
-            # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
             # display script name
             print_line('Checking '+script_name)
@@ -266,20 +266,24 @@ def test_function(script_name):
                 print_fail()
                 print output
                 print "\nTest files missing, downloading them now \n"
-                # TODO : Find a more effiecient way to go up 2 folders
-                os.chdir(os.pardir)
-                os.chdir(os.pardir)
+
+                os.chdir('../..')
                 downloaddata()
+
                 param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
+
                 # check existence of testing data folder
                 sct.check_folder_exist(param.path_data)
                 os.chdir(param.path_tmp + result_folder)
+
                 retest += 1
+
             # log file
             write_to_log_file(fname_log, output, 'w')
 
             # go back to parent folder
             os.chdir('..')
+            # end while loop
 
         # return
         return status
