@@ -232,19 +232,21 @@ def test_function(script_name):
     if script_name == 'test_debug':
         return test_debug()  # JULIEN
     else:
-        retest = 1;
+        # Using the retest variable to recheck if we can perform tests after we downloaded the data
+        retest = 1
         # while condition values are arbitrary and are present to prevent infinite loop
-        while retest > 0 and retest < 3:
+        while 0 < retest < 3:
             # build script name
             fname_log = script_name + ".log"
             tmp_script_name = script_name
             result_folder = "results_"+script_name
             script_name = "test_"+script_name
 
-            # create folder and go in it
-            sct.create_folder(result_folder)
-            os.chdir(result_folder)
+            if retest == 1:
+                # create folder and go in it
+                sct.create_folder(result_folder)
 
+            os.chdir(result_folder)
             #fname_log = "sct_convert_binary_to_trilinear.log"
             # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
 
@@ -259,7 +261,7 @@ def test_function(script_name):
             # manage status
             if status == 0:
                 print_ok()
-                retest = 0;
+                retest = 0
             else:
                 print_fail()
                 print output
