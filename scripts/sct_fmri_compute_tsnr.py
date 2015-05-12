@@ -13,7 +13,7 @@
 ########################################################################################################################
 
 import sys
-
+#import time
 from msct_parser import *
 import sct_utils as sct
 
@@ -40,29 +40,36 @@ class Tsnr:
 
     def compute(self):
 
-        # motion correct the fmri data
-        sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
-        path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
-        fname_fmri_moco = fname_fmri + '_moco'
-        print sct.slash_at_the_end(path_fmri) + fname_fmri
-        sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
+        fname_data = self.fmri
+
+        # # create temporary folder
+        # sct.printv('\nCreate temporary folder...', self.param.verbose)
+        # path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S/")
+        # status, output = sct.run('mkdir '+path_tmp, self.param.verbose)
+
+        # # motion correct the fmri data
+        # # sct.printv('\nMotion correct the fMRI data...', self.param.verbose, 'normal')
+        # path_fmri, fname_fmri, ext_fmri = sct.extract_fname(self.fmri)
+        # fname_fmri_moco = fname_fmri
+        # # print sct.slash_at_the_end(path_fmri) + fname_fmri
+        # # sct.run('mcflirt -in ' + sct.slash_at_the_end(path_fmri, 1) + fname_fmri + ' -out ' + fname_fmri_moco)
 
         # compute tsnr
         sct.printv('\nCompute the tSNR...', self.param.verbose, 'normal')
-        fname_fmri_moco_mean = fname_fmri_moco + '_mean'
-        sct.run('fslmaths ' + fname_fmri_moco + ' -Tmean ' + fname_fmri_moco_mean)
-        fname_fmri_moco_std = fname_fmri_moco + '_std'
-        sct.run('fslmaths ' + fname_fmri_moco + ' -Tstd ' + fname_fmri_moco_std)
-        fname_fmri_tsnr = fname_fmri + '_tsnr'
-        sct.run('fslmaths ' + fname_fmri_moco_mean + ' -div ' + fname_fmri_moco_std + ' ' + fname_fmri_tsnr)
+        fname_data_mean = sct.add_suffix(fname_data, '_mean')
+        sct.run('fslmaths ' + fname_data + ' -Tmean ' + fname_data_mean)
+        fname_data_std = sct.add_suffix(fname_data, '_std')
+        sct.run('fslmaths ' + fname_data + ' -Tstd ' + fname_data_std)
+        fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
+        sct.run('fslmaths ' + fname_data_mean + ' -div ' + fname_data_std + ' ' + fname_tsnr)
 
         # Remove temp files
         sct.printv('\nRemove temporary files...', self.param.verbose, 'normal')
-        sct.run('rm ' + fname_fmri_moco_std + '.nii.gz')
+        sct.run('rm ' + fname_data_std)
 
         # to view results
         sct.printv('\nDone! To view results, type:', self.param.verbose, 'normal')
-        sct.printv('fslview '+fname_fmri_tsnr+' &\n', self.param.verbose, 'info')
+        sct.printv('fslview '+fname_tsnr+' &\n', self.param.verbose, 'info')
 
 
 
