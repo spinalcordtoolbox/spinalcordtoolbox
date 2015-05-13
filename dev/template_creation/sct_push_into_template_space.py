@@ -35,7 +35,8 @@ def main():
     #Initialization
     fname = ''
     landmarks_native = ''
-    landmarks_template = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
+    #landmarks_template = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
+    landmarks_template = path_sct + '/dev/template_creation/landmark_native.nii.gz'
     reference = path_sct + '/dev/template_creation/template_shape.nii.gz'
     verbose = param.verbose
     interpolation_method = 'spline'
