@@ -44,10 +44,10 @@ SUBJECTS_LIST_marseille = [['1','/Volumes/data_shared/marseille/ED/01_0007_sc-mp
 SUBJECTS_LIST_TO_ADD = [['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_34/41-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_34/40-SPINE_T2'],['errsm_35','/Volumes/data_shared/montreal_criugm/errsm_35/37-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_35/38-SPINE_T2']]
 
 SUBJECTS_LIST_BUG = [['errsm_20', '/Volumes/data_shared/montreal_criugm/errsm_20/12-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_20/34-SPINE_T2'],['pain_pilot_3','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/31-SPINE_T2']]
-SUBJECTS_LIST_STR_1 = []
-SUBJECTS_LIST_STR = [['errsm_17', '/Volumes/data_shared/montreal_criugm/errsm_17/41-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_17/42-SPINE_T2']]
 
-SUBJECTS_LIST = SUBJECTS_LIST_total
+SUBJECTS_LIST_STR = [['JW','/Volumes/data_shared/marseille/JW/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5','/Volumes/data_shared/marseille/JW/01_0100_compo-space'],['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2']]
+
+SUBJECTS_LIST = SUBJECTS_LIST_STR
 # add path to scripts
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
@@ -65,7 +65,7 @@ if do_preprocessing_T2:
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
 
    # loop across subjects
-    for i in range(1,len(SUBJECTS_LIST)):
+    for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # create and go to output folder
@@ -78,11 +78,11 @@ if do_preprocessing_T2:
 
         # convert to nii
         print '\nConvert to nii'
-        sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
+        #sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
 
         # change file name
         print '\nChange file name to data.nii.gz...'
-        sct.run('mv *.nii.gz data.nii.gz')
+        #sct.run('mv *.nii.gz data.nii.gz')
 
        # Get info from txt file
         print '\nRecover infos from text file' + PATH_INFO + '/' + subject+ '/' + 'crop.txt\n'
