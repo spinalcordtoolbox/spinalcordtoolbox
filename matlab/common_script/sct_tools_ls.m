@@ -1,5 +1,6 @@
 function [list, path]=sct_tools_ls(fname, keeppath, keepext)
 % [list, path]=sct_tools_ls(fname, keeppath?, keepext?)
+% Example: sct_tools_ls('ep2d*')
 if nargin < 2, keeppath=0; end
 if nargin < 3, keepext=1; end
 % [list, path]=sct_tools_ls('*T.txt);

@@ -1,11 +1,17 @@
 function sct_dmri_moco(varargin)
 % process diffusion mri data
 %
+% USAGE:
+% >> sct_dmri_moco() --> calls a GUI
+% >> sct_dmri_moco(___,Name,Value)
+%
 % EXAMPLES:
-% >> sct_dmri_moco --> call a GUI
+% >> sct_dmri_moco()
 % >> sct_dmri_moco('data','qspace.nii.gz','bvec','bvecs.txt','crop','none','eddy',0)
 %
-% INPUT
+% Option Names:
+%     bval  (bval text file)
+%     bvec (bvec text file)
 %     method : 'b0','dwi'*,'dwi_lowbvalue'
 %     crop : 'manual', 'box', 'none'*, 'centerline', 'autobox'
 %     eddy : 0 | 1*
@@ -47,8 +53,14 @@ if isempty(in.bvec)
 else
     [sct.dmri.path_bvecs, sct.dmri.file_bvecs, ext] = fileparts(in.bvec);  if ~isempty(sct.dmri.path_bvecs), sct.dmri.path_bvecs=[sct.dmri.path_bvecs, filesep]; end; sct.dmri.file_bvecs=[sct.dmri.file_bvecs,ext];
 end
+if isempty(in.bval)
+    [sct.dmri.file_bvals,sct.dmri.path_bvecs] = uigetfile('*','Select bval file') ;
+    if sct.dmri.file_bvecs==0, return; end
+    sct.dmri.file_bvals=[sct.dmri.path_bvecs filesep sct.dmri.file_bvals];
+else
+    sct.dmri.file_bvals = in.bval;
+end
 
-sct.dmri.file_bvals = in.bval;
 
 % Add scripts to path
 batch_path= mfilename('fullpath');
