@@ -2,7 +2,7 @@
 ########################################################################################################################
 #
 #
-# Utility functions useed for the segmentation of the gray matter
+# Utility functions used for the segmentation of the gray matter
 #
 # ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -30,8 +30,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, seg=None, reg_to_m=None, im_m=None, seg_m=None,
-                 im_m_flat=None, seg_m_flat=None, level=None):
+    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
         """
         Slice constructor
 
@@ -39,35 +38,40 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param seg: manual segmentation of the original image, type: numpy array
+        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
 
-        :param reg_to_m: name of the file containing the transformation for this slice to go
-        from the image original space to the model space, type: string
+        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+
+        :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param seg_m: manual segmentation in the model space, type: numpy array
+        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+
+        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param seg_m_flat: flatten manual segmentation in the model space, type: numpy array
+        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param level: spinal AND\OR ? vertebral level of the slice, type: ??
+        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
 
-        **WARNING : the level isn't used yet in the gm segmentation method**
+        :param level: vertebral level of the slice, type: int
         """
         self.id = slice_id
         self.im = im
-        self.seg = seg
+        self.gm_seg = gm_seg
+        self.wm_seg = wm_seg
         self.reg_to_M = reg_to_m
         self.im_M = im_m
-        self.seg_M = seg_m
+        self.gm_seg_M = gm_seg_m
+        self.wm_seg_M = wm_seg_m
         self.im_M_flat = im_m_flat
-        self.seg_M_flat = seg_m_flat
+        self.gm_seg_M_flat = gm_seg_m_flat
+        self.wm_seg_M_flat = wm_seg_m_flat
         self.level = level
 
-    def set(self, slice_id=None, im=None, seg=None, reg_to_m=None, im_m=None, seg_m=None,
-            im_m_flat=None, seg_m_flat=None, level=None):
+    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
         """
         Slice setter, only the specified parameters are set
 
@@ -75,39 +79,48 @@ class Slice:
 
         :param im: original image (a T2star 2D image croped around the spinal cord), type: numpy array
 
-        :param seg: manual segmentation of the original image, type: numpy array
+        :param gm_seg: manual gray matter segmentation of the original image, type: numpy array
 
-        :param reg_to_m: name of the file containing the transformation for this slice to go
-        from the image original space to the model space, type: string
+        :param wm_seg: manual white matter segmentation of the original image, type: numpy array
+
+        :param reg_to_m: name of the file containing the transformation for this slice to go from the image original space to the model space, type: string
 
         :param im_m: image in the model space, type: numpy array
 
-        :param seg_m: manual segmentation in the model space, type: numpy array
+        :param gm_seg_m: manual gray matter segmentation in the model space, type: numpy array
+
+        :param wm_seg_m: manual white matter segmentation in the model space, type: numpy array
 
         :param im_m_flat: flatten image in the model space, type: numpy array
 
-        :param seg_m_flat: flatten manual segmentation in the model space, type: numpy array
+        :param gm_seg_m_flat: flatten manual gray matter  segmentation in the model space, type: numpy array
 
-        :param level: spinal AND\OR ? vertebral level of the slice, type: ??
+        :param wm_seg_m_flat: flatten manual white matter segmentation in the model space, type: numpy array
 
-        **WARNING : the level isn't used yet in the gm segmentation method**
+        :param level: vertebral level of the slice, type: int
         """
         if slice_id is not None:
             self.id = slice_id
         if im is not None:
             self.im = im
-        if seg is not None:
-            self.seg = seg
+        if gm_seg is not None:
+            self.gm_seg = gm_seg
+        if wm_seg is not None:
+            self.wm_seg = wm_seg
         if reg_to_m is not None:
             self.reg_to_M = reg_to_m
         if im_m is not None:
             self.im_M = im_m
-        if seg_m is not None:
-            self.seg_M = seg_m
+        if gm_seg_m is not None:
+            self.gm_seg_M = gm_seg_m
+        if wm_seg_m is not None:
+            self.wm_seg_M = wm_seg_m
         if im_m_flat is not None:
             self.im_M_flat = im_m_flat
-        if seg_m_flat is not None:
-            self.seg_M_flat = seg_m_flat
+        if gm_seg_m_flat is not None:
+            self.gm_seg_M_flat = gm_seg_m_flat
+        if wm_seg_m_flat is not None:
+            self.wm_seg_M_flat = wm_seg_m_flat
         if level is not None:
             self.level = level
 
@@ -115,12 +128,12 @@ class Slice:
         s = '\nSlice #' + str(self.id)
         if self.level is not None:
             s += 'Level : ' + str(self.level)
-        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.seg) +\
+        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.gm_seg) +\
              '\nTransformation to model space : ' + self.reg_to_M
         if self.im_M is not None:
             s += '\nAtlas in the common model space: \n' + str(self.im_M)
-        if self.seg_M is not None:
-            s += '\nDecision in the common model space: \n' + str(self.seg_M)
+        if self.gm_seg_M is not None:
+            s += '\nDecision in the common model space: \n' + str(self.gm_seg_M)
         return s
 
 
@@ -223,8 +236,7 @@ def save_image(im_array, im_name, path='', im_type='', verbose=1):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='',
-                       binary=True, path='./', inverse=0, verbose=0):
+def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary=True, path='./', inverse=0, verbose=0):
     """
     Compute and/or apply a registration using ANTs
 
@@ -238,8 +250,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
 
     :param apply_transfo: apply or not the transformation, type: boolean
 
-    :param transfo_name: name of the file containing the transformation information (to load or save the transformation,
-     type: string
+    :param transfo_name: name of the file containing the transformation information (to load or save the transformation, type: string
 
     :param binary: if the image to register is binary, type: boolean
 
@@ -387,7 +398,7 @@ def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, s=1, transfo=None, inve
 
     return transformed_mat, transfo
 
-
+'''
 # ----------------------------------------------------------------------------------------------------------------------
 def kronecker_delta(x, y):
     """
@@ -400,7 +411,7 @@ def kronecker_delta(x, y):
         return 1
     else:
         return 0
-
+'''
 
 '''
 # ------------------------------------------------------------------------------------------------------------------
@@ -1055,7 +1066,7 @@ def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True):
+def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='gm', use_levels=True):
     """
     Leave one out cross validation taking 1 SLICE out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1071,6 +1082,8 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
     dice_file = open('dice_coeff.txt', 'w')
     dice_sum = 0
     time_file = open('computation_time.txt', 'w')
+    level_file = open('levels_similarity.txt', 'w')
+    similarity_sum = 0
     time_sum = 0
     n_slices = 0
     e = None
@@ -1088,6 +1101,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         target = file_name
                         target_name = sct.extract_fname(target)[1][:-3]
                         ref_gm_seg = target_name + '_seg.nii.gz'
+                        ref = None
                         slice_level = target_name[-2:]
                         target_n_slice = target_name[-5:-3]
 
@@ -1105,7 +1119,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         os.chdir(tmp_dir)
 
                         res = ''
-                        cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg
+                        cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg + ' -seg-type ' + seg_type
 
                         if use_levels:
                             cmd_gm_seg += ' -l ' + slice_level
@@ -1124,33 +1138,57 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         ref_gm_seg_im = Image(ref_gm_seg)
                         target_im = Image(target)
 
-                        inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
+                        if seg_type == 'wm':
+                            inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
 
-                        ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
-                        ref_wm_seg_im = Image(ref_wm_seg)
+                            ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
+                            ref_wm_seg_im = Image(ref_wm_seg)
+
+                            ref = ref_wm_seg
+                            ref_im = ref_wm_seg_im
+
+                        elif seg_type == 'gm':
+                            ref = ref_gm_seg
+                            ref_im = ref_gm_seg_im
 
                         res_im = Image(res)
 
+                        # Levels similarity
+                        selected_slices_levels = open('selected_slices.txt', 'r')
+                        line_list = selected_slices_levels.read().split("'")
+                        selected_slices_levels.close()
+                        levels = []
+                        similar_levels = 0
+                        for s in line_list:
+                            if s in ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']:
+                                levels.append(s)
+                        for l in levels:
+                            if l == slice_level:
+                                similar_levels += 1
+                        slice_similarity = float(similar_levels)/len(levels)
+                        similarity_sum += slice_similarity
+                        level_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + str(slice_similarity) + '% (' + str(slice_level) + ')\n')
+
                         # Dice coefficient
-                        status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref_wm_seg)
+                        status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref)
                         dice = dice_output.split(' ')[-1]
                         os.chdir('..')
 
                         dice_sum += float(dice)
                         n_slices += 1
-                        dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + dice)
+                        dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + dice[:-1] + ' (' + str(slice_level) + ')\n')
 
                         # Error map
                         if first:
-                            error_map_sum = np.zeros(ref_wm_seg_im.data[0].shape)
-                            error_map_abs_sum = np.zeros(ref_wm_seg_im.data[0].shape)
+                            error_map_sum = np.zeros(ref_im.data.shape)
+                            error_map_abs_sum = np.zeros(ref_im.data.shape)
                             first = False
 
-                        error_3d = (ref_wm_seg_im.data - res_im.data) + 1
-                        error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
+                        error_3d = (ref_im.data - res_im.data) + 1
+                        error_3d_abs = abs(ref_im.data - res_im.data)
 
-                        error_map_sum += np.sum(error_3d, axis=0)
-                        error_map_abs_sum += np.sum(error_3d_abs, axis=0)
+                        error_map_sum += error_3d
+                        error_map_abs_sum += error_3d_abs
 
                         # n_slices += ref_wm_seg_im.data.shape[0]
 
@@ -1167,12 +1205,55 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
     dice_file.write('\nmean dice: ' + str(dice_sum/n_slices))
     dice_file.close()
 
+    level_file.write('\nmean similarity: ' + str(similarity_sum/n_slices) + '% ')
+    level_file.close()
+
     Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
     Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
 
     time_file.write('\nmean computation time: ' + str(time_sum/n_slices) + ' sec')
-    time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
     time_file.close()
+
+
+def compute_error_map(data_path):
+    error_map_sum = None
+    error_map_abs_sum = None
+    first = True
+    n_slices = 0
+    os.chdir(data_path)
+    for file_name in os.listdir('.'):
+        if os.path.isdir(file_name) and file_name != 'dictionary':
+            os.chdir(file_name)
+
+            res = ''
+            ref_wm_seg = ''
+
+            for slice_file in os.listdir('.'):
+                if 'graymatterseg' in slice_file:
+                    res = slice_file
+                elif 'inv_to_wm' in slice_file:
+                    ref_wm_seg = slice_file
+            res_im = Image(res)
+            ref_wm_seg_im = Image(ref_wm_seg)
+
+            if first:
+                error_map_sum = np.zeros(ref_wm_seg_im.data.shape)
+                error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
+                first = False
+
+            error_3d = (ref_wm_seg_im.data - res_im.data) + 1
+            error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
+
+            error_map_sum += error_3d
+            error_map_abs_sum += error_3d_abs
+            n_slices += 1
+            os.chdir('..')
+
+    Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
+    Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+
+
+
 
 if __name__ == "__main__":
         # Initialize the parser
@@ -1187,6 +1268,11 @@ if __name__ == "__main__":
         parser.add_option(name="-loocv",
                           type_value="folder",
                           description="Path to a dictionary folder to do 'Leave One Out Validation' on",
+                          mandatory=False,
+                          example='dictionary/')
+        parser.add_option(name="-error-map",
+                          type_value="folder",
+                          description="Path to a dictionary folder to compute the error map on",
                           mandatory=False,
                           example='dictionary/')
         parser.add_option(name="-save-dic-by-slice",
@@ -1206,6 +1292,8 @@ if __name__ == "__main__":
             crop_t2_star_by_slice(arguments['-crop'])
         if "-loocv" in arguments:
             leave_one_out_by_slice(arguments['-loocv'])
+        if "-error-map" in arguments:
+            compute_error_map(arguments['-error-map'])
         if "-save-dic-by-slice" in arguments:
             save_by_slice(arguments['-save-dic-by-slice'])
         if "-treat-AMU" in arguments:
