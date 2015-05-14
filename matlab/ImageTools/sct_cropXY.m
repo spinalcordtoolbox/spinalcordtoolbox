@@ -179,7 +179,7 @@ switch (crop_method)
         disp(['.. Cropping method: ',crop_method])
         
         % extract one image (to reslice center_line from anat to dw images)
-        cmd = [fsloutput,'fslroi ',fname_data,' ','tmp.dmri.crop.',data_file, '_1',' ','1 1'];
+        cmd = [fsloutput,'fslmaths ',fname_data,' -Tmean ','tmp.dmri.crop.',data_file, '_1'];
         disp(['>> ',cmd]);
         [status result] = unix(cmd);
         if status, error(result); end
