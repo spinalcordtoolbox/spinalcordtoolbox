@@ -48,7 +48,7 @@ if __name__ == "__main__":
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
-                      example=["0","1"],
+                      example=["0", "1"],
                       default_value="1")
     parser.add_option(name="-h",
                       type_value=None,
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
-            verbose = 1
+            verbose = 2
             cmd += " -verbose"
 
     # Output options
