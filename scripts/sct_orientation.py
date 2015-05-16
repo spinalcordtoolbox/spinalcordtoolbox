@@ -140,7 +140,10 @@ def get_or_set_orientation():
         if todo == 'set_orientation':
             # set orientation
             sct.printv('\nChange orientation...', param.verbose)
-            set_orientation('data.nii', param.orientation, 'data_orient.nii')
+            if param.change_header is '':
+                set_orientation('data.nii', param.orientation, 'data_orient.nii')
+            else:
+                set_orientation('data.nii', param.change_header, 'data_orient.nii', True)
         elif todo == 'get_orientation':
             # get orientation
             sct.printv('\nGet orientation...', param.verbose)
@@ -221,13 +224,13 @@ def get_orientation(fname):
 
 # set_orientation
 # ==========================================================================================
-def set_orientation(fname_in, orientation, fname_out):
-    if param.change_header is '':
+def set_orientation(fname_in, orientation, fname_out, inversion=False):
+    if not inversion:
         sct.run('isct_orientation3d -i '+fname_in+' -orientation '+orientation+' -o '+fname_out, 0)
     else:
         from msct_image import Image
         input_image = Image(fname_in)
-        input_image.change_orientation(param.change_header, True)
+        input_image.change_orientation(orientation, True)
         input_image.setFileName(fname_out)
         input_image.save()
     # return full path
