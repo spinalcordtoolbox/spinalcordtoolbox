@@ -29,6 +29,7 @@ class Param:
         self.fname_out = ''
         self.orientation = ''
         self.list_of_correct_orientation = 'RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'
+        self.change_header = ''
         self.verbose = 0
         self.remove_tmp_files = 1
 
@@ -44,12 +45,13 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/dmri/dwi_moco_mean.nii.gz'
         param.orientation = ''
+        param.change_header = ''
         param.remove_tmp_files = 0
         param.verbose = 1
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hi:o:r:s:a:v:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -67,6 +69,8 @@ def main():
                 param.orientation = arg
             elif opt in '-t':
                 param.threshold = arg
+            elif opt in '-a':
+                param.change_header = arg
             elif opt in '-v':
                 param.verbose = int(arg)
 
@@ -89,7 +93,7 @@ def get_or_set_orientation():
     sct.check_file_exist(param.fname_data, param.verbose)
 
     # find what to do
-    if param.orientation == '':
+    if param.orientation == '' and param.change_header is '':
         todo = 'get_orientation'
     else:
         todo = 'set_orientation'
@@ -218,7 +222,14 @@ def get_orientation(fname):
 # set_orientation
 # ==========================================================================================
 def set_orientation(fname_in, orientation, fname_out):
-    sct.run('isct_orientation3d -i '+fname_in+' -orientation '+orientation+' -o '+fname_out, 0)
+    if param.change_header is '':
+        sct.run('isct_orientation3d -i '+fname_in+' -orientation '+orientation+' -o '+fname_out, 0)
+    else:
+        from msct_image import Image
+        input_image = Image(fname_in)
+        input_image.change_orientation(param.change_header, True)
+        input_image.setFileName(fname_out)
+        input_image.save()
     # return full path
     return os.path.abspath(fname_out)
 
@@ -245,6 +256,8 @@ MANDATORY ARGUMENTS
 OPTIONAL ARGUMENTS
   -s <orient>      orientation. Default=None.
   -o <fname_out>   output file name. Default=<file>_<orient>.<ext>.
+  -a <orient>      actual orientation of image data (for corrupted data). Change the data
+                     orientation to match orientation in the header.
   -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
   -h               help. Show this message
