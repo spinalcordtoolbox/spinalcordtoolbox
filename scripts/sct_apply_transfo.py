@@ -118,8 +118,8 @@ def main():
     for i in range(len(fname_warp_list)):
         # check if file exist
         sct.check_file_exist(fname_warp_list[i])
-    for i in range(len(fname_warp_list_invert)):
-        sct.check_file_exist(fname_warp_list_invert[i])
+    # for i in range(len(fname_warp_list_invert)):
+    #     sct.check_file_exist(fname_warp_list_invert[i])
 
     # check if destination file is 3d
     sct.check_if_3d(fname_dest)
