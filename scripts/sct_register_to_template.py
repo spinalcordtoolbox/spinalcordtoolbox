@@ -221,12 +221,21 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # resample data to 1mm isotropic
+    sct.printv('\nResample data to 1mm isotropic...', verbose)
+    sct.run('isct_c3d data.nii -resample-mm 1.0x1.0x1.0mm -interpolation Linear -o datar.nii')
+    sct.run('isct_c3d segmentation.nii.gz -resample-mm 1.0x1.0x1.0mm -interpolation NearestNeighbor -o segmentationr.nii.gz')
+    # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
+    # TODO
+    sct.run('sct_label_utils -i datar.nii -t create -x 124,186,19,2:129,98,23,8 -o landmarksr.nii.gz')
+
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
-    set_orientation('data.nii', 'RPI', 'data_rpi.nii')
-    set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
-    set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
+    set_orientation('datar.nii', 'RPI', 'data_rpi.nii')
+    set_orientation('landmarksr.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
+    set_orientation('segmentationr.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
 
+    # get landmarks in native space
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
     sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
@@ -234,6 +243,8 @@ def main():
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
+    # re-define warping field using non-cropped space (to avoid issue #367)
+    sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d data_rpi.nii -o warp_straight2curve.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
