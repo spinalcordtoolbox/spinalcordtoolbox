@@ -30,7 +30,7 @@ class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
     """
-    def __init__(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def __init__(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
         """
         Slice constructor
 
@@ -60,6 +60,7 @@ class Slice:
         """
         self.id = slice_id
         self.im = im
+        self.sc_seg = sc_seg
         self.gm_seg = gm_seg
         self.wm_seg = wm_seg
         self.reg_to_M = reg_to_m
@@ -71,7 +72,7 @@ class Slice:
         self.wm_seg_M_flat = wm_seg_m_flat
         self.level = level
 
-    def set(self, slice_id=None, im=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
+    def set(self, slice_id=None, im=None, sc_seg=None, gm_seg=None, wm_seg=None, reg_to_m=None, im_m=None, gm_seg_m=None, wm_seg_m=None, im_m_flat=None, gm_seg_m_flat=None, wm_seg_m_flat=None, level=None):
         """
         Slice setter, only the specified parameters are set
 
@@ -103,6 +104,8 @@ class Slice:
             self.id = slice_id
         if im is not None:
             self.im = im
+        if sc_seg is not None:
+            self.sc_seg = sc_seg
         if gm_seg is not None:
             self.gm_seg = gm_seg
         if wm_seg is not None:
@@ -447,7 +450,7 @@ def l0_norm(x, y):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_wmseg_to_gmseg(wm_seg, original_im, name_wm_seg):
+def inverse_wmseg_to_gmseg(wm_seg, sc_seg, name_wm_seg):
     """
     Inverse a white matter segmentation array image to get a gray matter segmentation image and save it
 
@@ -458,42 +461,180 @@ def inverse_wmseg_to_gmseg(wm_seg, original_im, name_wm_seg):
     :param name_wm_seg: name of the white matter segmentation (to save the associated gray matter segmentation),
      type: string
 
-    :return inverted_seg: gray matter segmentation array
+    :return inverted_seg: gray matter segmentation image
     """
-    import copy
+    import time
+    import skimage.morphology as skm
+
+    inverted_seg = []
+    if len(sc_seg.data.shape) == 3 and sc_seg.data.shape[2] != 1:
+        dim = 3
+    else:
+        dim = 2
+
+    tmp_dir = 'tmp_' + str(time.time())
+    sct.run('mkdir ' + tmp_dir)
+    os.chdir(tmp_dir)
+
+    if dim == 3:
+        for seg_slice, sc_slice in zip(wm_seg.data, sc_seg.data):
+            inverted_seg.append(sc_slice-seg_slice)
+    elif dim == 2:
+        inverted_seg = sc_seg.data - wm_seg.data
+
+    inverted_seg = skm.remove_small_objects(np.asarray(inverted_seg).astype('bool'), 4).astype(int)
+
+    os.chdir('..')
+
+    inverted_seg_im = Image(param=inverted_seg)
+    inverted_seg_im.file_name = name_wm_seg + '_inv_to_gm'
+    inverted_seg_im.ext = '.nii.gz'
+    inverted_seg_im.save()
+
+    sct.run('rm -rf ' + tmp_dir)
+
+    return inverted_seg_im
+
+'''
+# ------------------------------------------------------------------------------------------------------------------
+def inverse_wmseg_to_gmseg_version3(wm_seg, original_im, name_wm_seg): # WORKS ALMOST OK BUT NOT PERFECT
+    """
+    Inverse a white matter segmentation array image to get a gray matter segmentation image and save it
+
+    :param wm_seg: white matter segmentation to inverse, type: Image
+
+    :param original_im: original image croped around the spinal cord
+
+    :param name_wm_seg: name of the white matter segmentation (to save the associated gray matter segmentation),
+     type: string
+
+    :return inverted_seg: gray matter segmentation image
+    """
+    import time
+    import skimage.morphology as skm
 
     inverted_seg = []
     sc = Image(param=original_im.data)
+    if len(sc.data.shape) == 3 and sc.data.shape[2] != 1:
+        dim = 3
+    else:
+        dim = 2
+
+    tmp_dir = 'tmp_' + str(time.time())
+    sct.run('mkdir ' + tmp_dir)
+    os.chdir(tmp_dir)
+
     nz_coord_sc = sc.getNonZeroCoordinates()
     for coord in nz_coord_sc:
-        sc.data[coord.x, coord.y, coord.z] = 1
+        if dim == 3:
+            sc.data[coord.x, coord.y, coord.z] = 1
+        elif dim == 2:
+            sc.data[coord.x, coord.y] = 1
     sc.file_name = 'original_target_sc'
     sc.ext = '.nii.gz'
     sc.save()
 
-    # erosion of the spinal cord segmentation
-    new_sc_dat = copy.deepcopy(sc.data)
+    sct.run(' cp ../' + wm_seg.file_name + '.nii.gz ./res.nii.gz')
 
-    for i_slice, sc_slice in enumerate(sc.data):
-        for i_row, row in enumerate(sc_slice):
-            for i_pix, pix in enumerate(row):
-                if pix == 1:
-                    if row[i_pix-1] == 0 or row[i_pix+1] == 0 \
-                            or sc_slice[i_row+1, i_pix] == 0 or sc_slice[i_row-1, i_pix] == 0:
-                        new_sc_dat[i_slice, i_row, i_pix] = 0
 
-    for seg_slice, sc_slice in zip(wm_seg.data, new_sc_dat):
-        inverted_seg.append(sc_slice-seg_slice)
+    sct.run('fslmaths res.nii.gz -kernel box 3 -dilM dilated_res.nii.gz')
+    sct.run('fslmaths dilated_res.nii.gz -kernel box 4 -ero closed_res.nii.gz')
 
-    inverted_seg_pos = (np.asarray(inverted_seg) > 0).astype(int)
+    sct.run('fslmaths original_target_sc.nii.gz -kernel box 3 -ero eroded_sc.nii.gz')
+    # sct.run('fslmaths eroded_sc.nii.gz -ero eroded_sc.nii.gz')
 
-    inverted_seg_pos_image = Image(param=np.asarray(inverted_seg_pos))
+    eroded_sc = Image('eroded_sc.nii.gz')
+
+    new_sc = Image('closed_res.nii.gz')
+
+    res = Image('res.nii.gz')
+
+    new_sc.data = ((res.data + new_sc.data + eroded_sc.data) > 0).astype(int)  # ((eroded_sc.data + new_sc.data) > 0).astype(int)
+    new_sc.file_name = 'new_sc'
+    new_sc.save()
+
+    if dim == 3:
+        for seg_slice, sc_slice in zip(wm_seg.data, new_sc.data):
+            inverted_seg.append(sc_slice-seg_slice)
+    elif dim == 2:
+        inverted_seg = new_sc.data - wm_seg.data
+
+    inverted_seg = skm.remove_small_objects(np.asarray(inverted_seg).astype('bool'), 7).astype(int)
+
+    # inverted_seg_pos = (np.asarray(inverted_seg) > 0).astype(int)
+
+    os.chdir('..')
+
+    inverted_seg_im = Image(param=inverted_seg)
+    inverted_seg_im.file_name = name_wm_seg + '_inv_to_gm'
+    inverted_seg_im.ext = '.nii.gz'
+    inverted_seg_im.save()
+
+    sct.run('rm -rf ' + tmp_dir)
+
+    return inverted_seg_im
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def inverse_wmseg_to_gmseg_version2(wm_seg, original_im, name_wm_seg):
+    """
+    Inverse a white matter segmentation array image to get a gray matter segmentation image and save it
+
+    :param wm_seg: white matter segmentation to inverse, type: Image
+
+    :param original_im: original image croped around the spinal cord
+
+    :param name_wm_seg: name of the white matter segmentation (to save the associated gray matter segmentation),
+     type: string
+
+    :return inverted_seg: gray matter segmentation image
+    """
+    import time
+
+    inverted_seg = []
+    sc = Image(param=original_im.data)
+    if len(sc.data.shape) == 3 and sc.data.shape[2] != 1:
+        dim = 3
+    else:
+        dim = 2
+
+    tmp_dir = 'tmp_' + str(time.time())
+    sct.run('mkdir ' + tmp_dir)
+    os.chdir(tmp_dir)
+
+    nz_coord_sc = sc.getNonZeroCoordinates()
+    for coord in nz_coord_sc:
+        if dim == 3:
+            sc.data[coord.x, coord.y, coord.z] = 1
+        elif dim == 2:
+            sc.data[coord.x, coord.y] = 1
+    sc.file_name = 'original_target_sc'
+    sc.ext = '.nii.gz'
+    sc.save()
+
+    sct.run(' cp ../' + wm_seg.file_name + '.nii.gz ./res.nii.gz')
+
+
+    sct.run('fslmaths res.nii.gz -binv inverted_res.nii.gz')
+    sct.run('fslmaths inverted_res.nii.gz -kernel  2D -dilD dilated_res.nii.gz')
+
+    dilated_res = Image('dilated_res.nii.gz')
+
+    inv_res = Image('inverted_res.nii.gz')
+
+    inverted_seg = ((dilated_res.data - inv_res.data) > 0).astype(int)
+
+    os.chdir('..')
+
+    inverted_seg_pos_image = Image(param=np.asarray(inverted_seg))
     inverted_seg_pos_image.file_name = name_wm_seg + '_inv_to_gm'
     inverted_seg_pos_image.ext = '.nii.gz'
     inverted_seg_pos_image.save()
 
-    return inverted_seg_pos
+    # sct.run('rm -rf ' + tmp_dir)
 
+    return inverted_seg_pos_image
+'''
 
 # ------------------------------------------------------------------------------------------------------------------
 def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
@@ -533,6 +674,13 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
     res_wm_seg_im.save()
 
     return res_wm_seg
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def correct_wmseg(res_gmseg, original_im):
+    wmseg_dat = (original_im.data > 0).astype(int) - res_gmseg.data
+
+    return Image(param=(wmseg_dat > 0).astype(int))
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -946,7 +1094,7 @@ def amu_treatments(data_path):
 
 
 ########################################################################################################################
-# -------------------------------------------------- LEAVE ONE OUT --------------------------------------------------- #
+# --------------------------------------------------- VALIDATION ----------------------------------------------------- #
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1066,7 +1214,7 @@ def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='gm', use_levels=True):
+def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True):
     """
     Leave one out cross validation taking 1 SLICE out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1079,8 +1227,10 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
 
     """
     import time
-    dice_file = open('dice_coeff.txt', 'w')
-    dice_sum = 0
+    wm_dice_file = open('wm_dice_coeff.txt', 'w')
+    wm_dice_sum = 0
+    gm_dice_file = open('gm_dice_coeff.txt', 'w')
+    gm_dice_sum = 0
     time_file = open('computation_time.txt', 'w')
     level_file = open('levels_similarity.txt', 'w')
     similarity_sum = 0
@@ -1101,7 +1251,6 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
                         target = file_name
                         target_name = sct.extract_fname(target)[1][:-3]
                         ref_gm_seg = target_name + '_seg.nii.gz'
-                        ref = None
                         slice_level = target_name[-2:]
                         target_n_slice = target_name[-5:-3]
 
@@ -1118,8 +1267,9 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
                         # beginning of the gm seg
                         os.chdir(tmp_dir)
 
-                        res = ''
-                        cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg + ' -seg-type ' + seg_type
+                        gm_res = ''
+                        wm_res = ''
+                        cmd_gm_seg = 'sct_asman -i ' + target + ' -dic ' + tmp_dic_name + ' -model compute  -target-reg ' + target_reg
 
                         if use_levels:
                             cmd_gm_seg += ' -l ' + slice_level
@@ -1131,27 +1281,21 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
                         seg_time = time.time() - before_seg
 
                         for file_name_tmp_dir in os.listdir('.'):
-                            if 'graymatterseg' in file_name_tmp_dir and 'manual' not in file_name_tmp_dir:
-                                res = file_name_tmp_dir
+                            if 'wmseg' in file_name_tmp_dir and 'inv_to_gm' not in file_name_tmp_dir and '_corrected' not in file_name_tmp_dir:
+                                wm_res = file_name_tmp_dir
+                                wm_res_im = Image(wm_res)
+                            elif 'inv_to_gm' in file_name_tmp_dir:
+                                gm_res = file_name_tmp_dir
+                                gm_res_im = Image(gm_res)
 
                         # Validation
                         ref_gm_seg_im = Image(ref_gm_seg)
                         target_im = Image(target)
 
-                        if seg_type == 'wm':
-                            inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
+                        inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
 
-                            ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
-                            ref_wm_seg_im = Image(ref_wm_seg)
-
-                            ref = ref_wm_seg
-                            ref_im = ref_wm_seg_im
-
-                        elif seg_type == 'gm':
-                            ref = ref_gm_seg
-                            ref_im = ref_gm_seg_im
-
-                        res_im = Image(res)
+                        ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
+                        ref_wm_seg_im = Image(ref_wm_seg)
 
                         # Levels similarity
                         selected_slices_levels = open('selected_slices.txt', 'r')
@@ -1170,22 +1314,27 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
                         level_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + str(slice_similarity) + '% (' + str(slice_level) + ')\n')
 
                         # Dice coefficient
-                        status, dice_output = sct.run('sct_dice_coefficient ' + res + ' ' + ref)
-                        dice = dice_output.split(' ')[-1]
+                        status, wm_dice_output = sct.run('sct_dice_coefficient ' + wm_res + ' ' + ref_wm_seg)
+                        wm_dice = wm_dice_output.split(' ')[-1]
+
+                        status, gm_dice_output = sct.run('sct_dice_coefficient ' + gm_res + ' ' + ref_gm_seg)
+                        gm_dice = gm_dice_output.split(' ')[-1]
                         os.chdir('..')
 
-                        dice_sum += float(dice)
+                        wm_dice_sum += float(wm_dice)
+                        gm_dice_sum += float(gm_dice)
                         n_slices += 1
-                        dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + dice[:-1] + ' (' + str(slice_level) + ')\n')
+                        wm_dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + wm_dice[:-1] + ' (' + str(slice_level) + ')\n')
+                        gm_dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + gm_dice[:-1] + ' (' + str(slice_level) + ')\n')
 
                         # Error map
                         if first:
-                            error_map_sum = np.zeros(ref_im.data.shape)
-                            error_map_abs_sum = np.zeros(ref_im.data.shape)
+                            error_map_sum = np.zeros(ref_wm_seg_im.data.shape)
+                            error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
                             first = False
 
-                        error_3d = (ref_im.data - res_im.data) + 1
-                        error_3d_abs = abs(ref_im.data - res_im.data)
+                        error_3d = (ref_wm_seg_im.data - wm_res_im.data) + 1
+                        error_3d_abs = abs(ref_wm_seg_im.data - wm_res_im.data)
 
                         error_map_sum += error_3d
                         error_map_abs_sum += error_3d_abs
@@ -1202,8 +1351,11 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
                     # else:
                     #    sct.run('rm -rf ' + tmp_dir)
     # if e is None:
-    dice_file.write('\nmean dice: ' + str(dice_sum/n_slices))
-    dice_file.close()
+    wm_dice_file.write('\nmean dice: ' + str(wm_dice_sum/n_slices))
+    wm_dice_file.close()
+
+    gm_dice_file.write('\nmean dice: ' + str(gm_dice_sum/n_slices))
+    gm_dice_file.close()
 
     level_file.write('\nmean similarity: ' + str(similarity_sum/n_slices) + '% ')
     level_file.close()
@@ -1214,7 +1366,12 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', seg_type='
     time_file.write('\nmean computation time: ' + str(time_sum/n_slices) + ' sec')
     time_file.close()
 
+########################################################################################################################
+# ------------------------------------------------- POST-TREATMENTS -------------------------------------------------- #
+########################################################################################################################
 
+
+# ------------------------------------------------------------------------------------------------------------------
 def compute_error_map(data_path):
     error_map_sum = None
     error_map_abs_sum = None
@@ -1251,6 +1408,45 @@ def compute_error_map(data_path):
 
     Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
     Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def compute_similarities(data_path):
+    similarity_sum = 0
+    n_slices = 0
+    os.chdir(data_path)
+    level_file = open('levels_similarity.txt', 'w')
+    for file_name in os.listdir('.'):
+        if os.path.isdir(file_name) and file_name != 'dictionary':
+            os.chdir(file_name)
+
+            for im_file in os.listdir('.'):
+                if 'seg.nii.gz' in im_file:
+                    ref_seg = im_file
+            subject = ref_seg[:8]
+            n_slice = ref_seg[14:16]
+            slice_level = ref_seg[-13:-11]
+
+            selected_slices_levels = open('selected_slices.txt', 'r')
+            line_list = selected_slices_levels.read().split("'")
+            selected_slices_levels.close()
+            levels = []
+            similar_levels = 0
+            for s in line_list:
+                if s in ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']:
+                    levels.append(s)
+            for l in levels:
+                if l == slice_level:
+                    similar_levels += 1
+            slice_similarity = float(similar_levels)/len(levels)
+            similarity_sum += slice_similarity
+            level_file.write(subject + ' slice ' + n_slice + ': ' + str(slice_similarity*100) + '% (' + str(slice_level) + ')\n')
+            n_slices += 1
+            os.chdir('..')
+    level_file.write('\nmean similarity: ' + str(similarity_sum/n_slices) + '% ')
+    level_file.close()
+    os.chdir('..')
+
 
 
 
