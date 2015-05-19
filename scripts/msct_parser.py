@@ -238,25 +238,27 @@ class Parser:
                 continue
 
             if arg in self.options:
+                # for each argument, check if is in the option list.
+                # if so, check the integrity of the argument
                 if self.options[arg].deprecated_by is not None:
-                    self.options[self.options[arg].deprecated_by] = self.options[arg]
-                else:
-                    # for each argument, check if is in the option list.
-                    # if so, check the integrity of the argument
-                    if self.options[arg].type_value:
-                        if len(arguments) > index+1: # Check if option is not the last item
-                            param = arguments[index+1]
-                        else:
-                            self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
-
-                        # check if option has an argument that is not another option
-                        if param in self.options:
-                            self.usage.error("ERROR: Option " + self.name + " needs an argument...")
-
-                        dictionary[arg] = self.options[arg].check_integrity(param)
-                        skip = True
+                    try:
+                        arg = self.options[arg].deprecated_by
+                    except KeyError as e:
+                        sct.printv("ERROR : Current argument non existent : " + e.message)
+                if self.options[arg].type_value:
+                    if len(arguments) > index+1: # Check if option is not the last item
+                        param = arguments[index+1]
                     else:
-                        dictionary[arg] = True
+                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+
+                    # check if option has an argument that is not another option
+                    if param in self.options:
+                        self.usage.error("ERROR: Option " + self.name + " needs an argument...")
+
+                    dictionary[arg] = self.options[arg].check_integrity(param)
+                    skip = True
+                else:
+                    dictionary[arg] = True
             else:
                 # if not in the list of known options, there is a syntax error in the list of arguments
                 # check if the input argument is close to a known option
