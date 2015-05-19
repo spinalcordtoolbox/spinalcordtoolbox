@@ -153,6 +153,13 @@ if do_preprocessing_T1:
         # sct.printv('sct_propseg -i data_RPI_registered.nii.gz -t t1 -init-centerline data_RPI_registered-mask.nii.gz')
         # os.system('sct_propseg -i data_RPI_registered.nii.gz -t t1 -init-centerline data_RPI_registered-mask.nii.gz')
 
+        #os.system('sct_propseg -i data_RPI.nii.gz -t t1 -init-centerline centerline_T1.nii.gz')
+        os.system(('sct_register_multimodal -i data_RPI.nii.gz -d ../T2/data_RPI_crop.nii.gz -iseg centerline_T1_mask_cyl_7.nii.gz -dseg centerline_T2_mask_cyl_7.nii.gz -p step=1,type=seg,algo=rigid,metric=MeanSquares,smooth=0.5:step=2,type=seg,algo=slicereg,metric=MeanSquares,poly=5:step=3,type=im,algo=slicereg,metric=MI,poly=5'))
+
+        sct.run('sct_apply_transfo -i data_RPI_seg.nii.gz -d centerline_T2.nii.gz -w warp_data_RPI2data_RPI_crop.nii.gz -x nn')
+
+        # save image and seg_reg into new folder
+        os.makedirs('')
 
        # # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects  (Done because propseg tends to diverge on edges)
        #  print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects...'
@@ -172,11 +179,11 @@ if do_preprocessing_T1:
        #  nibabel.save(img_seg, file_seg + '_mod' + ext_seg)
        #
        #
-       #  print '\n Concatenating segmentation and label files...'
-       #  sct.run('fslmaths data_RPI_registered_seg_mod.nii.gz -add labels_updown.nii.gz seg_and_labels.nii.gz')
-
-        # Get centerline from seg and labels
-        sct.run('sct_get_centerline_from_labels -i /Users/tamag/data/data_template/subjects_test_T1/subjects/' + subject+'/T2/seg_and_labels.nii.gz -o centerline_T2.nii.gz')
+        # print '\n Concatenating segmentation and label files...'
+        # sct.run('fslmaths data_RPI_seg.nii.gz -add labels_updown.nii.gz seg_and_labels.nii.gz')
+        #
+        # # Get centerline from seg and labels
+        # sct.run('sct_get_centerline_from_labels -i /Users/tamag/data/data_template/subjects_test_T1/subjects/' + subject+'/T1/seg_and_labels.nii.gz -o centerline_T1.nii.gz')
 
        #
        #

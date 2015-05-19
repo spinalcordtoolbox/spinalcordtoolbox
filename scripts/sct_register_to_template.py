@@ -11,13 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: make function sct_convert_binary_to_trilinear
 # TODO: testing script for all cases
-# TODO: try to combine seg and image based for 2nd stage
-# TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
-# TODO: flag to output warping field
-# TODO: check if destination is axial orientation
-# TODO: set gradient-step-length in mm instead of vox size.
 
 import sys
 import os
@@ -29,9 +23,6 @@ from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register, find_zmin_zmax
 from msct_parser import Parser
 from msct_image import Image
-
-
-
 
 
 # get path of the toolbox
@@ -221,12 +212,28 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # resample data to 1mm isotropic
+    sct.printv('\nResample data to 1mm isotropic...', verbose)
+    sct.run('isct_c3d data.nii -resample-mm 1.0x1.0x1.0mm -interpolation Linear -o datar.nii')
+    sct.run('isct_c3d segmentation.nii.gz -resample-mm 1.0x1.0x1.0mm -interpolation NearestNeighbor -o segmentationr.nii.gz')
+    # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
+    resample_labels('landmarks.nii.gz', 'datar.nii', 'landmarksr.nii.gz')
+    # # TODO
+    # sct.run('sct_label_utils -i datar.nii -t create -x 124,186,19,2:129,98,23,8 -o landmarksr.nii.gz')
+
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
-    set_orientation('data.nii', 'RPI', 'data_rpi.nii')
-    set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
-    set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
+    set_orientation('datar.nii', 'RPI', 'data_rpi.nii')
+    set_orientation('landmarksr.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
+    set_orientation('segmentationr.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
 
+    # # Change orientation of input images to RPI
+    # sct.printv('\nChange orientation of input images to RPI...', verbose)
+    # set_orientation('data.nii', 'RPI', 'data_rpi.nii')
+    # set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
+    # set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
+
+    # get landmarks in native space
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
     sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
@@ -234,6 +241,8 @@ def main():
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
     sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0')
+    # re-define warping field using non-cropped space (to avoid issue #367)
+    sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d data_rpi.nii -o warp_straight2curve.nii.gz')
 
     # Label preparation:
     # --------------------------------------------------------------------------------
@@ -354,6 +363,34 @@ def main():
     sct.printv('fslview '+fname_data+' template2anat -b 0,4000 &', verbose, 'info')
     sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
 
+
+# Resample labels
+# ==========================================================================================
+def resample_labels(fname_labels, fname_dest, fname_output):
+    """
+    This function re-create labels into a space that has been resampled. It works by re-defining the location of each
+    label using the old and new voxel size.
+    """
+    # get dimensions of input and destination files
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_labels)
+    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = sct.get_dimension(fname_dest)
+    sampling_factor = [float(nx)/nxd, float(ny)/nyd, float(nz)/nzd]
+    # read labels
+    status, output = sct.run('sct_label_utils -i '+fname_labels+' -t display-voxel -v 1')
+    # parse to get each label
+    label_list = output[output.find('Useful notation:')+17:].split(':')
+    label_new_list = []
+    for label in label_list:
+        label_sub = label.split(',')
+        label_sub_new = []
+        for i_label in range(0, 3):
+            label_single = round(int(label_sub[i_label])/sampling_factor[i_label])
+            label_sub_new.append(str(int(label_single)))
+        label_sub_new.append(str(int(float(label_sub[3]))))
+        label_new_list.append(','.join(label_sub_new))
+    label_new_list = ':'.join(label_new_list)
+    # create new labels
+    sct.run('sct_label_utils -i '+fname_dest+' -t create -x '+label_new_list+' -v 1 -o '+fname_output)
 
 
 # START PROGRAM
