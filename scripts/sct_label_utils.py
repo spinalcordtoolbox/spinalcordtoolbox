@@ -403,6 +403,7 @@ class ProcessLabels(object):
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         print 'Useful notation:'
         print useful_notation
+        return useful_notation
 
     def diff(self):
         """
