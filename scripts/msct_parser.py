@@ -67,7 +67,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -77,6 +77,7 @@ class Option:
         self.help = help
         self.parser = parser
         self.order = order
+        self.deprecated_by = deprecated_by
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -182,9 +183,9 @@ class Parser:
         self.errors = ''
         self.usage = Usage(self, file_name)
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None):
         order = len(self.options)+1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
@@ -237,22 +238,25 @@ class Parser:
                 continue
 
             if arg in self.options:
-                # for each argument, check if is in the option list.
-                # if so, check the integrity of the argument
-                if self.options[arg].type_value:
-                    if len(arguments) > index+1: # Check if option is not the last item
-                        param = arguments[index+1]
-                    else:
-                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
-
-                    # check if option has an argument that is not another option
-                    if param in self.options:
-                        self.usage.error("ERROR: Option " + self.name + " needs an argument...")
-
-                    dictionary[arg] = self.options[arg].check_integrity(param)
-                    skip = True
+                if self.options[arg].deprecated_by is not None:
+                    self.options[self.options[arg].deprecated_by] = self.options[arg]
                 else:
-                    dictionary[arg] = True
+                    # for each argument, check if is in the option list.
+                    # if so, check the integrity of the argument
+                    if self.options[arg].type_value:
+                        if len(arguments) > index+1: # Check if option is not the last item
+                            param = arguments[index+1]
+                        else:
+                            self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
+
+                        # check if option has an argument that is not another option
+                        if param in self.options:
+                            self.usage.error("ERROR: Option " + self.name + " needs an argument...")
+
+                        dictionary[arg] = self.options[arg].check_integrity(param)
+                        skip = True
+                    else:
+                        dictionary[arg] = True
             else:
                 # if not in the list of known options, there is a syntax error in the list of arguments
                 # check if the input argument is close to a known option
