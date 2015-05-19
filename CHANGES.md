@@ -1,9 +1,9 @@
 
 # CHANGES TO RELEASE
 
-##2.0.3 (TBD)
+##2.0.3 (2015-05-19)
 - BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
-- OPT: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid scaling issues
+- BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
 - OPT: **sct_create_mask**: improved speed
 
 ##2.0.2 (2015-05-16)
