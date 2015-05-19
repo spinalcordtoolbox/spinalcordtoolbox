@@ -376,9 +376,11 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = sct.get_dimension(fname_dest)
     sampling_factor = [float(nx)/nxd, float(ny)/nyd, float(nz)/nzd]
     # read labels
-    status, output = sct.run('sct_label_utils -i '+fname_labels+' -t display-voxel -v 1')
+    from sct_label_utils import ProcessLabels
+    processor = ProcessLabels(fname_labels)
+    label_list = processor.display_voxel().split(':')
     # parse to get each label
-    label_list = output[output.find('Useful notation:')+17:].split(':')
+    # TODO: modify sct_label_utils to output list of coordinates instead of string.
     label_new_list = []
     for label in label_list:
         label_sub = label.split(',')
