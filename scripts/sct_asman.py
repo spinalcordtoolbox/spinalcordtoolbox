@@ -39,661 +39,13 @@ class Param:
         self.reg = None  # TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = None  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
         self.level_fname = None
-        self.seg_type = None
+        #  self.seg_type = None
         self.verbose = 1
 
 
 ########################################################################################################################
 # ----------------------------------------------------- Classes ------------------------------------------------------ #
 ########################################################################################################################
-
-# ----------------------------------------------------------------------------------------------------------------------
-# MODEL DICTIONARY -----------------------------------------------------------------------------------------------------
-class ModelDictionary:
-    """
-    Dictionary used by the supervised gray matter segmentation method
-    """
-    def __init__(self, dic_param=None):
-        """
-        model dictionary constructor
-
-        :param dic_param: dictionary parameters, type: Param
-        """
-        if dic_param is None:
-            self.param = Param()
-        else:
-            self.param = dic_param
-
-        # list of the slices of the dictionary
-        self.slices = []  # type: list of slices
-        # number of slices
-        self.J = 0  # type: int
-        # dimension of the slices (flattened)
-        self.N = 0  # type: int
-        # mean segmentation image of the dictionary
-        self.mean_seg = None  # type: numpy array
-        # mean image of the dictionary
-        self.mean_image = None  # type: numpy array
-
-        # dictionary containing information about the data dictionary slices by subject : used to save the model only
-        # self.dic_data_info[subject] = {'n_slices': 0, 'inverted_gm_seg': [], 'im_M': [], 'seg_M': []}
-        self.dic_data_info = {}  # type: dictionary
-
-        # list of transformation to apply to each slice to co-register the data into the common groupwise space
-        if self.param.reg is not None:
-            self.coregistration_transfos = self.param.reg
-        else:
-            self.coregistration_transfos = ['Affine']
-
-        suffix = ''
-        for transfo in self.coregistration_transfos:
-            suffix += '_' + transfo
-        # self.coregistration_transfos = ['SyN']
-
-        # folder containing the saved model
-        self.model_dic_name = ''
-        if self.param.todo_model == 'compute':
-            self.model_dic_name = './gmseg_model_dictionary' + suffix  # TODO: remove suffix
-            self.compute_model_dictionary()
-        elif self.param.todo_model == 'load':
-            self.model_dic_name = self.param.path_dictionary  # TODO change the path by the name of the dic ?? ...
-            self.load_model_dictionary()
-        else:
-            sct.printv('WARNING: no todo_model param', self.param.verbose, 'warning')
-
-        # save all the dictionary slices
-        # TODO: --> not used by the model, only for visualization
-
-        '''
-        if 'data_by_slice' not in os.listdir('.'):
-            sct.run('mkdir ./data_by_slice')
-        os.chdir('./data_by_slice')
-        for j in range(self.J):
-            save_image(self.slices[j].im, 'slice_'+str(j) + '_im')
-            save_image(self.slices[j].im_M, 'slice_'+str(j) + '_registered_im')
-
-            save_image(self.slices[j].seg, 'slice_'+str(j) + '_seg')
-            save_image(self.slices[j].seg_M, 'slice_'+str(j) + '_registered_seg')
-        os.chdir('..')
-        '''
-
-        '''
-        if self.param.verbose == 2:
-            self.show_data()
-        '''
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def compute_model_dictionary(self):
-        """
-        Compute the model dictionary using the provided data set
-        """
-        sct.printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
-        # Load all the images' slices from param.path_dictionary
-        sct.printv('\nLoading data dictionary ...', self.param.verbose, 'normal')
-        # List of T2star images (im) and their label decision (seg) (=segmentation of the gray matter), slice by slice
-
-        sct.run('mkdir ' + self.model_dic_name)
-
-        self.slices = self.load_data_dictionary()
-
-        # number of slices in the data set
-        self.J = len([dic_slice.im for dic_slice in self.slices])
-        # dimension of the data (flatten slices)
-        self.N = len(self.slices[0].im.flatten())
-
-        self.save_model_data('im')
-
-        if self.param.seg_type != 'gm-model':
-            # inverts the segmentation slices : the model uses segmentation of the WM instead of segmentation of the GM
-            self.invert_seg()
-            self.save_model_data('inverted_gm_seg')
-
-        sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space ...',
-                   self.param.verbose, 'normal')
-
-        self.mean_seg = self.seg_coregistration(transfo_to_apply=self.coregistration_transfos)
-        self.save_model_data('seg_M')
-
-        sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
-
-        # List of images (im_M) and their label decision (seg_M) (=segmentation of the gray matter),
-        #  --> slice by slice in the common groupwise space
-        self.coregister_data(transfo_to_apply=self.coregistration_transfos)
-
-        '''
-        TESTING
-
-        self.crop_data()
-        '''
-
-        self.save_model_data('im_M')
-
-        self.mean_image = self.compute_mean_dic_image(np.asarray([dic_slice.im_M for dic_slice in self.slices]))
-        save_image(self.mean_image, 'mean_image', path=self.model_dic_name+'/', im_type='uint8')
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # FUNCTIONS USED TO COMPUTE THE MODEL
-    # ------------------------------------------------------------------------------------------------------------------
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def load_data_dictionary(self):
-        """
-        each slice of each subject will be loaded separately in a Slice object containing :
-
-        - a slice id
-
-        - the original T2star image crop around the spinal cord: im
-
-        - a manual segmentation of the gray matter: seg
-
-        :return slices: numpy array of all the slices of the data dictionary
-        """
-        # initialization
-        slices = []
-        j = 0
-        # TODO: change the name of files to find to a more general structure
-        for subject_dir in os.listdir(self.param.path_dictionary):
-            subject_path = self.param.path_dictionary + '/' + subject_dir
-            if os.path.isdir(subject_path):
-                self.dic_data_info[subject_dir] = {'n_slices': 0, 'inverted_gm_seg': [], 'im_M': [], 'seg_M': []}
-
-                subject_seg_in = ''
-                subject_gm_seg = ''
-                sct.run('mkdir ' + self.model_dic_name + '/' + subject_dir, verbose=self.param.verbose)
-                for file_name in os.listdir(subject_path):
-                    if 'GM' in file_name or 'gmseg' in file_name:
-                        subject_gm_seg = file_name
-                        '''
-                        # copy of the seg image in the saved model folder
-                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name
-                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_seg.nii.gz')
-                        '''
-                    if 'seg_in' in file_name and 'gm' not in file_name.lower():
-                        subject_seg_in = file_name
-                        '''
-                        # copy of the slice image in the saved model folder
-                        sct.run('cp ./' + self.param.path_dictionary + subject_dir + '/' + file_name
-                                + ' ' + self.model_dic_name + '/' + subject_dir + '/' + subject_dir + '_im.nii.gz')
-                        '''
-
-                im = Image(subject_path + '/' + subject_seg_in)
-                seg = Image(subject_path + '/' + subject_gm_seg)
-
-                for im_slice, seg_slice in zip(im.data, seg.data):
-                    self.dic_data_info[subject_dir]['n_slices'] += 1
-                    slices.append(Slice(slice_id=j, im=im_slice, gm_seg=seg_slice, reg_to_m=[]))
-                    j += 1
-
-        return np.asarray(slices)
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def save_model_data(self, what_to_save):
-        """
-        save 3D images of the model dictionary using the dictionary of information about the data slices by subject
-
-        :param what_to_save: type of data to be saved
-        """
-        suffix = ''
-        data_to_save = []
-        total_n_slices = 0
-        if what_to_save == 'gm_seg':
-            suffix = '_gm_seg'
-            data_to_save = [dic_slice.gm_seg for dic_slice in self.slices]
-        if what_to_save == 'inverted_gm_seg':
-            suffix = '_wm_seg'
-            data_to_save = [dic_slice.wm_seg for dic_slice in self.slices]
-        elif what_to_save == 'im':
-            suffix = '_im'
-            data_to_save = [dic_slice.im for dic_slice in self.slices]
-        elif what_to_save == 'im_M':
-            suffix = '_im_model_space'
-            data_to_save = [dic_slice.im_M for dic_slice in self.slices]
-        elif what_to_save == 'gm_seg_M':
-            suffix = '_gm_seg_model_space'
-            data_to_save = [dic_slice.gm_seg_M for dic_slice in self.slices]
-        elif what_to_save == 'wm_seg_M':
-            suffix = '_wm_seg_model_space'
-            data_to_save = [dic_slice.wm_seg_M for dic_slice in self.slices]
-
-        for subject_name in sorted(self.dic_data_info.keys()):
-            first_subject_slice = total_n_slices
-            last_subject_slice = first_subject_slice + self.dic_data_info[subject_name]['n_slices']
-            self.dic_data_info[subject_name][what_to_save] = data_to_save[first_subject_slice:last_subject_slice]
-            total_n_slices += self.dic_data_info[subject_name]['n_slices']
-
-        for subject_name, info in zip(self.dic_data_info.keys(), self.dic_data_info.values()):
-            for i, slice_i in enumerate(info[what_to_save]):
-
-                to_save = Image(param=np.asarray(slice_i))
-                to_save.path = self.model_dic_name + '/' + subject_name + '/'
-
-                to_save.file_name = subject_name + '_slice' + str(i) + suffix
-                to_save.ext = '.nii.gz'
-                to_save.save(type='minimize')
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def invert_seg(self):
-        """
-        Invert the gray matter segmentation to get segmentation of the white matter instead
-        keeps more information, theoretically better results
-        """
-        for dic_slice in self.slices:
-            im_dic = Image(param=dic_slice.im)
-            sc = im_dic.copy()
-            nz_coord_sc = sc.getNonZeroCoordinates()
-            im_seg = Image(param=dic_slice.gm_seg)
-            nz_coord_d = im_seg.getNonZeroCoordinates()
-            for coord in nz_coord_sc:
-                sc.data[coord.x, coord.y] = 1
-            for coord in nz_coord_d:
-                im_seg.data[coord.x, coord.y] = 1
-            # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
-            inverted_slice_seg = np.absolute(sc.data - im_seg.data).astype(int)
-            dic_slice.set(wm_seg=inverted_slice_seg)
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def seg_coregistration(self, transfo_to_apply=None):
-        """
-        For all the segmentation slices, do a registration of the segmentation slice to the mean segmentation
-         applying all the transformations in transfo_to_apply
-
-        Compute, apply and save each transformation warping field for all the segmentation slices
-
-        Compute the new mean segmentation at each step and update self.mean_seg
-
-        :param transfo_to_apply: list of string
-        :return:
-        """
-        if self.param.seg_type == 'gm-model':
-            current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.gm_seg for dic_slice in self.slices]))
-        else:
-            current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.wm_seg for dic_slice in self.slices]))
-
-        for transfo in transfo_to_apply:
-            sct.printv('Doing a ' + transfo + ' registration of each segmentation slice to the mean segmentation ...', self.param.verbose, 'normal')
-            current_mean_seg = self.find_coregistration(mean_seg=current_mean_seg, transfo_type=transfo)
-
-        '''
-        fig=plt.figure()
-        plt.imshow(current_mean_seg)
-        plt.title('Current mean segmentation ...')
-        plt.plot()
-
-        fig=plt.figure()
-        plt.imshow(self.slices[0].seg_M)
-        plt.title('slice 0...')
-        plt.plot()
-
-        # mean number of white pixels in the manual segmentation slices of the dictionary
-        mean_white_pix = self.nb_w_pixels()
-        print mean_white_pix
-
-
-        i=1
-        while np.sum(current_mean_seg) < 0.8*mean_white_pix:
-            print '--> Affine registration number ',i
-            print 'number of white pixels in the current mean seg', np.sum(current_mean_seg)
-            current_mean_seg = self.compute_mean_seg(np.asarray([slice.seg_M for slice in self.slices]))
-            current_mean_seg = self.find_coregistration(mean_seg=current_mean_seg, transfo_type='Affine')
-            i+=10
-        #current_mean_seg = self.compute_mean_seg(np.asarray([slice.seg_M for slice in self.slices]))
-        current_mean_seg = self.find_coregistration(mean_seg=current_mean_seg, transfo_type='Affine')
-        '''
-        resulting_mean_seg = current_mean_seg
-
-        return resulting_mean_seg
-
-    '''
-    def nb_w_pixels(self):
-        s_w_pix = 0
-        for slice in self.slices:
-            s_w_pix += np.sum(slice.seg)
-        return s_w_pix/self.J
-    '''
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def find_coregistration(self, mean_seg=None, transfo_type='Rigid', first=True):
-        """
-        For each segmentation slice, apply and save a registration of the specified type of transformation
-        the name of the registration file (usually a matlab matrix) is saved in self.RtoM
-
-        :param mean_seg: current mean segmentation
-
-        :param transfo_type: type of transformation for the registration
-
-        :return mean seg: updated mean segmentation
-        """
-        for dic_slice in self.slices:
-            name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_ants_transfo_name(transfo_type)[0]
-            new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
-            dic_slice.set(reg_to_m=new_reg_list)
-            if first:
-                if self.param.seg_type == 'gm-model':
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.gm_seg, transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-                else:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg, transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-            else:
-                if self.param.seg_type == 'gm-model':
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.gm_seg_M, transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-                else:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M, transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-            if self.param.seg_type == 'gm-model':
-                dic_slice.set(gm_seg_m=seg_m.astype(int))
-                dic_slice.set(gm_seg_m_flat=seg_m.flatten().astype(int))
-            else:
-                dic_slice.set(wm_seg_m=seg_m.astype(int))
-                dic_slice.set(wm_seg_m_flat=seg_m.flatten().astype(int))
-
-        if self.param.seg_type == 'gm-model':
-            mean_seg = compute_majority_vote_mean_seg([dic_slice.gm_seg_M for dic_slice in self.slices])
-        else:
-            mean_seg = compute_majority_vote_mean_seg([dic_slice.wm_seg_M for dic_slice in self.slices])
-
-        save_image(mean_seg, 'mean_seg', path=self.model_dic_name+'/', im_type='uint8')
-
-        return mean_seg
-
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    def compute_majority_vote_mean_seg_old_version(self, seg_data_set):
-        """
-        Compute the mean segmentation image for a given segmentation data set seg_data_set by Majority Vote
-
-        :param seg_data_set:
-        :return:
-        """
-        mean_seg = []
-        # dictionary containing for each possible label value :
-        #  the sum of all the flatten segmentation in seg_data_set = vector of the sum for each pixel
-        choose_maj_vote = {}
-        # for 0 and for 1 :
-        for l in self.L:
-            to_be_summed = []
-            for dic_slice in seg_data_set:
-                # vector of the pixel corresponding to the label value l in this slice
-                # 0 if the pixel is different than the label value, 1 if it's the same
-                consistent_vox = []
-                for row in dic_slice:
-                    for i in row:
-                        try:
-                            if i > 0.2:
-                                i = 1
-                        except ValueError:
-                            print 'Value Error with i = ', i
-                            print 'Dataset was : \n', seg_data_set
-                        consistent_vox.append(kronecker_delta(i, l))
-                to_be_summed.append(consistent_vox)
-            summed_vector = np.zeros(len(to_be_summed[0]), dtype=np.int)
-            # adding all the vectors of consistent_vox
-            for v in to_be_summed:
-                summed_vector = np.add(summed_vector, v)
-            choose_maj_vote[l] = summed_vector
-
-        # for each pixel :
-        # the value chosen for mean_seg is the value that was the most present in the data set for this pixel
-        for vote_tuple in zip(choose_maj_vote[0], choose_maj_vote[1]):
-            if vote_tuple[0] >= vote_tuple[1]:
-                mean_seg.append(0)
-            elif vote_tuple[1] > vote_tuple[0]:
-                mean_seg.append(1)
-        n = int(sqrt(self.N))
-        return np.asarray(mean_seg).reshape(n, n)
-    '''
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def compute_mean_dic_image(self, im_data_set):
-        """
-        Compute the mean image of the dictionary
-
-        Used to co-register the dictionary images into teh common groupwise space
-
-        :param im_data_set:
-        :return mean: mean image of the input data set
-        """
-        mean = np.sum(im_data_set, axis=0)
-
-        mean /= float(self.J)
-
-        return mean
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def coregister_data(self,  transfo_to_apply=None):
-        """
-        Apply to each image slice of the dictionary the transformations found registering the segmentation slices.
-        The co_registered images are saved for each slice as im_M
-
-        :param transfo_to_apply: list of string
-        :return:
-        """
-        list_im = [dic_slice.im for dic_slice in self.slices]
-        list_gm_seg = [dic_slice.gm_seg for dic_slice in self.slices]
-        
-        for dic_slice in self.slices:
-            for n_transfo, transfo in enumerate(transfo_to_apply):
-                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
-                # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
-                if self.param.seg_type == 'gm':
-                    gm_seg_m = apply_ants_transfo(self.compute_mean_dic_image(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
-
-            dic_slice.set(im_m=im_m)
-            dic_slice.set(im_m_flat=im_m.flatten())
-            if self.param.seg_type == 'gm':
-                dic_slice.set(gm_seg_m=gm_seg_m)
-                dic_slice.set(gm_seg_m_flat=gm_seg_m.flatten())
-
-    '''
-    def crop_data_new_ellipse(self):
-        #croping the im_M images
-
-        #mean_seg dimensions :
-        #height
-        down = True
-        above = False
-        height_min = 0
-        height_max = 0
-        for h,row in enumerate(self.mean_seg.T):
-            if sum(row) == 0:
-                if down :
-                    height_min = h
-                elif not above:
-                    height_max = h
-                    above = True
-            else:
-                down = False
-        height_min += 1
-        height_max -= 1
-
-        #width
-        left = True
-        right = False
-        width_min = 0
-        width_max = 0
-        for w,row in enumerate(self.mean_seg):
-            if sum(row) == 0:
-                if left :
-                    width_min = w
-                elif not right:
-                    width_max = w
-                    right = True
-            else:
-                left = False
-        width_min += 1
-        width_max -= 1
-
-        a = (width_max - width_min)/2.0
-        b = (height_max - height_min)/2.0
-
-        range_x = np.asarray(range(int(-10*a),int(10*a)+1)) /10.0
-        top_points = [(b * sqrt(1-(x**2/a**2)),x) for x in range_x]
-        n = int(sqrt(self.N))
-
-        top_points.sort()
-
-        ellipse_mask = np.zeros((n,n))
-        done_rows = []
-        for point in top_points:
-            y_plus = int(round((n/2)+point[0]))
-            y_minus = int(round((n/2)-point[0]))
-            print 'y_plus', y_plus, 'y_minus', y_minus
-            if y_plus not in done_rows:
-                x_plus = int(round((n/2)+abs(point[1])))
-                x_minus = int(round((n/2)-abs(point[1])))
-                for x in range(x_minus, x_plus+1):
-                    ellipse_mask[x, y_plus] = 1
-                    ellipse_mask[x, y_minus] = 1
-                done_rows.append(y_plus)
-
-
-        print 'axis', a, b
-        print 'done_rows', done_rows
-        print 'center : ', int(n/2)
-        print ellipse_mask
-        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', type='uint8')
-    '''
-
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    def crop_data(self):
-        """
-        Crop the model images (im_M) to an ellipse shape to get rid of the size/shape variability between slices
-        """
-        im_mean_seg = Image(param=self.mean_seg)
-
-        nz_coord = im_mean_seg.getNonZeroCoordinates()
-        nz_coord_dic = {}
-        for coord in nz_coord:
-            nz_coord_dic[coord.x] = []
-        for coord in nz_coord:
-            nz_coord_dic[coord.x].append(coord.y)
-
-        ellipse_mask = im_mean_seg.copy().data
-
-        for x, y_list in nz_coord_dic.items():
-            full_y_list = range(min(y_list), max(y_list)+1)
-            if y_list != full_y_list:
-                for y in full_y_list:
-                    ellipse_mask[x, y] = 1
-
-        save_image(ellipse_mask, 'ellipse_mask', path=self.model_dic_name+'/', im_type='uint8')
-
-        for dic_slice in self.slices:
-            new_im_m = np.einsum('ij,ij->ij', ellipse_mask, dic_slice.im_M)
-            dic_slice.set(im_m=new_im_m)
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    # END OF FUNCTIONS USED TO COMPUTE THE MODEL
-    # ------------------------------------------------------------------------------------------------------------------
-    # TODO: ADAPT LOAD DIC TO GM_SEG AND WM_SEG ATTRIBUTES FOR THE SLICES
-    # ------------------------------------------------------------------------------------------------------------------
-    def load_model_dictionary(self):
-        """
-        Load the model dictionary from a saved one
-        """
-        import itertools
-
-        sct.printv('\nLoading the model dictionary ...', self.param.verbose, 'normal')
-
-        j = 0
-        for subject_dir in os.listdir(self.model_dic_name):
-            subject_path = self.model_dic_name + subject_dir
-            if os.path.isdir(subject_path) and 'transformations' not in subject_path:
-                subject_im = None
-                im_mat = None
-                subject_seg = None
-                seg_mat = None
-                subject_im_m = None
-                im_m = None
-                subject_seg_m = None
-                seg_m = None
-
-                for file_name in os.listdir(subject_path):
-                    if '_im.nii' in file_name:
-                        subject_im = file_name
-                    if '_seg.nii' in file_name:
-                        subject_seg = file_name
-                    if '_im_model_space.nii' in file_name:
-                        subject_im_m = file_name
-                    if '_seg_model_space.nii' in file_name:
-                        subject_seg_m = file_name
-                if subject_im is not None:
-                    im = Image(subject_path + '/' + subject_im)
-                    im_mat = im.data
-                if subject_seg is not None:
-                    seg = Image(subject_path + '/' + subject_seg)
-                    seg_mat = seg.data
-                if subject_im_m is not None:
-                    im_m = Image(subject_path + '/' + subject_im_m)
-                else:
-                    sct.printv('WARNING: no dictionary image in model space for ' + subject_dir,
-                               self.param.verbose, 'warning')
-                if subject_seg_m is not None:
-                    seg_m = Image(subject_path + '/' + subject_seg_m)
-                else:
-                    sct.printv('WARNING: no segmentation in model space for ' + subject_dir,
-                               self.param.verbose, 'warning')
-                if im_mat is None:
-                    im_mat = itertools.repeat(None, im_m.data.shape[0])
-                if seg_mat is None:
-                    seg_mat = itertools.repeat(None, im_m.data.shape[0])
-
-                for im_slice, seg_slice, im_m_slice, seg_m_slice in zip(im_mat, seg_mat, im_m.data, seg_m.data):
-                    reg_list = ['transform_slice_' + str(j) + find_ants_transfo_name(transfo_type)[0]
-                                for transfo_type in self.coregistration_transfos]
-                    self.slices.append(Slice(slice_id=j, im=im_slice, seg=seg_slice, im_m=im_m_slice, seg_m=seg_m_slice,
-                                             im_m_flat=im_m_slice.flatten(), seg_m_flat=seg_m_slice.flatten(),
-                                             reg_to_m=reg_list))
-                    j += 1
-
-        # number of atlases in the dictionary
-        self.J = len(self.slices)  # len([slice.im for slice in self.slices])
-
-        # dimension of the data (flatten slices)
-        self.N = len(self.slices[0].im_M.flatten())
-
-        self.mean_image = Image(self.model_dic_name + 'mean_image.nii.gz').data
-        self.mean_seg = Image(self.model_dic_name + 'mean_seg.nii.gz').data
-
-    # ------------------------------------------------------------------------------------------------------------------
-    def show_data(self):
-        """
-        show the 10 first slices of the model dictionary
-        """
-        for dic_slice in self.slices[:10]:
-            fig = plt.figure()
-
-            seg_subplot = fig.add_subplot(2, 3, 1)
-            seg_subplot.set_title('Original space - seg')
-            im_seg = seg_subplot.imshow(dic_slice.wm_seg)
-            im_seg.set_interpolation('nearest')
-            im_seg.set_cmap('gray')
-
-            seg_m_subplot = fig.add_subplot(2, 3, 2)
-            seg_m_subplot.set_title('Common groupwise space - seg')
-            im_seg_m = seg_m_subplot.imshow(dic_slice.wm_seg_M)
-            im_seg_m.set_interpolation('nearest')
-            im_seg_m.set_cmap('gray')
-
-            mean_seg_subplot = fig.add_subplot(2, 3, 3)
-            mean_seg_subplot.set_title('Mean seg')
-            im_mean_seg = mean_seg_subplot.imshow(np.asarray(self.mean_seg))
-            im_mean_seg.set_interpolation('nearest')
-            im_mean_seg.set_cmap('gray')
-
-            slice_im_subplot = fig.add_subplot(2, 3, 4)
-            slice_im_subplot.set_title('Original space - data ')
-            im_slice_im = slice_im_subplot.imshow(dic_slice.im)
-            im_slice_im.set_interpolation('nearest')
-            im_slice_im.set_cmap('gray')
-
-            slice_im_m_subplot = fig.add_subplot(2, 3, 5)
-            slice_im_m_subplot.set_title('Common groupwise space - data ')
-            im_slice_im_m = slice_im_m_subplot.imshow(dic_slice.im_M)
-            im_slice_im_m.set_interpolation('nearest')
-            im_slice_im_m.set_cmap('gray')
-
-            plt.suptitle('Slice ' + str(dic_slice.id))
-            plt.show()
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # MODEL DICTIONARY SLICE BY SLICE---------------------------------------------------------------------------------------
@@ -727,7 +79,6 @@ class ModelDictionaryBySlice:
         self.mean_image = None  # type: numpy array
 
         # dictionary containing information about the data dictionary slices by subject : used to save the model only
-        # self.dic_data_info[subject] = {'n_slices': 0, 'inverted_gm_seg': [], 'im_M': [], 'seg_M': []}
         self.dic_data_info = {}  # type: dictionary
 
         # list of transformation to apply to each slice to co-register the data into the common groupwise space
@@ -739,8 +90,6 @@ class ModelDictionaryBySlice:
         suffix = ''
         for transfo in self.coregistration_transfos:
             suffix += '_' + transfo
-        suffix += '_' + self.param.seg_type[0:2]
-        # self.coregistration_transfos = ['SyN']
 
         # folder containing the saved model
         self.model_dic_name = ''
@@ -772,20 +121,15 @@ class ModelDictionaryBySlice:
         # dimension of the data (flatten slices)
         self.N = len(self.slices[0].im.flatten())
 
-        if self.param.seg_type != 'gm-model':
-            # inverts the segmentation slices : the model uses segmentation of the WM instead of segmentation of the GM
-            self.invert_seg()
-            self.save_model_data('inverted_gm_seg')
+        # inverts the segmentation slices : the model uses segmentation of the WM instead of segmentation of the GM
+        self.invert_seg()
+        self.save_model_data('inverted_gm_seg')
 
         sct.printv('\nComputing the transformation to co-register all the data into a common groupwise space ...',
                    self.param.verbose, 'normal')
 
         self.mean_seg = self.seg_coregistration(transfo_to_apply=self.coregistration_transfos)
-        if self.param.seg_type == 'gm-model':
-            self.save_model_data('gm_seg_M')
-        else:
-            self.save_model_data('wm_seg_M')
-
+        self.save_model_data('wm_seg_M')
 
         sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
 
@@ -941,10 +285,8 @@ class ModelDictionaryBySlice:
         :param transfo_to_apply: list of string
         :return:
         """
-        if self.param.seg_type == 'gm-model':
-            current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.gm_seg for dic_slice in self.slices]))
-        else:
-            current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.wm_seg for dic_slice in self.slices]))
+
+        current_mean_seg = compute_majority_vote_mean_seg(np.asarray([dic_slice.wm_seg for dic_slice in self.slices]))
 
         for transfo in transfo_to_apply:
             sct.printv('Doing a ' + transfo + ' registration of each segmentation slice to the mean segmentation ...', self.param.verbose, 'normal')
@@ -967,38 +309,20 @@ class ModelDictionaryBySlice:
         :return mean seg: updated mean segmentation
         """
 
-        if self.param.seg_type == 'gm-model':
-            # Coregistraion of the gray matter segmentations
-            for dic_slice in self.slices:
-                name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_ants_transfo_name(transfo_type)[0]
-                new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
-                dic_slice.set(reg_to_m=new_reg_list)
+        # Coregistraion of the white matter segmentations
+        for dic_slice in self.slices:
+            name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_ants_transfo_name(transfo_type)[0]
+            new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
+            dic_slice.set(reg_to_m=new_reg_list)
 
-                if first:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.gm_seg,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-                else:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.gm_seg_M,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
+            if first:
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
+            else:
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
+            dic_slice.set(wm_seg_m=seg_m.astype(int))
+            dic_slice.set(wm_seg_m_flat=seg_m.flatten().astype(int))
 
-                dic_slice.set(gm_seg_m=seg_m.astype(int))
-                dic_slice.set(gm_seg_m_flat=seg_m.flatten().astype(int))
-
-            mean_seg = compute_majority_vote_mean_seg([dic_slice.gm_seg_M for dic_slice in self.slices])
-
-        else:
-            # Coregistraion of the white matter segmentations
-            for dic_slice in self.slices:
-                name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_ants_transfo_name(transfo_type)[0]
-                new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
-                dic_slice.set(reg_to_m=new_reg_list)
-
-                if first:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-                else:
-                    seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.model_dic_name + '/', transfo_type=transfo_type)
-                dic_slice.set(wm_seg_m=seg_m.astype(int))
-                dic_slice.set(wm_seg_m_flat=seg_m.flatten().astype(int))
-
-            mean_seg = compute_majority_vote_mean_seg([dic_slice.wm_seg_M for dic_slice in self.slices])
+        mean_seg = compute_majority_vote_mean_seg([dic_slice.wm_seg_M for dic_slice in self.slices])
 
         save_image(mean_seg, 'mean_seg', path=self.model_dic_name+'/', im_type='uint8')
         return mean_seg
@@ -1015,7 +339,7 @@ class ModelDictionaryBySlice:
         """
         mean = np.sum(im_data_set, axis=0)
 
-        mean /= float(self.J)
+        mean /= float(len(im_data_set))
 
         return mean
 
@@ -1029,20 +353,14 @@ class ModelDictionaryBySlice:
         :return:
         """
         list_im = [dic_slice.im for dic_slice in self.slices]
-        list_gm_seg = [dic_slice.gm_seg for dic_slice in self.slices]
 
         for dic_slice in self.slices:
             for n_transfo, transfo in enumerate(transfo_to_apply):
                 im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
-                if self.param.seg_type == 'gm':
-                    gm_seg_m = apply_ants_transfo(self.compute_mean_dic_image(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.model_dic_name+'/', transfo_type=transfo)
 
             dic_slice.set(im_m=im_m)
             dic_slice.set(im_m_flat=im_m.flatten())
-            if self.param.seg_type == 'gm':
-                dic_slice.set(gm_seg_m=gm_seg_m)
-                dic_slice.set(gm_seg_m_flat=gm_seg_m.flatten())
 
     # ------------------------------------------------------------------------------------------------------------------
     # END OF FUNCTIONS USED TO COMPUTE THE MODEL
@@ -1053,7 +371,6 @@ class ModelDictionaryBySlice:
         """
         Load the model dictionary from a saved one
         """
-        import itertools
 
         sct.printv('\nLoading the model dictionary ...', self.param.verbose, 'normal')
 
@@ -1082,7 +399,7 @@ class ModelDictionaryBySlice:
                         j_im += 1
 
                     if '_seg.nii' in file_name:
-                        self.slices[j_seg].set(seg=Image(subject_path + '/' + file_name).data)
+                        self.slices[j_seg].set(gm_seg=Image(subject_path + '/' + file_name).data)
                         j_seg += 1
 
                     if '_im_model_space.nii' in file_name:
@@ -1092,7 +409,7 @@ class ModelDictionaryBySlice:
 
                     if '_seg_model_space.nii' in file_name:
                         seg_m_slice = Image(subject_path + '/' + file_name).data
-                        self.slices[j_seg_m].set(seg_m=seg_m_slice, seg_m_flat=seg_m_slice.flatten())
+                        self.slices[j_seg_m].set(wm_seg_m=seg_m_slice, wm_seg_m_flat=seg_m_slice.flatten())
                         j_seg_m += 1
 
         # number of atlases in the dictionary
@@ -1258,8 +575,10 @@ class TargetSegmentationPairwise:
         # Get the target image
         if len(target_image.data.shape) == 3:
             self.target = [Slice(slice_id=i_slice, im=target_slice) for i_slice, target_slice in enumerate(target_image.data)]
+            self.target_dim = 3
         elif len(target_image.data.shape) == 2:
             self.target = [Slice(slice_id=0, im=target_image.data)]
+            self.target_dim = 2
 
         # if levels_image is not None:
         if isinstance(levels_image, Image):
@@ -1306,12 +625,17 @@ class TargetSegmentationPairwise:
 
         slice_levels = np.asarray([self.model.dictionary.level_label[dic_slice.level] for dic_slice in self.model.dictionary.slices])
         fic_selected_slices = open('selected_slices.txt', 'w')
-        fic_selected_slices.write(str(slice_levels[self.selected_k_slices.reshape(self.model.dictionary.J,)]))
+        if self.target_dim == 2:
+            fic_selected_slices.write(str(slice_levels[self.selected_k_slices.reshape(self.model.dictionary.J,)]))
+        elif self.target_dim == 3:
+            for target_slice in self.target:
+                fic_selected_slices.write('slice ' + str(target_slice.id) + ': ' + str(slice_levels[self.selected_k_slices[target_slice.id]]))
         fic_selected_slices.close()
 
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
         # self.target_GM_seg_M = self.label_fusion(self.selected_k_slices)
         self.label_fusion(self.selected_k_slices)
+        self.sc_label_fusion(self.selected_k_slices)
 
         sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
                    model.param.verbose, 'normal')
@@ -1330,7 +654,6 @@ class TargetSegmentationPairwise:
         """
         if not inverse:
             # Registration target --> model space
-            target_model_space = []
             mean_dic_im = self.model.pca.mean_image
             for i, target_slice in enumerate(self.target):
                 moving_target_slice = target_slice.im
@@ -1339,30 +662,20 @@ class TargetSegmentationPairwise:
 
                     moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False, transfo_type=transfo, transfo_name=transfo_name)
                 self.target[i].set(im_m=moving_target_slice)
-                # target_model_space.append(moving_target_slice)
-            # return Image(param=np.asarray(target_model_space))
+
         else:
             # Inverse registration result in model space --> target original space
-            res_seg = []
-            # mean_dic_im = self.model.pca.mean_image
-
-            # for i, slice_M in enumerate(self.target_GM_seg_M.data):
             for i, target_slice in enumerate(self.target):
-                if self.model.param.seg_type == 'wm':
-                    moving_seg_slice = target_slice.wm_seg_M
-                else:
-                    moving_seg_slice = target_slice.gm_seg_M
+                moving_seg_slice = target_slice.wm_seg_M
+                moving_sc_seg_slice = target_slice.sc_seg
 
                 for transfo in self.model.dictionary.coregistration_transfos:
                     transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
                     moving_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo, transfo_name=transfo_name)
+                    moving_sc_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_sc_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo, transfo_name=transfo_name)
 
-                if self.model.param.seg_type == 'wm':
-                    target_slice.set(wm_seg=moving_seg_slice)
-                else:
-                    target_slice.set(gm_seg=moving_seg_slice)
-                # res_seg.append(moving_seg_slice)
-            # return Image(param=np.asarray(res_seg))
+                target_slice.set(wm_seg=moving_seg_slice)
+                target_slice.set(sc_seg=moving_sc_seg_slice)
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_beta(self, coord_target, target_levels=None, dataset_coord=None, dataset_levels=None, tau=0.01):
@@ -1457,13 +770,11 @@ class TargetSegmentationPairwise:
                 coord_dic_slice_dataset = np.delete(self.model.pca.dataset_coord.T, dic_slice.id, 0)
                 dic_slice_dataset_levels = np.delete(np.asarray(dic_levels), dic_slice.id, 0)
                 beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=dic_slice.level, dataset_coord=coord_dic_slice_dataset, dataset_levels=dic_slice_dataset_levels, tau=tau)
-                kj = self.select_k_slices(beta_dic_slice)  # , poped=dic_slice.id)
+                kj = self.select_k_slices(beta_dic_slice)
                 est_segm_j = self.label_fusion(kj)
 
-                if self.model.param.seg_type == 'wm':
-                    sum_norm += l0_norm(dic_slice.wm_seg_M, est_segm_j.data)
-                else:
-                    sum_norm += l0_norm(dic_slice.gm_seg_M, est_segm_j.data)
+                sum_norm += l0_norm(dic_slice.wm_seg_M, est_segm_j.data)
+
             return sum_norm
 
         dic_levels = [dic_slice.level for dic_slice in self.model.dictionary.slices]
@@ -1476,67 +787,6 @@ class TargetSegmentationPairwise:
             fic.close()
         return float(est_tau.x[0])
 
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    def select_k_slices_old(self, beta, poped=None):
-        """
-        Select the K dictionary slices most similar to the target slice
-
-        :param beta: Dictionary similarities
-
-        :return selected: numpy array of index of the selected dictionary slices
-        """
-        selected = []
-
-        slices_index = range(self.model.dictionary.J)
-        if poped is not None:
-            slices_index.pop(poped)
-
-        if isinstance(beta[0], (list, np.ndarray)):
-            for beta_slice in beta:
-                selected_by_slice = []
-                for j, beta_j in zip(slices_index, beta_slice):
-                    if beta_j > self.epsilon:
-                        selected_by_slice.append(j)
-                # selected.append(np.asarray(selected_by_slice))
-                selected.append(selected_by_slice)
-        else:
-            for j, beta_j in zip(slices_index, beta):
-                if beta_j > self.epsilon:
-                    selected.append(j)
-
-        return np.asarray(selected)
-
-    def label_fusion_old(self, selected_slices):
-        """
-        Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
-
-        :param selected_slices: array of indexes of the selected dictionary slices
-
-        :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
-        """
-        res_seg_model_space = []
-
-        if isinstance(selected_slices[0], (list, np.ndarray)):
-            for i_target, selected_by_slice in enumerate(selected_slices):
-                kept_slices_segmentation = []
-                for j in selected_by_slice:
-                    kept_slices_segmentation.append(self.model.dictionary.slices[j].seg_M)
-                slice_seg = compute_majority_vote_mean_seg(kept_slices_segmentation)
-                res_seg_model_space.append(slice_seg)
-        else:
-            kept_slices_segmentation = []
-            for j in selected_slices:
-                kept_slices_segmentation.append(self.model.dictionary.slices[j].seg_M)
-            slice_seg = compute_majority_vote_mean_seg(kept_slices_segmentation)
-            res_seg_model_space = slice_seg
-
-        res_seg_model_space = np.asarray(res_seg_model_space)
-        # save_image(res_seg_model_space, 'res_GM_seg_model_space')
-
-        return Image(res_seg_model_space)
-    '''
-
     # ------------------------------------------------------------------------------------------------------------------
     def select_k_slices(self, beta):
         """
@@ -1546,29 +796,19 @@ class TargetSegmentationPairwise:
 
         :return selected: numpy array of segmentation of the selected dictionary slices
         """
-
         kept_slice_index = []
 
         if isinstance(beta[0], (list, np.ndarray)):
             for beta_slice in beta:
                 selected_index = beta_slice > self.epsilon
-                '''
-                if poped is not None:
-                    selected_index = np.delete(selected_index, poped)
-                '''
-                # kept_seg_slices.append(segmentation_slices[selected_index])
+
                 kept_slice_index.append(selected_index)
 
         else:
             kept_slice_index = beta > self.epsilon
-            '''
-            if poped is not None:
-                selected_index = np.delete(selected_index, poped)
-            '''
-            # kept_seg_slices = segmentation_slices[selected_index]
-
         return np.asarray(kept_slice_index)
 
+    # ------------------------------------------------------------------------------------------------------------------
     def label_fusion(self, selected_index):
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
@@ -1577,38 +817,38 @@ class TargetSegmentationPairwise:
 
         :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
         """
-        if self.model.param.seg_type == 'wm':
-            segmentation_slices = np.asarray([dic_slice.wm_seg_M for dic_slice in self.model.dictionary.slices])
-        else:
-            segmentation_slices = np.asarray([dic_slice.gm_seg_M for dic_slice in self.model.dictionary.slices])
+        segmentation_slices = np.asarray([dic_slice.wm_seg_M for dic_slice in self.model.dictionary.slices])
 
         res_seg_model_space = []
-        '''
-        print '---------- IN LABEL_FUSION : shape selected_k_slices ---------------->', selected_k_slices.shape,
-         ' len = ', len(selected_k_slices.shape)
-        print '---------- IN LABEL_FUSION : type selected_k_slices[0] ---------------->', type(selected_k_slices[0])
-        '''
-        # if isinstance(selected_slices[0][0][0], (list, np.ndarray)):
-        # if len(selected_slices[0].shape) == 3:
+
         if isinstance(selected_index[0], (list, np.ndarray)):
 
             for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
                 slice_seg = compute_majority_vote_mean_seg(segmentation_slices[selected_ind_by_slice])
                 res_seg_model_space.append(slice_seg)
-                if self.model.param.seg_type == 'wm':
-                    self.target[i].set(wm_seg_m=slice_seg)
-                else:
-                    self.target[i].set(gm_seg_m=slice_seg)
-            # res_seg_model_space = map(compute_majority_vote_mean_seg, selected_slices)
+                self.target[i].set(wm_seg_m=slice_seg)
 
         else:
-            # res_seg_model_space = compute_majority_vote_mean_seg(selected_slices)
             res_seg_model_space = compute_majority_vote_mean_seg(segmentation_slices[selected_index])
 
         res_seg_model_space = np.asarray(res_seg_model_space)
-        # save_image(res_seg_model_space, 'res_GM_seg_model_space')
 
         return Image(param=res_seg_model_space)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def sc_label_fusion(self, selected_index):
+        """
+        Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
+
+        :param selected_index: array of indexes (as a boolean array) of the selected dictionary slices
+
+        :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
+        """
+        sc_slices = np.asarray([(dic_slice.im_M > 200).astype(int) for dic_slice in self.model.dictionary.slices])
+
+        for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
+            slice_sc_seg = compute_majority_vote_mean_seg(sc_slices[selected_ind_by_slice])
+            self.target[i].set(sc_seg=slice_sc_seg)
 
     # ------------------------------------------------------------------------------------------------------------------
     def plot_projected_dic(self, nb_modes=3):
@@ -1625,78 +865,6 @@ class TargetSegmentationPairwise:
 
         self.model.pca.plot_projected_dic(nb_mode=nb_modes, target_coord=self.coord_projected_target, to_highlight=(5, self.selected_k_slices[5])) if self.coord_projected_target is not None \
             else self.model.pca.plot_projected_dic()
-
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    def majority_vote_segmentation(self):
-        """
-        Mean segmentation using only the slices of the same level in the dictionary
-        """
-        target_seg = []
-        for target_slice in self.target:
-            dataset_by_level = []
-            for dic_slice in self.model.dictionary.slices:
-                if dic_slice.level == target_slice.level:
-                    dataset_by_level.append(dic_slice.seg_M)
-            if dataset_by_level:
-                target_slice_seg = compute_majority_vote_mean_seg(dataset_by_level, threshold=0.5)
-                Image(param=target_slice_seg, absolutepath='target_gm_seg_slice' + str(target_slice.id) + '.nii.gz').save()
-                target_seg.append(target_slice_seg)
-            else:
-                target_seg.append(np.zeros(target_slice.im.shape))
-        Image(param=np.asarray(target_seg), absolutepath='target_gm_seg.nii.gz').save()
-    '''
-
-    '''
-    # ------------------------------------------------------------------------------------------------------------------
-    def show_projected_target(self):
-        # Retrieving projected image from the mean image & its coordinates
-        import copy
-
-        index = 0
-        fig1 = plt.figure()
-        fig2 = plt.figure()
-        # loop across all the projected slices coord
-        for coord in self.coord_projected_target:
-            img_reducted = copy.copy(self.model.pca.mean_data_vect)
-            # loop across coord and build projected image
-            for i in range(0, coord.shape[0]):
-                img_reducted += int(coord[i][0]) * self.model.pca.kept_modes.T[i].reshape(self.model.pca.N, 1)
-
-            if self.model.param.split_data:
-                n = int(sqrt(self.model.pca.N * 2))
-            else:
-                n = int(sqrt(self.model.pca.N))
-
-            # Plot original image
-            orig_ax = fig1.add_subplot(10, 3, index)
-            orig_ax.set_title('original slice {} '.format(index))
-            if self.model.param.split_data:
-                imgplot = orig_ax.imshow(self.target.data[index, :, :].reshape(n / 2, n))
-            else:
-                imgplot = orig_ax.imshow(self.target.data[index].reshape(n, n))
-            imgplot.set_interpolation('nearest')
-            imgplot.set_cmap('gray')
-            # plt.title('Original Image')
-            # plt.show()
-
-            index += 1
-            # Plot projected image image
-            proj_ax = fig2.add_subplot(10, 3, index)
-            proj_ax.set_title('slice {} projected'.format(index))
-            if self.model.param.split_data:
-                imgplot = proj_ax.imshow(img_reducted.reshape(n / 2, n))
-                #imgplot = plt.imshow(img_reducted.reshape(n / 2, n))
-            else:
-                # imgplot = plt.imshow(img_reducted.reshape(n, n))
-                imgplot = proj_ax.imshow(img_reducted.reshape(n, n))
-            imgplot.set_interpolation('nearest')
-            imgplot.set_cmap('gray')
-            # plt.title('Projected Image')
-            # plt.show()
-        plt.show()
-    '''
-
 
 # ----------------------------------------------------------------------------------------------------------------------
 # TARGET SEGMENTATION GROUPWISE ----------------------------------------------------------------------------------------
@@ -2105,7 +1273,7 @@ sct_Image
         # build a target segmentation
         levels_im = None
         if gm_seg_param.level_fname is not None:
-            if isinstance(gm_seg_param.level_fname, str):
+            if len(gm_seg_param.level_fname) < 3:
                 # in this case the level is a string and not an image
                 levels_im = gm_seg_param.level_fname
             else:
@@ -2121,7 +1289,6 @@ sct_Image
 
         suffix = '_'
         suffix += gm_seg_param.target_reg
-        suffix += gm_seg_param.seg_type
         for transfo in self.dictionary.coregistration_transfos:
             suffix += '_' + transfo
         if levels_im is not None:
@@ -2131,29 +1298,27 @@ sct_Image
 
         # save the result gray matter segmentation
         # self.res_GM_seg = self.target_seg_methods.target_GM_seg
-        if gm_seg_param.seg_type == 'wm':
-            if len(self.target_seg_methods.target) == 1:
-                self.res = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg))
-            else:
-                self.res = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]))
+        if len(self.target_seg_methods.target) == 1:
+            self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg))
+            self.res_sc_seg = Image(param=np.asarray(self.target_seg_methods.target[0].sc_seg))
         else:
-            if len(self.target_seg_methods.target) == 1:
-                self.res = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg))
-            else:
-                self.res = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target]))
+            self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]))
+            self.res_sc_seg = Image(param=np.asarray([target_slice.sc_seg for target_slice in self.target_seg_methods.target]))
 
-        name_res = sct.extract_fname(target_fname)[1] + '_graymatterseg' + suffix  # TODO: remove suffix
-        self.res.file_name = name_res
-        self.res.ext = '.nii.gz'
-        self.res.save()
+        name_res = sct.extract_fname(target_fname)[1] + '_res_wmseg' + suffix  # TODO: remove suffix
+        self.res_wm_seg.file_name = name_res
+        self.res_wm_seg.ext = '.nii.gz'
+        self.res_wm_seg.save()
 
-        '''
-        save_image(self.res_GM_seg.data, name_res)
-        '''
-        # inverse_wmseg_to_gmseg(self.res_GM_seg, self.target_image, name_res)
+        self.res_gm_seg = inverse_wmseg_to_gmseg(self.res_wm_seg, self.res_sc_seg, name_res)
+
+        corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image)
+        corrected_wm_seg.file_name = name_res + '_corrected'
+        corrected_wm_seg.ext = '.nii.gz'
+        corrected_wm_seg.save()
 
         sct.printv('Done! \nTo see the result, type :')
-        sct.printv('fslview ' + target_fname + ' ' + name_res + '.nii.gz -l Red -t 0.4 &', gm_seg_param.verbose, 'info')
+        sct.printv('fslview ' + target_fname + ' ' + name_res + '_corrected.nii.gz -l Red -t 0.4 ' + name_res + '_inv_to_gm.nii.gz -l Blue -t 0.4 &', gm_seg_param.verbose, 'info')
 
     def show(self):
 
@@ -2225,12 +1390,14 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='pairwise',
                           example=['pairwise', 'groupwise'])
+        '''
         parser.add_option(name="-seg-type",
                           type_value='multiple_choice',
                           description="type of segmentation (gray matter or white matter)",
                           mandatory=False,
                           default_value='wm',
                           example=['wm', 'gm', 'gm-model'])
+        '''
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -2247,8 +1414,10 @@ if __name__ == "__main__":
             param.reg = arguments["-reg"]
         if "-target-reg" in arguments:
             param.target_reg = arguments["-target-reg"]
+        '''
         if "-seg-type" in arguments:
             param.seg_type = arguments["-seg-type"]
+        '''
         if "-l" in arguments:
             param.level_fname = arguments["-l"]
         if "-v" in arguments:
