@@ -525,7 +525,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     x_extended = x
     size_curve = x.shape[0]
     size_padding = int(window_len/2.0)
-    for i in range(size_padding+1):
+    for i in range(size_padding-1):
         x_extended = append(x_extended, 2*x[-1] - x[-2-i])
         x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
@@ -544,7 +544,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
         z_extended = [i for i in range(x_extended.shape[0])]
         # Create x_display to visualize concording results
         x_display = copy(x_extended)
-        for i in range(size_padding + 1):
+        for i in range(size_padding - 1):
             x_display[i] = 0
             x_display[-i-1] = 0
 
