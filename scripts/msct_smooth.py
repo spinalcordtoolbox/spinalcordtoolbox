@@ -524,40 +524,29 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # Extend the curve before smoothing
     x_extended = x
     size_curve = x.shape[0]
-    size_padding = int(window_len/2.0)
-    for i in range(size_padding-1):
+    size_padding = int(round(window_len/2.0))
+
+    for i in range(size_padding):
         x_extended = append(x_extended, 2*x[-1] - x[-2-i])
         x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
     # Convolution of the window with the extended signal
-    y_temp = convolve(x_extended, w/w.sum(), mode='same')
-    # y = convolve(w/w.sum(), s, mode='full')
-
-    # Crop the curve back to its original size
-    y = y_temp[size_padding + 1:size_padding + size_curve + 1]
+    y = convolve(x_extended, w/w.sum(), mode='valid')
 
     # Display smoothing
     if verbose == 2:
         import matplotlib.pyplot as plt
-        from copy import copy
-
-        z_extended = [i for i in range(x_extended.shape[0])]
-        # Create x_display to visualize concording results
-        x_display = copy(x_extended)
-        for i in range(size_padding - 1):
-            x_display[i] = 0
-            x_display[-i-1] = 0
+        z = [i for i in range(y.shape[0])]
 
         plt.figure()
-        pltx_ext, = plt.plot(z_extended, x_extended, 'bo')
-        pltx, = plt.plot(z_extended, x_display, 'ro')
-        pltx_fit, = plt.plot(z_extended, y_temp)
+        pltx, = plt.plot(z, x, 'ro')
+        pltx_fit, = plt.plot(z, y)
 
         plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
         #ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
-        plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
+        plt.legend([pltx, pltx_fit], ['Normal', 'Smoothed'])
 
         plt.show()
 
