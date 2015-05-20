@@ -97,6 +97,9 @@ class Option:
         if type_option in self.OPTION_TYPES:
             return self.checkStandardType(param,type)
 
+        elif type_option == "image_nifti":
+            return self.checkIfNifti(param)
+
         elif type_option == "file":
             return self.checkFile(param)
 
@@ -153,6 +156,33 @@ class Option:
         sct.printv("Check file existence...")
         sct.check_file_exist(param,1)
         return param
+
+    def checkIfNifti(self, param):
+        import os
+        sct.printv("Check file existence...")
+        nii = False
+        niigz = False
+        param_tmp = str()
+        if param.lower().endswith('.nii'):
+            nii = os.path.isfile(param)
+            niigz = os.path.isfile(param+'.gz')
+            param_tmp = param[:-4]
+            pass
+        elif param.lower().endswith('.nii.gz'):
+            niigz = os.path.isfile(param)
+            nii = os.path.isfile(param[:-3])
+            param_tmp = param[:-7]
+            pass
+        else:
+            sct.printv("ERROR : File is not a NIFTI image file. Exiting", type='error')
+
+        if nii:
+            return param_tmp+'.nii'
+        elif niigz:
+            return param_tmp+'.nii.gz'
+        if nii and niigz:
+            return param_tmp+'.nii.gz'
+
 
     def checkFolder(self,param):
         # check if the folder exist. If not, create it.
