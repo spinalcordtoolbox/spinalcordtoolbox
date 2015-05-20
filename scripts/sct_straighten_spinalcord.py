@@ -375,7 +375,7 @@ def main():
 
     # Estimate b-spline transformation curve --> straight
     sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 3 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
 
     # remove padding for straight labels
     if crop == 1:
@@ -396,7 +396,7 @@ def main():
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 3 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
     
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
