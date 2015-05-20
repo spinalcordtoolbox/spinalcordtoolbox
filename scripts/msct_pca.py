@@ -270,8 +270,14 @@ class PCA:
 
         :param path: path where save the data
         """
+        import pickle
         previous_path = os.getcwd()
         os.chdir(path)
+
+        pca_data = np.asarray([self.mean_data_vect, self.eig_pairs])
+        pickle.dump(pca_data, open('./pca_data.pkl', 'wb'), protocol=2)
+
+        '''
         fic_data = open('data_pca.txt', 'w')
 
         for i, m in enumerate(self.mean_data_vect):
@@ -292,6 +298,7 @@ class PCA:
         fic_data.write('\n')
 
         fic_data.close()
+        '''
         os.chdir(previous_path)
 
     # ------------------------------------------------------------------------------------------------------------------

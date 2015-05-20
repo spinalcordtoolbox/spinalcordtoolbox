@@ -269,7 +269,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
             sct.run('mkdir ' + path + transfo_dir)
-        dir_name = 'tmp_reg_' + str(time.time())
+        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
 
@@ -450,7 +450,7 @@ def l0_norm(x, y):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_wmseg_to_gmseg(wm_seg, sc_seg, name_wm_seg):
+def inverse_wmseg_to_gmseg(wm_seg, sc_seg, name_wm_seg, hdr):
     """
     Inverse a white matter segmentation array image to get a gray matter segmentation image and save it
 
@@ -472,7 +472,7 @@ def inverse_wmseg_to_gmseg(wm_seg, sc_seg, name_wm_seg):
     else:
         dim = 2
 
-    tmp_dir = 'tmp_' + str(time.time())
+    tmp_dir = 'tmp_' + time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir ' + tmp_dir)
     os.chdir(tmp_dir)
 
@@ -489,6 +489,7 @@ def inverse_wmseg_to_gmseg(wm_seg, sc_seg, name_wm_seg):
     inverted_seg_im = Image(param=inverted_seg)
     inverted_seg_im.file_name = name_wm_seg + '_inv_to_gm'
     inverted_seg_im.ext = '.nii.gz'
+    inverted_seg_im.hdr = hdr
     inverted_seg_im.save()
 
     sct.run('rm -rf ' + tmp_dir)
@@ -677,10 +678,17 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def correct_wmseg(res_gmseg, original_im):
+def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     wmseg_dat = (original_im.data > 0).astype(int) - res_gmseg.data
 
-    return Image(param=(wmseg_dat > 0).astype(int))
+    corrected_wm_seg = Image(param=(wmseg_dat > 0).astype(int))
+
+    corrected_wm_seg.file_name = name_wm_seg + '_corrected'
+    corrected_wm_seg.ext = '.nii.gz'
+    corrected_wm_seg.hdr = hdr
+    corrected_wm_seg.save()
+
+    return
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1311,7 +1319,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                                 similar_levels += 1
                         slice_similarity = float(similar_levels)/len(levels)
                         similarity_sum += slice_similarity
-                        level_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + str(slice_similarity) + '% (' + str(slice_level) + ')\n')
+                        level_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + str(100*slice_similarity) + '% (' + str(slice_level) + ')\n')
 
                         # Dice coefficient
                         status, wm_dice_output = sct.run('sct_dice_coefficient ' + wm_res + ' ' + ref_wm_seg)
@@ -1357,7 +1365,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
     gm_dice_file.write('\nmean dice: ' + str(gm_dice_sum/n_slices))
     gm_dice_file.close()
 
-    level_file.write('\nmean similarity: ' + str(similarity_sum/n_slices) + '% ')
+    level_file.write('\nmean similarity: ' + str(100*similarity_sum/n_slices) + '% ')
     level_file.close()
 
     Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
