@@ -723,7 +723,7 @@ def get_key_from_val(dic, val):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def crop_t2_star(path):
+def crop_t2_star_pipeline(path):
     """
     Pretreatment pipeline croping the t2star file around the spinal cord and both croped t2star and gray matter manual
     segmentation to a 45*45 squared image
@@ -980,6 +980,39 @@ def crop_t2_star_by_slice(path):
                         print 'Done !'
                         # sct.run('rm -rf ./tmp_' + now)
             os.chdir('..')
+
+# ------------------------------------------------------------------------------------------------------------------
+def crop_t2_star(t2star, sc_seg):
+    """
+    Pretreatment function croping the t2star file around the spinal cord and to a 45*45 squared image
+
+    :param t2star: t2star image to be croped
+
+    :param sc_seg: segmentation of the spinal cord
+    """
+    t2star_name = sct.extract_fname(t2star)[1]
+    sc_seg_name = sct.extract_fname(sc_seg)[1]
+
+    try:
+
+        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+        seg_in = t2star_name + '_seg_in.nii.gz'
+        seg_in_name = t2star_name + '_seg_in'
+
+        '''
+        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70'
+                ' -o ' + t2star_name + '_square_mask.nii.gz -f box' )
+        '''
+
+        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s 43 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
+        mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+
+        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+        mask_box_irp = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
+
+    except Exception, e:
+        sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
+    return mask_box_irp
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1380,6 +1413,24 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
 
 
 # ------------------------------------------------------------------------------------------------------------------
+def inverse_square_crop(croped_image, square_mask):
+    nz_coord = square_mask.getNonZeroCoordinates()
+
+    assert len(nz_coord) == croped_image.data.size
+
+    inverse_croped = square_mask.copy()
+    done_slices = []
+    for coord in nz_coord:
+        if coord.x not in done_slices:
+            inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
+            done_slices.append(coord.x)
+
+    inverse_croped.file_name = croped_image.file_name + '_original_dimension'
+
+    return inverse_croped
+
+
+# ------------------------------------------------------------------------------------------------------------------
 def compute_error_map(data_path):
     error_map_sum = None
     error_map_abs_sum = None
@@ -1493,7 +1544,7 @@ if __name__ == "__main__":
         arguments = parser.parse(sys.argv[1:])
 
         if "-crop" in arguments:
-            crop_t2_star_by_slice(arguments['-crop'])
+            crop_t2_star_pipeline(arguments['-crop'])
         if "-loocv" in arguments:
             leave_one_out_by_slice(arguments['-loocv'])
         if "-error-map" in arguments:
