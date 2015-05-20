@@ -371,6 +371,72 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         show()
 
+    def transfo_pix2phys(self, data_pix):
+        """
+        This function returns the physical coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_pix) but containing a 3D vector.
+        This vector is the physical position of the point.
+        data_pix must be an array of 3 dimensions.
+
+        Example:
+        img = Image('file.nii.gz')
+        data = img.data
+        data_phys = img.transfo_pix2phys(data)
+
+        :return:
+        """
+        from copy import copy
+        from numpy import zeros, array, transpose, dot
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3,0:3]
+        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+        coord_origin_transpose = transpose(coord_origin)
+        data_phys = zeros((((data_pix.shape[0], data_pix.shape[1], data_pix.shape[2], 3))))
+        a= array([[0],[0],[0]])
+        #print a
+        for i in range(data_pix.shape[0]):
+            print i
+            for j in range(data_pix.shape[1]):
+                for k in range(data_pix.shape[2]):
+                    #b = dot(m_p2f_transfo, array([[i],[j],[k]]))
+                    #c = coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]]))
+                    #d = data_phys[i,j,k,:]
+                    #e= transpose(c)
+                    #f = e[0]
+                    data_phys[i,j,k,:] = transpose(coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]])))[0]
+
+        return data_phys
+
+    def tranfo_phys2pix(self, data_phys):
+        """
+        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
+        This vector is the pixel position of the point in the space of the image.
+        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
+        :return:
+        """
+        from numpy import zeros, array, transpose, dot
+        from numpy.linalg import inv, pinv
+        from copy import copy
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3,0:3]
+        m_f2p_transfo = pinv(m_p2f_transfo) #inv or pinv does'nt work
+        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+        data_pix = copy(data_phys)
+        for i in range(data_phys.shape[0]):
+            print i
+            for j in range(data_phys.shape[1]):
+                for k in range(data_phys.shape[2]):
+                    # c = array([data_phys[i,j,k,:]])
+                    # d = transpose(c)
+                    # e = c[0]
+                    # f= data_pix[i,j,k,:]
+                    # g= dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin))
+                    data_pix[i,j,k,:] = transpose(dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin)))[0]  #take int value for pixel
+                    # data_pix[i,j,k] = m_f2p_transfo * (data_phys[i,j,k] - coord_origin)
+
+        return data_pix
+
+
+
 # =======================================================================================================================
 # Start program
 #=======================================================================================================================
