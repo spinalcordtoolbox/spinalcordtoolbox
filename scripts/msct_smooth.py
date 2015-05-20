@@ -533,6 +533,11 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     y_temp = convolve(x_extended, w/w.sum(), mode='same')
     # y = convolve(w/w.sum(), s, mode='full')
 
+
+import matplotlib.pyplot as plt
+plt.figure()
+plt.plot(y_temp, 'ro')
+
     # Crop the curve back to its original size
     y = y_temp[size_padding + 1:size_padding + size_curve + 1]
 
