@@ -524,7 +524,8 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # Extend the curve before smoothing
     x_extended = x
     size_curve = x.shape[0]
-    size_padding = int(window_len/2.0)
+    size_padding = int(round(window_len/2.0))
+
     for i in range(size_padding):
         x_extended = append(x_extended, 2*x[-1] - x[-2-i])
         x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
@@ -536,11 +537,9 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     if verbose == 2:
         import matplotlib.pyplot as plt
         z = [i for i in range(y.shape[0])]
-        # Create x_display to visualize concording results
-        x_display = x_extended[size_padding + 1:size_padding + size_curve + 1]
 
         plt.figure()
-        pltx, = plt.plot(z, x_display, 'ro')
+        pltx, = plt.plot(z, x, 'ro')
         pltx_fit, = plt.plot(z, y)
 
         plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
