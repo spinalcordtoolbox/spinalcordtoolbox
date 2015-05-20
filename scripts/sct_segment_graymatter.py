@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 #
-# This program returns the grey matter segmentation given anatomical, landmarks and t2star images
+# This program returns the gray matter segmentation given anatomical, spinal cord segmentation and t2star images
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Augustin Roux
-# Created: 2014-10-18
+# Authors: Sara Dupont
+# Modified: 2015-05-20
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -14,227 +14,105 @@ import os
 import time
 import sys
 import getopt
+from msct_parser import *
+from msct_image import Image
+from sct_asman import Model, Param
+from msct_gmseg_utils import *
 
 
-def main():
-    fname_ref = ''
-    fname_moving = ''
-    transformation = 'SyN'
-    metric = 'CC'
-    gradient_step = '0.2'
-    radius = '5'
-    iteration='20x15'
-    fname_seg_fixed = ''
-    fname_seg_moving = ''
-    fname_output = ''
-    padding = '10'
+class Pretreatments:
+    def __init__(self, target_fname, sc_seg_fname, t2_fname=None):
 
-    moving_name = 'moving'
-    fixed_name = 'fixed'
-    moving_seg_name = 'moving_seg'
-    fixed_seg_name = 'fixed_seg'
+        self.tmp_dir = 'tmp_' + sct.extract_fname(target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")
+        sct.run('mkdir ' + self.tmp_dir)
+        os.chdir(self.tmp_dir)
 
-    remove_temp = 1
+        self.t2star = 't2star.nii.gz'
+        self.sc_seg = 't2star_sc_seg.nii.gz'
 
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:d:t:s:g:o:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-        elif opt in ('-d'):
-            fname_moving = arg
-        elif opt in ('-i'):
-            fname_ref = arg
-        elif opt in ('-t'):
-            transformation = arg
-        elif opt in ('-s'):
-            fname_seg_fixed = arg
-        elif opt in ('-g'):
-            fname_seg_moving = arg
-        elif opt in ('-o'):
-            fname_output = arg
+        sct.run('cp ../' + target_fname + ' ./' + self.t2star)
+        sct.run('cp ../' + sc_seg_fname + ' ./' + self.sc_seg)
 
-    if fname_moving == '' or fname_ref == '':
-        usage()
+        status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
+        self.original_orientation = t2_star_orientation[4:7]
 
-    # check existence of input files
-    sct.check_file_exist(fname_ref)
-    sct.check_file_exist(fname_moving)
-    if (fname_seg_moving != '' and fname_seg_fixed == '') or (fname_seg_moving == '' and fname_seg_fixed != ''):
-        print('\nERROR: You need to provide one mask for each image (moving and fixed)')
-        usage()
-    if fname_seg_moving != '':
-        sct.check_file_exist(fname_seg_moving)
-    if fname_seg_fixed != '':
-        sct.check_file_exist(fname_seg_fixed)
+        self.square_mask_IRP = crop_t2_star(self.t2star, self.sc_seg)
 
-    # Extract path/file/extension
-    path_output, file_output, ext_output = sct.extract_fname(fname_output)
-
-    # create temporary folder
-    print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
-
-    # copy files to temporary folder
-    print('\nCopy files...')
-    sct.run("sct_c3d "+fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
-    sct.run("sct_c3d "+fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
-    if fname_seg_moving != '':
-        sct.run("sct_c3d "+fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
-    if fname_seg_fixed != '':
-        sct.run("sct_c3d "+fname_seg_fixed+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
-
-    # go to tmp folder
-    os.chdir(path_tmp)
-
-    # denoising the fixed image using non-local means from dipy
-    # file = nibabel.load(fixed_name+".nii")
-    # data = file.get_data()
-    # hdr = file.get_header()
-    # fixed_name_temp = fixed_name+"_denoised"
-    # data_denoised = nlmeans(data,3)
-    # fixed_name = fixed_name_temp
-    # hdr.set_data_dtype('uint32') # set imagetype to uint32
-    # img = nibabel.Nifti1Image(data_denoised, None, hdr)
-    # nibabel.save(img, fixed_name+".nii.gz")
-
-    # cropping in x & y directions
-    fixed_name_temp = fixed_name + "_crop"
-    cmd = "sct_crop_image -i " + fixed_name + ".nii -o " + fixed_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1"
-    print cmd
-    sct.run(cmd)
-    fixed_name = fixed_name_temp
-    if fname_seg_fixed != '':
-        fixed_seg_name_temp = fixed_seg_name+"_crop"
-        sct.run("sct_crop_image -i " + fixed_seg_name + ".nii -o " + fixed_seg_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1")
-        fixed_seg_name = fixed_seg_name_temp
-
-    #sct_crop_image -i t2star_denoised.nii -o t2star_denoised_crop.nii -m ../t2star_seg.nii.gz -shift 10,10 -dim 0,1
-
-    # padding the images
-    moving_name_temp = moving_name+"_pad"
-    fixed_name_temp = fixed_name+"_pad"
-    sct.run("sct_c3d "+moving_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_name_temp+".nii")
-    sct.run("sct_c3d "+fixed_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_name_temp+".nii")
-    moving_name = moving_name_temp
-    fixed_name = fixed_name_temp
-    if fname_seg_moving != '':
-        moving_seg_name_temp = moving_seg_name+"_pad"
-        sct.run("sct_c3d "+moving_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+moving_seg_name_temp+".nii")
-        moving_seg_name = moving_seg_name_temp
-    if fname_seg_fixed != '':
-        fixed_seg_name_temp = fixed_seg_name+"_pad"
-        sct.run("sct_c3d "+fixed_seg_name+".nii -pad 0x0x"+padding+"vox 0x0x"+padding+"vox 0 -o "+fixed_seg_name_temp+".nii")
-        fixed_seg_name = fixed_seg_name_temp
-
-    # binarise the moving image
-    # moving_name_temp_bin = moving_name_temp + "_bin"
-    # cmd = 'fslmaths ' + moving_name_temp + '.nii -thr 0.25 ' + moving_name_temp_bin + '.nii'
-    # sct.run(cmd, 1)
-    #
-    # cmd = 'fslmaths ' + moving_name_temp_bin + '.nii -bin ' + moving_name_temp_bin + '.nii'
-    # sct.run(cmd, 1)
-    #
-    # moving_name = moving_name_temp_bin
-
-
-    # register template to anat file: this generate warp_template2anat.nii
-    # cmd = "sct_register_to_template -i " + fname_anat + " -l " + fname_landmarks + " -m " + fname_seg + " -s normal"
-    # sct.run(cmd)
-    # warp_template2anat = ""
-
-    # # register anat file to t2star: generate  warp_anat2t2star
-    # cmd = "sct_register_multimodal -i " + fname_anat + " -d " + fname_t2star
-    # sct.run(cmd)
-    # warp_anat2t2star = ""
-
-    # # concatenation of the two warping fields
-    # warp_template2t2star = "warp_template2t2star.nii.gz"
-    # cmd = "sct_concat_transfo -w " + warp_template2anat + ',' + warp_anat2t2star + " -d " + fname_t2star + " -o " + warp_template2t2star
-    # sct.run(cmd)
-
-    # # apply the concatenated warping field to the template
-    # cmd = "sct_warp_template -d " + fname_t2star + " -w " + warp_template2anat + " -s 1 -o template_in_t2star_space"
-    # sct.run(cmd)
-
-
-    #sct_register_to_template --> warp_template2anat
-    # register anat file to t2star
-    #sct_register_multimodal --> warp_anat2t2star
-    # concatenate warp_template2anat with warp_anat2t2star
-    #--> warp_template2t2star
+        os.chdir('..')
 
 
 
-    # registration of the grey matter
-    print('\nDeforming the image...')
-    moving_name_temp = moving_name+"_deformed"
-    cmd = "sct_antsRegistration --dimensionality 3 --transform "+ transformation +"["+gradient_step+",3,0] --metric "+metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+radius+"] --convergence "+iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
-    if fname_seg_moving != '':
-        cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
-    sct.run(cmd)
-    moving_name = moving_name_temp
-
-    moving_name_temp = moving_name+"_unpadded"
-    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+padding+" -end -"+padding+" -o "+moving_name_temp+".nii")
-    sct.run("mv "+moving_name+"0Warp.nii.gz "+file_output+"0Warp"+ext_output)
-    sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+file_output+"0InverseWarp"+ext_output)
-    moving_name = moving_name_temp
-
-    # TODO change "fixed.nii"
-    moving_name_temp = file_output+ext_output
-    #sct.run("sct_c3d "+fixed_name+".nii "+file_output+ext_output+" -reslice-identity  -o "+file_output+'_register'+ext_output)
-    sct.run("sct_c3d fixed.nii "+moving_name+".nii -reslice-identity -o "+file_output+ext_output)
-
-    # move output files to initial folder
-    sct.run("cp "+file_output+"* ../")
-
-    # remove temporary file
-    if remove_temp == 1:
-        os.chdir('../')
-        print('\nRemove temporary files...')
-        sct.run("rm -rf "+path_tmp)
-
-    return
+def main(target_fname, sc_seg_fname, t2_fname):
+    # t2_im = Image(t2_fname) if t2_fname is not None else None
+    pretreated = Pretreatments(target_fname, sc_seg_fname, t2_fname)
 
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  This function returns the grey matter segmentation.\n' \
-        '\n'\
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <ref> -d <moving> -o <output>\n' \
-        '  '+os.path.basename(__file__)+' -i <anat volume> -t <t2star volume> -l <landmarks>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i                   input image (with white/gray matter contrast).\n' \
-        '  -d                   moving image.\n' \
-        '  -o                   output name (for warping field and image).\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -t                   transformation {SyN, BSplineSyN}.\n' \
-        '  -s                   input image segmentation.\n' \
-        '  -g                   moving image segmentation.\n'
-    sys.exit(2)
+
+    croped_seg_in_im = Image(pretreated.tmp_dir + '/t2star_seg_in_croped.nii.gz')
+    sq_mask = Image(pretreated.tmp_dir + '/' + pretreated.square_mask_IRP)
+    test_im = inverse_square_crop(croped_seg_in_im, sq_mask)
+    test_im.save()
+
+    sct.run('sct_orientation -i ' + pretreated.tmp_dir + '/test.nii.gz -s RPI')
 
 
+
+########################################################################################################################
+# ------------------------------------------------------  MAIN ------------------------------------------------------- #
+########################################################################################################################
 
 if __name__ == "__main__":
-    # initialize parameters
-    # param = Param()
-    # call main function
-    main()
+    param = Param()
+    input_target_fname = None
+    input_sc_seg_fname = None
+    input_t2_fname = None
+    if param.debug:
+        print '\n*** WARNING: DEBUG MODE ON ***\n'
+        fname_input = param.path_dictionary + "/errsm_34.nii.gz"
+        fname_input = param.path_dictionary + "/errsm_34_seg_in.nii.gz"
+    else:
+        param_default = Param()
 
+        # Initialize the parser
+        parser = Parser(__file__)
+        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.add_option(name="-i",
+                          type_value="file",
+                          description="T2star image you want to segment",
+                          mandatory=True,
+                          example='t2star.nii.gz')
+        parser.add_option(name="-s",
+                          type_value="file",
+                          description="Spinal cord segmentation of the T2star target",
+                          mandatory=True,
+                          example='sc_seg.nii.gz')
+        parser.add_option(name="-dic",
+                          type_value="folder",
+                          description="Path to the model data",
+                          mandatory=False,  # TODO: put back True when ready to use model
+                          example='/home/jdoe/gm_seg_model_data/')
+        parser.add_option(name="-t2",
+                          type_value="file",
+                          description="T2 image associated to the input image : used to register the template on the T2star and get the vertebral levels",
+                          mandatory=False,
+                          default_value=None,
+                          example='t2.nii.gz')
+        parser.add_option(name="-v",
+                          type_value="int",
+                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                          mandatory=False,
+                          default_value=0,
+                          example='1')
 
+        arguments = parser.parse(sys.argv[1:])
+        input_target_fname = arguments["-i"]
+        input_sc_seg_fname = arguments["-s"]
+        # param.path_dictionary = arguments["-dic"]
+        param.todo_model = 'load'
+
+        if "-t2" in arguments:
+            input_t2_fname = arguments["-t2"]
+        if "-v" in arguments:
+            param.verbose = arguments["-v"]
+
+    main(input_target_fname, input_sc_seg_fname, input_t2_fname)
