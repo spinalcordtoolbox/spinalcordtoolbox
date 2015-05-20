@@ -37,8 +37,8 @@ class Param:
         self.debug = 0
         self.path_dictionary = None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
         self.todo_model = None  # 'compute'
-        self.model_dir = './gm_seg_data'
-        self.reg = None  # TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
+        self.model_dir = './gm_seg_model_data'
+        self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = None  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
         self.verbose = 1
 
@@ -76,10 +76,7 @@ class ModelDictionary:
         self.mean_image = None
 
         # list of transformation to apply to each slice to co-register the data into the common groupwise space
-        if self.param.reg is not None:
-            self.coregistration_transfos = self.param.reg
-        else:
-            self.coregistration_transfos = ['Affine']
+        self.coregistration_transfos = self.param.reg
 
         if self.param.todo_model == 'compute':
             self.compute_model()
@@ -569,7 +566,6 @@ class Model:
         for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
             slice_sc_seg = compute_majority_vote_mean_seg(sc_slices[selected_ind_by_slice])
             target[i].set(sc_seg=slice_sc_seg)
-
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -1210,7 +1206,7 @@ if __name__ == "__main__":
         parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
         parser.add_option(name="-i",
                           type_value="file",
-                          description="T2star image you want to project",
+                          description="T2star image you want to segment",
                           mandatory=True,
                           example='t2star.nii.gz')
         parser.add_option(name="-dic",
