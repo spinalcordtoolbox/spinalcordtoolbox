@@ -121,8 +121,6 @@ def main():
                 algo_fitting = str(arg)
             elif opt in ('-f'):
                 crop = int(arg)
-            # elif opt in ('-f'):
-            #     centerline_fitting = str(arg)
             elif opt in ('-v'):
                 verbose = int(arg)
 
