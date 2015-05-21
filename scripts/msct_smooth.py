@@ -483,13 +483,9 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     scipy.signal.lfilter
 
     TODO: the window parameter could be the window itself if an array instead of a string
-
-    NOTE: If in 'convolve', the mode is not 'same' then: length(output) != length(input), to correct this:
-    return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
-    return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
     from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
-    from math import ceil
+    from math import ceil, floor
     import sct_utils as sct
 
     if x.ndim != 1:
@@ -510,7 +506,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
         sct.printv("WARNING: The ponderation window's length was too high compared to the number of points. The value is now of: "+str(window_len) +'warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
-    window_len_int = ceil((window_len + 1)/2)*2 - 1
+    window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
 
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
 
@@ -524,7 +520,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # Extend the curve before smoothing
     x_extended = x
     size_curve = x.shape[0]
-    size_padding = int(round(window_len/2.0))
+    size_padding = int(round((window_len_int-1)/2.0))
 
     for i in range(size_padding):
         x_extended = append(x_extended, 2*x[-1] - x[-2-i])
@@ -551,7 +547,3 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
         plt.show()
 
     return y
-    # if window_len_int%2 == 0:
-    #     return y[(window_len_int/2-1):-(window_len_int/2)]
-    # if window_len_int%2 != 0:
-    #     return y[(window_len_int/2-1):-(window_len_int/2+1)]
