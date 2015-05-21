@@ -234,56 +234,32 @@ def test_function(script_name):
     if script_name == 'test_debug':
         return test_debug()  # JULIEN
     else:
-        # Using the retest variable to recheck if we can perform tests after we downloaded the data
-        retest = 1
-        # while condition values are arbitrary and are present to prevent infinite loop
-        while 0 < retest < 3:
-            # build script name
-            fname_log = script_name + ".log"
-            tmp_script_name = script_name
-            result_folder = "results_"+script_name
-            script_name = "test_"+script_name
+        # build script name
+        fname_log = script_name + ".log"
+        tmp_script_name = script_name
+        result_folder = "results_"+script_name
+        script_name = "test_"+script_name
 
-            if retest == 1:
-                # create folder and go in it
-                sct.create_folder(result_folder)
+        sct.create_folder(result_folder)
+        os.chdir(result_folder)
 
-            os.chdir(result_folder)
-
-            # display script name
-            print_line('Checking '+script_name)
-            # import function as a module
-            script_tested = importlib.import_module(script_name)
-            # test function
-            status, output = script_tested.test(param.path_data)
-            # returning script_name to its original name
-            script_name = tmp_script_name
-            # manage status
-            if status == 0:
-                print_ok()
-                retest = 0
-            else:
-                print_fail()
-                print output
-                print "\nTest files missing, downloading them now \n"
-
-                os.chdir('../..')
-                downloaddata()
-
-                param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
-
-                # check existence of testing data folder
-                sct.check_folder_exist(param.path_data)
-                os.chdir(param.path_tmp + result_folder)
-
-                retest += 1
-
+        # display script name
+        print_line('Checking '+script_name)
+        # import function as a module
+        script_tested = importlib.import_module(script_name)
+        # test function
+        status, output = script_tested.test(param.path_data)
+        # manage status
+        if status == 0:
+            print_ok()
+        else:
+            print_fail()
+            print output
             # log file
             write_to_log_file(fname_log, output, 'w')
 
             # go back to parent folder
             os.chdir('..')
-            # end while loop
 
         # return
         return status
