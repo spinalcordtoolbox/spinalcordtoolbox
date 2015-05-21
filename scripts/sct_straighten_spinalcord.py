@@ -121,8 +121,6 @@ def main():
                 algo_fitting = str(arg)
             elif opt in ('-f'):
                 crop = int(arg)
-            # elif opt in ('-f'):
-            #     centerline_fitting = str(arg)
             elif opt in ('-v'):
                 verbose = int(arg)
 
@@ -169,7 +167,7 @@ def main():
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
     fname_centerline_orient = file_centerline+'_rpi.nii.gz'
-    set_orientation(fname_centerline, 'RPI', fname_centerline_orient)
+    set_orientation(file_centerline+ext_centerline, 'RPI', fname_centerline_orient)
 
     # Get dimension
     sct.printv('\nGet dimensions...', verbose)
