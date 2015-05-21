@@ -67,7 +67,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -77,6 +77,8 @@ class Option:
         self.help = help
         self.parser = parser
         self.order = order
+        self.deprecated_by = deprecated_by
+        self.deprecated_rm = deprecated_rm
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -94,6 +96,9 @@ class Option:
 
         if type_option in self.OPTION_TYPES:
             return self.checkStandardType(param,type)
+
+        elif type_option == "image_nifti":
+            return self.checkIfNifti(param)
 
         elif type_option == "file":
             return self.checkFile(param)
@@ -152,6 +157,33 @@ class Option:
         sct.check_file_exist(param,1)
         return param
 
+    def checkIfNifti(self, param):
+        import os
+        sct.printv("Check file existence...")
+        nii = False
+        niigz = False
+        param_tmp = str()
+        if param.lower().endswith('.nii'):
+            nii = os.path.isfile(param)
+            niigz = os.path.isfile(param+'.gz')
+            param_tmp = param[:-4]
+            pass
+        elif param.lower().endswith('.nii.gz'):
+            niigz = os.path.isfile(param)
+            nii = os.path.isfile(param[:-3])
+            param_tmp = param[:-7]
+            pass
+        else:
+            sct.printv("ERROR : File is not a NIFTI image file. Exiting", type='error')
+
+        if nii:
+            return param_tmp+'.nii'
+        elif niigz:
+            return param_tmp+'.nii.gz'
+        if nii and niigz:
+            return param_tmp+'.nii.gz'
+
+
     def checkFolder(self,param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
@@ -182,9 +214,9 @@ class Parser:
         self.errors = ''
         self.usage = Usage(self, file_name)
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False):
         order = len(self.options)+1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
@@ -237,8 +269,16 @@ class Parser:
                 continue
 
             if arg in self.options:
+                if self.options[arg].deprecated_rm:
+                    sct.printv("ERROR : "+arg+" is a deprecated argument and is no longer supported by the current version.", 1, 'error')
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
+                if self.options[arg].deprecated_by is not None:
+                    try:
+                        sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions. Changing argument to "+self.options[arg].deprecated_by+".", 1, 'warning')
+                        arg = self.options[arg].deprecated_by
+                    except KeyError as e:
+                        sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
                 if self.options[arg].type_value:
                     if len(arguments) > index+1: # Check if option is not the last item
                         param = arguments[index+1]
