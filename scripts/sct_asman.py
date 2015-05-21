@@ -39,7 +39,7 @@ class Param:
         self.todo_model = None  # 'compute'
         self.model_dir = './gm_seg_model_data'
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
-        self.target_reg = None  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
+        self.target_reg = 'pairwise'  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
         self.verbose = 1
 
 
@@ -138,7 +138,7 @@ class ModelDictionary:
             subject_path = self.param.path_dictionary + '/' + subject_dir
             if os.path.isdir(subject_path):
                 for file_name in os.listdir(subject_path):
-                    if 'im' in file_name:
+                    if 'im' in file_name or 'seg_in' in file_name:
                         slice_level = 0
                         name_list = file_name.split('_')
                         for word in name_list:
@@ -148,7 +148,7 @@ class ModelDictionary:
                         slices.append(Slice(slice_id=total_j_im, im=Image(subject_path + '/' + file_name).data, level=slice_level, reg_to_m=[]))
                         total_j_im += 1
 
-                    if 'seg' in file_name:
+                    if 'seg' in file_name and 'seg_in' not in file_name:
                         slices[total_j_seg].set(gm_seg=Image(subject_path + '/' + file_name).data)
                         total_j_seg += 1
 
@@ -1094,28 +1094,10 @@ class GMsegSupervisedMethod():
 sct_Image
     Load a target image to segment and do the segmentation using the model
     """
-    def __init__(self, target_fname, level_fname, gm_seg_param=None):
-
-
-        sct.printv('\nBuilding the appearance model...', verbose=gm_seg_param.verbose, type='normal')
+    def __init__(self, target_fname, level_fname, model, gm_seg_param=None):
         # build the appearance model
+        self.model = model
 
-        # if gm_seg_param.todo_model == 'compute':
-        self.model = Model(model_param=gm_seg_param, k=0.8)
-        '''
-            pickle.dump(self.model, open(gm_seg_param.model_dir + '/gmseg_model.pkl', 'wb'), protocol=2)
-        elif gm_seg_param.todo_model == 'load':
-            self.model = pickle.load(open(gm_seg_param.model_dir + '/gmseg_model.pkl', 'rb'))
-        '''
-
-        '''
-        tau = None  # 0.000765625  # 0.00025  # 0.000982421875  # 0.00090625  # None
-
-        if gm_seg_param.todo_model == 'load':
-            fic = open(gm_seg_param.model_dir + '/tau.txt', 'r')
-            tau = float(fic.read())
-            fic.close()
-        '''
         sct.printv('\nConstructing target image ...', verbose=gm_seg_param.verbose, type='normal')
         # construct target image
         self.target_image = Image(target_fname)
@@ -1128,6 +1110,7 @@ sct_Image
                 level_im = level_fname
             else:
                 level_im = Image(level_fname)
+
         if gm_seg_param.target_reg == 'pairwise':
             if level_im is not None:
                 self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image, levels_image=level_im)
@@ -1206,8 +1189,9 @@ if __name__ == "__main__":
         parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
         parser.add_option(name="-i",
                           type_value="file",
-                          description="T2star image you want to segment",
-                          mandatory=True,
+                          description="T2star image you want to segment"
+                                      "if -i isn't used, only the model is computed/loaded",
+                          mandatory=False,
                           example='t2star.nii.gz')
         parser.add_option(name="-dic",
                           type_value="folder",
@@ -1239,14 +1223,6 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='pairwise',
                           example=['pairwise', 'groupwise'])
-        '''
-        parser.add_option(name="-seg-type",
-                          type_value='multiple_choice',
-                          description="type of segmentation (gray matter or white matter)",
-                          mandatory=False,
-                          default_value='wm',
-                          example=['wm', 'gm', 'gm-model'])
-        '''
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -1255,10 +1231,11 @@ if __name__ == "__main__":
                           example='1')
 
         arguments = parser.parse(sys.argv[1:])
-        input_target_fname = arguments["-i"]
         param.path_dictionary = arguments["-dic"]
         param.todo_model = arguments["-model"]
 
+        if "-i" in arguments:
+            input_target_fname = arguments["-i"]
         if "-reg" in arguments:
             param.reg = arguments["-reg"]
         if "-target-reg" in arguments:
@@ -1272,7 +1249,9 @@ if __name__ == "__main__":
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
-    gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, gm_seg_param=param)
+    model = Model(model_param=param, k=0.8)
+    if input_target_fname is not None:
+        gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, model, gm_seg_param=param)
 
-    if param.verbose == 2:
-        gm_seg_method.show()
+        if param.verbose == 2:
+            gm_seg_method.show()
