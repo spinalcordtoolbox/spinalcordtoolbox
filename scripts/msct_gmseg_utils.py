@@ -400,6 +400,7 @@ def apply_2d_transformation(matrix, tx=0, ty=0, theta=0, s=1, transfo=None, inve
         transformed_mat = tf.warp(matrix.astype('uint32'), transfo, preserve_range=True)
 
     return transformed_mat, transfo
+# ######################################################################
 
 '''
 # ----------------------------------------------------------------------------------------------------------------------
@@ -688,7 +689,7 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     corrected_wm_seg.hdr = hdr
     corrected_wm_seg.save()
 
-    return
+    return corrected_wm_seg
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -717,6 +718,17 @@ def get_key_from_val(dic, val):
         if v == val:
             return k
 
+
+# ------------------------------------------------------------------------------------------------------------------
+def check_file_to_niigz(file_name, verbose=1):
+    if os.path.isfile(file_name):
+        if sct.extract_fname(file_name)[2] != '.nii.gz':
+            sct.run('fslchfiletype NIFTI_GZ ' + file_name)
+            file_name = sct.extract_fname(file_name)[1] + '.nii.gz'
+        return file_name
+    else:
+        sct.printv('WARNING: ' + file_name + ' is not a file ...', verbose, 'warning')
+        return False
 ########################################################################################################################
 # -------------------------------------------------- PRETREATMENTS --------------------------------------------------- #
 ########################################################################################################################
@@ -981,6 +993,7 @@ def crop_t2_star_by_slice(path):
                         # sct.run('rm -rf ./tmp_' + now)
             os.chdir('..')
 
+
 # ------------------------------------------------------------------------------------------------------------------
 def crop_t2_star(t2star, sc_seg):
     """
@@ -992,6 +1005,7 @@ def crop_t2_star(t2star, sc_seg):
     """
     t2star_name = sct.extract_fname(t2star)[1]
     sc_seg_name = sct.extract_fname(sc_seg)[1]
+    mask_box = None
 
     try:
 
@@ -1007,12 +1021,13 @@ def crop_t2_star(t2star, sc_seg):
         sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s 43 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
-        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
-        mask_box_irp = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
+        status, output = sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+        if t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz' in os.listdir('.'):
+            mask_box = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
 
     except Exception, e:
         sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
-    return mask_box_irp
+    return mask_box
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1132,6 +1147,32 @@ def amu_treatments(data_path):
                     # gm_seg_im = Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg.nii.gz')
                     # gm_seg_im.orientation = 'RPI'
                     gm_seg_im.save()
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def find_levels(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
+    # Registration to template
+    cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
+    sct.run(cmd_register_template)
+
+    cmd_warp_template = 'sct_warp_template -d ' + t2_fname + ' -w warp_template2anat.nii.gz'
+    sct.run(cmd_warp_template)
+
+    # Registration template to t2star
+    cmd_register_multimodal = 'sct_register_multimodal -i template2anat.nii.gz -d ' + t2star_fname + ' -iseg ./label/template/MNI-Poly-AMU_cord.nii.gz -dseg ' + t2star_sc_seg_fname + ' -p step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+    sct.run(cmd_register_multimodal)
+
+    multimodal_warp_name = 'warp_template2anat2' + t2star_fname
+    total_warp_name = 'warp_template2t2star.nii.gz'
+    cmd_concat = 'sct_concat_transfo -w warp_template2anat.nii.gz,' + multimodal_warp_name + ' -d ' + t2star_fname + ' -o ' + total_warp_name
+    sct.run(cmd_concat)
+
+    cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name
+    sct.run(cmd_warp)
+
+    sct.run('sct_orientation -i ./label/template/MNI-Poly-AMU_level.nii.gz -s IRP')
+
+    return './label/template/MNI-Poly-AMU_level_IRP.nii.gz'
 
 
 ########################################################################################################################
@@ -1417,13 +1458,18 @@ def inverse_square_crop(croped_image, square_mask):
     nz_coord = square_mask.getNonZeroCoordinates()
 
     assert len(nz_coord) == croped_image.data.size
+    dim = len(croped_image.data.shape)
 
     inverse_croped = square_mask.copy()
-    done_slices = []
-    for coord in nz_coord:
-        if coord.x not in done_slices:
-            inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
-            done_slices.append(coord.x)
+    if dim == 3 :
+        done_slices = []
+        for coord in nz_coord:
+            if coord.x not in done_slices:
+                inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
+                done_slices.append(coord.x)
+    elif dim == 2:
+        coord = nz_coord[0]
+        inverse_croped.data[coord.x: coord.x + croped_image.data.shape[0], coord.y: coord.y + croped_image.data.shape[1]] = croped_image.data
 
     inverse_croped.file_name = croped_image.file_name + '_original_dimension'
 
