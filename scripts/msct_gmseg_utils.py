@@ -654,6 +654,8 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
     """
     assert gm_seg.data.shape == original_im.data.shape
 
+    original_hdr = gm_seg.hdr
+
     gm_seg_copy = gm_seg.copy()
     sc = original_im.copy()
     nz_coord_sc = sc.getNonZeroCoordinates()
@@ -673,6 +675,7 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
     res_wm_seg = np.absolute(sc.data - gm_seg_copy.data).astype(int)
 
     res_wm_seg_im = Image(param=np.asarray(res_wm_seg), absolutepath=name_gm_seg + '_inv_to_wm.nii.gz')
+    res_wm_seg_im.hdr = original_hdr
     res_wm_seg_im.save()
 
     return res_wm_seg
@@ -1150,7 +1153,7 @@ def amu_treatments(data_path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def find_levels(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
+def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
     # Registration to template
     cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
     sct.run(cmd_register_template)
@@ -1296,7 +1299,7 @@ def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True):
+def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True, weight=None):
     """
     Leave one out cross validation taking 1 SLICE out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1325,18 +1328,32 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
 
     for subject_dir in os.listdir(dic_path):
         subject_path = dic_path + '/' + subject_dir
+        level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
         if os.path.isdir(subject_path):
             for file_name in os.listdir(subject_path):
                 if "im" in file_name:
                     try:
                         # Gray matter segmentation for this slice as target
                         target = file_name
-                        target_name = sct.extract_fname(target)[1][:-3]
-                        ref_gm_seg = target_name + '_seg.nii.gz'
-                        slice_level = target_name[-2:]
-                        target_n_slice = target_name[-5:-3]
+                        target_name = subject_dir + '_' + sct.extract_fname(target)[1][:-3]
+                        if 'errsm' in target:
+                            ref_gm_seg = sct.extract_fname(target)[1][:-3] + '_seg.nii.gz'
+                        else:
+                            ref_gm_seg = sct.extract_fname(target)[1][:-3] + '_manual_gmseg.nii.gz'
+                        # slice_level = target_name[-2:]
+                        slice_level = ''
+                        target_slice = ''
+                        name_list = file_name.split('_')
+                        for word in name_list:
+                            if word.upper() in level_label.values():
+                                slice_level = word.upper()
+                            elif 'slice' in word:
+                                target_slice = word
 
-                        tmp_dir = 'tmp_' + subject_dir + '_slice' + target_n_slice + '_as_target'
+                        if target_slice == '':
+                            target_slice = slice_level
+
+                        tmp_dir = 'tmp_' + subject_dir + '_' + target_slice + '_as_target'
                         sct.run('mkdir ./' + tmp_dir)
 
                         tmp_dic_name = 'dic'
@@ -1357,6 +1374,8 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                             cmd_gm_seg += ' -l ' + slice_level
                         if reg is not None:
                             cmd_gm_seg += ' -reg ' + reg
+                        if weight is not None:
+                            cmd_gm_seg += ' -weight ' + str(weight)
 
                         before_seg = time.time()
                         sct.run(cmd_gm_seg)
@@ -1386,14 +1405,14 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         levels = []
                         similar_levels = 0
                         for s in line_list:
-                            if s in ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']:
+                            if s in level_label.values():
                                 levels.append(s)
                         for l in levels:
                             if l == slice_level:
                                 similar_levels += 1
                         slice_similarity = float(similar_levels)/len(levels)
                         similarity_sum += slice_similarity
-                        level_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + str(100*slice_similarity) + '% (' + str(slice_level) + ')\n')
+                        level_file.write(subject_dir + ' slice ' + target_slice + ': ' + str(100*slice_similarity) + '% (' + str(slice_level) + ')\n')
 
                         # Dice coefficient
                         status, wm_dice_output = sct.run('sct_dice_coefficient ' + wm_res + ' ' + ref_wm_seg)
@@ -1406,8 +1425,8 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         wm_dice_sum += float(wm_dice)
                         gm_dice_sum += float(gm_dice)
                         n_slices += 1
-                        wm_dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + wm_dice[:-1] + ' (' + str(slice_level) + ')\n')
-                        gm_dice_file.write(subject_dir + ' slice ' + target_n_slice + ': ' + gm_dice[:-1] + ' (' + str(slice_level) + ')\n')
+                        wm_dice_file.write(subject_dir + ' slice ' + target_slice + ': ' + wm_dice[:-1] + ' (' + str(slice_level) + ')\n')
+                        gm_dice_file.write(subject_dir + ' slice ' + target_slice + ': ' + gm_dice[:-1] + ' (' + str(slice_level) + ')\n')
 
                         # Error map
                         if first:
@@ -1424,7 +1443,7 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         # n_slices += ref_wm_seg_im.data.shape[0]
 
                         # Time of computation
-                        time_file.write(subject_dir + ' slice ' + target_n_slice + ' as target: ' + str(seg_time) + ' sec\n')
+                        time_file.write(subject_dir + ' slice ' + target_slice + ' as target: ' + str(seg_time) + ' sec\n')
                         time_sum += seg_time
 
                     except Exception, e:
