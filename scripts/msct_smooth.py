@@ -463,7 +463,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     in the begining and end part of the output signal.
 
     input:
-        x: the input signal
+        x: the input signal (must be an array)
         window_len: the dimension of the smoothing window (in number of points); should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
