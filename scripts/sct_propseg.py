@@ -151,7 +151,7 @@ if __name__ == "__main__":
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
-    folder_output = "./"
+    folder_output = "."
     if "-o" in arguments:
         folder_output = arguments["-o"]
         cmd += " -o " + folder_output
