@@ -40,6 +40,7 @@ class Param:
         self.model_dir = './gm_seg_model_data'
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = 'pairwise'  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
+        self.weight_beta = 1.2
         self.verbose = 1
 
 
@@ -64,8 +65,7 @@ class ModelDictionary:
         else:
             self.param = dic_param
 
-        self.level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2',
-                            10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+        self.level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
 
         # Initialisation of the parameters
         self.coregistration_transfos = None
@@ -142,8 +142,8 @@ class ModelDictionary:
                         slice_level = 0
                         name_list = file_name.split('_')
                         for word in name_list:
-                            if word in self.level_label.values():
-                                slice_level = get_key_from_val(self.level_label, word)
+                            if word.upper() in self.level_label.values():
+                                slice_level = get_key_from_val(self.level_label, word.upper())
 
                         slices.append(Slice(slice_id=total_j_im, im=Image(subject_path + '/' + file_name).data, level=slice_level, reg_to_m=[]))
                         total_j_im += 1
@@ -426,7 +426,7 @@ class Model:
                         if target_levels[i_target] == dataset_levels[j_slice]:
                             beta_slice.append(exp(tau*square_norm))
                         else:
-                            beta_slice.append(exp(-tau*square_norm)/1.2*(target_levels[i_target] - dataset_levels[j_slice]))
+                            beta_slice.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice])) #TODO: before = no absolute
                     else:
                         beta_slice.append(exp(tau*square_norm))
 
@@ -1148,10 +1148,6 @@ sct_Image
 
         self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res, original_hdr)
 
-
-        sct.printv('Done! \nTo see the result, type :')
-        sct.printv('fslview ' + target_fname + ' ' + name_res + '_corrected.nii.gz -l Red -t 0.4 ' + name_res + '_inv_to_gm.nii.gz -l Blue -t 0.4 &', gm_seg_param.verbose, 'info')
-
     def show(self):
 
         sct.printv('\nShowing the pca modes ...')
@@ -1223,6 +1219,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='pairwise',
                           example=['pairwise', 'groupwise'])
+        parser.add_option(name="-weight",
+                          type_value='float',
+                          description="weight parameter on the level differences to compute the similarities (beta)",
+                          mandatory=False,
+                          default_value=1.2,
+                          example=2.0)
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -1240,12 +1242,10 @@ if __name__ == "__main__":
             param.reg = arguments["-reg"]
         if "-target-reg" in arguments:
             param.target_reg = arguments["-target-reg"]
-        '''
-        if "-seg-type" in arguments:
-            param.seg_type = arguments["-seg-type"]
-        '''
         if "-l" in arguments:
             input_level_fname = arguments["-l"]
+        if "-weight" in arguments:
+            param.weight_beta = arguments["-weight"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
