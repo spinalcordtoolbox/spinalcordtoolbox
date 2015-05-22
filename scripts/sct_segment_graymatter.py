@@ -45,7 +45,7 @@ class Pretreatments:
             sct.run('cp ../' + t2_data[1] + ' ./' + self.t2_seg)
             sct.run('cp ../' + t2_data[2] + ' ./' + self.t2_landmarks)
 
-            self.level_fname = find_levels(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
+            self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
 
 
 def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
@@ -70,20 +70,30 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
         else:
             level_to_use = level_fname
 
+    sct.printv('\nDoing target pretreatments ...', verbose=param.verbose, type='normal')
     pretreat = Pretreatments(target_fname, sc_seg_fname, t2_data)
     if pretreat.level_fname is not None:
         level_to_use = pretreat.level_fname
 
+    sct.printv('\nDoing target gray matter segmentation ...', verbose=param.verbose, type='normal')
     gm_seg = GMsegSupervisedMethod(pretreat.treated_target, level_to_use, model, gm_seg_param=param)
 
+    sct.printv('\nDoing result post-treatments ...', verbose=param.verbose, type='normal')
     square_mask = Image(pretreat.square_mask)
+    res_names = []
     for res_im in [gm_seg.res_wm_seg, gm_seg.res_gm_seg, gm_seg.corrected_wm_seg]:
         res_im_original_space = inverse_square_crop(res_im, square_mask)
         res_im_original_space.save()
         sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s RPI')
-        sct.run('cp ' + res_im_original_space.file_name + '_RPI.nii.gz ../' + sct.extract_fname(target_fname)[1] + res_im.file_name[len(pretreat.treated_target[:-7]):] + '.nii.gz')
+        res_name = sct.extract_fname(target_fname)[1] + res_im.file_name[len(pretreat.treated_target[:-7]):] + '.nii.gz'
+        sct.run('cp ' + res_im_original_space.file_name + '_RPI.nii.gz ../' + res_name)
+        res_names.append(res_name)
 
     os.chdir('..')
+
+    sct.printv('Done! \nTo see the result, type :')
+    sct.printv('fslview ' + target_fname + ' ' + res_names[0] + ' -l Red -t 0.4 ' + res_names[1] + ' -l Blue -t 0.4 &', param.verbose, 'info')
+
 
 
 ########################################################################################################################
