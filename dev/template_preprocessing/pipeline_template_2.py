@@ -33,7 +33,7 @@ from msct_image import Image
 # add path to scripts
 PATH_DICOM= '/Volumes/data_shared/' #sert a rien
 PATH_OUTPUT= '/Users/tamag/data/data_template/Results_template' #folder where you want the results to be stored
-PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects'  # to be replaced by URL from github
+PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects/T2'  # to be replaced by URL from github
 
 # define subject
 # SUBJECTS_LIST=[['errsm_14', ,'pathtodicomt1', 'pathtodicomt2']
@@ -46,9 +46,9 @@ SUBJECTS_LIST_TO_ADD = [['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_
 
 SUBJECTS_LIST_BUG = [['errsm_20', '/Volumes/data_shared/montreal_criugm/errsm_20/12-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_20/34-SPINE_T2'],['pain_pilot_3','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/31-SPINE_T2']]
 
-SUBJECTS_LIST_STR = [['JW','/Volumes/data_shared/marseille/JW/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5','/Volumes/data_shared/marseille/JW/01_0100_compo-space'],['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2']]
+SUBJECTS_LIST_STR = [['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2']]
 
-SUBJECTS_LIST = SUBJECTS_LIST_total
+SUBJECTS_LIST = SUBJECTS_LIST_STR
 # add path to scripts
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
@@ -77,14 +77,14 @@ if do_preprocessing_T2:
         if not os.path.isdir(PATH_OUTPUT + '/subjects/'+subject+'/'+'T2'):
             os.makedirs(PATH_OUTPUT + '/subjects/'+subject+'/'+'T2')
         os.chdir(PATH_OUTPUT + '/subjects/'+subject+'/'+'T2')
-
-        # convert to nii
-        print '\nConvert to nii'
-        #sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
-
-        # change file name
-        print '\nChange file name to data.nii.gz...'
-        #sct.run('mv *.nii.gz data.nii.gz')
+        #
+        # # convert to nii
+        # print '\nConvert to nii'
+        # #sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
+        #
+        # # change file name
+        # print '\nChange file name to data.nii.gz...'
+        # #sct.run('mv *.nii.gz data.nii.gz')
 
        # Get info from txt file
         print '\nRecover infos from text file' + PATH_INFO + '/' + subject+ '/' + 'crop.txt\n'
@@ -364,7 +364,7 @@ if average_level:
 # Aligning vertebrae for all subject
 
 if align_vertebrae_T2:
-    for i in range(3,len(SUBJECTS_LIST)):
+    for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # go to output folder
