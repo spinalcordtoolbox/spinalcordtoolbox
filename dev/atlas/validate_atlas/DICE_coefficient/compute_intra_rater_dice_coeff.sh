@@ -50,3 +50,7 @@ sct_dice_coefficient ../manual_masks/tanguy/manual_csr.nii.gz ../manual_masks/ta
 sct_dice_coefficient ../manual_masks/tanguy/manual_dc.nii.gz ../manual_masks/tanguy/manual_dc_2.nii.gz
 
 echo ---------------------------------------------------------------------------------------------------
+
+echo Mean left CST = 0.5928
+echo Mean right CST = 0.6170
+echo Mean dorsal columns = 0.7030
