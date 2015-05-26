@@ -83,7 +83,7 @@ def register_seg(seg_input, seg_dest):
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
 # If the mask is inputed, it must also be 3D.
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 0):
+def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
@@ -116,8 +116,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
-    sct.run('cp '+im_input+ ' ' + path_tmp +'/'+ root_i)
-    sct.run('cp '+im_dest+ ' ' + path_tmp +'/'+ root_d)
+    sct.run('cp '+im_input+ ' ' + path_tmp +'/'+ root_i+ext_i)
+    sct.run('cp '+im_dest+ ' ' + path_tmp +'/'+ root_d+ext_d)
     if mask:
         sct.run('cp '+mask+ ' '+path_tmp +'/mask.nii.gz')
 
@@ -162,7 +162,24 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--interpolation BSpline[3] '
                +masking)
 
-        sct.run(cmd)
+        # sct.run(cmd)
+
+        try:
+            sct.run(cmd)
+
+            if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
+                f = 'transform_' +num+ '0GenericAffine.mat'
+                matfile = loadmat(f, struct_as_record=True)
+                array_transfo = matfile['AffineTransform_double_2_2']
+                x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
+                y_displacement[i] = array_transfo[5][0]
+                theta_rotation[i] = acos(array_transfo[0])
+
+        except:
+                if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
+                    x_displacement[i] = x_displacement[i-1]  #is it? or is it y?
+                    y_displacement[i] = y_displacement[i-1]
+                    theta_rotation[i] = theta_rotation[i-1]
 
         # # get displacement form this slice and complete x and y displacement lists
         # with open('transform_'+num+'.csv') as f:
@@ -175,16 +192,16 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
         #             y_displacement[i] = line[1]
         #             f.close()
 
-        # get matrix of transfo for a rigid transform   (pb slicereg fait une rotation ie le deplacement n'est pas homogene par slice)
-        # recuperer le deplacement ne donnerait pas une liste mais un warping field: mieux vaut recup la matrice output
-        # pb du smoothing du deplacement par slice !!   on peut smoother les param theta tx ty
-        if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
-            f = 'transform_' +num+ '0GenericAffine.mat'
-            matfile = loadmat(f, struct_as_record=True)
-            array_transfo = matfile['AffineTransform_double_2_2']
-            x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
-            y_displacement[i] = array_transfo[5][0]
-            theta_rotation[i] = acos(array_transfo[0])
+        # # get matrix of transfo for a rigid transform   (pb slicereg fait une rotation ie le deplacement n'est pas homogene par slice)
+        # # recuperer le deplacement ne donnerait pas une liste mais un warping field: mieux vaut recup la matrice output
+        # # pb du smoothing du deplacement par slice !!   on peut smoother les param theta tx ty
+        # if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
+        #     f = 'transform_' +num+ '0GenericAffine.mat'
+        #     matfile = loadmat(f, struct_as_record=True)
+        #     array_transfo = matfile['AffineTransform_double_2_2']
+        #     x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
+        #     y_displacement[i] = array_transfo[5][0]
+        #     theta_rotation[i] = acos(array_transfo[0])
 
         #TO DO: different treatment for other algo
 
