@@ -227,7 +227,7 @@ def main():
    for i in range(data.shape[2]):
        data[:,:,i] = data[:,:,i] * (mean_intensity/means_smooth_extended[i])
 
-   hdr.set_data_dtype('uint16') # set imagetype to uint8
+   hdr.set_data_dtype('uint16') # set imagetype to uint16
    # save volume
    sct.printv('\nWrite NIFTI volumes...',verbose)
    data = data.astype(np.float32, copy =False)
