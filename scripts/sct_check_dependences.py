@@ -187,6 +187,16 @@ def main():
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
+    # check dipy
+    print_line('Check if dipy is installed ')
+    try:
+        import dipy
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  dipy is not installed! You can install it using: http://nipy.org/dipy/installation.html'
+        install_software = 1
+
     # check if FSL is declared
     print_line('Check if FSL is declared ')
     cmd = 'which fsl'
