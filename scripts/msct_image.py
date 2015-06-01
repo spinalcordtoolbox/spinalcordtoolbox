@@ -371,20 +371,26 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         show()
 
-    def transfo_pix2phys(self, data_pix=None, coordi=None):
+    def transfo_pix2phys(self, coordi=None, data_pix=None):
         """
+
         If data_pix is different from None:
         This function returns the physical coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_pix) but containing a 3D vector.
         This vector is the physical position of the point.
         data_pix must be an array of 3 dimensions.
 
         If coordi is different from none:
-        coordi is a list of length 3 containing the pixel coordinate of a point. The function will return a list with the physical coordinates of this point in the space of the image.
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
-        Example:
+        Example1:
         img = Image('file.nii.gz')
         data = img.data
-        data_phys = img.transfo_pix2phys(data)
+        data_phys = img.transfo_pix2phys(data_pix=data)
+
+        Example2:
+        img = Image('file.nii.gz')
+        coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
+        coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
         :return:
         """
@@ -421,11 +427,16 @@ class Image(object):
 
             return coordi_phys_list
 
-    def transfo_phys2pix(self, data_phys=None, coordi=None):
+    def transfo_phys2pix(self, coordi=None, data_phys=None):
         """
         This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
         This vector is the pixel position of the point in the space of the image.
         data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
+
+        If coordi is different from none:
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+
+
         :return:
         """
         from numpy import zeros, array, transpose, dot, asarray, asmatrix
@@ -440,6 +451,7 @@ class Image(object):
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
 
         if data_phys != None:
+
             data_pix = copy(data_phys)
             for i in range(data_phys.shape[0]):
                 print i
@@ -455,6 +467,7 @@ class Image(object):
             return data_pix
 
         if coordi != None:
+
             coordi_phys = transpose(asarray([coordi]))
             coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))[0]
             coordi_pix_list = [int(round(coordi_pix[i])) for i in range(coordi_pix.shape[0])]
