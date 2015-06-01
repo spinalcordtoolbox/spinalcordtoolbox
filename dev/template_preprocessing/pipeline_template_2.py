@@ -13,7 +13,7 @@
 # ~/subject/t2/centerline_propseg_RPI.nii.gz --> a series of binary labels along the cord to help propseg. To be done on the image cropped and in RPI orientation ! (Use command: "matlab_batcher.sh sct_get_centerline "'image_RPI_crop.nii.gz'" if image_RPI_crop.nii.gz is your anatomic image, cropped and in RPI orientation)
 # ~/subject/t2/crop.txt --> ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
 # ~/subject/t2/labels_updown.nii.gz --> a series of binary labels to complete the centerline from brainstem to L2/L3.
-# ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level. These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 19 labels from PMJ to the frontier T12/L1 I.e., Brainstem (PMJ)=1, C2/C3=2, C3/C4=3, C4/C5=4, C5/C6=5, T1/T2=6, T2/T3=7, T3/T4=8 ... T11/T12=18, T12/L1=19.
+# ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level(to be done on the original RPI image i.e. non crop image). These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 20 labels: [name of point at top] + PMJ + 18 labels of vertebral level going until the frontier T12/L1 I.e., Brainstem [name first label]=1, (PMJ)=2, C2/C3=3, C3/C4=4, C4/C5=5, C5/C6=6, T1/T2=7, T2/T3=8, T3/T4=9 ... T11/T12=19, T12/L1=20.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
 import os, sys, commands
@@ -31,9 +31,9 @@ from numpy import array
 from msct_image import Image
 
 # add path to scripts
-PATH_DICOM= '/Volumes/data_shared/' #sert a rien
-PATH_OUTPUT= '/Users/tamag/data/data_template/Results_template' #folder where you want the results to be stored
-PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects/T2'  # to be replaced by URL from github
+PATH_DICOM = '/Volumes/data_shared/' #sert a rien
+PATH_OUTPUT = '/Users/tamag/data/data_template/Results_template' #folder where you want the results to be stored
+PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects/T2'  # eventually to be replaced by URL from github
 
 # define subject
 # SUBJECTS_LIST=[['errsm_14', ,'pathtodicomt1', 'pathtodicomt2']
