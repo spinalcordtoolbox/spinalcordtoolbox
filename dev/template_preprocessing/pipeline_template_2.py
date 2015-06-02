@@ -74,7 +74,7 @@ if do_preprocessing_T2:
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
 
    # loop across subjects
-    for i in range(0,len(SUBJECTS_LIST)):
+    for i in range(10,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # create and go to output folder
