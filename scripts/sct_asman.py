@@ -40,6 +40,7 @@ class Param:
         self.model_dir = './gm_seg_model_data'
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = 'pairwise'  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
+        self.first_reg = False
         self.weight_beta = 1.2
         self.verbose = 1
 
@@ -389,8 +390,8 @@ class Model:
         elif self.param.todo_model == 'load':
             self.tau = pickle.load(open(self.param.path_dictionary + '/tau.txt', 'r'))  # if protocol was 2 : 'rb'
 
-        if self.param.verbose == 2:
-            self.pca.plot_projected_dic()
+        #if self.param.verbose == 2:
+        #    self.pca.plot_projected_dic()
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_beta(self, coord_target, target_levels=None, dataset_coord=None, dataset_levels=None, tau=0.01):
@@ -423,10 +424,14 @@ class Model:
                 for j_slice, coord_slice_j in enumerate(dataset_coord):
                     square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
                     if target_levels is not None:
+                        '''
                         if target_levels[i_target] == dataset_levels[j_slice]:
                             beta_slice.append(exp(tau*square_norm))
                         else:
                             beta_slice.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice])) #TODO: before = no absolute
+                        '''
+                        beta_slice.append(exp(-self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
+
                     else:
                         beta_slice.append(exp(tau*square_norm))
 
@@ -441,10 +446,13 @@ class Model:
             for j_slice, coord_slice_j in enumerate(dataset_coord):
                 square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
                 if target_levels is not None:
+                    '''
                     if target_levels == dataset_levels[j_slice]:
                         beta.append(exp(tau*square_norm))
                     else:
-                        beta.append(exp(-tau*square_norm)/1.2*(target_levels - dataset_levels[j_slice]))
+                        beta.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels - dataset_levels[j_slice]))
+                    '''
+                    beta.append(exp(-self.param.weight_beta*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
                 else:
                     beta.append(exp(tau*square_norm))
 
@@ -595,15 +603,17 @@ class TargetSegmentationPairwise:
 
         # Initialization of the target image
         if len(target_image.data.shape) == 3:
-            self.target = [Slice(slice_id=i_slice, im=target_slice) for i_slice, target_slice in enumerate(target_image.data)]
+            self.target = [Slice(slice_id=i_slice, im=target_slice, reg_to_m=[]) for i_slice, target_slice in enumerate(target_image.data)]
             self.target_dim = 3
         elif len(target_image.data.shape) == 2:
-            self.target = [Slice(slice_id=0, im=target_image.data)]
+            self.target = [Slice(slice_id=0, im=target_image.data, reg_to_m=[])]
             self.target_dim = 2
 
         if levels_image is not None:
             self.load_level(levels_image)
 
+        if self.model.param.first_reg:
+            self.first_reg()
         # self.target_M = self.target_pairwise_registration()
         self.target_pairwise_registration()
 
@@ -629,6 +639,10 @@ class TargetSegmentationPairwise:
             for target_slice in self.target:
                 fic_selected_slices.write('slice ' + str(target_slice.id) + ': ' + str(slice_levels[self.selected_k_slices[target_slice.id]]) + '\n')
         fic_selected_slices.close()
+
+        if self.model.param.verbose == 2:
+            self.model.pca.plot_projected_dic(nb_mode=3, target_coord=self.coord_projected_target)  # , to_highlight=(6, self.selected_k_slices[6]))
+
 
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
         # self.target_GM_seg_M = self.label_fusion(self.selected_k_slices)
@@ -658,6 +672,24 @@ class TargetSegmentationPairwise:
             self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image))
 
     # ------------------------------------------------------------------------------------------------------------------
+    def first_reg(self):
+        mean_sc_seg = (np.asarray(self.model.pca.mean_image) > 0).astype(int)
+        Image(param=self.model.pca.mean_image, absolutepath='mean_image.nii.gz').save()
+        for i, target_slice in enumerate(self.target):
+            moving_target_seg = (np.asarray(target_slice.im) > 0).astype(int)
+            transfo = 'BSplineSyN'
+            transfo_name =  transfo + '_first_reg_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
+
+            apply_ants_transfo(mean_sc_seg, moving_target_seg, binary=True, apply_transfo=False, transfo_type=transfo, transfo_name=transfo_name)
+            moved_target_slice = apply_ants_transfo(mean_sc_seg, target_slice.im, binary=False  , search_reg=False, transfo_type=transfo, transfo_name=transfo_name)
+
+            target_slice.set(im_m=moved_target_slice)
+            target_slice.reg_to_M.append((transfo, transfo_name))
+            Image(param=target_slice.im, absolutepath='slice' + str(target_slice.id) + '_original_im.nii.gz').save()
+            Image(param=target_slice.im_M, absolutepath='slice' + str(target_slice.id) + '_moved_im.nii.gz').save()
+
+
+    # ------------------------------------------------------------------------------------------------------------------
     def target_pairwise_registration(self, inverse=False):
         """
         Register the target image into the model space
@@ -672,9 +704,13 @@ class TargetSegmentationPairwise:
             # Registration target --> model space
             mean_dic_im = self.model.pca.mean_image
             for i, target_slice in enumerate(self.target):
-                moving_target_slice = target_slice.im
+                if not self.model.param.first_reg:
+                    moving_target_slice = target_slice.im
+                else:
+                    moving_target_slice = target_slice.im_M
                 for transfo in self.model.dictionary.coregistration_transfos:
                     transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
+                    target_slice.reg_to_M.append((transfo, transfo_name))
 
                     moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False, transfo_type=transfo, transfo_name=transfo_name)
                 self.target[i].set(im_m=moving_target_slice)
@@ -685,10 +721,11 @@ class TargetSegmentationPairwise:
                 moving_seg_slice = target_slice.wm_seg_M
                 moving_sc_seg_slice = target_slice.sc_seg
 
-                for transfo in self.model.dictionary.coregistration_transfos:
-                    transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
-                    moving_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo, transfo_name=transfo_name)
-                    moving_sc_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_sc_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo, transfo_name=transfo_name)
+                # for transfo in self.model.dictionary.coregistration_transfos:
+                for transfo in target_slice.reg_to_M:
+                    # transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
+                    moving_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    moving_sc_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_sc_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
 
                 target_slice.set(wm_seg=moving_seg_slice)
                 target_slice.set(sc_seg=moving_sc_seg_slice)
@@ -765,6 +802,7 @@ class TargetSegmentationGroupwise:
         sct.printv('\nProjecting the target image in the reduced common space ...', model.param.verbose, 'normal')
         self.coord_projected_target = model.pca.project(self.target_M) if self.target_M is not None else None
 
+
         '''
         print '----SHAPE COORD PROJECTED TARGET -----', self.coord_projected_target.shape
         print '----COORD PROJECTED TARGET -----', self.coord_projected_target
@@ -782,6 +820,7 @@ class TargetSegmentationGroupwise:
         print '----SELECTED K -----', self.selected_k_slices
         print '----SHAPE SELECTED K -----', self.selected_k_slices.shape
         '''
+
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
         self.target_GM_seg_M = self.label_fusion(self.selected_k_slices)
         self.target_GM_seg_M.file_name = 'res_gmseg_model_space'
@@ -1225,6 +1264,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1.2,
                           example=2.0)
+        parser.add_option(name="-first-reg",
+                          type_value='multiple_choice',
+                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -1246,6 +1291,8 @@ if __name__ == "__main__":
             input_level_fname = arguments["-l"]
         if "-weight" in arguments:
             param.weight_beta = arguments["-weight"]
+        if "-first-reg" in arguments:
+            param.first_reg = bool(int(arguments["-first-reg"]))
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 

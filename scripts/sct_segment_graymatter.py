@@ -65,6 +65,7 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
         t2_data = None
         if check_file_to_niigz('../' + level_fname):
             sct.run('cp ../' + level_fname + ' .')
+            level_fname = sct.extract_fname(level_fname)[1]+sct.extract_fname(level_fname)[2]
             sct.run('sct_orientation -i ' + level_fname + ' -s IRP')
             level_to_use = sct.extract_fname(level_fname)[1] + '_IRP.nii.gz'
         else:
@@ -144,6 +145,12 @@ if __name__ == "__main__":
                                       "If -l is used, no need to provide t2 data",
                           mandatory=False,
                           example='MNI-Poly-AMU_level_IRP.nii.gz')
+        parser.add_option(name="-first-reg",
+                          type_value='multiple_choice',
+                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -161,6 +168,8 @@ if __name__ == "__main__":
             input_t2_data = arguments["-t2"]
         if "-l" in arguments:
             input_level_fname = arguments["-l"]
+        if "-first-reg" in arguments:
+            param.first_reg = bool(int(arguments["-first-reg"]))
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 

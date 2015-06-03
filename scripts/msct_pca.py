@@ -430,12 +430,14 @@ class PCA:
                     c_dat = np.asarray([dic_slice.level for dic_slice in self.slices])
                     # graph.plot(i_dat, j_dat, 'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
 
-                    graph.scatter(i_dat, j_dat, c=c_dat, cmap='hsv', s=50, alpha=0.5)  # , alpha=0.5, label='dictionary')
+                    graph.scatter(i_dat, j_dat, c=c_dat, cmap='gist_ncar', s=50, alpha=0.5)  # , alpha=0.5, label='dictionary')
 
                     if to_highlight is not None:
+                        '''
                         for j_point, (x, y) in enumerate(zip(self.dataset_coord[i, 0:self.J],
                                                              self.dataset_coord[j, 0:self.J])):
                             graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
+                        '''
 
                         graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]],
                                    'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
@@ -444,17 +446,17 @@ class PCA:
                     if target_coord is not None:
                         # target coord is a numpy array of either dimension of all the slices or just one slice
                         if len(target_coord.shape) == 2:
-                            graph.plot(target_coord[i], target_coord[j],
-                                       '^', markersize=7, color='red', alpha=0.5, label='target')
+                            graph.plot(target_coord[0][i], target_coord[    0][j],
+                                       '^', markersize=7, color='black', alpha=0.5, label='target')
 
                         elif len(target_coord.shape) == 3:
                             for j_slice, slice_coord in enumerate(target_coord):
                                 graph.plot(slice_coord[i], slice_coord[j],
-                                           '^', markersize=7, color='red', alpha=0.5, label='target')
+                                           '^', markersize=7, color='black', alpha=0.5, label='target')
 
                                 if to_highlight is not None and j_slice == to_highlight[0]:
                                     graph.plot(slice_coord[i], slice_coord[j],
-                                               '^', markersize=7, color='black', alpha=0.5, label='this target')
+                                               '^', markersize=7, color='red', alpha=0.5, label='this target')
 
                         else:
                             sct.printv('Cannot plot projected target.', 1, 'error')
