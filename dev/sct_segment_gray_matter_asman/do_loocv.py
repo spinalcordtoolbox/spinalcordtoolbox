@@ -4,6 +4,17 @@ import sys
 from msct_parser import Parser
 from msct_gmseg_utils import leave_one_out_by_slice
 import os
+import time
+import multiprocessing as mp
+
+
+def loocv(param):
+    use_level, weight = param
+    sct.run('mkdir ./' + registration + '_levels_' + str(use_level) + '_weight' + str(weight) )
+    sct.run('cp -r ' + path_dictionary + ' ./' + registration + '_levels_' + str(use_level) + '_weight' + str(weight) + '/dictionary')
+    os.chdir('./' +registration + '_levels_' + str(use_level) + '_weight' + str(weight))
+    leave_one_out_by_slice('dictionary/', reg=registration, target_reg=target_reg, use_levels=use_level, weight=weight)
+    os.chdir('..')
 
 if __name__ == '__main__':
     parser = Parser(__file__)
@@ -31,17 +42,22 @@ if __name__ == '__main__':
 
     registration = 'Affine'
 
-    weights = [1.1, 1.2, 1.5, 1.8, 2.1]
+    weights = [0.5, 1.2, 1.57, 1.9]
 
+
+    before = time.time()
     for w in weights:
-        sct.run('mkdir ./' + registration + '_with_levels_weight' + str(w))
-        sct.run('cp -r ' + path_dictionary + ' ./' + registration + '_with_levels_weight' + str(w) + '/dictionary')
-        os.chdir('./' + registration + '_with_levels_weight' + str(w))
-        leave_one_out_by_slice('dictionary/', reg=registration, target_reg=target_reg, use_levels=True, weight=w)
-        os.chdir('..')
+        loocv((True, w))
+    loocv((False, 1.0))
 
-        sct.run('mkdir ./' + registration + '_without_levels' + str(w))
-        sct.run('cp -r ' + path_dictionary + ' ./' + registration + '_without_levels' + str(w) + '/dictionary')
-        os.chdir('./' + registration + '_without_levels' + str(w))
-        leave_one_out_by_slice('dictionary/', reg=registration, target_reg=target_reg, use_levels=False, weight=w)
-        os.chdir('..')
+    t1 = time.time() - before
+
+    '''
+    before = time.time()
+    par = zip([True]*(len(weights) - 1)+[False], weights)
+    pool = mp.Pool(8)
+    pool.map(loocv, par)
+    t2 = time.time() - before
+    '''
+    print 'normal : ', t1
+    # print 'with mp: ', t2
