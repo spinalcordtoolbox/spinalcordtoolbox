@@ -433,7 +433,7 @@ class Model:
                         beta_slice.append(exp(-self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
 
                     else:
-                        beta_slice.append(exp(tau*square_norm))
+                        beta_slice.append(exp(-tau*square_norm))
 
                 try:
                     beta_slice /= np.sum(beta_slice)
@@ -454,7 +454,7 @@ class Model:
                     '''
                     beta.append(exp(-self.param.weight_beta*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
                 else:
-                    beta.append(exp(tau*square_norm))
+                    beta.append(exp(-tau*square_norm))
 
             try:
                 beta /= np.sum(beta)
