@@ -291,32 +291,33 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             if transfo_type == 'BSpline':
                 transfo_params = ',1'
             elif transfo_type == 'BSplineSyN':
-                transfo_params = ',1,1'
+                transfo_params = ',3,0'
+                reg_interpolation = 'NearestNeighbor'
             elif transfo_type == 'SyN':
                 transfo_params = ',1,1'
-            gradientstep = 0.3  # 0.5
+            gradientstep = 0.5  # 0.3
             metric = 'MeanSquares'
-            metric_params = ',5'
+            metric_params = ',1,4'  # ',5'
             # metric = 'MI'
             # metric_params = ',1,2'
-            niter = 20
+            niter = 5  # 20
             smooth = 0
             shrink = 1
             cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
                       '-m ' + metric + '[' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params + '] -o reg  -c ' + str(niter) + \
-                      ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)
+                      ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)  # + ' -r [' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + ',1]'
 
             sct.run(cmd_reg, verbose=verbose)
 
             sct.run('cp ' + mat_name + ' ../' + path + transfo_dir + '/'+transfo_name, verbose=verbose)
-            if transfo_type == 'SyN':
+            if 'SyN' in transfo_type:
                 sct.run('cp ' + inverse_mat_name + ' ../' + path + transfo_dir + '/'+transfo_name + '_inversed',
                         verbose=verbose)
 
         if apply_transfo:
             if not search_reg:
                 sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + ' ./' + mat_name, verbose=verbose)
-                if transfo_type == 'SyN':
+                if 'SyN' in transfo_type:
                     sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + inverse_mat_name,
                             verbose=verbose)
 
@@ -325,7 +326,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             else:
                 apply_transfo_interpolation = 'BSpline'
 
-            if transfo_type == 'SyN' and inverse:
+            if 'SyN' in transfo_type and inverse:
                 cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                             '-n ' + apply_transfo_interpolation + ' -t [' + inverse_mat_name + '] ' \
                             '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
@@ -1532,6 +1533,57 @@ def compute_error_map(data_path):
 
     Image(param=(error_map_sum/n_slices) - 1, absolutepath='error_map.nii.gz').save()
     Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def compute_error_map_by_level(data_path):
+    diff_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
+    error_map_abs_sum = None
+    first = True
+    n_slices = 0
+    os.chdir(data_path)
+    for file_name in os.listdir('.'):
+        if os.path.isdir(file_name) and file_name != 'dictionary':
+            os.chdir(file_name)
+
+            res = ''
+            ref_wm_seg = ''
+
+            for slice_file in os.listdir('.'):
+                if 'res' in slice_file and 'corrected' not in slice_file and 'inv_to_gm' not in slice_file:
+                    res = slice_file
+                elif 'inv_to_wm' in slice_file:
+                    ref_wm_seg = slice_file
+            res_im = Image(res)
+            ref_wm_seg_im = Image(ref_wm_seg)
+            level = ''
+            for word in ref_wm_seg.split('_'):
+                if word.upper() in diff_by_level.keys():
+                    level = word.upper()
+
+            if first:
+                error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
+                first = False
+
+
+            error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
+            diff_by_level[level].append(error_3d_abs)
+            error_map_abs_sum += error_3d_abs
+            n_slices += 1
+            os.chdir('..')
+
+    for l, errors in diff_by_level.items():
+        n = len(errors)
+
+        Image(param=sum(errors)/n, absolutepath='error_map_' + str(l) + '.nii.gz').save()
+
+
+    Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+'''
+from msct_gmseg_utils import compute_error_map_by_level
+compute_error_map_by_level('.')
+
+'''
 
 
 # ------------------------------------------------------------------------------------------------------------------
