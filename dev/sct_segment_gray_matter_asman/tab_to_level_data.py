@@ -86,25 +86,34 @@ data_by_level.write('\n\n')
 
 data_by_level.close()
 '''
+dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
 
-dice_file = open('./dice_level.txt', 'r')
-data_lines = dice_file.readline().split('\r')
+dice_file = open('./wm_dice_coeff.txt', 'r')
+data_line = dice_file.readline()
+# data_line = data_line.split('\r')
+while data_line != '\n':
+    # for slice_line in data_line[:-2]:
+    slice_line = data_line.split(' ')
+
+    if len(slice_line) == 1:
+        slice_line = slice_line[0].split('\t')
+
+    level = slice_line[-1][1:-2]
+    dic[level].append(slice_line[3])
+    data_line = dice_file.readline()
 dice_file.close()
 
 
-dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
-
-
+'''
 for slice_line in data_lines:
     slice_line = slice_line.split('\t')
 
-    level = slice_line[0]
+    level = slice_line[-1][1:-1]
     dic[level].append(slice_line[1])
+'''
 
+data_by_level = open('wm_dice_by_level.txt', 'w')
 
-data_by_level = open('data_by_level.txt', 'w')
-
-data_by_level.write('GM SEG - AFFINE - NO LEVELS - MODEL WM\n')
 for level in dic.keys():
     s_dices = ''
     for dice in dic[level]:
