@@ -1,27 +1,51 @@
 
 # CHANGES TO RELEASE
 
-##1.2 (TBD)
+##2.0.3 (2015-05-19)
+- BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
+- BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
+- BUG: **sct_resample**: fixed bug when user specified output file
+- OPT: **sct_create_mask**: improved speed
 
-- NEW: sct_fmri_compute_tsnr: new function to compute TSNR from fMRI data (performs moco before)
-- OPT: sct_straighten_spinalcord: now MUCH faster and more accurate (issue #240)
-- OPT: sct_register_to_template: allows more flexibility by allowing multiple steps for registration (flag -p).
+##2.0.2 (2015-05-16)
+- BUG: **sct_fmri_compute_tsnr**: fixed issue when input path includes folder
+- BUG: **sct_orientation**: now possibility to change orientation even if no qform in header (issue #360)
+- BUG: **msct_smooth**: fixed error with small Hanning window (issue #363)
+- BUG: **sct_straighten_spinalcord**: fixed issue with relative path (issue #365)
+- NEW: **sct_label_utils**: added new function to transform group of labels into discrete label points
+- NEW: **sct_orientation**: added a tool to fix wrong orientation of an image (issue #366)
+- OPT: **sct_register_to_template**: twice as fast! (issue #343)
+
+##2.0.1 (2015-04-28)
+- BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
+- BUG: fixed issue with parser when typing a command to see usage (it crashed)
+
+##2.0 (2015-04-17)
+
+- NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
+- OPT: **sct_straighten_spinalcord**: now MUCH faster and more accurate (issue #240)
+- OPT: **sct_register_to_template**: allows more flexibility by allowing multiple steps for registration (flag -p).
   - N.B. flag "-m" has been replaced by "-s"
-- OPT: sct_register_multimodal: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
-- OPT: sct_extract_metric: new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
+- OPT: **sct_register_multimodal**: allows more flexibility by imposing only one stage. Several stages can be run sequentially and then transformations can be concatenated.
+  - N.B. flags "-s" and "-t" were replaced with "-iseg" and "-dseg" respectively
+- OPT: **sct_extract_metric**: 
+  - new methods for extraction: maximum likelihood and maximum a posteriori, which take into account partial volume effect
+  - now possible to specify global regions for extraction with flag -l: wm, gm, sc
+  - now possible to include a bunch of labels using ":". Example: 2:29
+- NEW: **sct_get_centerline_from_labels**: obtain a centerline using a combination of labels and/or segmentations
+  - N.B. sct_get_centerline was renamed for sct_get_centerline_automatic
+- NEW: **sct_compute_ernst_angle**: new script to compute and display Ernst angle depending on T1 and TR
+- OPT: **sct_process_segmentation**:
+  - can compute average CSA across vertebral levels or slices
+  - can compute length of segmentation
+  - can compute CSA on non-binary images such as probabilistic gray/white matter maps
+  - N.B. process names were simplified to: "csa", "length" and "centerline"
+- OPT: **sct_crop_image**: now possible to crop an image based on a reference space
 - OPT: new WM atlas: added gray matter and CSF for computing partial volume
 - OPT: now use all available cores for ANTs and adjust variable when running dmri_moco (issue #238)
 - INST: new installer in python, simpler to use and check for latest patches
-- BUG: various small bugs are now fixed, including metric extraction, image crop, PropSeg, registration to template
 - REF: msct_parser: new parser that generate documentation/usage
 - REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
-- OPT: straightening: improved smoothing and variable resolution
-- OPT: sct_register_multimodal: simplification of registration between multimodal images, it is now possible to use regularized slice-wise registration (SliceReg)
-- NEW: sct_get_ernst_angle: new script to compute and display Ernst angle depending on T1 and TR
-- OPT: sct_process_segmentation:
-  - can compute average CSA across vertebral levels or slices
-  - can compute length of segmentation
-  - N.B. process names were simplified to: "csa", "length" and "centerline"
 
 ##1.1.2_beta (2014-12-25)
 

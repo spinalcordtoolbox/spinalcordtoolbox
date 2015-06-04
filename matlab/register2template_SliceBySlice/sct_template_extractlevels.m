@@ -17,7 +17,7 @@ for ifile =1:length(templatelist)
     template=load_nii([path templatelist{ifile}]);
     template_roi=template.img(:,:,z_lev);
     template_roi=make_nii(double(template_roi),[0.5 0.5 0.5],[],[]);
-    save_nii(template_roi,['./template_roi/' sct_tool_remove_extension(templatelist{ifile},0) '_roi'])
+    save_nii_v2(template_roi,['./template_roi/' sct_tool_remove_extension(templatelist{ifile},0) '_roi'])
 end
 
 [tractlist, path]=sct_tools_ls([SCT_DIR '/data/atlas/WMtract*']);
@@ -26,5 +26,5 @@ for ifile =1:length(tractlist)
     tract=load_nii([path tractlist{ifile}]);
     tract_roi=tract.img(:,:,z_lev);
     tract_roi=make_nii(double(tract_roi),[0.5 0.5 0.5],[],[]);
-    save_nii(tract_roi,['./template_roi/atlas/' sct_tool_remove_extension(tractlist{ifile},0) '_roi'])
+    save_nii_v2(tract_roi,['./template_roi/atlas/' sct_tool_remove_extension(tractlist{ifile},0) '_roi'])
 end
