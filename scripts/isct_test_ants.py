@@ -2,7 +2,7 @@
 #########################################################################################
 #
 # This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline transform,
-# notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
+# notably when using isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -79,7 +79,7 @@ def main():
 
     # Estimate rigid transformation
     printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
 
     # Apply rigid transformation
     printv('\nApply rigid transformation to curved landmarks...', verbose)
@@ -87,11 +87,11 @@ def main():
 
     # Estimate b-spline transformation curve --> straight
     printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
 
     # Concatenate rigid and non-linear transformations...
     printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    cmd = 'sct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
+    cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
     printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)
 
@@ -146,7 +146,7 @@ def usage():
         '\n'\
         'DESCRIPTION\n' \
         '  This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline ' \
-        '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
+        '  transform notably when using isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+'\n' \
