@@ -13,6 +13,7 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 
 #### Spinal Cord Toolbox
 - [Cohen-Adad et al. Spinal Cord Toolbox: an open-source framework for processing spinal cord MRI data. Proceedings of the 20th Annual Meeting of OHBM, Hamburg, Germany 2014:3633](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ohbm14_spinalcordtoolbox.pdf)
+- [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://www.dropbox.com/s/1gv81xg17lgcxfn/5798_submitted_radC862D.pdf)
 
 #### Propseg
 - [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
