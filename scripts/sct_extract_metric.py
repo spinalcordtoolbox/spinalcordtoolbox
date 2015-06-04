@@ -789,8 +789,9 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
 
     # Estimation with maximum a posteriori (map)
     if method == 'map':
-        perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-        var_noise = int(adv_param[1])^2  # variance of the gaussian-distributed noise
+        # perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
+        var_label = int(adv_param[0])^2  # variance within label
+        var_noise = int(adv_param[1])^2  # variance of the noise (assumed Gaussian)
 
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
@@ -798,13 +799,16 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
         beta0 = np.zeros(nb_labels)
         for i_cluster in range(nb_clusters):
             beta0[np.where(ml_clusters == i_cluster)[0]] = beta[i_cluster]
-        # construct covariance matrix (variance between tracts)
-        Vlabel =  np.diag(beta0 * perc_var_label * 0.01)  # [nb_labels x nb_labels]
+        # construct covariance matrix (variance between tracts). For simplicity, we set it to be the identity.
+        Rlabel = np.diag(np.ones(nb_labels))
+        # Vlabel =  np.diag(np.ones(nb_labels) * var_label)
+        # Vlabel =  np.diag(beta0 * perc_var_label * 0.01)  # [nb_labels x nb_labels]
         # construct noise matrix
-        Vnoise = np.diag(np.ones(nb_labels) * var_noise)
-        # beta = beta0 + (Xt . X + Vnoise . Vlabel^-1)^-1 . Xt . ( y - X . beta0 )
-        # beta = beta0 +            A                 . B  .         C
-        A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Vnoise, np.linalg.pinv(Vlabel) ))
+        # Vnoise = np.diag(np.ones(nb_labels) * var_noise)
+        # beta = beta0 + (Xt . X + var_noise/Var_label * Rlabel^-1)^-1 . Xt . ( y - X . beta0 )
+        # beta = beta0 +                      A                        . B  .         C
+        # A = np.linalg.pinv(np.dot(x.T, x) + np.dot(Vnoise, np.linalg.pinv(Vlabel)))
+        A = np.linalg.pinv(np.dot(x.T, x) + np.linalg.pinv(Rlabel) * var_noise/var_label)
         B = x.T
         C = y - np.dot(x, beta0)
         beta = beta0 + np.dot(A, np.dot(B, C))
@@ -874,11 +878,9 @@ OPTIONAL ARGUMENTS
                         Default = all labels.
                         You can also select labels using 1:3 to get labels 1,2,3.
                         Following shortcuts are also available:
-                        -l sc will extract the metric in the whole cord
-                        -l wm will extract the metric in the whole white matter
-                        -l gm will extract the metric in the gray matter
-                        BECAREFUL: to use these shortcuts, you must have warped the all white matter atlas
-                        to your metric beforehand (see sct_warp_template).
+                        -l sc: extract in the spinal cord cord
+                        -l wm: extract in the white matter
+                        -l gm: extract in the gray matter
   -m <method>           method to extract metrics. Default = """+param_default.method+"""
                           ml: maximum likelihood (only use with well-defined regions and low noise)
                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
@@ -891,8 +893,8 @@ OPTIONAL ARGUMENTS
                           bin: binarize mask (threshold=0.5)
   -p <param>            advanced parameters for the 'map' method.
                           All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: standard deviation of the metric value across labels, in percentage of the mean
-                          #2: standard deviation of the assumed Gaussian noise
+                          #1: standard deviation of metrics across labels
+                          #2: standard deviation of the noise (assumed Gaussian)
   -a                    average all selected labels.
   -o <output>           File containing the results of metrics extraction.
                         Default = """+param_default.fname_output+"""
