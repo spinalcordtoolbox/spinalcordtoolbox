@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_otsu
+# Test function for sct_get_centerline script
+#
+#   replace the shell test script in sct 1.0
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Augustin Roux
-# modified: 2014/10/30
+# modified: 2014/09/28
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -15,16 +17,17 @@
 import commands
 
 
-def test(data_path):
+def test(path_data):
 
     # parameters
-    folder_data = ['t2/']
+    folder_data = 't2/'
     file_data = ['t2.nii.gz']
 
     # define command
-    cmd = 'sct_otsu -i ' + data_path + folder_data[0] + file_data[0]
-
+    cmd = 'sct_denoising_onlm -i '+path_data+folder_data+file_data[0] \
+          + ' -v 2'
     # return
+    #return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 

@@ -38,6 +38,10 @@ from msct_smooth import smoothing_window, evaluate_derivative_3D
 from sct_orientation import set_orientation
 
 
+
+
+
+
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -53,6 +57,7 @@ class Param:
         self.algo_fitting = 'hanning'  # 'hanning' or 'nurbs'
         self.type_window = 'hanning'  # !! for more choices, edit msct_smooth. Possibilities: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
         self.window_length = 50
+        self.crop = 1
 
 
 
@@ -71,6 +76,9 @@ def main():
     verbose = param.verbose
     interpolation_warp = param.interpolation_warp
     algo_fitting = param.algo_fitting
+    window_length = param.window_length
+    type_window = param.type_window
+    crop = param.crop
 
     # start timer
     start_time = time.time()
@@ -90,7 +98,7 @@ def main():
     else:
         # Check input param
         try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:a:')
+            opts, args = getopt.getopt(sys.argv[1:],'hi:c:p:r:v:x:a:f:')
         except getopt.GetoptError as err:
             print str(err)
             usage()
@@ -111,8 +119,8 @@ def main():
                 interpolation_warp = str(arg)
             elif opt in ('-a'):
                 algo_fitting = str(arg)
-            # elif opt in ('-f'):
-            #     centerline_fitting = str(arg)
+            elif opt in ('-f'):
+                crop = int(arg)
             elif opt in ('-v'):
                 verbose = int(arg)
 
@@ -159,7 +167,7 @@ def main():
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
     fname_centerline_orient = file_centerline+'_rpi.nii.gz'
-    set_orientation(fname_centerline, 'RPI', fname_centerline_orient)
+    set_orientation(file_centerline+ext_centerline, 'RPI', fname_centerline_orient)
 
     # Get dimension
     sct.printv('\nGet dimensions...', verbose)
@@ -168,7 +176,7 @@ def main():
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # smooth centerline
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, param, algo_fitting, verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length,verbose=verbose)
 
     # Get coordinates of landmarks along curved centerline
     #==========================================================================================
@@ -232,7 +240,7 @@ def main():
         landmark_curved[index][4][2] = (-1/c)*(a*x+b*landmark_curved[index][4][1]+d)  # z for -y
     ### <<==============================================================================================================
 
-    if verbose == 3:
+    if verbose == 2:
         from mpl_toolkits.mplot3d import Axes3D
         import matplotlib.pyplot as plt
         fig = plt.figure()
@@ -306,7 +314,7 @@ def main():
     # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
     #sct.run('fslview ' + fname_centerline_orient)
     sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
-    sct.run('sct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+    sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
     
     # Open padded centerline for reading
     sct.printv('\nOpen padded centerline for reading...', verbose)
@@ -354,12 +362,12 @@ def main():
 
     # convert landmarks to INT
     sct.printv('\nConvert landmarks to INT...', verbose)
-    sct.run('sct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
-    sct.run('sct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
+    sct.run('isct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
+    sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
 
     # Estimate rigid transformation
     sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
     
     # Apply rigid transformation
     sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
@@ -367,30 +375,33 @@ def main():
 
     # Estimate b-spline transformation curve --> straight
     sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
 
     # remove padding for straight labels
-    sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
-    sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+    if crop == 1:
+        sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 0 -bzmax', verbose)
+        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 1 -bzmax', verbose)
+        sct.run('sct_crop_image -i tmp.landmarks_straight_crop.nii.gz -o tmp.landmarks_straight_crop.nii.gz -dim 2 -bzmax', verbose)
+    else:
+        sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
 
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    #sct.run('sct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
-    # !!! DO NOT USE sct.run HERE BECAUSE sct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
-    cmd = 'sct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
+    #sct.run('isct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
+    # !!! DO NOT USE sct.run HERE BECAUSE isct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
+    cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
     sct.printv(cmd, verbose, 'code')
     commands.getstatusoutput(cmd)
 
     # Estimate b-spline transformation straight --> curve
     # TODO: invert warping field instead of estimating a new one
     sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-    sct.run('sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
+    sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
     
     # Concatenate rigid and non-linear transformations...
     sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-    # cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
-    cmd = 'sct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    # cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+    cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
     sct.printv(cmd, verbose, 'code')
     commands.getstatusoutput(cmd)
 
@@ -479,7 +490,8 @@ def usage():
         '  -x {nn,linear,spline}  Final interpolation. Default='+str(param_default.interpolation_warp)+'\n' \
         '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
         '  -a {hanning,nurbs}Algorithm for curve fitting. Default='+str(param_default.algo_fitting)+'\n' \
-        '  -v {0,1,2,3}      Verbose. 0: nothing, 1: basic, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
+        '  -f {0,1}          Crop option. 0: no crop, 1: crop around landmarks. Default=' + str(param_default.crop) + '\n' \
+        '  -v {0,1,2}        Verbose. 0: nothing, 1: basic, 2: extended. Default='+str(param_default.verbose)+'\n' \
         '  -h                help. Show this message.\n' \
         '\n'\
         'EXAMPLE:\n' \
@@ -490,19 +502,21 @@ def usage():
 
 # Smooth centerline
 #=======================================================================================================================
-def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
+def smooth_centerline(fname_centerline, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80, verbose = 0):
     """
     :param fname_centerline: centerline in RPI orientation
     :return: a bunch of useful stuff
     """
-    window_length = param.window_length
-    type_window = param.type_window
+    # window_length = param.window_length
+    # type_window = param.type_window
+    # algo_fitting = param.algo_fitting
+
+    sct.printv('\nSmooth centerline/segmentation...', verbose)
 
     # get dimensions (again!)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
 
     # open centerline
-    print '\nOpen centerline volume...'
     file = load(fname_centerline)
     data = file.get_data()
 
@@ -517,103 +531,50 @@ def smooth_centerline(fname_centerline, param, algo_fitting='nurbs', verbose=1):
     z_centerline_deriv = [0 for iz in range(0, nz_nonz, 1)]
 
     # get center of mass of the centerline/segmentation
-    sct.printv('\nGet center of mass of the centerline/segmentation...', param.verbose)
+    sct.printv('.. Get center of mass of the centerline/segmentation...', verbose)
     for iz in range(0, nz_nonz, 1):
         x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:, :, z_centerline[iz]]))
 
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111)
+        # data_tmp = data
+        # data_tmp[x_centerline[iz], y_centerline[iz], z_centerline[iz]] = 10
+        # implot = ax.imshow(data_tmp[:, :, z_centerline[iz]].T)
+        # implot.set_cmap('gray')
+        # plt.show()
+
+    sct.printv('.. Smoothing algo = '+algo_fitting, verbose)
     if algo_fitting == 'hanning':
         # 2D smoothing
-
-        #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-        if window_length >= int(2*nz_nonz * pz):
-            window_length = int(2*nz_nonz * pz)
-            print("WARNING: The ponderation window's length according to x was too high compared to the number of z slices. The value is now of: ", window_length)
-        if window_length >= int(2*nz_nonz * pz):
-            window_length = int(2*nz_nonz * pz)
-            print("WARNING: The ponderation window's length according to y was too high compared to the number of z slices. The value is now of: ", window_length)
+        sct.printv('.. Windows length = '+str(window_length), verbose)
 
         # change to array
         x_centerline = asarray(x_centerline)
         y_centerline = asarray(y_centerline)
 
-        # Extension of the curve to smooth, to avoid edge effects
-        x_centerline_extended = x_centerline
-        for i in range(int(window_length/(2.0*pz))+1):
-            x_centerline_extended = append(x_centerline_extended, 2*x_centerline[-1] - x_centerline[-i-1])
-            x_centerline_extended = insert(x_centerline_extended, 0, 2*x_centerline[0] - x_centerline[i+1])
 
-        y_centerline_extended = y_centerline
-        for i in range(int(window_length/(2.0*pz))+1):
-            y_centerline_extended = append(y_centerline_extended, 2*y_centerline[-1] - y_centerline[-i-1])
-            y_centerline_extended = insert(y_centerline_extended, 0, 2*y_centerline[0] - y_centerline[i+1])
-
-        # Smoothing of the extended curve
-        x_centerline_temp = smoothing_window(x_centerline_extended, window_len=window_length/pz, window=type_window)
-        y_centerline_temp = smoothing_window(y_centerline_extended, window_len=window_length/pz, window=type_window)
-
-        # Selection of the part of interest of the extended curve
-        x_centerline_final = x_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + x_centerline.shape[0]]
-        #print("x_centerline_final.shape[0]=", x_centerline_final.shape[0], "x_centerline_final[0]=",x_centerline_final[0],"x_centerline_final[-1]=", x_centerline_final[-1])
-        y_centerline_final = y_centerline_temp[int(window_length/(2.0*pz)) : int(window_length/(2.0*pz)) + y_centerline.shape[0]]
+        # Smooth the curve
+        x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window, verbose = verbose)
+        y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window, verbose = verbose)
 
         # convert to list final result
-        x_centerline_final = x_centerline_final.tolist()
-        y_centerline_final = y_centerline_final.tolist()
-
-        if param.verbose == 3:
-            import matplotlib.pyplot as plt
-            plt.figure(1)
-            #ax = plt.subplot(211)
-            plt.subplot(211)
-            plt.plot(z_centerline, x_centerline, 'ro')
-            plt.plot(z_centerline, x_centerline_final)
-            plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ax.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('x')
-            #ay = plt.subplot(212)
-            plt.subplot(212)
-            plt.plot(z_centerline, y_centerline, 'ro')
-            plt.plot(z_centerline, y_centerline_final)
-            plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ay.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('y')
-            plt.show()
-
-            z_centerline_extended = [i for i in range(0,x_centerline_extended.shape[0])]
-
-            plt.figure(2)
-            #ax = plt.subplot(211)
-            plt.subplot(211)
-            plt.plot(z_centerline_extended, x_centerline_extended, 'ro')
-            plt.plot(z_centerline_extended, x_centerline_temp)
-            plt.title("X: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ax.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('x')
-            #ay = plt.subplot(212)
-            plt.subplot(212)
-            plt.plot(z_centerline_extended, y_centerline_extended, 'ro')
-            plt.plot(z_centerline_extended, y_centerline_temp)
-            plt.title("Y: Type of window: %s     Window_length= %d mm" % (type_window, window_length))
-            #ay.set_aspect('equal')
-            plt.xlabel('z')
-            plt.ylabel('y')
-            plt.show()
-
-        x_centerline = x_centerline_final
-        y_centerline = y_centerline_final
+        x_centerline_smooth = x_centerline_smooth.tolist()
+        y_centerline_smooth = y_centerline_smooth.tolist()
 
         # clear variable
         del data
 
-        x_centerline_fit = x_centerline
-        y_centerline_fit = y_centerline
+        x_centerline_fit = x_centerline_smooth
+        y_centerline_fit = y_centerline_smooth
         z_centerline_fit = z_centerline
 
         # get derivative
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = evaluate_derivative_3D(x_centerline_fit, y_centerline_fit, z_centerline, px, py, pz)
+
+        x_centerline_fit = asarray(x_centerline_fit)
+        y_centerline_fit = asarray(y_centerline_fit)
+        z_centerline_fit = asarray(z_centerline_fit)
 
     elif algo_fitting == 'nurbs':
         from msct_smooth import b_spline_nurbs

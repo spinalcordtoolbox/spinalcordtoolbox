@@ -44,6 +44,7 @@ class param:
         self.remove_tmp_file = 0
         self.verbose = 1
         self.url_git = 'https://github.com/neuropoly/sct_testing_data.git'
+        self.path_tmp = ""
 
 
 # START MAIN
@@ -84,21 +85,15 @@ def main():
 
     # download data
     if param.download:
-        sct.printv('\nDownloading testing data...', param.verbose)
-        # remove data folder if exist
-        if os.path.exists('sct_testing_data'):
-            sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
-            sct.run('rm -rf sct_testing_data')
-        # clone git repos
-        sct.run('git clone '+param.url_git)
-        # update path_data field 
-        param.path_data = 'sct_testing_data/data'
+        downloaddata()
 
+    param.path_data = 'sct_testing_data/data'
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # check existence of testing data folder
-    sct.check_folder_exist(param.path_data)
+    if not sct.return_folder_exist(param.path_data):
+        downloaddata()
 
     # display path to data
     sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
@@ -136,6 +131,17 @@ def main():
     sys.exit(e)
 
 
+def downloaddata():
+    sct.printv('\nDownloading testing data...', param.verbose)
+    # remove data folder if exist
+    if os.path.exists('sct_testing_data'):
+        sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
+        sct.run('rm -rf sct_testing_data')
+    # clone git repos
+    sct.run('git clone '+param.url_git)
+    # update path_data field
+
+
 # list of all functions to test
 # ==========================================================================================
 def fill_functions():
@@ -149,7 +155,6 @@ def fill_functions():
     #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
-    functions.append('sct_detect_spinalcord')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
     functions.append('sct_dmri_moco')
@@ -162,7 +167,6 @@ def fill_functions():
     functions.append('sct_get_centerline_from_labels')
     functions.append('sct_label_utils')
     functions.append('sct_orientation')
-    functions.append('sct_otsu')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
@@ -232,18 +236,16 @@ def test_function(script_name):
     else:
         # build script name
         fname_log = script_name + ".log"
+        tmp_script_name = script_name
         result_folder = "results_"+script_name
         script_name = "test_"+script_name
-        # create folder and go in it
+
         sct.create_folder(result_folder)
         os.chdir(result_folder)
 
-        #fname_log = "sct_convert_binary_to_trilinear.log"
-        # test_all.write_to_log_file(fname_log, begin_log_file, 'w')
-
         # display script name
         print_line('Checking '+script_name)
-        # import function as a module        
+        # import function as a module
         script_tested = importlib.import_module(script_name)
         # test function
         status, output = script_tested.test(param.path_data)
@@ -253,12 +255,11 @@ def test_function(script_name):
         else:
             print_fail()
             print output
+            # log file
+            write_to_log_file(fname_log, output, 'w')
 
-        # log file
-        write_to_log_file(fname_log, output, 'w')
-
-        # go back to parent folder
-        os.chdir('..')
+            # go back to parent folder
+            os.chdir('..')
 
         # return
         return status

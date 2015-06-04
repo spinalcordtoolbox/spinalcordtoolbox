@@ -73,6 +73,7 @@ sct.run('cp ../README.md '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../batch_processing.sh '+folder_sct+'spinalcordtoolbox/')
+sct.run('cp ../batch_processing.sh '+folder_sct)
 sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 

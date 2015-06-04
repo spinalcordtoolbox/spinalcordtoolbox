@@ -26,7 +26,7 @@ def find_missing_items(int_list):
     return sorted(list(full_set - original_set))
 
 
-FILE_VOLUME = '/home/django/gleveque/data/spinalcordtoolbox_dev_testing/scripts/sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField/ortho_rigid.nii'
+FILE_VOLUME = '/home/django/gleveque/data/spinalcordtoolbox_dev_testing/scripts/isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField/ortho_rigid.nii'
 
 HORIZONTAL_LANDMARKS = '/home/django/gleveque/data/spinalcordtoolbox_dev_testing/scripts/errsm_24_t2_cropped_APRLIS_horizontal_landmarks.nii.gz'
 

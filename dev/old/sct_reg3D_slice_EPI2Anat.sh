@@ -280,7 +280,7 @@ echo $cmd
 eval $cmd
 
 
-# cmd="sct_antsRegistration -d $ImageDimension -r [${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT} ,1] -m ${MetricType}[${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT},1,4] --use-histogram-matching 1 -o ${PATH_OUTPUT}/ -t Affine -c [10000x10000x10000,1.e-8,20] -s 4x2x1vox -f 3x2x1"
+# cmd="isct_antsRegistration -d $ImageDimension -r [${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT} ,1] -m ${MetricType}[${FILE_DEST}.${EXT_ANAT},${FILE_SRC}.${EXT},1,4] --use-histogram-matching 1 -o ${PATH_OUTPUT}/ -t Affine -c [10000x10000x10000,1.e-8,20] -s 4x2x1vox -f 3x2x1"
 # echo $cmd
 # eval $cmd
 # 

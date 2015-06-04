@@ -121,13 +121,13 @@ def otsu():
     # binarize
     sct.run('sct_ThresholdImage '+str(dim)+' data_otsu.nii data_otsu_thr.nii '+str(param.threshold)+' '+str(param.threshold))
     # get largest component of binary mask
-    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii GetLargestComponent data_otsu_thr.nii')
+    sct.run('isct_ImageMath '+str(dim)+' data_otsu_thr.nii GetLargestComponent data_otsu_thr.nii')
     # Morphological Dilation
-    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii MD data_otsu_thr.nii')
+    sct.run('isct_ImageMath '+str(dim)+' data_otsu_thr.nii MD data_otsu_thr.nii')
     # Morphological Erosion
-    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii ME data_otsu_thr.nii')
+    sct.run('isct_ImageMath '+str(dim)+' data_otsu_thr.nii ME data_otsu_thr.nii')
     # Fill holes
-    sct.run('sct_ImageMath '+str(dim)+' data_otsu_thr.nii FillHoles data_otsu_thr.nii')
+    sct.run('isct_ImageMath '+str(dim)+' data_otsu_thr.nii FillHoles data_otsu_thr.nii')
 
     # come back to parent folder
     os.chdir('..')
