@@ -83,7 +83,7 @@ def register_seg(seg_input, seg_dest):
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
 # If the mask is inputed, it must also be 3D.
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
+def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
