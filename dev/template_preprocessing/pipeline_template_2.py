@@ -45,13 +45,13 @@ SUBJECTS_LIST_marseille = [['1','/Volumes/data_shared/marseille/ED/01_0007_sc-mp
 
 SUBJECTS_LIST_TO_ADD = [['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_34/41-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_34/40-SPINE_T2'],['errsm_35','/Volumes/data_shared/montreal_criugm/errsm_35/37-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_35/38-SPINE_T2'],\
                         ['pain_pilot_7', '/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot7/32-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot7/33-SPINE_T2'], ['errsm_03', '/Volumes/data_shared/montreal_criugm/errsm_03/32-SPINE_all/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_03/38-SPINE_all_space'],\
-                        ['AP', '/Volumes/data_shared/marseille/AP_T077/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-7', '/Volumes/data_shared/marseille/AP_T077/01_0102_t2comp'],['FL', '/Volumes/data_shared/marseille/FL_T056b/01_0044_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/FL_T056b/01_0049_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7'],\
+                        ['FL', '/Volumes/data_shared/marseille/FL_T056b/01_0044_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/FL_T056b/01_0049_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7'],\
                         ['FR', '/Volumes/data_shared/marseille/FR_T080/01_0039_sc-mprage-1mm-3palliers-fov384-comp-sp-13', '/Volumes/data_shared/marseille/FR_T080/01_0104_spine2'],['GB', '/Volumes/data_shared/marseille/GB_T083/01_0029_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/GB_T083/01_0033_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7'],\
                         ['T045', '/Volumes/data_shared/marseille/T045/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/T045/01_0101_t2-3d-composing'],['TM', '/Volumes/data_shared/marseille/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TM_T057c/01_0105_t2-composing'],\
-                        ['TR', '/Volumes/data_shared/marseille/TR_T076/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TR_T076/01_0016_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-19'],['TT', '/Volumes/data_shared/marseille/TT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', '/Volumes/data_shared/marseille/TT/01_0100_compo-space'],\
-                        ['T020b', '/Volumes/data_shared/marseille/T020b/01_0010_sc-mprage-1mm-2palliers-fov384-comp-sp-15', None]]
+                        ['TR', '/Volumes/data_shared/marseille/TR_T076/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TR_T076/01_0016_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-19']]
 
-SUBJECTS_LIST_BUG = [['errsm_20', '/Volumes/data_shared/montreal_criugm/errsm_20/12-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_20/34-SPINE_T2'],['pain_pilot_3','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/31-SPINE_T2']]
+SUBJECTS_LIST_BUG = [['AP', '/Volumes/data_shared/marseille/AP_T077/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-7', '/Volumes/data_shared/marseille/AP_T077/01_0102_t2comp'],['TT', '/Volumes/data_shared/marseille/TT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', '/Volumes/data_shared/marseille/TT/01_0100_compo-space'],\
+                        ['T020b', '/Volumes/data_shared/marseille/T020b/01_0010_sc-mprage-1mm-2palliers-fov384-comp-sp-15', None]]
 
 SUBJECTS_LIST_STR = [['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2']]
 
@@ -61,10 +61,10 @@ SUBJECTS_LIST = SUBJECTS_LIST_TO_ADD
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
 do_preprocessing_T2 = 1
-create_cross = 0
-normalize_levels_T2 = 0
-average_level = 0
-align_vertebrae_T2 = 0
+create_cross = 1
+normalize_levels_T2 = 1
+average_level = 1
+align_vertebrae_T2 = 1
 
 number_labels_for_template = 20
 
@@ -74,7 +74,7 @@ if do_preprocessing_T2:
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
 
    # loop across subjects
-    for i in range(10,len(SUBJECTS_LIST)):
+    for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # create and go to output folder
@@ -213,70 +213,70 @@ if do_preprocessing_T2:
         print '\nNormalizing intensity of the straightened image...'
         sct.printv('sct_normalize.py -i data_RPI_crop_straight.nii.gz')
         os.system('sct_normalize.py -i data_RPI_crop_straight.nii.gz')
-       #
-       #  # Crop labels_vertebral file
-       #  print '\nCroping labels_vertebral file...'
-       #  if ymin_anatomic == None and ymax_anatomic == None:
-       #      sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
-       #  else: sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + ymin_anatomic+','+zmin_anatomic + ' -end ' + ymax_anatomic+','+ zmax_anatomic + ' -dim 1,2')
-       #  #Dilate labels from labels_vertebral file
-       #  print '\nDilating labels from labels_vertebral file...'
-       #  sct.run('fslmaths '+ PATH_OUTPUT + '/subjects/' + subject+ '/T2/labels_vertebral_crop.nii.gz -dilF labels_vertebral_dilated.nii.gz')
-       #
-       #  # apply straightening to centerline and to labels_vertebral.nii.gz
-       #  # function: sct_apply_transfo
-       #  # input:
-       #  # - centerline.nii.gz + labels_vertebral.nii.gz
-       #  # - warp_curve2straight.nii.gz
-       #  # output:
-       #  # - centerline_straight.nii.gz
-       #  print '\nApply straightening to labels_vertebral_dilated.nii.gz'
-       #  sct.printv('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
-       #  os.system('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
-       #
-       #  # Select center of mass of labels volume due to past dilatation
-       #  sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
-       #
-       #  # Apply transfo to seg_and_labels.nii.gz which replace the centerline file
-       #  print'\nApplying transfo to seg_and_labels.nii.gz ...'
-       #  sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
-       #
-       #  #Calculate the extrem non zero points of the straightened centerline file
-       #
-       #  file = nibabel.load('seg_and_labels_reg.nii.gz')
-       #  data_c = file.get_data()
-       #  hdr = file.get_header()
-       #
-       #  # Get center of mass of the centerline
-       #  nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('seg_and_labels_reg.nii.gz')
-       #  z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
-       #  nz_nonz = len(z_centerline)
-       #  x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-       #  y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-       #  for iz in xrange(len(z_centerline)):
-       #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
-       #
-       #  X,Y,Z = (data_c>0).nonzero()
-       #
-       #  x_max,y_max = (data_c[:,:,max(Z)]).nonzero()
-       #  x_max = x_max[0]
-       #  y_max = y_max[0]
-       #  z_max = max(Z)
-       #
-       #  x_min,y_min = (data_c[:,:,min(Z)]).nonzero()
-       #  x_min = x_min[0]
-       #  y_min = y_min[0]
-       #  z_min = min(Z)
-       #
-       #
-       #
-       #  # Crop image one last time and create cross to push into template space
-       #  print'\nCrop image one last time and create cross to push into template space...'
-       #  os.system('sct_crop_image -i data_RPI_crop_straight_normalized.nii.gz -o data_RPI_crop_straight_normalized_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
-       #
-       #  # Crop labels_vertebral_reg.nii.gz and create cross to push into template space
-       #  print'\nCrop labels_vertebral_reg.nii.gz and use cross to push into template space...'
-       #  os.system('sct_crop_image -i labels_vertebral_dilated_reg_2point.nii.gz -o labels_vertebral_dilated_reg_2point_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
+
+        # Crop labels_vertebral file
+        print '\nCroping labels_vertebral file...'
+        if ymin_anatomic == None and ymax_anatomic == None:
+            sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
+        else: sct.run('sct_crop_image -i '+PATH_INFO + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + ymin_anatomic+','+zmin_anatomic + ' -end ' + ymax_anatomic+','+ zmax_anatomic + ' -dim 1,2')
+        #Dilate labels from labels_vertebral file
+        print '\nDilating labels from labels_vertebral file...'
+        sct.run('fslmaths '+ PATH_OUTPUT + '/subjects/' + subject+ '/T2/labels_vertebral_crop.nii.gz -dilF labels_vertebral_dilated.nii.gz')
+
+        # apply straightening to centerline and to labels_vertebral.nii.gz
+        # function: sct_apply_transfo
+        # input:
+        # - centerline.nii.gz + labels_vertebral.nii.gz
+        # - warp_curve2straight.nii.gz
+        # output:
+        # - centerline_straight.nii.gz
+        print '\nApply straightening to labels_vertebral_dilated.nii.gz'
+        sct.printv('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
+        os.system('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
+
+        # Select center of mass of labels volume due to past dilatation
+        sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
+
+        # Apply transfo to seg_and_labels.nii.gz which replace the centerline file
+        print'\nApplying transfo to seg_and_labels.nii.gz ...'
+        sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
+
+        #Calculate the extrem non zero points of the straightened centerline file
+
+        file = nibabel.load('seg_and_labels_reg.nii.gz')
+        data_c = file.get_data()
+        hdr = file.get_header()
+
+        # Get center of mass of the centerline
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('seg_and_labels_reg.nii.gz')
+        z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
+        nz_nonz = len(z_centerline)
+        x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+        for iz in xrange(len(z_centerline)):
+           x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
+
+        X,Y,Z = (data_c>0).nonzero()
+
+        x_max,y_max = (data_c[:,:,max(Z)]).nonzero()
+        x_max = x_max[0]
+        y_max = y_max[0]
+        z_max = max(Z)
+
+        x_min,y_min = (data_c[:,:,min(Z)]).nonzero()
+        x_min = x_min[0]
+        y_min = y_min[0]
+        z_min = min(Z)
+
+
+
+        # Crop image one last time and create cross to push into template space
+        print'\nCrop image one last time and create cross to push into template space...'
+        os.system('sct_crop_image -i data_RPI_crop_straight_normalized.nii.gz -o data_RPI_crop_straight_normalized_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
+
+        # Crop labels_vertebral_reg.nii.gz and create cross to push into template space
+        print'\nCrop labels_vertebral_reg.nii.gz and use cross to push into template space...'
+        os.system('sct_crop_image -i labels_vertebral_dilated_reg_2point.nii.gz -o labels_vertebral_dilated_reg_2point_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
 
 
 # Define list to gather all distances
@@ -324,13 +324,13 @@ if create_cross:
         # f_distance.write(str(distance_2))
         # f_distance.write('\n')
 
-## Calculate mean cross height for template and create file of reference
-# mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1)))
-# mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2)))
-# L = 1100 - 2*mean_distance_2
-# H = 1100 - 2*mean_distance_1
-# os.chdir('/Users/tamag/code/spinalcordtoolbox/dev/template_creation')
-# os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
+# Calculate mean cross height for template and create file of reference
+mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1)))
+mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2)))
+L = 1100 - 2*mean_distance_2
+H = 1100 - 2*mean_distance_1
+os.chdir('/Users/tamag/code/spinalcordtoolbox/dev/template_creation')
+os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
 
 
 
