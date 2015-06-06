@@ -39,9 +39,6 @@ from sct_orientation import set_orientation
 
 
 
-
-
-
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
