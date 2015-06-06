@@ -409,6 +409,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose = verbose)
     z_centerline_scaled = [x*pz for x in z_centerline]
 
+
    # # 3D plot of the fit
  #    fig=plt.figure()
  #    ax=Axes3D(fig)
