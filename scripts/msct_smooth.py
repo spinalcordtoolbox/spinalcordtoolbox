@@ -533,17 +533,14 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     if verbose == 2:
         import matplotlib.pyplot as plt
         z = [i for i in range(y.shape[0])]
-
         plt.figure()
         pltx, = plt.plot(z, x, 'ro')
         pltx_fit, = plt.plot(z, y)
-
         plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
         #ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
-        plt.legend([pltx, pltx_fit], ['Normal', 'Smoothed'])
-
+        plt.legend([pltx, pltx_fit], ['Raw', 'Smoothed'])
         plt.show()
 
     return y
