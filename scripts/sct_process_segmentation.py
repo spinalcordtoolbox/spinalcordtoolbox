@@ -414,8 +414,8 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         if verbose == 2:
             import matplotlib.pyplot as plt
             plt.figure()
-            pltx, = plt.plot(z_centerline_scaled, csa, 'ro')
-            pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth)
+            pltx, = plt.plot(z_centerline_scaled, csa, 'bo')
+            pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth, 'r', linewidth=2)
             plt.title("Cross-sectional area (CSA)")
             plt.xlabel('z (mm)')
             plt.ylabel('CSA (mm^2)')
