@@ -40,7 +40,7 @@ class Param:
         self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
         self.volume_output = 0
-        self.smoothing_param = 30  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
+        self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
