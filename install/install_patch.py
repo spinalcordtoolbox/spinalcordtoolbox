@@ -147,7 +147,10 @@ def main():
 
     # re-create links
     print 'Update links...'
-    status, output = sct.run('${SCT_DIR}/install/create_links.sh')
+    sudo_links = ''
+    if issudo != "":
+        sudo_links = ' -a'
+    status, output = sct.run('${SCT_DIR}/install/create_links.sh'+sudo_links)
     print output
 
     print "Done!\n"
