@@ -501,9 +501,9 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     ## Checking the window's size
     nb_points = x.shape[0]
     #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-    if window_len > int(2*nb_points):
-        window_len = int(2*nb_points)
-        sct.printv("WARNING: The weighting window's length was too high compared to the number of points. The value is now of: "+str(window_len) +'warning')
+    if window_len > int(nb_points):
+        window_len = int(nb_points)
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), 'warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
