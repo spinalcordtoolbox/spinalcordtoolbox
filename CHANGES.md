@@ -3,6 +3,7 @@
 
 ##2.0.4 (2015-06-06)
 - BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
+- BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
 - OPT: **sct_check_dependences**: now checks if git is installed
 - OPT: simplified batch_processing.sh
 
