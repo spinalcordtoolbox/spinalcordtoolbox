@@ -24,11 +24,13 @@ import platform
 import subprocess
 import signal
 
+
 # small function for input with timeout
 def interrupted(signum, frame):
-    "called when read times out"
+    """called when read times out"""
     print 'interrupted!'
 signal.signal(signal.SIGALRM, interrupted)
+
 
 def input_timeout(text):
     try:
@@ -37,6 +39,7 @@ def input_timeout(text):
     except:
         # timeout
         return
+
 
 ### Version is a class that contains three levels of versioning
 # Inspired by FSL installer
@@ -97,12 +100,14 @@ class Version(object):
         if self > other or self == other:
             return True
         return False
+
     def __le__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
         if self < other or self == other:
             return True
         return False
+
     def __cmp__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -111,6 +116,7 @@ class Version(object):
         if self.__gt__(other):
             return 1
         return 0
+
     def __lt__(self, other):
         if not isinstance(other, Version):
             return NotImplemented
@@ -215,6 +221,7 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
+
 class shell_colours(object):
     default = '\033[0m'
     rfg_kbg = '\033[91m'
@@ -225,16 +232,20 @@ class shell_colours(object):
     bfg_kbg = '\033[34m'
     bold = '\033[1m'
 
+
 class InstallationResult(object):
     SUCCESS = 0
     WARN = 1
     ERROR = 2
-    def __init__(self,result,status,message):
+
+    def __init__(self, result, status, message):
         self.result = result
         self.status = status
         self.message = message
+
     def __nonzero__(self):
         self.status
+
 
 class MsgUser(object): 
     __debug = False
@@ -243,12 +254,15 @@ class MsgUser(object):
     @classmethod
     def debugOn(cls):
         cls.__debug = True
+
     @classmethod
     def debugOff(cls):
         cls.__debug = False
+
     @classmethod
     def quietOn(cls):
         cls.__quiet = True
+
     @classmethod
     def quietOff(cls):
         cls.__quiet = False
@@ -284,23 +298,24 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+        print "".join((shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+        print "".join((shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg))
     
     @classmethod
     def failed(cls, msg):
-        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+        print "".join((shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg))
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
+        print "".join((shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg))
+
 
 class Progress_bar(object):
     def __init__(self, x=0, y=0, mx=1, numeric=False):
@@ -338,21 +353,28 @@ class Progress_bar(object):
                 stdout.write(cr)
                 stdout.flush()
 
+
 class InstallFailed(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
+
 
 class UnsupportedOs(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
-class Os(object):
-    '''Work out which platform we are running on'''
 
+class Os(object):
+    """
+    Work out which platform we are running on.
+    Also determine which python we are using: version and distribution.
+    """
     def __init__(self):
         import os
         if os.name != 'posix': raise UnsupportedOs('We only support OS X/Linux')
@@ -360,7 +382,8 @@ class Os(object):
         self.os = platform.system().lower()
         self.arch = platform.machine()
         self.applever = ''
-        
+
+        # check out OS
         if self.os == 'darwin':
             self.os = 'osx'
             self.vendor = 'apple'
@@ -385,6 +408,19 @@ class Os(object):
                 # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
         else:
             raise UnsupportedOs("We do not support this OS.")
+
+
+class Python(object):
+    """
+    This class check if the python that the user used is miniconda and python 2.7
+    """
+    def __init__(self):
+        # check out Python
+        import sys
+        self.python_version = sys.version
+        if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
+            raise "Unsupported Python"
+
 
 def open_url(url, start=0, timeout=20):
     import urllib2
@@ -432,7 +468,7 @@ def download_file(url, localf, timeout=20):
     dl_size = 0
     block = 16384
     x = 0
-    y= 0
+    y = 0
     pb = Progress_bar( x, y, rf_size, numeric=True)
 
     for attempt in range(1,6):
@@ -471,6 +507,8 @@ def download_file(url, localf, timeout=20):
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
 def runProcess(cmd, verbose=1):
+    if verbose:
+        print cmd
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -478,11 +516,15 @@ def runProcess(cmd, verbose=1):
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose==1:
+            if verbose == 2:
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    return process.returncode, output_final[0:-1]
+    if process.returncode:
+        # from inspect import stack
+        print output_final[0:-1]
+    else:
+        return process.returncode, output_final[0:-1]
 
 
 class Installer:
@@ -492,7 +534,8 @@ class Installer:
 
         # check if user is sudoer
         if os.geteuid() == 0:
-            print "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later. Exit program\n"
+            print "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later." \
+                  "Exit program\n"
             sys.exit(2)
 
         # Check input parameters
@@ -503,14 +546,13 @@ class Installer:
         for opt, arg in opts:
             if opt == '-h':
                 usage()
-            elif opt in ('-p'):
+            elif opt == '-p':
                 self.path_install = arg
-        
 
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-04-07"
+        print "Modified: 2015-04-17"
         print "============================="
 
         try:
@@ -518,6 +560,21 @@ class Installer:
         except UnsupportedOs, e:
             MsgUser.debug(str(e))
             raise InstallFailed(str(e))
+
+        try:
+            this_python = Python()
+        except Exception, e:
+            print e
+            print "WARNING: We do not support the version of Python that you are using.\n" \
+                  "You will have to install our dependencies by yourself.\n" \
+                  "Do you still want to continue?"
+            install_new = "no"
+            signal.alarm(120)
+            while install_new not in ["yes", "no"]:
+                install_new = input_timeout("[yes|no]: ")
+            signal.alarm(0)
+            if install_new == "no":
+                sys.exit(2)
 
         if not os.path.isdir(self.path_install):
             print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
@@ -546,7 +603,7 @@ class Installer:
         print "Check if spinalcordtoolbox is already installed (if so, delete it)..."
         if os.path.isdir(self.SCT_DIR):
             # check if sudo is required for removing SCT
-            if os.access(self.path_install+"spinalcordtoolbox", os.W_OK):
+            if os.access(self.path_install+"/spinalcordtoolbox", os.W_OK):
                 MsgUser.message("  No sudo needed for removing SCT.")
                 self.issudo_remove = ""
             else:
@@ -580,6 +637,7 @@ class Installer:
         print "  Version: "+str(version_sct)
 
         # fetch version of the toolbox online
+        MsgUser.message("Checking for connection and SCT version online...")
         url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
         file_name = "tmp.version_online.txt"
         version_result = download_file(url_version, file_name)
@@ -604,7 +662,7 @@ class Installer:
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
             isAble2Connect = False
-            MsgUser.warning("Failed to connect to SCT github website. Please check your connexion. %s." % (version_result.message))
+            print "WARNING: Failed to connect to SCT github website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
@@ -631,14 +689,16 @@ class Installer:
                 status, output = runProcess(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
-
-                print "  Deleting previous SCT entries in .bash_profile"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-                print ">> " + cmd
-                status, output = runProcess(cmd)
-                #status, output = commands.getstatusoutput(cmd)
-                if status != 0:
-                    print '\nERROR! \n' + output + '\nExit program.\n'
+                # test if .bash_profile exists
+                if os.path.isfile(self.home+"/.bash_profile"):
+                    # delete previous entries in .bash_profile
+                    print "  Deleting previous SCT entries in .bash_profile"
+                    cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
+                    print ">> " + cmd
+                    status, output = runProcess(cmd)
+                    #status, output = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print '\nERROR! \n' + output + '\nExit program.\n'
 
         # edit .bashrc. Add bin
         with open(self.home+"/.bashrc", "a") as bashrc:
@@ -684,9 +744,9 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # install required software
-        print "\nInstall required software... "
+        print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
         os.chdir("requirements")
-        cmd = "sudo ./requirements.sh"
+        cmd = self.issudo + "./requirements.sh"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
@@ -780,20 +840,19 @@ class Installer:
             print output
 
         # display stuff
-        print """\n"========================================================================================"
+        print """\n========================================================================================
 Installation finished!
 
-If you noticed errors during installation, please start a new Terminal and run the following command:
-> sct_check_dependences -c -l
+If you noticed errors during installation, please start a new Terminal and run:
+sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
-To get started, open a new Terminal and follow instructions here:
-https://sourceforge.net/p/spinalcordtoolbox/wiki/get_started/
+To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
 
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
 
-Have fun!
+Enjoy!
 """
 
 
