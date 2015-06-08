@@ -31,21 +31,16 @@ from sct_orientation import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 
 
-
-
-
-
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
     def __init__(self):
         self.debug = 0
         self.verbose = 1  # verbose
-        self.step = 1 # step of discretized plane in mm default is min(x_scale,py)
+        self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
         self.volume_output = 0
-        self.spline_smoothing = 1
-        self.smoothing_param = 700
+        self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
@@ -54,10 +49,10 @@ class Param:
         self.vertebral_levels = ''
         self.path_to_template = ''
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
-        self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
 
-        
+
 # MAIN
 # ==========================================================================================
 def main():
@@ -77,7 +72,7 @@ def main():
     verbose = param.verbose
     start_time = time.time()
     remove_temp_files = param.remove_temp_files
-    spline_smoothing = param.spline_smoothing
+    # spline_smoothing = param.spline_smoothing
     step = param.step
     smoothing_param = param.smoothing_param
     figure_fit = param.figure_fit
@@ -96,7 +91,7 @@ def main():
     else:
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:w:z:a:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:a:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -117,7 +112,7 @@ def main():
             elif opt in('-r'):
                 remove_temp_files = int(arg)
             elif opt in ('-s'):
-                spline_smoothing = int(arg)
+                smoothing_param = int(arg)
             elif opt in ('-f'):
                 figure_fit = int(arg)
             elif opt in ('-o'):
@@ -127,8 +122,6 @@ def main():
             elif opt in ('-v'):
                 verbose = int(arg)
                 volume_output = 1
-            elif opt in ('-w'):
-                param.window_length = int(arg)
             elif opt in ('-z'):
                 slices = arg
             elif opt in ('-a'):
@@ -161,14 +154,14 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose = param.verbose, algo_fitting = param.algo_fitting)
+        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
 
     if name_process == 'csa':
         volume_output = 1
-        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
         if (volume_output):
@@ -291,7 +284,6 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
                 x_display[int(z_centerline[i]-z_centerline[0])] = x_centerline[i]
                 y_display[int(z_centerline[i]-z_centerline[0])] = y_centerline[i]
 
-
             plt.figure(1)
             plt.subplot(2,1,1)
             plt.plot(z_centerline_fit, x_display, 'ro')
@@ -350,9 +342,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, spline_smoothing, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
-
-    #param.algo_fitting = 'hanning'
+def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_temp_files, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -369,7 +359,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # go to tmp folder
     os.chdir(path_tmp)
-        
+
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation of the input segmentation into RPI...', verbose)
     fname_segmentation_orient = set_orientation('segmentation.nii', 'RPI', 'segmentation_orient.nii')
@@ -385,201 +375,54 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     data_seg = file_seg.get_data()
     hdr_seg = file_seg.get_header()
 
-    #
     # # Extract min and max index in Z direction
     X, Y, Z = (data_seg > 0).nonzero()
-    # coords_seg = np.array([str([X[i], Y[i], Z[i]]) for i in xrange(0,len(Z))])  # don't know why but finding strings in array of array of strings is WAY faster than doing the same with integers
     min_z_index, max_z_index = min(Z), max(Z)
-    Xp,Yp = (data_seg[:,:,0]>=0).nonzero() # X and Y range
-    #
-    # x_centerline = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # y_centerline = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # z_centerline = np.array([iz for iz in xrange(min_z_index, max_z_index+1)])
-    #
-    # # Extract segmentation points and average per slice
-    # for iz in xrange(min_z_index, max_z_index+1):
-    #     x_seg, y_seg = (data_seg[:,:,iz]>0).nonzero()
-    #     x_centerline[iz-min_z_index] = np.mean(x_seg)
-    #     y_centerline[iz-min_z_index] = np.mean(y_seg)
-    #
-    # # Fit the centerline points with spline and return the new fitted coordinates
-    # x_centerline_fit, y_centerline_fit,x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = b_spline_centerline(x_centerline,y_centerline,z_centerline)
+    # Xp, Yp = (data_seg[:, :, 0] >= 0).nonzero()  # X and Y range
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_segmentation_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
     z_centerline_scaled = [x*pz for x in z_centerline]
-
-   # # 3D plot of the fit
- #    fig=plt.figure()
- #    ax=Axes3D(fig)
- #    ax.plot(x_centerline,y_centerline,z_centerline,zdir='z')
- #    ax.plot(x_centerline_fit,y_centerline_fit,z_centerline,zdir='z')
- #    plt.show()
-
-    # Defining cartesian basis vectors 
-    x = np.array([1, 0, 0])
-    y = np.array([0, 1, 0])
-    z = np.array([0, 0, 1])
-    
-    # Creating folder in which JPG files will be stored
-    sct.printv('\nCreating folder in which JPG files will be stored...', verbose)
-    sct.create_folder('JPG_Results')
 
     # Compute CSA
     sct.printv('\nCompute CSA...', verbose)
 
     # Empty arrays in which CSA for each z slice will be stored
-    csa = [0.0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # sections_ortho_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # sections_ortho_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # sections_z_ellipse = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    # sections_z_counting = [0 for i in xrange(0,max_z_index-min_z_index+1)]
-    sct.printv('\nCross-Section Area:', verbose, 'bold')
+    csa = np.zeros(max_z_index-min_z_index+1)
+    # csa = [0.0 for i in xrange(0, max_z_index-min_z_index+1)]
 
     for iz in xrange(0, len(z_centerline)):
 
-        # Equation of the the plane which is orthogonal to the spline at z=iz
-        a = x_centerline_deriv[iz]
-        b = y_centerline_deriv[iz]
-        c = z_centerline_deriv[iz]
+        # compute the vector normal to the plane
+        normal = normalize(np.array([x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]]))
 
-        #vector normal to the plane
-        normal = normalize(np.array([a, b, c]))
+        # compute the angle between the normal vector of the plane and the vector z
+        angle = np.arccos(np.dot(normal, [0, 0, 1]))
 
-        # angle between normal vector and z
-        angle = np.arccos(np.dot(normal, z))
+        # compute the number of voxels, assuming the segmentation is coded for partial volume effect between 0 and 1.
+        number_voxels = sum(sum(data_seg[:, :, iz+min_z_index]))
 
-        if name_method == 'counting_ortho_plane' or name_method == 'ellipse_ortho_plane':
+        # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
+        csa[iz] = number_voxels * px * py * np.cos(angle)
 
-            x_center = x_centerline_fit[iz]
-            y_center = y_centerline_fit[iz]
-            z_center = z_centerline[iz]
-
-            # use of x in order to get orientation of each plane, basis_1 is in the plane ax+by+cz+d=0
-            basis_1 = normalize(np.cross(normal,x))
-            basis_2 = normalize(np.cross(normal,basis_1))
-
-            # maximum dimension of the tilted plane. Try multiply numerator by sqrt(2) ?
-            max_diameter = (max([(max(X)-min(X))*px,(max(Y)-min(Y))*py]))/(np.cos(angle))
-
-            # Forcing the step to be the min of x and y scale (default value is 1 mm)
-            step = min([px,py])
-
-            # discretized plane which will be filled with 0/1
-            plane_seg = np.zeros((int(max_diameter/step),int(max_diameter/step)))
-
-            # how the plane will be skimmed through
-            plane_grid = np.linspace(-int(max_diameter/2),int(max_diameter/2),int(max_diameter/step))
-
-            # we go through the plane
-            for i_b1 in plane_grid :
-
-                for i_b2 in plane_grid :
-
-                    point = np.array([x_center*px,y_center*py,z_center*pz]) + i_b1*basis_1 +i_b2*basis_2
-
-                    # to which voxel belongs each point of the plane
-                    coord_voxel = str([ int(point[0]/px), int(point[1]/py), int(point[2]/pz)])
-
-                    if (coord_voxel in coords_seg) is True :  # if this voxel is 1
-                        plane_seg[int((plane_grid==i_b1).nonzero()[0])][int((plane_grid==i_b2).nonzero()[0])] = 1
-
-                        # number of voxels that are in the intersection of each plane and the nonzeros values of segmentation, times the area of one cell of the discretized plane
-                        if name_method == 'counting_ortho_plane':
-                            csa[iz] = len((plane_seg>0).nonzero()[0])*step*step
-
-            # if verbose ==1 and name_method == 'counting_ortho_plane' :
-
-                # print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-
-            if name_method == 'ellipse_ortho_plane':
-
-                # import scipy stuff
-                from scipy.misc import imsave
-
-                os.chdir('JPG_Results')
-                imsave('plane_ortho_' + str(iz) + '.jpg', plane_seg)
-
-                # Tresholded gradient image
-                mag = edge_detection('plane_ortho_' + str(iz) + '.jpg')
-
-                #Coordinates of the contour
-                x_contour,y_contour = (mag>0).nonzero()
-
-                x_contour = x_contour*step
-                y_contour = y_contour*step
-
-                #Fitting an ellipse
-                fit = Ellipse_fit(x_contour,y_contour)
-
-                # Semi-minor axis, semi-major axis
-                a_ellipse, b_ellipse = ellipse_dim(fit)
-
-                #Section = pi*a*b
-                csa[iz] = a_ellipse*b_ellipse*np.pi
-
-                # if verbose == 1 and name_method == 'ellipse_ortho_plane':
-                #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-                # os.chdir('..')
-
-        if name_method == 'counting_z_plane' or name_method == 'ellipse_z_plane':
-
-            # getting the segmentation for each z plane
-            x_seg, y_seg = (data_seg[:, :, iz+min_z_index] > 0).nonzero()
-            seg = [[x_seg[i], y_seg[i]] for i in range(0, len(x_seg))]
-
-            plane = np.zeros((max(Xp), max(Yp)))
-
-            for i in seg:
-                # filling the plane with 0 and 1 regarding to the segmentation
-                plane[i[0] - 1][i[1] - 1] = data_seg[i[0] - 1, i[1] - 1, iz+min_z_index]
-
-            if name_method == 'counting_z_plane':
-                x, y = (plane > 0.0).nonzero()
-                len_x = len(x)
-                for i in range(0, len_x):
-                    csa[iz] += plane[x[i], y[i]]*px*py
-                csa[iz] *= np.cos(angle)
-
-            # if verbose == 1 and name_method == 'counting_z_plane':
-            #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-
-            if name_method == 'ellipse_z_plane':
-
-                # import scipy stuff
-                from scipy.misc import imsave
-
-                os.chdir('JPG_Results')
-                imsave('plane_z_' + str(iz) + '.jpg', plane)
-
-                # Tresholded gradient image
-                mag = edge_detection('plane_z_' + str(iz) + '.jpg')
-
-                x_contour,y_contour = (mag>0).nonzero()
-
-                x_contour = x_contour*px
-                y_contour = y_contour*py
-
-                # Fitting an ellipse
-                fit = Ellipse_fit(x_contour,y_contour)
-                a_ellipse, b_ellipse = ellipse_dim(fit)
-                csa[iz] = a_ellipse*b_ellipse*np.pi*np.cos(angle)
-
-                 # if verbose == 1 and name_method == 'ellipse_z_plane':
-                 #     print('Cross-Section Area : ' + str(csa[iz]) + ' mm^2')
-
-    if spline_smoothing == 1:
-        sct.printv('\nSmoothing results with spline...', verbose)
-        tck = scipy.interpolate.splrep(z_centerline_scaled, csa, s=smoothing_param)
-        csa_smooth = scipy.interpolate.splev(z_centerline_scaled, tck)
-        if figure_fit == 1:
+    if smoothing_param:
+        from msct_smooth import smoothing_window
+        sct.printv('\nSmooth CSA across slices...', verbose)
+        sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
+        csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
+        # display figure
+        if verbose == 2:
             import matplotlib.pyplot as plt
             plt.figure()
-            plt.plot(z_centerline_scaled, csa)
-            plt.plot(z_centerline_scaled, csa_smooth)
-            plt.legend(['CSA values', 'Smoothed values'], 2)
-            plt.savefig('Spline_fit.png')
-        csa = csa_smooth  # update variable
+            pltx, = plt.plot(z_centerline_scaled, csa, 'bo')
+            pltx_fit, = plt.plot(z_centerline_scaled, csa_smooth, 'r', linewidth=2)
+            plt.title("Cross-sectional area (CSA)")
+            plt.xlabel('z (mm)')
+            plt.ylabel('CSA (mm^2)')
+            plt.legend([pltx, pltx_fit], ['Raw', 'Smoothed'])
+            plt.show()
+        # update variable
+        csa = csa_smooth
 
     # Create output text file
     sct.printv('\nWrite text file...', verbose)
@@ -809,7 +652,7 @@ MANDATORY ARGUMENTS
                           a volume in which each slice\'s value is equal to the CSA (mm^2).
 
 OPTIONAL ARGUMENTS
-  -s {0,1}              Smooth CSA values with spline. Default="""+str(param_default.spline_smoothing)+"""
+  -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
   -b {0,1}              Outputs a volume in which each slice\'s value is equal to the CSA in
                           mm^2. Default="""+str(param_default.volume_output)+"""
   -o <output_name>      Name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
@@ -819,7 +662,6 @@ OPTIONAL ARGUMENTS
   -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
   -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
-  -w <smoothing>        Smoothing window size. Only used with 'centerline'
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
   -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
