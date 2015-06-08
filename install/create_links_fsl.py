@@ -62,14 +62,13 @@ print "Creating soft links for each fsl script that start with ", prefix_fsl
 
 if path_fsl is '':
     status, path_fsl = commands.getstatusoutput('which ' + prefix_fsl + 'fslmaths')
+    path_fsl = os.path.dirname(path_fsl)
 if path_fsl is '':
     print 'ERROR: the FSL folder was not found! Please provide it using -f option.'
 
-for fsl_script in os.listdir(os.path.dirname(path_fsl)):
+for fsl_script in os.listdir(path_fsl):
     if fsl_script.startswith(prefix_fsl):
-        print fsl_script, len(prefix_fsl)
         script_name = fsl_script[len(prefix_fsl):]
-        print script_name
-        sct.run(issudo + 'ln -sf ' + path_sct+'/bin/'+fsl_script + script_name)
+        sct.run(issudo + 'ln -sf ' + path_sct+'/bin/'+fsl_script + ' ' + path_fsl+'/'+script_name)
 
 print "Done!"
