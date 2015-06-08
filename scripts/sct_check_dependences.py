@@ -49,7 +49,7 @@ def main():
     # initialization
     fsl_is_working = 1
     # ants_is_installed = 1
-    # sct_c3d_is_installed = 1
+    # isct_c3d_is_installed = 1
     install_software = 0
     e = 0
     restart_terminal = 0
@@ -86,10 +86,12 @@ def main():
         print sct.run('date', verbose)
         print sct.run('whoami', verbose)
         print sct.run('pwd', verbose)
-        (status, output) = sct.run('more ~/.bash_profile', verbose)
-        print output
-        (status, output) = sct.run('more ~/.bashrc', verbose)
-        print output
+        if os.path.isfile('~/.bash_profile'):
+            (status, output) = sct.run('more ~/.bash_profile', verbose)
+            print output
+        if os.path.isfile('~/.bashrc'):
+            (status, output) = sct.run('more ~/.bashrc', verbose)
+            print output
 
     # check if user is root (should not be!)
     if os.geteuid() == 0:
@@ -185,6 +187,16 @@ def main():
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
+    # check dipy
+    print_line('Check if dipy is installed ')
+    try:
+        import dipy
+        print_ok()
+    except ImportError:
+        print_fail()
+        print '  dipy is not installed! You can install it using: http://nipy.org/dipy/installation.html'
+        install_software = 1
+
     # check if FSL is declared
     print_line('Check if FSL is declared ')
     cmd = 'which fsl'
@@ -195,55 +207,70 @@ def main():
         print '  '+path_fsl
     else:
         print_fail()
-        print '  FSL is not working!'
+        print '  FSL is either not installed or not declared.'
+        print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
+        print '  - To declare it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup'
         e = 1
 
-    if complete_test:
-        print '>> '+cmd
-        print (status, output), '\n'
-
-    # check if FSL is installed
-    if not fsl_is_working:
-        print_line('Check if FSL is installed ')
-        # check first under /usr for faster search
-        (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
-        if output:
-            print_ok()
-            path_fsl = output[:-10]
-            print '  '+path_fsl
-        else:
-            # some users might have installed it under /home, so check it...
-            (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
-            if output:
-                print_ok()
-                path_fsl = output[:-10]
-                print '  '+path_fsl
-            else:
-                print_fail()
-                print '  FSL does not seem to be installed! Install it from: http://fsl.fmrib.ox.ac.uk/'
-                fsl_is_installed = 0
-                install_software = 1
-
-    # check ANTs
-    print_line('Check which ANTs is running ')
-    # (status, output) = commands.getstatusoutput('command -v sct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    cmd = 'which sct_antsRegistration'
+    # check if git is installed
+    print_line('Check if git is installed ')
+    cmd = 'which git'
     status, output = commands.getstatusoutput(cmd)
     if output:
         print_ok()
-        path_ants = output[:-20]
-        print '  '+path_ants
     else:
-        print_warning()
-        print '  ANTs is not declared.'
+        print_fail()
+        print '  git is not installed.'
+        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
         e = 1
+
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
 
+    # # check if FSL is installed
+    # if not fsl_is_working:
+    #     print_line('Check if FSL is installed ')
+    #     # check first under /usr for faster search
+    #     (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
+    #     if output:
+    #         print_ok()
+    #         path_fsl = output[:-10]
+    #         print '  '+path_fsl
+    #     else:
+    #         # some users might have installed it under /home, so check it...
+    #         (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
+    #         if output:
+    #             print_ok()
+    #             path_fsl = output[:-10]
+    #             print '  '+path_fsl
+    #         else:
+    #             print_fail()
+    #             print '  FSL is either not installed.'
+    #             print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
+    #             fsl_is_installed = 0
+    #             install_software = 1
+
+    # # check ANTs
+    # print_line('Check which ANTs is running ')
+    # # (status, output) = commands.getstatusoutput('command -v isct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
+    # cmd = 'which isct_antsRegistration'
+    # status, output = commands.getstatusoutput(cmd)
+    # if output:
+    #     print_ok()
+    #     path_ants = output[:-20]
+    #     print '  '+path_ants
+    # else:
+    #     print_warning()
+    #     print '  ANTs is not declared.'
+    #     e = 1
+    # if complete_test:
+    #     print '>> '+cmd
+    #     print (status, output), '\n'
+
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS ')
-    cmd = 'sct_antsRegistration'
+    cmd = 'isct_antsRegistration'
     status, output = commands.getstatusoutput(cmd)
     if status in [0, 256]:
         print_ok()
@@ -254,24 +281,24 @@ def main():
         print '>> '+cmd
         print (status, output), '\n'
 
-    # check sct_c3d
-    print_line('Check which sct_c3d is running ')
-    # (status, output) = commands.getstatusoutput('command -v sct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    status, output = commands.getstatusoutput('which sct_c3d')
-    if output:
-        print_ok()
-        path_sct_c3d = output[:-7]
-        print '  '+path_sct_c3d
-    else:
-        print_warning()
-        print '  sct_c3d is not installed or not declared.'
-        install_software = 1
-    if complete_test:
-        print (status, output), '\n'
+    # # check isct_c3d
+    # print_line('Check which isct_c3d is running ')
+    # # (status, output) = commands.getstatusoutput('command -v isct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
+    # status, output = commands.getstatusoutput('which isct_c3d')
+    # if output:
+    #     print_ok()
+    #     path_isct_c3d = output[:-7]
+    #     print '  '+path_isct_c3d
+    # else:
+    #     print_warning()
+    #     print '  isct_c3d is not installed or not declared.'
+    #     install_software = 1
+    # if complete_test:
+    #     print (status, output), '\n'
 
-    # check sct_c3d compatibility with OS
-    print_line('Check sct_c3d compatibility with OS ')
-    (status, output) = commands.getstatusoutput('sct_c3d -h')
+    # check isct_c3d compatibility with OS
+    print_line('Check c3d compatibility with OS ')
+    (status, output) = commands.getstatusoutput('isct_c3d -h')
     if status in [0, 256]:
         print_ok()
     else:
@@ -294,17 +321,17 @@ def main():
     # Check ANTs integrity
     print_line('Check integrity of ANTs output ')
     cmd_ants_test = 'isct_test_ants'
-    if not complete_test:
-        cmd_ants_test += ' -v 0'
+    # if not complete_test:
+    #     cmd_ants_test += ' -v 0'
     (status, output) = commands.getstatusoutput(cmd_ants_test)
     if status in [0]:
         print_ok()
     else:
         print_fail()
+        print output
         e = 1
     if complete_test:
         print (status, output), '\n'
-
     print
     
     # close log file

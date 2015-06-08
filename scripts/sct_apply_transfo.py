@@ -87,7 +87,7 @@ def main():
         usage()
 
     # get the right interpolation field depending on method
-    interp = sct.get_interpolation('sct_antsApplyTransforms', param.interp)
+    interp = sct.get_interpolation('isct_antsApplyTransforms', param.interp)
 
     # Parse list of warping fields
     sct.printv('\nParse list of warping fields...', verbose)
@@ -118,8 +118,8 @@ def main():
     for i in range(len(fname_warp_list)):
         # check if file exist
         sct.check_file_exist(fname_warp_list[i])
-    for i in range(len(fname_warp_list_invert)):
-        sct.check_file_exist(fname_warp_list_invert[i])
+    # for i in range(len(fname_warp_list_invert)):
+    #     sct.check_file_exist(fname_warp_list_invert[i])
 
     # check if destination file is 3d
     sct.check_if_3d(fname_dest)
@@ -152,7 +152,7 @@ def main():
     if nt == 1:
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
-        sct.run('sct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+        sct.run('isct_antsApplyTransforms -d 3 -i '+fname_src+' -o '+fname_out+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
     # if 4d, loop across the T dimension
     else:
@@ -178,7 +178,7 @@ def main():
         for it in range(nt):
             file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
             file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-            sct.run('sct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+            sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
         # Merge files back
         sct.printv('\nMerge file back...', verbose)
         cmd = fsloutput+'fslmerge -t '+fname_out
