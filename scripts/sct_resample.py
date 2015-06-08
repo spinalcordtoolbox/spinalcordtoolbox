@@ -29,7 +29,9 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.fname_data = ''
+        self.fname_out = ''
         self.factor = ''
+        self.interpolation = 'Linear'
         self.file_suffix = 'r'  # output suffix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -51,7 +53,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:r:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:o:r:v:x:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -63,10 +65,14 @@ def main():
                 param.factor = arg
             elif opt in '-i':
                 param.fname_data = arg
+            elif opt in '-o':
+                param.fname_out = arg
             elif opt in '-r':
                 param.remove_tmp_files = int(arg)
             elif opt in '-v':
                 param.verbose = int(arg)
+            elif opt in '-x':
+                param.interpolation = arg
 
     # run main program
     resample()
@@ -97,6 +103,10 @@ def resample():
         sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
     else:
         fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
+
+    # check interpolation
+    if param.interpolation not in ['NearestNeighbor','Linear','Cubic','Sinc','Gaussian']:
+        sct.printv('\nERROR: interpolation should be one of those:NearestNeighbor|Linear|Cubic|Sinc|Gaussian.\n', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -156,12 +166,12 @@ def resample():
 
         # resample volume
         sct.printv(('\nResample volume '+str((it+1))+'/'+str(nt)+':'), param.verbose)
-        sct.run('sct_c3d '+file_data_splitT+ext+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
+        sct.run('isct_c3d '+file_data_splitT+ext+' -interpolation '+param.interpolation+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
 
         # pad data (for ANTs)
         # # TODO: check if need to pad also for the estimate_and_apply
         # if program == 'ants' and todo == 'estimate' and slicewise == 0:
-        #     sct.run('sct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
+        #     sct.run('isct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
         #     file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
 
     # merge data back along T
@@ -177,7 +187,9 @@ def resample():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+file_data_resample+ext, path_out+file_out+param.file_suffix+ext_out)
+    if not param.fname_out:
+        param.fname_out = path_out+file_out+param.file_suffix+ext_out
+    sct.generate_output_file(path_tmp+file_data_resample+ext, param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
@@ -186,7 +198,7 @@ def resample():
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+path_out+file_out+param.file_suffix+ext_out+' &', param.verbose, 'code')
+    sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
     print
 
 
@@ -210,6 +222,7 @@ MANDATORY ARGUMENTS
                    For 2x upsampling, set to 2. For 2x downsampling set to 0.5
 
 OPTIONAL ARGUMENTS
+  -o <file>        output file name.
   -r {0,1}         remove temporary files. Default="""+str(param_debug.remove_tmp_files)+"""
   -v {0,1}         verbose. Default="""+str(param_debug.verbose)+"""
   -h               help. Show this message

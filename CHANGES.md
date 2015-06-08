@@ -1,7 +1,32 @@
 
 # CHANGES TO RELEASE
 
-##1.2 (TBD)
+##2.0.4 (2015-06-06)
+- BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
+- BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
+- OPT: **sct_check_dependences**: now checks if git is installed
+- OPT: simplified batch_processing.sh
+
+##2.0.3 (2015-05-19)
+- BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
+- BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
+- BUG: **sct_resample**: fixed bug when user specified output file
+- OPT: **sct_create_mask**: improved speed
+
+##2.0.2 (2015-05-16)
+- BUG: **sct_fmri_compute_tsnr**: fixed issue when input path includes folder
+- BUG: **sct_orientation**: now possibility to change orientation even if no qform in header (issue #360)
+- BUG: **msct_smooth**: fixed error with small Hanning window (issue #363)
+- BUG: **sct_straighten_spinalcord**: fixed issue with relative path (issue #365)
+- NEW: **sct_label_utils**: added new function to transform group of labels into discrete label points
+- NEW: **sct_orientation**: added a tool to fix wrong orientation of an image (issue #366)
+- OPT: **sct_register_to_template**: twice as fast! (issue #343)
+
+##2.0.1 (2015-04-28)
+- BUG: **sct_extract_metric**: MAP method did not scale properly with the data. Now fixed (issue #348)
+- BUG: fixed issue with parser when typing a command to see usage (it crashed)
+
+##2.0 (2015-04-17)
 
 - NEW: **sct_fmri_compute_tsnr**: new function to compute TSNR from fMRI data (performs moco before)
 - OPT: **sct_straighten_spinalcord**: now MUCH faster and more accurate (issue #240)
@@ -27,7 +52,6 @@
 - INST: new installer in python, simpler to use and check for latest patches
 - REF: msct_parser: new parser that generate documentation/usage
 - REF: msct_image, sct_label_utils: smoothly converting the toolbox to objet-oriented, some scripts can be used as python module
-
 
 ##1.1.2_beta (2014-12-25)
 

@@ -148,7 +148,7 @@ def create_mask():
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
-        sct.run('sct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
+        sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -204,12 +204,7 @@ def create_mask():
     cy = [0] * nz
     for iz in range(0, nz, 1):
         cx[iz], cy[iz] = ndimage.measurements.center_of_mass(numpy.array(data_centerline[:, :, z_centerline[iz]]))
-
-    # cx, cy, cz = numpy.where(data_centerline > 0)
-    # arg = numpy.argsort(cz)
-    # cz = cz[arg]
-    # cx = cx[arg]
-    # cy = cy[arg]
+    # create 2d masks
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
@@ -252,11 +247,16 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('sct_c3d line.nii -scale 0 -o line.nii', param.verbose)
+    sct.run('isct_c3d line.nii -scale 0 -o line.nii', param.verbose)
 
-    # loop across z and create a voxel at a given XY coordinate
+    cmd = 'sct_label_utils -i line.nii -o line.nii -t add -x '
     for iz in range(nz):
-        sct.run('sct_ImageMath 3 line.nii SetOrGetPixel line.nii 1 '+str(coord[0])+' '+str(coord[1])+' '+str(iz), param.verbose)
+        if iz == nz-1:
+            cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1'
+        else:
+            cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1:'
+
+    sct.run(cmd, param.verbose)
 
     return 'line.nii'
 
