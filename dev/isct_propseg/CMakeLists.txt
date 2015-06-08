@@ -34,7 +34,7 @@ endif()
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # This line was set up for statically linking standard libraries with the binary - does not work with clang on OSX10.10
-# set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
 set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 set(CMAKE_SHARED_LIBRARY_C_FLAGS)
