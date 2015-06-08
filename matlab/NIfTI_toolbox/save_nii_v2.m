@@ -48,8 +48,8 @@
 %  - Jimmy Shen (jimmy@rotman-baycrest.on.ca)
 %  - "old_RGB" related codes in "save_nii.m" are added by Mike Harms (2006.06.28) 
 %
-function save_nii(nii, fileprefix, old_nii_fname,datatype)
-   
+function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
+   dbstop if error
    if ~exist('nii','var') | isempty(nii) %| ~isfield(nii,'hdr') | ...
 	%~isfield(nii,'img') | ~exist('fileprefix','var') | isempty(fileprefix)
 
@@ -76,6 +76,7 @@ function save_nii(nii, fileprefix, old_nii_fname,datatype)
    end
    
    nii.hdr.dime.dim(1:length(size(nii.img))+1)=[length(size(nii.img)) size(nii.img)];
+   nii.hdr.dime.dim(length(size(nii.img))+2:end)=1;
 
   if exist('datatype','var')
       bittable=  [0 0; % DT_NONE, DT_UNKNOWN
@@ -139,7 +140,16 @@ function save_nii(nii, fileprefix, old_nii_fname,datatype)
    end
 
    write_nii(nii, filetype, fileprefix, old_RGB);
-
+   % reorient in RPI
+%    unix(['sct_orientation -i ' fileprefix '.nii -s RPI -o ' fileprefix '.nii'])
+%    if exist('old_nii_fname','var')
+%        unix(['sct_orientation -i ' old_nii_fname ' -s RPI'])
+%        unix(['fslcpgeom ' sct_tool_remove_extension(old_nii_fname,1) '_RPI ' fileprefix '.nii -d']);
+%    elseif isstruct(nii)
+%        unix(['sct_orientation -i ' nii.fileprefix ' -s RPI'])
+%        unix(['fslcpgeom ' nii.fileprefix '_RPI ' fileprefix '.nii -d']);
+%    end
+   
    %  gzip output file if requested
    %
    if exist('gzFile', 'var')
@@ -161,6 +171,8 @@ function save_nii(nii, fileprefix, old_nii_fname,datatype)
       M=[[diag(nii.hdr.dime.pixdim(2:4)) -[nii.hdr.hist.originator(1:3).*nii.hdr.dime.pixdim(2:4)]'];[0 0 0 1]];
       save([fileprefix '.mat'], 'M');
    end
+   
+   
    
    return					% save_nii
 
