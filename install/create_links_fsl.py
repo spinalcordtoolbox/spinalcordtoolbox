@@ -69,6 +69,6 @@ if path_fsl is '':
 for fsl_script in os.listdir(path_fsl):
     if fsl_script.startswith(prefix_fsl):
         script_name = fsl_script[len(prefix_fsl):]
-        sct.run(issudo + 'ln -sf ' + path_sct+'/bin/'+fsl_script + ' ' + path_fsl+'/'+script_name)
+        sct.run(issudo + 'ln -sf ' + path_sct+'/bin/'+script_name + ' ' + path_fsl+'/'+fsl_script)
 
 print "Done!"
