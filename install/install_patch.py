@@ -36,8 +36,22 @@
 import sys
 import commands
 import os
-import platform
 import getopt
+import signal
+
+# small function for input with timeout
+def interrupted(signum, frame):
+    """called when read times out"""
+    print 'interrupted!'
+signal.signal(signal.SIGALRM, interrupted)
+
+def input_timeout(text):
+    try:
+        foo = raw_input(text)
+        return foo
+    except:
+        # timeout
+        return
 
 # get path of the toolbox to be able to import sct_utils
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -74,13 +88,13 @@ def main():
 
     # fetch version of the toolbox
     print 'Fetch version of the toolbox... '
-    with open (path_sct+"/version.txt", "r") as myfile:
+    with open(path_sct+"/version.txt", "r") as myfile:
         version_sct = Version(myfile.read().replace('\n', ''))
     print "  toolbox version: "+str(version_sct)
 
     # fetch version of the patch
     print 'Fetch version of the patch... '
-    with open ("version.txt", "r") as myfile:
+    with open("version.txt", "r") as myfile:
         version_patch = Version(myfile.read().replace('\n', ''))
     print "  patch version: "+str(version_patch)
 
@@ -90,8 +104,14 @@ def main():
         MsgUser.failed("You already have installed this patch.")
         sys.exit(2)
     elif version_sct > version_patch:
-        MsgUser.failed("You can't install a patch that is an oldest version than the one you have.")
-        sys.exit(2)
+        MsgUser.warning("You can't install a patch that is an oldest version than the one you have. Installing this patch can broke the SCToolbox stability. Are you sure you want to install it?")
+        install_new = ""
+        signal.alarm(120)
+        while install_new not in ["yes", "no"]:
+            install_new = input_timeout("[yes|no]: ")
+        signal.alarm(0)
+        if install_new == "no":
+            sys.exit(2)
     elif not version_sct.isEqualTo_MajorMinor(version_patch):
         print "  ERROR: Patch is not compatible with this release. Patch version X.Y.Z should correspond to release" \
                 "  version X.Y. Exit program.\n"
@@ -125,10 +145,12 @@ def main():
                     # copy file
                     sct.run(issudo+'cp '+file_src+' '+file_dest)
 
-
     # re-create links
     print 'Update links...'
-    status, output = sct.run('${SCT_DIR}/install/create_links.sh')
+    sudo_links = ''
+    if issudo != "":
+        sudo_links = ' -a'
+    status, output = sct.run('${SCT_DIR}/install/create_links.sh'+sudo_links)
     print output
 
     print "Done!\n"
@@ -136,6 +158,7 @@ def main():
 class InstallFailed(Exception):
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
@@ -143,12 +166,15 @@ class InstallationResult(object):
     SUCCESS = 0
     WARN = 1
     ERROR = 2
+
     def __init__(self,result,status,message):
         self.result = result
         self.status = status
         self.message = message
+
     def __nonzero__(self):
         self.status
+
 
 def usage():
     print """
@@ -169,6 +195,7 @@ MANDATORY ARGUMENTS
 
     # exit program
     sys.exit(2)
+
 
 #=======================================================================================================================
 # Start program

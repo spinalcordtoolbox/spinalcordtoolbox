@@ -39,9 +39,6 @@ from sct_orientation import set_orientation
 
 
 
-
-
-
 ## Create a structure to pass important user parameters to the main function
 class Param:
     ## The constructor
@@ -590,6 +587,18 @@ def smooth_centerline(fname_centerline, algo_fitting = 'hanning', type_window = 
 
     else:
         sct.printv('ERROR: wrong algorithm for fitting',1,'error')
+
+    # # 2D plot
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # pltx, = plt.plot(z_centerline, x_centerline, 'ro')
+    # pltx_fit, = plt.plot(z_centerline, x_centerline_fit)
+    # plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.figure()
+    # pltx, = plt.plot(z_centerline, y_centerline, 'ro')
+    # pltx_fit, = plt.plot(z_centerline, y_centerline_fit)
+    # plt.show()
 
     return x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
