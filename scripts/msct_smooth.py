@@ -483,13 +483,9 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     scipy.signal.lfilter
 
     TODO: the window parameter could be the window itself if an array instead of a string
-
-    NOTE: If in 'convolve', the mode is not 'same' then: length(output) != length(input), to correct this:
-    return y[(window_len/2-1):-(window_len/2)] instead of just y if window_len is even
-    return y[(window_len/2-1):-(window_len/2)+1] instead of just y if window_len is odd.
     """
     from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
-    from math import ceil
+    from math import ceil, floor
     import sct_utils as sct
 
     if x.ndim != 1:
@@ -505,12 +501,12 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     ## Checking the window's size
     nb_points = x.shape[0]
     #The number of points of the curve must be superior to int(window_length/(2.0*pz))
-    if window_len > int(2*nb_points):
-        window_len = int(2*nb_points)
-        sct.printv("WARNING: The ponderation window's length was too high compared to the number of points. The value is now of: "+str(window_len) +'warning')
+    if window_len > int(nb_points):
+        window_len = int(nb_points)
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), 'warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
-    window_len_int = ceil((window_len + 1)/2)*2 - 1
+    window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
 
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
 
@@ -524,45 +520,33 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # Extend the curve before smoothing
     x_extended = x
     size_curve = x.shape[0]
-    size_padding = int(window_len/2.0)
-    for i in range(size_padding+1):
+    size_padding = int(round((window_len_int-1)/2.0))
+
+    for i in range(size_padding):
         x_extended = append(x_extended, 2*x[-1] - x[-2-i])
         x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
     # Convolution of the window with the extended signal
-    y_temp = convolve(x_extended, w/w.sum(), mode='same')
-    # y = convolve(w/w.sum(), s, mode='full')
-
-    # Crop the curve back to its original size
-    y = y_temp[size_padding + 1:size_padding + size_curve + 1]
+    y = convolve(x_extended, w/w.sum(), mode='valid')
 
     # Display smoothing
     if verbose == 2:
         import matplotlib.pyplot as plt
         from copy import copy
-
         z_extended = [i for i in range(x_extended.shape[0])]
         # Create x_display to visualize concording results
         x_display = copy(x_extended)
-        for i in range(size_padding + 1):
+        for i in range(size_padding - 1):
             x_display[i] = 0
             x_display[-i-1] = 0
-
         plt.figure()
-        pltx_ext, = plt.plot(z_extended, x_extended, 'bo')
-        pltx, = plt.plot(z_extended, x_display, 'ro')
-        pltx_fit, = plt.plot(z_extended, y_temp)
-
+        pltx_ext, = plt.plot(z_extended, x_extended, 'go')
+        pltx, = plt.plot(z_extended[size_padding:size_padding + size_curve], x_display[size_padding:size_padding + size_curve], 'bo')
+        pltx_fit, = plt.plot(z_extended[size_padding:size_padding + size_curve], y, 'r', linewidth=2)
         plt.title("Type of window: %s     Window_length= %d mm" % (window, window_len))
-        #ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
         plt.legend([pltx_ext, pltx, pltx_fit], ['Extended', 'Normal', 'Smoothed'])
-
         plt.show()
 
     return y
-    # if window_len_int%2 == 0:
-    #     return y[(window_len_int/2-1):-(window_len_int/2)]
-    # if window_len_int%2 != 0:
-    #     return y[(window_len_int/2-1):-(window_len_int/2+1)]
