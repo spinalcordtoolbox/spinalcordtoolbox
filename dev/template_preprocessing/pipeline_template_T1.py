@@ -420,7 +420,7 @@ if align_vertebrae_T1:
         #Copy final results into final results
         if not os.path.isdir(PATH_OUTPUT +'/Final_results'):
             os.makedirs(PATH_OUTPUT +'/Final_results')
-        sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned.nii.gz')
-        sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized.nii.gz')
+        sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_T1.nii.gz')
+        sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized_T1.nii.gz')
 
 
