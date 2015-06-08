@@ -42,13 +42,13 @@ if __name__ == '__main__':
 
     registration = 'Affine'
 
-    weights = [0.5, 1.2, 1.57, 1.9]
+    weights = [1.2, 1.9, 0.5]
 
 
     before = time.time()
     for w in weights:
         loocv((True, w))
-    loocv((False, 1.0))
+    loocv((False, 0))
 
     t1 = time.time() - before
 
