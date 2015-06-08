@@ -303,7 +303,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             niter = 5  # 20
             smooth = 0
             shrink = 1
-            cmd_reg = 'sct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
+            cmd_reg = 'antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
                       '-m ' + metric + '[' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)  # + ' -r [' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + ',1]'
 
@@ -327,12 +327,12 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
                 apply_transfo_interpolation = 'BSpline'
 
             if 'SyN' in transfo_type and inverse:
-                cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                cmd_apply = 'antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                             '-n ' + apply_transfo_interpolation + ' -t [' + inverse_mat_name + '] ' \
                             '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
             else:
-                cmd_apply = 'sct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                cmd_apply = 'antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                             '-n ' + apply_transfo_interpolation + ' -t [' + mat_name + ',' + str(inverse) + '] ' \
                             '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
@@ -843,24 +843,27 @@ def crop_t2_star_pipeline(path):
             # VERSION 3 OF THE PRE TREATMENTS
             for subject_file in os.listdir(path + '/' + subject_dir):
                 file_low = subject_file.lower()
-
-                if 't2star.nii' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
+                #todo change back im to t2star
+                if 'im' in file_low and 'denoised.nii.gz' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
                     t2star = subject_file
                     t2star_path, t2star_name, ext = sct.extract_fname(t2star)
                 elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
                     mask_box = subject_file
-                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low \
-                        and 'IRP' not in file_low:
+                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
                     sc_seg = subject_file
-                elif '_seg_in' in file_low and 'croped' not in file_low and 'IRP' not in file_low:
-                    seg_in = subject_file
-                    seg_in_name = sct.extract_fname(seg_in)[1]
+                    '''
+                    elif '_seg_in' in file_low and 'croped' not in file_low and 'IRP' not in file_low:
+                        seg_in = subject_file
+                        seg_in_name = sct.extract_fname(seg_in)[1]
+                    '''
                 elif 'gm' in file_low and 'croped.nii' not in file_low and 'IRP' not in file_low:
                     manual_seg = subject_file
                     print manual_seg
                     manual_seg_name = sct.extract_fname(manual_seg)[1]
-                elif '_croped.nii' in file_low and 'IRP' not in file_low and 'gm' not in file_low:
-                    seg_in_croped = subject_file
+                    '''
+                    elif '_croped.nii' in file_low and 'IRP' not in file_low and 'gm' not in file_low:
+                        seg_in_croped = subject_file
+                    '''
                 elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
                     manual_seg_croped = subject_file
                     print manual_seg_croped
@@ -1106,7 +1109,7 @@ def save_by_slice(dic_dir):
                                 i_slice = str(i_slice)
                                 i_slice = '0' + i_slice
                             Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + str(i_slice) + '_seg.nii.gz').save()
+                                  '_slice' + str(i_slice) + '_manual_gmseg.nii.gz').save()
                     else:
                         for i_slice, seg_slice in enumerate(seg.data):
                             if i_slice < 10:
@@ -1116,7 +1119,7 @@ def save_by_slice(dic_dir):
                                 i_slice_str = str(i_slice)
 
                             Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_seg.nii.gz').save()
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz').save()
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1337,10 +1340,12 @@ def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels
                         # Gray matter segmentation for this slice as target
                         target = file_name
                         target_name = subject_dir + '_' + sct.extract_fname(target)[1][:-3]
-                        if 'errsm' in target:
+                        '''
+                        if 'errsm' in target or 'pilot' in target:
                             ref_gm_seg = sct.extract_fname(target)[1][:-3] + '_seg.nii.gz'
                         else:
-                            ref_gm_seg = sct.extract_fname(target)[1][:-3] + '_manual_gmseg.nii.gz'
+                        '''
+                        ref_gm_seg = sct.extract_fname(target)[1][:-3] + '_manual_gmseg.nii.gz'
                         # slice_level = target_name[-2:]
                         slice_level = ''
                         target_slice = ''
