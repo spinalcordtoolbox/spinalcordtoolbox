@@ -394,35 +394,33 @@ class Image(object):
 
         :return:
         """
-        from copy import copy
         from numpy import zeros, array, transpose, dot, asarray
 
 
         m_p2f = self.hdr.get_sform()
         m_p2f_transfo = m_p2f[0:3,0:3]
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
-        coord_origin_transpose = transpose(coord_origin)
 
-        if data_pix != None:
-
-            data_phys = zeros((((data_pix.shape[0], data_pix.shape[1], data_pix.shape[2], 3))))
-            for i in range(data_pix.shape[0]):
-                print i
-                for j in range(data_pix.shape[1]):
-                    for k in range(data_pix.shape[2]):
-                        #b = dot(m_p2f_transfo, array([[i],[j],[k]]))
-                        #c = coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]]))
-                        #d = data_phys[i,j,k,:]
-                        #e= transpose(c)
-                        #f = e[0]
-                        data_phys[i,j,k,:] = transpose(coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]])))[0]
-
-            return data_phys
+        # if data_pix != None:
+        #
+        #     data_phys = zeros((((data_pix.shape[0], data_pix.shape[1], data_pix.shape[2], 3))))
+        #     for i in range(data_pix.shape[0]):
+        #         print i
+        #         for j in range(data_pix.shape[1]):
+        #             for k in range(data_pix.shape[2]):
+        #                 #b = dot(m_p2f_transfo, array([[i],[j],[k]]))
+        #                 #c = coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]]))
+        #                 #d = data_phys[i,j,k,:]
+        #                 #e= transpose(c)
+        #                 #f = e[0]
+        #                 data_phys[i,j,k,:] = transpose(coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]])))[0]
+        #
+        #     return data_phys
 
         if coordi != None:
 
-            coordi_pix = transpose(asarray([coordi]))
-            coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))[0]
+            coordi_pix = transpose(asarray(coordi))
+            coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
 
             return coordi_phys_list
@@ -439,8 +437,8 @@ class Image(object):
 
         :return:
         """
-        from numpy import zeros, array, transpose, dot, asarray, asmatrix
-        from numpy.linalg import inv, pinv
+        from numpy import array, transpose, dot, asarray
+        from numpy.linalg import inv
         from copy import copy
 
         m_p2f = self.hdr.get_sform()
@@ -450,27 +448,28 @@ class Image(object):
 
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        if data_phys != None:
-
-            data_pix = copy(data_phys)
-            for i in range(data_phys.shape[0]):
-                print i
-                for j in range(data_phys.shape[1]):
-                    for k in range(data_phys.shape[2]):
-                        # c = array([data_phys[i,j,k,:]])
-                        # d = transpose(c)
-                        # e = c[0]
-                        # f= data_pix[i,j,k,:]
-                        # g= dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin))
-                        data_pix[i,j,k,:] = transpose(dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin)))[0]  #take int value for pixel
-                        # data_pix[i,j,k] = m_f2p_transfo * (data_phys[i,j,k] - coord_origin)
-            return data_pix
+        # if data_phys != None:
+        #
+        #     data_pix = copy(data_phys)
+        #     for i in range(data_phys.shape[0]):
+        #         print i
+        #         for j in range(data_phys.shape[1]):
+        #             for k in range(data_phys.shape[2]):
+        #                 # c = array([data_phys[i,j,k,:]])
+        #                 # d = transpose(c)
+        #                 # e = c[0]
+        #                 # f= data_pix[i,j,k,:]
+        #                 # g= dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin))
+        #                 data_pix[i,j,k,:] = transpose(dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin)))[0]  #take int value for pixel
+        #                 # data_pix[i,j,k] = m_f2p_transfo * (data_phys[i,j,k] - coord_origin)
+        #     return data_pix
 
         if coordi != None:
 
-            coordi_phys = transpose(asarray([coordi]))
-            coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))[0]
-            coordi_pix_list = [int(round(coordi_pix[i])) for i in range(coordi_pix.shape[0])]
+            coordi_phys = transpose(asarray(coordi))
+            coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))
+            coordi_pix_tmp = coordi_pix.tolist()
+            coordi_pix_list = [[int(round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
 
