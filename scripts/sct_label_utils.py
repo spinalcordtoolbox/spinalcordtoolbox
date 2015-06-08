@@ -224,6 +224,7 @@ class ProcessLabels(object):
 
         return image_output
 
+        # Process to use if one wants to calculate the center of mass of a group of labels ordered by volume (and not by value)
         # image_output = self.image_input.copy()
         # data_output = image_output.data
         # data_output *= 0
@@ -550,7 +551,7 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels into a discrete single voxel label. """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
