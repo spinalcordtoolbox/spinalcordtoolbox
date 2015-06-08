@@ -72,19 +72,20 @@ def main():
            verbose = int(arg)
 
    # display usage if a mandatory argument is not provided
-   if fname == '' or fname_centerline == '':
+   #if fname == '' or fname_centerline == '':
+   if fname == '':
        usage()
 
 
    # check existence of input files
    print'\nCheck if file exists ...'
    sct.check_file_exist(fname)
-   sct.check_file_exist(fname_centerline)
+   #sct.check_file_exist(fname_centerline)
 
    # Display arguments
    print'\nCheck input arguments...'
    print'  Input volume ...................... '+fname
-   print'  Centerline ...................... '+fname
+   print'  Centerline ...................... '+fname_centerline
    print'  Verbose ........................... '+str(verbose)
 
    # Extract path, file and extension
@@ -96,32 +97,48 @@ def main():
    data = file.get_data()
    hdr = file.get_header()
 
-
-   sct.printv('\nOpen centerline...',verbose)
-   print '\nGet dimensions of input centerline...'
-   nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
-   print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-   print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
-   file_c = nibabel.load(fname_centerline)
-   data_c = file_c.get_data()
-
-
-   #X,Y,Z = (data_c>0).nonzero()
-
-   #min_z_index, max_z_index = min(Z), max(Z)
+   if fname_centerline != '':
+   ## [Process 1] Command for extracting center of mass for each slice of the centerline file if provided
+       sct.printv('\nOpen centerline...',verbose)
+       print '\nGet dimensions of input centerline...'
+       nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
+       print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
+       print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+       file_c = nibabel.load(fname_centerline)
+       data_c = file_c.get_data()
 
 
-   z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
-   nz_nonz = len(z_centerline)
-   if nz_nonz==0 :
-       print '\nERROR: Centerline is empty'
-       sys.exit()
-   x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-   y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-   #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
-   print '\nGet center of mass of the centerline ...'
-   for iz in xrange(len(z_centerline)):
-       x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
+       #X,Y,Z = (data_c>0).nonzero()
+
+       #min_z_index, max_z_index = min(Z), max(Z)
+
+
+       z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
+       nz_nonz = len(z_centerline)
+       if nz_nonz==0 :
+           print '\nERROR: Centerline is empty'
+           sys.exit()
+       x_centerline = [0 for iz in range(0, nz_nonz, 1)]
+       y_centerline = [0 for iz in range(0, nz_nonz, 1)]
+       #print("z_centerline", z_centerline,nz_nonz,len(x_centerline))
+       print '\nGet center of mass of the centerline ...'
+       for iz in xrange(len(z_centerline)):
+           x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(np.array(data_c[:,:,z_centerline[iz]]))
+   # end of Process 1
+
+   ## [Process 2] Process for defining the middle vertical line as reference for normalizing the intensity of the image
+   if fname_centerline == '':
+       print '\nGet dimensions of input image...'
+       nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+       print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
+       print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
+       z_centerline = [iz for iz in range(0, nz, 1)]
+       nz_nonz = len(z_centerline)
+       x_middle = int(round(nx/2))
+       y_middle = int(round(ny/2))
+       x_centerline = [x_middle for iz in range(0, nz, 1)]
+       y_centerline = [y_middle for iz in range(0, nz, 1)]
+       # end of Process 2
 
    means = [0 for iz in range(0, nz_nonz, 1)]
 
@@ -135,12 +152,12 @@ def main():
 
    print('\nSmoothing results with spline...')
    # Smoothing with scipy library (Julien Touati's code)
-   #m =np.mean(means)
-   #sigma = np.std(means)
-   #smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+   m =np.mean(means)
+   sigma = np.std(means)
+   smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
    #Equivalent to : m*sigma**2
-   #tck = splrep(z_centerline, means, s=smoothing_param)
-   #means_smooth = splev(z_centerline, tck)
+   tck = splrep(z_centerline, means, s=smoothing_param)
+   means_smooth = splev(z_centerline, tck)
 
    #Test smoothing with nurbs
    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
@@ -148,10 +165,10 @@ def main():
    #P = nurbs.getCourbe3D()
    #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
 
-   #Smoothing with hanning
-   means = np.asarray(means)
-   means_smooth = smoothing_window(means, window_len=window_length)
-   print means.shape[0], means_smooth.shape[0]
+   # #Smoothing with hanning
+   # means = np.asarray(means)
+   # means_smooth = smoothing_window(means, window_len=window_length)
+   # print means.shape[0], means_smooth.shape[0]
 
    if verbose :
        plt.figure()
@@ -186,10 +203,6 @@ def main():
    X_means_smooth_extended = np.insert(X_means_smooth_extended, 0, 0)
 
 
-
-#    for i in range(1,len(X_means_smooth_extended)-1):
-#        means_smooth_extended[X_means_smooth_extended[i]] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1]]+means_smooth_extended[X_means_smooth_extended[i+1]])
-
    #recurrence
    count_zeros=0
    for i in range(1,len(means_smooth_extended)-1):
@@ -212,9 +225,9 @@ def main():
        plt.show()
 
    for i in range(data.shape[2]):
-       data[:,:,i] = data[:,:,i]*(mean_intensity/means_smooth_extended[i])
+       data[:,:,i] = data[:,:,i] * (mean_intensity/means_smooth_extended[i])
 
-   hdr.set_data_dtype('uint8') # set imagetype to uint8
+   hdr.set_data_dtype('uint16') # set imagetype to uint16
    # save volume
    sct.printv('\nWrite NIFTI volumes...',verbose)
    data = data.astype(np.float32, copy =False)
@@ -240,15 +253,16 @@ def usage():
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
 
 DESCRIPTION
-
+Normalize intensity of the input image by smoothing the average intensity of the middle of the image by slice. If a centerline file is provided, the average intensity for each slice is calculated in the near region of the centerline.
 
 USAGE
  """+os.path.basename(__file__)+"""  -i <input_volume>
 
 MANDATORY ARGUMENTS
  -i <input_volume>         input volume to be processed. No Default value
- -c <centerline>           centerline. No Default Value
+
 OPTIONAL ARGUMENTS
+ -c <centerline>            centerline file. No Default Value
  -n <mean_intensity>        mean intensity.
                             Default="""+str(param.mean_intensity)+"""
  -v {0,1}                   verbose. Default="""+str(param.verbose)+"""

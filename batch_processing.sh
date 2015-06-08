@@ -5,26 +5,6 @@
 # N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
 
 
-# set default FSL output to be nii.gz
-export FSLOUTPUTTYPE=NIFTI_GZ
-
-
-## Checking if git is installed
-echo 'Checking if git is installed ...'
-#getting git output
-GIT_OUT=$(git)
-#converting output to string
-GIT_OUT="$GIT_OUT"
-#removing white spaces
-GIT_OUT=${GIT_OUT// /}
-
-if [[ $GIT_OUT != '' ]]; then
-echo "  --> OK"
-else
-echo "\n****************************************************************************************************\nERROR: GIT ISN'T INSTALLED ON THIS COMPUTER \nPlease install git as explained here : \n  http://git-scm.com/book/en/v1/Getting-Started-Installing-Git"
-exit 1
-fi
-
 # download example data (errsm_30)
 git clone https://github.com/neuropoly/sct_example_data.git
 
