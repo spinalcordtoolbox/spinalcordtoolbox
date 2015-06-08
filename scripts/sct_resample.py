@@ -31,6 +31,7 @@ class Param:
         self.fname_data = ''
         self.fname_out = ''
         self.factor = ''
+        self.interpolation = 'Linear'
         self.file_suffix = 'r'  # output suffix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -52,7 +53,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:o:r:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:o:r:v:x:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -70,6 +71,8 @@ def main():
                 param.remove_tmp_files = int(arg)
             elif opt in '-v':
                 param.verbose = int(arg)
+            elif opt in '-x':
+                param.interpolation = arg
 
     # run main program
     resample()
@@ -100,6 +103,10 @@ def resample():
         sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
     else:
         fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
+
+    # check interpolation
+    if param.interpolation not in ['NearestNeighbor','Linear','Cubic','Sinc','Gaussian']:
+        sct.printv('\nERROR: interpolation should be one of those:NearestNeighbor|Linear|Cubic|Sinc|Gaussian.\n', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -159,7 +166,7 @@ def resample():
 
         # resample volume
         sct.printv(('\nResample volume '+str((it+1))+'/'+str(nt)+':'), param.verbose)
-        sct.run('isct_c3d '+file_data_splitT+ext+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
+        sct.run('isct_c3d '+file_data_splitT+ext+' -interpolation '+param.interpolation+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
 
         # pad data (for ANTs)
         # # TODO: check if need to pad also for the estimate_and_apply
