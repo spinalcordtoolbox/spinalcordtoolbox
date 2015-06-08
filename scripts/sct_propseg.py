@@ -18,7 +18,18 @@ import sct_utils as sct
 if __name__ == "__main__":
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
+Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
+Parameters of the spinal cord detection are :
+ - the position (in inferior-superior direction) of the initialization
+ - the number of axial slices
+ - the gap (in pixel) between two axial slices
+ - the approximate radius of the spinal cord
+
+Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
+Cross-sectional areas along the spinal cord can be available (-cross).
+Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
+If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.''')
     parser.add_option(name="-i",
                       type_value="file",
                       description="input image.",
@@ -35,7 +46,7 @@ if __name__ == "__main__":
                       description="output folder.",
                       mandatory=False,
                       example="My_Output_Folder/",
-                      default_value="./")
+                      default_value=".")
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
@@ -48,7 +59,7 @@ if __name__ == "__main__":
                       type_value="multiple_choice",
                       description="1: display on, 0: display off (default)",
                       mandatory=False,
-                      example=["0","1"],
+                      example=["0", "1"],
                       default_value="1")
     parser.add_option(name="-h",
                       type_value=None,
@@ -151,10 +162,8 @@ if __name__ == "__main__":
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
-    folder_output = "./"
-    if "-o" in arguments:
-        folder_output = arguments["-o"]
-        cmd += " -o " + folder_output
+    folder_output = arguments["-o"]
+    cmd += " -o " + folder_output
 
     if "-down" in arguments:
         cmd += " -down " + str(arguments["-down"])
@@ -164,7 +173,7 @@ if __name__ == "__main__":
     verbose = 0
     if "-v" in arguments:
         if arguments["-v"] is "1":
-            verbose = 1
+            verbose = 2
             cmd += " -verbose"
 
     # Output options
@@ -219,4 +228,9 @@ if __name__ == "__main__":
     # extracting output filename
     path_fname, file_fname, ext_fname = sct.extract_fname(input_filename)
     output_filename = file_fname+"_seg"+ext_fname
-    sct.printv("fslview "+input_filename+" "+output_filename+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')
+
+    if folder_output == ".":
+        output_name = output_filename
+    else:
+        output_name = folder_output+"/"+output_filename
+    sct.printv("fslview "+input_filename+" "+output_name+" -l Red -b 0,1 -t 0.7 &\n", verbose, 'info')

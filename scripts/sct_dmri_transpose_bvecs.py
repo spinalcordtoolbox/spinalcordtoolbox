@@ -37,6 +37,34 @@ def extract_fname(fname):
         ext_fname = ".nii.gz"
     return path_fname, file_fname, ext_fname
 
+
+# Usage
+#=======================================================================================================================
+def usage():
+    print '\n' \
+    ''+os.path.basename(__file__)+'\n' \
+    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+    'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
+    '\n'\
+    'DESCRIPTION\n' \
+    '  Convert bvecs file to column, in case they are in line.\n' \
+    '\n' \
+    'USAGE\n' \
+    '  sct_dmri_transpose_bvecs -i <bvecs> \n' \
+    '\n' \
+    'MANDATORY ARGUMENTS\n' \
+    '  -i <txt_file>        bvecs file.\n' \
+    '\n' \
+    'OPTIONAL ARGUMENTS\n' \
+    '  -h                help. Show this message.\n' \
+    '\n' \
+    'EXAMPLE\n' \
+    '  sct_dmri_transpose_bvecs -i bvec.txt \n' \
+
+    sys.exit(2)
+
+
+
 #=======================================================================================================================
 # Main
 #=======================================================================================================================
@@ -46,8 +74,7 @@ def main():
     # Check inputs
     path_func, file_func, ext_func = extract_fname(sys.argv[0])
     if len(sys.argv) < 2:
-        print 'Usage: '+file_func+ext_func+' <bvecs>'
-        sys.exit(1)
+        usage()
     fname_in = sys.argv[1]
 
     # Extracts path, file and extension
