@@ -50,6 +50,7 @@ class Pretreatments:
 
 def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
     # t2_im = Image(t2_fname) if t2_fname is not None else None
+    before = time.time()
     sct.printv('\nBuilding the appearance model...', verbose=param.verbose, type='normal')
     model = Model(model_param=param, k=0.8)
 
@@ -91,8 +92,8 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
         res_names.append(res_name)
 
     os.chdir('..')
-
-    sct.printv('Done! \nTo see the result, type :')
+    after = time.time()
+    sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
     sct.printv('fslview ' + target_fname + ' ' + res_names[0] + ' -l Red -t 0.4 ' + res_names[1] + ' -l Blue -t 0.4 &', param.verbose, 'info')
 
 
