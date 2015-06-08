@@ -83,7 +83,7 @@ def register_seg(seg_input, seg_dest):
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
 # If the mask is inputed, it must also be 3D.
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
+def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
@@ -272,11 +272,13 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, fname = 'w
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
     if theta_rot != None:
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    data_warp[i, j, k, 0, 0] = cos(theta_rot[k]) * i - sin(theta_rot[k]) * j + x_trans[k]
-                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * i - cos(theta_rot[k]) + y_trans[k]
+        for k in range(nz):
+            for i in range(nx):
+                for j in range(ny):
+                    # matrix_rot = [[cos(theta_rot[k]), -sin(theta_rot[k])], [sin(theta_rot[k], cos(theta_rot[k]]]
+                    # data_warp[i,j,k,0,:] = matrix_rot
+                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * i - sin(theta_rot[k]) * j + x_trans[k]
+                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * i + (cos(theta_rot[k])-1) * j + y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
     if theta_rot == None:
         for i in range(nx):
