@@ -18,17 +18,17 @@ class param:
         self.verbose = 1
 
 # check if needed Python libraries are already installed or not
-import sys, commands
+import sys
 import getopt
+from commands import getstatusoutput
 
 # Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+status, path_sct = getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 
 import sct_utils as sct
 import os
-from commands import getstatusoutput
 def main():
 
 
@@ -116,7 +116,7 @@ USAGE
 MANDATORY ARGUMENTS
   -i <input_volume>         input straight cropped volume. No Default value
   -n <anatomical_landmarks> landmarks in native space. See sct_create_cross.py
-  -t <template_landmarks>   landmarks in template_space. See sct_create_croos.py
+  -t <template_landmarks>   landmarks in template_space. See sct_create_cross.py
   -R <reference>            Reference image. Empty template image
 
 OPTIONAL ARGUMENTS
