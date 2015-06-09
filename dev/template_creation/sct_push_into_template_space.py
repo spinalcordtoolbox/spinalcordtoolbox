@@ -16,19 +16,19 @@ class param:
     ## The constructor
     def __init__(self):
         self.verbose = 1
-        
+
 # check if needed Python libraries are already installed or not
 import sys
 import getopt
+from commands import getstatusoutput
+
+ # get path of the toolbox
+status, path_sct = getstatusoutput('echo $SCT_DIR')
+#print path_sct
+
 import sct_utils as sct
 import os
-from commands import getstatusoutput
 def main():
-    
-    
-    # get path of the toolbox
-    status, path_sct = getstatusoutput('echo $SCT_DIR')
-    #print path_sct
 
 
     #Initialization
@@ -87,7 +87,7 @@ def main():
 
 
     print '\nEstimate rigid transformation between paired landmarks...'
-    sct.run('ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + ' '+ landmarks_native + ' affine ' + transfo)
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + ' '+ landmarks_native + ' affine ' + transfo)
     
     # Apply rigid transformation
     print '\nApply affine transformation to native landmarks...'
@@ -114,7 +114,7 @@ USAGE
 MANDATORY ARGUMENTS
   -i <input_volume>         input straight cropped volume. No Default value
   -n <anatomical_landmarks> landmarks in native space. See sct_create_cross.py
-  -t <template_landmarks>   landmarks in template_space. See sct_create_croos.py 
+  -t <template_landmarks>   landmarks in template_space. See sct_create_cross.py
   -R <reference>            Reference image. Empty template image
   
 OPTIONAL ARGUMENTS

@@ -1,6 +1,12 @@
 
 # CHANGES TO RELEASE
 
+##2.0.4 (2015-06-06)
+- BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)
+- BUG: Hanning smoothing: fixed error that occurred when window size was larger than data (issue #390)
+- OPT: **sct_check_dependences**: now checks if git is installed
+- OPT: simplified batch_processing.sh
+
 ##2.0.3 (2015-05-19)
 - BUG: **sct_register_to_template**: fixed issue related to appearance of two overlapped templates in some cases (issue #367)
 - BUG: **sct_register_to_template**: now all input data are resampled to 1mm iso to avoid label mismatch (issue #368)
