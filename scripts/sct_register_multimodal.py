@@ -66,7 +66,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '31'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -76,6 +76,7 @@ class Paramreg(object):
         self.smooth = smooth
         self.gradStep = gradStep
         self.poly = poly  # slicereg only
+        self.window_length = window_length
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -174,7 +175,7 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {slicereg,rigid,affine,syn,bsplinesyn}. Default="""+paramreg.steps['1'].algo+"""\n  For info about slicereg, see here: goo.gl/Sj3ZeU\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {slicereg,rigid,affine,syn,bsplinesyn,slicereg2d_translation,slicereg2d_rigid}. Default="""+paramreg.steps['1'].algo+"""\n  For info about slicereg, see here: goo.gl/Sj3ZeU\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for real_defo, slicereg2d_translation and slicereg2d_rigid.. Default="""+paramreg.steps['1'].window_length,
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
@@ -182,6 +183,11 @@ def main():
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
                       default_value=param.padding)
+    # parser.add_option(name="-w",
+    #                   type_value="int",
+    #                   description="""size of hanning window for smoothing along z for slicereg2d_translation and slicereg2d_rigid.""",
+    #                   mandatory=False,
+    #                   default_value=param.window_length)
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -214,6 +220,7 @@ def main():
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
+    # window_length = arguments['-w']
     if "-p" in arguments:
         paramreg_user = arguments['-p']
         # update registration parameters
@@ -251,6 +258,7 @@ def main():
     param.padding = padding
     param.fname_mask = fname_mask
     param.remove_temp_files = remove_temp_files
+    # param.window_length = window_length
 
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
@@ -431,8 +439,8 @@ def register(src, dest, paramreg, param, i_step_str):
             x_disp_a = asarray(x_disp)
             y_disp_a = asarray(y_disp)
             # Smooth results
-            x_disp_smooth = smoothing_window(x_disp_a, window_len=31, window='hanning', verbose=param.verbose)
-            y_disp_smooth = smoothing_window(y_disp_a, window_len=31, window='hanning', verbose=param.verbose)
+            x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
+            y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
             # Generate warping field
             generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
             # Inverse warping field
@@ -451,8 +459,8 @@ def register(src, dest, paramreg, param, i_step_str):
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=31, window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=31, window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
@@ -472,9 +480,9 @@ def register(src, dest, paramreg, param, i_step_str):
         y_disp_a = asarray(y_disp)
         theta_rot_a = asarray(theta_rot)
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=31, window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=31, window='hanning', verbose = param.verbose)
-        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=31, window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
