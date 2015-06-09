@@ -46,22 +46,24 @@ from math import acos
 # (The segmentations can be of different size but the output segmentation must be smaller thant the input segmentation)?????? necessary or done before????
 
 def register_seg(seg_input, seg_dest):
-    seg_input_img = nibabel.load(seg_input)
-    seg_dest_img = nibabel.load(seg_dest)
-    seg_input_data = seg_input_img.get_data()
-    seg_dest_data = seg_dest_img.get_data()
+    seg_input_img = Image(seg_input)
+    seg_dest_img = Image(seg_dest)
+    seg_input_data = seg_input_img.data
+    seg_dest_data = seg_dest_img.data
 
 
-    x_center_of_mass_input = [0 for i in range(seg_input_data.shape[2])]
-    y_center_of_mass_input = [0 for i in range(seg_input_data.shape[2])]
-    print '\nGet center of mass of the input segmentation for each slice (corresponding to a slice int the output segmentation)...' #different if size of the two seg are different
+    x_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
+    y_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
+    print '\nGet center of mass of the input segmentation for each slice (corresponding to a slice in the output segmentation)...' #different if size of the two seg are different
     #TO DO: select only the slices corresponding to the output segmentation
+    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0,0,0]])
+    [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
     for iz in xrange(seg_dest_data.shape[2]):
-        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:,:,iz]))
+        x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
 
-    x_center_of_mass_output = [0 for i in range(seg_input_data.shape[2])]
-    y_center_of_mass_output = [0 for i in range(seg_input_data.shape[2])]
+    x_center_of_mass_output = [0 for i in range(seg_dest_data.shape[2])]
+    y_center_of_mass_output = [0 for i in range(seg_dest_data.shape[2])]
     print '\nGet center of mass of the output segmentation for each slice ...'
     for iz in xrange(seg_dest_data.shape[2]):
         x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:,:,iz]))
@@ -81,7 +83,7 @@ def register_seg(seg_input, seg_dest):
 # register_image
 # First step to register a 3D image onto another by splitting the images into 2D images and calculating the displacement by splice by image correlation algorithms.
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
-# If the mask is inputed, it must also be 3D.
+# If the mask is inputed, it must also be 3D and it must be in the same space as the destination image.
 
 def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
 
@@ -140,10 +142,16 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
         sct.run(sct.fsloutput + 'fslsplit mask.nii.gz mask_z -z')
         #file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
 
+    im_dest_img = Image(im_dest)
+    im_input_img = Image(im_input)
+    coord_origin_dest = im_dest_img.transfo_pix2phys([[0,0,0]])
+    [[x_o, y_o, z_o]] = im_input_img.transfo_phys2pix(coord_origin_dest)
+
     # loop across slices
     for i in range(nz):
         # set masking
         num = numerotation(i)
+        num_2 = numerotation(int(num) + z_o)
         if mask:
             masking = '-x mask_z' +num+ '.nii'
         else:
@@ -153,7 +161,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--dimensionality 2 '
                '--transform '+paramreg.algo+'['+paramreg.gradStep +
                ants_registration_params[paramreg.algo.lower()]+'] '
-               '--metric '+paramreg.metric+'['+root_d+'_z'+ num +'.nii' +','+root_i+'_z'+ num +'.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+               '--metric '+paramreg.metric+'['+root_d+'_z'+ num +'.nii' +','+root_i+'_z'+ num_2 +'.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
                '--convergence '+paramreg.iter+' '
                '--shrink-factors '+paramreg.shrink+' '
                '--smoothing-sigmas '+paramreg.smooth+'mm '
@@ -293,3 +301,4 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, fname = 'w
     hdr_warp.set_data_dtype('float32')
     img = nibabel.Nifti1Image(data_warp, None, hdr_warp)
     nibabel.save(img, fname)
+    print '\nDONE ! Warping field generated: '+fname
