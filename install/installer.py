@@ -662,7 +662,7 @@ class Installer:
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
             isAble2Connect = False
-            raise InstallFailed("Failed to connect to SCT github website. Please check your connexion. You absolutely need an internet connection in order to install all the SCT requirements. %s." % (version_result.message))
+            print "WARNING: Failed to connect to SCT github website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
@@ -744,7 +744,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # install required software
-        print "\nInstall required software... "
+        print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
         os.chdir("requirements")
         cmd = self.issudo + "./requirements.sh"
         print ">> " + cmd

@@ -21,16 +21,16 @@ def usage():
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
-        '  Create a package of the Spinal Cord Toolbox.\n' \
+        '  Create for FSL in the Spinal Cord Toolbox.\n' \
         '\n' \
         'USAGE\n' \
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -s <OS name>      name of the OS {osx,linux}.\n' \
+        '  -a      remove admin rights.\n' \
         '\n'\
         'EXAMPLE:\n' \
-        '  create_package.py -s linux\n'
+        '  create_package.py -a\n'
     sys.exit(2)
 
 issudo = 'sudo '
@@ -62,12 +62,13 @@ print "Creating soft links for each fsl script that start with ", prefix_fsl
 
 if path_fsl is '':
     status, path_fsl = commands.getstatusoutput('which ' + prefix_fsl + 'fslmaths')
+    path_fsl = os.path.dirname(path_fsl)
 if path_fsl is '':
     print 'ERROR: the FSL folder was not found! Please provide it using -f option.'
 
 for fsl_script in os.listdir(path_fsl):
     if fsl_script.startswith(prefix_fsl):
         script_name = fsl_script[len(prefix_fsl):]
-        sct.run(issudo + 'ln -sf ' + path_sct+'/bin/'+fsl_script + script_name)
+        sct.run(issudo + 'ln -sf ' + path_fsl+'/'+fsl_script + ' ' + path_sct+'/bin/'+script_name)
 
 print "Done!"
