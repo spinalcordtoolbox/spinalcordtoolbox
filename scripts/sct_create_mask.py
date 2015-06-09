@@ -226,7 +226,7 @@ def create_mask():
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+'mask.nii', param.fname_out)
+    sct.generate_output_file(path_tmp+'mask.nii.gz', param.fname_out)
 
     # Remove temporary files
     if param.remove_tmp_files == 1:
