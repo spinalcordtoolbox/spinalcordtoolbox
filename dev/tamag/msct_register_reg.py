@@ -59,6 +59,7 @@ def register_seg(seg_input, seg_dest):
     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0,0,0]])
     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
     for iz in xrange(seg_dest_data.shape[2]):
+        print iz
         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
 
@@ -112,6 +113,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     x_displacement = [0 for i in range(nz)]
     y_displacement = [0 for i in range(nz)]
     theta_rotation = [0 for i in range(nz)]
+    matrix_def = [0 for i in range(nz)]
 
     # create temporary folder
     print('\nCreate temporary folder...')
@@ -145,7 +147,9 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     im_dest_img = Image(im_dest)
     im_input_img = Image(im_input)
     coord_origin_dest = im_dest_img.transfo_pix2phys([[0,0,0]])
-    [[x_o, y_o, z_o]] = im_input_img.transfo_phys2pix(coord_origin_dest)
+    coord_origin_input = im_input_img.transfo_pix2phys([[0,0,0]])
+    coord_diff_origin_z = coord_origin_dest[0][2] - coord_origin_input[0][2]
+    [[x_o, y_o, z_o]] = im_input_img.transfo_phys2pix([[0, 0, coord_diff_origin_z]])
 
     # loop across slices
     for i in range(nz):
@@ -170,8 +174,6 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--interpolation BSpline[3] '
                +masking)
 
-        # sct.run(cmd)
-
         try:
             sct.run(cmd)
 
@@ -183,11 +185,23 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 y_displacement[i] = array_transfo[5][0]
                 theta_rotation[i] = acos(array_transfo[0])
 
+            if paramreg.algo == 'Affine':
+                f = 'transform_' +num+ '0GenericAffine.mat'
+                matfile = loadmat(f, struct_as_record=True)
+                array_transfo = matfile['AffineTransform_double_2_2']
+                x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
+                y_displacement[i] = array_transfo[5][0]
+                matrix_def[i] = [[array_transfo[0][0], array_transfo[2][0]], [array_transfo[1][0], array_transfo[3][0]]]  # comment savoir lequel est lequel?
+
         except:
                 if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
                     x_displacement[i] = x_displacement[i-1]  #is it? or is it y?
                     y_displacement[i] = y_displacement[i-1]
                     theta_rotation[i] = theta_rotation[i-1]
+                if paramreg.algo == 'Affine':
+                    x_displacement[i] = x_displacement[i-1]
+                    y_displacement[i] = y_displacement[i-1]
+                    matrix_def[i] = matrix_def[i-1]
 
         # # get displacement form this slice and complete x and y displacement lists
         # with open('transform_'+num+'.csv') as f:
@@ -223,6 +237,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
         return x_displacement, y_displacement, theta_rotation   # check if the displacement are not inverted (x_dis = -x_disp...)   theta is in radian
     if paramreg.algo == 'Translation':
         return x_displacement, y_displacement
+    if paramreg.algo == 'Affine':
+        return x_displacement, y_displacement,matrix_def
 
 
 def numerotation(nb):
@@ -260,7 +276,7 @@ def numerotation(nb):
 #   theta_rot
 #   fname_warp
 
-def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, fname = 'warping_field.nii.gz'):
+def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, matrix_def=None, fname = 'warping_field.nii.gz'):
     from nibabel import load
     from math import cos, sin
 
@@ -288,12 +304,23 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, fname = 'w
                     data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * i - sin(theta_rot[k]) * j + x_trans[k]
                     data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * i + (cos(theta_rot[k])-1) * j + y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
-    if theta_rot == None:
+    if theta_rot == None and matrix_def == None:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
                     data_warp[i, j, k, 0, 0] = x_trans[k]
                     data_warp[i, j, k, 0, 1] = y_trans[k]
+                    data_warp[i, j, k, 0, 2] = 0
+    if theta_rot == None and matrix_def != None:
+        matrix_def_0 = [matrix_def[j][0][0] for j in range(len(matrix_def))]
+        matrix_def_1 = [matrix_def[j][0][1] for j in range(len(matrix_def))]
+        matrix_def_2 = [matrix_def[j][1][0] for j in range(len(matrix_def))]
+        matrix_def_3 = [matrix_def[j][1][1] for j in range(len(matrix_def))]
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    data_warp[i, j, k, 0, 0] = (matrix_def_0[i]-1) * i + matrix_def_1[i] * j + x_trans[k]
+                    data_warp[i, j, k, 0, 1] = matrix_def_2[i] * i + (matrix_def_3[i]-1) * j+ y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
 
 
