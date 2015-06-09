@@ -52,7 +52,7 @@ def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose
     ## Concatenation of the files
 
     # Concatenation : sum of matrices
-    file_0 = load(list_file[0])
+    file_0 = load(file+ext)
     data_concatenation = file_0.get_data()
     hdr_0 = file_0.get_header()
     orientation_file_0 = get_orientation(list_file[0])
