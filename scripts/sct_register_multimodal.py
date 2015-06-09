@@ -42,7 +42,11 @@ import time
 import sct_utils as sct
 from msct_parser import Parser
 
-
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+sys.path.append(path_sct + '/dev/tamag')
 
 
 
@@ -432,7 +436,10 @@ def register(src, dest, paramreg, param, i_step_str):
             # Generate warping field
             generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
             # Inverse warping field
-
+            generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+            cmd = ('')
+            warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+            warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_translation':
         from msct_register_reg import register_images, generate_warping_field
@@ -449,7 +456,10 @@ def register(src, dest, paramreg, param, i_step_str):
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
-
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        cmd = ('')
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_rigid':
         from msct_register_reg import register_images, generate_warping_field
@@ -468,7 +478,10 @@ def register(src, dest, paramreg, param, i_step_str):
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
-
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        cmd = ('')
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
 
