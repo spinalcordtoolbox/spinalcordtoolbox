@@ -40,8 +40,13 @@ def main(file_to_denoise, param, output_file_name) :
     hdr_0 = img.get_header()
 
     data = img.get_data()
-    aff = img.get_affine()
+    # aff = img.get_affine()
 
+    if min(data.shape) <= 5:
+        sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
+        block_radius = min(data.shape) - 1
+    else:
+        block_radius = 5  # default value
 
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
@@ -52,18 +57,17 @@ def main(file_to_denoise, param, output_file_name) :
         # Application of NLM filter to the image
         print 'Applying Non-local mean filter...'
         if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=None, rician=True)
-        else : den = nlmeans(data, sigma=sigma, mask=None, rician=False)
+            den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
+        else : den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
     else:
         # # Process for manual detecting of background
-        mask = data[:, :, :] > noise_threshold
-        data = data[:, :, :]
+        mask = data > noise_threshold
         sigma = np.std(data[~mask])
         # Application of NLM filter to the image
         print 'Applying Non-local mean filter...'
         if param.parameter == 'Rician':
-            den = nlmeans(data, sigma=sigma, mask=mask, rician=True)
-        else : den = nlmeans(data, sigma=sigma, mask=mask, rician=False)
+            den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
+        else: den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
     print("total time", time() - t)
