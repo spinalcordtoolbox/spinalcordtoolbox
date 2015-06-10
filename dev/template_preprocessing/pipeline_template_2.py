@@ -235,9 +235,10 @@ if do_preprocessing_T2:
         os.system('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         # Select center of mass of labels volume due to past dilatation
+        # REMOVE IF NOT REQUIRED
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
 
-        # Apply transfo to seg_and_labels.nii.gz which replace the centerline file
+        # Apply straightening to seg_and_labels.nii.gz
         print'\nApplying transfo to seg_and_labels.nii.gz ...'
         sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
@@ -284,6 +285,7 @@ list_distances_1 = []
 list_distances_2 = []
 
 
+# create cross at the first and last labels. This cross will be used to push the subject into the template space using affine transfo.
 if create_cross:
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
@@ -334,6 +336,7 @@ os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+
 
 
 
+# push into template space + normalize 
 if normalize_levels_T2:
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
@@ -347,16 +350,15 @@ if normalize_levels_T2:
         sct.run('sct_push_into_template_space.py -i data_RPI_crop_straight_normalized_crop.nii.gz -n landmark_native.nii.gz')
         sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point_crop.nii.gz -n landmark_native.nii.gz -a nn')
 
-        # Apply cubic to point to the label file as it now presents cubic group of labels instead of discrete labels
+        # get center of mass of each label group
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -t cubic-to-point')
         #os.rename('labels.nii.gz', 'labels_vertebral_straight_in_template_space.nii.gz')
 
         # Copy labels_vertebral_straight_in_template_space.nii.gz into a folder that will contain each subject labels_vertebral_straight_in_template_space.nii.gz file and rename them
-        # check if forlder exists and if not create it
         print'\nCheck if forlder '+PATH_OUTPUT +'/labels_vertebral exists and if not creates it ...'
+        # check if folder exists and if not create it
         if not os.path.isdir(PATH_OUTPUT +'/labels_vertebral'):
             os.makedirs(PATH_OUTPUT + '/labels_vertebral')
-
         sct.run('cp labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral')
         os.chdir(PATH_OUTPUT +'/labels_vertebral')
         os.rename('labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz', subject+'.nii.gz')
@@ -366,17 +368,17 @@ if normalize_levels_T2:
 # if no good: check position of labels dilated with image crop
 
 
-# Calculate mean labels and save it into
+# Calculate mean labels and save it into folder "labels_vertebral"
 if average_level:
     print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral\n'
     os.chdir(PATH_OUTPUT +'/labels_vertebral')
     print'\nCalculate mean of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral'
     template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
+    # this function looks at all files inside the folder "labels_vertebral" and find the average vertebral levels across subjects
     sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
-# Aligning vertebrae for all subject
-
+# Aligning vertebrae for all subjects.
 if align_vertebrae_T2:
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
