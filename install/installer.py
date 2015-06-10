@@ -746,7 +746,7 @@ class Installer:
         # install required software
         print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
         os.chdir("requirements")
-        cmd = self.issudo + "./requirements.sh"
+        cmd = self.issudo + "bash requirements.sh"
         print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
