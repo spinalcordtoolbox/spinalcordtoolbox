@@ -1,0 +1,11 @@
+# Date - Time: 2015/06/06 - 18:58:40
+# Metric file: /Users/julien/code/spinalcordtoolbox/testing/sct_testing_data/data/mt/mtr.nii.gz
+# Extraction method: wath
+# WARNING: the bottom vertebral level you selected is lower to the lowest level available --> Selected the lowest vertebral level available: 3
+# WARNING: the top vertebral level you selected is not available --> Selected the nearest superior level available: 3
+# Vertebral levels: 3 to 3
+# Slices (z): 3:3
+# ID, label name, mean, std
+
+17, right lateral corticospinal tract, 32.819822, 4.882962
+2, left lateral corticospinal tract, 38.685644, 4.049973
