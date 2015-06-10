@@ -29,6 +29,7 @@ from sct_orientation import get_orientation, set_orientation
 from scipy import ndimage
 from numpy import array
 from msct_image import Image
+import matplotlib.pyplot as plt
 
 # add path to scripts
 PATH_DICOM = '/Volumes/data_shared/' #sert a rien
@@ -91,9 +92,9 @@ SUBJECTS_LIST = SUBJECTS_LIST_total
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
 do_preprocessing_T1 = 0
-create_cross = 1
-normalize_levels_T1 = 1
-average_level = 1
+create_cross = 0
+normalize_levels_T1 = 0
+average_level = 0
 align_vertebrae_T1 = 1
 
 number_labels_for_template = 20
@@ -104,7 +105,7 @@ if do_preprocessing_T1:
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral_T1')
 
    # loop across subjects
-    for i in range(25,len(SUBJECTS_LIST)):
+    for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # create and go to output folder
@@ -344,14 +345,14 @@ if create_cross:
         # f_distance.write(str(distance_2))
         # f_distance.write('\n')
 
-# Calculate mean cross height for template and create file of reference
-mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1))) # mean distance from top image to top label
-mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2))) # mean distance from top image to bottom label
-L = 1100 - 2*mean_distance_2 # mean position of top label
-H = 1100 - 2*mean_distance_1 # mean position of bottom label
-os.chdir('/Users/tamag/code/spinalcordtoolbox/dev/template_creation')
-# Create a cross for the template at first and last labels
-os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
+# # Calculate mean cross height for template and create file of reference
+# mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1))) # mean distance from top image to top label
+# mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2))) # mean distance from top image to bottom label
+# L = 1100 - 2*mean_distance_2 # mean position of top label
+# H = 1100 - 2*mean_distance_1 # mean position of bottom label
+# os.chdir('/Users/tamag/code/spinalcordtoolbox/dev/template_creation')
+# # Create a cross for the template at first and last labels
+# os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
 
 
 
@@ -406,21 +407,45 @@ if align_vertebrae_T1:
         print '\nGo to output folder '+ PATH_OUTPUT + '/subjects/'+subject+'/'+'T1\n'
         os.chdir(PATH_OUTPUT + '/subjects/'+subject+'/'+'T1')
 
-        print '\nAligning vertebrae for subject '+subject+'...'
-        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/T1/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_T1/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
-        os.system('sct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/T1/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_T1/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        # print '\nAligning vertebrae for subject '+subject+'...'
+        # sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/T1/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_T1/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        # os.system('sct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/T1/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_T1/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        #
+        # #Normalize intensity of result
+        # print'\nNormalizing intensity of results...'
+        # sct.run('sct_normalize.py -i '+subject+'_aligned.nii.gz')
+        #
+        # #Warning that results for the subject is ready
+        # print'\nThe results for subject '+subject+' are ready. You can visualize them by tapping: fslview '+subject+'_aligned_normalized.nii.gz'
+        #
+        # #Copy final results into final results
+        # if not os.path.isdir(PATH_OUTPUT +'/Final_results'):
+        #     os.makedirs(PATH_OUTPUT +'/Final_results')
+        # sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_T1.nii.gz')
+        # sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized_T1.nii.gz')
 
-        #Normalize intensity of result
-        print'\nNormalizing intensity of results...'
-        sct.run('sct_normalize.py -i '+subject+'_aligned.nii.gz')
-
-        #Warning that results for the subject is ready
-        print'\nThe results for subject '+subject+' are ready. You can visualize them by tapping: fslview '+subject+'_aligned_normalized.nii.gz'
-
-        #Copy final results into final results
-        if not os.path.isdir(PATH_OUTPUT +'/Final_results'):
-            os.makedirs(PATH_OUTPUT +'/Final_results')
-        sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_T1.nii.gz')
-        sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized_T1.nii.gz')
+        #Save png images into a different folder
+        if not os.path.isdir(PATH_OUTPUT +'/Image_results'):
+            os.makedirs(PATH_OUTPUT +'/Image_results')
+        f = nibabel.load(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized.nii.gz')
+        data = f.get_data()
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized.nii.gz')
+        sagital_middle = nx / 2
+        coronal_middle = ny / 2
 
 
+        sagital = data[sagital_middle, :, :].T
+        coronal = data[:, coronal_middle, :].T
+
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(sagital, cmap='gray', origin='lower')
+        ax[0].set_title('sagital')
+        ax[1].imshow(coronal, cmap='gray', origin='lower')
+        ax[1].set_title('coronal')
+
+        for i in range(2):
+            ax[i].set_axis_off()
+
+        plt.show()
+        plt.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_normalized.png', format='png', dpi=fig.dpi)#, bbox_inches = 'tight')
+        bla
