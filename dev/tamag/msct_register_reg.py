@@ -35,7 +35,7 @@ from scipy.interpolate import splrep,splev
 from sct_register_multimodal import Paramreg
 import time
 import csv
-from math import acos
+from math import acos, asin
 
 
 
@@ -181,9 +181,11 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 f = 'transform_' +num+ '0GenericAffine.mat'
                 matfile = loadmat(f, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
+                if i == 20 or i == 40:
+                    print i
                 x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
                 y_displacement[i] = array_transfo[5][0]
-                theta_rotation[i] = acos(array_transfo[0])
+                theta_rotation[i] = asin(array_transfo[2])
 
             if paramreg.algo == 'Affine':
                 f = 'transform_' +num+ '0GenericAffine.mat'
@@ -191,7 +193,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 array_transfo = matfile['AffineTransform_double_2_2']
                 x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
                 y_displacement[i] = array_transfo[5][0]
-                matrix_def[i] = [[array_transfo[0][0], array_transfo[2][0]], [array_transfo[1][0], array_transfo[3][0]]]  # comment savoir lequel est lequel?
+                matrix_def[i] = [[array_transfo[0][0], array_transfo[1][0]], [array_transfo[2][0], array_transfo[3][0]]]  # comment savoir lequel est lequel?
 
         except:
                 if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
@@ -275,11 +277,13 @@ def numerotation(nb):
 #   y_trans
 #   theta_rot
 #   fname_warp
+#   center_rotation if different from origin
+#   matrix_def for affine transformation
 
-def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, matrix_def=None, fname = 'warping_field.nii.gz'):
+def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation = None, matrix_def=None, fname = 'warping_field.nii.gz'):
     from nibabel import load
     from math import cos, sin
-
+    from numpy import matrix
 
     #Make sure image is in rpi format
 
@@ -293,16 +297,25 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, matrix_def
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
+    #Center of rotation
+    if center_rotation == None:
+        x_a = int(round(nx/2))
+        y_a = int(round(ny/2))
+
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
+    # matrix_pass = matrix([[1,0,-x_a],[0,1,-y_a],[0,0,1]])
+    # matrix_pass_inv = matrix([[1,0,x_a],[0,1,y_a],[0,0,1]])
     if theta_rot != None:
         for k in range(nz):
             for i in range(nx):
                 for j in range(ny):
-                    # matrix_rot = [[cos(theta_rot[k]), -sin(theta_rot[k])], [sin(theta_rot[k], cos(theta_rot[k]]]
-                    # data_warp[i,j,k,0,:] = matrix_rot
-                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * i - sin(theta_rot[k]) * j + x_trans[k]
-                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * i + (cos(theta_rot[k])-1) * j + y_trans[k]
+                    # matrix_rot = matrix([[cos(theta_rot[k]), -sin(theta_rot[k]),0],[sin(theta_rot[k]), cos(theta_rot[k]),0],[0,0,1]])
+                    # a = array(matrix_pass_inv * matrix_rot * matrix_pass * matrix([i,j,1]).T)
+                    # data_warp[i,j,k,0,:] = (a.T[0] - array([i,j,1]) + array([x_trans[k],y_trans[k],0])).tolist()
+
+                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
+                    data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a) - y_trans[k])
                     data_warp[i, j, k, 0, 2] = 0
     if theta_rot == None and matrix_def == None:
         for i in range(nx):
