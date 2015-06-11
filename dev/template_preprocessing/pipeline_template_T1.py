@@ -434,18 +434,17 @@ if align_vertebrae_T1:
         coronal_middle = ny / 2
 
 
-        sagital = data[sagital_middle, :, :].T
+        sagittal = data[sagital_middle, :, :].T
         coronal = data[:, coronal_middle, :].T
 
         fig, ax = plt.subplots(1, 2)
-        ax[0].imshow(sagital, cmap='gray', origin='lower')
-        ax[0].set_title('sagital')
+        ax[0].imshow(sagittal, cmap='gray', origin='lower')
+        ax[0].set_title('sagittal')
         ax[1].imshow(coronal, cmap='gray', origin='lower')
         ax[1].set_title('coronal')
 
         for i in range(2):
             ax[i].set_axis_off()
-
-        plt.show()
-        plt.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_normalized.png', format='png', dpi=fig.dpi)#, bbox_inches = 'tight')
-        bla
+        fig1 = plt.gcf()
+        #plt.show()
+        fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_normalized.png', format='png')
