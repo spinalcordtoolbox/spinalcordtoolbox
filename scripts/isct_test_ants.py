@@ -31,8 +31,8 @@ def main():
 
     # Initialization
     size_data = 61
-    size_label = 1 # put zero for labels that are single points.
-    dice_acceptable = 0.93 # computed DICE should be 0.931034
+    size_label = 1  # put zero for labels that are single points.
+    dice_acceptable = 0.86  # computed DICE should be 0.864662
     test_passed = 0
     remove_temp_files = 1
     verbose = 1
@@ -62,14 +62,30 @@ def main():
     # add labels for src image (curved).
     # Labels can be big (more than single point), because when applying NN interpolation, single points might disappear
     data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_src[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 2
-    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 50-size_label:50+size_label+1] = 3
+    data_src[25-size_label:25+size_label+1, 25-size_label:25+size_label+1, 20-size_label:20+size_label+1] = 2
+    data_src[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 3
+    data_src[25-size_label:25+size_label+1, 25-size_label:25+size_label+1, 40-size_label:40+size_label+1] = 4
+    data_src[20-size_label:20+size_label+1, 20-size_label:20+size_label+1, 50-size_label:50+size_label+1] = 5
+
+    points_moving = [[20, 20, 10],
+                     [25, 25, 20],
+                     [30, 30, 30],
+                     [25, 25, 40],
+                     [20, 20, 50]]
 
     # add labels for dest image (straight).
     # Here, no need for big labels (bigger than single point) because these labels will not be re-interpolated.
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 10-size_label:10+size_label+1] = 1
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 2
-    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 50-size_label:50+size_label+1] = 3
+    data_dest[28-size_label:28+size_label+1, 28-size_label:28+size_label+1, 10-size_label:10+size_label+1] = 1
+    data_dest[29-size_label:29+size_label+1, 29-size_label:29+size_label+1, 20-size_label:20+size_label+1] = 2
+    data_dest[30-size_label:30+size_label+1, 30-size_label:30+size_label+1, 30-size_label:30+size_label+1] = 3
+    data_dest[29-size_label:29+size_label+1, 29-size_label:29+size_label+1, 40-size_label:40+size_label+1] = 4
+    data_dest[28-size_label:28+size_label+1, 28-size_label:28+size_label+1, 50-size_label:50+size_label+1] = 5
+
+    points_fixed = [[28, 28, 10],
+                    [29, 29, 20],
+                    [30, 30, 30],
+                    [29, 29, 40],
+                    [28, 28, 50]]
 
     # save as nifti
     img_src = nib.Nifti1Image(data_src, np.eye(4))
@@ -77,9 +93,24 @@ def main():
     img_dest = nib.Nifti1Image(data_dest, np.eye(4))
     nib.save(img_dest, 'data_dest.nii.gz')
 
-    # Estimate rigid transformation
-    printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid.txt', verbose)
+    # OLD! Gave us some issues because ill-posed problem
+    # Estimate rigid transformation using isct_ANTSUseLandmarkImagesToGetAffineTransform
+    # printv('\nEstimate rigid transformation between paired landmarks...', verbose)
+    # sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform data_dest.nii.gz data_src.nii.gz rigid curve2straight_rigid_old.txt', verbose)
+
+    # Estimate rigid transformation using msct_register_landmarks
+    import msct_register_landmarks
+    (rotation_matrix, translation_array) = msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='xy', show=False)
+
+    # writing rigid transformation file
+    text_file = open("curve2straight_rigid.txt", "w")
+    text_file.write("""#Insight Transform File V1.0
+#Transform 0
+Transform: AffineTransform_double_3_3
+Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f
+FixedParameters: 0 0 0
+""" % (rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2], translation_array[0, 1], translation_array[0, 1], translation_array[0, 2]))
+    text_file.close()
 
     # Apply rigid transformation
     printv('\nApply rigid transformation to curved landmarks...', verbose)
