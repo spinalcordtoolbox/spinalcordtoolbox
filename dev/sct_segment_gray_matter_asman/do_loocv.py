@@ -2,7 +2,7 @@
 import sct_utils as sct
 import sys
 from msct_parser import Parser
-from msct_gmseg_utils import leave_one_out_by_slice
+from msct_gmseg_utils import leave_one_out_by_subject
 import os
 import time
 import multiprocessing as mp
@@ -13,7 +13,8 @@ def loocv(param):
     sct.run('mkdir ./' + registration + '_levels_' + str(use_level) + '_weight' + str(weight) )
     sct.run('cp -r ' + path_dictionary + ' ./' + registration + '_levels_' + str(use_level) + '_weight' + str(weight) + '/dictionary')
     os.chdir('./' +registration + '_levels_' + str(use_level) + '_weight' + str(weight))
-    leave_one_out_by_slice('dictionary/', reg=registration, target_reg=target_reg, use_levels=use_level, weight=weight)
+    # leave_one_out_by_slice('dictionary/', reg=registration, target_reg=target_reg, use_levels=use_level, weight=weight)
+    leave_one_out_by_subject('dictionary/', use_levels=use_level, weight=weight)
     os.chdir('..')
 
 if __name__ == '__main__':
@@ -42,13 +43,13 @@ if __name__ == '__main__':
 
     registration = 'Affine'
 
-    weights = [1.2, 1.9, 0.5]
+    weights = [1.9]
 
 
     before = time.time()
+    loocv((False, 0))
     for w in weights:
         loocv((True, w))
-    loocv((False, 0))
 
     t1 = time.time() - before
 
