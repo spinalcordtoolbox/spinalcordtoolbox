@@ -32,6 +32,11 @@ class Pretreatments:
         sct.run('cp ../' + target_fname + ' ./' + self.t2star)
         sct.run('cp ../' + sc_seg_fname + ' ./' + self.sc_seg)
 
+        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = sct.get_dimension(self.t2star)
+
+        self.t2star = resample_image(self.t2star)
+        self.sc_seg = resample_image(self.sc_seg, binary=True)
+
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
         self.original_orientation = t2_star_orientation[4:7]
 
@@ -88,7 +93,11 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
         res_im_original_space.save()
         sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s RPI')
         res_name = sct.extract_fname(target_fname)[1] + res_im.file_name[len(pretreat.treated_target[:-7]):] + '.nii.gz'
-        sct.run('cp ' + res_im_original_space.file_name + '_RPI.nii.gz ../' + res_name)
+
+        old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=pretreat.original_px, npy=pretreat.original_py, binary=True)
+
+        sct.run('cp ' + old_res_name + ' ../' + res_name)
+
         res_names.append(res_name)
 
     os.chdir('..')
