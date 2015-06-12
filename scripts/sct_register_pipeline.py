@@ -104,7 +104,7 @@ class Pipeline:
     # The constructor
     def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
-                 straightening_algo_fitting='hanning', dice=False, dice_on=None):
+                 straightening=False, straightening_params=None, dice=False, dice_on=None):
         self.path_data = path_data  # type: folder
         os.chdir(self.path_data)
         self.t = t   # type: string
@@ -118,7 +118,8 @@ class Pipeline:
         self.seg_t2star_params = seg_t2star_params  # type: dictionary
         self.reg_multimodal = reg_multimodal  # type: boolean
         self.reg_multimodal_params = reg_multimodal_params  # type: string
-        self.straightening_algo_fitting = straightening_algo_fitting
+        self.straightening = straightening
+        self.straightening_params = straightening_params
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
 
@@ -355,13 +356,23 @@ class Pipeline:
             os.chdir(path)
 
             try:
-                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg + ' -a ' + \
-                                    self.straightening_algo_fitting
+                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg\
 
                 sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
                            + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
-                sct.printv(cmd_straightening)
 
+                from sct_straighten_spinalcord import SpinalCordStraightener
+                sc_straight = SpinalCordStraightener(name, name_seg)
+
+                if self.straightening_params is not None:
+                    cmd_straightening += self.straightening_params
+                    params_straightening = self.straightening_params.split(' ')
+                    dict_params_straightening = dict(params_straightening[i:i+2] for i in range(0, len(params_straightening), 2))
+                    if "-a" in dict_params_straightening:
+                        sc_straight.algo_fitting = str(dict_params_straightening["-a"])
+
+                sct.printv(cmd_straightening)
+                sc_straight.straighten()
 
             except Exception, e:
                 sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD' + t.upper() + ' : ',
@@ -793,6 +804,16 @@ if __name__ == "__main__":
                       mandatory=False,
                       example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
                               'metric=MeanSquares,iter=5')
+    parser.add_option(name="-straightening",
+                      description='Straighten the spinal cord',
+                      mandatory=False)
+    parser.add_option(name="-straightening-params",
+                      type_value='str',
+                      description='Parameters for the spinal cord straightening\n'
+                                  'algo: {hanning, nurbs}',
+                      mandatory=False,
+                      example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
+                              'metric=MeanSquares,iter=5')
     parser.add_option(name="-dice",
                       description='Compute the Dice coefficient on the results of the operations you did',
                       mandatory=False)
@@ -840,6 +861,10 @@ if __name__ == "__main__":
         input_reg_multimodal = arguments["-reg-multimodal"]
     if "-reg-multimodal-params" in arguments:
         input_reg_multimodal_params = arguments["-reg-multimodal-params"]
+    if "-straightening" in arguments:
+        input_straightening = arguments["-straightening"]
+    if "-straightening-params" in arguments:
+        input_straightening_params = arguments["-straightening-params"]
     if "-dice" in arguments:
         input_dice = arguments["-dice"]
     if "-dice-on" in arguments:
