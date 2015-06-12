@@ -299,8 +299,11 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Center of rotation
     if center_rotation == None:
-        x_a = int(round(nx/2))
-        y_a = int(round(ny/2))
+        x_a = 0#int(round(nx/2))-100
+        y_a = 0#int(round(ny/2))
+    else:
+        x_a = center_rotation[0]
+        y_a = center_rotation[1]
 
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
@@ -314,8 +317,13 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
                     # a = array(matrix_pass_inv * matrix_rot * matrix_pass * matrix([i,j,1]).T)
                     # data_warp[i,j,k,0,:] = (a.T[0] - array([i,j,1]) + array([x_trans[k],y_trans[k],0])).tolist()
 
-                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
-                    data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a) - y_trans[k])
+                    # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
+                    # data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a)) + y_trans[k]
+
+                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) + sin(theta_rot[k]) * (j - y_a) - x_trans[k] + sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k])-1) * (j - y_a) + y_trans[k] - sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+                    # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i + x_a) - sin(theta_rot[k]) * (j + y_a) - x_trans[k]
+                    # data_warp[i, j, k, 0, 1] = -sin(theta_rot[k]) * (-i - x_a) - (cos(theta_rot[k])+1) * (j + y_a) + y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
     if theta_rot == None and matrix_def == None:
         for i in range(nx):
