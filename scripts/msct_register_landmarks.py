@@ -70,7 +70,15 @@ def minRigid_xy_Transform(params, points_fixed, points_moving):
     return SSE(matrix(points_fixed), points_moving_reg)
 
 
+def minTranslation_Transform(params, points_fixed, points_moving):
+    return SSE(matrix(points_fixed), matrix(points_moving) + matrix([params[0], params[1], params[2]]))
+
+
 def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints=None, show=False):
+    list_constraints = [None, 'xy', 'translation']
+    if constraints not in list_constraints:
+        raise 'ERROR: the constraints must be one of those: '+', '.join(list_constraints)
+
     points = (points_fixed, points_moving)
     points_moving_reg = points_moving
 
@@ -111,6 +119,14 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints=None
         points_moving_reg = ((rotation_matrix * (
             matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
 
+    elif constraints is 'translation':
+        initial_parameters = [0.0, 0.0, 0.0]
+        res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
+                       options={'maxiter': 10000, 'disp': True})
+
+        translation_array = matrix([res.x[0], res.x[1], res.x[2]])
+        points_moving_reg = matrix(points_moving) + translation_array
+
     if show:
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
@@ -125,12 +141,12 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints=None
         ax.scatter([points_moving_matrix[i, 0] for i in range(0, number_points)],
                    [points_moving_matrix[i, 1] for i in range(0, number_points)],
                    [points_moving_matrix[i, 2] for i in range(0, number_points)], c='r')
-        ax.scatter([points_fixed_matrix[i, 0] for i in range(0,number_points)],
-                   [points_fixed_matrix[i, 1] for i in range(0,number_points)],
-                   [points_fixed_matrix[i, 2] for i in range(0,number_points)], c='g')
-        ax.scatter([points_moving_reg[i, 0] for i in range(0,number_points)],
-                   [points_moving_reg[i, 1] for i in range(0,number_points)],
-                   [points_moving_reg[i, 2] for i in range(0,number_points)], c='b')
+        ax.scatter([points_fixed_matrix[i, 0] for i in range(0, number_points)],
+                   [points_fixed_matrix[i, 1] for i in range(0, number_points)],
+                   [points_fixed_matrix[i, 2] for i in range(0, number_points)], c='g')
+        ax.scatter([points_moving_reg[i, 0] for i in range(0, number_points)],
+                   [points_moving_reg[i, 1] for i in range(0, number_points)],
+                   [points_moving_reg[i, 2] for i in range(0, number_points)], c='b')
         plt.show()
 
     return rotation_matrix, translation_array
