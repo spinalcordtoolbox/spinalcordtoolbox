@@ -739,7 +739,7 @@ def check_file_to_niigz(file_name, verbose=1):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def crop_t2_star_pipeline(path):
+def crop_t2_star_pipeline(path, box_size=45):
     """
     Pretreatment pipeline croping the t2star file around the spinal cord and both croped t2star and gray matter manual
     segmentation to a 45*45 squared image
@@ -844,12 +844,12 @@ def crop_t2_star_pipeline(path):
             for subject_file in os.listdir(path + '/' + subject_dir):
                 file_low = subject_file.lower()
                 #todo change back im to t2star
-                if 'im' in file_low and 'denoised.nii.gz' in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
+                if 't2star' in file_low  or 'im' in file_low  in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
                     t2star = subject_file
                     t2star_path, t2star_name, ext = sct.extract_fname(t2star)
                 elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
                     mask_box = subject_file
-                elif '_seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
+                elif 'seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
                     sc_seg = subject_file
                     '''
                     elif '_seg_in' in file_low and 'croped' not in file_low and 'IRP' not in file_low:
@@ -858,7 +858,6 @@ def crop_t2_star_pipeline(path):
                     '''
                 elif 'gm' in file_low and 'croped.nii' not in file_low and 'IRP' not in file_low:
                     manual_seg = subject_file
-                    print manual_seg
                     manual_seg_name = sct.extract_fname(manual_seg)[1]
                     '''
                     elif '_croped.nii' in file_low and 'IRP' not in file_low and 'gm' not in file_low:
@@ -866,7 +865,9 @@ def crop_t2_star_pipeline(path):
                     '''
                 elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
                     manual_seg_croped = subject_file
-                    print manual_seg_croped
+
+            print 't2star', t2star
+            print sc_seg
 
             if t2star != '' and sc_seg != '':
                 subject_path = path + '/' + subject_dir + '/'
@@ -888,13 +889,8 @@ def crop_t2_star_pipeline(path):
                         seg_in_name = t2star_name + '_seg_in'
 
                     if mask_box == '':
-                        '''
-                        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70'
-                                ' -o ' + t2star_name + '_square_mask.nii.gz -f box' )
-                        '''
 
-                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s 43 '
-                                '-o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
+                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
                         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
                     if seg_in_croped == '':
@@ -916,7 +912,7 @@ def crop_t2_star_pipeline(path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def crop_t2_star_by_slice(path):
+def crop_t2_star_by_slice(path, box_size=45):
     """
     ###################################################################################################################################################
     DOES NOT WORK FOR NOW
@@ -981,7 +977,7 @@ def crop_t2_star_by_slice(path):
                             sct.run('sct_orientation -i ' + manual_seg + ' -s RPI ')
                             manual_seg = manual_seg_name + '_RPI.nii.gz'
                             '''
-                            sct.run('sct_create_mask -i ' + manual_seg + ' -m centerline,' + sc_seg + ' -s 43 '
+                            sct.run('sct_create_mask -i ' + manual_seg + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' '
                                     '-o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
                             mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
@@ -1002,7 +998,7 @@ def crop_t2_star_by_slice(path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def crop_t2_star(t2star, sc_seg):
+def crop_t2_star(t2star, sc_seg, box_size=45):
     """
     Pretreatment function croping the t2star file around the spinal cord and to a 45*45 squared image
 
@@ -1020,12 +1016,7 @@ def crop_t2_star(t2star, sc_seg):
         seg_in = t2star_name + '_seg_in.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
 
-        '''
-        sct.run('sct_create_mask -i ' + t2star + ' -m center -s 70'
-                ' -o ' + t2star_name + '_square_mask.nii.gz -f box' )
-        '''
-
-        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s 43 -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
+        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
         status, output = sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
@@ -1033,7 +1024,7 @@ def crop_t2_star(t2star, sc_seg):
             mask_box = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
 
     except Exception, e:
-        sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
+        sct.printv('WARNING: an error occured when croping ' + t2star_name + '... \n ' + str(e), 1, 'warning')
     return mask_box
 
 
@@ -1047,40 +1038,50 @@ def save_by_slice(dic_dir):
 
     :param dic_dir: dictionary directory
     """
-    dic_by_slice_dir = './' + dic_dir[:-1] + '_by_slice/'
+    if dic_dir[-1] == '/':
+        dic_dir = dic_dir[:-1]
+    dic_by_slice_dir = './' + dic_dir + '_by_slice/'
     sct.run('mkdir ' + dic_by_slice_dir)
+
     for subject_dir in os.listdir(dic_dir):
         subject_path = dic_dir + subject_dir
         if os.path.isdir(subject_path):
             sct.run('mkdir ' + dic_by_slice_dir + subject_dir)
 
+            # getting the level file
             path_file_levels = None
             label_by_slice = {}
             level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2',
                            10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
-            if 'label' in os.listdir(subject_path):
+            for file_name in os.listdir(subject_path):
+                if 'level' in file_name:
+                    path_file_levels = subject_path + '/' + file_name
+                    if 'IRP' not in file_name:
+                        sct.run('sct_orientation -i ' + subject_path + '/' + file_name + ' -s IRP')
+                        path_file_levels = subject_path + '/' + file_name[:-7] + '_IRP.nii.gz'
 
+            if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_orientation -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz'
-                            ' -s IRP')
+                    sct.run('sct_orientation -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -s IRP')
                 path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level_IRP.nii.gz'
 
-                if path_file_levels is not None:
-                    im_levels = Image(path_file_levels)
-                    nz_coord = im_levels.getNonZeroCoordinates()
-                    for i_level_slice, level_slice in enumerate(im_levels.data):
-                        nz_val = []
-                        for coord in nz_coord:
-                            if coord.x == i_level_slice:
-                                nz_val.append(level_slice[coord.y, coord.z])
-                        try:
-                            label_by_slice[i_level_slice] = int(round(sum(nz_val)/len(nz_val)))
-                        except ZeroDivisionError:
-                            sct.printv('No level label for slice ' + str(i_level_slice) + ' of subject ' + subject_dir)
-                            label_by_slice[i_level_slice] = 0
+            if path_file_levels is not None:
+                im_levels = Image(path_file_levels)
+                nz_coord = im_levels.getNonZeroCoordinates()
+                for i_level_slice, level_slice in enumerate(im_levels.data):
+                    nz_val = []
+                    for coord in nz_coord:
+                        if coord.x == i_level_slice:
+                            nz_val.append(level_slice[coord.y, coord.z])
+                    try:
+                        label_by_slice[i_level_slice] = int(round(sum(nz_val)/len(nz_val)))
+                    except ZeroDivisionError:
+                        sct.printv('No level label for slice ' + str(i_level_slice) + ' of subject ' + subject_dir)
+                        label_by_slice[i_level_slice] = 0
+                print 'label_by_slice', label_by_slice
 
             for file_name in os.listdir(subject_path):
-                if 'seg_in' in file_name:
+                if 'seg_in' in file_name and 'croped' in file_name:
                     im = Image(subject_path + '/' + file_name)
                     if path_file_levels is None:
                         for i_slice, im_slice in enumerate(im.data):
@@ -1101,7 +1102,7 @@ def save_by_slice(dic_dir):
                             Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
                                   '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz').save()
 
-                if 'manual_gmseg' in file_name:
+                if 'manual_gmseg' in file_name and 'croped' in file_name:
                     seg = Image(dic_dir + subject_dir + '/' + file_name)
                     if path_file_levels is None:
                         for i_slice, seg_slice in enumerate(seg.data):
@@ -1119,7 +1120,7 @@ def save_by_slice(dic_dir):
                                 i_slice_str = str(i_slice)
 
                             Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz').save()
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_seg.nii.gz').save()
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1131,13 +1132,22 @@ def amu_treatments(data_path):
 
     :return:
     """
-    for subject_dir in os.listdir(data_path):
+    im_ext = '.nii'
+    if data_path[-1] == '/':
+        data_path = data_path[:-1]
+    original_path = os.path.abspath('.')
+    os.chdir(data_path)
+    for subject_dir in os.listdir('.'):
         subject_path = data_path + '/' + subject_dir
-        if os.path.isdir(subject_path):
-            for file_name in os.listdir(subject_path):
+        if os.path.isdir(subject_dir):
+            os.chdir(subject_dir)
+            sc_seg_list = []
+            gm_seg_list = []
+            im_list = []
+            for file_name in os.listdir('.'):
                 ext = sct.extract_fname(file_name)[2]
                 if 'mask' in file_name and ext != '.hdr':
-                    mask_im = Image(subject_path + '/' + file_name)
+                    mask_im = Image(file_name)
 
                     sc_seg_im = mask_im.copy()
                     sc_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg'
@@ -1146,6 +1156,7 @@ def amu_treatments(data_path):
                     # sc_seg_im = Image(param=sc_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg.nii.gz')
                     # sc_seg_im.orientation = 'RPI'
                     sc_seg_im.save()
+                    sc_seg_list.append(sc_seg_im.file_name + sc_seg_im.ext)
 
                     gm_seg_im = mask_im.copy()
                     gm_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg'
@@ -1154,6 +1165,241 @@ def amu_treatments(data_path):
                     # gm_seg_im = Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg.nii.gz')
                     # gm_seg_im.orientation = 'RPI'
                     gm_seg_im.save()
+                    gm_seg_list.append(gm_seg_im.file_name + gm_seg_im.ext)
+
+                    im_list.append(file_name[:2] + im_ext)
+
+            # merging the slice images into a 3D image
+            im_list.reverse()
+            gm_seg_list.reverse()
+            sc_seg_list.reverse()
+            cmd_merge = 'fslmerge -z '
+            im_name = subject_dir + '_im.nii.gz '
+            cmd_merge_im = cmd_merge + im_name
+            gmseg_name = subject_dir + '_manual_gmseg.nii.gz '
+            cmd_merge_gm_seg = cmd_merge + gmseg_name
+            scseg_name = subject_dir + '_manual_scseg.nii.gz '
+            cmd_merge_sc_seg = cmd_merge + scseg_name
+
+            for im_i, gm_i, sc_i in zip(im_list, gm_seg_list, sc_seg_list):
+                cmd_merge_im += im_i + ' '
+                cmd_merge_gm_seg += gm_i + ' '
+                cmd_merge_sc_seg += sc_i + ' '
+
+            sct.run(cmd_merge_im)
+            sct.run(cmd_merge_gm_seg)
+            sct.run(cmd_merge_sc_seg)
+
+            # creating a level image
+            level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+            level_dat = np.zeros((mask_im.data.shape[0], mask_im.data.shape[1], len(im_list)))
+            for i, im_i_name in enumerate(im_list):
+                level_dat.T[:][:][i] = get_key_from_val(level_label, im_i_name[:2].upper())
+            Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
+
+            # resampling
+
+            resample_image(im_name)
+
+            resample_image(gmseg_name, binary=True, thr=0.45)
+
+            resample_image(scseg_name, binary=True, thr=0.55)
+
+            # organizing data
+            sct.run('mkdir original_data/')
+            sct.run('mkdir extracted_data/')
+            sct.run('mkdir 3d_data/')
+            sct.run('mkdir 3d_resampled_data/')
+
+            for file_name in os.listdir('.'):
+                if 'mask' in file_name:
+                    sct.run('mv ' + file_name + ' original_data/')
+                elif 'manual' in file_name and 'G1' not in file_name:
+                    sct.run('mv ' + file_name + ' extracted_data/')
+                elif 'resampled.nii' in file_name:
+                    sct.run('mv ' + file_name + ' 3d_resampled_data/')
+                elif 'G1' in file_name:
+                    sct.run('mv ' + file_name + ' 3d_data/')
+                elif not os.path.isdir(os.path.abspath('.') + '/' + file_name):
+                    sct.run('mv ' + file_name + ' original_data/')
+
+            os.chdir('..')
+    os.chdir(original_path)
+
+# ------------------------------------------------------------------------------------------------------------------
+def vanderbilt_treatments(data_path):
+    """
+    get a segmentation image of the spinal cord an of the graymatter from a three level mask
+
+    :param data_path: path to the data
+
+    :return:
+    """
+    im_ext = '.nii.gz'
+    if data_path[-1] == '/':
+        data_path = data_path[:-1]
+    original_path = os.path.abspath('.')
+    os.chdir(data_path)
+    for subject_dir in os.listdir('.'):
+        if os.path.isdir(subject_dir):
+            os.chdir(subject_dir)
+            sc_seg_list = []
+            gm_seg_list = []
+            im_list = []
+            for file_name in os.listdir('.'):
+                if 'seg' in file_name:
+                    mask_im = Image(file_name)
+
+                    sc_seg_im = mask_im.copy()
+                    sc_seg_im.file_name = sct.extract_fname(file_name)[1][:-4] + '_manual_sc_seg'
+                    sc_seg_im.ext = '.nii.gz'
+                    sc_seg_im.data = (sc_seg_im.data > 0).astype(int)
+                    # sc_seg_im = Image(param=sc_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg.nii.gz')
+                    # sc_seg_im.orientation = 'RPI'
+                    sc_seg_im.save()
+                    sc_seg_list.append(sc_seg_im.file_name + sc_seg_im.ext)
+
+                    gm_seg_im = mask_im.copy()
+                    gm_seg_im.file_name = sct.extract_fname(file_name)[1][:-4] + '_manual_gm_seg'
+                    gm_seg_im.ext = '.nii.gz'
+                    gm_seg_im.data = (gm_seg_im.data > 1).astype(int)
+                    # gm_seg_im = Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg.nii.gz')
+                    # gm_seg_im.orientation = 'RPI'
+                    gm_seg_im.save()
+                    gm_seg_list.append(gm_seg_im.file_name + gm_seg_im.ext)
+
+                    im_list.append(file_name[:17] + im_ext)
+
+            # merging the slice images into a 3D image
+            im_list.reverse()
+            gm_seg_list.reverse()
+            sc_seg_list.reverse()
+            cmd_merge = 'fslmerge -z '
+            im_name = subject_dir + '_im.nii.gz '
+            cmd_merge_im = cmd_merge + im_name
+            gmseg_name = subject_dir + '_manual_gmseg.nii.gz '
+            cmd_merge_gm_seg = cmd_merge + gmseg_name
+            scseg_name = subject_dir + '_manual_scseg.nii.gz '
+            cmd_merge_sc_seg = cmd_merge + scseg_name
+
+            for im_i, gm_i, sc_i in zip(im_list, gm_seg_list, sc_seg_list):
+                cmd_merge_im += im_i + ' '
+                cmd_merge_gm_seg += gm_i + ' '
+                cmd_merge_sc_seg += sc_i + ' '
+
+            sct.run(cmd_merge_im)
+            sct.run(cmd_merge_gm_seg)
+            sct.run(cmd_merge_sc_seg)
+
+            '''
+            # creating a level image
+            level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+            level_dat = np.zeros((mask_im.data.shape[0], mask_im.data.shape[1], len(im_list)))
+            for i, im_i_name in enumerate(im_list):
+                level_dat.T[:][:][i] = get_key_from_val(level_label, im_i_name[:2].upper())
+            Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
+            '''
+
+            # resampling
+
+            resample_image(im_name)
+
+            resample_image(gmseg_name, binary=True, thr=0.45)
+
+            resample_image(scseg_name, binary=True, thr=0.55)
+
+            # organizing data
+            sct.run('mkdir original_data/')
+            sct.run('mkdir extracted_data/')
+            sct.run('mkdir 3d_data/')
+            sct.run('mkdir 3d_resampled_data/')
+            sct.run('mkdir dic_data/')
+
+            for file_name in os.listdir('.'):
+                if '_manual_gm_seg' in file_name and 'sl' in file_name:
+                    sct.run('cp ' + file_name + ' dic_data/')
+                    sct.run('cp ' + file_name[:-21] + '.nii.gz dic_data/')
+            for file_name in os.listdir('.'):
+                if 'sl' in file_name and 'manual' not in file_name:
+                    sct.run('mv ' + file_name + ' original_data/')
+                elif 'manual' in file_name and 'sl' in file_name:
+                    sct.run('mv ' + file_name + ' extracted_data/')
+                elif 'resampled.nii' in file_name:
+                    sct.run('mv ' + file_name + ' 3d_resampled_data/')
+                elif 'sl' not in file_name and not os.path.isdir(os.path.abspath('.') + '/' + file_name):
+                    sct.run('mv ' + file_name + ' 3d_data/')
+                elif not os.path.isdir(os.path.abspath('.') + '/' + file_name):
+                    sct.run('mv ' + file_name + ' original_data/')
+
+            os.chdir('..')
+    os.chdir(original_path)
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.5, npy=0.5, thr=0.5, interpolation='Linear'):
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+    if px != npx or py != npy:
+        new_name = fname[:-7] + suffix
+        sct.run('c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + fname)
+        fx = px/npx
+        fy = py/npy
+        sct.run('sct_resample -i ' + fname + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + new_name + ' -x ' + interpolation)
+        sct.run('sct_crop_image -i ' + new_name + ' -o ' + new_name + ' -dim 2 -start 1 -end ' + str(nz))
+
+        if binary:
+            sct.run('fslmaths ' + new_name + ' -thr ' + str(thr) + ' ' + new_name)
+            sct.run('fslmaths ' + new_name + ' -bin ' + new_name)
+
+        return new_name
+    else:
+        sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
+        return fname
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def dataset_pretreatments(path_to_dataset):
+    """
+    pretreatment function for a dataset of 3D images to be integrated to the model
+    the dataset should contain for each subject :
+        - a T2*-w image containing 'im' in its name
+        - a segmentation of the spinal cord containing 'seg' in its name
+        - a manual segmentation of the gray matter containing 'gm' in its name
+        - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice
+    :param path:
+    :return:
+    """
+
+    axial_pix_dim = 0.3
+    model_image_size = 75
+    interpolation = 'Sinc'
+    original_path = os.path.abspath('.')
+    for subject_dir in os.listdir(path_to_dataset):
+        if os.path.isdir(path_to_dataset + '/' + subject_dir):
+            os.chdir(path_to_dataset + '/' + subject_dir)
+            # getting the subject images
+            t2star = ''
+            scseg = ''
+            gmseg = ''
+            for file_name in os.listdir('.'):
+                if 'im' in file_name:
+                    t2star = file_name
+                elif 'gm' in file_name:
+                    gmseg = file_name
+                elif 'seg' in file_name and 'gm' not in file_name:
+                    scseg = file_name
+
+            t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
+            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, thr=0.55, interpolation=interpolation)
+            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, thr=0.45, interpolation=interpolation)
+
+            mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
+            sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
+
+            os.chdir(original_path)
+        save_by_slice(path_to_dataset)
+
+
+
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1187,7 +1433,7 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
+def leave_one_out_old(dic_path, reg=None, target_reg='pairwise'):
     """
     Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1301,6 +1547,127 @@ def leave_one_out(dic_path, reg=None, target_reg='pairwise'):
         time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
         time_file.close()
 
+
+# ------------------------------------------------------------------------------------------------------------------
+def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
+    """
+    Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
+    and computing the resulting dice coefficient, the time of computation and an error map
+
+    :param dic_path: path to the dictionary to use to do the model validation
+
+    """
+    import time
+    init = time.time()
+    wm_dice_file = open('wm_dice_coeff.txt', 'w')
+    gm_dice_file = open('gm_dice_coeff.txt', 'w')
+    n_subject = 0
+    n_slices = 0
+    e = None
+    error_map_abs_sum = None
+    first = True
+
+    level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+
+    for subject_dir in os.listdir(dic_path):
+        subject_path = dic_path + '/' + subject_dir
+        if os.path.isdir(subject_path):
+            try:
+                tmp_dir = 'tmp_' + subject_dir + '_as_target'
+                sct.run('mkdir ' + tmp_dir)
+
+                tmp_dic_name = 'dic'
+                sct.run('cp -r ' + dic_path + ' ./' + tmp_dir + '/' + tmp_dic_name + '/')
+                sct.run('mv ./' + tmp_dir + '/' + tmp_dic_name + '/' + subject_dir + ' ./' + tmp_dir)
+
+                # Gray matter segmentation using this subject as target
+                os.chdir(tmp_dir)
+
+                cmd_compute_model = 'sct_asman -dic ' + tmp_dic_name + ' -model compute -weight ' +  str(weight) + ' -use-levels ' + str(int(use_levels))
+                model_dir = 'gm_seg_model_data/'
+
+                sct.run(cmd_compute_model)
+
+                for file_name in os.listdir(subject_dir):
+                    target = ''
+                    ref_gm_seg = ''
+                    level = ''
+                    res_wmseg = ''
+
+                    if 'im' in file_name:
+                        target = subject_dir + '/' + file_name
+                        ref_gm_seg = subject_dir + '/' + file_name[:-10] + '_seg.nii.gz'
+                        slice_level = ''
+                        target_slice = ''
+
+                        cmd_segment_gm = 'sct_asman -i ' + target + ' -model load -dic ' + model_dir + ' -weight ' + str(weight)
+
+                        if use_levels:
+                            name_list = file_name.split('_')
+                            for word in name_list:
+                                if word.upper() in level_label.values():
+                                    slice_level = word.upper()
+                                elif 'slice' in word:
+                                    target_slice = word
+                            cmd_segment_gm += ' -l ' + slice_level
+
+                        sct.run(cmd_segment_gm)
+
+                        if use_levels:
+                            res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels.nii.gz'
+                            res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels_inv_to_gm.nii.gz'
+                        else:
+                            res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels.nii.gz'
+                            res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels_inv_to_gm.nii.gz'
+
+                        # Validation
+                        ref_gm_seg_im = Image(ref_gm_seg)
+                        target_im = Image(target)
+
+                        inverse_gmseg_to_wmseg(ref_gm_seg_im, target_im, ref_gm_seg_im.file_name)
+
+                        ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
+                        ref_wm_seg_im = Image(ref_wm_seg)
+
+                        res_wmseg_im = Image(res_wmseg)
+                        # res_gmseg_im = Image(res_gmseg)
+
+                        # Dice coefficient
+                        status, wm_dice_output = sct.run('sct_dice_coefficient ' + res_wmseg + ' ' + ref_wm_seg)
+                        wm_dice = wm_dice_output[22:]
+                        wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice)
+
+                        status, gm_dice_output = sct.run('sct_dice_coefficient ' + res_gmseg + ' ' + ref_gm_seg)
+                        gm_dice = gm_dice_output[22:]
+                        gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice)
+
+                        # Error map
+                        if first:
+                            error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
+                            first = False
+
+                        error_3d_abs = abs(ref_wm_seg_im.data - res_wmseg_im.data)
+
+                        error_map_abs_sum += sum(error_3d_abs)
+                        n_slices += 1
+
+                        sct.run('mkdir ' + subject_dir + '_' + file_name[:-10] + '/')
+                        sct.run('mv ./' + file_name[:-10] + '* ./' + subject_dir + '_' + file_name[:-10] + '/')
+
+                os.chdir('..')
+
+            except Exception, e:
+                sct.printv('WARNING: an error occurred ...', 1, 'warning')
+                print e
+            # else:
+            #    sct.run('rm -rf ' + tmp_dir)
+    if e is None:
+        wm_dice_file.close()
+        gm_dice_file.close()
+
+        Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+        t = time.time() - init
+        print 'Done in ' + str(t) + ' sec'
 
 # ------------------------------------------------------------------------------------------------------------------
 def leave_one_out_by_slice(dic_path, reg=None, target_reg='pairwise', use_levels=True, weight=None):
@@ -1551,31 +1918,36 @@ def compute_error_map_by_level(data_path):
         if os.path.isdir(file_name) and file_name != 'dictionary':
             os.chdir(file_name)
 
-            res = ''
-            ref_wm_seg = ''
+            for slice_dir in os.listdir('.'):
+                if 'slice' in slice_dir:
+                    os.chdir(slice_dir)
+                    res = ''
+                    ref_wm_seg = ''
 
-            for slice_file in os.listdir('.'):
-                if 'res' in slice_file and 'corrected' not in slice_file and 'inv_to_gm' not in slice_file:
-                    res = slice_file
-                elif 'inv_to_wm' in slice_file:
-                    ref_wm_seg = slice_file
-            res_im = Image(res)
-            ref_wm_seg_im = Image(ref_wm_seg)
-            level = ''
-            for word in ref_wm_seg.split('_'):
-                if word.upper() in diff_by_level.keys():
-                    level = word.upper()
+                    for slice_file in os.listdir('.'):
+                        if 'res' in slice_file and 'corrected' not in slice_file and 'inv_to_gm' not in slice_file:
+                            res = slice_file
+                        elif 'inv_to_wm' in slice_file:
+                            ref_wm_seg = slice_file
+                    res_im = Image(res)
+                    ref_wm_seg_im = Image(ref_wm_seg)
+                    level = ''
+                    for word in ref_wm_seg.split('_'):
+                        if word.upper() in diff_by_level.keys():
+                            level = word.upper()
 
-            if first:
-                error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
-                first = False
+                    if first:
+                        error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
+                        first = False
 
 
-            error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
-            diff_by_level[level].append(error_3d_abs)
-            error_map_abs_sum += error_3d_abs
-            n_slices += 1
+                    error_3d_abs = abs(ref_wm_seg_im.data - res_im.data)
+                    diff_by_level[level].append(error_3d_abs)
+                    error_map_abs_sum += error_3d_abs
+                    n_slices += 1
+                    os.chdir('..')
             os.chdir('..')
+
 
     for l, errors in diff_by_level.items():
         n = len(errors)
@@ -1629,7 +2001,16 @@ def compute_similarities(data_path):
     os.chdir('..')
 
 
+# ------------------------------------------------------------------------------------------------------------------
+def save_data_by_slice(path_to_model):
+    import pickle
+    model_slices_list = pickle.load(open(path_to_model + '/dictionary_slices.pkl', 'rb'))
+    sct.run('mkdir ' + path_to_model + '/model_slices')
+    model_slices = [Slice(slice_id=i_slice, level=dic_slice[2], im_m=dic_slice[0], wm_seg_m=dic_slice[1], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices_list)]  # type: list of slices
 
+    for mod_slice in model_slices:
+        Image(param=mod_slice.im_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_level' + str(mod_slice.level) + '_im_m.nii.gz').save()
+        Image(param=mod_slice.wm_seg_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_level' + str(mod_slice.level) + '_wmseg_m.nii.gz').save()
 
 
 if __name__ == "__main__":
@@ -1662,6 +2043,16 @@ if __name__ == "__main__":
                           description="Path to a dictionary folder with images in the AMU format to be treated",
                           mandatory=False,
                           example='dictionary/')
+        parser.add_option(name="-treat-vanderbilt",
+                          type_value="folder",
+                          description="Path to a dictionary folder with images in the vanderbilt format to be treated",
+                          mandatory=False,
+                          example='dictionary/')
+        parser.add_option(name="-gmseg-to-wmseg",
+                          type_value=[[','], 'file'],
+                          description="Gray matter segmentation image and spinal cord segmentation image",
+                          mandatory=False,
+                          example='manual_gmseg.nii.gz,sc_seg.nii.gz')
 
         arguments = parser.parse(sys.argv[1:])
 
@@ -1675,4 +2066,13 @@ if __name__ == "__main__":
             save_by_slice(arguments['-save-dic-by-slice'])
         if "-treat-AMU" in arguments:
             amu_treatments(arguments['-treat-AMU'])
+        if "-treat-vanderbilt" in arguments:
+            vanderbilt_treatments(arguments['-treat-vanderbilt'])
+        if "-gmseg-to-wmseg" in arguments:
+            gmseg = arguments['-gmseg-to-wmseg'][0]
+            gmseg_im = Image(gmseg)
+            scseg = arguments['-gmseg-to-wmseg'][1]
+            scseg_im = Image(scseg)
+            inverse_gmseg_to_wmseg(gmseg_im, scseg_im, sct.extract_fname(gmseg)[1])
+
 
