@@ -478,8 +478,8 @@ class SpinalCordStraightener(object):
 
         print '\nDone!\n'
 
-        sct.printv('Maximum x-y error = '+str(round(max_dist,2))+' mm', verbose, 'bold')
-        sct.printv('Accuracy of straightening (MSE) = '+str(round(mse_curve,2))+' mm', verbose, 'bold')
+        sct.printv('Maximum x-y error = '+str(round(self.max_distance_straightening,2))+' mm', verbose, 'bold')
+        sct.printv('Accuracy of straightening (MSE) = '+str(round(self.mse_straightening,2))+' mm', verbose, 'bold')
         # display elapsed time
         elapsed_time = time.time() - start_time
         sct.printv('\nFinished! Elapsed time: '+str(int(round(elapsed_time)))+'s', verbose)
