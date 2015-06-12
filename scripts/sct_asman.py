@@ -41,6 +41,7 @@ class Param:
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.target_reg = 'pairwise'  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
         self.first_reg = False
+        self.use_levels = True
         self.weight_beta = 1.2
         self.verbose = 1
 
@@ -140,6 +141,7 @@ class ModelDictionary:
             if os.path.isdir(subject_path):
                 for file_name in os.listdir(subject_path):
                     if 'im' in file_name or 'seg_in' in file_name:
+
                         slice_level = 0
                         name_list = file_name.split('_')
                         for word in name_list:
@@ -423,14 +425,14 @@ class Model:
                 beta_slice = []
                 for j_slice, coord_slice_j in enumerate(dataset_coord):
                     square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
-                    if target_levels is not None:
+                    if target_levels is not None and target_levels is not [None] and self.param.use_levels:
                         '''
                         if target_levels[i_target] == dataset_levels[j_slice]:
                             beta_slice.append(exp(tau*square_norm))
                         else:
                             beta_slice.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice])) #TODO: before = no absolute
                         '''
-                        beta_slice.append(exp(-self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
+                        beta_slice.append(exp(-self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm))  # TODO: before = no absolute
 
                     else:
                         beta_slice.append(exp(-tau*square_norm))
@@ -445,7 +447,7 @@ class Model:
         else:
             for j_slice, coord_slice_j in enumerate(dataset_coord):
                 square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
-                if target_levels is not None:
+                if target_levels is not None and self.param.use_levels:
                     '''
                     if target_levels == dataset_levels[j_slice]:
                         beta.append(exp(tau*square_norm))
@@ -491,8 +493,11 @@ class Model:
             for dic_slice in self.dictionary.slices:
                 projected_dic_slice_coord = self.pca.project_array(dic_slice.im_M_flat)
                 coord_dic_slice_dataset = np.delete(self.pca.dataset_coord.T, dic_slice.id, 0)
-                dic_slice_dataset_levels = np.delete(np.asarray(dic_levels), dic_slice.id, 0)
-                beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=dic_slice.level, dataset_coord=coord_dic_slice_dataset, dataset_levels=dic_slice_dataset_levels, tau=tau)
+                if self.param.use_levels:
+                    dic_slice_dataset_levels = np.delete(np.asarray(dic_levels), dic_slice.id, 0)
+                    beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=dic_slice.level, dataset_coord=coord_dic_slice_dataset, dataset_levels=dic_slice_dataset_levels, tau=tau)
+                else:
+                    beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=None, dataset_coord=coord_dic_slice_dataset, dataset_levels=None, tau=tau)
                 kj = self.select_k_slices(beta_dic_slice)
                 est_segm_j = self.label_fusion(dic_slice, kj)
 
@@ -609,7 +614,7 @@ class TargetSegmentationPairwise:
             self.target = [Slice(slice_id=0, im=target_image.data, reg_to_m=[])]
             self.target_dim = 2
 
-        if levels_image is not None:
+        if levels_image is not None and self.model.param.use_levels:
             self.load_level(levels_image)
 
         if self.model.param.first_reg:
@@ -623,7 +628,7 @@ class TargetSegmentationPairwise:
         self.coord_projected_target = model.pca.project([target_slice.im_M for target_slice in self.target])
 
         sct.printv('\nComputing the similarities between the target and the model slices ...', model.param.verbose, 'normal')
-        if levels_image is not None:
+        if levels_image is not None and self.model.param.use_levels:
             self.beta = self.model.compute_beta(self.coord_projected_target, target_levels=np.asarray([target_slice.level for target_slice in self.target]), tau=self.model.tau)
         else:
             self.beta = self.model.compute_beta(self.coord_projected_target, tau=self.model.tau)
@@ -631,8 +636,8 @@ class TargetSegmentationPairwise:
         sct.printv('\nSelecting the dictionary slices most similar to the target ...', model.param.verbose, 'normal')
         self.selected_k_slices = self.model.select_k_slices(self.beta)
 
-        slice_levels = np.asarray([self.model.dictionary.level_label[dic_slice.level] for dic_slice in self.model.dictionary.slices])
-        fic_selected_slices = open('selected_slices.txt', 'w')
+        slice_levels = np.asarray([(dic_slice.id, self.model.dictionary.level_label[dic_slice.level]) for dic_slice in self.model.dictionary.slices])
+        fic_selected_slices = open(target_image.file_name[:-3] + '_selected_slices.txt', 'w')
         if self.target_dim == 2:
             fic_selected_slices.write(str(slice_levels[self.selected_k_slices.reshape(self.model.dictionary.J,)]))
         elif self.target_dim == 3:
@@ -669,7 +674,7 @@ class TargetSegmentationPairwise:
                             sct.printv('No level label for slice ' + str(i_level_slice) + ' of target')
                             self.target[i_level_slice].set(level=0)
         elif isinstance(level_image, str):
-            self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image))
+            self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image.upper()))
 
     # ------------------------------------------------------------------------------------------------------------------
     def first_reg(self):
@@ -1264,6 +1269,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1.2,
                           example=2.0)
+        parser.add_option(name="-use-levels",
+                          type_value='multiple_choice',
+                          description="1: Use vertebral level information, 0: no ",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
                           description="Apply a Bspline registration using the spinal cord edges target --> model first",
@@ -1291,6 +1302,8 @@ if __name__ == "__main__":
             input_level_fname = arguments["-l"]
         if "-weight" in arguments:
             param.weight_beta = arguments["-weight"]
+        if "-use-levels" in arguments:
+            param.use_levels = bool(int(arguments["-use-levels"]))
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-v" in arguments:
