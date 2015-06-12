@@ -104,7 +104,7 @@ class Pipeline:
     # The constructor
     def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
-                 dice=False, dice_on=None):
+                 straightening_algo_fitting='hanning', dice=False, dice_on=None):
         self.path_data = path_data  # type: folder
         os.chdir(self.path_data)
         self.t = t   # type: string
@@ -118,6 +118,7 @@ class Pipeline:
         self.seg_t2star_params = seg_t2star_params  # type: dictionary
         self.reg_multimodal = reg_multimodal  # type: boolean
         self.reg_multimodal_params = reg_multimodal_params  # type: string
+        self.straightening_algo_fitting = straightening_algo_fitting
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
 
@@ -332,6 +333,43 @@ class Pipeline:
             else:
                 sct.printv("WARNING: no file to do segmentation on in folder " + path, verbose=1, type='warning')
             os.chdir('..')
+
+    def straightening(self, t):
+        """
+        straighten image based on segmentation and/or manual labels
+        :param t: type of anatomical image to register
+        :return:
+        """
+        for subject in self.data:
+            os.chdir(subject.dir_name)
+
+            if t == 't1':
+                path = subject.dir_t1
+                name = subject.name_t1
+                name_seg = subject.name_t1_seg
+            elif t == 't2':
+                path = subject.dir_t2
+                name = subject.name_t2
+                name_seg = subject.name_t2_seg
+
+            os.chdir(path)
+
+            try:
+                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg + ' -a ' + \
+                                    self.straightening_algo_fitting
+
+                sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
+                           + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
+                sct.printv(cmd_straightening)
+
+
+            except Exception, e:
+                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD' + t.upper() + ' : ',
+                           1, 'warning')
+                print e
+                sct.printv('Continuing program ...', 1, 'warning')
+
+            os.chdir('../..')
 
     def register_warp_to_template(self, t):
         """
