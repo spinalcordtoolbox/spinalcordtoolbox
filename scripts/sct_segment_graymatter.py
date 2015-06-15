@@ -40,7 +40,7 @@ class Pretreatments:
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
         self.original_orientation = t2_star_orientation[4:7]
 
-        self.square_mask = crop_t2_star(self.t2star, self.sc_seg)
+        self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=75)
 
         self.treated_target = self.t2star[:-7] + '_seg_in_croped.nii.gz'
 
