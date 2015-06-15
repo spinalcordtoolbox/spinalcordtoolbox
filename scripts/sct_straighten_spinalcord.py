@@ -118,9 +118,10 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
+        self.output_filename = output_filename
         self.debug = debug
         self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = gapxy  # size of cross in x and y direction for the landmarks
@@ -141,6 +142,7 @@ class SpinalCordStraightener(object):
         # Initialization
         fname_anat = self.input_filename
         fname_centerline = self.centerline_filename
+        fname_output = self.output_filename
         gapxy = self.gapxy
         gapz = self.gapz
         padding = self.padding
@@ -420,14 +422,12 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            # cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             sct.printv(cmd, verbose, 'code')
             commands.getstatusoutput(cmd)
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            # sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz', verbose)
             Transform(input_filename=str(file_anat+ext_anat), source_reg="tmp.anat_rigid_warp.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp=interpolation_warp, warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
@@ -469,8 +469,10 @@ class SpinalCordStraightener(object):
         sct.printv('\nGenerate output file (in current folder)...', verbose)
         sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz', 'warp_curve2straight.nii.gz', verbose)  # warping field
         sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz', 'warp_straight2curve.nii.gz', verbose)  # warping field
-        fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
-
+        if fname_output == '':
+            fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
+        else:
+            fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', fname_output, verbose)  # straightened anatomic
         # Remove temporary files
         if remove_temp_files:
             sct.printv('\nRemove temporary files...', verbose)
@@ -509,6 +511,12 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="30",
                       default_value=30)
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="output file",
+                      mandatory=False,
+                      default_value='',
+                      example="out.nii.gz")
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
@@ -555,6 +563,8 @@ if __name__ == "__main__":
         sc_straight.padding = int(arguments["-p"])
     if "-x" in arguments:
         sc_straight.interpolation_warp = str(arguments["-x"])
+    if "-o" in arguments:
+        sc_straight.output_filename = str(arguments["-o"])
     if "-a" in arguments:
         sc_straight.algo_fitting = str(arguments["-a"])
     if "-f" in arguments:
