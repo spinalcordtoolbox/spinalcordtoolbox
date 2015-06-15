@@ -419,7 +419,7 @@ class Python(object):
         import sys
         self.python_version = sys.version
         if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
-            raise "Unsupported Python"
+            raise Exception("Unsupported Python")
 
 
 def open_url(url, start=0, timeout=20):
@@ -565,8 +565,8 @@ class Installer:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: We do not support the version of Python that you are using.\n" \
-                  "You will have to install our dependencies by yourself.\n" \
+            print "WARNING: The distribution of Python that you are using is not supported by the SCToolbox.\n" \
+                  "You still can use your own distribution of Python but you will have to install our dependencies by yourself.\n" \
                   "Do you still want to continue?"
             install_new = "no"
             signal.alarm(120)
