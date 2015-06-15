@@ -48,7 +48,6 @@ def main(file_to_denoise, param, output_file_name) :
     else:
         block_radius = 5  # default value
 
-
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
@@ -62,8 +61,7 @@ def main(file_to_denoise, param, output_file_name) :
         else : den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
     else:
         # # Process for manual detecting of background
-        mask = data[:, :, :] > noise_threshold
-        data = data[:, :, :]
+        mask = data > noise_threshold
         sigma = np.std(data[~mask])
         # Application of NLM filter to the image
         print 'Applying Non-local mean filter...'
