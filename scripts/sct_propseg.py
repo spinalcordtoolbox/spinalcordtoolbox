@@ -18,7 +18,18 @@ import sct_utils as sct
 if __name__ == "__main__":
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
+Initialization is provided by a spinal cord detection module based on the elliptical Hough transform on multiple axial slices. The result of the detection is available as a PNG image using option -detection-display.
+Parameters of the spinal cord detection are :
+ - the position (in inferior-superior direction) of the initialization
+ - the number of axial slices
+ - the gap (in pixel) between two axial slices
+ - the approximate radius of the spinal cord
+
+Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
+Cross-sectional areas along the spinal cord can be available (-cross).
+Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
+If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.''')
     parser.add_option(name="-i",
                       type_value="file",
                       description="input image.",
