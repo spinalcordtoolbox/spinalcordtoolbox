@@ -1398,10 +1398,6 @@ def dataset_pretreatments(path_to_dataset):
             os.chdir(original_path)
         save_by_slice(path_to_dataset)
 
-
-
-
-
 # ------------------------------------------------------------------------------------------------------------------
 def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
     # Registration to template
