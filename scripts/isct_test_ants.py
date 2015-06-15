@@ -109,7 +109,7 @@ def main():
 Transform: AffineTransform_double_3_3
 Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f
 FixedParameters: 0 0 0
-""" % (rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2], translation_array[0, 1], translation_array[0, 1], translation_array[0, 2]))
+""" % (rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
     text_file.close()
 
     # Apply rigid transformation
