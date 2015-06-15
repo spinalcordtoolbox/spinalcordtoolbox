@@ -356,32 +356,35 @@ class Pipeline:
 
             os.chdir(path)
 
-            try:
-                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg\
+            if name is '' or name_seg is '':
+                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.')
+            else:
+                try:
+                    cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg\
 
-                sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
-                           + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
+                    sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
+                               + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
 
-                from sct_straighten_spinalcord import SpinalCordStraightener
-                sc_straight = SpinalCordStraightener(name, name_seg)
+                    from sct_straighten_spinalcord import SpinalCordStraightener
+                    sc_straight = SpinalCordStraightener(name, name_seg)
 
-                if self.straightening_params is not None:
-                    cmd_straightening += ' ' + self.straightening_params
-                    dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
-                    if "algo" in dict_params_straightening:
-                        sc_straight.algo_fitting = str(dict_params_straightening["algo"])
+                    if self.straightening_params is not None:
+                        cmd_straightening += ' ' + self.straightening_params
+                        dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
+                        if "algo" in dict_params_straightening:
+                            sc_straight.algo_fitting = str(dict_params_straightening["algo"])
 
-                sct.printv(cmd_straightening)
-                sc_straight.straighten()
+                    sct.printv(cmd_straightening)
+                    # sc_straight.verbose = 2
+                    sc_straight.straighten()
 
-                self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
-                print sc_straight.mse_straightening, sc_straight.max_distance_straightening
+                    self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
 
-            except Exception, e:
-                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD ON ' + t.upper() + ': ',
-                           1, 'warning')
-                print e
-                sct.printv('Continuing program ...', 1, 'warning')
+                except Exception, e:
+                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD ON ' + t.upper() + ': ',
+                               1, 'warning')
+                    print e
+                    sct.printv('Continuing program ...', 1, 'warning')
 
             os.chdir('../..')
 
@@ -668,7 +671,15 @@ class Pipeline:
 
         if self.straightening:
             self.straighten_spinalcord(self.t)
+            from numpy import array, mean, std
+            mse_results = array([itm[1] for itm in self.straightening_results])
+            max_distance = array([itm[2] for itm in self.straightening_results])
+            print '\n'
             print self.straightening_results
+            print 'MSE          = ' + str(mean(mse_results)) + ' +- ' + str(
+                std(mse_results))
+            print 'Max distance = ' + str(mean(max_distance)) + ' +- ' + str(
+                std(max_distance))
 
         # compute dice on other results
         for arg in self.dice_on:
