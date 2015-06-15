@@ -299,7 +299,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Center of rotation
     if center_rotation == None:
-        x_a = 0#int(round(nx/2))-100
+        x_a = int(round(nx))#int(round(nx/2))-200
         y_a = 0#int(round(ny/2))
     else:
         x_a = center_rotation[0]
@@ -320,8 +320,8 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
                     # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
                     # data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a)) + y_trans[k]
 
-                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) + sin(theta_rot[k]) * (j - y_a) - x_trans[k] + sin(theta_rot[k]) * (int(round(nx/2))-x_a)
-                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k])-1) * (j - y_a) + y_trans[k] - sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) + sin(theta_rot[k]) * (j - y_a) - x_trans[k] #+ sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k])-1) * (j - y_a) + y_trans[k] #- sin(theta_rot[k]) * (int(round(nx/2))-x_a)
                     # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i + x_a) - sin(theta_rot[k]) * (j + y_a) - x_trans[k]
                     # data_warp[i, j, k, 0, 1] = -sin(theta_rot[k]) * (-i - x_a) - (cos(theta_rot[k])+1) * (j + y_a) + y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0

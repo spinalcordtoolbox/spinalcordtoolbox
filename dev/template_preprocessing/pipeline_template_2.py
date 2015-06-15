@@ -82,20 +82,36 @@ SUBJECTS_LIST = SUBJECTS_LIST_STR
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
-do_preprocessing = 1
-create_cross = 1
-push_into_templace_space = 1
-average_levels = 1
-align_vertebrae = 1
+# do_preprocessing = 1
+# create_cross = 1
+# push_into_templace_space = 1
+# average_levels = 1
+# align_vertebrae = 1
 
 #Parameters:
 height_of_template_space = 1100
 x_size_of_template_space = 200
 y_size_of_template_space = 200
 number_labels_for_template = 20
-contrast = 'T1' # enter 'T1' or 'T2'
+# contrast = 'T1' # enter 'T1' or 'T2'
 
-if do_preprocessing:
+def main():
+    # Processing of T1 data for template
+    do_preprocessing('T1')
+    create_cross('T1')
+    push_into_templace_space('T1')
+    average_levels('T1')
+    align_vertebrae('T1')
+
+    # Processing of T2 data for template
+    do_preprocessing('T2')
+    create_cross('T2')
+    push_into_templace_space('T2')
+    average_levels('T2')
+    align_vertebrae('T2')
+
+
+def do_preprocessing(contrast):
    # Create folder to gather all labels_vertebral.nii.gz files
     if not os.path.isdir(PATH_OUTPUT + '/'+'labels_vertebral'):
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
@@ -114,26 +130,29 @@ if do_preprocessing:
             os.makedirs(PATH_OUTPUT + '/subjects/'+subject+'/'+contrast)
         os.chdir(PATH_OUTPUT + '/subjects/'+subject+'/'+contrast)
 
-        # # # convert to nii
-        # # print '\nConvert to nii'
-        # # if contrast =='T1':
-        # #     sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][1] + '/*.dcm')
-        # # if contrast =='T2':
-        # #     sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
-        # #
-        # # # change file name
-        # # print '\nChange file name to data.nii.gz...'
-        # # sct.run('mv *.nii.gz data.nii.gz')
-        #
-        # # Convert to RPI
-        # # Input:
-        # # - data.nii.gz
-        # # - data_RPI.nii.gz
-        # print '\nConvert to RPI'
-        # sct.run('sct_orientation -i data.nii.gz -s RPI')
-        #
+        # convert to nii
+        print '\nChecking if dicoms have already been imported...'
+        list_file = os.listdir(PATH_OUTPUT + '/subjects/'+subject+'/'+contrast)
+        if 'data.nii.gz' not in list_file:
+            print '\nImporting dicoms and converting to nii...'
+            if contrast =='T1':
+                sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][1] + '/*.dcm')
+            if contrast =='T2':
+                sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
+
+            # change file name
+            print '\nChanging file name to data.nii.gz...'
+            sct.run('mv *.nii.gz data.nii.gz')
+
+        # Convert to RPI
+        # Input:
+        # - data.nii.gz
+        # - data_RPI.nii.gz
+        print '\nConverting to RPI...'
+        sct.run('sct_orientation -i data.nii.gz -s RPI')
+
         # Get info from txt file
-        print '\nRecover infos from text file' + PATH_INFO + '/' + contrast + '/' + subject+ '/' + 'crop.txt\n'
+        print '\nRecover infos from text file' + PATH_INFO + '/' + contrast + '/' + subject+ '/' + 'crop.txt'
         file_name = 'crop.txt'
         os.chdir(PATH_INFO + '/' + contrast + '/' + subject)
 
@@ -152,84 +171,85 @@ if do_preprocessing:
         file_results.close()
 
         os.chdir(PATH_OUTPUT + '/subjects/'+subject+ '/' + contrast)
-        #
-        # # Crop image
-        # if ymin_anatomic == None and ymax_anatomic == None:
-        #     sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start ' + zmin_anatomic + ' -end ' + zmax_anatomic )
-        # else: sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 1,2 -start ' + ymin_anatomic +','+zmin_anatomic+ ' -end ' + ymax_anatomic+','+zmax_anatomic )
-        #
-        # # propseg
-        # # input:
-        # # - data__crop_denoised.nii.gz
-        # # - labels_propseg.nii.gz
-        # # output:
-        # # - data_crop_denoised_seg.nii.gz
-        # print '\nExtracting segmentation...'
-        # list_dir = os.listdir(PATH_INFO + '/' + contrast + '/'+subject)
-        # centerline_proseg = False
-        # for k in range(len(list_dir)):
-        #     if list_dir[k] == 'centerline_propseg_RPI.nii.gz':
-        #         centerline_proseg = True
-        # if centerline_proseg == True:
-        #     if contrast == 'T1':
-        #         sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
-        #     if contrast == 'T2':
-        #         sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
-        # else:
-        #     if contrast == 'T1':
-        #         sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1')
-        #     if contrast == 'T2':
-        #         sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2')
-        #
-        # # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects  (Done because propseg tends to diverge on edges)
-        # print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects...'
-        # path_seg, file_seg, ext_seg = sct.extract_fname('data_RPI_crop_seg.nii.gz')
-        # image_seg = nibabel.load('data_RPI_crop_seg.nii.gz')
-        # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
-        # data_seg = image_seg.get_data()
-        # hdr_seg = image_seg.get_header()
-        #    # List slices that contain non zero values
-        # z_centerline = [iz for iz in range(0, nz, 1) if data_seg[:,:,iz].any() ]
-        # for k in range(0,3):
-        #     data_seg[:,:,z_centerline[-1]-k] = 0
-        #     if z_centerline[0]+k < nz:
-        #         data_seg[:,:,z_centerline[0]+k] = 0
-        # img_seg = nibabel.Nifti1Image(data_seg, None, hdr_seg)
-        # nibabel.save(img_seg, file_seg + '_mod' + ext_seg)
-        #
-        # # crop segmentation (but keep same dimension)
-        # # input:
-        # # - data_crop_denoised_seg.nii.gz
-        # # - crop.txt
-        # # output:
-        # # - data_crop_denoised_seg_crop.nii.gz
-        # print '\nCrop segmentation...'
-        # if zmax_seg == 'max':
-        #     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
-        #     sct.printv('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
-        #     os.system('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
-        # else: sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
-        #
-        # # Concatenate segmentation and labels_updown if labels_updown is inputed. If not, it concatenates the segmentation and centerline_propseg_RPI.
-        # print '\n Concatenating segmentation and label files...'
-        # labels_updown = False
-        # list_file_info = os.listdir(PATH_INFO+ '/' + contrast + '/' + subject)
-        # for k in range(0,len(list_file_info)):
-        #     if list_file_info[k] == 'labels_updown.nii.gz':
-        #         labels_updown = True
-        # if centerline_proseg == False and labels_updown == False:
-        #     print '\nERROR: No label file centerline_propseg_RPI.nii.gz or labels_updown.nii.gz in '+PATH_INFO+ '/' + contrast + '/' + subject +'. There must be at least one. Check '+ path_sct+'/dev/template_preprocessing/Readme.md for necessary inputs.'
-        #     sys.exit(2)
-        # if labels_updown:
-        #     sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
-        # else: sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
+
+        # Crop image
+        print '\nCropping image at L2-L3 and a little above brainstem...'
+        if ymin_anatomic == None and ymax_anatomic == None:
+            sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start ' + zmin_anatomic + ' -end ' + zmax_anatomic )
+        else: sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 1,2 -start ' + ymin_anatomic +','+zmin_anatomic+ ' -end ' + ymax_anatomic+','+zmax_anatomic )
+
+        # propseg
+        # input:
+        # - data__crop_denoised.nii.gz
+        # - labels_propseg.nii.gz
+        # output:
+        # - data_crop_denoised_seg.nii.gz
+        print '\nExtracting segmentation...'
+        list_dir = os.listdir(PATH_INFO + '/' + contrast + '/'+subject)
+        centerline_proseg = False
+        for k in range(len(list_dir)):
+            if list_dir[k] == 'centerline_propseg_RPI.nii.gz':
+                centerline_proseg = True
+        if centerline_proseg == True:
+            if contrast == 'T1':
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            if contrast == 'T2':
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2 -init-centerline ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+        else:
+            if contrast == 'T1':
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t1')
+            if contrast == 'T2':
+                sct.run('sct_propseg -i data_RPI_crop.nii.gz -t t2')
+
+        # Erase 3 top and 3 bottom slices of the segmentation to avoid edge effects  (Done because propseg tends to diverge on edges)
+        print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects of propseg...'
+        path_seg, file_seg, ext_seg = sct.extract_fname('data_RPI_crop_seg.nii.gz')
+        image_seg = nibabel.load('data_RPI_crop_seg.nii.gz')
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
+        data_seg = image_seg.get_data()
+        hdr_seg = image_seg.get_header()
+           # List slices that contain non zero values
+        z_centerline = [iz for iz in range(0, nz, 1) if data_seg[:,:,iz].any() ]
+        for k in range(0,3):
+            data_seg[:,:,z_centerline[-1]-k] = 0
+            if z_centerline[0]+k < nz:
+                data_seg[:,:,z_centerline[0]+k] = 0
+        img_seg = nibabel.Nifti1Image(data_seg, None, hdr_seg)
+        nibabel.save(img_seg, file_seg + '_mod' + ext_seg)
+
+        # crop segmentation (but keep same dimension)
+        # input:
+        # - data_crop_denoised_seg.nii.gz
+        # - crop.txt
+        # output:
+        # - data_crop_denoised_seg_crop.nii.gz
+        print '\nCropping segmentation...'
+        if zmax_seg == 'max':
+            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
+            sct.printv('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
+            os.system('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
+        else: sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
+
+        # Concatenate segmentation and labels_updown if labels_updown is inputed. If not, it concatenates the segmentation and centerline_propseg_RPI.
+        print '\nConcatenating segmentation and label files...'
+        labels_updown = False
+        list_file_info = os.listdir(PATH_INFO+ '/' + contrast + '/' + subject)
+        for k in range(0,len(list_file_info)):
+            if list_file_info[k] == 'labels_updown.nii.gz':
+                labels_updown = True
+        if centerline_proseg == False and labels_updown == False:
+            print '\nERROR: No label file centerline_propseg_RPI.nii.gz or labels_updown.nii.gz in '+PATH_INFO+ '/' + contrast + '/' + subject +'. There must be at least one. Check '+ path_sct+'/dev/template_preprocessing/Readme.md for necessary inputs.'
+            sys.exit(2)
+        if labels_updown:
+            sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
+        else: sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
         # Add creation of centerline from seg and labels
-        print '\nExtract centerline for intensity normalization...'
+        print '\nExtracting centerline for intensity normalization...'
         sct.run('sct_get_centerline_from_labels -i seg_and_labels.nii.gz')
         # Add normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
-        print '\nNormalizing intensity'
+        print '\nNormalizing intensity...'
         sct.run('sct_normalize.py -i data_RPI_crop.nii.gz -c generated_centerline.nii.gz')
 
 
@@ -242,8 +262,8 @@ if do_preprocessing:
         # output:
         # - warp_curve2straight.nii.gz
         # - data_crop_denoised_straight.nii.gz
-        print '\nStraighten image using centerline'
-        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_straight_normalized.nii.gz')
+        print '\nStraightening image using centerline...'
+        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz')
         sct.printv(cmd_straighten)
         os.system(cmd_straighten)
 
@@ -252,7 +272,7 @@ if do_preprocessing:
         # sct.run('sct_normalize.py -i data_RPI_crop_straight.nii.gz')
         #
         # Crop labels_vertebral file
-        print '\nCroping labels_vertebral file...'
+        print '\nCropping labels_vertebral file...'
         if ymin_anatomic == None and ymax_anatomic == None:
             sct.run('sct_crop_image -i '+PATH_INFO + '/' + contrast + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
         else: sct.run('sct_crop_image -i '+PATH_INFO + '/' + contrast + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + ymin_anatomic+','+zmin_anatomic + ' -end ' + ymax_anatomic+','+ zmax_anatomic + ' -dim 1,2')
@@ -267,16 +287,17 @@ if do_preprocessing:
         # - warp_curve2straight.nii.gz
         # output:
         # - centerline_straight.nii.gz
-        print '\nApply straightening to labels_vertebral_dilated.nii.gz'
-        sct.run('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
+        print '\nApplying straightening to labels_vertebral_dilated.nii.gz...'
+        sct.run('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         # Select center of mass of labels volume due to past dilatation
         # REMOVE IF NOT REQUIRED
+        print '\nSelecting center of mass of labels volume due to past dilatation...'
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg.nii.gz -o labels_vertebral_dilated_reg_2point.nii.gz -t cubic-to-point')
 
         # Apply straightening to seg_and_labels.nii.gz
         print'\nApplying transfo to seg_and_labels.nii.gz ...'
-        sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_straight_normalized.nii.gz -w warp_curve2straight.nii.gz -x nn')
+        sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
         ##Calculate the extrem non zero points of the straightened centerline file
         file = nibabel.load('seg_and_labels_reg.nii.gz')
@@ -305,7 +326,7 @@ if do_preprocessing:
 
         # Crop image one last time
         print'\nCrop image one last time and create cross to push into template space...'
-        sct.run('sct_crop_image -i data_RPI_crop_straight_normalized.nii.gz -o data_RPI_crop_straight_normalized_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
+        sct.run('sct_crop_image -i data_RPI_crop_normalized_straight.nii.gz -o data_RPI_crop_normalized_straight_crop.nii.gz -dim 2 -start '+ str(z_min)+' -end '+ str(z_max))
 
         # Crop labels_vertebral_reg.nii.gz
         print'\nCrop labels_vertebral_reg.nii.gz and use cross to push into template space...'
@@ -313,7 +334,7 @@ if do_preprocessing:
 
 
 # Create cross at the first and last labels for each subject. This cross will be used to push the subject into the template space using affine transfo.
-if create_cross:
+def create_cross(contrast):
     # Define list to gather all distances
     list_distances_1 = []
     list_distances_2 = []
@@ -325,6 +346,7 @@ if create_cross:
         os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast )
 
         #Calculate distances between : (last_label and bottom)  and (first label and top)
+        print '\nCalculating distances between : (last_label and bottom)  and (first label and top)...'
         img_label = nibabel.load('labels_vertebral_dilated_reg_2point_crop.nii.gz')
         data_labels = img_label.get_data()
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('labels_vertebral_dilated_reg_2point_crop.nii.gz')
@@ -344,8 +366,8 @@ if create_cross:
         list_distances_2.append(distance_2)
 
         #Create a cross on each subject at first and last labels (modify create cross to do so or do it )
-        #os.system('sct_create_cross.py -i data_RPI_crop_straight_normalized_crop.nii.gz -x ' +str(x_min)+' -y '+str(y_min))
-        os.system('sct_create_cross.py -i data_RPI_crop_straight_normalized_crop.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
+        print '\nCreating a cross at first and last labels...'
+        os.system('sct_create_cross.py -i data_RPI_crop_normalized_straight_crop.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
 
         # Write into a txt file the list of distances
         # os.chdir('../')
@@ -356,6 +378,7 @@ if create_cross:
         # f_distance.write('\n')
 
     # Calculate mean cross height for template and create file of reference
+    print '\nCalculating mean cross height for template and create file of reference'
     mean_distance_1 = int(round(sum(list_distances_1)/len(list_distances_1)))
     mean_distance_2 = int(round(sum(list_distances_2)/len(list_distances_2)))
     L = height_of_template_space - 2 * mean_distance_2
@@ -366,7 +389,7 @@ if create_cross:
 
 
 # push into template space
-if push_into_templace_space:
+def push_into_templace_space(contrast):
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
@@ -376,10 +399,11 @@ if push_into_templace_space:
 
         # Push into template space
         print'\nPush into template space...'
-        sct.run('sct_push_into_template_space.py -i data_RPI_crop_straight_normalized_crop.nii.gz -n landmark_native.nii.gz')
+        sct.run('sct_push_into_template_space.py -i data_RPI_crop_normalized_straight_crop.nii.gz -n landmark_native.nii.gz')
         sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point_crop.nii.gz -n landmark_native.nii.gz -a nn')
 
         # get center of mass of each label group
+        print '\nGet center of mass of each label group due to affine transformation...'
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -t cubic-to-point')
 
         # Copy labels_vertebral_straight_in_template_space.nii.gz into a folder that will contain each subject labels_vertebral_straight_in_template_space.nii.gz file and rename them
@@ -388,8 +412,6 @@ if push_into_templace_space:
         if not os.path.isdir(PATH_OUTPUT +'/labels_vertebral_' + contrast):
             os.makedirs(PATH_OUTPUT + '/labels_vertebral_' + contrast)
         sct.run('cp labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral_' + contrast + '/'+subject+'.nii.gz')
-        # os.chdir(PATH_OUTPUT +'/labels_vertebral')
-        # os.rename('labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz', subject+'.nii.gz')
 
 # Check position of labels crop_2temp with image crop_2temp
 # if no good: check position of labels reg with image straight_normalized
@@ -397,17 +419,17 @@ if push_into_templace_space:
 
 
 # Calculate mean labels and save it into folder "labels_vertebral"
-if average_levels:
+def average_levels(contrast):
     print '\nGo to output folder '+ PATH_OUTPUT + '/labels_vertebral_' + contrast + '\n'
     os.chdir(PATH_OUTPUT +'/labels_vertebral_' + contrast)
-    print'\nCalculate mean of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast
+    print'\nCalculate mean along subjects of files labels_vertebral and save it into '+PATH_OUTPUT +'/labels_vertebral_' + contrast +' as template_landmarks.nii.gz'
     template_shape = path_sct + '/dev/template_creation/template_shape.nii.gz'
     # this function looks at all files inside the folder "labels_vertebral_T*" and find the average vertebral levels across subjects
     sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
 # Aligning vertebrae for all subjects and copy results into "Final_results".
-if align_vertebrae:
+def align_vertebrae(contrast):
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
@@ -416,8 +438,8 @@ if align_vertebrae:
         os.chdir(PATH_OUTPUT + '/subjects/' + subject + '/' + contrast)
 
         print '\nAligning vertebrae for subject '+subject+'...'
-        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
-        os.system('sct_align_vertebrae.py -i data_RPI_crop_straight_normalized_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
+        os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
 
         # # Normalize intensity of result
         # print'\nNormalizing intensity of results...'
@@ -433,6 +455,7 @@ if align_vertebrae:
         # sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized_' + contrast + '.nii.gz')
 
         #Save png images of the results into a different folder
+        print '\nSaving png image of the final result into ' + PATH_OUTPUT +'/Image_results...'
         if not os.path.isdir(PATH_OUTPUT +'/Image_results'):
             os.makedirs(PATH_OUTPUT +'/Image_results')
         f = nibabel.load(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
@@ -452,3 +475,11 @@ if align_vertebrae:
         fig1 = plt.gcf()
         #plt.show()
         fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+   # call main function
+   main()
