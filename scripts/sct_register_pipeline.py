@@ -120,6 +120,7 @@ class Pipeline:
         self.reg_multimodal_params = reg_multimodal_params  # type: string
         self.straightening = straightening
         self.straightening_params = straightening_params
+        self.straightening_results = []
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
 
@@ -335,7 +336,7 @@ class Pipeline:
                 sct.printv("WARNING: no file to do segmentation on in folder " + path, verbose=1, type='warning')
             os.chdir('..')
 
-    def straightening(self, t):
+    def straighten_spinalcord(self, t):
         """
         straighten image based on segmentation and/or manual labels
         :param t: type of anatomical image to register
@@ -347,38 +348,43 @@ class Pipeline:
             if t == 't1':
                 path = subject.dir_t1
                 name = subject.name_t1
-                name_seg = subject.name_t1_seg
+                name_seg = subject.name_t1_ref
             elif t == 't2':
                 path = subject.dir_t2
                 name = subject.name_t2
-                name_seg = subject.name_t2_seg
+                name_seg = subject.name_t2_ref
 
             os.chdir(path)
 
-            try:
-                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg\
+            if name is '' or name_seg is '':
+                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.')
+            else:
+                try:
+                    cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg\
 
-                sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
-                           + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
+                    sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
+                               + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
 
-                from sct_straighten_spinalcord import SpinalCordStraightener
-                sc_straight = SpinalCordStraightener(name, name_seg)
+                    from sct_straighten_spinalcord import SpinalCordStraightener
+                    sc_straight = SpinalCordStraightener(name, name_seg)
 
-                if self.straightening_params is not None:
-                    cmd_straightening += self.straightening_params
-                    params_straightening = self.straightening_params.split(' ')
-                    dict_params_straightening = dict(params_straightening[i:i+2] for i in range(0, len(params_straightening), 2))
-                    if "-a" in dict_params_straightening:
-                        sc_straight.algo_fitting = str(dict_params_straightening["-a"])
+                    if self.straightening_params is not None:
+                        cmd_straightening += ' ' + self.straightening_params
+                        dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
+                        if "algo" in dict_params_straightening:
+                            sc_straight.algo_fitting = str(dict_params_straightening["algo"])
 
-                sct.printv(cmd_straightening)
-                sc_straight.straighten()
+                    sct.printv(cmd_straightening)
+                    # sc_straight.verbose = 2
+                    sc_straight.straighten()
 
-            except Exception, e:
-                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD' + t.upper() + ' : ',
-                           1, 'warning')
-                print e
-                sct.printv('Continuing program ...', 1, 'warning')
+                    self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
+
+                except Exception, e:
+                    sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD ON ' + t.upper() + ': ',
+                               1, 'warning')
+                    print e
+                    sct.printv('Continuing program ...', 1, 'warning')
 
             os.chdir('../..')
 
@@ -663,6 +669,18 @@ class Pipeline:
             if self.dice:
                 self.compute_dice('t2star', 'reg')
 
+        if self.straightening:
+            self.straighten_spinalcord(self.t)
+            from numpy import array, mean, std
+            mse_results = array([itm[1] for itm in self.straightening_results])
+            max_distance = array([itm[2] for itm in self.straightening_results])
+            print '\n'
+            print self.straightening_results
+            print 'MSE          = ' + str(mean(mse_results)) + ' +- ' + str(
+                std(mse_results))
+            print 'Max distance = ' + str(mean(max_distance)) + ' +- ' + str(
+                std(max_distance))
+
         # compute dice on other results
         for arg in self.dice_on:
             type_res, type_image = arg.split(":")
@@ -839,6 +857,9 @@ if __name__ == "__main__":
     input_reg_multimodal = False
     input_reg_multimodal_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,' \
                                   'metric=MeanSquares,iter=5'
+    input_straightening = False
+    input_straightening_params = 'algo=hanning'
+
     input_dice = False
     input_dice_on = []
     if "-seg" in arguments:
@@ -874,6 +895,7 @@ if __name__ == "__main__":
                              reg_template=input_reg_template, reg_template_params=input_reg_template_params,
                              seg_t2star=input_seg_t2star, seg_t2star_params=input_seg_t2star_params,
                              reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params,
+                             straightening=input_straightening,straightening_params=input_straightening_params,
                              dice=input_dice, dice_on=input_dice_on)
     pipeline_test.compute()
 
