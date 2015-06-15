@@ -375,7 +375,7 @@ class Pipeline:
                             sc_straight.algo_fitting = str(dict_params_straightening["algo"])
 
                     sct.printv(cmd_straightening)
-                    # sc_straight.verbose = 2
+                    # sc_straight.verbose = 2 # for visualization purpose
                     sc_straight.straighten()
 
                     self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
