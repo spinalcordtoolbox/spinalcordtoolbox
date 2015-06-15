@@ -998,7 +998,7 @@ def crop_t2_star_by_slice(path, box_size=45):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def crop_t2_star(t2star, sc_seg, box_size=45):
+def crop_t2_star(t2star, sc_seg, box_size=75):
     """
     Pretreatment function croping the t2star file around the spinal cord and to a 45*45 squared image
 
@@ -1039,15 +1039,18 @@ def save_by_slice(dic_dir):
     :param dic_dir: dictionary directory
     """
     if dic_dir[-1] == '/':
-        dic_dir = dic_dir[:-1]
-    dic_by_slice_dir = './' + dic_dir + '_by_slice/'
+        dic_by_slice_dir = './' + dic_dir[:-1] + '_by_slice/'
+    else:
+        dic_by_slice_dir = './' + dic_dir + '_by_slice/'
+
     sct.run('mkdir ' + dic_by_slice_dir)
 
     for subject_dir in os.listdir(dic_dir):
-        subject_path = dic_dir + subject_dir
+        subject_path = dic_dir + '/' + subject_dir
+        print os.path.isdir(subject_path)
         if os.path.isdir(subject_path):
             sct.run('mkdir ' + dic_by_slice_dir + subject_dir)
-
+            print 'coucou'
             # getting the level file
             path_file_levels = None
             label_by_slice = {}
@@ -1107,10 +1110,12 @@ def save_by_slice(dic_dir):
                     if path_file_levels is None:
                         for i_slice, seg_slice in enumerate(seg.data):
                             if i_slice < 10:
-                                i_slice = str(i_slice)
-                                i_slice = '0' + i_slice
+                                i_slice_str = str(i_slice)
+                                i_slice_str = '0' + i_slice_str
+                            else:
+                                i_slice_str = str(i_slice)
                             Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + str(i_slice) + '_manual_gmseg.nii.gz').save()
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz').save()
                     else:
                         for i_slice, seg_slice in enumerate(seg.data):
                             if i_slice < 10:
@@ -1304,9 +1309,9 @@ def vanderbilt_treatments(data_path):
 
             resample_image(im_name)
 
-            resample_image(gmseg_name, binary=True, thr=0.45)
+            resample_image(gmseg_name, binary=True)
 
-            resample_image(scseg_name, binary=True, thr=0.55)
+            resample_image(scseg_name, binary=True)
 
             # organizing data
             sct.run('mkdir original_data/')
@@ -1336,21 +1341,25 @@ def vanderbilt_treatments(data_path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.5, npy=0.5, thr=0.5, interpolation='Linear'):
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
-    if px != npx or py != npy:
-        new_name = fname[:-7] + suffix
-        sct.run('c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + fname)
+    if round(px, 3) != round(npx, 3) or round(py, 3) != round(npy, 3):
+        name_pad = fname[:-7] + '_pad.nii.gz'
+        name_resample = name_pad[:-7] + suffix
+        # name_croped = name_resample[:-7] + '_croped.nii.gz'
+        if binary:
+            interpolation = 'NearestNeighbor'
+        sct.run('c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
         fx = px/npx
         fy = py/npy
-        sct.run('sct_resample -i ' + fname + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + new_name + ' -x ' + interpolation)
-        sct.run('sct_crop_image -i ' + new_name + ' -o ' + new_name + ' -dim 2 -start 1 -end ' + str(nz))
+        sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
+        sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
 
         if binary:
-            sct.run('fslmaths ' + new_name + ' -thr ' + str(thr) + ' ' + new_name)
-            sct.run('fslmaths ' + new_name + ' -bin ' + new_name)
+            sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
+            sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
 
-        return new_name
+        return name_resample
     else:
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
@@ -1371,7 +1380,7 @@ def dataset_pretreatments(path_to_dataset):
 
     axial_pix_dim = 0.3
     model_image_size = 75
-    interpolation = 'Sinc'
+    interpolation = 'Cubic'  # 'Sinc'
     original_path = os.path.abspath('.')
     for subject_dir in os.listdir(path_to_dataset):
         if os.path.isdir(path_to_dataset + '/' + subject_dir):
@@ -1389,14 +1398,15 @@ def dataset_pretreatments(path_to_dataset):
                     scseg = file_name
 
             t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
-            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, thr=0.55, interpolation=interpolation)
-            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True, thr=0.45, interpolation=interpolation)
+            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
             sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
 
             os.chdir(original_path)
-        save_by_slice(path_to_dataset)
+    save_by_slice(path_to_dataset)
+
 
 # ------------------------------------------------------------------------------------------------------------------
 def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
@@ -2044,6 +2054,11 @@ if __name__ == "__main__":
                           description="Path to a dictionary folder with images in the vanderbilt format to be treated",
                           mandatory=False,
                           example='dictionary/')
+        parser.add_option(name="-pretreat",
+                          type_value="folder",
+                          description="Path to a dictionary folder of data to be pre-treated. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
+                          mandatory=False,
+                          example='dictionary/')
         parser.add_option(name="-gmseg-to-wmseg",
                           type_value=[[','], 'file'],
                           description="Gray matter segmentation image and spinal cord segmentation image",
@@ -2064,6 +2079,8 @@ if __name__ == "__main__":
             amu_treatments(arguments['-treat-AMU'])
         if "-treat-vanderbilt" in arguments:
             vanderbilt_treatments(arguments['-treat-vanderbilt'])
+        if "-pretreat" in arguments:
+            dataset_pretreatments(arguments['-pretreat'])
         if "-gmseg-to-wmseg" in arguments:
             gmseg = arguments['-gmseg-to-wmseg'][0]
             gmseg_im = Image(gmseg)
