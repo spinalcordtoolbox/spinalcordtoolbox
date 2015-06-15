@@ -373,8 +373,13 @@ class Pipeline:
                         dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
                         if "algo" in dict_params_straightening:
                             sc_straight.algo_fitting = str(dict_params_straightening["algo"])
+                        if "rigid-python" in dict_params_straightening:
+                            sc_straight.use_python_implementation = True
+                        if "rigid-python-algo" in dict_params_straightening:
+                            sc_straight.rigid_python_algo = str(dict_params_straightening["rigid-python-algo"])
 
                     sct.printv(cmd_straightening)
+                    sc_straight.remove_temp_files = 0
                     # sc_straight.verbose = 2 # for visualization purpose
                     sc_straight.straighten()
 
