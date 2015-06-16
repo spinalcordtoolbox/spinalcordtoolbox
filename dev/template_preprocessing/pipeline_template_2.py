@@ -77,23 +77,17 @@ SUBJECTS_LIST_INCOMPLETE = [['T020b', '/Volumes/data_shared/marseille/T020b/01_0
 
 SUBJECTS_LIST_STR = [['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2'],['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_34/41-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_34/40-SPINE_T2'],['errsm_35','/Volumes/data_shared/montreal_criugm/errsm_35/37-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_35/38-SPINE_T2']]
 
-SUBJECTS_LIST = SUBJECTS_LIST_STR
+SUBJECTS_LIST = SUBJECTS_LIST_total
 # add path to scripts
 #export PATH=${PATH}:$SCT_DIR/dev/template_creation
 #export PATH_OUTPUT=/Users/tamag/data/template/
 #export PATH_DICOM='/Volumes/data_shared/'
-# do_preprocessing = 1
-# create_cross = 1
-# push_into_templace_space = 1
-# average_levels = 1
-# align_vertebrae = 1
 
 #Parameters:
 height_of_template_space = 1100
 x_size_of_template_space = 200
 y_size_of_template_space = 200
 number_labels_for_template = 20
-# contrast = 'T1' # enter 'T1' or 'T2'
 
 def main():
     # Processing of T1 data for template
@@ -117,7 +111,7 @@ def do_preprocessing(contrast):
         os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
 
    # Loop across subjects
-    for i in range(0,len(SUBJECTS_LIST)):
+    for i in range(3,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # Should check all inputs before starting the processing of the data
@@ -248,11 +242,10 @@ def do_preprocessing(contrast):
         # Add creation of centerline from seg and labels
         print '\nExtracting centerline for intensity normalization...'
         sct.run('sct_get_centerline_from_labels -i seg_and_labels.nii.gz')
+
         # Add normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
         print '\nNormalizing intensity...'
         sct.run('sct_normalize.py -i data_RPI_crop.nii.gz -c generated_centerline.nii.gz')
-
-
 
         # straighten image using the concatenation of the segmentation and the labels
         # function: sct_straighten_spinalcord (option: nurbs)
