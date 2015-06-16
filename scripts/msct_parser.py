@@ -139,7 +139,9 @@ class Option:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
         else:
-            self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+            # self.parser.usage.error("ERROR: Type of option \"" + str(self.type_value) +"\" is not supported by the parser.")
+            sct.printv("WARNING : Option "+str(self.type_value)+" does not exist and will have no effect on the execution of the script", "warining")
+            sct.printv("Type -h to see supported options", "warning")
 
     def checkStandardType(self,param,type=None):
         # check if a int is really a int (same for str, float, long and complex)
