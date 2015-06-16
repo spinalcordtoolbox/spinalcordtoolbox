@@ -91,10 +91,12 @@ class PCA:
         n = int(sqrt(self.N))
         self.mean_image = self.mean_data_vect.reshape(n, n)
 
-        plt.figure()
-        plt.imshow(self.mean_image.astype(np.float))
-        plt.set_cmap('gray')
-        plt.plot()
+        if self.verbose == 2:
+            plt.figure()
+            plt.imshow(self.mean_image.astype(np.float))
+            plt.set_cmap('gray')
+            plt.plot()
+            plt.show()
 
         # compute the the eigenvalues and eigenvectors from the data
         if eig_pairs is None:
