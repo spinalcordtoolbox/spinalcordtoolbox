@@ -100,16 +100,19 @@ def main():
 
     # Estimate rigid transformation using msct_register_landmarks
     import msct_register_landmarks
-    (rotation_matrix, translation_array) = msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='xy', show=False)
+    (rotation_matrix, translation_array, moving_points_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='xy', show=False)
 
     # writing rigid transformation file
     text_file = open("curve2straight_rigid.txt", "w")
-    text_file.write("""#Insight Transform File V1.0
-#Transform 0
-Transform: AffineTransform_double_3_3
-Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f
-FixedParameters: 0 0 0
-""" % (rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2], translation_array[0, 1], translation_array[0, 1], translation_array[0, 2]))
+    text_file.write("#Insight Transform File V1.0\n")
+    text_file.write("#Transform 0\n")
+    text_file.write("Transform: AffineTransform_double_3_3\n")
+    text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0],
+        rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
+        rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1],
+        translation_array[0, 2]))
+    text_file.write("FixedParameters: 0 0 0\n")
     text_file.close()
 
     # Apply rigid transformation
