@@ -140,7 +140,7 @@ class ModelDictionary:
             subject_path = self.param.path_dictionary + '/' + subject_dir
             if os.path.isdir(subject_path):
                 for file_name in os.listdir(subject_path):
-                    if 'im' in file_name or 'seg_in' in file_name:
+                    if 'im' in file_name:  # or 'seg_in' in file_name:
 
                         slice_level = 0
                         name_list = file_name.split('_')
@@ -149,12 +149,15 @@ class ModelDictionary:
                                 slice_level = get_key_from_val(self.level_label, word.upper())
 
                         slices.append(Slice(slice_id=total_j_im, im=Image(subject_path + '/' + file_name).data, level=slice_level, reg_to_m=[]))
-                        total_j_im += 1
 
+                        seg_file = sct.extract_fname(file_name)[1][:-3] + '_seg.nii.gz'
+                        slices[total_j_im].set(gm_seg=Image(subject_path + '/' + seg_file).data)
+                        total_j_im += 1
+                    '''
                     if 'seg' in file_name and 'seg_in' not in file_name:
                         slices[total_j_seg].set(gm_seg=Image(subject_path + '/' + file_name).data)
                         total_j_seg += 1
-
+                    '''
         return np.asarray(slices)
 
     # ------------------------------------------------------------------------------------------------------------------
