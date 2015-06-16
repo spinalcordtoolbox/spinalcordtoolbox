@@ -418,7 +418,6 @@ class Pipeline(object):
 
                 os.chdir('../..')
 
-                #self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
                 return [subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening]
 
             except Exception, e:
