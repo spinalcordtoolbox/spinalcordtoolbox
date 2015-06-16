@@ -429,7 +429,7 @@ class ProcessLabels(object):
             # display info
             sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
                        str(coord.value), 1)
-            image_output.data[coord.x, coord.y, coord.z] = int(coord.value)
+            image_output.data[coord.x, coord.y, coord.z] = coord.value
 
         return image_output
 
