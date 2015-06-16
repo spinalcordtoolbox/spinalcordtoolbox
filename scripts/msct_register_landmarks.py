@@ -164,7 +164,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints=None
         res = minimize(minTranslation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
                        options={'maxiter': 10000, 'disp': True})
 
-        translation_array = matrix([res.x[0], res.x[1], 0])
+        translation_array = matrix([res.x[0], res.x[1], 0.0])
         points_moving_reg = matrix(points_moving) + translation_array
 
     elif constraints is 'rotation':
