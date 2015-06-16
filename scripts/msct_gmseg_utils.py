@@ -1567,7 +1567,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
     from sct_asman import Model, Param, GMsegSupervisedMethod
     init = time.time()
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
-    gm_dice_file = open('gm_dice_coeff.txt', 'w')
+    # gm_dice_file = open('gm_dice_coeff.txt', 'w')
     n_subject = 0
     n_slices = 0
     e = None
@@ -1615,7 +1615,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                         slice_level = ''
                         target_slice = ''
 
-                        cmd_segment_gm = 'sct_asman -i ' + target + ' -model load -dic ' + model.param.model_dir + ' -weight ' + str(weight)
+                        cmd_segment_gm = 'sct_asman.py -i ' + target + ' -model load -dic ' + model.param.model_dir + ' -weight ' + str(weight)
 
                         name_list = file_name.split('_')
                         for word in name_list:
@@ -1630,10 +1630,10 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
 
                         if use_levels:
                             res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels.nii.gz'
-                            res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels_inv_to_gm.nii.gz'
+                            # res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels_inv_to_gm.nii.gz'
                         else:
                             res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels.nii.gz'
-                            res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels_inv_to_gm.nii.gz'
+                            # res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels_inv_to_gm.nii.gz'
 
                         # Validation
                         ref_gm_seg_im = Image(ref_gm_seg)
@@ -1652,9 +1652,11 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                         wm_dice = wm_dice_output[22:-1]
                         wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
 
+                        '''
                         status, gm_dice_output = sct.run('sct_dice_coefficient ' + res_gmseg + ' ' + ref_gm_seg)
                         gm_dice = gm_dice_output[22:-1]
                         gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
+                        '''
 
                         # Error map
                         if first:
@@ -1678,7 +1680,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
             #    sct.run('rm -rf ' + tmp_dir)
     if e is None:
         wm_dice_file.close()
-        gm_dice_file.close()
+        # gm_dice_file.close()
 
         Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
         t = time.time() - init
