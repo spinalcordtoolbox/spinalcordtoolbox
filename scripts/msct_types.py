@@ -61,9 +61,9 @@ class Coordinate(Point):
             self.value = 0
         # coordinates and value must be digits:
         try:
-            int(self.x), int(self.y), int(self.z), int(self.value)
+            int(self.x), int(self.y), int(self.z), float(self.value)
         except ValueError:
-            raise TypeError("All coordinates and value must be digits. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
+            raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
 
     def __eq__(self, other):
