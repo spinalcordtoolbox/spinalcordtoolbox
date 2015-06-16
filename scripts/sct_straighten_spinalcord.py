@@ -374,6 +374,7 @@ class SpinalCordStraightener(object):
                     landmark_curved_rigid[index_curved][4] = points_moving_reg[index_registered+4]
 
                 # Create volumes containing curved and straight landmarks
+                data_curved_landmarks = data * 0
                 data_curved_rigid_landmarks = data * 0
                 data_straight_landmarks = data * 0
                 # initialize landmark value
@@ -383,16 +384,28 @@ class SpinalCordStraightener(object):
                     # loop across cross element index
                     for i_element in range(0, 5, 1):
                         # get x, y and z coordinates of curved landmark (rounded to closest integer)
-                        x, y, z = int(round(landmark_curved_rigid[index][i_element][0])), int(
-                            round(landmark_curved_rigid[index][i_element][1])), int(
-                            round(landmark_curved_rigid[index][i_element][2]))
+                        x, y, z = int(round(landmark_curved[index][i_element][0])), \
+                                  int(round(landmark_curved[index][i_element][1])), \
+                                  int(round(landmark_curved[index][i_element][2]))
+
+                        # attribute landmark_value to the voxel and its neighbours
+                        data_curved_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
+                        z + padding - 1:z + padding + 2] = landmark_value
+
+                        # get x, y and z coordinates of curved landmark (rounded to closest integer)
+                        x, y, z = int(round(landmark_curved_rigid[index][i_element][0])), \
+                                  int(round(landmark_curved_rigid[index][i_element][1])), \
+                                  int(round(landmark_curved_rigid[index][i_element][2]))
+
                         # attribute landmark_value to the voxel and its neighbours
                         data_curved_rigid_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
                         z + padding - 1:z + padding + 2] = landmark_value
+
                         # get x, y and z coordinates of straight landmark (rounded to closest integer)
-                        x, y, z = int(round(landmark_straight[index][i_element][0])), int(
-                            round(landmark_straight[index][i_element][1])), int(
-                            round(landmark_straight[index][i_element][2]))
+                        x, y, z = int(round(landmark_straight[index][i_element][0])), \
+                                  int(round(landmark_straight[index][i_element][1])), \
+                                  int(round(landmark_straight[index][i_element][2]))
+
                         # attribute landmark_value to the voxel and its neighbours
                         data_straight_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
                         z + padding - 1:z + padding + 2] = landmark_value
@@ -401,6 +414,10 @@ class SpinalCordStraightener(object):
 
                 # Write NIFTI volumes
                 sct.printv('\nWrite NIFTI volumes...', verbose)
+                hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
+                img = Nifti1Image(data_curved_landmarks, None, hdr)
+                save(img, 'tmp.landmarks_curved.nii.gz')
+                sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
                 hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
                 img = Nifti1Image(data_curved_rigid_landmarks, None, hdr)
                 save(img, 'tmp.landmarks_curved_rigid.nii.gz')
@@ -417,8 +434,8 @@ class SpinalCordStraightener(object):
                 text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
                     rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0],
                     rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
-                    rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1],
-                    translation_array[0, 2]))
+                    rotation_matrix[2, 2], -translation_array[0, 0], translation_array[0, 1],
+                    -translation_array[0, 2]))
                 text_file.write("FixedParameters: 0 0 0\n")
                 text_file.close()
 
@@ -455,12 +472,6 @@ class SpinalCordStraightener(object):
 
                 # Estimate deformation field by pairing landmarks
                 #==========================================================================================
-
-                """
-                Here starts rigid transformation that will be replaced by our implementation
-                 input: landmark_curved and landmark_straight
-                 output: landmark_curved that are registered on landmark_straight
-                """
                 # This stands to avoid overlapping between landmarks
                 sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
                 label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz")
@@ -479,6 +490,13 @@ class SpinalCordStraightener(object):
                 sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
                 #sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -x nn', verbose)
                 Transform(input_filename="tmp.landmarks_curved.nii.gz", source_reg="tmp.landmarks_curved_rigid.nii.gz", output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt", interp="nn", verbose=verbose).apply()
+
+            # This stands to avoid overlapping between landmarks
+            sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
+            label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
+                                          fname_output="tmp.landmarks_straight.nii.gz",
+                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz")
+            label_process.remove_label()
 
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
