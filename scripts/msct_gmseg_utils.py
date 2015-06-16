@@ -1564,6 +1564,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
 
     """
     import time
+    from sct_asman import Model, Param, GMsegSupervisedMethod
     init = time.time()
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
     gm_dice_file = open('gm_dice_coeff.txt', 'w')
@@ -1588,11 +1589,19 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
 
                 # Gray matter segmentation using this subject as target
                 os.chdir(tmp_dir)
+                model_param = Param()
+                model_param.path_dictionary = tmp_dic_name
+                model_param.todo_model = 'compute'
+                model_param.weight_beta = weight
+                model_param.use_levels = use_levels
 
-                cmd_compute_model = 'sct_asman -dic ' + tmp_dic_name + ' -model compute -weight ' +  str(weight) + ' -use-levels ' + str(int(use_levels))
-                model_dir = 'gm_seg_model_data/'
+                model = Model(model_param=model_param, k=0.8)
+                # model_dir = 'gm_seg_model_data/'
 
-                sct.run(cmd_compute_model)
+                n_slices_model = model.dictionary.J
+
+                # cmd_compute_model = 'sct_asman -dic ' + tmp_dic_name + ' -model compute -weight ' +  str(weight) + ' -use-levels ' + str(int(use_levels))
+                # sct.run(cmd_compute_model)
 
                 for file_name in os.listdir(subject_dir):
                     target = ''
@@ -1606,15 +1615,15 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                         slice_level = ''
                         target_slice = ''
 
-                        cmd_segment_gm = 'sct_asman -i ' + target + ' -model load -dic ' + model_dir + ' -weight ' + str(weight)
+                        cmd_segment_gm = 'sct_asman -i ' + target + ' -model load -dic ' + model.param.model_dir + ' -weight ' + str(weight)
 
+                        name_list = file_name.split('_')
+                        for word in name_list:
+                            if word.upper() in level_label.values():
+                                slice_level = word.upper()
+                            elif 'slice' in word:
+                                target_slice = word
                         if use_levels:
-                            name_list = file_name.split('_')
-                            for word in name_list:
-                                if word.upper() in level_label.values():
-                                    slice_level = word.upper()
-                                elif 'slice' in word:
-                                    target_slice = word
                             cmd_segment_gm += ' -l ' + slice_level
 
                         sct.run(cmd_segment_gm)
@@ -1640,12 +1649,12 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
 
                         # Dice coefficient
                         status, wm_dice_output = sct.run('sct_dice_coefficient ' + res_wmseg + ' ' + ref_wm_seg)
-                        wm_dice = wm_dice_output[22:]
-                        wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice)
+                        wm_dice = wm_dice_output[22:-1]
+                        wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
 
                         status, gm_dice_output = sct.run('sct_dice_coefficient ' + res_gmseg + ' ' + ref_gm_seg)
-                        gm_dice = gm_dice_output[22:]
-                        gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice)
+                        gm_dice = gm_dice_output[22:-1]
+                        gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
 
                         # Error map
                         if first:

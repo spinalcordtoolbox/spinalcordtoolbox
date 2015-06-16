@@ -28,13 +28,25 @@ if __name__ == '__main__':
                       description="Path to the dictionary of images",
                       mandatory=True,
                       example='/home/jdoe/data/dictionary')
+    parser.add_option(name="-list",
+                      type_value=[[','], 'int'],
+                      description="Path to the dictionary of images",
+                      mandatory=False,
+                      default_value=[2,5,10,15,20,28,36],
+                      example='/home/jdoe/data/dictionary')
+
+
 
     arguments = parser.parse(sys.argv[1:])
     path_dictionary = arguments["-dic"]
+    if "-list" in arguments:
+        n_subjects = arguments["-list"]
+    else:
+        n_subjects = [2, 5, 10, 15, 20, 28, 36]
+
 
     gamma = 1.2
     all_subjects = np.asarray(os.listdir(path_dictionary)[1:])
-    n_subjects = [2, 5, 10, 15, 20, 28, 36]
     n_repetition = 8
 
     for n in n_subjects:
@@ -43,4 +55,4 @@ if __name__ == '__main__':
             subjects_to_use = np.random.choice(all_subjects, n, replace=False)
             loocv((False, 0, subjects_to_use))
             loocv((True, gamma, subjects_to_use))
-            ir +=1
+            ir += 1
