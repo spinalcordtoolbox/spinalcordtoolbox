@@ -1276,9 +1276,12 @@ def vanderbilt_treatments(data_path):
                     im_list.append(file_name[:17] + im_ext)
 
             # merging the slice images into a 3D image
+            '''
             im_list.reverse()
             gm_seg_list.reverse()
             sc_seg_list.reverse()
+            '''
+
             cmd_merge = 'fslmerge -z '
             im_name = subject_dir + '_im.nii.gz '
             cmd_merge_im = cmd_merge + im_name
@@ -1304,6 +1307,8 @@ def vanderbilt_treatments(data_path):
                 level_dat.T[:][:][i] = get_key_from_val(level_label, im_i_name[:2].upper())
             Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
             '''
+
+
 
             # resampling
 
