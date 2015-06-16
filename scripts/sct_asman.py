@@ -1191,9 +1191,9 @@ sct_Image
         self.res_wm_seg.hdr = original_hdr
         self.res_wm_seg.save()
 
-        self.res_gm_seg = inverse_wmseg_to_gmseg(self.res_wm_seg, self.res_sc_seg, name_res, original_hdr)
+        # self.res_gm_seg = inverse_wmseg_to_gmseg(self.res_wm_seg, self.res_sc_seg, name_res, original_hdr)
 
-        self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res, original_hdr)
+        # self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res, original_hdr)
 
     def show(self):
 
