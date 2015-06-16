@@ -37,10 +37,45 @@ import sys
 import sct_utils as sct
 import os
 import time
+import copy_reg
+import types
+
+
+def _pickle_method(method):
+    """
+    Author: Steven Bethard (author of argparse)
+    http://bytes.com/topic/python/answers/552476-why-cant-you-pickle-instancemethods
+    """
+    func_name = method.im_func.__name__
+    obj = method.im_self
+    cls = method.im_class
+    cls_name = ''
+    if func_name.startswith('__') and not func_name.endswith('__'):
+        cls_name = cls.__name__.lstrip('_')
+    if cls_name:
+        func_name = '_' + cls_name + func_name
+    return _unpickle_method, (func_name, obj, cls)
+
+
+def _unpickle_method(func_name, obj, cls):
+    """
+    Author: Steven Bethard
+    http://bytes.com/topic/python/answers/552476-why-cant-you-pickle-instancemethods
+    """
+    for cls in cls.mro():
+        try:
+            func = cls.__dict__[func_name]
+        except KeyError:
+            pass
+        else:
+            break
+    return func.__get__(obj, cls)
+
+copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
 # DEFAULT PARAMETERS
-class Param:
+class Param(object):
     """
     Parameters used for the pipeline
     """
@@ -53,7 +88,7 @@ class Param:
         self.t = 't2'  # type: string
 
 
-class Subject:
+class Subject(object):
     """
     A directory containing data for a subject
     The directory must be organized as follows :
@@ -96,7 +131,7 @@ class Subject:
         self.name_t2star_ref = name_t2star_ref
 
 
-class Pipeline:
+class Pipeline(object):
     """
     Segmentation and registration pipeline
     """
@@ -104,12 +139,13 @@ class Pipeline:
     # The constructor
     def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
-                 dice=False, dice_on=None):
+                 straightening=False, straightening_params=None, dice=False, dice_on=None):
         self.path_data = path_data  # type: folder
         os.chdir(self.path_data)
         self.t = t   # type: string
 
         # options
+        self.t = t
         self.seg = seg  # type: boolean
         self.seg_params = seg_params  # type: dictionary
         self.reg_template = reg_template  # type: boolean
@@ -118,6 +154,9 @@ class Pipeline:
         self.seg_t2star_params = seg_t2star_params  # type: dictionary
         self.reg_multimodal = reg_multimodal  # type: boolean
         self.reg_multimodal_params = reg_multimodal_params  # type: string
+        self.straightening = straightening
+        self.straightening_params = straightening_params
+        self.straightening_results = []
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
 
@@ -332,6 +371,85 @@ class Pipeline:
             else:
                 sct.printv("WARNING: no file to do segmentation on in folder " + path, verbose=1, type='warning')
             os.chdir('..')
+
+    def worker_straightening(self, subject):
+        os.chdir(subject.dir_name)
+
+        if self.t == 't1':
+            path = subject.dir_t1
+            name = subject.name_t1
+            name_seg = subject.name_t1_ref
+        elif self.t == 't2':
+            path = subject.dir_t2
+            name = subject.name_t2
+            name_seg = subject.name_t2_ref
+
+        os.chdir(path)
+
+        if name is '' or name_seg is '':
+            sct.printv(
+                'WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.')
+            os.chdir('../..')
+            return None
+        else:
+            try:
+                cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg
+                sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
+                                   + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
+
+                from sct_straighten_spinalcord import SpinalCordStraightener
+
+                sc_straight = SpinalCordStraightener(name, name_seg)
+
+                if self.straightening_params is not None:
+                    cmd_straightening += ' ' + self.straightening_params
+                    dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
+                    if "algo" in dict_params_straightening:
+                        sc_straight.algo_fitting = str(dict_params_straightening["algo"])
+                    if "rigid-python" in dict_params_straightening:
+                        sc_straight.use_python_implementation = True
+                    if "rigid-python-algo" in dict_params_straightening:
+                        sc_straight.rigid_python_algo = str(dict_params_straightening["rigid-python-algo"])
+
+                sct.printv(cmd_straightening)
+                sc_straight.remove_temp_files = 0
+                # sc_straight.verbose = 2 # for visualization purpose
+                sc_straight.straighten()
+
+                os.chdir('../..')
+
+                #self.straightening_results.append([subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening])
+                return [subject.dir_name, sc_straight.mse_straightening, sc_straight.max_distance_straightening]
+
+            except Exception, e:
+                sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD ON ' + self.t.upper() + ': ',
+                           1, 'warning')
+                print e
+                sct.printv('Continuing program ...', 1, 'warning')
+
+                os.chdir('../..')
+
+                return None
+
+    def worker_straightening_results(self, results):
+        self.straightening_results = [result for result in results if result is not None]
+        sorted(self.straightening_results, key=lambda l: l[0])
+
+    def straighten_spinalcord(self):
+        """
+        straighten image based on segmentation and/or manual labels
+        :param t: type of anatomical image to register
+        :return:
+        """
+        from multiprocessing import Pool
+
+        pool = Pool(processes=None)
+        #self.straightening_results = pool.map(self.worker_straightening, self.data)
+        pool.map_async(self.worker_straightening, self.data, callback=self.worker_straightening_results)
+        pool.close()
+
+        # waiting for all the jobs to be done
+        pool.join()
 
     def register_warp_to_template(self, t):
         """
@@ -614,6 +732,18 @@ class Pipeline:
             if self.dice:
                 self.compute_dice('t2star', 'reg')
 
+        if self.straightening:
+            self.straighten_spinalcord()
+            from numpy import array, mean, std
+            mse_results = array([itm[1] for itm in self.straightening_results])
+            max_distance = array([itm[2] for itm in self.straightening_results])
+            print '\n'
+            print self.straightening_results
+            print 'MSE          = ' + str(mean(mse_results)) + ' +- ' + str(
+                std(mse_results))
+            print 'Max distance = ' + str(mean(max_distance)) + ' +- ' + str(
+                std(max_distance))
+
         # compute dice on other results
         for arg in self.dice_on:
             type_res, type_image = arg.split(":")
@@ -755,6 +885,16 @@ if __name__ == "__main__":
                       mandatory=False,
                       example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
                               'metric=MeanSquares,iter=5')
+    parser.add_option(name="-straightening",
+                      description='Straighten the spinal cord',
+                      mandatory=False)
+    parser.add_option(name="-straightening-params",
+                      type_value='str',
+                      description='Parameters for the spinal cord straightening\n'
+                                  'algo: {hanning, nurbs}',
+                      mandatory=False,
+                      example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
+                              'metric=MeanSquares,iter=5')
     parser.add_option(name="-dice",
                       description='Compute the Dice coefficient on the results of the operations you did',
                       mandatory=False)
@@ -780,6 +920,9 @@ if __name__ == "__main__":
     input_reg_multimodal = False
     input_reg_multimodal_params = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,' \
                                   'metric=MeanSquares,iter=5'
+    input_straightening = False
+    input_straightening_params = 'algo=hanning'
+
     input_dice = False
     input_dice_on = []
     if "-seg" in arguments:
@@ -802,6 +945,10 @@ if __name__ == "__main__":
         input_reg_multimodal = arguments["-reg-multimodal"]
     if "-reg-multimodal-params" in arguments:
         input_reg_multimodal_params = arguments["-reg-multimodal-params"]
+    if "-straightening" in arguments:
+        input_straightening = arguments["-straightening"]
+    if "-straightening-params" in arguments:
+        input_straightening_params = arguments["-straightening-params"]
     if "-dice" in arguments:
         input_dice = arguments["-dice"]
     if "-dice-on" in arguments:
@@ -811,6 +958,7 @@ if __name__ == "__main__":
                              reg_template=input_reg_template, reg_template_params=input_reg_template_params,
                              seg_t2star=input_seg_t2star, seg_t2star_params=input_seg_t2star_params,
                              reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params,
+                             straightening=input_straightening,straightening_params=input_straightening_params,
                              dice=input_dice, dice_on=input_dice_on)
     pipeline_test.compute()
 

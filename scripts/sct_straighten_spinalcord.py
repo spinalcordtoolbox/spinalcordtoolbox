@@ -118,9 +118,10 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
+        self.output_filename = output_filename
         self.debug = debug
         self.deg_poly = deg_poly  # maximum degree of polynomial function for fitting centerline.
         self.gapxy = gapxy  # size of cross in x and y direction for the landmarks
@@ -134,6 +135,9 @@ class SpinalCordStraightener(object):
         self.window_length = window_length
         self.crop = crop
 
+        self.use_python_implementation = False
+        self.rigid_python_algo = 'translation'
+
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
 
@@ -141,6 +145,7 @@ class SpinalCordStraightener(object):
         # Initialization
         fname_anat = self.input_filename
         fname_centerline = self.centerline_filename
+        fname_output = self.output_filename
         gapxy = self.gapxy
         gapz = self.gapz
         padding = self.padding
@@ -340,57 +345,140 @@ class SpinalCordStraightener(object):
             data = file.get_data()
             hdr = file.get_header()
 
-            # Create volumes containing curved and straight landmarks
-            data_curved_landmarks = data * 0
-            data_straight_landmarks = data * 0
-            # initialize landmark value
-            landmark_value = 1
-            # Loop across cross index
-            for index in range(0, n_iz_curved, 1):
-                # loop across cross element index
-                for i_element in range(0, 5, 1):
-                    # get x, y and z coordinates of curved landmark (rounded to closest integer)
-                    x, y, z = int(round(landmark_curved[index][i_element][0])), int(round(landmark_curved[index][i_element][1])), int(round(landmark_curved[index][i_element][2]))
-                    # attribute landmark_value to the voxel and its neighbours
-                    data_curved_landmarks[x+padding-1:x+padding+2, y+padding-1:y+padding+2, z+padding-1:z+padding+2] = landmark_value
-                    # get x, y and z coordinates of straight landmark (rounded to closest integer)
-                    x, y, z = int(round(landmark_straight[index][i_element][0])), int(round(landmark_straight[index][i_element][1])), int(round(landmark_straight[index][i_element][2]))
-                    # attribute landmark_value to the voxel and its neighbours
-                    data_straight_landmarks[x+padding-1:x+padding+2, y+padding-1:y+padding+2, z+padding-1:z+padding+2] = landmark_value
-                    # increment landmark value
-                    landmark_value = landmark_value + 1
+            if self.use_python_implementation:
+                # Reorganize landmarks
+                points_fixed, points_moving = [], []
+                for index in range(0, n_iz_curved, 1):
+                    # loop across cross element index
+                    for i_element in range(0, 5, 1):
+                        points_fixed.append([landmark_straight[index][i_element][0],
+                                             landmark_straight[index][i_element][1],
+                                             landmark_straight[index][i_element][2]])
+                        points_moving.append([landmark_curved[index][i_element][0],
+                                              landmark_curved[index][i_element][1],
+                                              landmark_curved[index][i_element][2]])
 
-            # Write NIFTI volumes
-            sct.printv('\nWrite NIFTI volumes...', verbose)
-            hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
-            img = Nifti1Image(data_curved_landmarks, None, hdr)
-            save(img, 'tmp.landmarks_curved.nii.gz')
-            sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-            img = Nifti1Image(data_straight_landmarks, None, hdr)
-            save(img, 'tmp.landmarks_straight.nii.gz')
-            sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
+                # Register curved landmarks on straight landmarks based on python implementation
+                sct.printv('\nComputing rigid transformation (algo='+self.rigid_python_algo+') ...', verbose)
+                import msct_register_landmarks
+                (rotation_matrix, translation_array, points_moving_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(
+                    points_fixed, points_moving, constraints=self.rigid_python_algo, show=False)
 
-            # Estimate deformation field by pairing landmarks
-            #==========================================================================================
+                # reorganize registered points
+                landmark_curved_rigid = [[[0 for i in range(0, 3)] for i in range(0, 5)] for i in iz_curved]
+                for index_curved, index_registered in enumerate(range(0, len(points_moving_reg), 5)):
+                    landmark_curved_rigid[index_curved][0] = points_moving_reg[index_registered]
+                    landmark_curved_rigid[index_curved][1] = points_moving_reg[index_registered+1]
+                    landmark_curved_rigid[index_curved][2] = points_moving_reg[index_registered+2]
+                    landmark_curved_rigid[index_curved][3] = points_moving_reg[index_registered+3]
+                    landmark_curved_rigid[index_curved][4] = points_moving_reg[index_registered+4]
 
-            # This stands to avoid overlapping between landmarks
-            sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
-            label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz")
-            label_process.remove_label()
+                # Create volumes containing curved and straight landmarks
+                data_curved_rigid_landmarks = data * 0
+                data_straight_landmarks = data * 0
+                # initialize landmark value
+                landmark_value = 1
+                # Loop across cross index
+                for index in range(0, n_iz_curved, 1):
+                    # loop across cross element index
+                    for i_element in range(0, 5, 1):
+                        # get x, y and z coordinates of curved landmark (rounded to closest integer)
+                        x, y, z = int(round(landmark_curved_rigid[index][i_element][0])), int(
+                            round(landmark_curved_rigid[index][i_element][1])), int(
+                            round(landmark_curved_rigid[index][i_element][2]))
+                        # attribute landmark_value to the voxel and its neighbours
+                        data_curved_rigid_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
+                        z + padding - 1:z + padding + 2] = landmark_value
+                        # get x, y and z coordinates of straight landmark (rounded to closest integer)
+                        x, y, z = int(round(landmark_straight[index][i_element][0])), int(
+                            round(landmark_straight[index][i_element][1])), int(
+                            round(landmark_straight[index][i_element][2]))
+                        # attribute landmark_value to the voxel and its neighbours
+                        data_straight_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
+                        z + padding - 1:z + padding + 2] = landmark_value
+                        # increment landmark value
+                        landmark_value = landmark_value + 1
 
-            # convert landmarks to INT
-            sct.printv('\nConvert landmarks to INT...', verbose)
-            sct.run('isct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
-            sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
+                # Write NIFTI volumes
+                sct.printv('\nWrite NIFTI volumes...', verbose)
+                hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
+                img = Nifti1Image(data_curved_rigid_landmarks, None, hdr)
+                save(img, 'tmp.landmarks_curved_rigid.nii.gz')
+                sct.printv('.. File created: tmp.landmarks_curved_rigid.nii.gz', verbose)
+                img = Nifti1Image(data_straight_landmarks, None, hdr)
+                save(img, 'tmp.landmarks_straight.nii.gz')
+                sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
-            # Estimate rigid transformation
-            sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-            sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
+                # writing rigid transformation file
+                text_file = open("tmp.curve2straight_rigid.txt", "w")
+                text_file.write("#Insight Transform File V1.0\n")
+                text_file.write("#Transform 0\n")
+                text_file.write("Transform: AffineTransform_double_3_3\n")
+                text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+                    rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0],
+                    rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
+                    rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1],
+                    translation_array[0, 2]))
+                text_file.write("FixedParameters: 0 0 0\n")
+                text_file.close()
 
-            # Apply rigid transformation
-            sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
-            #sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -x nn', verbose)
-            Transform(input_filename="tmp.landmarks_curved.nii.gz", source_reg="tmp.landmarks_curved_rigid.nii.gz", output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt", interp="nn", verbose=verbose).apply()
+            else:
+                # Create volumes containing curved and straight landmarks
+                data_curved_landmarks = data * 0
+                data_straight_landmarks = data * 0
+                # initialize landmark value
+                landmark_value = 1
+                # Loop across cross index
+                for index in range(0, n_iz_curved, 1):
+                    # loop across cross element index
+                    for i_element in range(0, 5, 1):
+                        # get x, y and z coordinates of curved landmark (rounded to closest integer)
+                        x, y, z = int(round(landmark_curved[index][i_element][0])), int(round(landmark_curved[index][i_element][1])), int(round(landmark_curved[index][i_element][2]))
+                        # attribute landmark_value to the voxel and its neighbours
+                        data_curved_landmarks[x+padding-1:x+padding+2, y+padding-1:y+padding+2, z+padding-1:z+padding+2] = landmark_value
+                        # get x, y and z coordinates of straight landmark (rounded to closest integer)
+                        x, y, z = int(round(landmark_straight[index][i_element][0])), int(round(landmark_straight[index][i_element][1])), int(round(landmark_straight[index][i_element][2]))
+                        # attribute landmark_value to the voxel and its neighbours
+                        data_straight_landmarks[x+padding-1:x+padding+2, y+padding-1:y+padding+2, z+padding-1:z+padding+2] = landmark_value
+                        # increment landmark value
+                        landmark_value = landmark_value + 1
+
+                # Write NIFTI volumes
+                sct.printv('\nWrite NIFTI volumes...', verbose)
+                hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
+                img = Nifti1Image(data_curved_landmarks, None, hdr)
+                save(img, 'tmp.landmarks_curved.nii.gz')
+                sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
+                img = Nifti1Image(data_straight_landmarks, None, hdr)
+                save(img, 'tmp.landmarks_straight.nii.gz')
+                sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
+
+                # Estimate deformation field by pairing landmarks
+                #==========================================================================================
+
+                """
+                Here starts rigid transformation that will be replaced by our implementation
+                 input: landmark_curved and landmark_straight
+                 output: landmark_curved that are registered on landmark_straight
+                """
+                # This stands to avoid overlapping between landmarks
+                sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
+                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz")
+                label_process.remove_label()
+
+                # convert landmarks to INT
+                sct.printv('\nConvert landmarks to INT...', verbose)
+                sct.run('isct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
+                sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
+
+                # Estimate rigid transformation
+                sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
+                sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
+
+                # Apply rigid transformation
+                sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
+                #sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -x nn', verbose)
+                Transform(input_filename="tmp.landmarks_curved.nii.gz", source_reg="tmp.landmarks_curved_rigid.nii.gz", output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt", interp="nn", verbose=verbose).apply()
 
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
@@ -420,14 +508,12 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            # cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R tmp.landmarks_straight.nii.gz -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             sct.printv(cmd, verbose, 'code')
             commands.getstatusoutput(cmd)
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            # sct.run('sct_apply_transfo -i '+file_anat+ext_anat+' -o tmp.anat_rigid_warp.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x '+interpolation_warp+' -w tmp.curve2straight.nii.gz', verbose)
             Transform(input_filename=str(file_anat+ext_anat), source_reg="tmp.anat_rigid_warp.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp=interpolation_warp, warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
@@ -459,8 +545,9 @@ class SpinalCordStraightener(object):
                     count_mean += 1
             self.mse_straightening = self.mse_straightening/float(count_mean)
 
-        except:
-            pass
+        except Exception, e:
+            sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
+            print e
 
         os.chdir('..')
 
@@ -469,8 +556,10 @@ class SpinalCordStraightener(object):
         sct.printv('\nGenerate output file (in current folder)...', verbose)
         sct.generate_output_file(path_tmp+'/tmp.curve2straight.nii.gz', 'warp_curve2straight.nii.gz', verbose)  # warping field
         sct.generate_output_file(path_tmp+'/tmp.straight2curve.nii.gz', 'warp_straight2curve.nii.gz', verbose)  # warping field
-        fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
-
+        if fname_output == '':
+            fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
+        else:
+            fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', fname_output, verbose)  # straightened anatomic
         # Remove temporary files
         if remove_temp_files:
             sct.printv('\nRemove temporary files...', verbose)
@@ -509,6 +598,12 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="30",
                       default_value=30)
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="output file",
+                      mandatory=False,
+                      default_value='',
+                      example="out.nii.gz")
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
@@ -522,7 +617,7 @@ if __name__ == "__main__":
                       example=['0', '1'],
                       default_value='0')
     parser.add_option(name="-a",
-                      type_value="str",
+                      type_value="multiple_choice",
                       description="Algorithm for curve fitting.",
                       mandatory=False,
                       example=["hanning", "nurbs"],
@@ -540,6 +635,15 @@ if __name__ == "__main__":
                       example=['0', '1', '2'],
                       default_value=1)
 
+    parser.add_option(name="-rigid-python",
+                      type_value=None,
+                      description="Use of python implementation of rigid transformation",
+                      mandatory=False)
+    parser.add_option(name="-rigid-python-algo",
+                      type_value="str",
+                      description="Transformation model for python-based rigid transformation: {xy, translation, translation-xy, rotation, rotation-xy}",
+                      mandatory=False)
+
     arguments = parser.parse(sys.argv[1:])
 
     # assigning variables to arguments
@@ -555,11 +659,18 @@ if __name__ == "__main__":
         sc_straight.padding = int(arguments["-p"])
     if "-x" in arguments:
         sc_straight.interpolation_warp = str(arguments["-x"])
+    if "-o" in arguments:
+        sc_straight.output_filename = str(arguments["-o"])
     if "-a" in arguments:
         sc_straight.algo_fitting = str(arguments["-a"])
     if "-f" in arguments:
         sc_straight.crop = int(arguments["-f"])
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
+
+    if "-rigid-python" in arguments:
+        sc_straight.use_python_implementation = True
+    if "-rigid-python-algo" in arguments:
+        sc_straight.rigid_python_algo = str(arguments["-rigid-python-algo"])
 
     sc_straight.straighten()
