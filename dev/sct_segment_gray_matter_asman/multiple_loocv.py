@@ -62,5 +62,6 @@ if __name__ == '__main__':
                 list_dir.append(name_dir)
             ir += 1
 
-    pool = mp.Pool(8)
+    pool = mp.Pool()
     pool.map(loocv, list_dir)
+    pool.join()
