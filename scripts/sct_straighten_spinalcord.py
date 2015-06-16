@@ -530,7 +530,7 @@ if __name__ == "__main__":
                       example=['0', '1'],
                       default_value='0')
     parser.add_option(name="-a",
-                      type_value="str",
+                      type_value="multiple_choice",
                       description="Algorithm for curve fitting.",
                       mandatory=False,
                       example=["hanning", "nurbs"],
