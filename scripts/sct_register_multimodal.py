@@ -430,7 +430,7 @@ def register(src, dest, paramreg, param, i_step_str):
             print '\nERROR: Algorithm real_defo only operates for segmentation type.'
             sys.exit(2)
         else:
-            from msct_register_reg import register_seg, generate_warping_field
+            from msct_register_regularized import register_seg, generate_warping_field
             from numpy import asarray
             from msct_smooth import smoothing_window
             # Calculate displacement
@@ -450,7 +450,7 @@ def register(src, dest, paramreg, param, i_step_str):
             warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_translation':
-        from msct_register_reg import register_images, generate_warping_field
+        from msct_register_regularized import register_images, generate_warping_field
         from numpy import asarray
         from msct_smooth import smoothing_window
         # Calculate displacement
@@ -470,7 +470,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_rigid':
-        from msct_register_reg import register_images, generate_warping_field
+        from msct_register_regularized import register_images, generate_warping_field
         from numpy import asarray
         from msct_smooth import smoothing_window
         # Calculate displacement
