@@ -141,6 +141,7 @@ class Pipeline(object):
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
                  straightening=False, straightening_params=None, dice=False, dice_on=None):
         self.path_data = path_data  # type: folder
+        self.old_dir = os.getcwd()
         os.chdir(self.path_data)
         self.t = t   # type: string
 
@@ -159,6 +160,8 @@ class Pipeline(object):
         self.straightening_results = []
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
+        if self.dice_on is None:
+            self.dice_on = []
 
         self.cpu_count = None
 
@@ -751,10 +754,12 @@ class Pipeline(object):
             max_distance = array([itm[2] for itm in self.straightening_results])
             print '\n'
             print self.straightening_results
-            print 'MSE          = ' + str(mean(mse_results)) + ' +- ' + str(
-                std(mse_results))
-            print 'Max distance = ' + str(mean(max_distance)) + ' +- ' + str(
-                std(max_distance))
+            self.straightening_results_mse = [mean(mse_results), std(mse_results)]
+            self.straightening_results_dist_max = [mean(max_distance), std(max_distance)]
+            print 'MSE          = ' + str(self.straightening_results_mse[0]) + ' +- ' + str(
+                self.straightening_results_mse[1])
+            print 'Max distance = ' + str(self.straightening_results_dist_max[0]) + ' +- ' + str(
+                self.straightening_results_dist_max[1])
 
         # compute dice on other results
         for arg in self.dice_on:
@@ -762,6 +767,8 @@ class Pipeline(object):
             self.compute_dice(type_image, type_res)
 
         self.write_infos()
+
+        os.chdir(self.old_dir)
 
 
 # =======================================================================================================================
