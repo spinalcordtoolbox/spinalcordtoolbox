@@ -160,6 +160,8 @@ class Pipeline(object):
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
 
+        self.cpu_count = None
+
         # generating data
         self.data = self.generate_data_list()   # type: list
 
@@ -404,12 +406,16 @@ class Pipeline(object):
                 if self.straightening_params is not None:
                     cmd_straightening += ' ' + self.straightening_params
                     dict_params_straightening = dict([param.split('=') for param in self.straightening_params.split(',')])
-                    if "algo" in dict_params_straightening:
-                        sc_straight.algo_fitting = str(dict_params_straightening["algo"])
-                    if "rigid-python" in dict_params_straightening:
-                        sc_straight.use_python_implementation = True
-                    if "rigid-python-algo" in dict_params_straightening:
-                        sc_straight.rigid_python_algo = str(dict_params_straightening["rigid-python-algo"])
+                    if "algo_fitting" in dict_params_straightening:
+                        sc_straight.algo_fitting = str(dict_params_straightening["algo_fitting"])
+                    if "bspline_meshsize" in dict_params_straightening:
+                        sc_straight.bspline_meshsize = str(dict_params_straightening["bspline_meshsize"])
+                    if "bspline_numberOfLevels" in dict_params_straightening:
+                        sc_straight.bspline_numberOfLevels = str(dict_params_straightening["bspline_numberOfLevels"])
+                    if "bspline_order" in dict_params_straightening:
+                        sc_straight.bspline_order = str(dict_params_straightening["bspline_order"])
+                    if "algo_landmark_rigid" in dict_params_straightening:
+                        sc_straight.algo_landmark_rigid = str(dict_params_straightening["algo_landmark_rigid"])
 
                 sct.printv(cmd_straightening)
                 sc_straight.remove_temp_files = 0
@@ -430,6 +436,10 @@ class Pipeline(object):
 
                 return None
 
+            except KeyboardInterrupt:
+                os.chdir('../..')
+                return
+
     def worker_straightening_results(self, results):
         self.straightening_results = [result for result in results if result is not None]
         sorted(self.straightening_results, key=lambda l: l[0])
@@ -442,13 +452,15 @@ class Pipeline(object):
         """
         from multiprocessing import Pool
 
-        pool = Pool(processes=None)
-        #self.straightening_results = pool.map(self.worker_straightening, self.data)
+        pool = Pool(processes=self.cpu_count)
         pool.map_async(self.worker_straightening, self.data, callback=self.worker_straightening_results)
-        pool.close()
 
-        # waiting for all the jobs to be done
-        pool.join()
+        pool.close()
+        try:
+            pool.join()  # waiting for all the jobs to be done
+        except KeyboardInterrupt:
+            print "\nWarning: Caught KeyboardInterrupt, terminating workers"
+            pool.terminate()
 
     def register_warp_to_template(self, t):
         """
@@ -889,11 +901,9 @@ if __name__ == "__main__":
                       mandatory=False)
     parser.add_option(name="-straightening-params",
                       type_value='str',
-                      description='Parameters for the spinal cord straightening\n'
-                                  'algo: {hanning, nurbs}',
+                      description='Parameters for the spinal cord straightening\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. Default=5x5x10\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. Default=3\nbspline_order: <int> Order of BSpline for interpolation. Default=2\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} constraints on landmark-based rigid pre-registration',
                       mandatory=False,
-                      example='step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,'
-                              'metric=MeanSquares,iter=5')
+                      example='algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy')
     parser.add_option(name="-dice",
                       description='Compute the Dice coefficient on the results of the operations you did',
                       mandatory=False)
@@ -904,6 +914,12 @@ if __name__ == "__main__":
                                   'Has to be type_results:type_image, separated with coma, without any white spaces',
                       mandatory=False,
                       example="seg:t2,reg:t2star")
+    from multiprocessing import cpu_count
+    parser.add_option(name="-cpu-count",
+                      type_value="int",
+                      description='number of cores used by the pipeline. Default='+str(cpu_count()),
+                      mandatory=False,
+                      example="6")
 
     arguments = parser.parse(sys.argv[1:])
     input_path_data = arguments["-data"]
@@ -959,6 +975,8 @@ if __name__ == "__main__":
                              reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params,
                              straightening=input_straightening,straightening_params=input_straightening_params,
                              dice=input_dice, dice_on=input_dice_on)
+    if "-cpu-count" in arguments:
+        pipeline_test.cpu_count = arguments["-cpu-count"]
     pipeline_test.compute()
 
     elapsed_time = round(time.time() - begin, 2)
