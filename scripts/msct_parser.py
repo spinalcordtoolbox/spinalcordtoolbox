@@ -67,7 +67,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -79,6 +79,7 @@ class Option:
         self.order = order
         self.deprecated_by = deprecated_by
         self.deprecated_rm = deprecated_rm
+        self.deprecated = deprecated
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -216,9 +217,9 @@ class Parser:
         self.errors = ''
         self.usage = Usage(self, file_name)
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
         order = len(self.options)+1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
@@ -275,6 +276,8 @@ class Parser:
                     sct.printv("ERROR : "+arg+" is a deprecated argument and is no longer supported by the current version.", 1, 'error')
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
+                if self.options[arg].deprecated:
+                    sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
                 if self.options[arg].deprecated_by is not None:
                     try:
                         sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions. Changing argument to "+self.options[arg].deprecated_by+".", 1, 'warning')
@@ -369,8 +372,8 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
 
     def set_arguments(self):
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory]
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
+        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
         if mandatory:
             self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
@@ -391,7 +394,9 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+str(self.arguments[opt].default_value)
+                    description += " Default value = "+str(self.arguments[opt].default_value)+"."
+                if self.arguments[opt].deprecated:
+                    description += " Deprecated argument!"
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
