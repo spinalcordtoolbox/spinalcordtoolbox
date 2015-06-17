@@ -461,6 +461,7 @@ class Pipeline(object):
         except KeyboardInterrupt:
             print "\nWarning: Caught KeyboardInterrupt, terminating workers"
             pool.terminate()
+            sys.exit(2)
 
     def register_warp_to_template(self, t):
         """
