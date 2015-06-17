@@ -135,8 +135,10 @@ class SpinalCordStraightener(object):
         self.window_length = window_length
         self.crop = crop
 
-        self.use_python_implementation = False
-        self.rigid_python_algo = 'translation'
+        self.bspline_meshsize = '5x5x10'
+        self.bspline_numberOfLevels = '3'
+        self.bspline_order = '2'
+        self.algo_landmark_rigid = None
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -345,7 +347,7 @@ class SpinalCordStraightener(object):
             data = file.get_data()
             hdr = file.get_header()
 
-            if self.use_python_implementation:
+            if self.algo_landmark_rigid is not None:
                 # Reorganize landmarks
                 points_fixed, points_moving = [], []
                 for index in range(0, n_iz_curved, 1):
@@ -359,10 +361,10 @@ class SpinalCordStraightener(object):
                                               landmark_curved[index][i_element][2]])
 
                 # Register curved landmarks on straight landmarks based on python implementation
-                sct.printv('\nComputing rigid transformation (algo='+self.rigid_python_algo+') ...', verbose)
+                sct.printv('\nComputing rigid transformation (algo='+self.algo_landmark_rigid+') ...', verbose)
                 import msct_register_landmarks
                 (rotation_matrix, translation_array, points_moving_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(
-                    points_fixed, points_moving, constraints=self.rigid_python_algo, show=False)
+                    points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=False)
 
                 # reorganize registered points
                 landmark_curved_rigid = [[[0 for i in range(0, 3)] for i in range(0, 5)] for i in iz_curved]
@@ -500,7 +502,7 @@ class SpinalCordStraightener(object):
 
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
+            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
             # remove padding for straight labels
             if crop == 1:
@@ -522,7 +524,7 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
             sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
+            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
@@ -653,14 +655,11 @@ if __name__ == "__main__":
                       example=['0', '1', '2'],
                       default_value=1)
 
-    parser.add_option(name="-rigid-python",
-                      type_value=None,
-                      description="Use of python implementation of rigid transformation",
-                      mandatory=False)
-    parser.add_option(name="-rigid-python-algo",
-                      type_value="str",
-                      description="Transformation model for python-based rigid transformation: {xy, translation, translation-xy, rotation, rotation-xy}",
-                      mandatory=False)
+    parser.add_option(name="-params",
+                      type_value=[[':'], 'str'],
+                      description="""Parameters for spinal cord straightening. Separate arguments with ",".\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. Default=5x5x10\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. Default=3\nbspline_order: <int> Order of BSpline for interpolation. Default=2\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} constraints on landmark-based rigid pre-registration""",
+                      mandatory=False,
+                      example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -686,9 +685,20 @@ if __name__ == "__main__":
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
 
-    if "-rigid-python" in arguments:
-        sc_straight.use_python_implementation = True
-    if "-rigid-python-algo" in arguments:
-        sc_straight.rigid_python_algo = str(arguments["-rigid-python-algo"])
+    if "-params" in arguments:
+        params_user = str(arguments['-params'])
+        # update registration parameters
+        for param in params_user:
+            param_split = param.split('=')
+            if param_split[0] == 'algo_fitting':
+                sc_straight.algo_fitting = param_split[1]
+            elif param_split[0] == 'bspline_meshsize':
+                sc_straight.bspline_meshsize = param_split[1]
+            elif param_split[0] == 'bspline_numberOfLevels':
+                sc_straight.bspline_numberOfLevels = param_split[1]
+            elif param_split[0] == 'bspline_order':
+                sc_straight.bspline_order = param_split[1]
+            elif param_split[0] == 'algo_landmark_rigid':
+                sc_straight.algo_landmark_rigid = param_split[1]
 
     sc_straight.straighten()
