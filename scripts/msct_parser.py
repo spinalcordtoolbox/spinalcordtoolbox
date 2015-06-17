@@ -28,6 +28,28 @@
 # parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
 # parser.add_option("-test2") # this is a option without argument
 #
+# Here we define a multiple choice option named "-a"
+# To define the list of available choices, we define it in the example section
+# parser.add_option(name="-a",
+#                   type_value="multiple_choice",
+#                   description="Algorithm for curve fitting.",
+#                   mandatory=False,
+#                   example=["hanning", "nurbs"],
+#                   default_value="hanning")
+#
+#
+# Here we define a deprecated option.
+# Deprecated option can be defined in 3 ways :
+#       - deprecated : the option exists but is no longer supported
+#       - deprecated_rm : This option signals the user that the option has been removed in the current version.
+#       - deprecated_by : This option serves to indicate that a new option is used to implement the functionality.
+# parser.add_option(name="-bzmax",
+#                   type_value=None,
+#                   description="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
+#                   deprecated_by="-bmax",
+#                   mandatory=False)
+
+#
 # Usage are available as follow:
 # string_usage = parser.usage.generate()
 #
