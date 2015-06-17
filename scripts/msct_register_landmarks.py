@@ -107,7 +107,7 @@ def minRotation_xy_Transform(params, points_fixed, points_moving):
 
 
 def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='none', show=False):
-    list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
+    list_constraints = [None, 'none', 'rigid', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
     if constraints not in list_constraints:
         raise 'ERROR: the constraints must be one of those: '+', '.join(list_constraints)
 
@@ -119,7 +119,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     translation_array = matrix([0.0, 0.0, 0.0])
 
-    if constraints == 'none' or constraints is None:
+    if constraints == 'rigid' or constraints == 'none' or constraints is None:
         initial_parameters = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         res = minimize(minRigidTransform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6, options={'maxiter': 10000, 'disp': True})
 
