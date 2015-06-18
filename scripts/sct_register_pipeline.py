@@ -164,6 +164,7 @@ class Pipeline(object):
             self.dice_on = []
 
         self.cpu_count = None
+        self.verbose = 1
 
         # generating data
         self.data = self.generate_data_list()   # type: list
@@ -178,7 +179,7 @@ class Pipeline(object):
         # each directory in "path_data" is a subject
         for subject_dir in os.listdir('./'):
             if not os.path.isdir(subject_dir):
-                sct.printv("WARNING : Found a file, data should be organized in folders ...", verbose=1, type="warning")
+                sct.printv("WARNING : Found a file, data should be organized in folders ...", verbose=self.verbose, type="warning")
             else:
                 os.chdir(subject_dir)
 
@@ -224,18 +225,18 @@ class Pipeline(object):
                                 name_t1_seg = file_name
 
                     if name_t1 == '':
-                        sct.printv("WARNING: could not find t1 file in folder" + dir_t1, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t1 file in folder" + dir_t1, verbose=self.verbose, type='warning')
                     if name_landmarks_t1 == '':
                         sct.printv("WARNING: could not find landmarks file in folder" + dir_t1,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if name_t1_ref == '':
                         sct.printv("WARNING: could not find t1 reference segmentation file in folder" + dir_t1,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if not self.seg and name_t1_seg == '':
                         sct.printv("WARNING: could not find t1 segmentation file in folder " + dir_t1,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                 else:
-                    sct.printv('WARNING: no t1 folder', 1, 'warning')
+                    sct.printv('WARNING: no t1 folder', self.verbose, 'warning')
 
                 # T2 data
                 if dir_t2 is not '':
@@ -254,18 +255,18 @@ class Pipeline(object):
                                 name_t2_seg = file_name
 
                     if name_t2 == '':
-                        sct.printv("WARNING: could not find t2 file in folder " + dir_t2, verbose=1, type='warning')
+                        sct.printv("WARNING: could not find t2 file in folder " + dir_t2, verbose=self.verbose, type='warning')
                     if name_landmarks_t2 == '':
                         sct.printv("WARNING: could not find landmarks file in folder " + dir_t2,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if name_t2_ref == '':
                         sct.printv("WARNING: could not find t2 reference segmentation file in folder " + dir_t2,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if not self.seg and name_t2_seg == '':
                         sct.printv("WARNING: could not find t2 segmentation file in folder " + dir_t2,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                 else:
-                    sct.printv('WARNING: no t2 folder', 1, 'warning')
+                    sct.printv('WARNING: no t2 folder', self.verbose, 'warning')
 
                 # T2star data
                 if dir_t2star is not '':
@@ -283,15 +284,15 @@ class Pipeline(object):
 
                     if name_t2star == '':
                         sct.printv("WARNING: could not find t2star file in folder " + dir_t2star,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if name_t2star_ref == '':
                         sct.printv("WARNING: could not find t2star reference segmentation file in folder " + dir_t2star,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                     if not self.seg_t2star and name_t2star_seg == '':
                         sct.printv("WARNING: could not find t2star segmentation file in folder " + dir_t2star,
-                                   verbose=1, type='warning')
+                                   verbose=self.verbose, type='warning')
                 else:
-                    sct.printv('WARNING: no t2star folder', 1, 'warning')
+                    sct.printv('WARNING: no t2star folder', self.verbose, 'warning')
 
                 # creation of a subject for each directory
                 data.append(Subject(subject_dir, dir_t1, name_t1, name_t1_seg, name_t1_ref, name_landmarks_t1,
@@ -308,10 +309,10 @@ class Pipeline(object):
                            '\nT2 landmarks: ........ ' + name_landmarks_t2 +
                            '\nT2star: .............. ' + name_t2star +
                            '\nT2star seg: .......... ' + name_t2star_seg +
-                           '\nT2star ref: .......... ' + name_t2star_ref, 1, "normal")
+                           '\nT2star ref: .......... ' + name_t2star_ref, self.verbose, "normal")
                 os.chdir('..')
         if not data:
-            sct.printv("ERROR : Data should be organized in folders ... ", verbose=1, type="error")
+            sct.printv("ERROR : Data should be organized in folders ... ", verbose=self.verbose, type="error")
 
         return data
 
@@ -360,7 +361,7 @@ class Pipeline(object):
                     cmd = cmd + " -radius " + str(radius)
 
                 sct.printv("\nDoing segmentation on " + subject.dir_name + '/' + path + "/" + name +
-                           " using sct_propseg ...", verbose=1, type="normal")
+                           " using sct_propseg ...", verbose=self.verbose, type="normal")
                 sct.run(cmd)
                 for file_name in os.listdir('./'):
                             if "_seg.nii" in file_name:
@@ -374,7 +375,7 @@ class Pipeline(object):
                     subject.name_t2star_seg = name_seg
                 os.chdir('..')
             else:
-                sct.printv("WARNING: no file to do segmentation on in folder " + path, verbose=1, type='warning')
+                sct.printv("WARNING: no file to do segmentation on in folder " + path, verbose=self.verbose, type='warning')
             os.chdir('..')
 
     def worker_straightening(self, subject):
@@ -393,14 +394,14 @@ class Pipeline(object):
 
         if name is '' or name_seg is '':
             sct.printv(
-                'WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.')
+                'WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.', self.verbose)
             os.chdir('../..')
             return None
         else:
             try:
                 cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg
                 sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
-                                   + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=1, type="normal")
+                                   + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=self.verbose, type="normal")
 
                 from sct_straighten_spinalcord import SpinalCordStraightener
 
@@ -422,7 +423,7 @@ class Pipeline(object):
 
                 sct.printv(cmd_straightening)
                 sc_straight.remove_temp_files = 0
-                # sc_straight.verbose = 2 # for visualization purpose
+                sc_straight.verbose = 0  # for visualization purpose
                 sc_straight.straighten()
 
                 os.chdir('../..')
@@ -431,9 +432,9 @@ class Pipeline(object):
 
             except Exception, e:
                 sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD ON ' + self.t.upper() + ': ',
-                           1, 'warning')
+                           self.verbose, 'warning')
                 print e
-                sct.printv('Continuing program ...', 1, 'warning')
+                sct.printv('Continuing program ...', self.verbose, 'warning')
 
                 os.chdir('../..')
 
@@ -494,26 +495,26 @@ class Pipeline(object):
                     cmd_register = cmd_register + " -p " + str(self.reg_template_params)
 
                 sct.printv("\nDoing registration to template on " + subject.dir_name + '/' + path + '/'
-                           + subject.name_t2 + " using sct_register_to_template ...", verbose=1, type="normal")
+                           + subject.name_t2 + " using sct_register_to_template ...", verbose=self.verbose, type="normal")
                 sct.run(cmd_register)
             except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO' + t.upper() + ' : ',
-                               1, 'warning')
+                               self.verbose, 'warning')
                     print e
-                    sct.printv('Continuing program ...', 1, 'warning')
+                    sct.printv('Continuing program ...', self.verbose, 'warning')
             else:
                 try:
                     # TODO change name of the warping field by a Subject attribute ??
                     cmd_warp = 'sct_warp_template -d ' + name + ' -w warp_template2anat.nii.gz'
 
                     sct.printv("\nWarping Template to T2 on " + subject.dir_name + '/' + path + "/"
-                               + name + " using sct_warp_template ...", verbose=1, type="normal")
+                               + name + " using sct_warp_template ...", verbose=self.verbose, type="normal")
                     sct.run(cmd_warp)
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO ' + t.upper() + ' : ',
-                               1, 'warning')
+                               self.verbose, 'warning')
                     print e
-                    sct.printv('Continuing program ...', 1, 'warning')
+                    sct.printv('Continuing program ...', self.verbose, 'warning')
             os.chdir('../..')
 
     def register_warp_multimodal(self, t, src='template2anat.nii.gz'):
@@ -543,7 +544,7 @@ class Pipeline(object):
 
                     sct.printv("\nDoing multimodal registration of " + src + " to " + subject.dir_name + '/'
                                + subject.dir_t2star + "/" + subject.name_t2star + " using sct_register_multimodal ...",
-                               verbose=1, type="normal")
+                               verbose=self.verbose, type="normal")
                     sct.run(cmd_register)
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO REGISTER TEMPLATE TO T2STAR : ', 1, 'warning')
@@ -560,13 +561,13 @@ class Pipeline(object):
                         cmd_concat = 'sct_concat_transfo -w ' + path_anat + '/warp_template2anat.nii.gz,'\
                                      + multimodal_warp_name + ' -d ' + subject.name_t2star + ' -o ' + total_warp_name
                         sct.printv("\nConcatenate transformations using sct_concat_transfo ...",
-                                   verbose=1, type="normal")
+                                   verbose=self.verbose, type="normal")
                         sct.run(cmd_concat)
                     except Exception, e:
                         sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO CONCATENATE TRANSFORMATIONS : ',
-                                   1, 'warning')
+                                   self.verbose, 'warning')
                         print e
-                        sct.printv('Continuing program ...', 1, 'warning')
+                        sct.printv('Continuing program ...', self.verbose, 'warning')
 
                     else:
                         try:
@@ -575,18 +576,18 @@ class Pipeline(object):
 
                             sct.printv("\nWarping Template to T2star on " + subject.dir_name + "/" + subject.dir_t2star
                                        + "/" + subject.name_t2star + " using sct_warp_template ...",
-                                       verbose=1, type="normal")
+                                       verbose=self.verbose, type="normal")
                             sct.run(cmd_warp)
                         except Exception, e:
                             sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO WARP TEMPLATE TO T2STAR : ',
-                                       1, 'warning')
+                                       self.verbose, 'warning')
                             print e
-                            sct.printv('Continuing program ...', 1, 'warning')
+                            sct.printv('Continuing program ...', self.verbose, 'warning')
                 os.chdir('..')
 
             else:
                 sct.printv('WARNING: no t2star folder, did not apply sct_register_multimodal to subject '
-                           + subject.dir_name, 1, 'warning')
+                           + subject.dir_name, self.verbose, 'warning')
             os.chdir('..')
 
     def compute_dice(self, t, type_res):
@@ -608,7 +609,7 @@ class Pipeline(object):
         else:
             name_res = ''
             sct.printv('WARNING: input type of results to compute dice coefficient on is unrecognized ...',
-                       1, 'warning')
+                       self.verbose, 'warning')
         res_file.write('Dice coefficient for ' + t.upper() + name_res + ' data in file ' + self.path_data + '\n')
         for subject in self.data:
             os.chdir(subject.dir_name)
@@ -637,7 +638,7 @@ class Pipeline(object):
                     os.chdir(path)
                     cmd_dice = 'sct_dice_coefficient ' + res + ' ' + ref
                     sct.printv("\nComputing the dice coefficient for the " + t + " image(s) of subject "
-                               + subject.dir_name + "  ...", verbose=1, type="normal")
+                               + subject.dir_name + "  ...", verbose=self.verbose, type="normal")
                     status, output = sct.run(cmd_dice)
 
                     dice_dictionary[subject.dir_name] = float(output.split(' ')[-1][:-2])
@@ -648,15 +649,15 @@ class Pipeline(object):
                 except Exception, e:
                     sct.printv('WARNING: AN ERROR OCCURRED WHEN TRYING TO COMPUTE DICE BETWEEN ' + subject.dir_name
                                + '/' + t + '/' + ref + ' AND ' + subject.dir_name + '/' + t + '/' + res + ' :',
-                               1, 'warning')
+                               self.verbose, 'warning')
                     print e
-                    sct.printv('Continuing program ...\n', 1, 'warning')
+                    sct.printv('Continuing program ...\n', self.verbose, 'warning')
                 finally:
                     os.chdir('..')
 
             else:
                 sct.printv('WARNING: no reference segmentation for the ' + t + ' image of subject ' + subject.dir_name
-                           + ', did not compute dice.', verbose=1, type='warning')
+                           + ', did not compute dice.', verbose=self.verbose, type='warning')
             os.chdir('..')
         mean_dice = sum_dice / n_subjects
         res_file.write('Mean Dice coefficient : ' + str(mean_dice) + '\n')
@@ -752,14 +753,14 @@ class Pipeline(object):
             from numpy import array, mean, std
             mse_results = array([itm[1] for itm in self.straightening_results])
             max_distance = array([itm[2] for itm in self.straightening_results])
-            print '\n'
-            print self.straightening_results
+            sct.printv('\n', self.verbose)
+            sct.printv(self.straightening_results, self.verbose)
             self.straightening_results_mse = [mean(mse_results), std(mse_results)]
             self.straightening_results_dist_max = [mean(max_distance), std(max_distance)]
-            print 'MSE          = ' + str(self.straightening_results_mse[0]) + ' +- ' + str(
-                self.straightening_results_mse[1])
-            print 'Max distance = ' + str(self.straightening_results_dist_max[0]) + ' +- ' + str(
-                self.straightening_results_dist_max[1])
+            sct.printv('MSE          = ' + str(self.straightening_results_mse[0]) + ' +- ' + str(
+                self.straightening_results_mse[1]), self.verbose)
+            sct.printv('Max distance = ' + str(self.straightening_results_dist_max[0]) + ' +- ' + str(
+                self.straightening_results_dist_max[1]), self.verbose)
 
         # compute dice on other results
         for arg in self.dice_on:
@@ -789,7 +790,7 @@ def check_nii_gz(full_file):
     """
     file_path, file_name, file_ext = sct.extract_fname(full_file)
     if file_ext != '.nii.gz':
-        sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + '...', 1, 'warning')
+        sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + '...', self.verbose, 'warning')
         return False
     else:
         return True
@@ -929,6 +930,13 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="6")
 
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="Verbose. 0: nothing, 1: basic, 2: extended.",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value=1)
+
     arguments = parser.parse(sys.argv[1:])
     input_path_data = arguments["-data"]
     input_t = arguments["-t"]
@@ -945,6 +953,8 @@ if __name__ == "__main__":
                                   'metric=MeanSquares,iter=5'
     input_straightening = False
     input_straightening_params = 'algo=hanning'
+
+    input_verbose = 0
 
     input_dice = False
     input_dice_on = []
@@ -985,8 +995,11 @@ if __name__ == "__main__":
                              dice=input_dice, dice_on=input_dice_on)
     if "-cpu-count" in arguments:
         pipeline_test.cpu_count = arguments["-cpu-count"]
+    if "-v" in arguments:
+        pipeline_test.verbose = int(arguments["-v"])
+        input_verbose = int(arguments["-v"])
     pipeline_test.compute()
 
     elapsed_time = round(time.time() - begin, 2)
 
-    sct.printv('Finished ! \nElapsed time : ' + str(elapsed_time) + ' sec', 1, 'info')
+    sct.printv('Finished ! \nElapsed time : ' + str(elapsed_time) + ' sec', input_verbose, 'info')
