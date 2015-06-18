@@ -76,7 +76,7 @@ def main():
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data)
+    sct.check_file_exist(fname_data, verbose)
     
     # extract names
     fname_data = os.path.abspath(fname_data)
