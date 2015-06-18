@@ -164,7 +164,7 @@ class SpinalCordStraightener(object):
 
         # get path of the toolbox
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        print path_sct
+        sct.printv(path_sct, verbose)
 
         if self.debug == 1:
             print '\n*** WARNING: DEBUG MODE ON ***\n'
@@ -175,16 +175,16 @@ class SpinalCordStraightener(object):
             verbose = 2
 
         # check existence of input files
-        sct.check_file_exist(fname_anat)
-        sct.check_file_exist(fname_centerline)
+        sct.check_file_exist(fname_anat, verbose)
+        sct.check_file_exist(fname_centerline, verbose)
 
         # Display arguments
-        print '\nCheck input arguments...'
-        print '  Input volume ...................... '+fname_anat
-        print '  Centerline ........................ '+fname_centerline
-        print '  Final interpolation ............... '+interpolation_warp
-        print '  Verbose ........................... '+str(verbose)
-        print ''
+        sct.printv('\nCheck input arguments...', verbose)
+        sct.printv('  Input volume ...................... '+fname_anat, verbose)
+        sct.printv('  Centerline ........................ '+fname_centerline, verbose)
+        sct.printv('  Final interpolation ............... '+interpolation_warp, verbose)
+        sct.printv('  Verbose ........................... '+str(verbose), verbose)
+        sct.printv('', verbose)
 
         # Extract path/file/extension
         path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
@@ -195,8 +195,8 @@ class SpinalCordStraightener(object):
         sct.run('mkdir '+path_tmp, verbose)
 
         # copy files into tmp folder
-        sct.run('cp '+fname_anat+' '+path_tmp)
-        sct.run('cp '+fname_centerline+' '+path_tmp)
+        sct.run('cp '+fname_anat+' '+path_tmp, verbose)
+        sct.run('cp '+fname_centerline+' '+path_tmp, verbose)
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -339,7 +339,7 @@ class SpinalCordStraightener(object):
             # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
             #sct.run('fslview ' + fname_centerline_orient)
             sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
-            sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+            sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz', verbose)
 
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
@@ -539,9 +539,9 @@ class SpinalCordStraightener(object):
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
-            print '\nApply transformation to input image...'
+            sct.printv('\nApply transformation to centerline image...', verbose)
             # sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x nn -w tmp.curve2straight.nii.gz')
-            Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn", warp="tmp.curve2straight.nii.gz").apply()
+            Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn", warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             #c = sct.run('sct_crop_image -i tmp.centerline_straight.nii.gz -o tmp.centerline_straight_crop.nii.gz -dim 2 -bzmax')
             from msct_image import Image
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz')
@@ -585,7 +585,7 @@ class SpinalCordStraightener(object):
             sct.printv('\nRemove temporary files...', verbose)
             sct.run('rm -rf '+path_tmp, verbose)
 
-        print '\nDone!\n'
+        sct.printv('\nDone!\n', verbose)
 
         sct.printv('Maximum x-y error = '+str(round(self.max_distance_straightening,2))+' mm', verbose, 'bold')
         sct.printv('Accuracy of straightening (MSE) = '+str(round(self.mse_straightening,2))+' mm', verbose, 'bold')
