@@ -476,7 +476,7 @@ class SpinalCordStraightener(object):
                 #==========================================================================================
                 # This stands to avoid overlapping between landmarks
                 sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
-                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz")
+                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz", verbose=verbose)
                 label_process.remove_label()
 
                 # convert landmarks to INT
@@ -497,7 +497,7 @@ class SpinalCordStraightener(object):
             sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
             label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
                                           fname_output="tmp.landmarks_straight.nii.gz",
-                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz")
+                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
             label_process.remove_label()
 
             # Estimate b-spline transformation curve --> straight
@@ -519,7 +519,8 @@ class SpinalCordStraightener(object):
             # !!! DO NOT USE sct.run HERE BECAUSE isct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
             cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
             sct.printv(cmd, verbose, 'code')
-            commands.getstatusoutput(cmd)
+            sct.run(cmd, self.verbose)
+            #commands.getstatusoutput(cmd)
 
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
@@ -530,7 +531,8 @@ class SpinalCordStraightener(object):
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
             cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             sct.printv(cmd, verbose, 'code')
-            commands.getstatusoutput(cmd)
+            #commands.getstatusoutput(cmd)
+            sct.run(cmd, self.verbose)
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
@@ -544,7 +546,7 @@ class SpinalCordStraightener(object):
             Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn", warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             #c = sct.run('sct_crop_image -i tmp.centerline_straight.nii.gz -o tmp.centerline_straight_crop.nii.gz -dim 2 -bzmax')
             from msct_image import Image
-            file_centerline_straight = Image('tmp.centerline_straight.nii.gz')
+            file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
             mean_coord = []
             for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):

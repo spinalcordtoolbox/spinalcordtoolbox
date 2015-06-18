@@ -84,11 +84,11 @@ class Transform:
 
         # Check file existence
         sct.printv('\nCheck file existence...', verbose)
-        sct.check_file_exist(fname_src)
-        sct.check_file_exist(fname_dest)
+        sct.check_file_exist(fname_src, self.verbose)
+        sct.check_file_exist(fname_dest, self.verbose)
         for i in range(len(fname_warp_list)):
             # check if file exist
-            sct.check_file_exist(fname_warp_list[i])
+            sct.check_file_exist(fname_warp_list[i], self.verbose)
 
         # check if destination file is 3d
         sct.check_if_3d(fname_dest)
