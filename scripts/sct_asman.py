@@ -43,6 +43,7 @@ class Param:
         self.first_reg = False
         self.use_levels = True
         self.weight_beta = 1.2
+        self.res_type = 'binary'
         self.verbose = 1
 
 
@@ -263,13 +264,16 @@ class ModelDictionary:
         :return:
         """
         list_im = [dic_slice.im for dic_slice in self.slices]
+        list_gm_seg = [dic_slice.gm_seg for dic_slice in self.slices]
 
         for dic_slice in self.slices:
             for n_transfo, transfo in enumerate(transfo_to_apply):
                 im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.model_dir+'/', transfo_type=transfo)
+                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.model_dir+'/', transfo_type=transfo)
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
 
             dic_slice.set(im_m=im_m)
+            dic_slice.set(gm_seg_m=gm_seg_m)
             dic_slice.set(im_m_flat=im_m.flatten())
 
         # Delete the directory containing the transformations : They are not needed anymore
@@ -280,7 +284,7 @@ class ModelDictionary:
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
-        model_slices = np.asarray([(dic_slice.im_M, dic_slice.wm_seg_M, dic_slice.level) for dic_slice in self.slices])
+        model_slices = np.asarray([(dic_slice.im_M, dic_slice.wm_seg_M, dic_slice.gm_seg_M, dic_slice.level) for dic_slice in self.slices])
         pickle.dump(model_slices, open(self.param.model_dir + '/dictionary_slices.pkl', 'wb'), protocol=2)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -292,7 +296,7 @@ class ModelDictionary:
 
         model_slices = pickle.load(open(self.param.path_dictionary + '/dictionary_slices.pkl', 'rb'))
 
-        self.slices = [Slice(slice_id=i_slice, level=dic_slice[2], im_m=dic_slice[0], wm_seg_m=dic_slice[1], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices)]  # type: list of slices
+        self.slices = [Slice(slice_id=i_slice, level=dic_slice[3], im_m=dic_slice[0], wm_seg_m=dic_slice[1], gm_seg_m=dic_slice[2], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices)]  # type: list of slices
 
         # number of slices in the data set
         self.J = len([dic_slice.im_M for dic_slice in self.slices])  # type: int
@@ -542,7 +546,7 @@ class Model:
         return np.asarray(kept_slice_index)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def label_fusion(self, target, selected_index):
+    def label_fusion(self, target, selected_index, type='binary'):
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
 
@@ -550,26 +554,34 @@ class Model:
 
         :return res_seg_model_space: Image of the resulting segmentation for the target image (in the model space)
         """
-        segmentation_slices = np.asarray([dic_slice.wm_seg_M for dic_slice in self.dictionary.slices])
+        wm_segmentation_slices = np.asarray([dic_slice.wm_seg_M for dic_slice in self.dictionary.slices])
+        gm_segmentation_slices = np.asarray([dic_slice.gm_seg_M for dic_slice in self.dictionary.slices])
 
-        res_seg_model_space = []
+        res_wm_seg_model_space = []
+        res_gm_seg_model_space = []
 
         if isinstance(selected_index[0], (list, np.ndarray)):
 
             for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
-                slice_seg = compute_majority_vote_mean_seg(segmentation_slices[selected_ind_by_slice])
-                res_seg_model_space.append(slice_seg)
-                target[i].set(wm_seg_m=slice_seg)
+                wm_slice_seg = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_ind_by_slice], type=type, threshold=0.50001)
+                res_wm_seg_model_space.append(wm_slice_seg)
+                target[i].set(wm_seg_m=wm_slice_seg)
+
+                gm_slice_seg = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_ind_by_slice], type=type)  # , threshold=0.4999)
+                res_gm_seg_model_space.append(gm_slice_seg)
+                target[i].set(gm_seg_m=gm_slice_seg)
 
         else:
-            res_seg_model_space = compute_majority_vote_mean_seg(segmentation_slices[selected_index])
+            res_wm_seg_model_space = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_index], type=type, threshold=0.50001)
+            res_gm_seg_model_space = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_index], type=type)  # , threshold=0.4999)
 
-        res_seg_model_space = np.asarray(res_seg_model_space)
+        res_wm_seg_model_space = np.asarray(res_wm_seg_model_space)
+        res_gm_seg_model_space = np.asarray(res_gm_seg_model_space)
 
-        return Image(param=res_seg_model_space)
+        return Image(param=res_wm_seg_model_space), Image(param=res_gm_seg_model_space)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def sc_label_fusion(self, target, selected_index):
+    def sc_label_fusion(self, target, selected_index, type='binary'):
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
 
@@ -580,7 +592,7 @@ class Model:
         sc_slices = np.asarray([(dic_slice.im_M > 200).astype(int) for dic_slice in self.dictionary.slices])
 
         for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
-            slice_sc_seg = compute_majority_vote_mean_seg(sc_slices[selected_ind_by_slice])
+            slice_sc_seg = compute_majority_vote_mean_seg(sc_slices[selected_ind_by_slice], type=type)
             target[i].set(sc_seg=slice_sc_seg)
 
 
@@ -654,8 +666,8 @@ class TargetSegmentationPairwise:
 
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
         # self.target_GM_seg_M = self.label_fusion(self.selected_k_slices)
-        self.model.label_fusion(self.target, self.selected_k_slices)
-        self.model.sc_label_fusion(self.target, self.selected_k_slices)
+        self.model.label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
+        self.model.sc_label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
 
         sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
                    model.param.verbose, 'normal')
@@ -726,16 +738,23 @@ class TargetSegmentationPairwise:
         else:
             # Inverse registration result in model space --> target original space
             for i, target_slice in enumerate(self.target):
-                moving_seg_slice = target_slice.wm_seg_M
+                moving_wm_seg_slice = target_slice.wm_seg_M
+                moving_gm_seg_slice = target_slice.gm_seg_M
                 moving_sc_seg_slice = target_slice.sc_seg
 
                 # for transfo in self.model.dictionary.coregistration_transfos:
                 for transfo in target_slice.reg_to_M:
                     # transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
-                    moving_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
-                    moving_sc_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_sc_seg_slice, search_reg=False, binary=True, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    if self.model.param.res_type == 'binary':
+                        bin = True
+                    else:
+                        bin = False
+                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    moving_sc_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_sc_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
 
-                target_slice.set(wm_seg=moving_seg_slice)
+                target_slice.set(wm_seg=moving_wm_seg_slice)
+                target_slice.set(gm_seg=moving_gm_seg_slice)
                 target_slice.set(sc_seg=moving_sc_seg_slice)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -1168,7 +1187,7 @@ sct_Image
             self.target_seg_methods = TargetSegmentationGroupwise(self.model, target_image=self.target_image)
 
         suffix = '_'
-        suffix += gm_seg_param.target_reg
+        suffix += gm_seg_param.target_reg + '_' + gm_seg_param.res_type
         for transfo in self.model.dictionary.coregistration_transfos:
             suffix += '_' + transfo
         if level_im is not None:
@@ -1180,20 +1199,28 @@ sct_Image
         # self.res_GM_seg = self.target_seg_methods.target_GM_seg
         if len(self.target_seg_methods.target) == 1:
             self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg))
+            self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg))
             self.res_sc_seg = Image(param=np.asarray(self.target_seg_methods.target[0].sc_seg))
         else:
             self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]))
+            self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target]))
             self.res_sc_seg = Image(param=np.asarray([target_slice.sc_seg for target_slice in self.target_seg_methods.target]))
 
-        name_res = sct.extract_fname(target_fname)[1] + '_res_wmseg' + suffix  # TODO: remove suffix
-        self.res_wm_seg.file_name = name_res
+        name_res_wmseg = sct.extract_fname(target_fname)[1] + '_res_wmseg' + suffix  # TODO: remove suffix
+        self.res_wm_seg.file_name = name_res_wmseg
         self.res_wm_seg.ext = '.nii.gz'
         self.res_wm_seg.hdr = original_hdr
         self.res_wm_seg.save()
 
         # self.res_gm_seg = inverse_wmseg_to_gmseg(self.res_wm_seg, self.res_sc_seg, name_res, original_hdr)
 
-        # self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res, original_hdr)
+        name_res_gmseg = sct.extract_fname(target_fname)[1] + '_res_gmseg' + suffix  # TODO: remove suffix
+        self.res_gm_seg.file_name = name_res_gmseg
+        self.res_gm_seg.ext = '.nii.gz'
+        self.res_gm_seg.hdr = original_hdr
+        self.res_gm_seg.save()
+
+        self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res_wmseg, original_hdr)
 
     def show(self):
 
@@ -1284,12 +1311,18 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-res-type",
+                          type_value='multiple_choice',
+                          description="Type of result segmentation : binary or probabilistic",
+                          mandatory=False,
+                          default_value='binary',
+                          example=['binary', 'prob'])
         parser.add_option(name="-v",
-                          type_value="int",
+                          type_value='multiple_choice',
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
                           mandatory=False,
                           default_value=0,
-                          example='1')
+                          example=['0', '1', '2'])
 
         arguments = parser.parse(sys.argv[1:])
         param.path_dictionary = arguments["-dic"]
@@ -1309,6 +1342,8 @@ if __name__ == "__main__":
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
+        if "-res-type" in arguments:
+            param.res_type = arguments["-res-type"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
