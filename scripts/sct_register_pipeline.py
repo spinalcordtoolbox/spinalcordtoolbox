@@ -212,16 +212,16 @@ class Pipeline(object):
                 # T1 data
                 if dir_t1 is not '':
                     for file_name in os.listdir(dir_t1):
-                        if "t1.nii" in file_name.lower() and check_nii_gz(file_name) and 'warp' not in file_name:
+                        if "t1.nii" in file_name.lower() and check_nii_gz(file_name, self.verbose) and 'warp' not in file_name:
                             name_t1 = file_name
-                        if "landmark" in file_name.lower() and check_nii_gz(file_name):
+                        if "landmark" in file_name.lower() and check_nii_gz(file_name, self.verbose):
                             name_landmarks_t1 = file_name
                         if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
                                 or 'ref' in file_name.lower():
-                            if check_nii_gz(file_name):
+                            if check_nii_gz(file_name, self.verbose):
                                 name_t1_ref = file_name
                         elif not self.seg:
-                            if "seg" in file_name.lower() and check_nii_gz(file_name):
+                            if "seg" in file_name.lower() and check_nii_gz(file_name, self.verbose):
                                 name_t1_seg = file_name
 
                     if name_t1 == '':
@@ -241,17 +241,17 @@ class Pipeline(object):
                 # T2 data
                 if dir_t2 is not '':
                     for file_name in os.listdir(dir_t2):
-                        if "t2.nii" in file_name.lower() and check_nii_gz(file_name) and 'warp' not in file_name:
+                        if "t2.nii" in file_name.lower() and check_nii_gz(file_name, self.verbose) and 'warp' not in file_name:
                             name_t2 = file_name
-                        if "landmark" in file_name.lower() and check_nii_gz(file_name):
+                        if "landmark" in file_name.lower() and check_nii_gz(file_name, self.verbose):
                             name_landmarks_t2 = file_name
                         if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
                                 or 'ref' in file_name.lower():
-                            if check_nii_gz(file_name):
+                            if check_nii_gz(file_name, self.verbose):
                                 name_t2_ref = file_name
                         elif not self.seg:
                             if "seg" in file_name.lower() and 'mask' not in file_name and 'warp' not in file_name \
-                                    and check_nii_gz(file_name):
+                                    and check_nii_gz(file_name, self.verbose):
                                 name_t2_seg = file_name
 
                     if name_t2 == '':
@@ -271,15 +271,15 @@ class Pipeline(object):
                 # T2star data
                 if dir_t2star is not '':
                     for file_name in os.listdir(dir_t2star):
-                        if 't2star.nii' in file_name and check_nii_gz(file_name) and 'warp' not in file_name:
+                        if 't2star.nii' in file_name and check_nii_gz(file_name, self.verbose) and 'warp' not in file_name:
                             name_t2star = file_name
                         if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
                                 or 'ref' in file_name.lower():
-                            if check_nii_gz(file_name):
+                            if check_nii_gz(file_name, self.verbose):
                                 name_t2star_ref = file_name
                         elif not self.seg_t2star:
                             if "seg" in file_name.lower() and 'mask' not in file_name and 'seg_in' not in file_name\
-                                    and 'warp' not in file_name and check_nii_gz(file_name):
+                                    and 'warp' not in file_name and check_nii_gz(file_name, self.verbose):
                                 name_t2star_seg = file_name
 
                     if name_t2star == '':
@@ -782,7 +782,7 @@ def yes_no(bool_param):
         return 'NO'
 
 
-def check_nii_gz(full_file):
+def check_nii_gz(full_file, verbose=1):
     """
     Check if file extension is .nii.gz, if yes, return True, else, print a warning message and return False
     :param full_file:
@@ -790,7 +790,7 @@ def check_nii_gz(full_file):
     """
     file_path, file_name, file_ext = sct.extract_fname(full_file)
     if file_ext != '.nii.gz':
-        sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + '...', self.verbose, 'warning')
+        sct.printv('WARNING: File ' + file_name + ' should be .nii.gz instead of ' + file_ext + '...', verbose, 'warning')
         return False
     else:
         return True
