@@ -139,7 +139,7 @@ class Pipeline(object):
     # The constructor
     def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
-                 straightening=False, straightening_params=None, dice=False, dice_on=None):
+                 straightening=False, straightening_params=None, dice=False, dice_on=None, verbose=1):
         self.path_data = path_data  # type: folder
         self.old_dir = os.getcwd()
         os.chdir(self.path_data)
@@ -164,7 +164,7 @@ class Pipeline(object):
             self.dice_on = []
 
         self.cpu_count = None
-        self.verbose = 1
+        self.verbose = verbose
 
         # generating data
         self.data = self.generate_data_list()   # type: list
@@ -186,9 +186,10 @@ class Pipeline(object):
                 dir_t1 = ''
                 dir_t2 = ''
                 dir_t2star = ''
-                print "\n\n---------------------------------------------------------------------------"
-                print "SUBJECT : ", subject_dir
-                print "---> containing : ", os.listdir('./')
+                sct.printv("\n\n---------------------------------------------------------------------------", self.verbose)
+                sct.printv("SUBJECT : " + subject_dir, self.verbose)
+                sct.printv("---> containing : ", self.verbose)
+                sct.printv(os.listdir('./'), self.verbose)
                 for directory in os.listdir('./'):
                     if 't1' in directory.lower():
                         dir_t1 = directory
@@ -421,7 +422,7 @@ class Pipeline(object):
                     if "algo_landmark_rigid" in dict_params_straightening:
                         sc_straight.algo_landmark_rigid = str(dict_params_straightening["algo_landmark_rigid"])
 
-                sct.printv(cmd_straightening)
+                sct.printv(cmd_straightening, self.verbose)
                 sc_straight.remove_temp_files = 0
                 sc_straight.verbose = 0  # for visualization purpose
                 sc_straight.straighten()

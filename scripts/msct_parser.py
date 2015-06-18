@@ -144,25 +144,25 @@ class Option:
             sct.printv("WARNING : Option "+str(self.type_value)+" does not exist and will have no effect on the execution of the script", "warining")
             sct.printv("Type -h to see supported options", "warning")
 
-    def checkStandardType(self,param,type=None):
+    def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
         type_option = self.type_value
         if type is not None:
             type_option = type
         try:
-            return self.__safe_cast__(param,eval(type_option))
+            return self.__safe_cast__(param, eval(type_option))
         except ValueError:
             self.parser.usage.error("ERROR: Option "+self.name+" must be "+type_option)
 
-    def checkFile(self,param):
+    def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...")
-        sct.check_file_exist(param,1)
+        sct.check_file_exist(param, 0)
         return param
 
     def checkIfNifti(self, param):
         import os
-        sct.printv("Check file existence...")
+        sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
         param_tmp = str()
@@ -187,20 +187,20 @@ class Option:
             return param_tmp+'.nii.gz'
 
 
-    def checkFolder(self,param):
+    def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
-        sct.check_folder_exist(param,1)
+        sct.check_folder_exist(param, 0)
         return param
 
-    def checkFolderCreation(self,param):
+    def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
         result_creation = sct.create_folder(param)
         if result_creation == 2:
-            sct.printv("ERROR: Permission denied for folder creation...",type="error")
+            sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
-            sct.printv("Folder "+param+" has been created.",type='warning')
+            sct.printv("Folder "+param+" has been created.", 0, type='warning')
         return param
 
 

@@ -54,7 +54,6 @@ class Image(object):
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = extract_fname(absolutepath)
         else:
-
             raise TypeError(' Image constructor takes at least one argument.')
 
         """
@@ -93,7 +92,7 @@ class Image(object):
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
-            printv('Error: make sure ' + path + ' is an image.')
+            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
