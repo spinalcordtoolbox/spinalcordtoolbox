@@ -94,7 +94,14 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
         sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s RPI')
         res_name = sct.extract_fname(target_fname)[1] + res_im.file_name[len(pretreat.treated_target[:-7]):] + '.nii.gz'
 
-        old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=pretreat.original_px, npy=pretreat.original_py, binary=True)
+        if param.res_type == 'binary':
+            bin = True
+        else:
+            bin = False
+        old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=pretreat.original_px, npy=pretreat.original_py, binary=bin)
+
+        if param.res_type == 'prob':
+            sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
 
         sct.run('cp ' + old_res_name + ' ../' + res_name)
 
@@ -103,7 +110,13 @@ def main(target_fname, sc_seg_fname, t2_data, level_fname, param=None):
     os.chdir('..')
     after = time.time()
     sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
-    sct.printv('fslview ' + target_fname + ' ' + res_names[0] + ' -l Red -t 0.4 ' + res_names[1] + ' -l Blue -t 0.4 &', param.verbose, 'info')
+    if param.res_type == 'binary':
+        wm_col = 'Red'
+        gm_col = 'Blue'
+    else:
+        wm_col = 'Blue-Lightblue'
+        gm_col = 'Red-Yellow'
+    sct.printv('fslview ' + target_fname + ' ' + res_names[0] + ' -l ' + wm_col + ' -t 0.4 ' + res_names[1] + ' -l ' + gm_col + ' -t 0.4 &', param.verbose, 'info')
 
 
 
@@ -161,6 +174,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-res-type",
+                          type_value='multiple_choice',
+                          description="Type of result segmentation : binary or probabilistic",
+                          mandatory=False,
+                          default_value='binary',
+                          example=['binary', 'prob'])
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -180,6 +199,8 @@ if __name__ == "__main__":
             input_level_fname = arguments["-l"]
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
+        if "-res-type" in arguments:
+            param.res_type = arguments["-res-type"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
