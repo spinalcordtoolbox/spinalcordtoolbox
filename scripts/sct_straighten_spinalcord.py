@@ -135,8 +135,10 @@ class SpinalCordStraightener(object):
         self.window_length = window_length
         self.crop = crop
 
-        self.use_python_implementation = False
-        self.rigid_python_algo = 'translation'
+        self.bspline_meshsize = '5x5x10'
+        self.bspline_numberOfLevels = '3'
+        self.bspline_order = '2'
+        self.algo_landmark_rigid = None
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -162,7 +164,7 @@ class SpinalCordStraightener(object):
 
         # get path of the toolbox
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-        print path_sct
+        sct.printv(path_sct, verbose)
 
         if self.debug == 1:
             print '\n*** WARNING: DEBUG MODE ON ***\n'
@@ -173,16 +175,16 @@ class SpinalCordStraightener(object):
             verbose = 2
 
         # check existence of input files
-        sct.check_file_exist(fname_anat)
-        sct.check_file_exist(fname_centerline)
+        sct.check_file_exist(fname_anat, verbose)
+        sct.check_file_exist(fname_centerline, verbose)
 
         # Display arguments
-        print '\nCheck input arguments...'
-        print '  Input volume ...................... '+fname_anat
-        print '  Centerline ........................ '+fname_centerline
-        print '  Final interpolation ............... '+interpolation_warp
-        print '  Verbose ........................... '+str(verbose)
-        print ''
+        sct.printv('\nCheck input arguments...', verbose)
+        sct.printv('  Input volume ...................... '+fname_anat, verbose)
+        sct.printv('  Centerline ........................ '+fname_centerline, verbose)
+        sct.printv('  Final interpolation ............... '+interpolation_warp, verbose)
+        sct.printv('  Verbose ........................... '+str(verbose), verbose)
+        sct.printv('', verbose)
 
         # Extract path/file/extension
         path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
@@ -193,8 +195,8 @@ class SpinalCordStraightener(object):
         sct.run('mkdir '+path_tmp, verbose)
 
         # copy files into tmp folder
-        sct.run('cp '+fname_anat+' '+path_tmp)
-        sct.run('cp '+fname_centerline+' '+path_tmp)
+        sct.run('cp '+fname_anat+' '+path_tmp, verbose)
+        sct.run('cp '+fname_centerline+' '+path_tmp, verbose)
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -337,7 +339,7 @@ class SpinalCordStraightener(object):
             # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
             #sct.run('fslview ' + fname_centerline_orient)
             sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
-            sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
+            sct.run('isct_c3d '+fname_centerline_orient+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz', verbose)
 
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
@@ -345,7 +347,7 @@ class SpinalCordStraightener(object):
             data = file.get_data()
             hdr = file.get_header()
 
-            if self.use_python_implementation:
+            if self.algo_landmark_rigid is not None:
                 # Reorganize landmarks
                 points_fixed, points_moving = [], []
                 for index in range(0, n_iz_curved, 1):
@@ -359,10 +361,10 @@ class SpinalCordStraightener(object):
                                               landmark_curved[index][i_element][2]])
 
                 # Register curved landmarks on straight landmarks based on python implementation
-                sct.printv('\nComputing rigid transformation (algo='+self.rigid_python_algo+') ...', verbose)
+                sct.printv('\nComputing rigid transformation (algo='+self.algo_landmark_rigid+') ...', verbose)
                 import msct_register_landmarks
                 (rotation_matrix, translation_array, points_moving_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(
-                    points_fixed, points_moving, constraints=self.rigid_python_algo, show=False)
+                    points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=False)
 
                 # reorganize registered points
                 landmark_curved_rigid = [[[0 for i in range(0, 3)] for i in range(0, 5)] for i in iz_curved]
@@ -474,7 +476,7 @@ class SpinalCordStraightener(object):
                 #==========================================================================================
                 # This stands to avoid overlapping between landmarks
                 sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
-                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz")
+                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz", fname_output="tmp.landmarks_straight.nii.gz", fname_ref="tmp.landmarks_curved.nii.gz", verbose=verbose)
                 label_process.remove_label()
 
                 # convert landmarks to INT
@@ -495,12 +497,12 @@ class SpinalCordStraightener(object):
             sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
             label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
                                           fname_output="tmp.landmarks_straight.nii.gz",
-                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz")
+                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
             label_process.remove_label()
 
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz 5x5x10 3 2 0', verbose)
+            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
             # remove padding for straight labels
             if crop == 1:
@@ -517,18 +519,20 @@ class SpinalCordStraightener(object):
             # !!! DO NOT USE sct.run HERE BECAUSE isct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
             cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
             sct.printv(cmd, verbose, 'code')
-            commands.getstatusoutput(cmd)
+            sct.run(cmd, self.verbose)
+            #commands.getstatusoutput(cmd)
 
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
             sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz 5x5x10 3 2 0', verbose)
+            sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
             cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
             sct.printv(cmd, verbose, 'code')
-            commands.getstatusoutput(cmd)
+            #commands.getstatusoutput(cmd)
+            sct.run(cmd, self.verbose)
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
@@ -537,12 +541,12 @@ class SpinalCordStraightener(object):
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
-            print '\nApply transformation to input image...'
+            sct.printv('\nApply transformation to centerline image...', verbose)
             # sct.run('sct_apply_transfo -i '+fname_centerline_orient+' -o tmp.centerline_straight.nii.gz -d tmp.landmarks_straight_crop.nii.gz -x nn -w tmp.curve2straight.nii.gz')
-            Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn", warp="tmp.curve2straight.nii.gz").apply()
+            Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn", warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             #c = sct.run('sct_crop_image -i tmp.centerline_straight.nii.gz -o tmp.centerline_straight_crop.nii.gz -dim 2 -bzmax')
             from msct_image import Image
-            file_centerline_straight = Image('tmp.centerline_straight.nii.gz')
+            file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
             mean_coord = []
             for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
@@ -583,7 +587,7 @@ class SpinalCordStraightener(object):
             sct.printv('\nRemove temporary files...', verbose)
             sct.run('rm -rf '+path_tmp, verbose)
 
-        print '\nDone!\n'
+        sct.printv('\nDone!\n', verbose)
 
         sct.printv('Maximum x-y error = '+str(round(self.max_distance_straightening,2))+' mm', verbose, 'bold')
         sct.printv('Accuracy of straightening (MSE) = '+str(round(self.mse_straightening,2))+' mm', verbose, 'bold')
@@ -653,14 +657,11 @@ if __name__ == "__main__":
                       example=['0', '1', '2'],
                       default_value=1)
 
-    parser.add_option(name="-rigid-python",
-                      type_value=None,
-                      description="Use of python implementation of rigid transformation",
-                      mandatory=False)
-    parser.add_option(name="-rigid-python-algo",
-                      type_value="str",
-                      description="Transformation model for python-based rigid transformation: {xy, translation, translation-xy, rotation, rotation-xy}",
-                      mandatory=False)
+    parser.add_option(name="-params",
+                      type_value=[[':'], 'str'],
+                      description="""Parameters for spinal cord straightening. Separate arguments with ",".\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. Default=5x5x10\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. Default=3\nbspline_order: <int> Order of BSpline for interpolation. Default=2\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} constraints on landmark-based rigid pre-registration""",
+                      mandatory=False,
+                      example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -686,9 +687,20 @@ if __name__ == "__main__":
     if "-v" in arguments:
         sc_straight.verbose = int(arguments["-v"])
 
-    if "-rigid-python" in arguments:
-        sc_straight.use_python_implementation = True
-    if "-rigid-python-algo" in arguments:
-        sc_straight.rigid_python_algo = str(arguments["-rigid-python-algo"])
+    if "-params" in arguments:
+        params_user = str(arguments['-params'])
+        # update registration parameters
+        for param in params_user:
+            param_split = param.split('=')
+            if param_split[0] == 'algo_fitting':
+                sc_straight.algo_fitting = param_split[1]
+            elif param_split[0] == 'bspline_meshsize':
+                sc_straight.bspline_meshsize = param_split[1]
+            elif param_split[0] == 'bspline_numberOfLevels':
+                sc_straight.bspline_numberOfLevels = param_split[1]
+            elif param_split[0] == 'bspline_order':
+                sc_straight.bspline_order = param_split[1]
+            elif param_split[0] == 'algo_landmark_rigid':
+                sc_straight.algo_landmark_rigid = param_split[1]
 
     sc_straight.straighten()
