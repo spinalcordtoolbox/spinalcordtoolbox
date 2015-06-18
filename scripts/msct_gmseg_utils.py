@@ -321,7 +321,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
                     sct.run('cp ../' + path + transfo_dir + '/' + transfo_name + '_inversed' + ' ./' + inverse_mat_name,
                             verbose=verbose)
 
-            if binary:
+            if binary or moving_im.max() == 1 or fixed_im.max() == 1:
                 apply_transfo_interpolation = 'NearestNeighbor'
             else:
                 apply_transfo_interpolation = 'BSpline'
@@ -697,7 +697,7 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5):
+def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, type='binary'):
     """
     Compute the mean segmentation image for a given segmentation data set seg_data_set by Majority Vote
 
@@ -706,8 +706,10 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5):
     :param threshold: threshold to select the value of a pixel
     :return:
     """
-    return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set)) >= threshold).astype(int)
-
+    if type == 'binary':
+        return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set)) >= threshold).astype(int)
+    else:
+        return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set))).astype(float)
 
 # ------------------------------------------------------------------------------------------------------------------
 def get_key_from_val(dic, val):
@@ -1047,10 +1049,8 @@ def save_by_slice(dic_dir):
 
     for subject_dir in os.listdir(dic_dir):
         subject_path = dic_dir + '/' + subject_dir
-        print os.path.isdir(subject_path)
         if os.path.isdir(subject_path):
             sct.run('mkdir ' + dic_by_slice_dir + subject_dir)
-            print 'coucou'
             # getting the level file
             path_file_levels = None
             label_by_slice = {}
@@ -1067,8 +1067,7 @@ def save_by_slice(dic_dir):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
                     sct.run('sct_orientation -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -s IRP')
                 path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level_IRP.nii.gz'
-
-            if path_file_levels is not None:
+            elif path_file_levels is not None:
                 im_levels = Image(path_file_levels)
                 nz_coord = im_levels.getNonZeroCoordinates()
                 for i_level_slice, level_slice in enumerate(im_levels.data):
@@ -1081,11 +1080,12 @@ def save_by_slice(dic_dir):
                     except ZeroDivisionError:
                         sct.printv('No level label for slice ' + str(i_level_slice) + ' of subject ' + subject_dir)
                         label_by_slice[i_level_slice] = 0
-                print 'label_by_slice', label_by_slice
 
             for file_name in os.listdir(subject_path):
                 if 'seg_in' in file_name and 'croped' in file_name:
                     im = Image(subject_path + '/' + file_name)
+                    im_zooms = im.hdr.get_zooms()
+                    slice_zoom = (im_zooms[1], im_zooms[2], im_zooms[0])
                     if path_file_levels is None:
                         for i_slice, im_slice in enumerate(im.data):
                             if i_slice < 10:
@@ -1093,8 +1093,13 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_im.nii.gz').save()
+                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
+                                  '_slice' + i_slice_str + '_im.nii.gz', hdr=im.hdr)
+
+                            if len(im_slice.hdr.get_zooms()) == 3:
+                                im_slice.hdr.set_zooms(slice_zoom)
+                            im_slice.save()
+
                     else:
                         for i_slice, im_slice in enumerate(im.data):
                             if i_slice < 10:
@@ -1102,11 +1107,17 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz').save()
+                            im_slice = Image(param=im_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_im.nii.gz', hdr=im.hdr)
+
+                            if len(im_slice.hdr.get_zooms()) == 3:
+                                im_slice.hdr.set_zooms(slice_zoom)
+                            im_slice.save()
 
                 if 'manual_gmseg' in file_name and 'croped' in file_name:
                     seg = Image(dic_dir + subject_dir + '/' + file_name)
+                    seg_zooms = seg.hdr.get_zooms()
+                    slice_zoom = (seg_zooms[1], seg_zooms[2], seg_zooms[0])
                     if path_file_levels is None:
                         for i_slice, seg_slice in enumerate(seg.data):
                             if i_slice < 10:
@@ -1114,8 +1125,13 @@ def save_by_slice(dic_dir):
                                 i_slice_str = '0' + i_slice_str
                             else:
                                 i_slice_str = str(i_slice)
-                            Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz').save()
+                            seg_slice = Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_manual_gmseg.nii.gz', hdr=seg.hdr)
+
+                            if len(seg_slice.hdr.get_zooms()) == 3:
+                                seg_slice.hdr.set_zooms(slice_zoom)
+                            seg_slice.save()
+
                     else:
                         for i_slice, seg_slice in enumerate(seg.data):
                             if i_slice < 10:
@@ -1124,8 +1140,12 @@ def save_by_slice(dic_dir):
                             else:
                                 i_slice_str = str(i_slice)
 
-                            Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
-                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_seg.nii.gz').save()
+                            seg_slice = Image(param=seg_slice, absolutepath=dic_by_slice_dir + subject_dir + '/' + subject_dir +
+                                  '_slice' + i_slice_str + '_' + level_label[label_by_slice[i_slice]] + '_seg.nii.gz', hdr=seg.hdr)
+
+                            if len(seg_slice.hdr.get_zooms()) == 3:
+                                seg_slice.hdr.set_zooms(slice_zoom)
+                            seg_slice.save()
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -1283,21 +1303,30 @@ def vanderbilt_treatments(data_path):
             '''
 
             cmd_merge = 'fslmerge -z '
-            im_name = subject_dir + '_im.nii.gz '
+            im_name = subject_dir + '_im.nii.gz'
             cmd_merge_im = cmd_merge + im_name
-            gmseg_name = subject_dir + '_manual_gmseg.nii.gz '
+            gmseg_name = subject_dir + '_manual_gmseg.nii.gz'
             cmd_merge_gm_seg = cmd_merge + gmseg_name
-            scseg_name = subject_dir + '_manual_scseg.nii.gz '
+            scseg_name = subject_dir + '_manual_scseg.nii.gz'
             cmd_merge_sc_seg = cmd_merge + scseg_name
 
             for im_i, gm_i, sc_i in zip(im_list, gm_seg_list, sc_seg_list):
-                cmd_merge_im += im_i + ' '
-                cmd_merge_gm_seg += gm_i + ' '
-                cmd_merge_sc_seg += sc_i + ' '
+                cmd_merge_im += ' ' + im_i
+                cmd_merge_gm_seg += ' ' + gm_i
+                cmd_merge_sc_seg += ' ' + sc_i
 
             sct.run(cmd_merge_im)
             sct.run(cmd_merge_gm_seg)
             sct.run(cmd_merge_sc_seg)
+
+            label_slices = [im_slice.split('_')[-1][2:4] for im_slice in im_list]
+            i_slice_to_level = {0: 6, 1: 6, 2: 6, 3: 6, 4: 6, 5: 5, 6: 5, 7: 5, 8: 5, 9: 5, 10: 4, 11: 4, 12: 4, 13: 4, 14: 4, 15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 2, 22: 2, 23: 2, 24: 2, 25: 1, 26: 1, 27: 1, 28: 1, 29: 1}
+
+            level_dat = np.zeros((mask_im.data.shape[0], mask_im.data.shape[1], len(im_list)))
+            for i, l_slice in enumerate(label_slices):
+                i_slice = int(l_slice) - 1
+                level_dat.T[:][:][i] = i_slice_to_level[i_slice]
+            Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
 
             '''
             # creating a level image
@@ -1307,8 +1336,6 @@ def vanderbilt_treatments(data_path):
                 level_dat.T[:][:][i] = get_key_from_val(level_label, im_i_name[:2].upper())
             Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
             '''
-
-
 
             # resampling
 
@@ -1336,7 +1363,7 @@ def vanderbilt_treatments(data_path):
                     sct.run('mv ' + file_name + ' extracted_data/')
                 elif 'resampled.nii' in file_name:
                     sct.run('mv ' + file_name + ' 3d_resampled_data/')
-                elif 'sl' not in file_name and not os.path.isdir(os.path.abspath('.') + '/' + file_name):
+                elif '_sl' not in file_name and not os.path.isdir(os.path.abspath('.') + '/' + file_name) or 'level' in file_name:
                     sct.run('mv ' + file_name + ' 3d_data/')
                 elif not os.path.isdir(os.path.abspath('.') + '/' + file_name):
                     sct.run('mv ' + file_name + ' original_data/')
@@ -1348,7 +1375,7 @@ def vanderbilt_treatments(data_path):
 # ------------------------------------------------------------------------------------------------------------------
 def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
-    if round(px, 3) != round(npx, 3) or round(py, 3) != round(npy, 3):
+    if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
         name_pad = fname[:-7] + '_pad.nii.gz'
         name_resample = name_pad[:-7] + suffix
         # name_croped = name_resample[:-7] + '_croped.nii.gz'
@@ -1405,6 +1432,17 @@ def dataset_pretreatments(path_to_dataset):
             t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
             scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
             gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+
+            new_names = []
+            for f_name in [t2star, scseg, gmseg]:
+                status, output = sct.run('sct_orientation -i ' + f_name)
+                if output != 'RPI':
+                    status, output = sct.run('sct_orientation -i ' + f_name + ' -s RPI')
+                    new_names.append(output.split(':')[1][1:-1])
+            t2star = new_names[0]
+            scseg = new_names[1]
+            gmseg = new_names[2]
+
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
             sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
