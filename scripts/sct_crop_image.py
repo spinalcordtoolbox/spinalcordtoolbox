@@ -102,7 +102,7 @@ class ImageCropper(object):
         # Run command line
         sct.run(self.cmd, verb)
 
-        self.result = Image(self.output_filename)
+        self.result = Image(self.output_filename, verbose=self.verbose)
 
         # removes the output file created by the script if it is not needed
         if self.rm_output_file:
@@ -110,7 +110,7 @@ class ImageCropper(object):
                 os.remove(self.output_filename)
             except OSError:
                 sct.printv("WARNING : Couldn't remove output file. Either it is opened elsewhere or "
-                           "it doesn't exist.", 0, 'warning')
+                           "it doesn't exist.", self.verbose, 'warning')
         else:
             # Complete message
             sct.printv('\nDone! To view results, type:', self.verbose)
@@ -131,7 +131,7 @@ class ImageCropper(object):
 
         # Check file existence
         sct.printv('\nCheck file existence...', verbose)
-        sct.check_file_exist(fname_data)
+        sct.check_file_exist(fname_data, verbose)
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
