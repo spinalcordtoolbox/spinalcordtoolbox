@@ -33,11 +33,11 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose='1'):
-        self.image_input = Image(fname_label)
+                 coordinates=None, verbose=1):
+        self.image_input = Image(fname_label, verbose=verbose)
 
         if fname_ref is not None:
-            self.image_ref = Image(fname_ref)
+            self.image_ref = Image(fname_ref, verbose=verbose)
 
         self.fname_output = fname_output
         self.cross_radius = cross_radius
@@ -90,7 +90,7 @@ class ProcessLabels(object):
 
 
     def cross(self):
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -136,7 +136,7 @@ class ProcessLabels(object):
         """
         This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
@@ -151,11 +151,11 @@ class ProcessLabels(object):
         This function generate a plan in the reference space for each label present in the input image
         """
 
-        image_output = Image(self.image_ref)
+        image_output = Image(self.image_ref, self.verbose)
         image_output.data *= 0
 
-        image_input_neg = Image(self.image_input).copy()
-        image_input_pos = Image(self.image_input).copy()
+        image_input_neg = Image(self.image_input, self.verbose).copy()
+        image_input_pos = Image(self.image_input, self.verbose).copy()
         image_input_neg.data *=0
         image_input_pos.data *=0
         X, Y, Z = (self.image_input.data< 0).nonzero()
@@ -312,7 +312,7 @@ class ProcessLabels(object):
         Therefore, labels are incremented from top to bottom, assuming a RPI orientation
         Labels are assumed to be non-zero.
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
@@ -329,7 +329,7 @@ class ProcessLabels(object):
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
@@ -349,7 +349,7 @@ class ProcessLabels(object):
         :param side: string 'left' or 'right'. Side that will be copied on the other side.
         :return:
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
 
         image_output[0:]
 
@@ -437,7 +437,7 @@ class ProcessLabels(object):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates()
 
