@@ -506,7 +506,7 @@ class Model:
                 else:
                     beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=None, dataset_coord=coord_dic_slice_dataset, dataset_levels=None, tau=tau)
                 kj = self.select_k_slices(beta_dic_slice)
-                est_segm_j = self.label_fusion(dic_slice, kj)
+                est_segm_j = self.label_fusion(dic_slice, kj)[0]
 
                 sum_norm += l0_norm(dic_slice.wm_seg_M, est_segm_j.data)
 
