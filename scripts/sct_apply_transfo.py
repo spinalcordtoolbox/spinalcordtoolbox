@@ -164,7 +164,7 @@ class Transform:
         warping_field = fname_warp_list_invert[-1]
         # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
         if isLastAffine:
-            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',1,'warning')
+            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',verbose,'warning')
         elif crop_reference == 1:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
