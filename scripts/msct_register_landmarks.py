@@ -16,10 +16,12 @@
 #########################################################################################
 
 from msct_types import Point
-from numpy import array, sin, cos, matrix, sum, mean
+from numpy import array, sin, cos, matrix, sum, mean, absolute
 from math import pow, sqrt
 from operator import itemgetter
-
+from msct_register_regularized import generate_warping_field
+import sct_utils as sct
+from nibabel import load
 
 def getNeighbors(point, set_points, k=1):
     '''
@@ -39,6 +41,33 @@ def getNeighbors(point, set_points, k=1):
 
 def SSE(pointsA, pointsB):
     return sum(array(pointsA[:, 0:3]-pointsB[:, 0:3])**2.0)
+
+
+def Metric_Images(imageA, imageB, type=''):
+
+    data_A_list = load(imageA).get_data().tolist()
+    data_B_list = load(imageB).get_data().tolist()
+
+    # Define both list of intensity
+    list_A = []
+    list_B = []
+    for i in range(len(data_A_list)):
+        list_A = list_A + data_A_list[i]
+        list_B = list_B + data_B_list[i]
+    # Calculate metric depending on the type
+    if type == 'MeanSquares':
+        result_metric = 1.0/(len(list_A)) * sum(array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])**2)
+        #result_metric = 1/(len(list_A)) * sum(array(list_A - list_B)**2)
+
+    if type == 'Correlation':
+        result_metric = 1.0/(len(list_A)) * sum(absolute(array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
+
+    if type == 'MI':
+        print '\nto do: MI'
+
+    # Return results
+    print '\nResult of metric is: '+str(result_metric)
+    return result_metric
 
 
 def minRigidTransform(params, points_fixed, points_moving):
@@ -69,6 +98,21 @@ def minRigid_xy_Transform(params, points_fixed, points_moving):
 
     return SSE(matrix(points_fixed), points_moving_reg)
 
+def minRigid_xy_Transform_for_Images(params, image_fixed, image_moving, center_rotation = None, metric='MeanSquares'):
+    gamma, tx, ty = params[0], params[1], params[2]
+    name_warp = 'warping_field.nii.gz'
+    path, file, ext = sct.extract_fname(image_moving)
+    name_image_moving_reg = file + '_reg' + ext
+
+    # Apply transformation
+    tx_real = 100000*tx
+    ty_real = 100000*ty
+    generate_warping_field(image_fixed, [tx_real], [ty_real], [gamma], center_rotation=center_rotation, fname=name_warp)
+    print'\nApplying a rigid transformation of parameters: angle=' + str(gamma) + 'rad, ' + 'tx=' + str(tx_real) +'pix, ty=' + str(ty_real) + 'pix'
+    sct.run('sct_apply_transfo -i ' + image_moving + ' -d ' + image_fixed + ' -w ' + name_warp + ' -o ' + name_image_moving_reg + ' -x nn')
+
+    # return metric results of the transformation image compared to the fixed image
+    return Metric_Images(image_fixed, name_image_moving_reg, type=metric)
 
 def minTranslation_Transform(params, points_fixed, points_moving):
     return SSE(matrix(points_fixed), matrix(points_moving) + matrix([params[0], params[1], params[2]]))
@@ -104,6 +148,63 @@ def minRotation_xy_Transform(params, points_fixed, points_moving):
     points_moving_reg = (rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter
 
     return SSE(matrix(points_fixed), points_moving_reg)
+
+def minRotation_xy_Transform_for_Images(params, image_fixed, image_moving, center_rotation = None, metric='MeanSquares'):
+    gamma = params[0]
+    name_warp = 'warping_field.nii.gz'
+    path, file, ext = sct.extract_fname(image_moving)
+    name_image_moving_reg = file + '_reg' + ext
+
+    # Apply transformation
+    gamma_list = [gamma]
+    generate_warping_field(image_fixed, [0], [0], gamma_list, center_rotation=center_rotation, fname=name_warp)
+    print'\nApplying a pure rotational warping field of angle ' + str(gamma) + 'rad'
+    sct.run('sct_apply_transfo -i ' + image_moving + ' -d ' + image_fixed + ' -w ' + name_warp + ' -o ' + name_image_moving_reg + ' -x nn')
+
+    # return metric results of the transformation image compared to the fixed image
+    return Metric_Images(image_fixed, name_image_moving_reg, type=metric)
+
+
+def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', metric = 'MeanSquares', center_rotation=None):
+    list_constraints = [None, 'none', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
+    list_center_rotation = [None, 'BarycenterImage']
+    if constraints not in list_constraints:
+        raise 'ERROR: the constraints must be one of those: '+', '.join(list_constraints)
+    if center_rotation not in list_center_rotation:
+        raise 'ERROR: the center_rotation must be one of those: '+', '.join(list_center_rotation)
+
+    from scipy.optimize import minimize
+
+    rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    translation_array = matrix([0.0, 0.0, 0.0])
+    # Get barycenter of the image if specified
+    if center_rotation == 'BarycenterImage':
+        from nibabel import load
+        data_moving = load(image_moving).get_data()
+
+
+    if constraints == 'rotation-xy':
+        initial_parameters = [-0.4]
+        res = minimize(minRotation_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, metric), method='Nelder-Mead', tol=1e-2,
+                       options={'maxiter': 100, 'disp': True})
+
+        gamma = res.x[0]
+        rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
+                                  [sin(gamma), cos(gamma), 0],
+                                  [0, 0, 1]])
+
+    elif constraints == 'xy':
+        initial_parameters = [-0.4, 0.0, 0.0]
+        res = minimize(minRigid_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, center_rotation, metric), method='Nelder-Mead', tol=1e-2,
+                       options={'maxiter': 100, 'disp': True})
+
+        gamma, tx, ty = res.x[0], res.x[1], res.x[2]
+        rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
+                                  [sin(gamma), cos(gamma), 0],
+                                  [0, 0, 1]])
+        translation_array = matrix([tx, ty, 0])
+
+    return rotation_matrix, translation_array
 
 
 def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='none', show=False):
