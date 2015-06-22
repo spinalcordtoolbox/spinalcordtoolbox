@@ -269,7 +269,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
         transfo_dir = transfo_type.lower() + '_transformations'
         if transfo_dir not in os.listdir(path):
             sct.run('mkdir ' + path + transfo_dir)
-        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S")
+        dir_name = 'tmp_reg_' + time.strftime("%y%m%d%H%M%S") + '_' + str(time.time())
         sct.run('mkdir ' + dir_name, verbose=verbose)
         os.chdir('./' + dir_name)
 
@@ -679,19 +679,22 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg):
     res_wm_seg_im.hdr = original_hdr
     res_wm_seg_im.save()
 
-    return res_wm_seg
+    return res_wm_seg_im
 
 
 # ------------------------------------------------------------------------------------------------------------------
 def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     wmseg_dat = (original_im.data > 0).astype(int) - res_gmseg.data
 
-    corrected_wm_seg = Image(param=(wmseg_dat > 0).astype(int))
+    # corrected_wm_seg = Image(param=(wmseg_dat > 0).astype(int))
+    corrected_wm_seg = Image(param=wmseg_dat)
 
     corrected_wm_seg.file_name = name_wm_seg + '_corrected'
     corrected_wm_seg.ext = '.nii.gz'
     corrected_wm_seg.hdr = hdr
     corrected_wm_seg.save()
+
+    sct.run('fslmaths ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 ' + corrected_wm_seg.file_name + '.nii.gz')
 
     return corrected_wm_seg
 
@@ -1596,7 +1599,7 @@ def leave_one_out_old(dic_path, reg=None, target_reg='pairwise'):
         time_file.write('\nmean computation time per subject slice: ' + str(time_sum/n_slices) + ' sec')
         time_file.close()
 
-
+'''
 # ------------------------------------------------------------------------------------------------------------------
 def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
     """
@@ -1610,7 +1613,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
     from sct_asman import Model, Param, GMsegSupervisedMethod
     init = time.time()
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
-    # gm_dice_file = open('gm_dice_coeff.txt', 'w')
+    gm_dice_file = open('gm_dice_coeff.txt', 'w')
     n_subject = 0
     n_slices = 0
     e = None
@@ -1637,6 +1640,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                 model_param.todo_model = 'compute'
                 model_param.weight_beta = weight
                 model_param.use_levels = use_levels
+                model_param.res_type = 'prob'
 
                 model = Model(model_param=model_param, k=0.8)
                 # model_dir = 'gm_seg_model_data/'
@@ -1650,15 +1654,15 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                     target = ''
                     ref_gm_seg = ''
                     level = ''
-                    res_wmseg = ''
 
                     if 'im' in file_name:
                         target = subject_dir + '/' + file_name
                         ref_gm_seg = subject_dir + '/' + file_name[:-10] + '_seg.nii.gz'
-                        slice_level = ''
+                        slice_level = None
                         target_slice = ''
 
-                        cmd_segment_gm = 'sct_asman.py -i ' + target + ' -model load -dic ' + model.param.model_dir + ' -weight ' + str(weight)
+                        # cmd_segment_gm = 'sct_asman.py -i ' + target + ' -model load -dic ' + model.param.model_dir + ' -weight ' + str(weight)
+
 
                         name_list = file_name.split('_')
                         for word in name_list:
@@ -1666,17 +1670,17 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                                 slice_level = word.upper()
                             elif 'slice' in word:
                                 target_slice = word
-                        if use_levels:
-                            cmd_segment_gm += ' -l ' + slice_level
 
-                        sct.run(cmd_segment_gm)
+                        # sct.run(cmd_segment_gm)
+                        gm_seg_param = Param()
+                        gm_seg_param.path_dictionary = model.param.model_dir
+                        gm_seg_param.todo_model = 'load'
+                        gm_seg_param.weight_beta = weight
+                        gm_seg_param.use_levels = use_levels
+                        gm_seg_param.res_type = 'prob'
 
-                        if use_levels:
-                            res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels.nii.gz'
-                            # res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_with_levels_inv_to_gm.nii.gz'
-                        else:
-                            res_wmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels.nii.gz'
-                            # res_gmseg = file_name[:-7] + '_res_wmseg_pairwise_Affine_no_levels_inv_to_gm.nii.gz'
+                        gm_seg_method = GMsegSupervisedMethod(target, slice_level, model, gm_seg_param=gm_seg_param)
+
 
                         # Validation
                         ref_gm_seg_im = Image(ref_gm_seg)
@@ -1687,26 +1691,38 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
                         ref_wm_seg = ref_gm_seg_im.file_name + '_inv_to_wm.nii.gz'
                         ref_wm_seg_im = Image(ref_wm_seg)
 
-                        res_wmseg_im = Image(res_wmseg)
-                        # res_gmseg_im = Image(res_gmseg)
+
+                        res_wmseg_prob_im = gm_seg_method.res_wm_seg  # Image(res_wmseg)
+                        res_gmseg_prob_im = gm_seg_method.res_gm_seg  # Image(res_gmseg)
+
+                        res_wmseg_prob = res_wmseg_prob_im.file_name + res_wmseg_prob_im.ext
+                        res_gmseg_prob = res_gmseg_prob_im.file_name + res_gmseg_prob_im.ext
+
+                        res_wmseg_bin =  res_wmseg_prob_im.file_name + '_binary' + res_wmseg_prob_im.ext
+                        res_gmseg_bin =  res_gmseg_prob_im.file_name + '_binary' + res_gmseg_prob_im.ext
+                        sct.run('fslmaths ' + res_wmseg_prob + ' -thr 0.50001 ' + res_wmseg_bin)
+                        sct.run('fslmaths ' + res_gmseg_prob + ' -thr 0.50001 ' + res_gmseg_bin)
+
+                        res_wmseg_bin_im = Image(res_wmseg_bin)
+
 
                         # Dice coefficient
-                        status, wm_dice_output = sct.run('sct_dice_coefficient ' + res_wmseg + ' ' + ref_wm_seg)
+                        status, wm_dice_output = sct.run('sct_dice_coefficient ' + res_wmseg_bin + ' ' + ref_wm_seg)
                         wm_dice = wm_dice_output[22:-1]
                         wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
 
-                        '''
-                        status, gm_dice_output = sct.run('sct_dice_coefficient ' + res_gmseg + ' ' + ref_gm_seg)
+
+                        status, gm_dice_output = sct.run('sct_dice_coefficient ' + res_gmseg_bin + ' ' + ref_gm_seg)
                         gm_dice = gm_dice_output[22:-1]
                         gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
-                        '''
+
 
                         # Error map
                         if first:
                             error_map_abs_sum = np.zeros(ref_wm_seg_im.data.shape)
                             first = False
 
-                        error_3d_abs = abs(ref_wm_seg_im.data - res_wmseg_im.data)
+                        error_3d_abs = abs(ref_wm_seg_im.data - res_wmseg_bin_im.data)
 
                         error_map_abs_sum += sum(error_3d_abs)
                         n_slices += 1
@@ -1726,6 +1742,173 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
         # gm_dice_file.close()
 
         Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
+        t = time.time() - init
+        print 'Done in ' + str(t) + ' sec'
+'''
+
+# ------------------------------------------------------------------------------------------------------------------
+def leave_one_out_by_subject(dictionaries, use_levels=True, weight=1.2):
+    """
+    Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
+    and computing the resulting dice coefficient, the time of computation and an error map
+
+    :param dic_path: path to the dictionary to use to do the model validation
+
+    """
+    import time
+    from sct_asman import Model, Param, GMsegSupervisedMethod
+    from sct_segment_graymatter import FullGmSegmentation
+    init = time.time()
+
+    dic_path, dic_3d = dictionaries
+
+    wm_dice_file = open('wm_dice_coeff.txt', 'w')
+    gm_dice_file = open('gm_dice_coeff.txt', 'w')
+    wm_csa_file = open('wm_csa.txt', 'w')
+    gm_csa_file = open('gm_csa.txt', 'w')
+    n_subject = 0
+    n_slices = 0
+    e = None
+    # error_map_abs_sum = None
+    # first = True
+
+    level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+
+    for subject_dir in os.listdir(dic_path):
+        subject_path = dic_path + '/' + subject_dir
+        if os.path.isdir(subject_path):
+            try:
+                tmp_dir = 'tmp_' + subject_dir + '_as_target'
+                sct.run('mkdir ' + tmp_dir)
+
+                tmp_dic_name = 'dic'
+                sct.run('cp -r ' + dic_path + ' ./' + tmp_dir + '/' + tmp_dic_name + '/')
+                sct.run('cp -r ' + dic_3d + '/' + subject_dir +' ./' + tmp_dir + '/' )
+                sct.run('mv ./' + tmp_dir + '/' + tmp_dic_name + '/' + subject_dir + ' ./' + tmp_dir + '/' + subject_dir + '_by_slice')
+
+                # Gray matter segmentation using this subject as target
+                os.chdir(tmp_dir)
+                model_param = Param()
+                model_param.path_dictionary = tmp_dic_name
+                model_param.todo_model = 'compute'
+                model_param.weight_beta = weight
+                model_param.use_levels = use_levels
+                model_param.res_type = 'prob'
+
+                model = Model(model_param=model_param, k=0.8)
+                # model_dir = 'gm_seg_model_data/'
+
+                n_slices_model = model.dictionary.J
+
+                target = ''
+                sc_seg = ''
+                ref_gm_seg = ''
+                level = ''
+                for file_name in os.listdir(subject_dir): # 3d files
+
+                    if 'im' in file_name:
+                        target = subject_dir + '/' + file_name
+                    elif 'level' in file_name:
+                        level = subject_dir + '/' + file_name
+                    elif 'gm' in file_name:
+                        ref_gm_seg = subject_dir + '/' + file_name
+                    elif 'seg' in file_name:
+                        sc_seg = subject_dir + '/' + file_name
+
+                # sct.run('sct_segment_graymatter.py -i ' + target + ' -s ' + sc_seg + ' -l ' + level + ' -ref ' + ref_gm_seg + ' -dic ' + model.param.model_dir + ' -res-type prob')
+
+                full_gmseg = FullGmSegmentation(target, sc_seg, None, level, ref_gm_seg=ref_gm_seg, model=model, param=model_param)
+
+                # ## VALIDATION ##
+                # Dice coeff
+                subject_dice = open(full_gmseg.dice_name, 'r')
+                dice_lines_list = subject_dice.readlines()
+                subject_dice.close()
+
+                gm_dices = None
+                wm_dices = None
+                n_subject_slices = len(full_gmseg.gm_seg.target_seg_methods.target)
+                n_slices += n_subject_slices
+
+                for i,line in enumerate(dice_lines_list):
+                    if 'Gray Matter' in line:
+                        gm_dices = dice_lines_list[i+10:i+10+n_subject_slices]
+
+                    if 'White Matter' in line:
+                        wm_dices = dice_lines_list[i+10:i+10+n_subject_slices]
+
+                subject_slices_levels = {}
+                for slice_dice in wm_dices:
+                    target_slice, wm_dice = slice_dice[:-1].split(' ')
+
+                    if int(target_slice) < 10:
+                        target_slice = 'slice0' + target_slice
+                    else:
+                        target_slice = 'slice' + target_slice
+
+                    slice_level = ''
+                    for file_name in os.listdir('./' + subject_dir + '_by_slice'):
+                        if target_slice in file_name:
+                            slice_level = file_name[file_name.find(target_slice)+8:file_name.find(target_slice)+10]
+                            subject_slices_levels[target_slice] = slice_level
+                    wm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
+
+                for slice_dice in gm_dices:
+                    target_slice, gm_dice = slice_dice[:-1].split(' ')
+
+                    if int(target_slice) < 10:
+                        target_slice = 'slice0' + target_slice
+                    else:
+                        target_slice = 'slice' + target_slice
+                    slice_level = subject_slices_levels[target_slice]
+
+                    gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
+
+                # error map
+                # TODO : error map by level
+
+                sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['corrected_wm_seg'] + ' -p csa')
+                tmp_csa_file = open('csa.txt')
+                csa_lines = tmp_csa_file.readlines()
+                tmp_csa_file.close()
+                for slice_csa in csa_lines:
+                    target_slice, wm_csa = slice_csa.split(',')
+                    if int(target_slice) < 10:
+                        target_slice = 'slice0' + target_slice
+                    else:
+                        target_slice = 'slice' + target_slice
+                    slice_level = subject_slices_levels[target_slice]
+                    wm_csa_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + wm_csa[:-1] + '\n')
+                sct.run('mv csa.txt csa_corrected_wm_seg.txt')
+
+                sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['gm_seg'] + ' -p csa')
+                tmp_csa_file = open('csa.txt')
+                csa_lines = tmp_csa_file.readlines()
+                tmp_csa_file.close()
+                for slice_csa in csa_lines:
+                    target_slice, gm_csa = slice_csa.split(',')
+                    if int(target_slice) < 10:
+                        target_slice = 'slice0' + target_slice
+                    else:
+                        target_slice = 'slice' + target_slice
+                    slice_level = subject_slices_levels[target_slice]
+                    gm_csa_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_csa[:-1] + '\n')
+                sct.run('mv csa.txt csa_gm_seg.txt')
+
+                os.chdir('..')
+
+            except Exception, e:
+                sct.printv('WARNING: an error occurred ...', 1, 'warning')
+                print e
+            # else:
+            #    sct.run('rm -rf ' + tmp_dir)
+    if e is None:
+        wm_dice_file.close()
+        gm_dice_file.close()
+        wm_csa_file.close()
+        gm_csa_file.close()
+
+        # Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
         t = time.time() - init
         print 'Done in ' + str(t) + ' sec'
 
@@ -2084,10 +2267,10 @@ if __name__ == "__main__":
                           mandatory=False,
                           example='dictionary/')
         parser.add_option(name="-loocv",
-                          type_value="folder",
+                          type_value=[[','], 'folder'],# "folder",
                           description="Path to a dictionary folder to do 'Leave One Out Validation' on",
                           mandatory=False,
-                          example='dictionary/')
+                          example='dic_by_slice/,dic_3d/') # 'dictionary/')
         parser.add_option(name="-error-map",
                           type_value="folder",
                           description="Path to a dictionary folder to compute the error map on",
@@ -2124,7 +2307,7 @@ if __name__ == "__main__":
         if "-crop" in arguments:
             crop_t2_star_pipeline(arguments['-crop'])
         if "-loocv" in arguments:
-            leave_one_out_by_slice(arguments['-loocv'])
+            leave_one_out_by_subject(arguments['-loocv'])
         if "-error-map" in arguments:
             compute_error_map(arguments['-error-map'])
         if "-save-dic-by-slice" in arguments:
