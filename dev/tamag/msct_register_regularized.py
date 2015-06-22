@@ -287,6 +287,10 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Make sure image is in rpi format
 
+    print'\nCreating warping field for transformations along z of parameters: ' \
+         '\n\t-Rotation: angle=' + str(theta_rot) + 'rad and of center of rotation: ' + str(center_rotation) + \
+         '\n\t-Translation: ' + str(x_trans) + 'pix along x and ' + str(y_trans) +'pix along y'
+
     file_dest = load(im_dest)
     hdr_file_dest = file_dest.get_header()
     hdr_warp = hdr_file_dest.copy()
@@ -299,8 +303,8 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Center of rotation
     if center_rotation == None:
-        x_a = int(round(nx))#int(round(nx/2))-200
-        y_a = 0#int(round(ny/2))
+        x_a = int(round(nx/2)) # int(round(nx/2))-200
+        y_a = int(round(ny/2)) # 0
     else:
         x_a = center_rotation[0]
         y_a = center_rotation[1]
