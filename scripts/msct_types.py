@@ -36,7 +36,7 @@ class Point(object):
         return not self.__eq__(other)
 
 class Coordinate(Point):
-    def __init__(self, coord=None):
+    def __init__(self, coord=None, mode='index'):
         super(Coordinate, self).__init__()
         if coord is None:
             self.value = 0
@@ -61,7 +61,10 @@ class Coordinate(Point):
             self.value = 0
         # coordinates and value must be digits:
         try:
-            int(self.x), int(self.y), int(self.z), float(self.value)
+            if mode == 'index':
+                int(self.x), int(self.y), int(self.z), float(self.value)
+            else:
+                float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
             raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
