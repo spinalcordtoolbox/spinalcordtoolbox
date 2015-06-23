@@ -446,7 +446,7 @@ class ProcessLabels(object):
             isInRef = False
             for coord_ref in coordinates_ref:
                 # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
-                if abs(coord.value - coord_ref.value) < 0.1:
+                if abs(coord.value - coord_ref.value) < 0.5:
                     image_output.data[coord.x, coord.y, coord.z] = int(round(coord_ref.value))
                     isInRef = True
             if isInRef == False:
