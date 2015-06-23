@@ -109,7 +109,6 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
         from msct_smooth import b_spline_nurbs
         x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = b_spline_nurbs(x_centerline, y_centerline, z_centerline, nbControl=None, verbose=verbose)
 
-
     else:
         sct.printv('ERROR: wrong algorithm for fitting',1,'error')
 
@@ -139,7 +138,7 @@ class SpinalCordStraightener(object):
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '2'
         self.algo_landmark_rigid = None
-        self.all_labels = False
+        self.all_labels = 0
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -262,7 +261,9 @@ class SpinalCordStraightener(object):
                     d = -(a*x + b*y + c*z)
                     #print a,b,c,d,x,y,z
                     # set coordinates for landmark at the center of the cross
-                    landmark_curved.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz], landmark_curved_value], mode='continuous'))
+                    coord = Coordinate([0, 0, 0, landmark_curved_value])
+                    coord.x, coord.y, coord.z = x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz]
+                    landmark_curved.append(coord)
 
                     # set y coordinate to y_centerline_fit[iz] for elements 1 and 2 of the cross
                     cross_coordinates = [Coordinate([0, 0, 0, landmark_curved_value+1]), Coordinate([0, 0, 0, landmark_curved_value+2]), Coordinate([0, 0, 0, landmark_curved_value+3]), Coordinate([0, 0, 0, landmark_curved_value+4])]
@@ -290,24 +291,10 @@ class SpinalCordStraightener(object):
                         landmark_curved.append(coord)
                     landmark_curved_value += 5
                 else:
-                    if self.all_labels:
+                    if self.all_labels == 1:
                         landmark_curved.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz], landmark_curved_value], mode='continuous'))
                         landmark_curved_value += 1
             ### <<==============================================================================================================
-
-            if verbose == 2:
-                from mpl_toolkits.mplot3d import Axes3D
-                import matplotlib.pyplot as plt
-                fig = plt.figure()
-                ax = Axes3D(fig)
-                ax.plot(x_centerline_fit, y_centerline_fit,z_centerline,zdir='z')
-                ax.plot([coord.x for coord in landmark_curved],
-                        [coord.y for coord in landmark_curved],
-                        [coord.z for coord in landmark_curved], '.')
-                ax.set_xlabel('x')
-                ax.set_ylabel('y')
-                ax.set_zlabel('z')
-                plt.show()
 
             # Get coordinates of landmarks along straight centerline
             #==========================================================================================
@@ -356,7 +343,7 @@ class SpinalCordStraightener(object):
                     landmark_straight.append(Coordinate([x0, y0 - gapxy, iz_straight[index], landmark_curved_value+4]))
                     landmark_curved_value += 5
                 else:
-                    if self.all_labels:
+                    if self.all_labels == 1:
                         landmark_straight.append(Coordinate([x0, y0, iz, landmark_curved_value]))
                         landmark_curved_value += 1
 
@@ -374,7 +361,7 @@ class SpinalCordStraightener(object):
             data = file.get_data()
             hdr = file.get_header()
 
-            if self.algo_landmark_rigid is not None:
+            if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None':
                 # Reorganize landmarks
                 points_fixed, points_moving = [], []
                 for coord in landmark_straight:
@@ -392,7 +379,7 @@ class SpinalCordStraightener(object):
                 landmark_curved_rigid = []
                 for index_curved, ind in enumerate(range(0, len(points_moving_reg), 1)):
                     coord = Coordinate()
-                    coord.x, coord.y, coord.z, coord.value = points_moving_reg[ind][0], points_moving_reg[ind][1], points_moving_reg[ind][2], index_curved
+                    coord.x, coord.y, coord.z, coord.value = points_moving_reg[ind][0], points_moving_reg[ind][1], points_moving_reg[ind][2], index_curved+1
                     landmark_curved_rigid.append(coord)
 
                 # Create volumes containing curved and straight landmarks
@@ -516,11 +503,37 @@ class SpinalCordStraightener(object):
                 #sct.run('sct_apply_transfo -i tmp.landmarks_curved.nii.gz -o tmp.landmarks_curved_rigid.nii.gz -d tmp.landmarks_straight.nii.gz -w tmp.curve2straight_rigid.txt -x nn', verbose)
                 Transform(input_filename="tmp.landmarks_curved.nii.gz", source_reg="tmp.landmarks_curved_rigid.nii.gz", output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt", interp="nn", verbose=verbose).apply()
 
+            if verbose == 2:
+                from mpl_toolkits.mplot3d import Axes3D
+                import matplotlib.pyplot as plt
+
+                fig = plt.figure()
+                ax = Axes3D(fig)
+                ax.plot(x_centerline_fit, y_centerline_fit, z_centerline, zdir='z')
+                ax.plot([coord.x for coord in landmark_curved],
+                        [coord.y for coord in landmark_curved],
+                        [coord.z for coord in landmark_curved], '.')
+                ax.plot([coord.x for coord in landmark_straight],
+                        [coord.y for coord in landmark_straight],
+                        [coord.z for coord in landmark_straight], 'r.')
+                if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None':
+                    ax.plot([coord.x for coord in landmark_curved_rigid],
+                            [coord.y for coord in landmark_curved_rigid],
+                            [coord.z for coord in landmark_curved_rigid], 'b.')
+                ax.set_xlabel('x')
+                ax.set_ylabel('y')
+                ax.set_zlabel('z')
+                plt.show()
+
             # This stands to avoid overlapping between landmarks
             sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
             label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
                                           fname_output="tmp.landmarks_straight.nii.gz",
                                           fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
+            label_process.process('remove')
+            label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
+                                          fname_output="tmp.landmarks_curved_rigid.nii.gz",
+                                          fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
             label_process.process('remove')
 
             # Estimate b-spline transformation curve --> straight
@@ -577,8 +590,8 @@ class SpinalCordStraightener(object):
 
             # compute error between the input data and the nurbs
             from math import sqrt
-            x0 = int(round(file_centerline_straight.data.shape[0]/2.0))
-            y0 = int(round(file_centerline_straight.data.shape[1]/2.0))
+            x0 = file_centerline_straight.data.shape[0]/2.0
+            y0 = file_centerline_straight.data.shape[1]/2.0
             count_mean = 0
             for coord_z in mean_coord:
                 if not isnan(sum(coord_z)):
@@ -588,7 +601,7 @@ class SpinalCordStraightener(object):
                     if dist > self.max_distance_straightening:
                         self.max_distance_straightening = dist
                     count_mean += 1
-            self.mse_straightening = self.mse_straightening/float(count_mean)
+            self.mse_straightening = sqrt(self.mse_straightening/float(count_mean))
 
         except Exception as e:
             sct.printv('WARNING: Exception during Straightening:', 1, 'warning')
@@ -660,7 +673,7 @@ if __name__ == "__main__":
                       description="remove temporary files.",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='0')
+                      default_value='1')
     parser.add_option(name="-a",
                       type_value="multiple_choice",
                       description="Algorithm for curve fitting.",
@@ -681,7 +694,7 @@ if __name__ == "__main__":
                       default_value=1)
 
     parser.add_option(name="-params",
-                      type_value=[[':'], 'str'],
+                      type_value=[[','], 'str'],
                       description="""Parameters for spinal cord straightening. Separate arguments with ",".\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. Default=5x5x10\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. Default=3\nbspline_order: <int> Order of BSpline for interpolation. Default=2\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} constraints on landmark-based rigid pre-registration""",
                       mandatory=False,
                       example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
@@ -711,7 +724,7 @@ if __name__ == "__main__":
         sc_straight.verbose = int(arguments["-v"])
 
     if "-params" in arguments:
-        params_user = str(arguments['-params'])
+        params_user = arguments['-params']
         # update registration parameters
         for param in params_user:
             param_split = param.split('=')
@@ -726,6 +739,6 @@ if __name__ == "__main__":
             elif param_split[0] == 'algo_landmark_rigid':
                 sc_straight.algo_landmark_rigid = param_split[1]
             elif param_split[0] == 'all_labels':
-                sc_straight.all_labels = True
+                sc_straight.all_labels = int(param_split[1])
 
     sc_straight.straighten()
