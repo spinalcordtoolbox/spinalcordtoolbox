@@ -475,7 +475,7 @@ def find_zmin_zmax(fname):
     # crop image
     status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
     # parse output
-    zmin, zmax = output[output.find('Dimension 2: ')+13:].split(' ')
+    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
 
 
