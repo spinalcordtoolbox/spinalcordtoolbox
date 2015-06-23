@@ -249,7 +249,6 @@ class SpinalCordStraightener(object):
             ### >>==============================================================================================================
             for iz in range(min(iz_curved), max(iz_curved)+1, 1):
                 if iz in iz_curved:
-                    print iz
                     index = iz_curved.index(iz)
                     # calculate d (ax+by+cz+d=0)
                     # print iz_curved[index]
