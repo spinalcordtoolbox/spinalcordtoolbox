@@ -1747,7 +1747,7 @@ def leave_one_out_by_subject(dic_path, use_levels=True, weight=1.2):
 '''
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_subject(dictionaries, use_levels=True, weight=1.2):
+def leave_one_out_by_subject(param):
     """
     Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1760,7 +1760,9 @@ def leave_one_out_by_subject(dictionaries, use_levels=True, weight=1.2):
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
-    dic_path, dic_3d = dictionaries
+    dic_path, dic_3d, use_levels, weight = param
+    use_levels = bool(int(use_levels))
+    weight = float(weight)
 
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
     gm_dice_file = open('gm_dice_coeff.txt', 'w')
@@ -2267,10 +2269,11 @@ if __name__ == "__main__":
                           mandatory=False,
                           example='dictionary/')
         parser.add_option(name="-loocv",
-                          type_value=[[','], 'folder'],# "folder",
-                          description="Path to a dictionary folder to do 'Leave One Out Validation' on",
+                          type_value=[[','], 'str'],# "folder",
+                          description="Path to a dictionary folder to do 'Leave One Out Validation' on\n"
+                                      "dictionary_by_slice/,dictionary_3d/,use_levels,weight_param",
                           mandatory=False,
-                          example='dic_by_slice/,dic_3d/') # 'dictionary/')
+                          example='dic_by_slice/,dic_3d/,1,1.2') # 'dictionary/')
         parser.add_option(name="-error-map",
                           type_value="folder",
                           description="Path to a dictionary folder to compute the error map on",
