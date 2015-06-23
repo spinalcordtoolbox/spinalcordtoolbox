@@ -422,7 +422,7 @@ class Pipeline(object):
                     if "algo_landmark_rigid" in dict_params_straightening:
                         sc_straight.algo_landmark_rigid = str(dict_params_straightening["algo_landmark_rigid"])
                     if "all_labels" in dict_params_straightening:
-                        sc_straight.all_labels = str(dict_params_straightening["all_labels"])
+                        sc_straight.all_labels = int(dict_params_straightening["all_labels"])
 
                 sct.printv(cmd_straightening, self.verbose)
                 sc_straight.remove_temp_files = 0
