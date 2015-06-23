@@ -14,12 +14,31 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-class Coordinate(object):
+from math import sqrt
+
+class Point(object):
+    def __init__(self):
+        self.x = 0
+        self.y = 0
+        self.z = 0
+
+    # Euclidean distance
+    def euclideanDistance(self, other_point):
+        return sqrt(pow((self.x - self.x), 2) + pow((self.y - self.y), 2) + pow((self.z - self.z), 2))
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.x == other.x and self.y == other.y and self.z == other.z
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+class Coordinate(Point):
     def __init__(self, coord=None):
+        super(Coordinate, self).__init__()
         if coord is None:
-            self.x = 0
-            self.y = 0
-            self.z = 0
             self.value = 0
             return
 
@@ -42,9 +61,9 @@ class Coordinate(object):
             self.value = 0
         # coordinates and value must be digits:
         try:
-            int(self.x),int(self.y),int(self.z),int(self.value)
+            int(self.x), int(self.y), int(self.z), float(self.value)
         except ValueError:
-            raise TypeError("All coordinates and value must be digits. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
+            raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
 
     def __eq__(self, other):
