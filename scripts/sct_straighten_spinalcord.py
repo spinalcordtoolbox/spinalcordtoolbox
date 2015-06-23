@@ -231,7 +231,7 @@ class SpinalCordStraightener(object):
             if nb_landmark == 1:
                 iz_curved = [0]
             else:
-                iz_curved = [i*gapz for i in range(0, nb_landmark-1)]
+                iz_curved = [i*gapz for i in range(0, nb_landmark - 1)]
 
             iz_curved.append(nz_nonz-1)
             #print iz_curved, len(iz_curved)
@@ -247,8 +247,9 @@ class SpinalCordStraightener(object):
 
             ### TODO: THIS PART IS SLOW AND CAN BE MADE FASTER
             ### >>==============================================================================================================
-            for iz in range(min(iz_curved), max(iz_curved), 1):
+            for iz in range(min(iz_curved), max(iz_curved)+1, 1):
                 if iz in iz_curved:
+                    print iz
                     index = iz_curved.index(iz)
                     # calculate d (ax+by+cz+d=0)
                     # print iz_curved[index]
@@ -328,7 +329,7 @@ class SpinalCordStraightener(object):
             x0 = int(round(nx/2))
             y0 = int(round(ny/2))
             landmark_curved_value = 1
-            for iz in range(min(iz_curved), max(iz_curved), 1):
+            for iz in range(min(iz_curved), max(iz_curved)+1, 1):
                 if iz in iz_curved:
                     index = iz_curved.index(iz)
                     # set coordinates for landmark at the center of the cross
@@ -542,9 +543,7 @@ class SpinalCordStraightener(object):
 
             # remove padding for straight labels
             if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0", bmax=True, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="1", bmax=True, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="2", bmax=True, verbose=verbose).crop()
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0,1,2", bmax=True, verbose=verbose).crop()
                 pass
             else:
                 sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
