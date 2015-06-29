@@ -23,6 +23,11 @@ from msct_register_regularized import generate_warping_field
 import sct_utils as sct
 from nibabel import load
 
+ini_param_rotation = 0.5 #rad
+ini_param_trans_x = 270.0 #pix
+ini_param_trans_y = -150.0 #pix
+initial_step = 2
+
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
@@ -42,6 +47,13 @@ def getNeighbors(point, set_points, k=1):
 def SSE(pointsA, pointsB):
     return sum(array(pointsA[:, 0:3]-pointsB[:, 0:3])**2.0)
 
+def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
+    # The initial step for the Nelder-Mead algorithm is of (initial_param * 5e-2) which is too small when we want initial_param = 30 pix and step = 5 or 10.
+    # This function allows to choose the scale of the steps after the first movement
+    step_factor = float(initial_step)/float(initial_param*5e-2)
+    real_param = initial_param + (param_from_optimizer - initial_param) * step_factor
+
+    return real_param
 
 def Metric_Images(imageA, imageB, type=''):
 
@@ -105,8 +117,8 @@ def minRigid_xy_Transform_for_Images(params, image_fixed, image_moving, center_r
     name_image_moving_reg = file + '_reg' + ext
 
     # Apply transformation
-    tx_real = 100000*tx
-    ty_real = 100000*ty
+    tx_real = real_optimization_parameters(tx, initial_param=ini_param_trans_x, initial_step=initial_step)
+    ty_real = real_optimization_parameters(ty, initial_param=ini_param_trans_y, initial_step=initial_step)
     generate_warping_field(image_fixed, [tx_real], [ty_real], [gamma], center_rotation=center_rotation, fname=name_warp)
     print'\nApplying a rigid transformation of parameters: angle=' + str(gamma) + 'rad, ' + 'tx=' + str(tx_real) +'pix, ty=' + str(ty_real) + 'pix'
     sct.run('sct_apply_transfo -i ' + image_moving + ' -d ' + image_fixed + ' -w ' + name_warp + ' -o ' + name_image_moving_reg + ' -x nn')
@@ -177,16 +189,59 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
 
     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     translation_array = matrix([0.0, 0.0, 0.0])
-    # Get barycenter of the image if specified
-    if center_rotation == 'BarycenterImage':
-        from nibabel import load
-        data_moving = load(image_moving).get_data()
 
+    # Get barycenter of the images if specified
+    if center_rotation == 'BarycenterImage':
+        print '\nEvaluating barycenters of images...'
+        # Importing data
+        from nibabel import load
+        from numpy import amax, cross, dot
+        from math import acos, pi
+        data_moving = load(image_moving).get_data()
+        data_fixed = load(image_fixed).get_data()
+        data_moving_10percent = data_moving > amax(data_moving) * 0.1
+        data_fixed_10percent = data_fixed > amax(data_fixed) * 0.1
+        # Calculating position of barycenters
+        coord_barycenter_moving = (1.0/(sum(data_moving))) * sum(array([[data_moving[i,j,k] * i, data_moving[i,j,k] * j, data_moving[i,j,k] * k] for i in range(data_moving.shape[0]) for j in range(data_moving.shape[1]) for k in range(data_moving.shape[2])]), axis=0)
+        coord_barycenter_fixed = (1.0/(sum(data_fixed))) * sum(array([[data_fixed[i,j,k] * i, data_fixed[i,j,k] * j, data_fixed[i,j,k] * k] for i in range(data_fixed.shape[0]) for j in range(data_fixed.shape[1]) for k in range(data_fixed.shape[2])]), axis=0)
+        coord_barycenter_moving_10percent = (1.0/(sum(data_moving_10percent))) * sum(array([[data_moving_10percent[i,j,k] * i, data_moving_10percent[i,j,k] * j, data_moving_10percent[i,j,k] * k] for i in range(data_moving_10percent.shape[0]) for j in range(data_moving_10percent.shape[1]) for k in range(data_moving_10percent.shape[2])]), axis=0)
+        coord_barycenter_fixed_10percent = (1.0/(sum(data_fixed_10percent))) * sum(array([[data_fixed_10percent[i,j,k] * i, data_fixed_10percent[i,j,k] * j, data_fixed_10percent[i,j,k] * k] for i in range(data_fixed_10percent.shape[0]) for j in range(data_fixed_10percent.shape[1]) for k in range(data_fixed_10percent.shape[2])]), axis=0)
+
+        print '\nPosition of the barycenters:' \
+              '\n\t-moving image : '+ str(coord_barycenter_moving) +  \
+              '\n\t-fixed image: ' + str(coord_barycenter_fixed)
+        #Evaluating initial translations to match the barycenters
+        ini_param_trans_x_real = int(round(coord_barycenter_fixed[0] - coord_barycenter_moving[0]))
+        ini_param_trans_y_real = int(round(coord_barycenter_fixed[1] - coord_barycenter_moving[1]))
+
+        # Defining new center of rotation
+        coord_center_rotation = [int(round(coord_barycenter_fixed[0])), int(round(coord_barycenter_fixed[1])), int(round(coord_barycenter_fixed[2]))]
+
+        #Evaluating the initial rotation to match the 10 percent barycenters
+        # We have calculated two relevant points to evaluate the best initial registration for the algorithm so that it may converge more quickly
+        # First a translation to match the barycenters and then a rotation (of center: the barycenter of the fixed image) to match the 10_percent barycenters
+        vector_bar_fix_2_bar_10p_moving = coord_barycenter_moving_10percent - coord_barycenter_fixed
+        vector_bar_fix_2_bar_10p_fixed = coord_barycenter_fixed_10percent - coord_barycenter_fixed
+        vector_bar_10p_fix_2_10p_moving = coord_barycenter_moving_10percent - coord_barycenter_fixed_10percent
+        a = dot(vector_bar_fix_2_bar_10p_moving, vector_bar_fix_2_bar_10p_moving) #OAm
+        b = dot(vector_bar_fix_2_bar_10p_fixed, vector_bar_fix_2_bar_10p_fixed) #OAf
+        c = dot(vector_bar_10p_fix_2_10p_moving, vector_bar_10p_fix_2_10p_moving) #AfAm
+        e = cross(vector_bar_fix_2_bar_10p_moving, vector_bar_fix_2_bar_10p_fixed)
+        if e[2] >= 0:
+            ini_param_rotation_real = acos((a + b - c)/(2.0*sqrt(a)*sqrt(b)))   # theorem of Al-Kashi
+        else:
+            ini_param_rotation_real = -acos((a + b - c)/(2.0*sqrt(a)*sqrt(b)))    # theorem of Al-Kashi
+
+    else:
+        coord_center_rotation=None
+        ini_param_trans_x_real = ini_param_trans_x
+        ini_param_trans_y_real = ini_param_trans_y
+        ini_param_rotation_real = ini_param_rotation
 
     if constraints == 'rotation-xy':
-        initial_parameters = [-0.4]
+        initial_parameters = [ini_param_rotation]
         res = minimize(minRotation_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, metric), method='Nelder-Mead', tol=1e-2,
-                       options={'maxiter': 100, 'disp': True})
+                       options={'maxiter': 1000, 'disp': True})
 
         gamma = res.x[0]
         rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
@@ -194,11 +249,13 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
                                   [0, 0, 1]])
 
     elif constraints == 'xy':
-        initial_parameters = [-0.4, 0.0, 0.0]
-        res = minimize(minRigid_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, center_rotation, metric), method='Nelder-Mead', tol=1e-2,
-                       options={'maxiter': 100, 'disp': True})
+        initial_parameters = [ini_param_rotation_real, ini_param_trans_x_real, ini_param_trans_y_real]
+        res = minimize(minRigid_xy_Transform_for_Images, x0=initial_parameters, args=(image_fixed, image_moving, coord_center_rotation, metric), method='Nelder-Mead', tol=1e-2,
+                       options={'maxiter': 1000, 'disp': True})
 
-        gamma, tx, ty = res.x[0], res.x[1], res.x[2]
+        # change result if input parameters are changed
+        # tx_real = ini_param_trans + (ini_param_trans - tx) * 10
+        gamma, tx, ty = res.x[0], real_optimization_parameters(res.x[1], initial_param=ini_param_trans_x, initial_step=initial_step), real_optimization_parameters(res.x[2], initial_param=ini_param_trans_y, initial_step=initial_step)
         rotation_matrix = matrix([[cos(gamma), - sin(gamma), 0],
                                   [sin(gamma), cos(gamma), 0],
                                   [0, 0, 1]])
