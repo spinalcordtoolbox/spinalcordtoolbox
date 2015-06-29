@@ -12,7 +12,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
 class Image(object):
     """
 
@@ -30,6 +29,8 @@ class Image(object):
         self.file_name = ""
         self.ext = ""
         self.dim = None
+
+        self.verbose = verbose
 
         # load an image from file
         if type(param) is str:
@@ -54,7 +55,6 @@ class Image(object):
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = extract_fname(absolutepath)
         else:
-
             raise TypeError(' Image constructor takes at least one argument.')
 
         """
@@ -93,7 +93,7 @@ class Image(object):
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
-            printv('Error: make sure ' + path + ' is an image.')
+            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
@@ -207,13 +207,14 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         """
         from nibabel import Nifti1Image, save
+        from sct_utils import printv
 
         if type != '':
             self.changeType(type)
 
         self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        print 'saving ' + self.path + self.file_name + self.ext + '\n'
+        #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
         save(img, self.path + self.file_name + self.ext)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
