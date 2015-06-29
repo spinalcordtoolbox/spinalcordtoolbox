@@ -610,7 +610,7 @@ class TargetSegmentationPairwise:
 
         - computation of the resulting target segmentation by label fusion of their segmentation
     """
-    def __init__(self, model, target_image=None, levels_image=None):
+    def __init__(self, model, target_image=None, levels_image=None, epsilon=None):
         """
         Target gray matter segmentation constructor
 
