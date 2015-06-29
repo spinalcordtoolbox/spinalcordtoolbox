@@ -84,11 +84,11 @@ class Transform:
 
         # Check file existence
         sct.printv('\nCheck file existence...', verbose)
-        sct.check_file_exist(fname_src)
-        sct.check_file_exist(fname_dest)
+        sct.check_file_exist(fname_src, self.verbose)
+        sct.check_file_exist(fname_dest, self.verbose)
         for i in range(len(fname_warp_list)):
             # check if file exist
-            sct.check_file_exist(fname_warp_list[i])
+            sct.check_file_exist(fname_warp_list[i], self.verbose)
 
         # check if destination file is 3d
         sct.check_if_3d(fname_dest)
@@ -164,7 +164,7 @@ class Transform:
         warping_field = fname_warp_list_invert[-1]
         # if last warping field is an affine transfo, we need to compute the space of the concatenate warping field:
         if isLastAffine:
-            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',1,'warning')
+            sct.printv('WARNING: the resulting image could have wrong apparent results. You should use an affine transformation as last transformation...',verbose,'warning')
         elif crop_reference == 1:
             ImageCropper(input_file=fname_out, output_file=fname_out, ref=warping_field, background=0).crop()
             # sct.run('sct_crop_image -i '+fname_out+' -o '+fname_out+' -ref '+warping_field+' -b 0')
