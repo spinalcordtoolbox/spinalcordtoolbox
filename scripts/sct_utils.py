@@ -63,7 +63,7 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
-def run(cmd, verbose=1):
+def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     # print sys._getframe().f_back.f_code.co_name
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
@@ -80,9 +80,11 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if process.returncode:
         # from inspect import stack
-        printv(output_final[0:-1], 1, 'error')
+        printv(output_final[0:-1], 1, error_exit)
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
+        if raise_exception:
+            raise Exception(output_final[0:-1])
     else:
         # no need to output process.returncode (because different from 0)
         return process.returncode, output_final[0:-1]
