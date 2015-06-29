@@ -26,7 +26,7 @@ import nibabel
 from sct_orientation import get_orientation, set_orientation
 from scipy import ndimage
 from scipy.io import loadmat
-from numpy import array, asarray, zeros, int8, mean, std, sqrt, convolve, hanning
+from numpy import array, asarray, zeros, int8, mean, std, sqrt, convolve, hanning, dot
 from copy import copy
 from msct_image import Image
 from numpy.linalg import inv
@@ -73,8 +73,8 @@ def register_seg(seg_input, seg_dest):
     y_displacement = [0 for i in range(seg_input_data.shape[2])]
     print '\nGet displacement by voxel...'
     for iz in xrange(seg_dest_data.shape[2]):
-        x_displacement[iz] = (x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    #strangely, this is the inverse of x_displacement when the same equation defines y_displacement
-        y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]
+        x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
+        y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
 
     return x_displacement, y_displacement
 
@@ -148,14 +148,14 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     im_input_img = Image(im_input)
     coord_origin_dest = im_dest_img.transfo_pix2phys([[0,0,0]])
     coord_origin_input = im_input_img.transfo_pix2phys([[0,0,0]])
-    coord_diff_origin_z = coord_origin_dest[0][2] - coord_origin_input[0][2]
-    [[x_o, y_o, z_o]] = im_input_img.transfo_phys2pix([[0, 0, coord_diff_origin_z]])
+    coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
+    [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
     # loop across slices
     for i in range(nz):
         # set masking
         num = numerotation(i)
-        num_2 = numerotation(int(num) + z_o)
+        num_2 = numerotation(int(num) + int(z_o))
         if mask:
             masking = '-x mask_z' +num+ '.nii'
         else:
@@ -170,7 +170,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--shrink-factors '+paramreg.shrink+' '
                '--smoothing-sigmas '+paramreg.smooth+'mm '
                #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
-               '--output [transform_' + num + '] '    #--> file.txt (contains Tx,Ty)    [outputTransformPrefix,<outputWarpedImage>,<outputInverseWarpedImage>]
+               '--output [transform_' + num + '] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                +masking)
 
@@ -183,21 +183,22 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 array_transfo = matfile['AffineTransform_double_2_2']
                 if i == 20 or i == 40:
                     print i
-                x_displacement[i] = array_transfo[4][0]  #is it? or is it y?
-                y_displacement[i] = array_transfo[5][0]
-                theta_rotation[i] = asin(array_transfo[2])
+                x_displacement[i] = array_transfo[4][0]  # Tx in ITK'S coordinate system
+                y_displacement[i] = array_transfo[5][0]  # Ty  in ITK'S and fslview's coordinate systems
+                theta_rotation[i] = asin(array_transfo[2]) # angle of rotation theta in ITK'S coordinate system (minus theta for fslview)
 
             if paramreg.algo == 'Affine':
                 f = 'transform_' +num+ '0GenericAffine.mat'
                 matfile = loadmat(f, struct_as_record=True)
                 array_transfo = matfile['AffineTransform_double_2_2']
-                x_displacement[i] = array_transfo[4][0]  #is it? or is it y?
-                y_displacement[i] = array_transfo[5][0]
-                matrix_def[i] = [[array_transfo[0][0], array_transfo[1][0]], [array_transfo[2][0], array_transfo[3][0]]]  # comment savoir lequel est lequel?
+                x_displacement[i] = array_transfo[4][0] # Tx in ITK'S coordinate system -Tx in fslview coordinate system
+                y_displacement[i] = array_transfo[5][0] # Ty  in ITK'S and fslview's coordinate systems
+                matrix_def[i] = [[array_transfo[0][0], array_transfo[1][0]], [array_transfo[2][0], array_transfo[3][0]]]  # array_transfo[2][0] refers to lambda * sin(theta) in ITK'S coordinate system (lambda * (minus theta) for fslview)
 
+        #if an exception occurs with ants, take the last values for the transformation
         except:
                 if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
-                    x_displacement[i] = x_displacement[i-1]  #is it? or is it y?
+                    x_displacement[i] = x_displacement[i-1]
                     y_displacement[i] = y_displacement[i-1]
                     theta_rotation[i] = theta_rotation[i-1]
                 if paramreg.algo == 'Affine':
@@ -270,24 +271,30 @@ def numerotation(nb):
 
 
 
-# FUNCTION: generate warping field that is homogeneous by slice   (for rigid transform only for now)
+# FUNCTION: generate warping field that is homogeneous by slice
 #input:
 #   image_destination to recover the header
-#   x_trans
-#   y_trans
-#   theta_rot
+#   x_trans in ITK'S coordinate system -x_trans in fslview coordinate system
+#   y_trans in ITK'S and fslview's coordinate systems
+#   theta_rot in ITK'S coordinate system (minus theta for fslview)
 #   fname_warp
-#   center_rotation if different from origin
+#   center_rotation if different from the middle of the image (in fslview coordinate system)
 #   matrix_def for affine transformation
 
 def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation = None, matrix_def=None, fname = 'warping_field.nii.gz'):
     from nibabel import load
     from math import cos, sin
+    from sct_orientation import get_orientation
     from numpy import matrix
 
     #Make sure image is in rpi format
+    print '\nChecking if the image of destination is in RPI orientation for the warping field generation ...'
+    orientation = get_orientation(im_dest)
+    if orientation != 'RPI':
+        print '\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.'
+    else: print'\tOK'
 
-    print'\nCreating warping field for transformations along z...'
+    print'\n\nCreating warping field ' + fname + ' for transformations along z...'
 
     file_dest = load(im_dest)
     hdr_file_dest = file_dest.get_header()
@@ -309,43 +316,59 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
-    # matrix_pass = matrix([[1,0,-x_a],[0,1,-y_a],[0,0,1]])
-    # matrix_pass_inv = matrix([[1,0,x_a],[0,1,y_a],[0,0,1]])
-    if theta_rot != None:
-        for k in range(nz):
-            for i in range(nx):
-                for j in range(ny):
-                    # matrix_rot = matrix([[cos(theta_rot[k]), -sin(theta_rot[k]),0],[sin(theta_rot[k]), cos(theta_rot[k]),0],[0,0,1]])
-                    # a = array(matrix_pass_inv * matrix_rot * matrix_pass * matrix([i,j,1]).T)
-                    # data_warp[i,j,k,0,:] = (a.T[0] - array([i,j,1]) + array([x_trans[k],y_trans[k],0])).tolist()
-
-                    # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
-                    # data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a)) + y_trans[k]
-
-                    data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) + sin(theta_rot[k]) * (j - y_a) - x_trans[k] #+ sin(theta_rot[k]) * (int(round(nx/2))-x_a)
-                    data_warp[i, j, k, 0, 1] = sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k])-1) * (j - y_a) + y_trans[k] #- sin(theta_rot[k]) * (int(round(nx/2))-x_a)
-                    # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i + x_a) - sin(theta_rot[k]) * (j + y_a) - x_trans[k]
-                    # data_warp[i, j, k, 0, 1] = -sin(theta_rot[k]) * (-i - x_a) - (cos(theta_rot[k])+1) * (j + y_a) + y_trans[k]
-                    data_warp[i, j, k, 0, 2] = 0
+    # For translations
     if theta_rot == None and matrix_def == None:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    data_warp[i, j, k, 0, 0] = -x_trans[k]
+                    data_warp[i, j, k, 0, 0] = x_trans[k]
                     data_warp[i, j, k, 0, 1] = y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
-    if theta_rot == None and matrix_def != None:
-        matrix_def_0 = [matrix_def[j][0][0] for j in range(len(matrix_def))]
-        matrix_def_1 = [matrix_def[j][0][1] for j in range(len(matrix_def))]
-        matrix_def_2 = [matrix_def[j][1][0] for j in range(len(matrix_def))]
-        matrix_def_3 = [matrix_def[j][1][1] for j in range(len(matrix_def))]
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    data_warp[i, j, k, 0, 0] = (matrix_def_0[i]-1) * i + matrix_def_1[i] * j - x_trans[k]
-                    data_warp[i, j, k, 0, 1] = matrix_def_2[i] * i + (matrix_def_3[i]-1) * j+ y_trans[k]
-                    data_warp[i, j, k, 0, 2] = 0
+    # # For rigid transforms
+    # if theta_rot != None:
+    #     for k in range(nz):
+    #         for i in range(nx):
+    #             for j in range(ny):
+    #                 # data_warp[i, j, k, 0, 0] = (cos(theta_rot[k])-1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) - x_trans[k]
+    #                 # data_warp[i, j, k, 0, 1] = -(sin(theta_rot[k]) * (i - x_a) + (cos(theta_rot[k])-1) * (j - y_a)) + y_trans[k]
+    #
+    #                 data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k] #+ sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+    #                 data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k] #- sin(theta_rot[k]) * (int(round(nx/2))-x_a)
+    #                 data_warp[i, j, k, 0, 2] = 0
 
+    # For rigid transforms with array (time optimization)
+    if theta_rot != None:
+        vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
+        for k in range(nz):
+            matrix_rot_a = asarray([[cos(theta_rot[k]), - sin(theta_rot[k])],[-sin(theta_rot[k]), -cos(theta_rot[k])]])
+            tmp = matrix_rot_a + array(((-1,0),(0,1)))
+            result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+            for i in range(nx):
+                data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+                data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
+    # # For affine transforms (not optimized)
+    # if theta_rot == None and matrix_def != None:
+    #     matrix_def_0 = [matrix_def[j][0][0] for j in range(len(matrix_def))]
+    #     matrix_def_1 = [matrix_def[j][0][1] for j in range(len(matrix_def))]
+    #     matrix_def_2 = [matrix_def[j][1][0] for j in range(len(matrix_def))]
+    #     matrix_def_3 = [matrix_def[j][1][1] for j in range(len(matrix_def))]
+    #     for i in range(nx):
+    #         for j in range(ny):
+    #             for k in range(nz):
+    #                 data_warp[i, j, k, 0, 0] = (matrix_def_0[k] - 1) * (i - x_a) + matrix_def_1[k] * (j - y_a) + x_trans[k]  # same equation as for rigid
+    #                 data_warp[i, j, k, 0, 1] = matrix_def_2[k] * (i - x_a) - (matrix_def_3[k] - 1) * (j - y_a) + y_trans[k] # same equation as for rigid (est ce qu'il y a vraiment un moins devant matrix_def_3?)
+    #                 data_warp[i, j, k, 0, 2] = 0
+
+    # Passer en mode matrice   (checker le signe de matrix_def_3)
+    if theta_rot == None and matrix_def != None:
+        vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
+        matrix_def_a = asarray(matrix_def)
+        for k in range(nz):
+            tmp = matrix_def_a[k] + array(((-1,0),(0,-1)))
+            result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+            for i in range(nx):
+                data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
+                data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
 
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
