@@ -28,6 +28,28 @@
 # parser.add_option("-dim", ['x', 'y', 'z', 't'], 'dimension: x|y|z|t')
 # parser.add_option("-test2") # this is a option without argument
 #
+# Here we define a multiple choice option named "-a"
+# To define the list of available choices, we define it in the example section
+# parser.add_option(name="-a",
+#                   type_value="multiple_choice",
+#                   description="Algorithm for curve fitting.",
+#                   mandatory=False,
+#                   example=["hanning", "nurbs"],
+#                   default_value="hanning")
+#
+#
+# Here we define a deprecated option.
+# Deprecated option can be defined in 3 ways :
+#       - deprecated : the option exists but is no longer supported
+#       - deprecated_rm : This option signals the user that the option has been removed in the current version.
+#       - deprecated_by : This option serves to indicate that a new option is used to implement the functionality.
+# parser.add_option(name="-bzmax",
+#                   type_value=None,
+#                   description="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
+#                   deprecated_by="-bmax",
+#                   mandatory=False)
+
+#
 # Usage are available as follow:
 # string_usage = parser.usage.generate()
 #
@@ -67,7 +89,7 @@ class Option:
     OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
 
     ## Constructor
-    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False):
+    def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
         self.name = name
         self.type_value = type_value
         self.description = description
@@ -79,6 +101,7 @@ class Option:
         self.order = order
         self.deprecated_by = deprecated_by
         self.deprecated_rm = deprecated_rm
+        self.deprecated = deprecated
 
     def __safe_cast__(self, val, to_type):
         return to_type(val)
@@ -143,25 +166,25 @@ class Option:
             sct.printv("WARNING : Option "+str(self.type_value)+" does not exist and will have no effect on the execution of the script", "warining")
             sct.printv("Type -h to see supported options", "warning")
 
-    def checkStandardType(self,param,type=None):
+    def checkStandardType(self, param, type=None):
         # check if a int is really a int (same for str, float, long and complex)
         type_option = self.type_value
         if type is not None:
             type_option = type
         try:
-            return self.__safe_cast__(param,eval(type_option))
+            return self.__safe_cast__(param, eval(type_option))
         except ValueError:
             self.parser.usage.error("ERROR: Option "+self.name+" must be "+type_option)
 
-    def checkFile(self,param):
+    def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...")
-        sct.check_file_exist(param,1)
+        sct.check_file_exist(param, 0)
         return param
 
     def checkIfNifti(self, param):
         import os
-        sct.printv("Check file existence...")
+        sct.printv("Check file existence...", 0)
         nii = False
         niigz = False
         param_tmp = str()
@@ -186,20 +209,20 @@ class Option:
             return param_tmp+'.nii.gz'
 
 
-    def checkFolder(self,param):
+    def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
-        sct.check_folder_exist(param,1)
+        sct.check_folder_exist(param, 0)
         return param
 
-    def checkFolderCreation(self,param):
+    def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
         result_creation = sct.create_folder(param)
         if result_creation == 2:
-            sct.printv("ERROR: Permission denied for folder creation...",type="error")
+            sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
-            sct.printv("Folder "+param+" has been created.",type='warning')
+            sct.printv("Folder "+param+" has been created.", 0, type='warning')
         return param
 
 
@@ -216,9 +239,9 @@ class Parser:
         self.errors = ''
         self.usage = Usage(self, file_name)
 
-    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False):
+    def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
         order = len(self.options)+1
-        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm)
+        self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
     def parse(self, arguments):
         # if no arguments, print usage and quit
@@ -275,6 +298,8 @@ class Parser:
                     sct.printv("ERROR : "+arg+" is a deprecated argument and is no longer supported by the current version.", 1, 'error')
                 # for each argument, check if is in the option list.
                 # if so, check the integrity of the argument
+                if self.options[arg].deprecated:
+                    sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions.", 1, 'warning')
                 if self.options[arg].deprecated_by is not None:
                     try:
                         sct.printv("WARNING : "+arg+" is a deprecated argument and will no longer be updated in future versions. Changing argument to "+self.options[arg].deprecated_by+".", 1, 'warning')
@@ -369,8 +394,8 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
 
     def set_arguments(self):
         sorted_arguments = sorted(self.arguments.items(), key=lambda x: x[1].order)
-        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory]
-        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory]
+        mandatory = [opt[0] for opt in sorted_arguments if self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
+        optional = [opt[0] for opt in sorted_arguments if not self.arguments[opt[0]].mandatory and not self.arguments[opt[0]].deprecated_by]
         if mandatory:
             self.arguments_string = '\n\nMANDATORY ARGUMENTS\n'
             for opt in mandatory:
@@ -391,7 +416,9 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+str(self.arguments[opt].default_value)
+                    description += " Default value = "+str(self.arguments[opt].default_value)+"."
+                if self.arguments[opt].deprecated:
+                    description += " Deprecated argument!"
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 

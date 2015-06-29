@@ -12,6 +12,7 @@
 #########################################################################################
 
 from scipy.interpolate import splrep, splev
+import sct_utils as sct
 
 
 #=======================================================================================================================
@@ -34,7 +35,7 @@ def spline_2D(z_centerline, x_centerline):
     print (m - sqrt(2*m))*(sigma**2), (m + sqrt(2*m))*(sigma**2)
 
     smoothing_param = (((m + sqrt(2*m))*(sigma**2))+((m - sqrt(2*m))*(sigma**2)))/2
-    print('\nSmoothing results with spline...')
+    sct.printv('\nSmoothing results with spline...')
     tck = splrep(z_centerline, x_centerline, s = smoothing_param)
     x_centerline_fit = splev(z_centerline, tck)
     return x_centerline_fit
@@ -185,11 +186,11 @@ def opt_f(x, y, z):
             msex = mean_squared_error(x, x_fit)
             msey = mean_squared_error(y, y_fit)
 
-            if msx < msx_min:
-                msx_min = msx
+            if msex < msx_min:
+                msx_min = msex
                 f_opt_x = f
-            if msy < msy_min:
-                msy_min = msy
+            if msey < msy_min:
+                msy_min = msey
                 f_opt_y = f
 
             x_fit_d, y_fit_d, z_d = evaluate_derivative_3D(x_fit, y_fit, z)
@@ -252,7 +253,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y.reverse()
     z.reverse()"""
           
-    print '\nFitting centerline using B-spline approximation...'
+    sct.printv('\nFitting centerline using B-spline approximation...', verbose)
     data = [[x[n], y[n], z[n]] for n in range(len(x))]
 
     # if control_points == 0:
