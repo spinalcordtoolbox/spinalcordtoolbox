@@ -1760,7 +1760,7 @@ def leave_one_out_by_subject(param):
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
-    dic_path, dic_3d, use_levels, weight = param
+    dic_path, dic_3d, use_levels, weight, reg = param
     use_levels = bool(int(use_levels))
     weight = float(weight)
 
@@ -1796,6 +1796,7 @@ def leave_one_out_by_subject(param):
                 model_param.weight_beta = weight
                 model_param.use_levels = use_levels
                 model_param.res_type = 'prob'
+                model_param.reg = reg.split(':')
 
                 model = Model(model_param=model_param, k=0.8)
                 # model_dir = 'gm_seg_model_data/'
@@ -2270,10 +2271,10 @@ if __name__ == "__main__":
                           example='dictionary/')
         parser.add_option(name="-loocv",
                           type_value=[[','], 'str'],# "folder",
-                          description="Path to a dictionary folder to do 'Leave One Out Validation' on\n"
-                                      "dictionary_by_slice/,dictionary_3d/,use_levels,weight_param",
+                          description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by : without white space"
+                                      "dictionary_by_slice/,dictionary_3d/,use_levels,weight_param,registration_type",
                           mandatory=False,
-                          example='dic_by_slice/,dic_3d/,1,1.2') # 'dictionary/')
+                          example='dic_by_slice/,dic_3d/,1,1.2,Rigid:Affine') # 'dictionary/')
         parser.add_option(name="-error-map",
                           type_value="folder",
                           description="Path to a dictionary folder to compute the error map on",
