@@ -287,9 +287,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Make sure image is in rpi format
 
-    print'\nCreating warping field for transformations along z of parameters: ' \
-         '\n\t-Rotation: angle=' + str(theta_rot) + 'rad and of center of rotation: ' + str(center_rotation) + \
-         '\n\t-Translation: ' + str(x_trans) + 'pix along x and ' + str(y_trans) +'pix along y'
+    print'\nCreating warping field for transformations along z...'
 
     file_dest = load(im_dest)
     hdr_file_dest = file_dest.get_header()
