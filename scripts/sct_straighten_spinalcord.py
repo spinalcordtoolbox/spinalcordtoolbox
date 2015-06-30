@@ -138,8 +138,8 @@ class SpinalCordStraightener(object):
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '2'
         self.algo_landmark_rigid = None
-        self.all_labels = 1
-        
+        self.all_labels = 0
+
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
 
