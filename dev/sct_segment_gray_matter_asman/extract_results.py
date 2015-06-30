@@ -4,6 +4,8 @@ import os
 
 path = '.'
 
+
+# ############################# MULTIPLE LOOCV FROM MAGMA #############################
 # Create a workbook and add a worksheet.
 workbook = xl.Workbook('results_wmseg_dices.xlsx')
 worksheet_36 = workbook.add_worksheet('36subjects')
@@ -32,7 +34,7 @@ for w in worksheets.values():
 
 
 for loocv_dir in os.listdir(path):
-    if os.path.isdir(path + '/' + loocv_dir):
+    if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
         words = loocv_dir.split('_')
         n_sub = words[0]
         mod = int(words[1])
@@ -59,14 +61,182 @@ for loocv_dir in os.listdir(path):
                 worksheets[n_sub][2][slice_id] = worksheets[n_sub][1]
                 for i, v in enumerate(line[:3]):
                     worksheets[n_sub][0].write(worksheets[n_sub][1], col+i, v)
-                worksheets[n_sub][0].write(worksheets[n_sub][1], 3+3*mod+to_add_col, line[3])
-                worksheets[n_sub][0].write(worksheets[n_sub][1], 3+3*mod+2, line[-1])
+                worksheets[n_sub][0].write(worksheets[n_sub][1], 3+3*mod+to_add_col, float(line[3]))
+                worksheets[n_sub][0].write(worksheets[n_sub][1], 3+3*mod+2, float(line[-1]))
                 worksheets[n_sub][1] += 1
             else:
-                worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+to_add_col, line[3])
-                worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+2, line[-1])
+                worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+to_add_col, float(line[3]))
+                worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+2, float(line[-1]))
 
 
 
 
 workbook.close()
+
+"""
+# ############################# CLASSICAL LOOCV #############################
+
+workbook = xl.Workbook('results_loocv_subjects_resampled.xlsx')
+
+worksheet_wm = workbook.add_worksheet('wm_dice')
+worksheet_gm = workbook.add_worksheet('gm_dice')
+
+worksheet_csa = workbook.add_worksheet('CSA')
+
+bold = workbook.add_format({'bold': True, 'text_wrap': True})
+
+init_col = 3
+dic_worksheets = {worksheet_wm: init_col, worksheet_gm: init_col, worksheet_csa: init_col}
+
+for w in dic_worksheets.keys():
+    w.write(1, 0, 'Subject', bold)
+    w.write(1, 1, 'Slice #', bold)
+    w.write(1, 2, 'Slice level', bold)
+
+len_gm_lines = 0
+len_wm_lines = 0
+
+for loocv_dir in os.listdir(path):
+    if os.path.isdir(path + '/' + loocv_dir):
+        words = loocv_dir.split('_')
+        levels = words[0] + ' ' + words[1]
+        gamma = words[2]
+        reg = words[-1]
+        info = levels + ' - ' + gamma + ' - ' + reg
+
+        # GM DICE
+        gm_dice = open(path + '/' + loocv_dir + '/gm_dice_coeff.txt')
+        gm_dice_lines = gm_dice.readlines()
+        gm_dice.close()
+
+        gm_dice_lines = [line.split(' ') for line in gm_dice_lines]
+
+        if dic_worksheets[worksheet_gm] == init_col:
+            worksheet_gm.write(1, dic_worksheets[worksheet_gm], 'Number of slices in model', bold)
+            dic_worksheets[worksheet_gm] += 1
+            for i, line in enumerate(gm_dice_lines):
+                worksheet_gm.write(i+2, 0, line[0])
+                worksheet_gm.write(i+2, 1, line[1])
+                worksheet_gm.write(i+2, 2, line[2][:-1])
+                worksheet_gm.write(i+2, 3, int(line[-1][:-1]))
+                res = float(line[3])
+                worksheet_gm.write(i+2, dic_worksheets[worksheet_gm], res)  # RESULT
+            len_gm_lines = len(gm_dice_lines)
+        else:
+            for i, line in enumerate(gm_dice_lines):
+                res = float(line[3])
+                worksheet_gm.write(i+2, dic_worksheets[worksheet_gm], res)  # RESULT
+        worksheet_gm.write(0, dic_worksheets[worksheet_gm], info, bold)
+        dic_worksheets[worksheet_gm] += 1
+
+        # WM DICE
+        wm_dice = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt')
+        wm_dice_lines = wm_dice.readlines()
+        wm_dice.close()
+
+        wm_dice_lines = [line.split(' ') for line in wm_dice_lines]
+
+        if dic_worksheets[worksheet_wm] == init_col:
+            worksheet_wm.write(1, dic_worksheets[worksheet_wm], 'Number of slices in model', bold)
+            dic_worksheets[worksheet_wm] += 1
+            for i, line in enumerate(wm_dice_lines[:-1]):
+                worksheet_wm.write(i+2, 0, line[0])
+                worksheet_wm.write(i+2, 1, line[1])
+                worksheet_wm.write(i+2, 2, line[2][:-1])
+                worksheet_wm.write(i+2, 3, int(line[-1][:-1]))
+                if line[3] != '':
+                    res = float(line[3])
+                else:
+                    res = 0
+                worksheet_wm.write(i+2, dic_worksheets[worksheet_wm], res)  # RESULT
+            len_wm_lines = len(wm_dice_lines)
+
+        else:
+            for i, line in enumerate(wm_dice_lines[:-1]):
+                if line[3] != '':
+                    res = float(line[3])
+                else:
+                    res = 0
+                worksheet_wm.write(i+2, dic_worksheets[worksheet_wm], res)  # RESULT
+        worksheet_wm.write(0, dic_worksheets[worksheet_wm], info, bold)
+        dic_worksheets[worksheet_wm] += 1
+
+        # CSA
+        wm_csa = open(path + '/' + loocv_dir + '/wm_csa.txt')
+        wm_csa_lines = wm_csa.readlines()
+        wm_csa.close()
+        wm_csa_lines = [line.split(' ') for line in wm_csa_lines]
+
+        gm_csa = open(path + '/' + loocv_dir + '/gm_csa.txt')
+        gm_csa_lines = gm_csa.readlines()
+        gm_csa.close()
+        gm_csa_lines = [line.split(' ') for line in gm_csa_lines]
+
+        worksheet_csa.write(1, dic_worksheets[worksheet_csa], 'WM', bold)
+        worksheet_csa.write(1, dic_worksheets[worksheet_csa]+1, 'GM', bold)
+
+        if dic_worksheets[worksheet_csa] == init_col:
+            for i, csa_lines in enumerate(zip(wm_csa_lines, gm_csa_lines)):
+                wm_line, gm_line = csa_lines
+                worksheet_csa.write(i+2, 0, wm_line[0])
+                worksheet_csa.write(i+2, 1, wm_line[1])
+                worksheet_csa.write(i+2, 2, wm_line[2][:-1])
+
+                res_wm = float(wm_line[3])
+                res_gm = float(gm_line[3])
+
+                worksheet_csa.write(i+2, dic_worksheets[worksheet_csa], res_wm)
+                worksheet_csa.write(i+2, dic_worksheets[worksheet_csa]+1, res_gm)
+        else:
+            for i, csa_lines in enumerate(zip(wm_csa_lines, gm_csa_lines)):
+                wm_line, gm_line = csa_lines
+                res_wm = float(wm_line[3])
+                res_gm = float(gm_line[3])
+
+                worksheet_csa.write(i+2, dic_worksheets[worksheet_csa], res_wm)
+                worksheet_csa.write(i+2, dic_worksheets[worksheet_csa]+1, res_gm)
+
+        worksheet_csa.merge_range(0,dic_worksheets[worksheet_csa], 0, dic_worksheets[worksheet_csa]+1, info, bold)
+        dic_worksheets[worksheet_csa] += 2
+
+# ##  CONDITIONAL FORMATTING  ##
+good = workbook.add_format({'font_color': '#006600', 'bg_color': '#CCFFCC'})
+med = workbook.add_format({'font_color': '#CC6600', 'bg_color': '#FDED83'})
+bad = workbook.add_format({'font_color': '#990000', 'bg_color': '#FFCCCC'})
+
+gm_lim = chr(dic_worksheets[worksheet_gm] + 64) + str(len_gm_lines)
+worksheet_gm.conditional_format('E3:' + gm_lim, {'type':     'cell',
+                                        'criteria': '>=',
+                                        'value':    0.9,
+                                        'format':   good})
+worksheet_gm.conditional_format('E3:' + gm_lim, {'type':     'cell',
+                                        'criteria': 'between',
+                                        'minimum': 0.8,
+                                        'maximum': 0.85,
+                                        'format':   med})
+worksheet_gm.conditional_format('E3:' + gm_lim, {'type':     'cell',
+                                        'criteria': '<',
+                                        'value':    0.8,
+                                        'format':   bad})
+
+
+wm_lim = chr(dic_worksheets[worksheet_wm] + 64) + str(len_wm_lines)
+worksheet_wm.conditional_format('E3:' + wm_lim, {'type':     'cell',
+                                        'criteria': '>=',
+                                        'value':    0.9,
+                                        'format':   good})
+worksheet_wm.conditional_format('E3:' + wm_lim, {'type':     'cell',
+                                        'criteria': 'between',
+                                        'minimum': 0.8,
+                                        'maximum': 0.85,
+                                        'format':   med})
+worksheet_wm.conditional_format('E3:' + wm_lim, {'type':     'cell',
+                                        'criteria': '<',
+                                        'value':    0.8,
+                                        'format':   bad})
+
+
+
+workbook.close()
+
+"""
