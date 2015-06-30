@@ -545,10 +545,10 @@ class SpinalCordStraightener(object):
             crop_y_start = int(round(ny_/2)) - gapxy - 20
             crop_y_end = int(round(ny_/2)) + gapxy + 20
             if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0", bmax=True, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="1", start=crop_y_start, end=crop_y_end, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="2", bmax=True, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0,1,2", bmax=True, verbose=verbose).crop()
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0,2], bmax=True, verbose=verbose).crop()
+                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[1], start=[crop_y_start], end=[crop_y_end], verbose=verbose).crop()
+                #ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="2", bmax=True, verbose=verbose).crop()
+                #ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0,1,2", bmax=True, verbose=verbose).crop()
 
                 pass
             else:
