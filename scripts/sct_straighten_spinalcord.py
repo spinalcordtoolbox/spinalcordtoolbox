@@ -367,6 +367,7 @@ class SpinalCordStraightener(object):
             file = load('tmp.centerline_pad.nii.gz')
             data = file.get_data()
             hdr = file.get_header()
+            landmark_curved_rigid = []
 
             if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None':
                 # Reorganize landmarks
@@ -382,8 +383,8 @@ class SpinalCordStraightener(object):
                 (rotation_matrix, translation_array, points_moving_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(
                     points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=False)
 
-                # reorganize registered points
-                landmark_curved_rigid = []
+                # reorganize registered pointsx
+
                 for index_curved, ind in enumerate(range(0, len(points_moving_reg), 1)):
                     coord = Coordinate()
                     coord.x, coord.y, coord.z, coord.value = points_moving_reg[ind][0], points_moving_reg[ind][1], points_moving_reg[ind][2], index_curved+1
@@ -552,7 +553,7 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
 
-            if self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None":
+            if (self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
@@ -576,7 +577,7 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
             sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-            if self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None":
+            if (self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
