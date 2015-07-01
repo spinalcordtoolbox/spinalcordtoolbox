@@ -85,8 +85,10 @@ if __name__ == "__main__":
                   'bspline_order': ['2', '3'],
                   'algo_landmark_rigid': ['xy', 'translation', 'translation-xy']}"""
     parameters = {'algo_fitting': ['hanning', 'nurbs'],
-                  'algo_landmark_rigid': ['None', 'xy', 'translation', 'translation-xy'],
-                  'all_labels': ['0', '1']}
+                  'algo_landmark_rigid': ['None', 'translation', 'translation-xy'],
+                  'all_labels': ['0', '1'],
+                  'use_continuous_labels':['0', '1']}
+
 
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
