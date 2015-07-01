@@ -139,7 +139,7 @@ class SpinalCordStraightener(object):
         self.bspline_order = '2'
         self.algo_landmark_rigid = None
         self.all_labels = 0
-        self.use_continuous_labels = False
+        self.use_continuous_labels = 0
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -553,7 +553,7 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation curve --> straight
             sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
 
-            if (self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
+            if (self.use_continuous_labels==1 and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
@@ -577,7 +577,7 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
             sct.printv('\nEstimate b-spline transformation: straight --> curve...', verbose)
-            if (self.use_continuous_labels and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
+            if (self.use_continuous_labels==1 and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
@@ -761,6 +761,6 @@ if __name__ == "__main__":
             elif param_split[0] == 'all_labels':
                 sc_straight.all_labels = int(param_split[1])
             elif param_split[0] == 'use_continuous_labels':
-                sc_straight.use_continuous_labels = bool(param_split[1])
+                sc_straight.use_continuous_labels = int(param_split[1])
 
     sc_straight.straighten()
