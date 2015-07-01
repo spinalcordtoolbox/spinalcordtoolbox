@@ -169,19 +169,21 @@ class NURBS():
                 self.nbControle -= 1  # last addition does not count
 
                 #self.courbe3D, self.courbe3D_deriv = self.construct3D(self.pointsControle, self.degre, self.precision)  # generate curve with hig resolution
-                nbControle_that_last_worked = list_param_that_worked[-1][0]
-                pointsControle_that_last_worked = list_param_that_worked[-1][1]
-                error_curve_that_last_worked = list_param_that_worked[-1][2]
+                # select number of control points that gives the best results
+                list_param_that_worked_sorted = sorted(list_param_that_worked, key=lambda list_param_that_worked: list_param_that_worked[2])
+                nbControle_that_last_worked = list_param_that_worked_sorted[0][0]
+                pointsControle_that_last_worked = list_param_that_worked_sorted[0][1]
+                error_curve_that_last_worked = list_param_that_worked_sorted[0][2]
                 self.courbe3D, self.courbe3D_deriv = self.construct3D(pointsControle_that_last_worked, self.degre, self.precision)  # generate curve with hig resolution
 
                 if verbose >= 1:
                     if self.nbControle != nbControle_that_last_worked:
-                        print 'The number of points was too low. The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the last number that worked. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
+                        print 'The number of points was too low. The fitting of the curve was done using ', nbControle_that_last_worked, ' points of controle: the number that gave the best results. \nError on approximation = ' + str(round(error_curve_that_last_worked, 2)) + ' mm'
                     else:
                         print 'Number of control points of the optimal NURBS = ' + str(self.nbControle)
             else:
                 if verbose >= 1:
-                    print 'In NURBS we get nurbs_ctl_points = ',nbControl
+                    print 'In NURBS we get nurbs_ctl_points = ', nbControl
                 w = [1.0]*len(P_x)
                 self.nbControl = nbControl  # increase nbeControle if "short data"
                 self.pointsControle = self.reconstructGlobalApproximation(P_x, P_y, P_z, self.degre, self.nbControle, w)
@@ -514,7 +516,7 @@ class NURBS():
         from numpy import std
         std_factor = 10.0
         std_Px, std_Py, std_Pz, std_x, std_y, std_z = std(P_xb), std(P_yb), std(P_zb), std(array(P_x)), std(array(P_y)), std(array(P_z))
-        if std_Px > std_factor*std_x or std_Py > std_factor*std_y or std_Pz > std_factor*std_z:
+        if std_x >= 0.1 and std_y >= 0.1 and std_z >= 0.1 and (std_Px > std_factor*std_x or std_Py > std_factor*std_y or std_Pz > std_factor*std_z):
             raise Exception('WARNING: NURBS instability -> wrong control points')
 
         P = [[P_xb[i,0],P_yb[i,0],P_zb[i,0]] for i in range(len(P_xb))]
