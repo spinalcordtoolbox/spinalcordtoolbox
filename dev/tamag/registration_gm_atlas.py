@@ -15,6 +15,7 @@ import numpy as np
 from PIL import Image
 import nibabel
 import sct_utils as sct
+import matplotlib.pyplot as plt
 
 ext_o = '.nii.gz'
 
@@ -24,15 +25,21 @@ def main():
     os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_registration')
 
     # Define names
-    fname1 = 'greyscale_select_smooth.png'
+    fname1 = 'greyscale_antisym.png'
     fname2 = 'binary_gm_black.png'
     fname3 = 'gm_white.png'
     fname4 = 'mask_grays_cerv_sym_correc_r5.png'
     slice = 'slice_ref_template.nii.gz'
-    name1 = 'greyscale_select_smooth'
+    name1 = 'greyscale_antisym'
     name2 = 'binary_gm_black'
     name3 = 'gm_white'
     name4 = 'mask_grays_cerv_sym_correc_r5'
+
+        # Save png images of the registered NIFTI images
+    save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
+    save_png_from_nii('binary_gm_crop_resampled_registered.nii.gz')
+    save_png_from_nii(name3+'_resampled'+'_registered'+ext_o)
+
 
     save_nii_from_png(fname1)
     save_nii_from_png(fname2)
@@ -41,7 +48,7 @@ def main():
 
     # Crop image background
 
-    sct.run('sct_crop_image -i '+name2+ext_o+' -dim 0,1 -start 84,0 -end 1581,1029 -b 0 -o binary_gm_crop.nii.gz')
+    sct.run('sct_crop_image -i '+ name2 + ext_o +' -dim 0,1 -start 84,0 -end 1581,1029 -b 0 -o binary_gm_crop.nii.gz')
     name2 = 'binary_gm_crop'
 
     # Interpolation of the images to set them in the right format
@@ -67,7 +74,7 @@ def main():
     warp_2_prefix = 'warp_2_'
     tmp_file_2 = 'tmp_2.nii.gz'
     # cmd_1 = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+ tmp_file+', 1, 4] -t BSplineSyN[0.2,3] --convergence 100x10 -s 1x0 -f 4x1 -o '+warp_2_prefix+' -r [mask_grays_cerv_sym_correc_r5.nii.gz, ' + tmp_file + ', 0]')
-    cmd_1 = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+ tmp_file+', 1, 32] -t SyN[0.1,3,0] --convergence 500x200 -s 1x0 -f 2x1 -o '+warp_2_prefix+' -r [mask_grays_cerv_sym_correc_r5.nii.gz, ' + tmp_file + ', 0]')
+    cmd_1 = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+ tmp_file+', 1, 32] -t SyN[0.1,3,0] --convergence 1000x1000 -s 1x0 -f 2x1 -o '+warp_2_prefix+' -r [mask_grays_cerv_sym_correc_r5.nii.gz, ' + tmp_file + ', 0]')
     sct.run(cmd_1)
     cmd_2 = ('isct_antsApplyTransforms -d 2 -i '+tmp_file+' -t '+ warp_2_prefix + '1Warp.nii.gz -r mask_grays_cerv_sym_correc_r5.nii.gz  -o '+tmp_file_2)
     sct.run(cmd_2)
@@ -77,6 +84,11 @@ def main():
     # cmd = ('isct_ComposeMultiTransform 2 outwarp.nii.gz  test_registration0GenericAffine.mat test_registration_Bspline1Warp.nii.gz -R mask_grays_cerv_sym_correc_r5.nii.gz')
     # cmd = ('isct_antsApplyTransforms -d 2 -i greyscale_select_inv_resampled.nii.gz -o greyscale_registered.nii.gz -n Linear -t outwarp.nii.gz -r mask_grays_cerv_sym_correc_r5.nii.gz')
     concat_and_apply(inputs=[name1+'_resampled'+ext_o, name2+'_resampled'+ext_o, name3+'_resampled'+ext_o], dest=name4+ext_o, output_names=[name1+'_resampled'+'_registered'+ext_o, name2+'_resampled'+'_registered'+ext_o, name3+'_resampled'+'_registered'+ext_o], warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'])
+
+    # Save png images of the registered NIFTI images
+    save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
+    save_png_from_nii(name2+'_resampled'+'_registered'+ext_o)
+    save_png_from_nii(name3+'_resampled'+'_registered'+ext_o)
 
     # tester correspondances entre les images
     status, output = sct.run('sct_dice_coefficient ' + name2 + '_resampled' + '_registered' + ext_o + ' ' + name4 + ext_o)
@@ -113,6 +125,17 @@ def interpolate(fname, interpolation = 'Linear'):
     path, file, ext = sct.extract_fname(fname)
     cmd =('isct_c3d '+fname+' -interpolation '+interpolation + ' -resample 492x363x1 -o '+ file + '_resampled' + ext)
     sct.run(cmd)
+
+def save_png_from_nii(fname):
+    path, file, ext = sct.extract_fname(fname)
+    data = nibabel.load(fname).get_data()
+    sagittal = data[ :, :].T
+    fig, ax = plt.subplots(1,1)
+    ax.imshow(sagittal, cmap='gray', origin='lower')
+    ax.set_title('sagittal')
+    ax.set_axis_off()
+    fig1 = plt.gcf()
+    fig1.savefig(file + '.png', format='png')
 
 #=======================================================================================================================
 # Start program
