@@ -421,7 +421,7 @@ def average_levels(contrast):
     sct.run('sct_average_levels.py -i ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + ' -t '+ template_shape +' -n '+ str(number_labels_for_template))
 
 
-# Aligning vertebrae for all subjects and copy results into "Final_results".
+# Aligning vertebrae for all subjects and copy results into "Final_results". Plus: save png images of all subject into a folder named Image_results.
 def align_vertebrae(contrast):
     for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
