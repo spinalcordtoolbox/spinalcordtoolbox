@@ -62,7 +62,7 @@ class Param:
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '31'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -72,6 +72,7 @@ class Paramreg(object):
         self.smooth = smooth
         self.gradStep = gradStep
         self.poly = poly  # slicereg only
+        self.window_length = window_length
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -170,7 +171,7 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: {slicereg,rigid,affine,syn,bsplinesyn}. Default="""+paramreg.steps['1'].algo+"""\n  For info about slicereg, see here: goo.gl/Sj3ZeU\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  rigid\n  affine\n  syn\n  bsplinesyn\n  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n  slicereg2d_translation: hanning-regularized slicereg\n  slicereg2d_rigid\n  slicereg2d_affine\n  slicereg2d_pointwise: uses continuous coordinates (only to be used with seg type)\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid and slicereg2d_affine.. Default="""+paramreg.steps['1'].window_length,
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
@@ -246,6 +247,7 @@ def main():
     param.verbose = verbose
     param.padding = padding
     param.fname_mask = fname_mask
+    param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
@@ -409,6 +411,103 @@ def register(src, dest, paramreg, param, i_step_str):
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
                '-o [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +masking)
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_pointwise':
+        if paramreg.steps[i_step_str].type != 'seg':
+            print '\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.'
+            sys.exit(2)
+        else:
+            from msct_register_regularized import register_seg, generate_warping_field
+            from numpy import asarray
+            from msct_smooth import smoothing_window
+            # Calculate displacement
+            x_disp, y_disp = register_seg(src, dest)
+            # Change to array
+            x_disp_a = asarray(x_disp)
+            y_disp_a = asarray(y_disp)
+            # Smooth results
+            x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
+            y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
+            # Generate warping field
+            generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
+            # Inverse warping field
+            generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+            cmd = ('')
+            warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+            warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_translation':
+        from msct_register_regularized import register_images, generate_warping_field
+        from numpy import asarray
+        from msct_smooth import smoothing_window
+        # Calculate displacement
+        x_disp, y_disp = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Translation', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
+        # Change to array
+        x_disp_a = asarray(x_disp)
+        y_disp_a = asarray(y_disp)
+        # Smooth results
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        # Generate warping field
+        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
+        # Inverse warping field
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        cmd = ('')
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_rigid':
+        from msct_register_regularized import register_images, generate_warping_field
+        from numpy import asarray
+        from msct_smooth import smoothing_window
+        # Calculate displacement
+        x_disp, y_disp, theta_rot = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Rigid', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
+        # Change to array
+        x_disp_a = asarray(x_disp)
+        y_disp_a = asarray(y_disp)
+        theta_rot_a = asarray(theta_rot)
+        # Smooth results
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        # Generate warping field
+        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
+        # Inverse warping field
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        cmd = ('')
+        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_affine':
+        from msct_register_regularized import register_images, generate_warping_field
+        from numpy import asarray
+        from msct_smooth import smoothing_window
+        from numpy.linalg import inv
+        # Calculate displacement
+        x_disp, y_disp, matrix_def = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Affine', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
+        # Change to array
+        x_disp_a = asarray(x_disp)
+        y_disp_a = asarray(y_disp)
+        matrix_def_0_a = asarray([matrix_def[j][0][0] for j in range(len(matrix_def))])
+        matrix_def_1_a = asarray([matrix_def[j][0][1] for j in range(len(matrix_def))])
+        matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
+        matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
+        # Smooth results
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a, window_len=31, window='hanning', verbose = param.verbose)
+        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a, window_len=31, window='hanning', verbose = param.verbose)
+        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a, window_len=31, window='hanning', verbose = param.verbose)
+        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a, window_len=31, window='hanning', verbose = param.verbose)
+        matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
+        matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
+        # Generate warping field
+        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, matrix_def_smooth, fname='step'+i_step_str+'Warp.nii.gz')
+        # Inverse warping field
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def_smooth_inv, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        cmd = ('')
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
