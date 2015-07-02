@@ -157,7 +157,7 @@ for slice_line in data_lines:
     dic[level].append(slice_line[1])
 '''
 
-data_by_level = open('wm_dice_by_level.txt', 'w')
+data_by_level = open(path + '/wm_dice_by_level.txt', 'w')
 
 for level in level_dic.keys():
     s_dices = ''
@@ -169,7 +169,7 @@ data_by_level.write('\n\n')
 
 data_by_level.close()
 
-data_by_n_slice = open('wm_dice_by_n_slice.txt', 'w')
+data_by_n_slice = open(path + '/wm_dice_by_n_slice.txt', 'w')
 
 for n_slice in n_slice_dic.keys():
     s_dices = ''
