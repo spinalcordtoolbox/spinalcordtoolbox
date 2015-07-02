@@ -108,22 +108,22 @@ for loocv_dir in os.listdir(path):
 
         col = 1
         for line in dice_lines:
-            print line
-            n_slices = line[0]
-            if n_slices not in worksheets_n_slices[n_sub][2].keys():
-                worksheets_n_slices[n_sub][2][n_slices] = [init_row, col]
-                worksheets_n_slices[n_sub][0].write(0, col, int(n_slices))
-                worksheets_n_slices[n_sub][0].write(0, col+1, int(n_slices))
+            if line[0] != '\n':
+                n_slices = line[0]
+                if n_slices not in worksheets_n_slices[n_sub][2].keys():
+                    worksheets_n_slices[n_sub][2][n_slices] = [init_row, col]
+                    worksheets_n_slices[n_sub][0].write(0, col, int(n_slices))
+                    worksheets_n_slices[n_sub][0].write(0, col+1, int(n_slices))
 
-                worksheets_n_slices[n_sub][0].write(1, col, 1.2)
-                worksheets_n_slices[n_sub][0].write(1, col+1, 0)
+                    worksheets_n_slices[n_sub][0].write(1, col, 1.2)
+                    worksheets_n_slices[n_sub][0].write(1, col+1, 0)
 
-                col += 2
-                for i, dc in enumerate(line[1].split(',')):
-                    worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
-            else:
-                for i, dc in enumerate(line[1].split(',')):
-                    worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
+                    col += 2
+                    for i, dc in enumerate(line[1].split(',')):
+                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
+                else:
+                    for i, dc in enumerate(line[1].split(',')):
+                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
 
 workbook2.close()
 
@@ -166,21 +166,22 @@ for loocv_dir in os.listdir(path):
 
         col = 1
         for line in dice_lines:
-            level = line[0]
-            if level not in worksheets_levels[n_sub][2].keys():
-                worksheets_levels[n_sub][2][level] = [init_row, col]
-                worksheets_levels[n_sub][0].write(0, col, level)
-                worksheets_levels[n_sub][0].write(0, col+1, level)
+            if line[0] != '\n':
+                level = line[0]
+                if level not in worksheets_levels[n_sub][2].keys():
+                    worksheets_levels[n_sub][2][level] = [init_row, col]
+                    worksheets_levels[n_sub][0].write(0, col, level)
+                    worksheets_levels[n_sub][0].write(0, col+1, level)
 
-                worksheets_levels[n_sub][0].write(1, col, 1.2)
-                worksheets_levels[n_sub][0].write(1, col+1, 0)
+                    worksheets_levels[n_sub][0].write(1, col, 1.2)
+                    worksheets_levels[n_sub][0].write(1, col+1, 0)
 
-                col += 2
-                for i, dc in enumerate(line[1].split(',')):
-                    worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
-            else:
-                for i, dc in enumerate(line[1].split(',')):
-                    worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
+                    col += 2
+                    for i, dc in enumerate(line[1].split(',')):
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
+                else:
+                    for i, dc in enumerate(line[1].split(',')):
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
 
 workbook3.close()
 
