@@ -178,9 +178,11 @@ for loocv_dir in os.listdir(path):
 
                     col += 2
                     for i, dc in enumerate(line[1].split(',')):
+                        print dc
                         worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
                 else:
                     for i, dc in enumerate(line[1].split(',')):
+                        print dc
                         worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
 
 workbook3.close()
