@@ -113,7 +113,7 @@ for loocv_dir in os.listdir(path):
                 n_slices = n_slices.replace(' ', '')
 
                 if n_slices not in worksheets_n_slices[n_sub][2].keys():
-                    worksheets_n_slices[n_sub][2][n_slices] = [init_row, col]
+                    worksheets_n_slices[n_sub][2][n_slices] = [init_row, init_row, col]
                     worksheets_n_slices[n_sub][0].write(0, col, int(n_slices))
                     worksheets_n_slices[n_sub][0].write(0, col+1, int(n_slices))
 
@@ -122,12 +122,12 @@ for loocv_dir in os.listdir(path):
 
                     col += 2
                     for i, dc in enumerate(line[1].split(',')):
-                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0], worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
-                        worksheets_n_slices[n_sub][2][n_slices][0] += 1
+                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][to_add_col], worksheets_n_slices[n_sub][2][n_slices][2]+to_add_col, float(dc))
+                        worksheets_n_slices[n_sub][2][n_slices][to_add_col] += 1
                 else:
                     for i, dc in enumerate(line[1].split(',')):
-                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0], worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
-                        worksheets_n_slices[n_sub][2][n_slices][0] += 1
+                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][to_add_col], worksheets_n_slices[n_sub][2][n_slices][2]+to_add_col, float(dc))
+                        worksheets_n_slices[n_sub][2][n_slices][to_add_col] += 1
 
 workbook2.close()
 
@@ -156,6 +156,7 @@ for loocv_dir in os.listdir(path):
     if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
         words = loocv_dir.split('_')
         n_sub = words[0]
+        print n_sub
         mod = int(words[1])
         gamma = words[-1]
         if gamma == '1.2':
@@ -174,7 +175,7 @@ for loocv_dir in os.listdir(path):
                 level = line[0]
                 level = level.replace(' ', '')
                 if level not in worksheets_levels[n_sub][2].keys():
-                    worksheets_levels[n_sub][2][level] = [init_row, col]
+                    worksheets_levels[n_sub][2][level] = [init_row, init_row, col]
                     worksheets_levels[n_sub][0].write(0, col, level)
                     worksheets_levels[n_sub][0].write(0, col+1, level)
 
@@ -185,13 +186,13 @@ for loocv_dir in os.listdir(path):
                     print 'levels line dice', line
                     for i, dc in enumerate(line[1].split(',')):
                         print dc
-                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0], worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
-
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][to_add_col], worksheets_levels[n_sub][2][level][2]+to_add_col, float(dc))
+                        worksheets_levels[n_sub][2][level][to_add_col] += 1
                 else:
                     for i, dc in enumerate(line[1].split(',')):
                         print dc
-                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0], worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
-                        worksheets_levels[n_sub][2][level][0] += 1
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][to_add_col], worksheets_levels[n_sub][2][level][2]+to_add_col, float(dc))
+                        worksheets_levels[n_sub][2][level][to_add_col] += 1
 
 workbook3.close()
 
