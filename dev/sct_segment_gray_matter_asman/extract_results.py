@@ -126,7 +126,7 @@ for loocv_dir in os.listdir(path):
                         worksheets_n_slices[n_sub][2][n_slices][0] += 1
                 else:
                     for i, dc in enumerate(line[1].split(',')):
-                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
+                        worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0], worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
                         worksheets_n_slices[n_sub][2][n_slices][0] += 1
 
 workbook2.close()
@@ -185,14 +185,13 @@ for loocv_dir in os.listdir(path):
                     print 'levels line dice', line
                     for i, dc in enumerate(line[1].split(',')):
                         print dc
-                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
-                        worksheets_levels[n_sub][2][n_slices][0] += 1
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0], worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
 
                 else:
                     for i, dc in enumerate(line[1].split(',')):
                         print dc
-                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
-                        worksheets_levels[n_sub][2][n_slices][0] += 1
+                        worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0], worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
+                        worksheets_levels[n_sub][2][level][0] += 1
 
 workbook3.close()
 
