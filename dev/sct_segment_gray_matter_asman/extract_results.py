@@ -68,10 +68,121 @@ for loocv_dir in os.listdir(path):
                 worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+to_add_col, float(line[3]))
                 worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+2, float(line[-1]))
 
-
-
-
 workbook.close()
+
+# ############################# MULTIPLE LOOCV FROM MAGMA :  get level and n_sice data #############################
+workbook2 = xl.Workbook('results_wmseg_dices_by_n_slices.xlsx')
+worksheet_36 = workbook2.add_worksheet('36subjects')
+worksheet_28 = workbook2.add_worksheet('28subjects')
+worksheet_20 = workbook2.add_worksheet('20subjects')
+worksheet_15 = workbook2.add_worksheet('15subjects')
+worksheet_10 = workbook2.add_worksheet('10subjects')
+worksheet_5 = workbook2.add_worksheet('5subjects')
+worksheet_2 = workbook2.add_worksheet('2subjects')
+
+bold = workbook2.add_format({'bold': True})
+
+init_row = 2
+worksheets_n_slices = {'36subjects': [worksheet_36, init_row, {}], '28subjects': [worksheet_28, init_row, {}], '20subjects': [worksheet_20, init_row, {}], '15subjects': [worksheet_15, init_row, {}], '10subjects': [worksheet_10, init_row, {}], '5subjects': [worksheet_5, init_row, {}], '2subjects': [worksheet_2, init_row, {}]}
+
+for w in worksheets_n_slices.values():
+    w[0].write(0, 0, 'Number of slices in model', bold)
+    w[0].write(1, 0, 'Gamma', bold)
+
+for loocv_dir in os.listdir(path):
+    if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
+        words = loocv_dir.split('_')
+        n_sub = words[0]
+        mod = int(words[1])
+        gamma = words[-1]
+        if gamma == '1.2':
+            to_add_col = 0
+        else:
+            to_add_col = 1
+
+        dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
+        dice_lines = dice_file.readlines()
+        dice_file.close()
+
+        dice_lines = [line.split(':') for line in dice_lines]
+
+        col = 1
+        for line in dice_lines:
+            n_slices = line[0]
+            if n_slices not in worksheets_n_slices[n_sub][2].keys():
+                worksheets_n_slices[n_sub][2][n_slices] = [init_row, col]
+                worksheets_n_slices[n_sub][0].write(0, col, int(n_slices))
+                worksheets_n_slices[n_sub][0].write(0, col+1, int(n_slices))
+
+                worksheets_n_slices[n_sub][0].write(1, col, 1.2)
+                worksheets_n_slices[n_sub][0].write(1, col+1, 0)
+
+                col += 2
+                for i, dc in enumerate(line[1].split(',')):
+                    worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
+            else:
+                for i, dc in enumerate(line[1].split(',')):
+                    worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][0]+i, worksheets_n_slices[n_sub][2][n_slices][1]+to_add_col, float(dc))
+
+workbook2.close()
+
+
+# ############################# MULTIPLE LOOCV FROM MAGMA :  get level and n_sice data #############################
+workbook3 = xl.Workbook('results_wmseg_dices_by_level.xlsx')
+worksheet_36 = workbook3.add_worksheet('36subjects')
+worksheet_28 = workbook3.add_worksheet('28subjects')
+worksheet_20 = workbook3.add_worksheet('20subjects')
+worksheet_15 = workbook3.add_worksheet('15subjects')
+worksheet_10 = workbook3.add_worksheet('10subjects')
+worksheet_5 = workbook3.add_worksheet('5subjects')
+worksheet_2 = workbook3.add_worksheet('2subjects')
+
+bold = workbook3.add_format({'bold': True})
+
+init_row = 2
+worksheets_levels = {'36subjects': [worksheet_36, init_row, {}], '28subjects': [worksheet_28, init_row, {}], '20subjects': [worksheet_20, init_row, {}], '15subjects': [worksheet_15, init_row, {}], '10subjects': [worksheet_10, init_row, {}], '5subjects': [worksheet_5, init_row, {}], '2subjects': [worksheet_2, init_row, {}]}
+
+for w in worksheets_levels.values():
+    w[0].write(0, 0, 'Number of slices in model', bold)
+    w[0].write(1, 0, 'Gamma', bold)
+
+for loocv_dir in os.listdir(path):
+    if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
+        words = loocv_dir.split('_')
+        n_sub = words[0]
+        mod = int(words[1])
+        gamma = words[-1]
+        if gamma == '1.2':
+            to_add_col = 0
+        else:
+            to_add_col = 1
+
+        dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
+        dice_lines = dice_file.readlines()
+        dice_file.close()
+
+        dice_lines = [line.split(':') for line in dice_lines]
+
+        col = 1
+        for line in dice_lines:
+            level = line[0]
+            if level not in worksheets_levels[n_sub][2].keys():
+                worksheets_levels[n_sub][2][level] = [init_row, col]
+                worksheets_levels[n_sub][0].write(0, col, level)
+                worksheets_levels[n_sub][0].write(0, col+1, level)
+
+                worksheets_levels[n_sub][0].write(1, col, 1.2)
+                worksheets_levels[n_sub][0].write(1, col+1, 0)
+
+                col += 2
+                for i, dc in enumerate(line[1].split(',')):
+                    worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
+            else:
+                for i, dc in enumerate(line[1].split(',')):
+                    worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][0]+i, worksheets_levels[n_sub][2][level][1]+to_add_col, float(dc))
+
+workbook3.close()
+
 
 """
 # ############################# CLASSICAL LOOCV #############################
