@@ -108,6 +108,7 @@ for loocv_dir in os.listdir(path):
 
         col = 1
         for line in dice_lines:
+            print line
             n_slices = line[0]
             if n_slices not in worksheets_n_slices[n_sub][2].keys():
                 worksheets_n_slices[n_sub][2][n_slices] = [init_row, col]
