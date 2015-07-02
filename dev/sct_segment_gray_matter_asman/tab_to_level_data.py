@@ -136,7 +136,7 @@ while data_line != '\n' and data_line != '':
     if len(slice_line) == 1:
         slice_line = slice_line[0].split('\t')
 
-    n_slices = slice_line[-1]
+    n_slices = slice_line[-1][:-1]
     level = slice_line[2][:-1]
 
     level_dic[level].append(slice_line[3])
