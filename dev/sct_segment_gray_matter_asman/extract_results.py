@@ -83,13 +83,13 @@ worksheet_2 = workbook2.add_worksheet('2subjects')
 bold = workbook2.add_format({'bold': True})
 
 init_row = 2
-worksheets_n_slices = {'36subjects': [worksheet_36, init_row, {}], '28subjects': [worksheet_28, init_row, {}], '20subjects': [worksheet_20, init_row, {}], '15subjects': [worksheet_15, init_row, {}], '10subjects': [worksheet_10, init_row, {}], '5subjects': [worksheet_5, init_row, {}], '2subjects': [worksheet_2, init_row, {}]}
+init_col = 1
+worksheets_n_slices = {'36subjects': [worksheet_36, init_col, {}], '28subjects': [worksheet_28, init_col, {}], '20subjects': [worksheet_20, init_col, {}], '15subjects': [worksheet_15, init_col, {}], '10subjects': [worksheet_10, init_col, {}], '5subjects': [worksheet_5, init_col, {}], '2subjects': [worksheet_2, init_col, {}]}
 
 for w in worksheets_n_slices.values():
     w[0].write(0, 0, 'Number of slices in model', bold)
     w[0].write(1, 0, 'Gamma', bold)
 
-col = 1
 for loocv_dir in os.listdir(path):
     if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
         words = loocv_dir.split('_')
@@ -113,14 +113,14 @@ for loocv_dir in os.listdir(path):
                 n_slices = n_slices.replace(' ', '')
 
                 if n_slices not in worksheets_n_slices[n_sub][2].keys():
-                    worksheets_n_slices[n_sub][2][n_slices] = [init_row, init_row, col]
-                    worksheets_n_slices[n_sub][0].write(0, col, int(n_slices))
-                    worksheets_n_slices[n_sub][0].write(0, col+1, int(n_slices))
+                    worksheets_n_slices[n_sub][2][n_slices] = [init_row, init_row, worksheets_n_slices[n_sub][1]]
+                    worksheets_n_slices[n_sub][0].write(0, worksheets_n_slices[n_sub][1], int(n_slices))
+                    worksheets_n_slices[n_sub][0].write(0, worksheets_n_slices[n_sub][1]+1, int(n_slices))
 
-                    worksheets_n_slices[n_sub][0].write(1, col, 1.2)
-                    worksheets_n_slices[n_sub][0].write(1, col+1, 0)
+                    worksheets_n_slices[n_sub][0].write(1, worksheets_n_slices[n_sub][1], 1.2)
+                    worksheets_n_slices[n_sub][0].write(1, worksheets_n_slices[n_sub][1]+1, 0)
 
-                    col += 2
+                    worksheets_n_slices[n_sub][1] += 2
                     for i, dc in enumerate(line[1].split(',')):
                         worksheets_n_slices[n_sub][0].write(worksheets_n_slices[n_sub][2][n_slices][to_add_col], worksheets_n_slices[n_sub][2][n_slices][2]+to_add_col, float(dc))
                         worksheets_n_slices[n_sub][2][n_slices][to_add_col] += 1
@@ -145,13 +145,13 @@ worksheet_2 = workbook3.add_worksheet('2subjects')
 bold = workbook3.add_format({'bold': True})
 
 init_row = 2
-worksheets_levels = {'36subjects': [worksheet_36, init_row, {}], '28subjects': [worksheet_28, init_row, {}], '20subjects': [worksheet_20, init_row, {}], '15subjects': [worksheet_15, init_row, {}], '10subjects': [worksheet_10, init_row, {}], '5subjects': [worksheet_5, init_row, {}], '2subjects': [worksheet_2, init_row, {}]}
+init_col = 1
+worksheets_levels = {'36subjects': [worksheet_36, init_col, {}], '28subjects': [worksheet_28, init_col, {}], '20subjects': [worksheet_20, init_col, {}], '15subjects': [worksheet_15, init_col, {}], '10subjects': [worksheet_10, init_col, {}], '5subjects': [worksheet_5, init_col, {}], '2subjects': [worksheet_2, init_col, {}]}
 
 for w in worksheets_levels.values():
     w[0].write(0, 0, 'Number of slices in model', bold)
     w[0].write(1, 0, 'Gamma', bold)
 
-col = 1
 for loocv_dir in os.listdir(path):
     if os.path.isdir(path + '/' + loocv_dir) and 'dictionary' not in loocv_dir:
         words = loocv_dir.split('_')
@@ -175,22 +175,20 @@ for loocv_dir in os.listdir(path):
                 level = line[0]
                 level = level.replace(' ', '')
                 if level not in worksheets_levels[n_sub][2].keys():
-                    worksheets_levels[n_sub][2][level] = [init_row, init_row, col]
-                    worksheets_levels[n_sub][0].write(0, col, level)
-                    worksheets_levels[n_sub][0].write(0, col+1, level)
+                    worksheets_levels[n_sub][2][level] = [init_row, init_row, worksheets_levels[n_sub][1]]
+                    worksheets_levels[n_sub][0].write(0, worksheets_levels[n_sub][1], level)
+                    worksheets_levels[n_sub][0].write(0, worksheets_levels[n_sub][1]+1, level)
 
-                    worksheets_levels[n_sub][0].write(1, col, 1.2)
-                    worksheets_levels[n_sub][0].write(1, col+1, 0)
+                    worksheets_levels[n_sub][0].write(1, worksheets_levels[n_sub][1], 1.2)
+                    worksheets_levels[n_sub][0].write(1, worksheets_levels[n_sub][1]+1, 0)
 
-                    col += 2
+                    worksheets_levels[n_sub][1] += 2
                     print 'levels line dice', line
                     for i, dc in enumerate(line[1].split(',')):
-                        print dc
                         worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][to_add_col], worksheets_levels[n_sub][2][level][2]+to_add_col, float(dc))
                         worksheets_levels[n_sub][2][level][to_add_col] += 1
                 else:
                     for i, dc in enumerate(line[1].split(',')):
-                        print dc
                         worksheets_levels[n_sub][0].write(worksheets_levels[n_sub][2][level][to_add_col], worksheets_levels[n_sub][2][level][2]+to_add_col, float(dc))
                         worksheets_levels[n_sub][2][level][to_add_col] += 1
 
