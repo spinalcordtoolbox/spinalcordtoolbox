@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 '''
 dice_file = open('./dice_coeffs.txt', 'r')
 data_lines = dice_file.readline().split('\r')
@@ -86,20 +87,64 @@ data_by_level.write('\n\n')
 
 data_by_level.close()
 '''
+
+## USUAL CASE THAT WORKS ##
+'''
 dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
 
 dice_file = open('./wm_dice_coeff.txt', 'r')
 data_line = dice_file.readline()
 # data_line = data_line.split('\r')
-while data_line != '\n':
+while data_line != '\n' and data_line != '':
     # for slice_line in data_line[:-2]:
     slice_line = data_line.split(' ')
 
     if len(slice_line) == 1:
         slice_line = slice_line[0].split('\t')
 
-    level = slice_line[-1][1:-2]
+    # level = slice_line[-1][1:-2]
+    level = slice_line[2][:-1]
     dic[level].append(slice_line[3])
+    data_line = dice_file.readline()
+dice_file.close()
+
+
+data_by_level = open('wm_dice_by_level.txt', 'w')
+
+for level in dic.keys():
+    s_dices = ''
+    for dice in dic[level]:
+        s_dices += dice + ' , '
+    data_by_level.write(level + ' : ' + s_dices[:-2] + '\n')
+data_by_level.write('\n\n')
+
+
+data_by_level.close()
+'''
+
+path = sys.argv[1]
+n_slice_dic = {}
+level_dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
+
+dice_file = open(path + '/wm_dice_coeff.txt', 'r')
+data_line = dice_file.readline()
+# data_line = data_line.split('\r')
+while data_line != '\n' and data_line != '':
+    # for slice_line in data_line[:-2]:
+    slice_line = data_line.split(' ')
+
+    if len(slice_line) == 1:
+        slice_line = slice_line[0].split('\t')
+
+    n_slices = slice_line[-1]
+    level = slice_line[2][:-1]
+
+    level_dic[level].append(slice_line[3])
+    if n_slices not in n_slice_dic.keys():
+        n_slice_dic[n_slices] = [slice_line[3]]
+    else:
+        n_slice_dic[n_slices].append(slice_line[3])
+
     data_line = dice_file.readline()
 dice_file.close()
 
@@ -114,12 +159,24 @@ for slice_line in data_lines:
 
 data_by_level = open('wm_dice_by_level.txt', 'w')
 
-for level in dic.keys():
+for level in level_dic.keys():
     s_dices = ''
-    for dice in dic[level]:
+    for dice in level_dic[level]:
         s_dices += dice + ' , '
     data_by_level.write(level + ' : ' + s_dices[:-2] + '\n')
 data_by_level.write('\n\n')
 
 
 data_by_level.close()
+
+data_by_n_slice = open('wm_dice_by_n_slice.txt', 'w')
+
+for n_slice in n_slice_dic.keys():
+    s_dices = ''
+    for dice in n_slice_dic[n_slice]:
+        s_dices += dice + ' , '
+    data_by_n_slice.write(str(n_slice) + ' : ' + s_dices[:-2] + '\n')
+data_by_n_slice.write('\n\n')
+
+
+data_by_n_slice.close()
