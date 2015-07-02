@@ -166,7 +166,7 @@ for loocv_dir in os.listdir(path):
 
         col = 1
         for line in dice_lines:
-            if line[0] != '\n' and line[1] != '\n':
+            if line[0] != '\n' and line[1] != ' \n':
                 level = line[0]
                 if level not in worksheets_levels[n_sub][2].keys():
                     worksheets_levels[n_sub][2][level] = [init_row, col]
