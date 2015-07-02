@@ -100,7 +100,7 @@ for loocv_dir in os.listdir(path):
         else:
             to_add_col = 1
 
-        dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
+        dice_file = open(path + '/' + loocv_dir + '/wm_dice_by_n_slices.txt', 'r')
         dice_lines = dice_file.readlines()
         dice_file.close()
 
@@ -157,7 +157,7 @@ for loocv_dir in os.listdir(path):
         else:
             to_add_col = 1
 
-        dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
+        dice_file = open(path + '/' + loocv_dir + '/wm_dice_by_level.txt', 'r')
         dice_lines = dice_file.readlines()
         dice_file.close()
 
