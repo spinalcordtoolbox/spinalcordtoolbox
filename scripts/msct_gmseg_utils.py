@@ -1762,8 +1762,10 @@ def leave_one_out_by_subject(param):
 
     dic_path, dic_3d, use_levels, weight, reg, z_reg = param
     use_levels = bool(int(use_levels))
+    print 'use-levels: ', use_levels
     z_reg = bool(int(z_reg))
     weight = float(weight)
+    print 'weight gamma: ', weight
 
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
     gm_dice_file = open('gm_dice_coeff.txt', 'w')

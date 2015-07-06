@@ -77,7 +77,7 @@ class FullGmSegmentation:
         sct.run('mkdir ' + self.tmp_dir)
         os.chdir(self.tmp_dir)
 
-        level_to_use = None
+        self.level_to_use = None
         if level_fname is not None:
             t2_data = None
             if check_file_to_niigz('../' + level_fname):
@@ -256,13 +256,18 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-use-levels",
+                          type_value='multiple_choice',
+                          description="Use the level information for the model or not",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
         parser.add_option(name="-z",
                           type_value='multiple_choice',
                           description="1: Z regularisation, 0: no ",
                           mandatory=False,
-                          default_value=1,
+                          default_value=0,
                           example=['0', '1'])
-
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
@@ -274,6 +279,12 @@ if __name__ == "__main__":
                           description="Reference segmentation of the gray matter",
                           mandatory=False,
                           example='manual_gm_seg.nii.gz')
+        parser.add_option(name="-select-k",
+                          type_value='multiple_choice',
+                          description="Method used to select the k dictionary slices most similar to the target slice: with a threshold (thr) or by taking the first n slices (n)",
+                          mandatory=False,
+                          default_value='thr',
+                          example=['thr', 'n'])
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -293,12 +304,16 @@ if __name__ == "__main__":
             input_level_fname = arguments["-l"]
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
+        if "-use-levels" in arguments:
+            param.use_levels = bool(int(arguments["-use-levels"]))
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-z" in arguments:
             param.z_regularisation = bool(int(arguments["-z"]))
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
+        if "-select-k" in arguments:
+            param.select_k = arguments["-select-k"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
