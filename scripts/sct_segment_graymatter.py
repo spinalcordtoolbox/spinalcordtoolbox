@@ -256,6 +256,13 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-z",
+                          type_value='multiple_choice',
+                          description="1: Z regularisation, 0: no ",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
+
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
@@ -288,6 +295,8 @@ if __name__ == "__main__":
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
+        if "-z" in arguments:
+            param.z_regularisation = bool(int(arguments["-z"]))
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
         if "-v" in arguments:
