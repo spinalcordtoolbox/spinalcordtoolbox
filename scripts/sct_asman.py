@@ -43,6 +43,7 @@ class Param:
         self.first_reg = False
         self.use_levels = True
         self.weight_beta = 1.2
+        self.z_regularisation = False
         self.res_type = 'binary'
         self.verbose = 1
 
@@ -669,6 +670,10 @@ class TargetSegmentationPairwise:
         self.model.label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
         self.model.sc_label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
 
+        if self.model.param.z_regularisation:
+            sct.printv('\nRegularisation of the segmentation along the Z axis ...', model.param.verbose, 'normal')
+            self.z_regularisation()
+
         sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
                    model.param.verbose, 'normal')
         self.target_pairwise_registration(inverse=True)
@@ -707,7 +712,6 @@ class TargetSegmentationPairwise:
             target_slice.reg_to_M.append((transfo, transfo_name))
             Image(param=target_slice.im, absolutepath='slice' + str(target_slice.id) + '_original_im.nii.gz').save()
             Image(param=target_slice.im_M, absolutepath='slice' + str(target_slice.id) + '_moved_im.nii.gz').save()
-
 
     # ------------------------------------------------------------------------------------------------------------------
     def target_pairwise_registration(self, inverse=False):
@@ -756,6 +760,33 @@ class TargetSegmentationPairwise:
                 target_slice.set(wm_seg=moving_wm_seg_slice)
                 target_slice.set(gm_seg=moving_gm_seg_slice)
                 target_slice.set(sc_seg=moving_sc_seg_slice)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def z_regularisation(self, coeff=0.4):
+        for i, target_slice in enumerate(self.target[1:-1]):
+            adjacent_wm_seg = []  # coeff * self.target[i-1].wm_seg_M, (1-2*coeff) * target_slice.wm_seg_M, coeff * self.target[i+1].wm_seg_M
+            adjacent_gm_seg = []  # coeff * self.target[i-1].gm_seg_M, (1-2*coeff) * target_slice.gm_seg_M, coeff * self.target[i+1].gm_seg_M
+
+            precision = 100
+            print int(precision*coeff)
+            for k in range(int(precision*coeff)):
+                adjacent_wm_seg.append(self.target[i-1].wm_seg_M)
+                adjacent_wm_seg.append(self.target[i+1].wm_seg_M)
+                adjacent_gm_seg.append(self.target[i-1].gm_seg_M)
+                adjacent_gm_seg.append(self.target[i+1].gm_seg_M)
+
+            for k in range(precision - 2*int(precision*coeff)):
+                adjacent_wm_seg.append(target_slice.wm_seg_M)
+                adjacent_gm_seg.append(target_slice.gm_seg_M)
+
+            adjacent_wm_seg = np.asarray(adjacent_wm_seg)
+            adjacent_gm_seg = np.asarray(adjacent_gm_seg)
+
+            new_wm_seg = compute_majority_vote_mean_seg(adjacent_wm_seg, type=self.model.param.res_type, threshold=0.50001)
+            new_gm_seg = compute_majority_vote_mean_seg(adjacent_gm_seg, type=self.model.param.res_type)  # , threshold=0.4999)
+
+            target_slice.set(wm_seg_m=new_wm_seg)
+            target_slice.set(gm_seg_m=new_gm_seg)
 
     # ------------------------------------------------------------------------------------------------------------------
     def plot_projected_dic(self, nb_modes=3):
@@ -1305,6 +1336,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-z",
+                          type_value='multiple_choice',
+                          description="1: Z regularisation, 0: no ",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
                           description="Apply a Bspline registration using the spinal cord edges target --> model first",
@@ -1340,6 +1377,8 @@ if __name__ == "__main__":
             param.weight_beta = arguments["-weight"]
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
+        if "-z" in arguments:
+            param.z_regularisation = bool(int(arguments["-z"]))
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-res-type" in arguments:
