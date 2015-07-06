@@ -45,6 +45,7 @@ class Param:
         self.weight_beta = 1.2
         self.z_regularisation = False
         self.res_type = 'binary'
+        self.select_k = 'thr'
         self.verbose = 1
 
 
@@ -392,7 +393,10 @@ class Model:
         self.dictionary.mean_image = self.pca.mean_image
 
         # Other model parameters
-        self.epsilon = round(1.0/self.dictionary.J, 4)/2
+        if self.param.select_k == 'thr':
+            self.epsilon = round(1.0/self.dictionary.J, 4)/2
+        else:
+            self.epsilon = 5  # TODO: optimize that !
 
         if self.param.todo_model == 'compute':
             self.tau = self.compute_tau()
@@ -538,12 +542,21 @@ class Model:
 
         if isinstance(beta[0], (list, np.ndarray)):
             for beta_slice in beta:
-                selected_index = beta_slice > self.epsilon
+                if self.param.select_k == 'thr':
+                    selected_index = beta_slice > self.epsilon
+                else:
+                    thr = sorted(beta_slice)[self.epsilon]
+                    selected_index = beta_slice > thr
 
                 kept_slice_index.append(selected_index)
 
         else:
-            kept_slice_index = beta > self.epsilon
+            if self.param.select_k == 'thr':
+                kept_slice_index = beta > self.epsilon
+            else:
+                thr = sorted(beta)[self.epsilon]
+                kept_slice_index = beta > thr
+
         return np.asarray(kept_slice_index)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -1221,7 +1234,7 @@ sct_Image
         suffix += gm_seg_param.target_reg + '_' + gm_seg_param.res_type
         for transfo in self.model.dictionary.coregistration_transfos:
             suffix += '_' + transfo
-        if level_im is not None:
+        if self.model.param.use_levels:
             suffix += '_with_levels'
         else:
             suffix += '_no_levels'
@@ -1340,7 +1353,7 @@ if __name__ == "__main__":
                           type_value='multiple_choice',
                           description="1: Z regularisation, 0: no ",
                           mandatory=False,
-                          default_value=1,
+                          default_value=0,
                           example=['0', '1'])
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
@@ -1354,6 +1367,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='binary',
                           example=['binary', 'prob'])
+        parser.add_option(name="-select-k",
+                          type_value='multiple_choice',
+                          description="Method used to select the k dictionary slices most similar to the target slice: with a threshold (thr) or by taking the first n slices (n)",
+                          mandatory=False,
+                          default_value='thr',
+                          example=['thr', 'n'])
         parser.add_option(name="-v",
                           type_value='multiple_choice',
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -1383,6 +1402,8 @@ if __name__ == "__main__":
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
+        if "-select-k" in arguments:
+            param.select_k = arguments["-select-k"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
