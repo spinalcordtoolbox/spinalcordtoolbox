@@ -4,7 +4,7 @@ import os
 
 path = '.'
 
-
+'''
 # ############################# MULTIPLE LOOCV FROM MAGMA #############################
 # Create a workbook and add a worksheet.
 workbook = xl.Workbook('results_wmseg_dices.xlsx')
@@ -193,9 +193,9 @@ for loocv_dir in os.listdir(path):
                         worksheets_levels[n_sub][2][level][to_add_col] += 1
 
 workbook3.close()
+'''
 
 
-"""
 # ############################# CLASSICAL LOOCV #############################
 
 workbook = xl.Workbook('results_loocv_subjects_resampled.xlsx')
@@ -361,4 +361,4 @@ worksheet_wm.conditional_format('E3:' + wm_lim, {'type':     'cell',
 
 workbook.close()
 
-"""
+
