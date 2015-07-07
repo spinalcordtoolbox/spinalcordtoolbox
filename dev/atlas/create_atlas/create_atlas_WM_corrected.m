@@ -63,7 +63,7 @@ z_slice_ref = 387;
 interp_factor = 6;
 
 % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
-% NB: 238=WM, 255=CSF (added by jcohen on 2014-12-08)
+% NB: 238=GM, 255=CSF (added by jcohen on 2014-12-08)
 % label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 238 255];
 label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121];
 label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230];
