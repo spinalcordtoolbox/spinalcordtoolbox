@@ -114,7 +114,7 @@ TEMPLATE PREPROCESSING
 
 
 
-    preprocess_data_template
+    preprocess_data_template.py
     ========
 
         This file was made to ease the generation of the template. It enables one to generate all the necessary files that are subject specific from scratch.

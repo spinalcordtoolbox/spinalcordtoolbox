@@ -76,7 +76,8 @@ if __name__ == "__main__":
 
     # contrast: t1, t2 or both
     input_t = "t2"
-    data_folders = ['C1-T3']
+    data_folders = ['C2-C5', 'C1-T12', 'C5-T8']
+    data_folders = ['C2-C5_copy', 'C1-T12_copy', 'C5-T8_copy']
 
     # parameters to optimize
     """parameters = {'algo_fitting': ['hanning', 'nurbs'],
@@ -84,19 +85,25 @@ if __name__ == "__main__":
                   'bspline_numberOfLevels': ['2', '3'],
                   'bspline_order': ['2', '3'],
                   'algo_landmark_rigid': ['xy', 'translation', 'translation-xy']}"""
-    parameters = {'algo_fitting': ['hanning', 'nurbs'],
-                  'algo_landmark_rigid': ['None', 'xy', 'translation', 'translation-xy'],
-                  'all_labels': ['0', '1']}
+    parameters = {'algo_fitting': ['nurbs'],
+                  'algo_landmark_rigid': ['translation-xy'],
+                  'all_labels': ['0', '1'],
+                  'use_continuous_labels': ['1']}
+
 
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
-    results = np.empty([len(data_folders), len(perm_params)])
+    #results_mse = np.empty([len(data_folders), len(perm_params)])
+    #results_dist_max = np.empty([len(data_folders), len(perm_params)])
 
-    pb = Progress_bar(0, 0, len(perm_params), numeric=True)
+    results_mse = [dict() for _ in xrange(len(data_folders))]
+    results_dist_max = [dict() for _ in xrange(len(data_folders))]
+
+    pb = Progress_bar(0, 0, len(data_folders)*len(perm_params), numeric=True)
 
     for i, folder_name in enumerate(data_folders):
         for index_comb, param in enumerate(perm_params):
-            pb.update(index_comb)
+            pb.update(i*len(perm_params)+index_comb)
 
             input_straightening_params = ''
             for key in param:
@@ -117,19 +124,65 @@ if __name__ == "__main__":
             pipeline_test.compute()
 
             # pipeline_test.straightening_results_dist_max
-            results[i, index_comb] = pipeline_test.straightening_results_mse[0]
+            #results[i, index_comb] = pipeline_test.straightening_results_mse[0]
+            from numpy import array, mean, std
 
-    pb.update(len(perm_params))
+            results_mse[i][input_straightening_params] = [itm[1] for itm in pipeline_test.straightening_results]
+            results_dist_max[i][input_straightening_params] = [itm[2] for itm in pipeline_test.straightening_results]
+
+    pb.update(len(data_folders)*len(perm_params))
+
     print '\n'
-    print results
-    min_value = results.ravel().argmin()
-    i_min, j_min = np.unravel_index(min_value, results.shape)
-    print "Minimum= "+str(results[i, j_min])
-    print "Optimal parameters:"
-    for k, v in perm_params[j_min].items():
-        print k + ': ' + v
 
-    elapsed_time = round(time.time() - begin, 2)
+    if len(perm_params) == 2:
+        results = dict()
+        results['folder'] = []
+        results['mse'] = []
+        results['dist_max'] = []
+        results['all_labels'] = []
+        for i, folder_name in enumerate(data_folders):
+            temp = []
+            for param in results_mse[i]:
+                temp.extend([folder_name]*len(results_mse[i][param]))
+            results['Dataset'].extend(temp)
+            temp = []
+            for param in results_mse[i]:
+                temp.extend(results_mse[i][param])
+            results['MSE'].extend(temp)
+            temp = []
+            for param in results_dist_max[i]:
+                temp.extend(results_dist_max[i][param])
+            results['Maximal distance'].extend(temp)
+            temp = []
+            for param in results_mse[i]:
+                opt = 'yes'
+                if param[-1] == '0':
+                    opt = 'no'
+                temp.extend([opt]*len(results_mse[i][param]))
+            results['Option labels'].extend(temp)
+
+    from pandas import DataFrame
+    df = DataFrame(results)
+    print df
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
+    f, (ax1, ax2) = plt.subplots(1, 2)
+
+    sns.set(style="whitegrid")
+    # Set up the matplotlib figure
+
+    # Draw a violinplot with a narrower bandwidth than the default
+    sns.violinplot(x='Dataset', y='MSE', hue="Option labels", data=df, split=True, bw=.2, cut=1, linewidth=1, ax=ax1)
+    sns.violinplot(x='Dataset', y='Maximal distance', hue="Option labels", data=df, split=True, bw=.2, cut=1, linewidth=1, ax=ax2)
+
+    # change ylim from 0 to max(mse) and max(dist)x
+
+    plt.show()
+
+    # Finalize the figure
+    #sns.despine(left=True, bottom=True)
 
     import pickle
-    pickle.dump(results, open("results_straightening.p", "wb"))
+    pickle.dump(df, open("results_straightening.p", "wb"))
