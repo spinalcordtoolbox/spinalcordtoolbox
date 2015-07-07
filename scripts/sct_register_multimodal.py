@@ -504,9 +504,9 @@ def register(src, dest, paramreg, param, i_step_str):
         matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
         matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
         # Generate warping field
-        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, matrix_def_smooth, fname='step'+i_step_str+'Warp.nii.gz')
+        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, matrix_def=matrix_def_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
-        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def_smooth_inv, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def=matrix_def_smooth_inv, fname='step'+i_step_str+'InverseWarp.nii.gz')
         cmd = ('')
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
