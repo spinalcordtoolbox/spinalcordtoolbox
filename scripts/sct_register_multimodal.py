@@ -171,7 +171,7 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  rigid\n  affine\n  syn\n  bsplinesyn\n  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n  slicereg2d_translation: hanning-regularized slicereg\n  slicereg2d_rigid\n  slicereg2d_affine\n  slicereg2d_pointwise: uses continuous coordinates (only to be used with seg type)\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step (only for SyN). Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid and slicereg2d_affine.. Default="""+paramreg.steps['1'].window_length,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  rigid\n  affine\n  syn\n  bsplinesyn\n  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n  slicereg2d_translation: slice-by-slice translation regularized using moving average (Hanning window)\n  slicereg2d_rigid\n  slicereg2d_affine\n  slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg)\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step. Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid and slicereg2d_affine.. Default="""+paramreg.steps['1'].window_length,
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
@@ -448,8 +448,8 @@ def register(src, dest, paramreg, param, i_step_str):
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
@@ -469,9 +469,9 @@ def register(src, dest, paramreg, param, i_step_str):
         y_disp_a = asarray(y_disp)
         theta_rot_a = asarray(theta_rot)
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
-        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
@@ -495,12 +495,12 @@ def register(src, dest, paramreg, param, i_step_str):
         matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
         matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=paramreg.steps[i_step_str].window_length, window='hanning', verbose = param.verbose)
-        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a, window_len=31, window='hanning', verbose = param.verbose)
-        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a, window_len=31, window='hanning', verbose = param.verbose)
-        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a, window_len=31, window='hanning', verbose = param.verbose)
-        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a, window_len=31, window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
         matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
         # Generate warping field
