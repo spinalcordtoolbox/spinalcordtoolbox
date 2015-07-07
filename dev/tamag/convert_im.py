@@ -36,7 +36,7 @@ def sorting_value_of_zone(zone):
 
 os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_registration')
 
-os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas')
+#os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas')
 # img_1 = mpimg.imread('gm_white_inv.png')
 # img = mpimg.imread('greyscale_select.png')
 
@@ -67,9 +67,12 @@ os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas')
 # elif e == min(a,b,c,d,e):
 #     g = 255
 
-fname = 'gm_white_resampled_registered.png'
+fname = 'greyscale_antisym_resampled_registered_crop.png'
 image = Image.open(fname).convert("L")
 arr = np.asarray(image)
+fname_dest = 'atlas_grays_cerv_sym_correc_r5.png'
+image_dest = Image.open(fname_dest).convert("L")
+arr_dest = np.asarray(image)
 
 # avoid transition between zones
 a = 0
@@ -100,15 +103,23 @@ list = [a,b,c,d,e]
 #             arr_bin[i,j] = arr[i,j]
 
 
-arr_bin = np.zeros((451, 613), dtype=np.uint8)
-for i in range(451):
-    # h = 74+i
-    for j in range(613):
-        # g = 103+j
+# arr_bin = np.zeros((451, 613), dtype=np.uint8)
+# for i in range(451):
+#     # h = 74+i
+#     for j in range(613):
+#         # g = 103+j
+#
+#         arr_bin[i,j] = arr[74+i,103+j]
 
-        arr_bin[i,j] = arr[74+i,103+j]
+#resize image using interpolation
+img = Image.open(fname)    # Open image as Pillow image object
 
+rsize = img.resize((image_dest.size[0],image_dest.size[1])) # Use Pillow to resize
+rsizeArr = np.asarray(rsize)
+img_output = Image.fromarray(rsizeArr)
+img_output.save('test.png')
 
+# select slice from nii image registered at the end
 # middle_y = int(round(arr.shape[1]/2.0))
 # for i in range(arr.shape[0]):
 #     for j in range(middle_y,arr.shape[1]):
@@ -121,28 +132,28 @@ for i in range(451):
         # else: arr_bin[i,j] = arr[i,j]
 
 
-#arr_bin = arr[:, :] > 20
-im = Image.fromarray(arr_bin)
-im.save('gm_white_resampled_registered_crop.png')
-fname = 'greyscale_select_smooth.png'
-image = Image.open(fname).convert("L")
-arr = np.asarray(image)
-print arr[550,550]
-#arr_bin_2 = np.zeros((arr.shape[0]-98, arr.shape[1]-95), dtype=np.uint8)
-arr_bin = np.zeros((arr.shape[0], arr.shape[1]), dtype=np.uint8)
-for i in range(arr.shape[0]):
-    for j in range(arr.shape[1]):
-        if 200 > arr[i,j] > 20:
-            arr_bin[i,j] = 255
-        else: arr_bin[i,j] = 0
+# #arr_bin = arr[:, :] > 20
+# im = Image.fromarray(arr_bin)
+# im.save('gm_white_resampled_registered_crop.png')
+# fname = 'greyscale_select_smooth.png'
+# image = Image.open(fname).convert("L")
+# arr = np.asarray(image)
+# print arr[550,550]
+# #arr_bin_2 = np.zeros((arr.shape[0]-98, arr.shape[1]-95), dtype=np.uint8)
+# arr_bin = np.zeros((arr.shape[0], arr.shape[1]), dtype=np.uint8)
+# for i in range(arr.shape[0]):
+#     for j in range(arr.shape[1]):
+#         if 200 > arr[i,j] > 20:
+#             arr_bin[i,j] = 255
+#         else: arr_bin[i,j] = 0
 
 # for i in range(arr_bin_2.shape[0]):
 #     for j in range(arr_bin_2.shape[1]):
 #         arr_bin_2[i,j] = arr[i+7, j+20]
 
-#arr_bin = arr[:, :] > 20
-im = Image.fromarray(arr_bin)
-im.save('gm_white.png')
+# #arr_bin = arr[:, :] > 20
+# im = Image.fromarray(arr_bin)
+# im.save('gm_white.png')
 # #
 # #
 # # plt.imshow(arr_bin, cmap=cm.binary)
@@ -152,7 +163,6 @@ im.save('gm_white.png')
 
 
 # from scipy.ndimage import gaussian_filter, median_filter
-#
 #
 # #kernel = np.ones((5,5),np.float32)/25
 # #img_smooth_1 = gaussian_filter(img, sigma=(20, 20), order=0)
