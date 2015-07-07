@@ -46,7 +46,7 @@ class Progress_bar(object):
             elapsed = datetime(1, 1, 1) + timedelta(seconds=self.elapsed_time)
             remain = datetime(1, 1, 1) + timedelta(seconds=remaining_time)
 
-            bar = "/".join((str(reading), str(self.max))) + ' - ' + str(percent) + "%\033[K" + \
+            bar = "/".join((str(reading), str(self.max))) + ' - ' + str(round(percent, 2)) + "%\033[K" + \
                   " Elapsed time: " + str(elapsed.day - 1) + " day(s), " + str(elapsed.hour) + ":" + str(elapsed.minute) \
                   + ":" + str(elapsed.second) + \
                   ", Remaining time: " + str(remain.day-1) + " day(s), " + str(remain.hour) + ":" + str(remain.minute) \
@@ -75,9 +75,8 @@ if __name__ == "__main__":
     begin = time.time()
 
     # contrast: t1, t2 or both
-    input_t = "t2"
+    input_t = ["t1", "t2"]
     data_folders = ['C2-C5', 'C1-T12', 'C5-T8']
-    data_folders = ['C2-C5_copy', 'C1-T12_copy', 'C5-T8_copy']
 
     # parameters to optimize
     """parameters = {'algo_fitting': ['hanning', 'nurbs'],
@@ -90,12 +89,10 @@ if __name__ == "__main__":
                   'all_labels': ['0', '1'],
                   'use_continuous_labels': ['1']}
 
-
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
-    #results_mse = np.empty([len(data_folders), len(perm_params)])
-    #results_dist_max = np.empty([len(data_folders), len(perm_params)])
-
+    subjects = [dict() for _ in xrange(len(data_folders))]
+    contrasts = [dict() for _ in xrange(len(data_folders))]
     results_mse = [dict() for _ in xrange(len(data_folders))]
     results_dist_max = [dict() for _ in xrange(len(data_folders))]
 
@@ -118,48 +115,78 @@ if __name__ == "__main__":
                 sct.run("rm -rf " + folder_name_complete, verbose=0)
             sct.run("cp -R original_data/" + folder_name + " " + folder_name_complete, verbose=0)
 
-            pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, input_t, seg=False, straightening=True,
-                                                           straightening_params=input_straightening_params, verbose=0)
-            pipeline_test.cpu_count = 6
-            pipeline_test.compute()
+            subjects[i][input_straightening_params] = []
+            contrasts[i][input_straightening_params] = []
+            results_mse[i][input_straightening_params] = []
+            results_dist_max[i][input_straightening_params] = []
+            if "t1" in input_t:
+                pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t1", seg=False, straightening=True,
+                                                               straightening_params=input_straightening_params, verbose=0)
+                pipeline_test.cpu_count = 6
+                pipeline_test.compute()
 
-            # pipeline_test.straightening_results_dist_max
-            #results[i, index_comb] = pipeline_test.straightening_results_mse[0]
-            from numpy import array, mean, std
+                subjects[i][input_straightening_params].extend(
+                    [itm[0] for itm in pipeline_test.straightening_results])
+                contrasts[i][input_straightening_params].extend(
+                    ["t1" for itm in pipeline_test.straightening_results])
+                results_mse[i][input_straightening_params].extend(
+                    [itm[1] for itm in pipeline_test.straightening_results])
+                results_dist_max[i][input_straightening_params].extend(
+                    [itm[2] for itm in pipeline_test.straightening_results])
 
-            results_mse[i][input_straightening_params] = [itm[1] for itm in pipeline_test.straightening_results]
-            results_dist_max[i][input_straightening_params] = [itm[2] for itm in pipeline_test.straightening_results]
+            if "t2" in input_t:
+                pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t2", seg=False,
+                                                               straightening=True,
+                                                               straightening_params=input_straightening_params,
+                                                               verbose=0)
+                pipeline_test.cpu_count = 6
+                pipeline_test.compute()
+
+                subjects[i][input_straightening_params].extend(
+                    [itm[0] for itm in pipeline_test.straightening_results])
+                contrasts[i][input_straightening_params].extend(
+                    ["t2" for itm in pipeline_test.straightening_results])
+                results_mse[i][input_straightening_params].extend(
+                    [itm[1] for itm in pipeline_test.straightening_results])
+                results_dist_max[i][input_straightening_params].extend(
+                    [itm[2] for itm in pipeline_test.straightening_results])
 
     pb.update(len(data_folders)*len(perm_params))
 
     print '\n'
 
-    if len(perm_params) == 2:
-        results = dict()
-        results['folder'] = []
-        results['mse'] = []
-        results['dist_max'] = []
-        results['all_labels'] = []
-        for i, folder_name in enumerate(data_folders):
-            temp = []
-            for param in results_mse[i]:
-                temp.extend([folder_name]*len(results_mse[i][param]))
-            results['Dataset'].extend(temp)
-            temp = []
-            for param in results_mse[i]:
-                temp.extend(results_mse[i][param])
-            results['MSE'].extend(temp)
-            temp = []
-            for param in results_dist_max[i]:
-                temp.extend(results_dist_max[i][param])
-            results['Maximal distance'].extend(temp)
-            temp = []
-            for param in results_mse[i]:
-                opt = 'yes'
-                if param[-1] == '0':
-                    opt = 'no'
-                temp.extend([opt]*len(results_mse[i][param]))
-            results['Option labels'].extend(temp)
+    results = dict()
+    results['Subject'] = []
+    results['Contrast'] = []
+    results['Dataset'] = []
+    results['MSE'] = []
+    results['Maximal distance'] = []
+    results['Parameters'] = []
+    for i, folder_name in enumerate(data_folders):
+        temp_subject = []
+        for param in subjects[i]:
+            temp_subject.extend(subjects[i][param])
+        results['Subject'].extend(temp_subject)
+        temp_contrast = []
+        for param in subjects[i]:
+            temp_contrast.extend(contrasts[i][param])
+        results['Contrast'].extend(temp_contrast)
+        temp = []
+        for param in results_mse[i]:
+            temp.extend([folder_name]*len(results_mse[i][param]))
+        results['Dataset'].extend(temp)
+        temp = []
+        for param in results_mse[i]:
+            temp.extend(results_mse[i][param])
+        results['MSE'].extend(temp)
+        temp = []
+        for param in results_dist_max[i]:
+            temp.extend(results_dist_max[i][param])
+        results['Maximal distance'].extend(temp)
+        temp = []
+        for param in results_mse[i]:
+            temp.extend([param]*len(results_mse[i][param]))
+        results['Parameters'].extend(temp)
 
     from pandas import DataFrame
     df = DataFrame(results)
@@ -168,21 +195,30 @@ if __name__ == "__main__":
     import seaborn as sns
     import matplotlib.pyplot as plt
 
-    f, (ax1, ax2) = plt.subplots(1, 2)
+    for i, folder_name in enumerate(data_folders):
+        f, (ax1, ax2) = plt.subplots(1, 2)
 
-    sns.set(style="whitegrid")
-    # Set up the matplotlib figure
+        sns.set(style="whitegrid")
+        # Set up the matplotlib figure
+        ax1.set_title(folder_name + ' - Mean Square Error')
+        ax2.set_title(folder_name + ' - Maximum distance')
+        plt.setp(ax1.get_xticklabels(), rotation=75)
+        plt.setp(ax2.get_xticklabels(), rotation=75)
 
-    # Draw a violinplot with a narrower bandwidth than the default
-    sns.violinplot(x='Dataset', y='MSE', hue="Option labels", data=df, split=True, bw=.2, cut=1, linewidth=1, ax=ax1)
-    sns.violinplot(x='Dataset', y='Maximal distance', hue="Option labels", data=df, split=True, bw=.2, cut=1, linewidth=1, ax=ax2)
+        # Draw a violinplot with a narrower bandwidth than the default
+        sns.violinplot(x='Parameters', y='MSE', hue="Contrast", data=df[df.Dataset == folder_name],
+                       inner="quart", bw=.2, cut=1, linewidth=1, ax=ax1)
+        sns.violinplot(x='Parameters', y='Maximal distance', hue="Contrast", data=df[df.Dataset == folder_name],
+                       inner="quart", bw=.2, cut=1, linewidth=1, ax=ax2)
 
-    # change ylim from 0 to max(mse) and max(dist)x
+        # change ylim from 0 to max(mse) and max(dist)x
+        ax1.set(ylim=(0.0, 10.0))
+        ax2.set(ylim=(0.0, 40.0))
 
-    plt.show()
+        sns.despine(left=True, bottom=True)
 
-    # Finalize the figure
-    #sns.despine(left=True, bottom=True)
+        plt.savefig(folder_name+'.png', bbox_inches='tight')
+        plt.show()
 
     import pickle
     pickle.dump(df, open("results_straightening.p", "wb"))
