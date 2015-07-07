@@ -19,6 +19,7 @@ from sct_register_multimodal import Paramreg
 import sct_utils as sct
 from math import asin
 from numpy.linalg import inv
+import time
 
 
 # csv_file = '/Users/tamag/data/data_template/subjects_test_T1/subjects/errsm_11/T1/tmp.150519154253/step2TxTy_poly.csv'
@@ -90,26 +91,26 @@ mask = 'mask_cyl_50.nii.gz'
 
 
 
-# im and algo rigid
-im_i = im_T1
-im_d = im_T2
-window_size = 31
-x_disp, y_disp, theta = register_images(im_i, im_d, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='100', shrink='1', smooth='0', gradStep='3'), remove_tmp_folder=1)
-
-x_disp_a = asarray(x_disp)
-y_disp_a = asarray(y_disp)
-theta_a = asarray(theta)
-
-x_disp_smooth = smoothing_window(x_disp_a, window_len=window_size, window='hanning', verbose = 2)
-y_disp_smooth = smoothing_window(y_disp_a, window_len=window_size, window='hanning', verbose = 2)
-theta_smooth = smoothing_window(theta_a, window_len=window_size, window='hanning', verbose = 2)
-theta_smooth_inv = -theta_smooth
-
-generate_warping_field(im_d, x_disp_smooth, y_disp_smooth, theta_rot=theta_smooth, fname='warping_field_seg_rigid.nii.gz')
-generate_warping_field(im_i, -x_disp_smooth, -y_disp_smooth, theta_rot=theta_smooth_inv, fname='warping_field_seg_rigid_inv.nii.gz')
-
-sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_rigid.nii.gz -o output_im_rigid.nii.gz -x nn')
-sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigid_inv.nii.gz -o output_im_rigid_inv.nii.gz -x nn')
+# # im and algo rigid
+# im_i = im_T1
+# im_d = im_T2
+# window_size = 31
+# x_disp, y_disp, theta = register_images(im_i, im_d, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='100', shrink='1', smooth='0', gradStep='3'), remove_tmp_folder=1)
+#
+# x_disp_a = asarray(x_disp)
+# y_disp_a = asarray(y_disp)
+# theta_a = asarray(theta)
+#
+# x_disp_smooth = smoothing_window(x_disp_a, window_len=window_size, window='hanning', verbose = 2)
+# y_disp_smooth = smoothing_window(y_disp_a, window_len=window_size, window='hanning', verbose = 2)
+# theta_smooth = smoothing_window(theta_a, window_len=window_size, window='hanning', verbose = 2)
+# theta_smooth_inv = -theta_smooth
+#
+# generate_warping_field(im_d, x_disp_smooth, y_disp_smooth, theta_rot=theta_smooth, fname='warping_field_seg_rigid.nii.gz')
+# generate_warping_field(im_i, -x_disp_smooth, -y_disp_smooth, theta_rot=theta_smooth_inv, fname='warping_field_seg_rigid_inv.nii.gz')
+#
+# sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_rigid.nii.gz -o output_im_rigid.nii.gz -x nn')
+# sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigid_inv.nii.gz -o output_im_rigid_inv.nii.gz -x nn')
 
 
 
@@ -142,3 +143,86 @@ sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigi
 #
 # sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_affine.nii.gz -o output_im_affine.nii.gz -x nn')
 # sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_affine_inv.nii.gz -o output_im_affine_inv.nii.gz -x nn')
+def main():
+    os.chdir('/Users/tamag/data/work_on_registration')
+    #os.chdir('/Users/tamag/data/data_template/subjects_test_T1/subjects/errsm_11/T1')
+    seg_T1 = '/Users/tamag/data/work_on_registration/centerline_T1_mask_cyl_7.nii.gz'
+    seg_T2 = '/Users/tamag/data/work_on_registration/centerline_T2_mask_cyl_7.nii.gz'
+    seg_T1_crop = '/Users/tamag/data/work_on_registration/T1_seg_crop.nii.gz'
+    seg_T2_crop = '/Users/tamag/data/work_on_registration/T2_seg_crop.nii.gz'
+
+    im_T2 = '/Users/tamag/data/work_on_registration/data_T2_RPI_crop.nii.gz'
+    im_T2_crop = 'T2_crop.nii.gz'
+    im_T1 = '/Users/tamag/data/work_on_registration/data_RPI_registered.nii.gz'
+    im_T1_crop = 'T1_crop.nii.gz'
+
+    im_d_3 = '/Users/tamag/data/work_on_registration/pad_carre.nii.gz'
+    im_d_5 = '/Users/tamag/data/work_on_registration/pad_carre_after_rotation.nii.gz'
+    mask = 'mask_cyl_50.nii.gz'
+    num = numerotation(1)
+    func_bsplinesyn(im_T1_crop, im_T2_crop)
+
+## im and algo Bsplinesyn slice-by-slice
+def func_bsplinesyn(im_i, im_d, name_output='im_output.nii.gz'):
+    # file_dest = nibabel.load(im_d)
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_d)
+
+    #split images into tmp folder
+    print'\nCreate temporary folder...'
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    os.mkdir(path_tmp)
+
+    print'\nCopy images into temporary folder...'
+    sct.run('cp ' + im_i + ' ' + path_tmp)
+    sct.run('cp ' + im_d + ' ' + path_tmp)
+
+    print'\nGo to temp folder'
+    os.chdir(path_tmp)
+
+    print'\nSplit volume...'
+    sct.run('fslsplit ' + im_i + ' im_i_z -z')
+    sct.run('fslsplit ' + im_d + ' im_d_z -z')
+
+    #2d registration by slice
+    list_warp = []
+    list_warp_inv = []
+    for i in range(nz):
+        num = numerotation(i)
+        cmd = ('isct_antsRegistration -d 2 -t BSplineSyN[2,3,32] --metric MI[im_d_z'+ num +'.nii.gz,im_i_z'+ num +'.nii.gz,1,4] --convergence 10 --shrink-factors 1 --smoothing-sigmas 0mm --output [transform_'+num+'] --interpolation BSpline[3]')
+        sct.run(cmd)
+        list_warp.append('transform_0'+num+'Warp.nii.gz')
+        list_warp_inv.append('transform_0'+num+'InverseWarp.nii.gz')
+
+    #merge along z of the warping fields
+    sct.run('fslmerge -z Warp_total '+",".join(list_warp))
+    sct.run('fslmerge -z InverseWarp_total '+",".join(list_warp_inv))
+
+    #apply the concatenation to the 3d volume
+    sct.run('sct_apply_transfo -i '+ im_i +' -d '+im_d+ ' -w Warp_total.nii.gz -o ' + name_output)
+
+
+def numerotation(nb):
+    if nb < 0:
+        print 'ERROR: the number is negative.'
+        sys.exit(status = 2)
+    elif -1 < nb < 10:
+        nb_output = '000'+str(nb)
+    elif 9 < nb < 100:
+        nb_output = '00'+str(nb)
+    elif 99 < nb < 1000:
+        nb_output = '0'+str(nb)
+    elif 999 < nb < 10000:
+        nb_output = str(nb)
+    elif nb > 9999:
+        print 'ERROR: the number is superior to 9999.'
+        sys.exit(status = 2)
+    return nb_output
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    # call main function
+    main()
+
