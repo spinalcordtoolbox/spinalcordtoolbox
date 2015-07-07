@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
     # contrast: t1, t2 or both
     input_t = ["t1", "t2"]
-    data_folders = ['C2-C5', 'C1-T12', 'C5-T8']
+    data_folders = ['C1-T12', 'C2-C5', 'C5-T8']
 
     # parameters to optimize
     """parameters = {'algo_fitting': ['hanning', 'nurbs'],
@@ -84,10 +84,10 @@ if __name__ == "__main__":
                   'bspline_numberOfLevels': ['2', '3'],
                   'bspline_order': ['2', '3'],
                   'algo_landmark_rigid': ['xy', 'translation', 'translation-xy']}"""
-    parameters = {'algo_fitting': ['nurbs'],
+    parameters = {'algo_fitting': ['hanning', 'nurbs'],
                   'algo_landmark_rigid': ['translation-xy'],
                   'all_labels': ['0', '1'],
-                  'use_continuous_labels': ['1']}
+                  'use_continuous_labels': ['0', '1']}
 
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
@@ -171,6 +171,7 @@ if __name__ == "__main__":
         for param in subjects[i]:
             temp_contrast.extend(contrasts[i][param])
         results['Contrast'].extend(temp_contrast)
+        print temp_contrast
         temp = []
         for param in results_mse[i]:
             temp.extend([folder_name]*len(results_mse[i][param]))
@@ -218,7 +219,7 @@ if __name__ == "__main__":
         sns.despine(left=True, bottom=True)
 
         plt.savefig(folder_name+'.png', bbox_inches='tight')
-        plt.show()
+        #plt.show()
 
     import pickle
     pickle.dump(df, open("results_straightening.p", "wb"))
