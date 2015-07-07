@@ -22,7 +22,7 @@ ext_o = '.nii.gz'
 
 def main():
 
-    os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_registration')
+    os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_2')
 
     # Define names
     fname1 = 'greyscale_antisym.png'
@@ -35,11 +35,6 @@ def main():
     name3 = 'gm_white'
     name4 = 'mask_grays_cerv_sym_correc_r5'
 
-        # Save png images of the registered NIFTI images
-    save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
-    save_png_from_nii('binary_gm_crop_resampled_registered.nii.gz')
-    save_png_from_nii(name3+'_resampled'+'_registered'+ext_o)
-
 
     save_nii_from_png(fname1)
     save_nii_from_png(fname2)
@@ -48,8 +43,8 @@ def main():
 
     # Crop image background
 
-    sct.run('sct_crop_image -i '+ name2 + ext_o +' -dim 0,1 -start 84,0 -end 1581,1029 -b 0 -o binary_gm_crop.nii.gz')
-    name2 = 'binary_gm_crop'
+    #sct.run('sct_crop_image -i '+ name2 + ext_o +' -dim 0,1 -start 84,0 -end 1581,1029 -b 0 -o binary_gm_crop.nii.gz')
+    #name2 = 'binary_gm_crop'
 
     # Interpolation of the images to set them in the right format
     interpolate(name1+ext_o)
@@ -65,12 +60,12 @@ def main():
     # transformation affine pour premier recalage
     warp_1_prefix = 'warp_1_'
     tmp_file = 'tmp.nii.gz'
-    cmd = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, binary_gm_crop_resampled.nii.gz, 3, 4] -t Affine[50] --convergence 100x10 -s 1x0 -f 4x1 -o '+ warp_1_prefix +' -r [mask_grays_cerv_sym_correc_r5.nii.gz, binary_gm_crop_resampled.nii.gz, 0]')
+    cmd = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+name2+'_resampled'+ext_o+', 3, 4] -t Affine[50] --convergence 100x10 -s 1x0 -f 4x1 -o '+ warp_1_prefix +' -r [mask_grays_cerv_sym_correc_r5.nii.gz, '+name2+'_resampled'+ext_o+', 0]')
     sct.run(cmd)
-    cmd_0 = ('isct_antsApplyTransforms -d 2 -i binary_gm_crop_resampled.nii.gz -t '+warp_1_prefix+'0GenericAffine.mat -r mask_grays_cerv_sym_correc_r5.nii.gz  -o '+ tmp_file)
+    cmd_0 = ('isct_antsApplyTransforms -d 2 -i '+name2+'_resampled'+ext_o+' -t '+warp_1_prefix+'0GenericAffine.mat -r mask_grays_cerv_sym_correc_r5.nii.gz  -o '+ tmp_file)
     sct.run(cmd_0)
 
-    # transformation BsplineSyn pour faire correspondre les formes
+    # transformation Syn pour faire correspondre les formes
     warp_2_prefix = 'warp_2_'
     tmp_file_2 = 'tmp_2.nii.gz'
     # cmd_1 = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+ tmp_file+', 1, 4] -t BSplineSyN[0.2,3] --convergence 100x10 -s 1x0 -f 4x1 -o '+warp_2_prefix+' -r [mask_grays_cerv_sym_correc_r5.nii.gz, ' + tmp_file + ', 0]')
@@ -89,6 +84,16 @@ def main():
     save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
     save_png_from_nii(name2+'_resampled'+'_registered'+ext_o)
     save_png_from_nii(name3+'_resampled'+'_registered'+ext_o)
+
+    # Crop png images to erase blank borders
+    crop_blank_edges(name1+'_resampled'+'_registered')
+    crop_blank_edges(name2+'_resampled'+'_registered')
+    crop_blank_edges(name3+'_resampled'+'_registered')
+
+    # resize images to the same size as the WM atlas images
+    resize_gm_png_to_wm_png_name(name1+'_resampled'+'_registered'+'_crop', name4)
+    resize_gm_png_to_wm_png_name(name2+'_resampled'+'_registered'+'_crop', name4)
+    resize_gm_png_to_wm_png_name(name3+'_resampled'+'_registered'+'_crop', name4)
 
     # tester correspondances entre les images
     status, output = sct.run('sct_dice_coefficient ' + name2 + '_resampled' + '_registered' + ext_o + ' ' + name4 + ext_o)
@@ -136,6 +141,22 @@ def save_png_from_nii(fname):
     ax.set_axis_off()
     fig1 = plt.gcf()
     fig1.savefig(file + '.png', format='png')
+
+# Crop blank edges coming from save_png_from_nii
+# minus 102 along x and minus 75 along y (on each side)
+def crop_blank_edges(name_png):
+    img = Image.open(name_png+'.png')
+    data = np.asarray(img)
+    data_out = data[75:525, 102:715]
+    im_out = Image.fromarray(data_out)
+    im_out.save(name_png+'_crop'+'.png')
+
+def resize_gm_png_to_wm_png_name(name_png, name_dest_png):
+    img = Image.open(name_png+'.png')
+    img_dest = Image.open(name_dest_png+'.png')
+    img_resized = img.resize((img_dest.size[1],img_dest.size[0]))
+    img_resized.save(name_png+'_resized.png')
+
 
 #=======================================================================================================================
 # Start program
