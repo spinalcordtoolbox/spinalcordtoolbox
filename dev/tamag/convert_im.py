@@ -35,6 +35,8 @@ def sorting_value_of_zone(zone):
     return group_value
 
 os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_registration')
+
+os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas')
 # img_1 = mpimg.imread('gm_white_inv.png')
 # img = mpimg.imread('greyscale_select.png')
 
@@ -122,6 +124,25 @@ for i in range(451):
 #arr_bin = arr[:, :] > 20
 im = Image.fromarray(arr_bin)
 im.save('gm_white_resampled_registered_crop.png')
+fname = 'greyscale_select_smooth.png'
+image = Image.open(fname).convert("L")
+arr = np.asarray(image)
+print arr[550,550]
+#arr_bin_2 = np.zeros((arr.shape[0]-98, arr.shape[1]-95), dtype=np.uint8)
+arr_bin = np.zeros((arr.shape[0], arr.shape[1]), dtype=np.uint8)
+for i in range(arr.shape[0]):
+    for j in range(arr.shape[1]):
+        if 200 > arr[i,j] > 20:
+            arr_bin[i,j] = 255
+        else: arr_bin[i,j] = 0
+
+# for i in range(arr_bin_2.shape[0]):
+#     for j in range(arr_bin_2.shape[1]):
+#         arr_bin_2[i,j] = arr[i+7, j+20]
+
+#arr_bin = arr[:, :] > 20
+im = Image.fromarray(arr_bin)
+im.save('gm_white.png')
 # #
 # #
 # # plt.imshow(arr_bin, cmap=cm.binary)

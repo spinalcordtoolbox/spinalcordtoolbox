@@ -23,19 +23,13 @@ sys.path.append(path_sct + '/scripts')
 
 import sct_utils as sct
 import nibabel
-from sct_orientation import get_orientation, set_orientation
 from scipy import ndimage
 from scipy.io import loadmat
-from numpy import array, asarray, zeros, int8, mean, std, sqrt, convolve, hanning, dot
-from copy import copy
+from numpy import array, asarray, zeros, sqrt, dot
 from msct_image import Image
-from numpy.linalg import inv
-import matplotlib.pyplot as plt
-from scipy.interpolate import splrep,splev
 from sct_register_multimodal import Paramreg
 import time
-import csv
-from math import acos, asin
+from math import asin
 
 
 

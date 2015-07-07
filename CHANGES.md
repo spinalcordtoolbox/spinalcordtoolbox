@@ -1,5 +1,7 @@
-
 # CHANGES TO RELEASE
+
+##2.0.6 (2015-06-30)
+- BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
 
 ##2.0.5 (2015-06-10)
 - BUG: **sct_process_segmentation**: fixed error when calculating CSA (issue #388)

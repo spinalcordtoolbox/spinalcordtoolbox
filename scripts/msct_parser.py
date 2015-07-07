@@ -314,7 +314,7 @@ class Parser:
 
                     # check if option has an argument that is not another option
                     if param in self.options:
-                        self.usage.error("ERROR: Option " + self.name + " needs an argument...")
+                        self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
 
                     dictionary[arg] = self.options[arg].check_integrity(param)
                     skip = True
