@@ -352,7 +352,7 @@ if create_cross:
 # H = 1100 - 2*mean_distance_1 # mean position of bottom label
 # os.chdir('/Users/tamag/code/spinalcordtoolbox/dev/template_creation')
 # # Create a cross for the template at first and last labels
-# os.system('sct_create_cross.py -i template_landmarks-mm_2.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
+# os.system('sct_create_cross.py -i template_landmarks-mm.nii.gz -x ' +str(100)+' -y '+str(100)+ ' -s '+str(L)+ ' -e '+ str(H))
 
 
 
