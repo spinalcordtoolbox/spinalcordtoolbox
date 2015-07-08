@@ -605,8 +605,12 @@ class SpinalCordStraightener(object):
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
             mean_coord = []
+            from numpy import mean
             for z in range(coordinates_centerline[0].z, coordinates_centerline[-1].z):
-                mean_coord.append(mean([[coord.x*coord.value, coord.y*coord.value] for coord in coordinates_centerline if coord.z == z], axis=0))
+                temp_mean = [coord.value for coord in coordinates_centerline if coord.z == z]
+                if temp_mean:
+                    mean_value = mean(temp_mean)
+                    mean_coord.append(mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value] for coord in coordinates_centerline if coord.z == z], axis=0))
 
             # compute error between the input data and the nurbs
             from math import sqrt
