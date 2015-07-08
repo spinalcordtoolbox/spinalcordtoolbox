@@ -164,7 +164,6 @@ def main():
 
 ## im and algo Bsplinesyn slice-by-slice
 def func_bsplinesyn(im_i, im_d, name_output='im_output.nii.gz'):
-    # file_dest = nibabel.load(im_d)
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_d)
 
     #split images into tmp folder
