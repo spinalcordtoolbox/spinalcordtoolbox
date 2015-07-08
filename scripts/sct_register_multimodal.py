@@ -41,6 +41,7 @@ import time
 
 import sct_utils as sct
 from msct_parser import Parser
+import numpy as np
 
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -504,6 +505,7 @@ def register(src, dest, paramreg, param, i_step_str):
         matrix_def_1_a = asarray([matrix_def[j][0][1] for j in range(len(matrix_def))])
         matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
         matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
+        # Detect
         # Smooth results
         x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
@@ -587,7 +589,22 @@ def find_zmin_zmax(fname):
     zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
 
+def outliers_detection(data, type='std', factor=2):
+    # data: numpy array
+    m = factor
+    if type == 'std':
+        u = np.mean(data)
+        s = np.std(data)
+        mask = u - m * s < data < u + m * s
+        filtered = [e for e in data if (u - m * s < e < u + m * s)]
 
+    if type == 'median':
+        d = np.abs(data - np.median(data))
+        mdev = np.median(d)
+        s = d/mdev if mdev else 0.
+        filtered = data[s<m] # mask or data_filtered ?
+
+    return filtered, mask
 
 # START PROGRAM
 # ==========================================================================================
