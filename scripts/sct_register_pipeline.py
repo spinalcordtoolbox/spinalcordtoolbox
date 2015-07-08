@@ -392,15 +392,16 @@ class Pipeline(object):
             name = subject.name_t2
             name_seg = subject.name_t2_ref
 
-        os.chdir(path)
-
-        if name is '' or name_seg is '':
+        if path is '' or name is '' or name_seg is '':
             sct.printv(
                 'WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.', self.verbose)
-            os.chdir('../..')
-            return None
+            os.chdir('..')
+            from numpy import nan
+            return [subject.dir_name, nan, nan]
         else:
             try:
+                os.chdir(path)
+
                 cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg
                 sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
                                    + name + " using sct_straighten_spinalcord ...", verbose=self.verbose, type="normal")
@@ -443,8 +444,8 @@ class Pipeline(object):
                 sct.printv('Continuing program ...', self.verbose, 'warning')
 
                 os.chdir('../..')
-
-                return None
+                from numpy import nan
+                return [subject.dir_name, nan, nan]
 
             except KeyboardInterrupt:
                 os.chdir('../..')
