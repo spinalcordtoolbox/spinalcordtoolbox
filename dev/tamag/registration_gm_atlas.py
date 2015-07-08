@@ -22,17 +22,28 @@ ext_o = '.nii.gz'
 
 def main():
 
-    os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/test_2')
+    os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/correct_images')
 
-    # Define names
-    fname1 = 'greyscale_antisym.png'
-    fname2 = 'binary_gm_black.png'
-    fname3 = 'gm_white.png'
-    fname4 = 'mask_grays_cerv_sym_correc_r5.png'
-    slice = 'slice_ref_template.nii.gz'
-    name1 = 'greyscale_antisym'
-    name2 = 'binary_gm_black'
-    name3 = 'gm_white'
+    # # Define names
+    # fname1 = 'greyscale_antisym.png'  # greyscale image showing tracts (warp applied to it at the end)
+    # fname2 = 'binary_gm_black.png'    # white mask of the white matter for registration
+    # fname3 = 'gm_white.png'           # white mask of the grey matter (warp applied to it at the end) (used for the atlas generation by registration slice by slice)
+    # fname4 = 'mask_grays_cerv_sym_correc_r5.png' # mask from the WM atlas
+    # slice = 'slice_ref_template.nii.gz'          #reference slice of the GM template
+    # name1 = 'greyscale_antisym'
+    # name2 = 'binary_gm_black'
+    # name3 = 'gm_white'
+    # name4 = 'mask_grays_cerv_sym_correc_r5'
+
+        # Define names
+    fname1 = 'greyscale_final.png'  # greyscale image showing tracts (warp applied to it at the end)
+    fname2 = 'white_WM_mask.png'    # white mask of the white matter for registration
+    fname3 = 'white_GM_mask.png'           # white mask of the grey matter (warp applied to it at the end)
+    fname4 = 'mask_grays_cerv_sym_correc_r5.png' # mask from the WM atlas
+    slice = 'slice_ref_template.nii.gz'          #reference slice of the GM template
+    name1 = 'greyscale_final'
+    name2 = 'white_WM_mask'
+    name3 = 'white_GM_mask'
     name4 = 'mask_grays_cerv_sym_correc_r5'
 
 
@@ -74,11 +85,20 @@ def main():
     cmd_2 = ('isct_antsApplyTransforms -d 2 -i '+tmp_file+' -t '+ warp_2_prefix + '1Warp.nii.gz -r mask_grays_cerv_sym_correc_r5.nii.gz  -o '+tmp_file_2)
     sct.run(cmd_2)
 
+    # Symmetrize the warping fields
 
     # concatenation et application des warping fields aux images de base
     # cmd = ('isct_ComposeMultiTransform 2 outwarp.nii.gz  test_registration0GenericAffine.mat test_registration_Bspline1Warp.nii.gz -R mask_grays_cerv_sym_correc_r5.nii.gz')
     # cmd = ('isct_antsApplyTransforms -d 2 -i greyscale_select_inv_resampled.nii.gz -o greyscale_registered.nii.gz -n Linear -t outwarp.nii.gz -r mask_grays_cerv_sym_correc_r5.nii.gz')
-    concat_and_apply(inputs=[name1+'_resampled'+ext_o, name2+'_resampled'+ext_o, name3+'_resampled'+ext_o], dest=name4+ext_o, output_names=[name1+'_resampled'+'_registered'+ext_o, name2+'_resampled'+'_registered'+ext_o, name3+'_resampled'+'_registered'+ext_o], warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'])
+    concat_and_apply(inputs=[name1+'_resampled'+ext_o], dest=name4+ext_o,
+                     output_names=[name1+'_resampled'+'_registered'+ext_o],
+                     warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'], interpolation='Linear')
+    concat_and_apply(inputs=[name2+'_resampled'+ext_o, name3+'_resampled'+ext_o], dest=name4+ext_o,
+                 output_names=[name2+'_resampled'+'_registered'+ext_o, name3+'_resampled'+'_registered'+ext_o],
+                 warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'], interpolation='NearestNeighbor')
+    # concat_and_apply(inputs=[name1+'_resampled'+ext_o, name2+'_resampled'+ext_o, name3+'_resampled'+ext_o], dest=name4+ext_o,
+    #          output_names=[name1+'_resampled'+'_registered'+ext_o, name2+'_resampled'+'_registered'+ext_o, name3+'_resampled'+'_registered'+ext_o],
+    #          warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'], interpolation='Linear')
 
     # Save png images of the registered NIFTI images
     save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
@@ -99,7 +119,7 @@ def main():
     status, output = sct.run('sct_dice_coefficient ' + name2 + '_resampled' + '_registered' + ext_o + ' ' + name4 + ext_o)
     print output
 
-def concat_and_apply(inputs, dest, output_names, warps):
+def concat_and_apply(inputs, dest, output_names, warps, interpolation='Linear'):
     # input = [input1, input2]
     # warps = [warp_1, warp_2]
     warp_str = ''
@@ -108,7 +128,7 @@ def concat_and_apply(inputs, dest, output_names, warps):
     cmd_0 = ('isct_ComposeMultiTransform 2 outwarp.nii.gz  ' + warp_str + ' -R ' + dest)
     sct.run(cmd_0)
     for j in range(len(inputs)):
-        cmd_1 = ('isct_antsApplyTransforms -d 2 -i ' + inputs[j] + ' -o '+ output_names[j] + ' -n Linear -t outwarp.nii.gz -r '+ dest)
+        cmd_1 = ('isct_antsApplyTransforms -d 2 -i ' + inputs[j] + ' -o '+ output_names[j] + ' -n '+interpolation+' -t outwarp.nii.gz -r '+ dest)
         sct.run(cmd_1)
 
 def save_nii_from_png(fname):
@@ -147,7 +167,7 @@ def save_png_from_nii(fname):
 def crop_blank_edges(name_png):
     img = Image.open(name_png+'.png')
     data = np.asarray(img)
-    data_out = data[75:525, 102:715]
+    data_out = data[75:525, 104:717]
     im_out = Image.fromarray(data_out)
     im_out.save(name_png+'_crop'+'.png')
 

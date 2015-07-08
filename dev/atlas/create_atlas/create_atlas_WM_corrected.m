@@ -50,9 +50,9 @@ path_template = strcat(path_sct, '/data/template/');
 % name of the WM template. Default is 'MNI-Poly-AMU_WM'
 file_template = 'MNI-Poly-AMU_WM';
 % path to the image file that contains the drawing of the WM atlas from Grays anatomy.
-path_atlas_data = strcat(path_sct, '/dev/atlas/raw_data/');
+path_atlas_data = strcat('/Users/tamag/Desktop/GM_atlas/def_new_atlas/correct_images/results/');
 % file name of the full atlas
-file_atlas = 'atlas_grays_cerv_sym_correc_r5';
+file_atlas = 'addition_corrected';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
 file_mask = 'mask_grays_cerv_sym_correc_r5';
 ext_atlas = '.png';
@@ -63,11 +63,11 @@ z_slice_ref = 387;
 interp_factor = 6;
 
 % values of the label in the atlas file (file_atlas). Each value corresponds to a given tract, e.g., corticospinal left.
-% NB: 238=GM, 255=CSF (added by jcohen on 2014-12-08)
+% NB: [45,80,120,150,190,220]=GM, 255=CSF (added by jcohen on 2014-12-08)
 % label_values = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121 146 152 159 167 173 180 187 194 199 204 208 214 219 224 230 238 255];
 label_left = [14 26 38 47 52 62 70 82 89 94 101 107 112 116 121];
 label_right = [146 152 159 167 173 180 187 194 199 204 208 214 219 224 230];
-label_pve = [238 255];
+label_pve = [45 80 120 150 190 220 255];
 label_values = [label_left, label_right, label_pve];
 % these are the value corresponding to the slice number (z) on the MNI-Poly-AMU template, at which the atlas will be warped. It corresponds to the mid-levels as well as the level of the intervertebral disks.
 % NB: to extract these values, you have to look at the T2 and WM template, because this script will crop the WM template (which can be smaller than the T2), therefore the maximum z cannot exceed the zmax that will be generated in the cropped version of the WM template.
@@ -82,10 +82,10 @@ z_disks_mid_noC4 = [483 476 466 455 440 423 406 371 356 339 324 303 286 268 248 
 
 ext = '.nii.gz';
 fsloutputype = 'export FSLOUTPUTTYPE=NIFTI_GZ; ';
-path_out = 'WMtracts_outputs/';
+path_out = 'WM_and_GM_tracts_outputs/';
 path_ctrl = [path_out 'registered_template/'];
 path_results = [path_out 'final_results/'];
-prefix_out = 'WMtract_';
+prefix_out = 'WM_and_GM_tract_';
 
 template_mask = [path_out file_template '_mask'];
 template_cropped = [path_out file_template '_c6v'];
