@@ -125,7 +125,7 @@ if __name__ == "__main__":
                 pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t1", seg=False,
                                                                straightening=True,
                                                                straightening_params=input_straightening_params,
-                                                               verbose=1)
+                                                               verbose=0)
                 pipeline_test.cpu_count = 6
                 pipeline_test.compute()
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t2", seg=False,
                                                                straightening=True,
                                                                straightening_params=input_straightening_params,
-                                                               verbose=1)
+                                                               verbose=0)
                 pipeline_test.cpu_count = 6
                 pipeline_test.compute()
 
