@@ -72,11 +72,13 @@ class Progress_bar(object):
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
+    np.seterr(all='ignore')
     begin = time.time()
 
     # contrast: t1, t2 or both
     input_t = ["t1", "t2"]
-    data_folders = ['C1-T12', 'C2-C5', 'C5-T8']
+    #data_folders = ['C1-T12', 'C2-C5', 'C5-T8']
+    data_folders = ['C1-T12']
 
     # parameters to optimize
     """parameters = {'algo_fitting': ['hanning', 'nurbs'],
@@ -84,10 +86,10 @@ if __name__ == "__main__":
                   'bspline_numberOfLevels': ['2', '3'],
                   'bspline_order': ['2', '3'],
                   'algo_landmark_rigid': ['xy', 'translation', 'translation-xy']}"""
-    parameters = {'algo_fitting': ['hanning', 'nurbs'],
+    parameters = {'algo_fitting': ['nurbs'],
                   'algo_landmark_rigid': ['translation-xy'],
                   'all_labels': ['0', '1'],
-                  'use_continuous_labels': ['0', '1']}
+                  'use_continuous_labels': ['1']}
 
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
@@ -120,8 +122,10 @@ if __name__ == "__main__":
             results_mse[i][input_straightening_params] = []
             results_dist_max[i][input_straightening_params] = []
             if "t1" in input_t:
-                pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t1", seg=False, straightening=True,
-                                                               straightening_params=input_straightening_params, verbose=0)
+                pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t1", seg=False,
+                                                               straightening=True,
+                                                               straightening_params=input_straightening_params,
+                                                               verbose=1)
                 pipeline_test.cpu_count = 6
                 pipeline_test.compute()
 
@@ -138,7 +142,7 @@ if __name__ == "__main__":
                 pipeline_test = sct_register_pipeline.Pipeline(folder_name_complete, "t2", seg=False,
                                                                straightening=True,
                                                                straightening_params=input_straightening_params,
-                                                               verbose=0)
+                                                               verbose=1)
                 pipeline_test.cpu_count = 6
                 pipeline_test.compute()
 
@@ -213,8 +217,8 @@ if __name__ == "__main__":
                        inner="quart", bw=.2, cut=1, linewidth=1, ax=ax2)
 
         # change ylim from 0 to max(mse) and max(dist)x
-        ax1.set(ylim=(0.0, 10.0))
-        ax2.set(ylim=(0.0, 40.0))
+        ax1.set(ylim=(0.0, df['MSE'].max() + 1.0))
+        ax2.set(ylim=(0.0, df['Maximal distance'].max() + 1.0))
 
         sns.despine(left=True, bottom=True)
 
