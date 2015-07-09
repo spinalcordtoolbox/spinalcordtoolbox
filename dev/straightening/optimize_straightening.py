@@ -77,8 +77,7 @@ if __name__ == "__main__":
 
     # contrast: t1, t2 or both
     input_t = ["t1", "t2"]
-    #data_folders = ['C1-T12', 'C2-C5', 'C5-T8']
-    data_folders = ['C1-T12']
+    data_folders = ['C1-T12', 'C2-C5', 'C5-T8']
 
     # parameters to optimize
     """parameters = {'algo_fitting': ['hanning', 'nurbs'],
@@ -89,7 +88,7 @@ if __name__ == "__main__":
     parameters = {'algo_fitting': ['nurbs'],
                   'algo_landmark_rigid': ['translation-xy'],
                   'all_labels': ['0', '1'],
-                  'use_continuous_labels': ['1']}
+                  'use_continuous_labels': ['0', '1']}
 
     perm_params = [dict(zip(parameters, v)) for v in product(*parameters.values())]
 
@@ -197,33 +196,26 @@ if __name__ == "__main__":
     df = DataFrame(results)
     print df
 
-    import seaborn as sns
-    import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-    for i, folder_name in enumerate(data_folders):
-        f, (ax1, ax2) = plt.subplots(1, 2)
-
-        sns.set(style="whitegrid")
-        # Set up the matplotlib figure
-        ax1.set_title(folder_name + ' - Mean Square Error')
-        ax2.set_title(folder_name + ' - Maximum distance')
-        plt.setp(ax1.get_xticklabels(), rotation=75)
-        plt.setp(ax2.get_xticklabels(), rotation=75)
-
-        # Draw a violinplot with a narrower bandwidth than the default
-        sns.violinplot(x='Parameters', y='MSE', hue="Contrast", data=df[df.Dataset == folder_name],
-                       inner="quart", bw=.2, cut=1, linewidth=1, ax=ax1)
-        sns.violinplot(x='Parameters', y='Maximal distance', hue="Contrast", data=df[df.Dataset == folder_name],
-                       inner="quart", bw=.2, cut=1, linewidth=1, ax=ax2)
-
-        # change ylim from 0 to max(mse) and max(dist)x
-        ax1.set(ylim=(0.0, df['MSE'].max() + 1.0))
-        ax2.set(ylim=(0.0, df['Maximal distance'].max() + 1.0))
-
-        sns.despine(left=True, bottom=True)
-
-        plt.savefig(folder_name+'.png', bbox_inches='tight')
-        #plt.show()
+for i, folder_name in enumerate(data_folders):
+    f, (ax1, ax2) = plt.subplots(1, 2)
+    sns.set(style="whitegrid", palette="pastel", color_codes=True)
+    # Set up the matplotlib figure
+    ax1.set_title(folder_name + ' - Mean Square Error')
+    ax2.set_title(folder_name + ' - Maximum distance')
+    plt.setp(ax1.get_xticklabels(), rotation=75)
+    plt.setp(ax2.get_xticklabels(), rotation=75)
+    # Draw a violinplot with a narrower bandwidth than the default
+    sns.violinplot(x='Parameters', y='MSE', hue="Contrast", data=df[df.Dataset == folder_name], inner="quart", bw=.2, cut=1, linewidth=1, ax=ax1, palette={"t1": "b", "t2": "y"})
+    sns.violinplot(x='Parameters', y='Maximal distance', hue="Contrast", data=df[df.Dataset == folder_name], inner="quart", bw=.2, cut=1, linewidth=1, ax=ax2, palette={"t1": "b", "t2": "y"})
+    # change ylim from 0 to max(mse) and max(dist)x
+    ax1.set(ylim=(0.0, df['MSE'].max() + 1.0))
+    ax2.set(ylim=(0.0, df['Maximal distance'].max() + 1.0))
+    sns.despine(left=True, bottom=True)
+    plt.savefig(folder_name+'.png', bbox_inches='tight')
+    plt.show()
 
     import pickle
     pickle.dump(df, open("results_straightening.p", "wb"))
