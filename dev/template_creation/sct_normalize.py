@@ -150,13 +150,14 @@ def main():
        means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
    #print("means=", means)
 
-   # print('\nSmoothing results with spline...')
-   # # Smoothing with scipy library (Julien Touati's code)
-   # m =np.mean(means)
-   # sigma = np.std(means)
-   # smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/20 #Equivalent to : m*sigma**2
-   # tck = splrep(z_centerline, means, s=smoothing_param)
-   # means_smooth = splev(z_centerline, tck)
+   print('\nSmoothing results with spline...')
+   # Smoothing with scipy library (Julien Touati's code)
+   m =np.mean(means)
+   sigma = np.std(means)
+   smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+   #Equivalent to : m*sigma**2
+   tck = splrep(z_centerline, means, s=smoothing_param)
+   means_smooth = splev(z_centerline, tck)
 
    #Test smoothing with nurbs
    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
@@ -164,11 +165,11 @@ def main():
    #P = nurbs.getCourbe3D()
    #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
 
-   #Smoothing with hanning
+   # #Smoothing with hanning
    print('\nSmoothing results with hanning windowing...')
-   means = np.asarray(means)
-   means_smooth = smoothing_window(means, window_len=window_length)
-   print means.shape[0], means_smooth.shape[0]
+   # means = np.asarray(means)
+   # means_smooth = smoothing_window(means, window_len=window_length)
+   # print means.shape[0], means_smooth.shape[0]
 
    if verbose :
        plt.figure()
