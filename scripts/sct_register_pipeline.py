@@ -189,7 +189,8 @@ class Pipeline(object):
                 sct.printv("\n\n---------------------------------------------------------------------------", self.verbose)
                 sct.printv("SUBJECT : " + subject_dir, self.verbose)
                 sct.printv("---> containing : ", self.verbose)
-                sct.printv(os.listdir('./'), self.verbose)
+                if self.verbose:
+                    print os.listdir('./')
                 for directory in os.listdir('./'):
                     if 't1' in directory.lower():
                         dir_t1 = directory
@@ -391,18 +392,19 @@ class Pipeline(object):
             name = subject.name_t2
             name_seg = subject.name_t2_ref
 
-        os.chdir(path)
-
-        if name is '' or name_seg is '':
+        if path is '' or name is '' or name_seg is '':
             sct.printv(
                 'WARNING: AN ERROR OCCURRED WHEN TRYING TO STRAIGHTEN THE SPINAL CORD. The images seem to be missing.', self.verbose)
-            os.chdir('../..')
-            return None
+            os.chdir('..')
+            from numpy import nan
+            return [subject.dir_name, nan, nan]
         else:
             try:
+                os.chdir(path)
+
                 cmd_straightening = 'sct_straighten_spinalcord -i ' + name + ' -c ' + name_seg
                 sct.printv("\nStraightening " + subject.dir_name + '/' + path + '/'
-                                   + subject.name_t2 + " using sct_straighten_spinalcord ...", verbose=self.verbose, type="normal")
+                                   + name + " using sct_straighten_spinalcord ...", verbose=self.verbose, type="normal")
 
                 from sct_straighten_spinalcord import SpinalCordStraightener
 
@@ -423,10 +425,12 @@ class Pipeline(object):
                         sc_straight.algo_landmark_rigid = str(dict_params_straightening["algo_landmark_rigid"])
                     if "all_labels" in dict_params_straightening:
                         sc_straight.all_labels = int(dict_params_straightening["all_labels"])
+                    if "use_continuous_labels" in dict_params_straightening:
+                        sc_straight.use_continuous_labels = int(dict_params_straightening["use_continuous_labels"])
 
                 sct.printv(cmd_straightening, self.verbose)
                 sc_straight.remove_temp_files = 0
-                sc_straight.verbose = 0  # for visualization purpose
+                sc_straight.verbose = self.verbose  # for visualization purpose
                 sc_straight.straighten()
 
                 os.chdir('../..')
@@ -440,8 +444,8 @@ class Pipeline(object):
                 sct.printv('Continuing program ...', self.verbose, 'warning')
 
                 os.chdir('../..')
-
-                return None
+                from numpy import nan
+                return [subject.dir_name, nan, nan]
 
             except KeyboardInterrupt:
                 os.chdir('../..')
@@ -468,6 +472,9 @@ class Pipeline(object):
         except KeyboardInterrupt:
             print "\nWarning: Caught KeyboardInterrupt, terminating workers"
             pool.terminate()
+            sys.exit(2)
+        except Exception as e:
+            print e
             sys.exit(2)
 
     def register_warp_to_template(self, t):
@@ -754,16 +761,21 @@ class Pipeline(object):
         if self.straightening:
             self.straighten_spinalcord()
             from numpy import array, mean, std
-            mse_results = array([itm[1] for itm in self.straightening_results])
-            max_distance = array([itm[2] for itm in self.straightening_results])
-            sct.printv('\n', self.verbose)
-            sct.printv(self.straightening_results, self.verbose)
-            self.straightening_results_mse = [mean(mse_results), std(mse_results)]
-            self.straightening_results_dist_max = [mean(max_distance), std(max_distance)]
-            sct.printv('MSE          = ' + str(self.straightening_results_mse[0]) + ' +- ' + str(
-                self.straightening_results_mse[1]), self.verbose)
-            sct.printv('Max distance = ' + str(self.straightening_results_dist_max[0]) + ' +- ' + str(
-                self.straightening_results_dist_max[1]), self.verbose)
+            if self.straightening_results:
+                mse_results = array([itm[1] for itm in self.straightening_results])
+                max_distance = array([itm[2] for itm in self.straightening_results])
+                sct.printv('\n', self.verbose)
+                if self.verbose:
+                    print self.straightening_results
+                self.straightening_results_mse = [mean(mse_results), std(mse_results)]
+                self.straightening_results_dist_max = [mean(max_distance), std(max_distance)]
+                sct.printv('MSE          = ' + str(self.straightening_results_mse[0]) + ' +- ' + str(
+                    self.straightening_results_mse[1]), self.verbose)
+                sct.printv('Max distance = ' + str(self.straightening_results_dist_max[0]) + ' +- ' + str(
+                    self.straightening_results_dist_max[1]), self.verbose)
+            else:
+                print self.straightening_results
+                sct.printv('WARNING: there are no results for straightening... Please check your data or contact the SCToolbox administrators.', self.verbose, 'warning')
 
         # compute dice on other results
         for arg in self.dice_on:

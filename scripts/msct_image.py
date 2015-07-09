@@ -238,7 +238,7 @@ class Image(object):
         """
         from msct_types import Coordinate
 
-        X, Y, Z = (self.data > 0).nonzero()
+        X, Y, Z = (self.data > 0.0).nonzero()
         list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
 
         if sorting is not None:
