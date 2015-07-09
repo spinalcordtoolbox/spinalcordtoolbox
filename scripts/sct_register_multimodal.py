@@ -458,9 +458,15 @@ def register(src, dest, paramreg, param, i_step_str):
         # Change to array
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
+        # Detect outliers
+        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
+        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
+        # Replace value of outliers by linear interpolation using closest non-outlier points
+        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
+        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
@@ -479,10 +485,19 @@ def register(src, dest, paramreg, param, i_step_str):
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
         theta_rot_a = asarray(theta_rot)
+        # Detect outliers
+        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
+        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
+        filtered, mask_theta_a = outliers_detection(theta_rot_a, type='median', verbose=param.verbose)
+        # Replace value of outliers by linear interpolation using closest non-outlier points
+        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
+        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
+        theta_rot_a_no_outliers = outliers_completion(mask_theta_a, verbose=0)
+
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        theta_rot_smooth = smoothing_window(theta_rot_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         # Generate warping field
         generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
         # Inverse warping field
@@ -496,6 +511,7 @@ def register(src, dest, paramreg, param, i_step_str):
         from numpy import asarray
         from msct_smooth import smoothing_window
         from numpy.linalg import inv
+        import matplotlib.pyplot as plt
         # Calculate displacement
         x_disp, y_disp, matrix_def = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Affine', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
         # Change to array
@@ -505,14 +521,28 @@ def register(src, dest, paramreg, param, i_step_str):
         matrix_def_1_a = asarray([matrix_def[j][0][1] for j in range(len(matrix_def))])
         matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
         matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
-        # Detect
+        # Detect outliers
+        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
+        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
+        filtered, mask_0_a = outliers_detection(matrix_def_0_a, type='median', verbose=param.verbose)
+        filtered, mask_1_a = outliers_detection(matrix_def_1_a, type='median', verbose=param.verbose)
+        filtered, mask_2_a = outliers_detection(matrix_def_2_a, type='median', verbose=param.verbose)
+        filtered, mask_3_a = outliers_detection(matrix_def_3_a, type='median', verbose=param.verbose)
+        # Replace value of outliers by linear interpolation using closest non-outlier points
+        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
+        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
+        matrix_def_0_a_no_outliers = outliers_completion(mask_0_a, verbose=0)
+        matrix_def_1_a_no_outliers = outliers_completion(mask_1_a, verbose=0)
+        matrix_def_2_a_no_outliers = outliers_completion(mask_2_a, verbose=0)
+        matrix_def_3_a_no_outliers = outliers_completion(mask_3_a, verbose=0)
+
         # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
+        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
         matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
         matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
         # Generate warping field
@@ -589,22 +619,93 @@ def find_zmin_zmax(fname):
     zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
 
-def outliers_detection(data, type='std', factor=2):
+def outliers_detection(data, type='std', factor=2, verbose=0):
+    from copy import copy
     # data: numpy array
-    m = factor
+    # filtered: list
+    # mask: numpy array
     if type == 'std':
         u = np.mean(data)
         s = np.std(data)
-        mask = u - m * s < data < u + m * s
-        filtered = [e for e in data if (u - m * s < e < u + m * s)]
+        index_1 = data > (u + factor * s)
+        index_2 = (u - factor * s) > data
+        filtered = [e for e in data if (u - factor * s < e < u + factor * s)]
+        mask = copy(data)
+        mask[index_1] = None
+        mask[index_2] = None
 
     if type == 'median':
+        # Detect extrem outliers using median
         d = np.abs(data - np.median(data))
-        mdev = np.median(d)
+        mdev = 1.4826 * np.median(d)
         s = d/mdev if mdev else 0.
-        filtered = data[s<m] # mask or data_filtered ?
+        mean_s = np.mean(s)
+        index_1 = s>5* mean_s
+        # index_2 = s<mean_s
+        mask_1 = copy(data)
+        mask_1[index_1] = None
+        # mask_1[index_2] = None
+        filtered_1 = [e for i,e in enumerate(data.tolist()) if not np.isnan(mask_1[i])]
+        # Recalculate std using filtered variable and detect outliers with threshold factor * std
+        u = np.mean(filtered_1)
+        std = np.std(filtered_1)
+        filtered = [e for e in data if (u - factor * std < e < u + factor * std)]
+        index_1_2 = data > (u + factor * std)
+        index_2_2 = (u - factor * std) > data
+        mask = copy(data)
+        mask[index_1_2] = None
+        mask[index_2_2] = None
+
+    if verbose:
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(data, 'bo')
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.subplot(212)
+        plt.plot(mask, 'bo')
+        plt.ylim(y_lim)
+        plt.show()
 
     return filtered, mask
+
+def outliers_completion(mask, verbose=0):
+    # Complete mask that as nan values by linear interpolation of the closest points
+    #Define extended mask
+    mask_completed = np.nan_to_num(mask)
+    # take indexe of all non nan points
+    X_mask_completed = np.nonzero(mask_completed)
+    X_mask_completed = np.transpose(X_mask_completed)
+    #initialization: we set the extrem values to avoid edge effects
+    mask_completed[0] = mask_completed[X_mask_completed[0]]
+    mask_completed[-1] = mask_completed[X_mask_completed[-1]]
+    #Add two rows to the vector X_mask_completed:
+    # one before as mask_completed[0] is now diff from 0
+    # one after as mask_completed[-1] is now diff from 0
+    X_mask_completed = np.append(X_mask_completed, len(mask_completed)-1)
+    X_mask_completed = np.insert(X_mask_completed, 0, 0)
+    #linear interpolation
+    count_zeros=0
+    for i in range(1,len(mask_completed)-1):
+        if mask_completed[i]==0:
+            #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros])
+            mask_completed[i] = 0.5*(mask_completed[mask_completed[i-1-count_zeros]] + mask_completed[mask_completed[i-count_zeros]])
+            count_zeros += 1
+    if verbose:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.subplot(2,1,1)
+        plt.plot(mask, 'bo')
+        plt.title("Before")
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.subplot(2,1,2)
+        plt.plot(mask_completed, 'bo')
+        plt.title("After")
+        plt.ylim(y_lim)
+        plt.show()
+    return mask_completed
 
 # START PROGRAM
 # ==========================================================================================
