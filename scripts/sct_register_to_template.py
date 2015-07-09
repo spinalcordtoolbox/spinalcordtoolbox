@@ -378,17 +378,13 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     # read labels
     from sct_label_utils import ProcessLabels
     processor = ProcessLabels(fname_labels)
-    label_list = processor.display_voxel().split(':')
-    # parse to get each label
-    # TODO: modify sct_label_utils to output list of coordinates instead of string.
+    label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:
-        label_sub = label.split(',')
-        label_sub_new = []
-        for i_label in range(0, 3):
-            label_single = round(int(label_sub[i_label])/sampling_factor[i_label])
-            label_sub_new.append(str(int(label_single)))
-        label_sub_new.append(str(int(float(label_sub[3]))))
+        label_sub_new = [str(int(round(int(label.x)/sampling_factor[0]))),
+                         str(int(round(int(label.y)/sampling_factor[1]))),
+                         str(int(round(int(label.z)/sampling_factor[2]))),
+                         str(int(float(label.value)))]
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels

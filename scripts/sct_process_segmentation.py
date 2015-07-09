@@ -166,7 +166,9 @@ def main():
         sct.printv('\nDone!', param.verbose)
         if (volume_output):
             sct.printv('Output CSA volume: '+name_output, param.verbose, 'info')
-        sct.printv('Output CSA file: '+param.fname_csa+'\n', param.verbose, 'info')
+        if slices or vert_lev:
+            sct.printv('Output CSA file (averaged): csa_mean.txt', param.verbose, 'info')
+        sct.printv('Output CSA file (all slices): '+param.fname_csa+'\n', param.verbose, 'info')
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -490,13 +492,12 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(fname_segmentation)
         create_info_label('info_label.txt', path_tmp_extract_metric, file_fname_seg+ext_fname_seg)
 
+        # average CSA
         if slices:
-            # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -z "+slices)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
         if vert_levels:
             sct.run('cp -R '+abs_path_to_template+' .')
-            # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -v "+vert_levels)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -v "+vert_levels)
 
         os.chdir('..')
 
