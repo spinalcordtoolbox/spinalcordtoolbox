@@ -53,7 +53,6 @@ def register_seg(seg_input, seg_dest):
     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0,0,0]])
     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
     for iz in xrange(seg_dest_data.shape[2]):
-        print iz
         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
 
@@ -84,7 +83,6 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
-    path_m, root_m, ext_m = sct.extract_fname(mask)
 
     # set metricSize
     if paramreg.metric == 'MI':
@@ -150,6 +148,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
             list_warp_x_inv = []
             list_warp_y = []
             list_warp_y_inv = []
+            name_warp_syn = 'Warp_total' #if modified, name should also be modified in msct_register (algo slicereg2d_bsplinesyn and slicereg2d_syn)
     # loop across slices
     for i in range(nz):
         # set masking
@@ -196,7 +195,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 # Split the warping fields into two for displacement along x and y before merge
                 sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
                 sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
-                #List names of warping fields for futur merge
+                # List names of warping fields for futur merge
                 list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                 list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
                 list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
@@ -211,14 +210,14 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                     x_displacement[i] = x_displacement[i-1]
                     y_displacement[i] = y_displacement[i-1]
                     matrix_def[i] = matrix_def[i-1]
-                if paramreg.algo == 'BSplineSyn' or paramreg.algo == 'Syn':
+                if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
                     print'Problem with ants for slice '+str(i)+'. Copy of the last warping field.'
                     sct.run('cp transform_' + numerotation(i-1) + '0Warp.nii.gz transform_' + num + '0Warp.nii.gz')
                     sct.run('cp transform_' + numerotation(i-1) + '0InverseWarp.nii.gz transform_' + num + '0InverseWarp.nii.gz')
                     # Split the warping fields into two for displacement along x and y before merge
                     sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
                     sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
-                    #List names of warping fields for futur merge
+                    # List names of warping fields for futur merge
                     list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                     list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
                     list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
@@ -228,25 +227,22 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
         print'\nMerge along z of the warping fields...' #need to separate the merge for x and y displacement
-        sct.run('fslmerge -z Warp_total_x ' + " ".join(list_warp_x))
-        sct.run('fslmerge -z Warp_total_x_inverse ' + " ".join(list_warp_x_inv))
-        sct.run('fslmerge -z Warp_total_y ' + " ".join(list_warp_y))
-        sct.run('fslmerge -z Warp_total_y_inverse ' + " ".join(list_warp_y_inv))
+        sct.run('fslmerge -z ' + name_warp_syn + '_x ' + " ".join(list_warp_x))
+        sct.run('fslmerge -z ' + name_warp_syn + '_x_inverse ' + " ".join(list_warp_x_inv))
+        sct.run('fslmerge -z ' + name_warp_syn + '_y ' + " ".join(list_warp_y))
+        sct.run('fslmerge -z ' + name_warp_syn + '_y_inverse ' + " ".join(list_warp_y_inv))
         print'\nChange resolution of warping fields to match the resolution of the destination image...'
-        sct.run('fslcpgeom ' + im_dest + ' Warp_total_x.nii.gz')
-        sct.run('fslcpgeom ' + im_input + ' Warp_total_x_inverse.nii.gz')
-        sct.run('fslcpgeom ' + im_dest + ' Warp_total_y.nii.gz')
-        sct.run('fslcpgeom ' + im_input + ' Warp_total_y_inverse.nii.gz')
+        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_syn + '_x.nii.gz')
+        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_syn + '_x_inverse.nii.gz')
+        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_syn + '_y.nii.gz')
+        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_syn + '_y_inverse.nii.gz')
         print'\nMerge translation fields along x and y into one global warping field '
-        sct.run('isct_c3d Warp_total_x.nii.gz Warp_total_y.nii.gz -omc 2 Warp_total.nii.gz')
-        sct.run('isct_c3d Warp_total_x_inverse.nii.gz Warp_total_y_inverse.nii.gz -omc 2 Warp_total_inverse.nii.gz')
+        sct.run('isct_c3d ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz -omc 2 ' + name_warp_syn + '.nii.gz')
+        sct.run('isct_c3d ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz -omc 2 ' + name_warp_syn + '_inverse.nii.gz')
         print'\nCopy to parent folder...'
-        sct.run('cp Warp_total.nii.gz ../')
-        sct.run('cp Warp_total_inverse.nii.gz ../')
-        # sct.run('cp Warp_total_x.nii.gz ../')
-        # sct.run('cp Warp_total_x_inverse.nii.gz ../')
-        # sct.run('cp Warp_total_y.nii.gz ../')
-        # sct.run('cp Warp_total_y_inverse.nii.gz ../')
+        sct.run('cp ' + name_warp_syn + '.nii.gz ../')
+        sct.run('cp ' + name_warp_syn + '_inverse.nii.gz ../')
+
     #Delete tmp folder
     os.chdir('../')
     if remove_tmp_folder:
@@ -340,7 +336,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
                     data_warp[i, j, k, 0, 0] = x_trans[k]
                     data_warp[i, j, k, 0, 1] = y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
-    # # For rigid transforms
+    # # For rigid transforms (not optimized)
     # if theta_rot != None:
     #     for k in range(nz):
     #         for i in range(nx):
