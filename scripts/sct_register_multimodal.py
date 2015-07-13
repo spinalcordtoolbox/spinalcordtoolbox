@@ -41,13 +41,8 @@ import time
 
 import sct_utils as sct
 from msct_parser import Parser
-import numpy as np
 
-# Get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# Append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
-sys.path.append(path_sct + '/dev/tamag')
+
 
 
 
@@ -176,7 +171,7 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  rigid\n  affine\n  syn\n  bsplinesyn\n  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n  slicereg2d_translation: slice-by-slice translation regularized using moving average (Hanning window)\n  slicereg2d_rigid\n  slicereg2d_affine\n  slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg)\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step. Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid and slicereg2d_affine.. Default="""+paramreg.steps['1'].window_length,
+                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  rigid\n  affine\n  syn\n  bsplinesyn\n  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n  slicereg2d_translation: slice-by-slice translation regularized using moving average (Hanning window)\n  slicereg2d_rigid\n  slicereg2d_affine\n  slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg)\n slicereg_2d_bsplinesyn\n slicereg_2d_syn\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step. Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid, slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.. Default="""+paramreg.steps['1'].window_length,
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
@@ -184,11 +179,6 @@ def main():
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
                       mandatory=False,
                       default_value=param.padding)
-    # parser.add_option(name="-w",
-    #                   type_value="int",
-    #                   description="""size of hanning window for smoothing along z for slicereg2d_translation and slicereg2d_rigid.""",
-    #                   mandatory=False,
-    #                   default_value=param.window_length)
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -221,7 +211,6 @@ def main():
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
-    # window_length = arguments['-w']
     if "-p" in arguments:
         paramreg_user = arguments['-p']
         # update registration parameters
@@ -393,6 +382,7 @@ def register(src, dest, paramreg, param, i_step_str):
         masking = ''
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
+        from msct_image import find_zmin_zmax
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
         src_th = sct.add_suffix(src, '_th')
         sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
@@ -426,135 +416,49 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_pointwise':
-        if paramreg.steps[i_step_str].type != 'seg':
-            print '\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.'
-            sys.exit(2)
-        else:
-            from msct_register_regularized import register_seg, generate_warping_field
-            from numpy import asarray
-            from msct_smooth import smoothing_window
-            # Calculate displacement
-            x_disp, y_disp = register_seg(src, dest)
-            # Change to array
-            x_disp_a = asarray(x_disp)
-            y_disp_a = asarray(y_disp)
-            # Smooth results
-            x_disp_smooth = smoothing_window(x_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
-            y_disp_smooth = smoothing_window(y_disp_a, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose=param.verbose)
-            # Generate warping field
-            generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
-            # Inverse warping field
-            generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
-            cmd = ('')
-            warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
-            warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+        from msct_register import register_slicereg2d_pointwise
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_pointwise(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Translation', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, verbose=param.verbose)
+        cmd = ('')
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_translation':
-        from msct_register_regularized import register_images, generate_warping_field
-        from numpy import asarray
-        from msct_smooth import smoothing_window
-        # Calculate displacement
-        x_disp, y_disp = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Translation', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
-        # Change to array
-        x_disp_a = asarray(x_disp)
-        y_disp_a = asarray(y_disp)
-        # Detect outliers
-        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
-        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
-        # Replace value of outliers by linear interpolation using closest non-outlier points
-        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-        # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        # Generate warping field
-        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname='step'+i_step_str+'Warp.nii.gz')
-        # Inverse warping field
-        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        from msct_register import register_slicereg2d_translation
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_translation(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Translation', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, remove_temp_files=param.remove_temp_files, verbose=param.verbose)
         cmd = ('')
-        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_rigid':
-        from msct_register_regularized import register_images, generate_warping_field
-        from numpy import asarray
-        from msct_smooth import smoothing_window
-        # Calculate displacement
-        x_disp, y_disp, theta_rot = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Rigid', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
-        # Change to array
-        x_disp_a = asarray(x_disp)
-        y_disp_a = asarray(y_disp)
-        theta_rot_a = asarray(theta_rot)
-        # Detect outliers
-        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
-        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
-        filtered, mask_theta_a = outliers_detection(theta_rot_a, type='median', verbose=param.verbose)
-        # Replace value of outliers by linear interpolation using closest non-outlier points
-        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-        theta_rot_a_no_outliers = outliers_completion(mask_theta_a, verbose=0)
-
-        # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        # Generate warping field
-        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname='step'+i_step_str+'Warp.nii.gz')
-        # Inverse warping field
-        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        from msct_register import register_slicereg2d_rigid
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_rigid(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Rigid', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, remove_temp_files=param.remove_temp_files, verbose=param.verbose)
         cmd = ('')
-        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
 
     elif paramreg.steps[i_step_str].algo == 'slicereg2d_affine':
-        from msct_register_regularized import register_images, generate_warping_field
-        from numpy import asarray
-        from msct_smooth import smoothing_window
-        from numpy.linalg import inv
-        import matplotlib.pyplot as plt
-        # Calculate displacement
-        x_disp, y_disp, matrix_def = register_images(src, dest, mask=param.fname_mask, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Affine', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), remove_tmp_folder=param.remove_temp_files)
-        # Change to array
-        x_disp_a = asarray(x_disp)
-        y_disp_a = asarray(y_disp)
-        matrix_def_0_a = asarray([matrix_def[j][0][0] for j in range(len(matrix_def))])
-        matrix_def_1_a = asarray([matrix_def[j][0][1] for j in range(len(matrix_def))])
-        matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
-        matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
-        # Detect outliers
-        filtered, mask_x_a = outliers_detection(x_disp_a, type='median', verbose=param.verbose)
-        filtered, mask_y_a = outliers_detection(y_disp_a, type='median', verbose=param.verbose)
-        filtered, mask_0_a = outliers_detection(matrix_def_0_a, type='median', verbose=param.verbose)
-        filtered, mask_1_a = outliers_detection(matrix_def_1_a, type='median', verbose=param.verbose)
-        filtered, mask_2_a = outliers_detection(matrix_def_2_a, type='median', verbose=param.verbose)
-        filtered, mask_3_a = outliers_detection(matrix_def_3_a, type='median', verbose=param.verbose)
-        # Replace value of outliers by linear interpolation using closest non-outlier points
-        x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-        y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-        matrix_def_0_a_no_outliers = outliers_completion(mask_0_a, verbose=0)
-        matrix_def_1_a_no_outliers = outliers_completion(mask_1_a, verbose=0)
-        matrix_def_2_a_no_outliers = outliers_completion(mask_2_a, verbose=0)
-        matrix_def_3_a_no_outliers = outliers_completion(mask_3_a, verbose=0)
-
-        # Smooth results
-        x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_0 = smoothing_window(matrix_def_0_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_1 = smoothing_window(matrix_def_1_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_2 = smoothing_window(matrix_def_2_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth_3 = smoothing_window(matrix_def_3_a_no_outliers, window_len=int(paramreg.steps[i_step_str].window_length), window='hanning', verbose = param.verbose)
-        matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
-        matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
-        # Generate warping field
-        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, matrix_def=matrix_def_smooth, fname='step'+i_step_str+'Warp.nii.gz')
-        # Inverse warping field
-        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def=matrix_def_smooth_inv, fname='step'+i_step_str+'InverseWarp.nii.gz')
+        from msct_register import register_slicereg2d_affine
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_affine(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Affine', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, remove_temp_files=param.remove_temp_files, verbose=param.verbose)
         cmd = ('')
-        warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
-        warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_syn':
+        from msct_register import register_slicereg2d_syn
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_syn(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='SyN', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, remove_temp_files=param.remove_temp_files)
+        cmd = ('')
+
+    elif paramreg.steps[i_step_str].algo == 'slicereg2d_bsplinesyn':
+        from msct_register import register_slicereg2d_bsplinesyn
+        warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
+        warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
+        register_slicereg2d_bsplinesyn(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='BSplineSyN', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep), fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, remove_temp_files=param.remove_temp_files)
+        cmd = ('')
 
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
-
+        from msct_image import pad_image
         # Pad the destination image (because ants doesn't deform the extremities)
         # N.B. no need to pad if iter = 0
         if not paramreg.steps[i_step_str].iter == '0':
@@ -602,110 +506,6 @@ def register(src, dest, paramreg, param, i_step_str):
 
     return warp_forward, warp_inverse
 
-
-
-# pad an image
-# ==========================================================================================
-def pad_image(fname_in, file_out, padding):
-    sct.run('isct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
-    return
-
-
-
-def find_zmin_zmax(fname):
-    # crop image
-    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
-    # parse output
-    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
-    return int(zmin), int(zmax)
-
-def outliers_detection(data, type='std', factor=2, verbose=0):
-    from copy import copy
-    # data: numpy array
-    # filtered: list
-    # mask: numpy array
-    if type == 'std':
-        u = np.mean(data)
-        s = np.std(data)
-        index_1 = data > (u + factor * s)
-        index_2 = (u - factor * s) > data
-        filtered = [e for e in data if (u - factor * s < e < u + factor * s)]
-        mask = copy(data)
-        mask[index_1] = None
-        mask[index_2] = None
-
-    if type == 'median':
-        # Detect extrem outliers using median
-        d = np.abs(data - np.median(data))
-        mdev = 1.4826 * np.median(d)
-        s = d/mdev if mdev else 0.
-        mean_s = np.mean(s)
-        index_1 = s>5* mean_s
-        # index_2 = s<mean_s
-        mask_1 = copy(data)
-        mask_1[index_1] = None
-        # mask_1[index_2] = None
-        filtered_1 = [e for i,e in enumerate(data.tolist()) if not np.isnan(mask_1[i])]
-        # Recalculate std using filtered variable and detect outliers with threshold factor * std
-        u = np.mean(filtered_1)
-        std = np.std(filtered_1)
-        filtered = [e for e in data if (u - factor * std < e < u + factor * std)]
-        index_1_2 = data > (u + factor * std)
-        index_2_2 = (u - factor * std) > data
-        mask = copy(data)
-        mask[index_1_2] = None
-        mask[index_2_2] = None
-
-    if verbose:
-        import matplotlib.pyplot as plt
-        plt.figure(1)
-        plt.subplot(211)
-        plt.plot(data, 'bo')
-        axes = plt.gca()
-        y_lim = axes.get_ylim()
-        plt.subplot(212)
-        plt.plot(mask, 'bo')
-        plt.ylim(y_lim)
-        plt.show()
-
-    return filtered, mask
-
-def outliers_completion(mask, verbose=0):
-    # Complete mask that as nan values by linear interpolation of the closest points
-    #Define extended mask
-    mask_completed = np.nan_to_num(mask)
-    # take indexe of all non nan points
-    X_mask_completed = np.nonzero(mask_completed)
-    X_mask_completed = np.transpose(X_mask_completed)
-    #initialization: we set the extrem values to avoid edge effects
-    mask_completed[0] = mask_completed[X_mask_completed[0]]
-    mask_completed[-1] = mask_completed[X_mask_completed[-1]]
-    #Add two rows to the vector X_mask_completed:
-    # one before as mask_completed[0] is now diff from 0
-    # one after as mask_completed[-1] is now diff from 0
-    X_mask_completed = np.append(X_mask_completed, len(mask_completed)-1)
-    X_mask_completed = np.insert(X_mask_completed, 0, 0)
-    #linear interpolation
-    count_zeros=0
-    for i in range(1,len(mask_completed)-1):
-        if mask_completed[i]==0:
-            #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros])
-            mask_completed[i] = 0.5*(mask_completed[mask_completed[i-1-count_zeros]] + mask_completed[mask_completed[i-count_zeros]])
-            count_zeros += 1
-    if verbose:
-        import matplotlib.pyplot as plt
-        plt.figure()
-        plt.subplot(2,1,1)
-        plt.plot(mask, 'bo')
-        plt.title("Before")
-        axes = plt.gca()
-        y_lim = axes.get_ylim()
-        plt.subplot(2,1,2)
-        plt.plot(mask_completed, 'bo')
-        plt.title("After")
-        plt.ylim(y_lim)
-        plt.show()
-    return mask_completed
 
 # START PROGRAM
 # ==========================================================================================
