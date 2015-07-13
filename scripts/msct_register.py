@@ -147,8 +147,8 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
-    sct.run('isct_c3d -mcs Warp_total.nii.gz -oo ' + name_warp_syn + '_x.nii.gz Warp_total_y.nii.gz')
-    sct.run('isct_c3d -mcs Warp_total_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
@@ -204,8 +204,8 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
-    sct.run('isct_c3d -mcs Warp_total.nii.gz -oo ' + name_warp_syn + '_x.nii.gz Warp_total_y.nii.gz')
-    sct.run('isct_c3d -mcs Warp_total_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
