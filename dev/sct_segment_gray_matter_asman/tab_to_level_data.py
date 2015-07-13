@@ -122,6 +122,9 @@ data_by_level.write('\n\n')
 data_by_level.close()
 '''
 
+
+# #################  WM DICE COEFF
+"""
 path = sys.argv[1]
 n_slice_dic = {}
 level_dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
@@ -180,3 +183,52 @@ data_by_n_slice.write('\n\n')
 
 
 data_by_n_slice.close()
+"""
+
+
+# #################  CSA
+path = sys.argv[1]
+level_dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
+
+sc_part = 'wm'
+
+dice_file = open(path + '/' + sc_part + '_csa.txt', 'r')
+data_line = dice_file.readline()
+# data_line = data_line.split('\r')
+while data_line != '\n' and data_line != '':
+    # for slice_line in data_line[:-2]:
+    slice_line = data_line.split(' ')
+
+    if len(slice_line) == 1:
+        slice_line = slice_line[0].split('\t')
+
+    # n_slices = slice_line[-1][:-1]
+    level = slice_line[2][:-1]
+
+    level_dic[level].append(slice_line[3][:-1])
+
+    data_line = dice_file.readline()
+dice_file.close()
+
+
+'''
+for slice_line in data_lines:
+    slice_line = slice_line.split('\t')
+
+    level = slice_line[-1][1:-1]
+    dic[level].append(slice_line[1])
+'''
+
+data_by_level = open(path + '/' + sc_part + '_csa_by_level.txt', 'w')
+
+for level in level_dic.keys():
+    s_dices = ''
+    for dice in level_dic[level]:
+        s_dices += dice + ' , '
+    data_by_level.write(level + ' : ' + s_dices[:-2] + '\n')
+data_by_level.write('\n\n')
+
+
+data_by_level.close()
+
+
