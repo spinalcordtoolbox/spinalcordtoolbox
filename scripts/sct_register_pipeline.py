@@ -363,11 +363,11 @@ class Pipeline(object):
                             if "_seg.nii" in file_name:
                                 name_seg = file_name
                                 break
-                if t_seg == 't1':
+                if t == 't1':
                     subject.name_t1_seg = name_seg
-                if t_seg == 't2':
+                if t == 't2':
                     subject.name_t2_seg = name_seg
-                if t_seg == 't2star':
+                if t == 't2star':
                     subject.name_t2star_seg = name_seg
                 os.chdir('..')
             else:
