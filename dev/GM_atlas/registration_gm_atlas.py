@@ -7,10 +7,6 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
 
-
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import numpy as np
 from PIL import Image
 import nibabel
@@ -18,24 +14,14 @@ import sct_utils as sct
 import matplotlib.pyplot as plt
 
 ext_o = '.nii.gz'
-
+path_info = '/Users/tamag/code/spinalcordtoolbox/dev/GM_atlas/raw_data'
+path_output = '/Users/tamag/code/spinalcordtoolbox/dev/GM_atlas/raw_data/test'
 
 def main():
 
-    os.chdir('/Users/tamag/Desktop/GM_atlas/def_new_atlas/correct_images')
+    os.chdir(path_output)
 
-    # # Define names
-    # fname1 = 'greyscale_antisym.png'  # greyscale image showing tracts (warp applied to it at the end)
-    # fname2 = 'binary_gm_black.png'    # white mask of the white matter for registration
-    # fname3 = 'gm_white.png'           # white mask of the grey matter (warp applied to it at the end) (used for the atlas generation by registration slice by slice)
-    # fname4 = 'mask_grays_cerv_sym_correc_r5.png' # mask from the WM atlas
-    # slice = 'slice_ref_template.nii.gz'          #reference slice of the GM template
-    # name1 = 'greyscale_antisym'
-    # name2 = 'binary_gm_black'
-    # name3 = 'gm_white'
-    # name4 = 'mask_grays_cerv_sym_correc_r5'
-
-        # Define names
+    # Define names
     fname1 = 'greyscale_final.png'  # greyscale image showing tracts (warp applied to it at the end)
     fname2 = 'white_WM_mask.png'    # white mask of the white matter for registration
     fname3 = 'white_GM_mask.png'           # white mask of the grey matter (warp applied to it at the end)
@@ -46,7 +32,15 @@ def main():
     name3 = 'white_GM_mask'
     name4 = 'mask_grays_cerv_sym_correc_r5'
 
+    # Copy file to path_output
+    print '\nCopy files to output folder'
+    sct.run('cp '+ path_info+'/'+ fname1 + ' '+fname1)
+    sct.run('cp '+ path_info+'/'+ fname2 + ' '+fname2)
+    sct.run('cp '+ path_info+'/'+ fname3 + ' '+fname3)
+    sct.run('cp '+ path_info+'/'+ fname4 + ' '+fname4)
+    sct.run('cp '+ path_info+'/'+ slice + ' '+slice)
 
+    print '\nSave nifti images from png'
     save_nii_from_png(fname1)
     save_nii_from_png(fname2)
     save_nii_from_png(fname3)
@@ -58,17 +52,20 @@ def main():
     #name2 = 'binary_gm_crop'
 
     # Interpolation of the images to set them in the right format
+    print'\nInterpolate images to set them in the right format'
     interpolate(name1+ext_o)
     interpolate(name2+ext_o)
     interpolate(name3+ext_o)
 
     # Copy some info from hdr of the slice template
+    print '\nCopy some info from hdr of the slice template'
     copy_hdr(name1+'_resampled'+ext_o, slice)
     copy_hdr(name2+'_resampled'+ext_o, slice)
     copy_hdr(name3+'_resampled'+ext_o, slice)
     copy_hdr(name4+ext_o, slice)
 
     # transformation affine pour premier recalage
+    print '\nAffine transformation for position registration'
     warp_1_prefix = 'warp_1_'
     tmp_file = 'tmp.nii.gz'
     cmd = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+name2+'_resampled'+ext_o+', 3, 4] -t Affine[50] --convergence 100x10 -s 1x0 -f 4x1 -o '+ warp_1_prefix +' -r [mask_grays_cerv_sym_correc_r5.nii.gz, '+name2+'_resampled'+ext_o+', 0]')
@@ -77,6 +74,7 @@ def main():
     sct.run(cmd_0)
 
     # transformation Syn pour faire correspondre les formes
+    print '\nSyn transformation for shape registration'
     warp_2_prefix = 'warp_2_'
     tmp_file_2 = 'tmp_2.nii.gz'
     # cmd_1 = ('isct_antsRegistration --dimensionality 2 -m MeanSquares[mask_grays_cerv_sym_correc_r5.nii.gz, '+ tmp_file+', 1, 4] -t BSplineSyN[0.2,3] --convergence 100x10 -s 1x0 -f 4x1 -o '+warp_2_prefix+' -r [mask_grays_cerv_sym_correc_r5.nii.gz, ' + tmp_file + ', 0]')
@@ -88,6 +86,7 @@ def main():
     # Symmetrize the warping fields
 
     # concatenation et application des warping fields aux images de base
+    print'\nConcatenate and apply warping fields to root images'
     # cmd = ('isct_ComposeMultiTransform 2 outwarp.nii.gz  test_registration0GenericAffine.mat test_registration_Bspline1Warp.nii.gz -R mask_grays_cerv_sym_correc_r5.nii.gz')
     # cmd = ('isct_antsApplyTransforms -d 2 -i greyscale_select_inv_resampled.nii.gz -o greyscale_registered.nii.gz -n Linear -t outwarp.nii.gz -r mask_grays_cerv_sym_correc_r5.nii.gz')
     concat_and_apply(inputs=[name1+'_resampled'+ext_o], dest=name4+ext_o,
@@ -101,23 +100,34 @@ def main():
     #          warps=[warp_1_prefix+'0GenericAffine.mat', warp_2_prefix + '1Warp.nii.gz'], interpolation='Linear')
 
     # Save png images of the registered NIFTI images
+    print '\nSave png images of the registered nifti images'
     save_png_from_nii(name1+'_resampled'+'_registered'+ext_o)
     save_png_from_nii(name2+'_resampled'+'_registered'+ext_o)
     save_png_from_nii(name3+'_resampled'+'_registered'+ext_o)
 
     # Crop png images to erase blank borders
+    print '\nCrop png images to erase blank borders'
     crop_blank_edges(name1+'_resampled'+'_registered')
     crop_blank_edges(name2+'_resampled'+'_registered')
     crop_blank_edges(name3+'_resampled'+'_registered')
 
     # resize images to the same size as the WM atlas images
+    print '\nResize images to the same size as the WM atlas images'
     resize_gm_png_to_wm_png_name(name1+'_resampled'+'_registered'+'_crop', name4)
     resize_gm_png_to_wm_png_name(name2+'_resampled'+'_registered'+'_crop', name4)
     resize_gm_png_to_wm_png_name(name3+'_resampled'+'_registered'+'_crop', name4)
 
     # tester correspondances entre les images
+    print '\nTest dice coeffcient between the two images'
     status, output = sct.run('sct_dice_coefficient ' + name2 + '_resampled' + '_registered' + ext_o + ' ' + name4 + ext_o)
     print output
+
+    # delete file imported at the beginning
+    sct.run('rm ' + fname1)
+    sct.run('rm ' + fname2)
+    sct.run('rm ' + fname3)
+    sct.run('rm ' + fname4)
+    sct.run('rm ' + slice)
 
 def concat_and_apply(inputs, dest, output_names, warps, interpolation='Linear'):
     # input = [input1, input2]
