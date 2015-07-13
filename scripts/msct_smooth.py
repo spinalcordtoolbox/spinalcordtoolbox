@@ -615,7 +615,7 @@ def outliers_completion(mask, verbose=0):
     # Complete mask that as nan values by linear interpolation of the closest points
     #Define extended mask
     mask_completed = nan_to_num(mask)
-    # take indexe of all non nan points
+    # take index of all non nan points
     X_mask_completed = nonzero(mask_completed)
     X_mask_completed = transpose(X_mask_completed)
     #initialization: we set the extrem values to avoid edge effects
@@ -631,9 +631,13 @@ def outliers_completion(mask, verbose=0):
     count_zeros=0
     for i in range(1,len(mask_completed)-1):
         if mask_completed[i]==0:
-            #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros])
-            mask_completed[i] = 0.5*(mask_completed[mask_completed[i-1-count_zeros]] + mask_completed[mask_completed[i-count_zeros]])
-            count_zeros += 1
+            #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros]) # linear interpolation ponderate by distance with closest non zero points
+            #mask_completed[i] = 0.25 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]] + mask_completed[X_mask_completed[i-2-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros+1]]) # linear interpolation with closest non zero points (2 points on each side)
+            mask_completed[i] = 0.5 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]]) # linear interpolation with closest non zero points
+            #redefine X_mask_completed
+            X_mask_completed = nonzero(mask_completed)
+            X_mask_completed = transpose(X_mask_completed)
+            #count_zeros += 1
     if verbose:
         import matplotlib.pyplot as plt
         plt.figure()
