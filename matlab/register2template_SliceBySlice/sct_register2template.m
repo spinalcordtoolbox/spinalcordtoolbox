@@ -67,7 +67,8 @@ end
 % choose only good slices of the template
 template=load_nii(file_ref);
 template_roi=template.img(:,:,z_lev);
-template_roi=make_nii(double(template_roi),[0.5 0.5 0.5],[],[]);
+src_nii=load_nii(file_src); % use slice thickness of the source
+template_roi=make_nii(double(template_roi),[template.hdr.dime.pixdim(2:3) src_nii.hdr.dime.pixdim(4)],[],[]);
 save_nii(template_roi,'template_roi.nii')
 file_ref = 'template_roi';
 
