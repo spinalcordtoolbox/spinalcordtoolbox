@@ -592,7 +592,7 @@ def outliers_detection(data, type='std', factor=2, return_filtered_signal='no', 
         mask[index_1_2] = None
         mask[index_2_2] = None
 
-    if verbose:
+    if verbose==2:
         import matplotlib.pyplot as plt
         plt.figure(1)
         plt.subplot(211)
@@ -627,18 +627,18 @@ def outliers_completion(mask, verbose=0):
         # one after as mask_completed[-1] is now diff from 0
         X_mask_completed = append(X_mask_completed, len(mask_completed)-1)
         X_mask_completed = insert(X_mask_completed, 0, 0)
-    #linear interpolation
-    count_zeros=0
-    for i in range(1,len(mask_completed)-1):
-        if mask_completed[i]==0:
+        #linear interpolation
+        count_zeros=0
+        for i in range(1,len(mask_completed)-1):
+            if mask_completed[i]==0:
             #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros]) # linear interpolation ponderate by distance with closest non zero points
             #mask_completed[i] = 0.25 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]] + mask_completed[X_mask_completed[i-2-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros+1]]) # linear interpolation with closest non zero points (2 points on each side)
-            mask_completed[i] = 0.5 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]]) # linear interpolation with closest non zero points
-            #redefine X_mask_completed
-            X_mask_completed = nonzero(mask_completed)
-            X_mask_completed = transpose(X_mask_completed)
-            #count_zeros += 1
-    if verbose:
+                mask_completed[i] = 0.5 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]]) # linear interpolation with closest non zero points
+                #redefine X_mask_completed
+                X_mask_completed = nonzero(mask_completed)
+                X_mask_completed = transpose(X_mask_completed)
+                #count_zeros += 1
+    if verbose==2:
         import matplotlib.pyplot as plt
         plt.figure()
         plt.subplot(2,1,1)
