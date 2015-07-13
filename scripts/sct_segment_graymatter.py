@@ -100,10 +100,12 @@ class FullGmSegmentation:
         if self.param.res_type == 'binary':
             wm_col = 'Red'
             gm_col = 'Blue'
+            b = '0,1'
         else:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
-        sct.printv('fslview ' + self.target_fname + ' ' + self.res_names['wm_seg'] + ' -l ' + wm_col + ' -t 0.4 ' + self.res_names['gm_seg'] + ' -l ' + gm_col + ' -t 0.4 &', param.verbose, 'info')
+            b = '0.5,1'
+        sct.printv('fslview ' + self.target_fname + ' -b 0,700 ' + self.res_names['wm_seg'] + ' -l ' + wm_col + ' -t 0.4 -b ' + b + ' ' + self.res_names['gm_seg'] + ' -l ' + gm_col + ' -t 0.4  -b ' + b + ' &', param.verbose, 'info')
 
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
@@ -148,6 +150,7 @@ class FullGmSegmentation:
         self.res_names['gm_seg'] = tmp_res_names[1]
         self.res_names['corrected_wm_seg'] = tmp_res_names[2]
 
+    # ------------------------------------------------------------------------------------------------------------------
     def validation(self):
         name_ref_gm_seg = sct.extract_fname(self.ref_gm_seg)
         im_ref_gm_seg = Image('../' + self.ref_gm_seg)
@@ -262,6 +265,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-weight",
+                          type_value='float',
+                          description="weight parameter on the level differences to compute the similarities (beta)",
+                          mandatory=False,
+                          default_value=1.2,
+                          example=2.0)
         parser.add_option(name="-z",
                           type_value='multiple_choice',
                           description="1: Z regularisation, 0: no ",
@@ -279,12 +288,6 @@ if __name__ == "__main__":
                           description="Reference segmentation of the gray matter",
                           mandatory=False,
                           example='manual_gm_seg.nii.gz')
-        parser.add_option(name="-select-k",
-                          type_value='multiple_choice',
-                          description="Method used to select the k dictionary slices most similar to the target slice: with a threshold (thr) or by taking the first n slices (n)",
-                          mandatory=False,
-                          default_value='thr',
-                          example=['thr', 'n'])
         parser.add_option(name="-v",
                           type_value="int",
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -306,14 +309,14 @@ if __name__ == "__main__":
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
+        if "-weight" in arguments:
+            param.weight_beta = arguments["-weight"]
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-z" in arguments:
             param.z_regularisation = bool(int(arguments["-z"]))
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
-        if "-select-k" in arguments:
-            param.select_k = arguments["-select-k"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
