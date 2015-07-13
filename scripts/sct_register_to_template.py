@@ -20,9 +20,9 @@ import time
 
 import sct_utils as sct
 from sct_orientation import set_orientation
-from sct_register_multimodal import Paramreg, ParamregMultiStep, register, find_zmin_zmax
+from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
-from msct_image import Image
+from msct_image import Image, find_zmin_zmax
 
 
 # get path of the toolbox
