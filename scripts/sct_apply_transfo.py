@@ -25,7 +25,7 @@ from sct_crop_image import ImageCropper
 
 
 class Transform:
-    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=1, crop=0, interp='spline', remove_temp_files=1, debug=0):
+    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         if isinstance(warp, str):
             self.warp_input = list([warp])
@@ -171,7 +171,7 @@ class Transform:
             os.chdir('..')
 
             # Delete temporary folder if specified
-            if remove_temp_files:
+            if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.run('rm -rf '+path_tmp, verbose)
 
@@ -238,6 +238,12 @@ if __name__ == "__main__":
                   mandatory=False,
                   default_value='1',
                   example=['0', '1'])
+    parser.add_option(name="-v",
+                  type_value="multiple_choice",
+                  description="""Verbose.""",
+                  mandatory=False,
+                  default_value='0',
+                  example=['0', '1', '2'])
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -254,6 +260,8 @@ if __name__ == "__main__":
     if "-x" in arguments:
         transform.interp = arguments["-x"]
     if "-r" in arguments:
-        transform.remove_tmp_files = arguments["-r"]
+        transform.remove_temp_files = arguments["-r"]
+    if "-v" in arguments:
+        transform.verbose = arguments["-v"]
 
     transform.apply()
