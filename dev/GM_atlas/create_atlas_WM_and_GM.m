@@ -49,10 +49,10 @@ addpath(path_fsl_matlab);
 path_template = strcat(path_sct, '/data/template/');
 % name of the WM template. Default is 'MNI-Poly-AMU_WM'
 file_template = 'MNI-Poly-AMU_WM';
-% path to the image file that contains the drawing of the WM atlas from Grays anatomy.
-path_atlas_data = strcat('/Users/tamag/Desktop/GM_atlas/def_new_atlas/correct_images/results/');
+% path to the image file that contains the drawing of the WM atlas from Grays anatomy and the GM atlas from The human central nervous system.
+path_atlas_data = strcat(path_sct, '/dev/GM_atlas/raw_data/');
 % file name of the full atlas
-file_atlas = 'addition_corrected';
+file_atlas = 'concatenation_corrected_vertical';
 % file name of the binary mask that helps for the registration to the MNI-Poly-AMU
 file_mask = 'mask_grays_cerv_sym_correc_r5';
 ext_atlas = '.png';
