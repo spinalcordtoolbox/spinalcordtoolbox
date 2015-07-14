@@ -93,7 +93,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     # initiate default parameters of antsRegistration transformation
     ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
                                 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',3,32'}
+                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
