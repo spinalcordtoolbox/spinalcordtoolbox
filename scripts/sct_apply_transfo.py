@@ -25,7 +25,7 @@ from sct_crop_image import ImageCropper
 
 
 class Transform:
-    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=1, crop=0, interp='spline', debug=0):
+    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=1, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         if isinstance(warp, str):
             self.warp_input = list([warp])
@@ -36,6 +36,7 @@ class Transform:
         self.source_reg = source_reg
         self.crop = crop
         self.verbose = verbose
+        self.remove_temp_files = remove_temp_files
         self.debug = debug
 
     def apply(self):
@@ -45,6 +46,7 @@ class Transform:
         fname_dest = self.output_filename  # destination image (fix)
         fname_src_reg = self.source_reg
         verbose = self.verbose
+        remove_temp_files = self.remove_temp_files
         fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
 
@@ -133,6 +135,8 @@ class Transform:
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
             sct.run('cp '+fname_dest+' '+path_tmp+'dest'+ext_dest, verbose)
+            for i,warp in enumerate(fname_warp_list_invert):
+                sct.run('cp ' + warp + ' ' + path_tmp + warp, verbose)
             # go to tmp folder
             os.chdir(path_tmp)
             try:
@@ -151,7 +155,8 @@ class Transform:
 
                 # Merge files back
                 sct.printv('\nMerge file back...', verbose)
-                cmd = fsloutput+'fslmerge -t '+fname_out
+                #cmd = fsloutput+'fslmerge -t '+fname_out
+                cmd = 'fslmerge -t '+fname_out
                 for it in range(nt):
                     file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
                     cmd = cmd+' '+file_data_split_reg
@@ -159,8 +164,16 @@ class Transform:
 
             except:
                 pass
+            # Copy result to parent folder
+            sct.run('cp ' + fname_out + ' ../' + fname_out)
+
             # come back to parent folder
             os.chdir('..')
+
+            # Delete temporary folder if specified
+            if remove_temp_files:
+                sct.printv('\nRemove temporary files...', verbose)
+                sct.run('rm -rf '+path_tmp, verbose)
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
@@ -219,6 +232,12 @@ if __name__ == "__main__":
                       mandatory=False,
                       default_value='spline',
                       example=['nn','linear','spline'])
+    parser.add_option(name="-r",
+                  type_value="multiple_choice",
+                  description="""Remove temporary files.""",
+                  mandatory=False,
+                  default_value='1',
+                  example=['0', '1'])
 
     arguments = parser.parse(sys.argv[1:])
 
@@ -234,5 +253,7 @@ if __name__ == "__main__":
         transform.source_reg = arguments["-o"]
     if "-x" in arguments:
         transform.interp = arguments["-x"]
+    if "-r" in arguments:
+        transform.remove_tmp_files = arguments["-r"]
 
     transform.apply()
