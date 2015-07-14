@@ -38,13 +38,16 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Translation', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
+def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Translation', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                                    fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
+                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # Calculate displacement
-    x_disp, y_disp = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
+    x_disp, y_disp = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     # Change to array
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
@@ -63,13 +66,16 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Rigid', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
+def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Rigid', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                              fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
+                              ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # Calculate displacement
-    x_disp, y_disp, theta_rot = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
+    x_disp, y_disp, theta_rot = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     # Change to array
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
@@ -92,14 +98,17 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
+def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
+                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from numpy.linalg import inv
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # Calculate displacement
-    x_disp, y_disp, matrix_def = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
+    x_disp, y_disp, matrix_def = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     # Change to array
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
@@ -136,7 +145,10 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)
 
 
-def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1):
+def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                            fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1,
+                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -144,7 +156,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     import sct_utils as sct
     name_warp_syn = 'Warp_total'
     # Registrating images
-    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
+    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
     sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
@@ -193,7 +205,10 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     print'\tFile ' + warp_inverse_out + ' saved.'
 
 
-def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1):
+def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                                   fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1,
+                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -201,7 +216,7 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     import sct_utils as sct
     name_warp_syn = 'Warp_total'
     # Registrating images
-    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files)
+    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
     sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
