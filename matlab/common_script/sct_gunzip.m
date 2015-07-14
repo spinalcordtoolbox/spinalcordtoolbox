@@ -2,7 +2,7 @@ function sct_gunzip(varargin)
 try 
     gunzip(varargin{1:2})
 catch
-    if nargin==2
+    if nargin>1
         copyfile(varargin{1},varargin{2})
     end
 end
