@@ -396,31 +396,43 @@ class PCA:
         plt.show()
 
     # ------------------------------------------------------------------------------------------------------------------
-    def plot_projected_dic(self, nb_mode=None, target_coord=None, to_highlight=None):
+    def plot_projected_dic(self, nb_modes=None, target_coord=None, target_levels=None, to_highlight=None):
         """
         plot the projected dictionary (data set) in a graph mode_x=f(mode_x-1)
 
         if a target is provided, the target slices will be plotted in the same graph
 
-        :param nb_mode: maximum number of modes to display graph of
+        :param nb_modes: maximum number of modes to display graph of
 
         :param target_coord: coordinates of a target image (ie. that wasn't in the PCA data set)
 
         :param to_highlight: indexes of some points to highlight as a tuple (target_slice, [list of data slices])
         """
-        sct.run('mkdir ./mode_images')
-        if nb_mode is None:
-            nb_mode = int(round(len(self.kept_eigenval)/3))
+        cmap = 'gist_ncar'
+        cmin = 0
+        cmax = 9
+        marker_size = 7
+        if target_coord is not None:
+            im_dir = 'mode_images_with_target'
+            if to_highlight is not None:
+                im_dir += '_slice' + str(to_highlight[0])
+        else:
+            im_dir = 'mode_images_without_target'
+        if im_dir not in os.listdir('.'):
+            sct.run('mkdir ./'+im_dir)
+        if nb_modes is None:
+            nb_modes = int(round(len(self.kept_eigenval)/3))
 
-        elif len(self.kept_eigenval) < nb_mode:
+        elif len(self.kept_eigenval) < nb_modes:
             print "Can't plot {} modes, not enough modes kept. " \
-                  "Try to increase k, which is curently {}".format(nb_mode, self.k)
+                  "Try to increase k, which is curently {}".format(nb_modes, self.k)
             exit(2)
         assert self.dataset_coord.shape == (len(self.kept_eigenval), self.J), \
             "The matrix is {}".format(self.dataset_coord.shape)
 
-        for i in range(nb_mode):
-            for j in range(i, nb_mode):
+        first = True
+        for i in range(nb_modes):
+            for j in range(i, nb_modes):
 
                 # Plot the PCA data set slices
                 if j != i:
@@ -432,7 +444,7 @@ class PCA:
                     c_dat = np.asarray([dic_slice.level for dic_slice in self.slices])
                     # graph.plot(i_dat, j_dat, 'o', markersize=7, color='blue', alpha=0.5, label='dictionary')
 
-                    graph.scatter(i_dat, j_dat, c=c_dat, cmap='gist_ncar', s=50, alpha=0.5)  # , alpha=0.5, label='dictionary')
+                    graph.scatter(i_dat, j_dat, c=c_dat, cmap=cmap, vmin=cmin, vmax=cmax, s=marker_size**2, alpha=0.5)  # , alpha=0.5, label='dictionary')
 
                     if to_highlight is not None:
                         '''
@@ -441,31 +453,35 @@ class PCA:
                             graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
                         '''
 
-                        graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]],
-                                   'o', markersize=7, color='black', alpha=0.5, label='chosen dictionary')
+                        graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]], 'o', markersize=marker_size, color='black', alpha=0.6, label='chosen dictionary')
 
                     # Plot the projected image's coord
                     if target_coord is not None:
                         # target coord is a numpy array of either dimension of all the slices or just one slice
-                        if len(target_coord.shape) == 2:
-                            graph.plot(target_coord[0][i], target_coord[    0][j],
-                                       '^', markersize=7, color='black', alpha=0.5, label='target')
-
-                        elif len(target_coord.shape) == 3:
+                        # target_cord.shape[0] == n_slices - target_cord.shape[1] == n PCA kept dimensions
+                        if target_levels is None:
                             for j_slice, slice_coord in enumerate(target_coord):
-                                graph.plot(slice_coord[i], slice_coord[j],
-                                           '^', markersize=7, color='black', alpha=0.5, label='target')
-
-                                if to_highlight is not None and j_slice == to_highlight[0]:
-                                    graph.plot(slice_coord[i], slice_coord[j],
-                                               '^', markersize=7, color='red', alpha=0.5, label='this target')
-
+                                graph.plot(slice_coord[i], slice_coord[j], '^', markersize=marker_size, color='black', alpha=0.5, label='target')
                         else:
-                            sct.printv('Cannot plot projected target.', 1, 'error')
+                            target_levels = np.asarray(target_levels).reshape(len(target_levels), 1)
+                            i_slice_dat = target_coord[0:len(target_coord), i]
+                            j_slice_dat = target_coord[0:len(target_coord), j]
+                            graph.scatter(i_slice_dat, j_slice_dat, marker=u'^', s=marker_size**2, c=target_levels, cmap=cmap, vmin=cmin, vmax=cmax, alpha=0.5)
+
+                        for j_slice, slice_coord in enumerate(target_coord):
+                            if to_highlight is not None and j_slice == to_highlight[0]:
+                                if target_levels is None:
+                                    graph.plot(slice_coord[i], slice_coord[j], '^', markersize=marker_size, color='red', alpha=0.6, label='this target')
+                                else:
+                                    graph.plot(slice_coord[i], slice_coord[j], '^', markersize=marker_size, color='black', alpha=0.6, label='this target')
 
                     plt.title('Dictionary images and target slices in the PCA space. (' + str(len(self.kept_eigenval))
                               + ' modes in total)')
                     plt.xlabel('Mode ' + str(i))
                     plt.ylabel('Mode ' + str(j))
-                    plt.savefig('mode_images/modes_' + str(i) + '_' + str(j) + '.png')
+                    plt.savefig(im_dir+'/modes_' + str(i) + '_' + str(j) + '.png')
+                    if not first:
+                        plt.close()
+                    else:
+                        first = False
         plt.show()
