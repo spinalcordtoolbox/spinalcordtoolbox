@@ -25,7 +25,7 @@ from sct_crop_image import ImageCropper
 
 
 class Transform:
-    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=0, crop=0, interp='spline', debug=0):
+    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=1, crop=0, interp='spline', debug=0):
         self.input_filename = input_filename
         if isinstance(warp, str):
             self.warp_input = list([warp])
@@ -98,6 +98,7 @@ class Transform:
 
         # Extract path, file and extension
         path_src, file_src, ext_src = sct.extract_fname(fname_src)
+        path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
 
         # Get output folder and file name
         if fname_src_reg == '':
@@ -131,6 +132,7 @@ class Transform:
             # NB: cannot use c3d here because c3d cannot convert 4D data.
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
+            sct.run('cp '+fname_dest+' '+path_tmp+'dest'+ext_dest, verbose)
             # go to tmp folder
             os.chdir(path_tmp)
             try:
@@ -145,7 +147,7 @@ class Transform:
                 for it in range(nt):
                     file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
                     file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                    sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+                    sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r dest'+ext_dest+interp, verbose)
 
                 # Merge files back
                 sct.printv('\nMerge file back...', verbose)
