@@ -10,7 +10,7 @@ from sct_register_multimodal import Paramreg
 
 
 
-def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step=0, type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', verbose=0):
+def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step=0, type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, verbose=0):
     if paramreg.type != 'seg':
         print '\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.'
         sys.exit(2)
@@ -24,8 +24,8 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
         # Detect outliers
-        mask_x_a = outliers_detection(x_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-        mask_y_a = outliers_detection(y_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+        mask_x_a = outliers_detection(x_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+        mask_y_a = outliers_detection(y_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
         # Replace value of outliers by linear interpolation using closest non-outlier points
         x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
         y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
@@ -38,7 +38,7 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Translation', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', remove_temp_files=1, verbose=0):
+def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Translation', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
@@ -49,8 +49,8 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
     # Detect outliers
-    mask_x_a = outliers_detection(x_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_y_a = outliers_detection(y_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+    mask_x_a = outliers_detection(x_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_y_a = outliers_detection(y_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
     # Replace value of outliers by linear interpolation using closest non-outlier points
     x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
     y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
@@ -63,7 +63,7 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Rigid', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', remove_temp_files=1, verbose=0):
+def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Rigid', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
@@ -75,8 +75,8 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     y_disp_a = asarray(y_disp)
     theta_rot_a = asarray(theta_rot)
     # Detect outliers
-    mask_x_a = outliers_detection(x_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_y_a = outliers_detection(y_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+    mask_x_a = outliers_detection(x_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_y_a = outliers_detection(y_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
     mask_theta_a = outliers_detection(theta_rot_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
     # Replace value of outliers by linear interpolation using closest non-outlier points
     x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
@@ -92,7 +92,7 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', remove_temp_files=1, verbose=0):
+def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0):
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from numpy.linalg import inv
@@ -108,12 +108,12 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
     matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
     # Detect outliers
-    mask_x_a = outliers_detection(x_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_y_a = outliers_detection(y_disp_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_0_a = outliers_detection(matrix_def_0_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_1_a = outliers_detection(matrix_def_1_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_2_a = outliers_detection(matrix_def_2_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
-    mask_3_a = outliers_detection(matrix_def_3_a, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+    mask_x_a = outliers_detection(x_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_y_a = outliers_detection(y_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_0_a = outliers_detection(matrix_def_0_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_1_a = outliers_detection(matrix_def_1_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_2_a = outliers_detection(matrix_def_2_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
+    mask_3_a = outliers_detection(matrix_def_3_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
     # Replace value of outliers by linear interpolation using closest non-outlier points
     x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
     y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
@@ -136,7 +136,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)
 
 
-def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', remove_temp_files=1):
+def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1):
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -157,10 +157,10 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
     #Outliers deletion
     print'\n\tDeleting outliers...'
-    mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
-    mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
-    mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
-    mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
+    mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
+    mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
+    mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
+    mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
     #Outliers replacement by linear interpolation using closest non-outlier points
     data_warp_x_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_a)
     data_warp_y_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_a)
@@ -193,7 +193,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     print'\tFile ' + warp_inverse_out + ' saved.'
 
 
-def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', remove_temp_files=1):
+def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1):
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -214,10 +214,10 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
     #Outliers deletion
     print'\n\tDeleting outliers...'
-    mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
-    mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
-    mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
-    mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=2, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
+    mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
+    mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
+    mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
+    mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
     #Outliers replacement by linear interpolation using closest non-outlier points
     data_warp_x_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_a)
     data_warp_y_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_a)
