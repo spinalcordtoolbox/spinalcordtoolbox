@@ -176,7 +176,7 @@ class ModelDictionary:
             # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
             inverted_slice_decision = np.absolute(sc.data - im_seg.data).astype(int)
             '''
-            inverted_slice_decision = inverse_gmseg_to_wmseg(im_seg, im_dic)
+            inverted_slice_decision = inverse_gmseg_to_wmseg(im_seg, im_dic, save=False)
             dic_slice.set(wm_seg=inverted_slice_decision.data)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -397,6 +397,7 @@ class Model:
 
         if self.param.verbose == 2:
             self.pca.plot_projected_dic()
+
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_beta(self, coord_target, target_levels=None, dataset_coord=None, dataset_levels=None, tau=0.006):
@@ -632,7 +633,7 @@ class TargetSegmentationPairwise:
         self.save_selected_slices(target_image.file_name[:-3])
 
         if self.model.param.verbose == 2:
-            self.model.pca.plot_projected_dic(nb_mode=3, target_coord=self.coord_projected_target)  # , to_highlight=(6, self.selected_k_slices[6]))
+            self.plot_projected_dic(nb_modes=3, to_highlight='all')  # , to_highlight=(6, self.selected_k_slices[6]))
 
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
         self.model.label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
@@ -770,7 +771,7 @@ class TargetSegmentationPairwise:
             target_slice.set(gm_seg_m=new_gm_seg)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def plot_projected_dic(self, nb_modes=3):
+    def plot_projected_dic(self, nb_modes=3, to_highlight=1):
         """
         plot the pca first modes and the target projection if target is provided.
 
@@ -779,12 +780,15 @@ class TargetSegmentationPairwise:
         :param nb_modes:
         :return:
         """
-        self.model.pca.plot_projected_dic(nb_mode=nb_modes, target_coord=self.coord_projected_target) if self.coord_projected_target is not None \
-            else self.model.pca.plot_projected_dic()
+        self.model.pca.plot_projected_dic(nb_modes=nb_modes, target_coord=self.coord_projected_target, target_levels=[t_slice.level for t_slice in self.target]) if self.coord_projected_target is not None \
+            else self.model.pca.plot_projected_dic(nb_modes=nb_modes)
 
-        self.model.pca.plot_projected_dic(nb_mode=nb_modes, target_coord=self.coord_projected_target, to_highlight=(5, self.selected_k_slices[5])) if self.coord_projected_target is not None \
+        if to_highlight == 'all':
+            for i in range(len(self.target)):
+                self.model.pca.plot_projected_dic(nb_modes=nb_modes, target_coord=self.coord_projected_target, target_levels=[t_slice.level for t_slice in self.target], to_highlight=(i, self.selected_k_slices[i]))
+        else:
+            self.model.pca.plot_projected_dic(nb_modes=nb_modes, target_coord=self.coord_projected_target, target_levels=[t_slice.level for t_slice in self.target], to_highlight=(to_highlight, self.selected_k_slices[to_highlight])) if self.coord_projected_target is not None \
             else self.model.pca.plot_projected_dic()
-
     # ------------------------------------------------------------------------------------------------------------------
     def save_selected_slices(self, target_name):
         slice_levels = np.asarray([(dic_slice.id, self.model.dictionary.level_label[dic_slice.level]) for dic_slice in self.model.dictionary.slices])
