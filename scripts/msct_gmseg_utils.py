@@ -149,7 +149,7 @@ class Slice:
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg'):
+def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True):
     """
     Inverse a gray matter segmentation array image to get a white matter segmentation image and save it
 
@@ -174,7 +174,8 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg'):
 
     res_wm_seg_im = Image(param=np.asarray(res_wm_seg), absolutepath=name_gm_seg + '_inv_to_wm.nii.gz')
     res_wm_seg_im.hdr = original_hdr
-    res_wm_seg_im.save()
+    if save:
+        res_wm_seg_im.save()
 
     return res_wm_seg_im
 
