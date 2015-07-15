@@ -605,7 +605,10 @@ if __name__ == "__main__":
     input_dilate = False
     input_coordinates = None
     input_verbose = '1'
-    input_fname_output = arguments["-o"]
+    if len(arguments["-o"]) == 1:
+        input_fname_output = arguments["-o"][0]
+    else:
+        input_fname_output = arguments["-o"]
     if "-r" in arguments:
         input_fname_ref = arguments["-r"]
     if "-x" in arguments:
