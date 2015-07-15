@@ -165,7 +165,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
     data_warp_x_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
-    data_warp_y_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
+    data_warp_y_inverse = load(name_warp_syn + '_y_inverse.nii.gz').get_data()
     hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
     #Outliers deletion
     print'\n\tDeleting outliers...'
@@ -225,7 +225,7 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
     data_warp_x_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
-    data_warp_y_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
+    data_warp_y_inverse = load(name_warp_syn + '_y_inverse.nii.gz').get_data()
     hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
     #Outliers deletion
     print'\n\tDeleting outliers...'

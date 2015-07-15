@@ -52,7 +52,7 @@ class Param:
         self.outSuffix  = "_reg"
         self.fname_mask = ''
         self.padding = 5
-        self.outlier_factor = 1
+        self.outlier_factor = 2
 
 # Parameters for registration
 class Paramreg(object):
