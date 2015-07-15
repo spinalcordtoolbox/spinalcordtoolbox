@@ -79,7 +79,9 @@ def register_seg(seg_input, seg_dest):
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
 # If the mask is inputed, it must also be 3D and it must be in the same space as the destination image.
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
+def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
+                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, remove_tmp_folder = 1):
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
@@ -90,10 +92,10 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
-    # initiate default parameters of antsRegistration transformation
-    ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
-                                'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',3,32'}
+    # # initiate default parameters of antsRegistration transformation
+    # ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
+    #                             'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+    #                             'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
