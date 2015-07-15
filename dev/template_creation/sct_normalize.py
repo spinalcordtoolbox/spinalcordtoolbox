@@ -207,8 +207,11 @@ def main():
    count_zeros=0
    for i in range(1,len(means_smooth_extended)-1):
        if means_smooth_extended[i]==0:
-           means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
-           count_zeros += 1
+            means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
+            # redefine X_mask_extended
+            X_mask_completed = np.nonzero(means_smooth_extended)
+            X_mask_completed = np.transpose(X_mask_completed)
+            #count_zeros += 1
    if verbose :
        plt.figure()
 

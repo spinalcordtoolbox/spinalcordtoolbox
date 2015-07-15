@@ -14,11 +14,13 @@ from msct_image import Image
 from msct_register_regularized import generate_warping_field, register_images, register_seg
 from scipy.io import loadmat
 from msct_smooth import smoothing_window
-from numpy import asarray
+import numpy as np
 from sct_register_multimodal import Paramreg
 import sct_utils as sct
 from math import asin
 from numpy.linalg import inv
+import time
+from scipy.ndimage.filters import convolve1d
 
 
 # csv_file = '/Users/tamag/data/data_template/subjects_test_T1/subjects/errsm_11/T1/tmp.150519154253/step2TxTy_poly.csv'
@@ -90,26 +92,26 @@ mask = 'mask_cyl_50.nii.gz'
 
 
 
-# im and algo rigid
-im_i = im_T1
-im_d = im_T2
-window_size = 31
-x_disp, y_disp, theta = register_images(im_i, im_d, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='100', shrink='1', smooth='0', gradStep='3'), remove_tmp_folder=1)
-
-x_disp_a = asarray(x_disp)
-y_disp_a = asarray(y_disp)
-theta_a = asarray(theta)
-
-x_disp_smooth = smoothing_window(x_disp_a, window_len=window_size, window='hanning', verbose = 2)
-y_disp_smooth = smoothing_window(y_disp_a, window_len=window_size, window='hanning', verbose = 2)
-theta_smooth = smoothing_window(theta_a, window_len=window_size, window='hanning', verbose = 2)
-theta_smooth_inv = -theta_smooth
-
-generate_warping_field(im_d, x_disp_smooth, y_disp_smooth, theta_rot=theta_smooth, fname='warping_field_seg_rigid.nii.gz')
-generate_warping_field(im_i, -x_disp_smooth, -y_disp_smooth, theta_rot=theta_smooth_inv, fname='warping_field_seg_rigid_inv.nii.gz')
-
-sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_rigid.nii.gz -o output_im_rigid.nii.gz -x nn')
-sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigid_inv.nii.gz -o output_im_rigid_inv.nii.gz -x nn')
+# # im and algo rigid
+# im_i = im_T1
+# im_d = im_T2
+# window_size = 31
+# x_disp, y_disp, theta = register_images(im_i, im_d, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MI', iter='100', shrink='1', smooth='0', gradStep='3'), remove_tmp_folder=1)
+#
+# x_disp_a = asarray(x_disp)
+# y_disp_a = asarray(y_disp)
+# theta_a = asarray(theta)
+#
+# x_disp_smooth = smoothing_window(x_disp_a, window_len=window_size, window='hanning', verbose = 2)
+# y_disp_smooth = smoothing_window(y_disp_a, window_len=window_size, window='hanning', verbose = 2)
+# theta_smooth = smoothing_window(theta_a, window_len=window_size, window='hanning', verbose = 2)
+# theta_smooth_inv = -theta_smooth
+#
+# generate_warping_field(im_d, x_disp_smooth, y_disp_smooth, theta_rot=theta_smooth, fname='warping_field_seg_rigid.nii.gz')
+# generate_warping_field(im_i, -x_disp_smooth, -y_disp_smooth, theta_rot=theta_smooth_inv, fname='warping_field_seg_rigid_inv.nii.gz')
+#
+# sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_rigid.nii.gz -o output_im_rigid.nii.gz -x nn')
+# sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigid_inv.nii.gz -o output_im_rigid_inv.nii.gz -x nn')
 
 
 
@@ -142,3 +144,108 @@ sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_rigi
 #
 # sct.run('sct_apply_transfo -i '+ im_i +' -d ' +im_d+ ' -w warping_field_seg_affine.nii.gz -o output_im_affine.nii.gz -x nn')
 # sct.run('sct_apply_transfo -i '+ im_d +' -d ' +im_i+ ' -w warping_field_seg_affine_inv.nii.gz -o output_im_affine_inv.nii.gz -x nn')
+def main():
+    path = '/Users/tamag/Desktop/sliceregaffine/test2'
+    os.chdir(path)
+
+    im_i = 'highQ_mean.nii'
+    im_d = 'template_roi.nii'
+    #os.chdir('/Users/tamag/data/data_template/subjects_test_T1/subjects/errsm_11/T1')
+    seg_T1 = '/Users/tamag/data/work_on_registration/centerline_T1_mask_cyl_7.nii.gz'
+    seg_T2 = '/Users/tamag/data/work_on_registration/centerline_T2_mask_cyl_7.nii.gz'
+    seg_T1_crop = '/Users/tamag/data/work_on_registration/T1_seg_crop.nii.gz'
+    seg_T2_crop = '/Users/tamag/data/work_on_registration/T2_seg_crop.nii.gz'
+
+    im_T2 = '/Users/tamag/data/work_on_registration/data_T2_RPI_crop.nii.gz'
+    im_T2_crop = 'T2_crop.nii.gz'
+    im_T1 = '/Users/tamag/data/work_on_registration/data_RPI_registered.nii.gz'
+    im_T1_crop = 'T1_crop.nii.gz'
+
+    im_d_3 = '/Users/tamag/data/work_on_registration/pad_carre.nii.gz'
+    im_d_5 = '/Users/tamag/data/work_on_registration/pad_carre_after_rotation.nii.gz'
+    mask = 'mask_cyl_50.nii.gz'
+    num = numerotation(1)
+    register_images(im_i, im_d,paramreg=Paramreg(step='1',type='im',algo='Syn', metric='MeanSquares', iter='150', shrink='1', smooth='0', gradStep='3'), remove_tmp_folder=0)
+    #Apply gaussian kernel to warping field to smooth it along z
+    print '\nGet image dimensions of destination image...'
+    data_warp = nibabel.load('Warp_total.nii.gz').get_data()
+    hdr_warp = nibabel.load('Warp_total.nii.gz').get_header()
+    data_test = data_warp[:,5,1]
+    data_test_result = smoothing_window(data_test, window_len=50, window='hanning', verbose=2)
+
+    data_smooth = np.apply_along_axis(lambda m: smoothing_window(m, window_len=30, window='hanning', verbose=0), axis=-1, arr=data_warp)
+
+    img=nibabel.Nifti1Image(data_smooth, None, header=hdr_warp)
+    nibabel.save(img, 'warp_smooth.nii.gz')
+
+    sct.run('sct_apply_transfo -i '+im_i+' -d '+ im_d+' -w Warp_total.nii.gz -o test.nii.gz')
+    sct.run('sct_apply_transfo -i '+im_i+' -d '+ im_d+' -w warp_smooth.nii.gz -o test1.nii.gz')
+    # func_bsplinesyn(im_T2_crop, im_T1_crop)
+
+## im and algo Bsplinesyn slice-by-slice
+def func_bsplinesyn(im_i, im_d, name_output='im_output.nii.gz'):
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_d)
+
+    #split images into tmp folder
+    print'\nCreate temporary folder...'
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    os.mkdir(path_tmp)
+
+    print'\nCopy images into temporary folder...'
+    sct.run('cp ' + im_i + ' ' + path_tmp)
+    sct.run('cp ' + im_d + ' ' + path_tmp)
+
+    print'\nGo to temp folder'
+    os.chdir(path_tmp)
+
+    print'\nSplit volume...'
+    sct.run('fslsplit ' + im_i + ' im_i_z -z')
+    sct.run('fslsplit ' + im_d + ' im_d_z -z')
+
+    #2d registration by slice
+    list_warp = []  #BSplineSyN[0.2,2,0,3]
+    list_warp_inv = []
+    for i in range(nz):
+        num = numerotation(i)
+        cmd = ('isct_antsRegistration -d 2 -t BSplineSyN[0.2,2,0,3] --metric MI[im_d_z'+ num +'.nii.gz,im_i_z'+ num +'.nii.gz,1,32] --convergence 10 --shrink-factors 1 --smoothing-sigmas 0 --output [transform_'+num+'] --interpolation BSpline[3]')
+        sct.run(cmd)
+        list_warp.append('transform_'+num+'0Warp.nii.gz')
+        list_warp_inv.append('transform_'+num+'0InverseWarp.nii.gz')
+
+    #merge along z of the warping fields
+    sct.run('fslmerge -z Warp_total '+" ".join(list_warp))
+    sct.run('fslmerge -z InverseWarp_total '+" ".join(list_warp_inv))
+
+    #apply the concatenation to the 3d volume
+    sct.run('sct_apply_transfo -i '+ im_i +' -d '+im_d+ ' -w Warp_total.nii.gz -o ' + name_output)
+
+    print'\nCopy image output and warping field to parent folder'
+    sct.run('cp ' + name_output + ' ../')
+    sct.run('cp Warp_total.nii.gz ../')
+    sct.run('cp InverseWarp_total.nii.gz ../')
+
+def numerotation(nb):
+    if nb < 0:
+        print 'ERROR: the number is negative.'
+        sys.exit(status = 2)
+    elif -1 < nb < 10:
+        nb_output = '000'+str(nb)
+    elif 9 < nb < 100:
+        nb_output = '00'+str(nb)
+    elif 99 < nb < 1000:
+        nb_output = '0'+str(nb)
+    elif 999 < nb < 10000:
+        nb_output = str(nb)
+    elif nb > 9999:
+        print 'ERROR: the number is superior to 9999.'
+        sys.exit(status = 2)
+    return nb_output
+
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    # call main function
+    main()
+
