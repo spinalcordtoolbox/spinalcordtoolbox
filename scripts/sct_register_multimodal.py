@@ -43,15 +43,8 @@ import sct_utils as sct
 from msct_parser import Parser
 
 
-
-
-
-
-
-
-
-
 # DEFAULT PARAMETERS
+
 class Param:
     ## The constructor
     def __init__(self):
@@ -162,7 +155,7 @@ def main():
                       example="dest_seg.nii.gz")
     parser.add_option(name="-m",
                       type_value="file",
-                      description="Binary mask to improve accuracy over region of interest.",
+                      description="Spinal cord segmentation used as a binary mask to improve accuracy over region of interest.",
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",

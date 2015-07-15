@@ -107,7 +107,7 @@ def main():
         fname_anat = path_sct_testing_data+'/t2/t2.nii.gz'
         fname_point = path_sct_testing_data+'/t2/t2_centerline_init.nii.gz'
         slice_gap = 5
-        import matplotlib.pyplot as plt
+
     else:
         # Check input param
         try:
@@ -347,6 +347,7 @@ def main():
 
     # display
     if param.debug == 1:
+        import matplotlib.pyplot as plt
         plt.figure()
         plt.plot(z_centerline,x_centerline,'.',z_centerline,x_centerline_fit,'r')
         plt.legend(['Data','Polynomial Fit'])
