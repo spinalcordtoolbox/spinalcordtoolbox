@@ -7,7 +7,7 @@ function [basename, varargout]=sct_tool_remove_extension(fname,keeppath)
     [~, basename, ext2]=fileparts(name);
     
     if isempty(path)
-        path='.';
+        path=pwd;
     end
     
     if keeppath
