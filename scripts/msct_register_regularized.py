@@ -53,7 +53,6 @@ def register_seg(seg_input, seg_dest):
     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0,0,0]])
     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
     for iz in xrange(seg_dest_data.shape[2]):
-        print iz
         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
 
@@ -80,11 +79,12 @@ def register_seg(seg_input, seg_dest):
 # (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
 # If the mask is inputed, it must also be 3D and it must be in the same space as the destination image.
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'), remove_tmp_folder = 1):
+def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
+                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, remove_tmp_folder = 1):
 
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
-    path_m, root_m, ext_m = sct.extract_fname(mask)
 
     # set metricSize
     if paramreg.metric == 'MI':
@@ -92,10 +92,10 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
-    # initiate default parameters of antsRegistration transformation
-    ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
-                                'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',3,32'}
+    # # initiate default parameters of antsRegistration transformation
+    # ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
+    #                             'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+    #                             'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
@@ -145,6 +145,12 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
     [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
+    if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+            list_warp_x = []
+            list_warp_x_inv = []
+            list_warp_y = []
+            list_warp_y_inv = []
+            name_warp_syn = 'Warp_total' #if modified, name should also be modified in msct_register (algo slicereg2d_bsplinesyn and slicereg2d_syn)
     # loop across slices
     for i in range(nz):
         # set masking
@@ -187,6 +193,15 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 y_displacement[i] = array_transfo[5][0] # Ty  in ITK'S and fslview's coordinate systems
                 matrix_def[i] = [[array_transfo[0][0], array_transfo[1][0]], [array_transfo[2][0], array_transfo[3][0]]]  # array_transfo[2][0] refers to lambda * sin(theta) in ITK'S coordinate system (lambda * (minus theta) for fslview)
 
+            if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+                # Split the warping fields into two for displacement along x and y before merge
+                sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
+                sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
+                # List names of warping fields for futur merge
+                list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
+                list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
+                list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
+                list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
         #if an exception occurs with ants, take the last values for the transformation
         except:
                 if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
@@ -197,31 +212,38 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                     x_displacement[i] = x_displacement[i-1]
                     y_displacement[i] = y_displacement[i-1]
                     matrix_def[i] = matrix_def[i-1]
-
-        # # get displacement form this slice and complete x and y displacement lists
-        # with open('transform_'+num+'.csv') as f:
-        #     reader = csv.reader(f)
-        #     count = 0
-        #     for line in reader:
-        #         count += 1
-        #         if count == 2:
-        #             x_displacement[i] = line[0]
-        #             y_displacement[i] = line[1]
-        #             f.close()
-
-        # # get matrix of transfo for a rigid transform   (pb slicereg fait une rotation ie le deplacement n'est pas homogene par slice)
-        # # recuperer le deplacement ne donnerait pas une liste mais un warping field: mieux vaut recup la matrice output
-        # # pb du smoothing du deplacement par slice !!   on peut smoother les param theta tx ty
-        # if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
-        #     f = 'transform_' +num+ '0GenericAffine.mat'
-        #     matfile = loadmat(f, struct_as_record=True)
-        #     array_transfo = matfile['AffineTransform_double_2_2']
-        #     x_displacement[i] = -array_transfo[4][0]  #is it? or is it y?
-        #     y_displacement[i] = array_transfo[5][0]
-        #     theta_rotation[i] = acos(array_transfo[0])
+                if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+                    print'Problem with ants for slice '+str(i)+'. Copy of the last warping field.'
+                    sct.run('cp transform_' + numerotation(i-1) + '0Warp.nii.gz transform_' + num + '0Warp.nii.gz')
+                    sct.run('cp transform_' + numerotation(i-1) + '0InverseWarp.nii.gz transform_' + num + '0InverseWarp.nii.gz')
+                    # Split the warping fields into two for displacement along x and y before merge
+                    sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
+                    sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
+                    # List names of warping fields for futur merge
+                    list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
+                    list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
+                    list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
+                    list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
         #TO DO: different treatment for other algo
 
+    if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
+        print'\nMerge along z of the warping fields...' #need to separate the merge for x and y displacement
+        sct.run('fslmerge -z ' + name_warp_syn + '_x ' + " ".join(list_warp_x))
+        sct.run('fslmerge -z ' + name_warp_syn + '_x_inverse ' + " ".join(list_warp_x_inv))
+        sct.run('fslmerge -z ' + name_warp_syn + '_y ' + " ".join(list_warp_y))
+        sct.run('fslmerge -z ' + name_warp_syn + '_y_inverse ' + " ".join(list_warp_y_inv))
+        print'\nChange resolution of warping fields to match the resolution of the destination image...'
+        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_syn + '_x.nii.gz')
+        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_syn + '_x_inverse.nii.gz')
+        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_syn + '_y.nii.gz')
+        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_syn + '_y_inverse.nii.gz')
+        print'\nMerge translation fields along x and y into one global warping field '
+        sct.run('isct_c3d ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz -omc 2 ' + name_warp_syn + '.nii.gz')
+        sct.run('isct_c3d ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz -omc 2 ' + name_warp_syn + '_inverse.nii.gz')
+        print'\nCopy to parent folder...'
+        sct.run('cp ' + name_warp_syn + '.nii.gz ../')
+        sct.run('cp ' + name_warp_syn + '_inverse.nii.gz ../')
 
     #Delete tmp folder
     os.chdir('../')
@@ -316,7 +338,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
                     data_warp[i, j, k, 0, 0] = x_trans[k]
                     data_warp[i, j, k, 0, 1] = y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
-    # # For rigid transforms
+    # # For rigid transforms (not optimized)
     # if theta_rot != None:
     #     for k in range(nz):
     #         for i in range(nx):
