@@ -61,6 +61,10 @@ class ProcessLabels(object):
             self.fname_output = None
         elif type_process == 'remove':
             self.output_image = self.remove_label()
+        elif type_process == 'remove-symm':
+            print self.fname_output
+            self.fname_output = self.fname_output.split(',')
+            self.output_image = self.remove_label(symmetry=True)
         elif type_process == 'centerline':
             self.extract_centerline()
         elif type_process == 'display-voxel':
@@ -83,10 +87,12 @@ class ProcessLabels(object):
 
         # save the output image as minimized integers
         if self.fname_output is not None:
+            print self.fname_output
             self.output_image.setFileName(self.fname_output)
             if type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
-            else: self.output_image.save()
+            else:
+                self.output_image.save()
 
 
     def cross(self):
@@ -433,24 +439,37 @@ class ProcessLabels(object):
 
         return image_output
 
-    def remove_label(self):
+    def remove_label_coord(self, coord_input, coord_ref, symmetry=False):
+        result_coord_ref = coord_ref
+        result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
+        if symmetry:
+            result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
+
+        return result_coord_input, result_coord_ref
+
+    def remove_label(self, symmetry=False):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
+        The symmetry option enables to remove labels from reference image that are not in input image
         """
-        image_output = Image(self.image_input, self.verbose)
-        coordinates_input = self.image_input.getNonZeroCoordinates()
-        coordinates_ref = self.image_ref.getNonZeroCoordinates()
+        image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
 
-        for coord in coordinates_input:
-            value = self.image_input.data[coord.x, coord.y, coord.z]
-            isInRef = False
-            for coord_ref in coordinates_ref:
-                # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
-                if abs(coord.value - coord_ref.value) < 0.5:
-                    image_output.data[coord.x, coord.y, coord.z] = int(round(coord_ref.value))
-                    isInRef = True
-            if isInRef == False:
-                image_output.data[coord.x, coord.y, coord.z] = 0
+        result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(),
+                                                                       self.image_ref.getNonZeroCoordinates(), symmetry)
+
+        for coord in result_coord_input:
+            image_output.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+
+        if symmetry:
+            image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
+            for coord in result_coord_ref:
+                image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+            image_output_ref.setFileName(self.fname_output[1])
+            image_output_ref.save()
+
+            print self.fname_output
+            self.fname_output = self.fname_output[0]
+            print self.fname_output
 
         return image_output
 
@@ -544,14 +563,14 @@ if __name__ == "__main__":
                       mandatory=True,
                       example="t2_labels.nii.gz")
     parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="output volume.",
+                      type_value=[[','], "file_output"],
+                      description="output volume. For 'remove_symm' option, provide two names (for input and ref files) separated by a comma.",
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\nremove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names.\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
@@ -586,7 +605,10 @@ if __name__ == "__main__":
     input_dilate = False
     input_coordinates = None
     input_verbose = '1'
-    input_fname_output = arguments["-o"]
+    if len(arguments["-o"]) == 1:
+        input_fname_output = arguments["-o"][0]
+    else:
+        input_fname_output = arguments["-o"]
     if "-r" in arguments:
         input_fname_ref = arguments["-r"]
     if "-x" in arguments:
