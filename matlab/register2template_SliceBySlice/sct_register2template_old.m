@@ -72,12 +72,36 @@ template_roi=make_nii(double(template_roi),[template.hdr.dime.pixdim(2:3) src_ni
 save_nii(template_roi,'template_roi.nii')
 file_ref = 'template_roi';
 
+%     % apply sqrt
+%     unix('fslmaths template_roi -sqrt -sqrt template_roi_sqrt');
+%     ref_fname = 'template_roi_sqrt';
+
+files_ref = sct_sliceandrename(file_ref, 'z');
+% splitZ source
+files_src = sct_sliceandrename(file_src, 'z');
 
 %--------------------------------------------------------------------------
 % Estimate transfo between source and GW template
 %--------------------------------------------------------------------------
 
-sct_register_SbS(file_src,file_ref);
+for level = 1:length(levels)
+    % affine
+    cmd = ['isct_antsRegistration --metric MeanSquares[' files_ref{level} ',' files_src{level} ',1,32] --dimensionality 2 -o [reg_,filesrc_reg.nii.gz] --convergence 50 --smoothing-sigmas 0 --shrink-factors 1 --interpolation Linear -r [' files_ref{level} ',' files_src{level} ',0] --transform Affine[5]'];
+    j_disp(log,['>> ',cmd]); [status result] = unix(cmd);
+    
+    % copy and rename matrix
+    mat_folder{level} = ['mat_level' num2str(level)];
+    if ~exist(mat_folder{level},'dir'), mkdir(mat_folder{level}); end
+    unix(['mv reg_0GenericAffine.mat ' mat_folder{level} '/reg_1Affine.mat']);
+    
+    cmd = ['isct_antsRegistration --metric MeanSquares[' files_ref{level} ',filesrc_reg.nii.gz,1,32] --dimensionality 2 -o [reg_,test.nii] --convergence 10 --smoothing-sigmas 0 --shrink-factors 1 --interpolation Linear --transform BsplineSyN[0.2,2,0,3]'];
+    j_disp(log,['>> ',cmd]); [status result] = unix(cmd);
+	unix(['mv reg_0Warp.nii.gz ' mat_folder{level} '/reg_2Warp.nii.gz']);
+    unix(['mv reg_0InverseWarp.nii.gz ' mat_folder{level} '/reg_2InverseWarp.nii.gz']);
+    unix(['isct_ComposeMultiTransform 2 ' mat_folder{level} '/warp_final.nii.gz -R ' files_ref{level} ' ' mat_folder{level} '/reg_2Warp.nii.gz ' mat_folder{level} '/reg_1Affine.mat'])
+    unix(['rm ' files_src{level}]);
+end
+
 
 
 
@@ -86,6 +110,27 @@ sct_register_SbS(file_src,file_ref);
 %--------------------------------------------------------------------------
 
 for i_file_reg = 1:length(file_reg)
+    freg = load_nii(file_reg{i_file_reg});
+    files_reg = sct_sliceandrename(file_reg{i_file_reg}, 'z');
+    pause(0.5)
+    for level = 1:freg.dims(3)
+        if warp_transfo, warp_mat = [mat_folder{level} '/warp_final.nii.gz ']; else warp_mat = ' '; end
+        % split
+        files_tmp = sct_sliceandrename(files_reg{level}, 't');
+        pause(0.5)
+        mergelist='';
+        for iT=1:freg.dims(4)
+            % register reg file
+            cmd = ['isct_antsApplyTransforms -d 2 -i ' files_tmp{iT} ' -o ' sct_tool_remove_extension(files_tmp{iT},1) '_reg.nii.gz -t ' warp_mat ' -r ' files_ref{level} ' -n BSpline[3]'];
+            j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+            mergelist=[mergelist ' ' sct_tool_remove_extension(files_tmp{iT},1) '_reg.nii.gz'];
+        end
+        pause(0.5)
+        cmd = ['fslmerge -t ' sct_tool_remove_extension(files_reg{level},0) '_reg.nii.gz ' mergelist];
+        j_disp(log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
+        unix(['rm ' sct_tool_remove_extension(file_reg{i_file_reg},1) '*t*']);
+        unix(['rm ' files_reg{level}]);
+    end
     
     % merge files
     %reg
