@@ -292,7 +292,7 @@ class SpinalCordStraightener(object):
                         landmark_curved.append(coord)
                     landmark_curved_value += 5
                 else:
-                    if self.all_labels == 1:
+                    if self.all_labels >= 1:
                         landmark_curved.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz], landmark_curved_value], mode='continuous'))
                         landmark_curved_value += 1
             ### <<==============================================================================================================
@@ -344,7 +344,7 @@ class SpinalCordStraightener(object):
                     landmark_straight.append(Coordinate([x0, y0 - gapxy, iz_straight[index], landmark_curved_value+4]))
                     landmark_curved_value += 5
                 else:
-                    if self.all_labels == 1:
+                    if self.all_labels >= 1:
                         landmark_straight.append(Coordinate([x0, y0, iz, landmark_curved_value]))
                         landmark_curved_value += 1
 
@@ -539,23 +539,25 @@ class SpinalCordStraightener(object):
                 landmark_curved_file.write(str(i.x + padding)+","+str(i.y + padding)+","+str(i.z + padding)+"\n")
             landmark_curved_file.close()
 
-            # This stands to avoid overlapping between landmarks
-            sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
-            label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
-                                          fname_output="tmp.landmarks_straight.nii.gz",
-                                          fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
-            label_process.process('remove')
-            label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
-                                          fname_output="tmp.landmarks_curved_rigid.nii.gz",
-                                          fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
-            label_process.process('remove')
+            if (self.use_continuous_labels == 1 and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
+                # Estimate b-spline transformation curve --> straight
+                sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
 
-            # Estimate b-spline transformation curve --> straight
-            sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-
-            if (self.use_continuous_labels==1 and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
+                # This stands to avoid overlapping between landmarks
+                sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
+                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
+                                              fname_output="tmp.landmarks_straight.nii.gz",
+                                              fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
+                label_process.process('remove')
+                label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
+                                              fname_output="tmp.landmarks_curved_rigid.nii.gz",
+                                              fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
+                label_process.process('remove')
+
+                # Estimate b-spline transformation curve --> straight
+                sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
             # remove padding for straight labels
@@ -766,5 +768,8 @@ if __name__ == "__main__":
                 sc_straight.all_labels = int(param_split[1])
             elif param_split[0] == 'use_continuous_labels':
                 sc_straight.use_continuous_labels = int(param_split[1])
+            elif param_split[0] == 'gapz':
+                sc_straight.gapz = int(param_split[1])
 
-    sc_straight.straighten()
+    import cProfile
+    cProfile.run('sc_straight.straighten()')
