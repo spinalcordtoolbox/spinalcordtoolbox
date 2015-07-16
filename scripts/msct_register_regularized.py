@@ -170,7 +170,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--shrink-factors '+paramreg.shrink+' '
                '--smoothing-sigmas '+paramreg.smooth+'mm '
                #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
-               '--output [transform_' + num + '] '    #--> file.mat (contains Tx,Ty, theta)
+               '--output [transform_' + num + ','+root_i+'_z'+ num_2 +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                +masking)
 
@@ -295,7 +295,7 @@ def numerotation(nb):
 #   center_rotation if different from the middle of the image (in fslview coordinate system)
 #   matrix_def for affine transformation
 
-def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation = None, matrix_def=None, fname = 'warping_field.nii.gz'):
+def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, matrix_def=None, fname='warping_field.nii.gz'):
     from nibabel import load
     from math import cos, sin
     from sct_orientation import get_orientation
@@ -377,7 +377,11 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
     if theta_rot == None and matrix_def != None:
         vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
         #matrix_def_a = asarray(matrix_def)
-        matrix_def_a = asarray([[[matrix_def[j][0][0],matrix_def[j][0][1]],[matrix_def[j][1][0],matrix_def[j][1][1]]] for j in range(len(matrix_def))])
+        # matrix_def_a = asarray([[[matrix_def[j][0][0],matrix_def[j][0][1]],[matrix_def[j][1][0],matrix_def[j][1][1]]] for j in range(len(matrix_def))])
+        # for k in range(nz):
+        #     tmp = matrix_def_a[k] + array(((-1,0),(0,-1)))
+        #     result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
+        matrix_def_a = asarray([[[matrix_def[j][0][0], matrix_def[j][0][1]], [matrix_def[j][1][0], matrix_def[j][1][1]]] for j in range(len(matrix_def))])
         for k in range(nz):
             tmp = matrix_def_a[k] + array(((-1,0),(0,-1)))
             result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
