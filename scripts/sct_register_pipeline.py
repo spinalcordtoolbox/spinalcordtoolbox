@@ -219,7 +219,7 @@ class Pipeline(object):
                         if "landmark" in file_name.lower() and check_nii_gz(file_name, self.verbose):
                             name_landmarks_t1 = file_name
                         if 'manual_seg' in file_name.lower() or 'manualseg' in file_name.lower()\
-                                or 'ref' in file_name.lower():
+                                or 'ref' in file_name.lower() and not "csf" in file_name.lower():
                             if check_nii_gz(file_name, self.verbose):
                                 name_t1_ref = file_name
                         elif not self.seg:

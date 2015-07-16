@@ -55,7 +55,7 @@ class Image(object):
             self.absolutepath = absolutepath
             self.path, self.file_name, self.ext = extract_fname(absolutepath)
         else:
-            raise TypeError(' Image constructor takes at least one argument.')
+            raise TypeError('Image constructor takes at least one argument.')
 
         """
         if split:
@@ -86,7 +86,7 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
+        from sct_utils import check_file_exist, printv, extract_fname, get_dimension
         from sct_orientation import get_orientation
 
         check_file_exist(path, verbose=verbose)
@@ -99,6 +99,8 @@ class Image(object):
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
+        nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        self.dim = [nx, ny, nz]
 
     def setFileName(self, filename):
         from sct_utils import extract_fname
