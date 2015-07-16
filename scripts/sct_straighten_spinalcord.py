@@ -352,7 +352,6 @@ class SpinalCordStraightener(object):
             ### TODO: THIS PART IS SLOW AND CAN BE MADE FASTER
             ### >>=====================================================================================================
             worker_arguments = (iz_curved, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv, x_centerline_fit, y_centerline_fit, z_centerline)
-            print 'number of cpu = ' + str(self.cpu_number)
             if self.cpu_number != 0:
                 from multiprocessing import Pool
                 arguments_landmarks = [(iz, worker_arguments) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
@@ -376,7 +375,7 @@ class SpinalCordStraightener(object):
                     print e
                     sys.exit(2)
             else:
-                landmark_curved_temp = [self.worker_landmarks_curved(iz, worker_arguments) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
+                landmark_curved_temp = [self.worker_landmarks_curved((iz, worker_arguments)) for iz in range(min(iz_curved), max(iz_curved) + 1, 1)]
                 landmark_curved_value = 0
                 for iz, l_curved in landmark_curved_temp:
                     for landmark in l_curved:
@@ -434,12 +433,6 @@ class SpinalCordStraightener(object):
                     if self.all_labels >= 1:
                         landmark_straight.append(Coordinate([x0, y0, iz, landmark_curved_value]))
                         landmark_curved_value += 1
-
-            # Writting landmark curve in text file
-            landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
-            for i in landmark_straight:
-                landmark_straight_file.write(str(i.x + padding)+","+str(i.y + padding)+","+str(i.z + padding)+"\n")
-            landmark_straight_file.close()
 
             # Create NIFTI volumes with landmarks
             #==========================================================================================
@@ -620,28 +613,33 @@ class SpinalCordStraightener(object):
                 ax.set_zlabel('z')
                 plt.show()
 
-            # Writting landmark curve in text file
-            landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
-            for i in landmark_curved_rigid:
-                landmark_curved_file.write(str(i.x + padding)+","+str(i.y + padding)+","+str(i.z + padding)+"\n")
-            landmark_curved_file.close()
-
             if (self.use_continuous_labels == 1 and self.algo_landmark_rigid is not None and self.algo_landmark_rigid != "None") or self.use_continuous_labels=='1':
+                landmark_curved_rigid, landmark_straight = ProcessLabels.remove_label_coord(landmark_curved_rigid, landmark_straight, symmetry=True)
+
+                # Writting landmark curve in text file
+                landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
+                for i in landmark_straight:
+                    landmark_straight_file.write(
+                        str(i.x + padding) + "," + str(i.y + padding) + "," + str(i.z + padding) + "\n")
+                landmark_straight_file.close()
+
+                # Writting landmark curve in text file
+                landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
+                for i in landmark_curved_rigid:
+                    landmark_curved_file.write(
+                        str(i.x + padding) + "," + str(i.y + padding) + "," + str(i.z + padding) + "\n")
+                landmark_curved_file.close()
+
                 # Estimate b-spline transformation curve --> straight
                 sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 # This stands to avoid overlapping between landmarks
                 sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
                 label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
-                                              fname_output="tmp.landmarks_straight.nii.gz",
+                                              fname_output=["tmp.landmarks_straight.nii.gz", "tmp.landmarks_curved_rigid.nii.gz"],
                                               fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
-                label_process.process('remove')
-                label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
-                                              fname_output="tmp.landmarks_curved_rigid.nii.gz",
-                                              fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
-                label_process.process('remove')
+                label_process.process('remove-symm')
 
                 # Estimate b-spline transformation curve --> straight
                 sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
