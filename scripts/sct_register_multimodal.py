@@ -43,15 +43,8 @@ import sct_utils as sct
 from msct_parser import Parser
 
 
-
-
-
-
-
-
-
-
 # DEFAULT PARAMETERS
+
 class Param:
     ## The constructor
     def __init__(self):
@@ -59,7 +52,7 @@ class Param:
         self.outSuffix  = "_reg"
         self.fname_mask = ''
         self.padding = 5
-        self.outlier_factor = 1
+        self.outlier_factor = 2
 
 # Parameters for registration
 class Paramreg(object):
@@ -162,7 +155,8 @@ def main():
                       example="dest_seg.nii.gz")
     parser.add_option(name="-m",
                       type_value="file",
-                      description="Binary mask to improve accuracy over region of interest.",
+                      description="Spinal cord segmentation mask created with sct_create_mask to improve accuracy over region of interest. "
+                                  "This mask will be used at all the stages of the registration.",
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",
@@ -378,8 +372,10 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # set masking
     if param.fname_mask:
+        fname_mask = 'mask.nii.gz'
         masking = '-x mask.nii.gz'
     else:
+        fname_mask = ''
         masking = ''
 
     if paramreg.steps[i_step_str].algo == 'slicereg':
@@ -429,7 +425,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicereg2d_translation(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Translation', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep),
-                                        fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
+                                        fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
                                         verbose=param.verbose, ants_registration_params=ants_registration_params)
         cmd = ('')
 
@@ -438,7 +434,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicereg2d_rigid(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Rigid', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep),
-                                  fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
+                                  fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
                                   verbose=param.verbose, ants_registration_params=ants_registration_params)
         cmd = ('')
 
@@ -447,7 +443,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicereg2d_affine(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='Affine', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep),
-                                   fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
+                                   fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
                                    verbose=param.verbose, ants_registration_params=ants_registration_params)
         cmd = ('')
 
@@ -456,7 +452,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicereg2d_syn(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='SyN', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep),
-                                fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
+                                fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
                                 ants_registration_params=ants_registration_params)
         cmd = ('')
 
@@ -465,7 +461,7 @@ def register(src, dest, paramreg, param, i_step_str):
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
         register_slicereg2d_bsplinesyn(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=Paramreg(step=paramreg.steps[i_step_str].step, type=paramreg.steps[i_step_str].type, algo='BSplineSyN', metric=paramreg.steps[i_step_str].metric, iter= paramreg.steps[i_step_str].iter, shrink=paramreg.steps[i_step_str].shrink, smooth=paramreg.steps[i_step_str].smooth, gradStep=paramreg.steps[i_step_str].gradStep),
-                                       fname_mask=param.fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
+                                       fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
                                        ants_registration_params=ants_registration_params)
         cmd = ('')
 
