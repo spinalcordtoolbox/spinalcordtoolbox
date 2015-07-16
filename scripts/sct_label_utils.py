@@ -62,8 +62,6 @@ class ProcessLabels(object):
         elif type_process == 'remove':
             self.output_image = self.remove_label()
         elif type_process == 'remove-symm':
-            print self.fname_output
-            self.fname_output = self.fname_output.split(',')
             self.output_image = self.remove_label(symmetry=True)
         elif type_process == 'centerline':
             self.extract_centerline()
