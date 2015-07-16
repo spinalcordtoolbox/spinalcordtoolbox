@@ -14,7 +14,7 @@ sys.path.append(path_sct + '/scripts')
 from msct_parser import Parser
 import sct_utils as sct
 
-import matplotlib.pyplot as plt
+
 
 
 
@@ -85,6 +85,7 @@ def main(file_to_denoise, param, output_file_name) :
         difference[~mask[:, :, axial_middle].T] = 0
 
     if param.verbose == 2 :
+        import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
         ax[0].imshow(before, cmap='gray', origin='lower')
         ax[0].set_title('before')

@@ -1,4 +1,6 @@
 function sct_gunzip(varargin)
+% sct_gunzip(fname,outputfolder, outputname);
+% sct_gunzip('T1.nii.gz',tmp_folder, 'data.nii');
 try 
     gunzip(varargin{1:2})
 catch

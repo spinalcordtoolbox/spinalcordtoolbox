@@ -15,7 +15,7 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 #import numpy as np
-import matplotlib.pyplot as plt
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -46,6 +46,7 @@ class ErnstAngle:
 
     #draw the graph
     def draw(self,tr_min,tr_max):
+        import matplotlib.pyplot as plt
         from numpy import arange
         step=(tr_max-tr_min)/50
         tr_range=arange(tr_min,tr_max,step)
