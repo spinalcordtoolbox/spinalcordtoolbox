@@ -39,8 +39,11 @@ class ProcessLabels(object):
         if fname_ref is not None:
             self.image_ref = Image(fname_ref, verbose=verbose)
 
-        if len(fname_output) == 1:
-            self.fname_output = fname_output[0]
+        if isinstance(fname_output, list):
+            if len(fname_output) == 1:
+                self.fname_output = fname_output[0]
+            else:
+                self.fname_output = fname_output
         else:
             self.fname_output = fname_output
         self.cross_radius = cross_radius
