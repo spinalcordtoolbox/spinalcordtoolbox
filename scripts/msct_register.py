@@ -103,9 +103,10 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from msct_register_regularized import register_images, generate_warping_field
-    from numpy import asarray
+    from numpy import asarray, array, sum
     from numpy.linalg import inv
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
+    from nibabel import load
 
     # Calculate displacement
     x_disp, y_disp, matrix_def = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
@@ -139,10 +140,16 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     matrix_def_smooth_3 = smoothing_window(matrix_def_3_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
     matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
     matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
+    # Calculate barycenters of intensity
+    data_src = load(src).get_data()
+    bar_intensity_src = (1.0/(sum(data_src))) * sum(array([[data_src[i,j,k] * i, data_src[i,j,k] * j, data_src[i,j,k] * k] for i in range(data_src.shape[0]) for j in range(data_src.shape[1]) for k in range(data_src.shape[2])]), axis=0)
+    data_dest = load(dest).get_data()
+    bar_intensity_dest = (1.0/(sum(data_dest))) * sum(array([[data_dest[i,j,k] * i, data_dest[i,j,k] * j, data_dest[i,j,k] * k] for i in range(data_dest.shape[0]) for j in range(data_dest.shape[1]) for k in range(data_dest.shape[2])]), axis=0)
+
     # Generate warping field
-    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, matrix_def=matrix_def_smooth, fname=warp_forward_out)
+    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, center_rotation=bar_intensity_src, matrix_def=matrix_def_smooth, fname=warp_forward_out)
     # Inverse warping field
-    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)
+    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, center_rotation=bar_intensity_dest, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)  #bar intensity dest?
 
 
 def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
