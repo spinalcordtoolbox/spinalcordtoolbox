@@ -463,7 +463,7 @@ class ProcessLabels(object):
             for coord in result_coord_ref:
                 image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
             image_output_ref.setFileName(self.fname_output[1])
-            image_output_ref.save()
+            image_output_ref.save('minimize_int')
 
             print self.fname_output
             self.fname_output = self.fname_output[0]
