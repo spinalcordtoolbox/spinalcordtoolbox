@@ -98,7 +98,7 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_affine_old(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
                                fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -147,10 +147,70 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     bar_intensity_dest = (1.0/(sum(data_dest))) * sum(array([[data_dest[i,j,k] * i, data_dest[i,j,k] * j, data_dest[i,j,k] * k] for i in range(data_dest.shape[0]) for j in range(data_dest.shape[1]) for k in range(data_dest.shape[2])]), axis=0)
 
     # Generate warping field
-    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, center_rotation=bar_intensity_src, matrix_def=matrix_def_smooth, fname=warp_forward_out)
+    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, center_rotation=None, matrix_def=matrix_def_smooth, fname=warp_forward_out)
     # Inverse warping field
-    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, center_rotation=bar_intensity_dest, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)  #bar intensity dest?
+    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, center_rotation=None, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)  #bar intensity dest?
 
+def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
+                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
+                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    from nibabel import load, Nifti1Image, save
+    from msct_smooth import smoothing_window, outliers_detection, outliers_completion
+    from msct_register_regularized import register_images
+    from numpy import apply_along_axis, zeros
+    import sct_utils as sct
+    name_warp_syn = 'Warp_total'
+
+    # Calculate displacement
+    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+
+    print'\nRegularizing warping fields along z axis...'
+    print'\n\tSplitting warping fields ...'
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
+    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
+    data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
+    data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
+    hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
+    data_warp_x_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
+    data_warp_y_inverse = load(name_warp_syn + '_y_inverse.nii.gz').get_data()
+    hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
+    #Outliers deletion
+    print'\n\tDeleting outliers...'
+    mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
+    mask_y_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y)
+    mask_x_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x_inverse)
+    mask_y_inverse_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_y_inverse)
+    #Outliers replacement by linear interpolation using closest non-outlier points
+    data_warp_x_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_a)
+    data_warp_y_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_a)
+    data_warp_x_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_x_inverse_a)
+    data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
+    #Smoothing of results along z
+    print'\n\tSmoothing results...'
+    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
+    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
+    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
+    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+
+    print'\nSaving regularized warping fields...'
+    #Get image dimensions of destination image
+    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
+    data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
+    data_warp_smooth_inverse = zeros(((((nx, ny, nz, 1, 3)))))
+    data_warp_smooth_inverse[:,:,:,0,0] = data_warp_x_smooth_inverse
+    data_warp_smooth_inverse[:,:,:,0,1] = data_warp_y_smooth_inverse
+    # Force header's parameter to intent so that the file may be recognised as a warping field by ants
+    hdr_warp.set_intent('vector', (), '')
+    hdr_warp_inverse.set_intent('vector', (), '')
+    img = Nifti1Image(data_warp_smooth, None, header=hdr_warp)
+    img_inverse = Nifti1Image(data_warp_smooth_inverse, None, header=hdr_warp_inverse)
+    save(img, filename=warp_forward_out)
+    print'\tFile ' + warp_forward_out + ' saved.'
+    save(img_inverse, filename=warp_inverse_out)
+    print'\tFile ' + warp_inverse_out + ' saved.'
 
 def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
                             fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1,
@@ -270,4 +330,3 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     print'\tFile ' + warp_forward_out + ' saved.'
     save(img_inverse, filename=warp_inverse_out)
     print'\tFile ' + warp_inverse_out + ' saved.'
-
