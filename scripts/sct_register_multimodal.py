@@ -155,8 +155,8 @@ def main():
                       example="dest_seg.nii.gz")
     parser.add_option(name="-m",
                       type_value="file",
-                      description="Spinal cord segmentation mask created with sct_create_mask to improve accuracy over region of interest. "
-                                  "This mask will be used at all the stages of the registration.",
+                      description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
+                                  "This mask will be used on the destination image.",
                       mandatory=False,
                       example="mask.nii.gz")
     parser.add_option(name="-o",

@@ -68,6 +68,11 @@ class Coordinate(Point):
         except ValueError:
             raise TypeError("All coordinates must be int and the value can be a float or a int. x="+str(self.x)+", y="+str(self.y)+", z="+str(self.z)+", value="+str(self.value))
 
+    def __repr__(self):
+        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
+
+    def __str__(self):
+        return "("+str(self.x)+", "+str(self.y)+", "+str(self.z)+", "+str(self.value)+")"
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
