@@ -20,9 +20,7 @@ from msct_parser import Parser
 import msct_gmseg_utils as sct_gm
 
 
-# TODO: check that images are 2D AND adapt for 3D
-# TODO: add a flag -o = outputs a .txt file
-# TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ?
+# TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -38,6 +36,7 @@ class Param:
 # THINNING -------------------------------------------------------------------------------------------------------------
 class Thinning:
     def __init__(self, im):
+        sct.printv('Thinning ... ', param.verbose, 'normal')
         self.image = im
         self.image.data = bin_data(self.image.data)
         self.dim_im = len(self.image.data.shape)
@@ -64,13 +63,12 @@ class Thinning:
         :param image:
         :return:
         """
-        now = time.time()
-        img = image
+        # now = time.time()
         x_1, y_1, x1, y1 = x-1, y-1, x+1, y+1
-        neighbours = [img[x_1][y], img[x_1][y1], img[x][y1], img[x1][y1],     # P2,P3,P4,P5
-                img[x1][y], img[x1][y_1], img[x][y_1], img[x_1][y_1]]    # P6,P7,P8,P9
-        t = time.time() - now
-        print ''
+        neighbours = [image[x_1][y], image[x_1][y1], image[x][y1], image[x1][y1],     # P2,P3,P4,P5
+                      image[x1][y], image[x1][y_1], image[x][y_1], image[x_1][y_1]]    # P6,P7,P8,P9
+        # t = time.time() - now
+        # print 't neighbours: ', t
         return neighbours
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -81,8 +79,12 @@ class Thinning:
         :param neighbours:
         :return:
         """
+        # now = time.time()
         n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
-        return sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
+        s = np.sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
+        # t = time.time() - now
+        # print 't transitions sum: ', t
+        return s
 
     # ------------------------------------------------------------------------------------------------------------------
     def zhang_suen(self, image):
@@ -92,37 +94,47 @@ class Thinning:
         :param image:
         :return:
         """
-        sct.printv('Thinning ... ', param.verbose, 'normal')
+        now = time.time()
         image_thinned = image.copy()  # deepcopy to protect the original image
         changing1 = changing2 = 1  # the points to be removed (set as 0)
         while changing1 or changing2:  # iterates until no further changes occur in the image
             # Step 1
             changing1 = []
-            rows, columns = image_thinned.shape  # x for rows, y for columns
-            for x in range(1, rows - 1):         # No. of  rows
-                for y in range(1, columns - 1):  # No. of columns
+            max = len(image_thinned) - 1
+            pass_list = [1, max]
+            # rows, columns = image_thinned.shape  # x for rows, y for columns
+
+            # for x in range(1, rows - 1):         # No. of  rows
+            # for y in range(1, columns - 1):  # No. of columns
+            for x, y in non_zero_coord(image_thinned):
+                if x not in pass_list and y not in pass_list:
+                    # if image_thinned[x][y] == 1:  # Condition 0: Point P1 in the object regions
                     P2, P3, P4, P5, P6, P7, P8, P9 = n = self.get_neighbours(x, y, image_thinned)
-                    if (image_thinned[x][y] == 1 and    # Condition 0: Point P1 in the object regions
-                        2 <= sum(n) <= 6 and    # Condition 1: 2<= N(P1) <= 6
-                        self.transitions(n) == 1 and    # Condition 2: S(P1)=1
+                    if (2 <= sum(n) <= 6 and    # Condition 1: 2<= N(P1) <= 6
                         P2 * P4 * P6 == 0 and    # Condition 3
-                        P4 * P6 * P8 == 0):         # Condition 4
+                        P4 * P6 * P8 == 0 and   # Condition 4
+                        self.transitions(n) == 1):    # Condition 2: S(P1)=1
                         changing1.append((x, y))
             for x, y in changing1:
                 image_thinned[x][y] = 0
             # Step 2
             changing2 = []
-            for x in range(1, rows - 1):
-                for y in range(1, columns - 1):
+
+            # for x in range(1, rows - 1):
+            # for y in range(1, columns - 1):
+            for x, y in non_zero_coord(image_thinned):
+                if x not in pass_list and y not in pass_list:
+                    # if image_thinned[x][y] == 1:  # Condition 0
                     P2, P3, P4, P5, P6, P7, P8, P9 = n = self.get_neighbours(x, y, image_thinned)
-                    if (image_thinned[x][y] == 1 and        # Condition 0
-                        2 <= sum(n) <= 6 and       # Condition 1
-                        self.transitions(n) == 1 and      # Condition 2
+                    if (2 <= sum(n) <= 6 and       # Condition 1
                         P2 * P4 * P8 == 0 and       # Condition 3
-                        P2 * P6 * P8 == 0):            # Condition 4
+                        P2 * P6 * P8 == 0 and  # Condition 4
+                        self.transitions(n) == 1):    # Condition 2
                         changing2.append((x, y))
             for x, y in changing2:
                 image_thinned[x][y] = 0
+        t = time.time() - now
+        print 't thinning: ', t
         return image_thinned
 
 
@@ -134,8 +146,10 @@ class HausdorffDistance:
         the hausdorff distance between two sets is the maximum of the distances from a point in any of the sets to the nearest point in the other set
         :return:
         """
-        self.data1 = data1
-        self.data2 = data2
+        now = time.time()
+        sct.printv('Computing 2D Hausdorff\'s distance ... ', param.verbose, 'normal')
+        self.data1 = bin_data(data1)
+        self.data2 = bin_data(data2)
 
         self.min_distances_1 = self.relative_hausdorff_dist(self.data1, self.data2)
         self.min_distances_2 = self.relative_hausdorff_dist(self.data2, self.data1)
@@ -146,21 +160,25 @@ class HausdorffDistance:
 
         # Hausdorff's distance in pixel
         self.H = max(self.h1, self.h2)
+        t = time.time() - now
+        print 'Hausdorff dist time :', t
 
     # ------------------------------------------------------------------------------------------------------------------
     def relative_hausdorff_dist(self, dat1, dat2):
         h = np.zeros(dat1.shape)
-        for x1 in range(dat1.shape[0]):
-            for y1 in range(dat1.shape[1]):
-                if dat1[x1, y1] == 1:
-                    d_p1_dat2 = []
-                    p1 = np.asarray([x1, y1])
-                    for x2 in range(dat2.shape[0]):
-                        for y2 in range(dat2.shape[1]):
-                            if dat2[x2, y2] == 1:
-                                p2 = np.asarray([x2, y2])
-                                d_p1_dat2.append(np.linalg.norm(p1-p2))  # Euclidean distance between p1 and p2
-                    h[x1, y1] = min(d_p1_dat2)
+        for x1, y1 in non_zero_coord(dat1):
+            # for x1 in range(dat1.shape[0]):
+            # for y1 in range(dat1.shape[1]):
+            # if dat1[x1, y1] == 1:
+            d_p1_dat2 = []
+            p1 = np.asarray([x1, y1])
+            for x2, y2 in non_zero_coord(dat2):
+                # for x2 in range(dat2.shape[0]):
+                # for y2 in range(dat2.shape[1]):
+                # if dat2[x2, y2] == 1:
+                p2 = np.asarray([x2, y2])
+                d_p1_dat2.append(np.linalg.norm(p1-p2))  # Euclidean distance between p1 and p2
+            h[x1, y1] = min(d_p1_dat2)
         return h
 
 
@@ -206,15 +224,30 @@ class ComputeDistances:
             else:
                 self.compute_dist_2im_3d()
 
+        if self.dim_im == 2 and self.distances is not None:
+            self.dist1_distribution = self.distances.min_distances_1[np.nonzero(self.distances.min_distances_1)]
+            if self.im2 is not None:
+                self.dist2_distribution = self.distances.min_distances_2[np.nonzero(self.distances.min_distances_2)]
+        elif self.dim_im == 3:
+            self.dist1_distribution = []
+            self.dist2_distribution = []
+            for d in self.distances:
+                self.dist1_distribution.append(d.min_distances_1[np.nonzero(d.min_distances_1)])
+                if self.im2 is not None:
+                    self.dist2_distribution.append(d.min_distances_2[np.nonzero(d.min_distances_2)])
+
         sct.printv('-----------------------------------------------------------------------------\n' +
                    self.res, param.verbose, 'normal')
+
+        if param.verbose == 2:
+            self.show_results()
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_2d(self):
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = sct.get_dimension(self.im1.absolutepath)
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = sct.get_dimension(self.im2.absolutepath)
         assert px1 == px2 and py1 == py2 and px1 == py1
-        self.dim_pix = px1
+        self.dim_pix = py1
 
         if param.thinning:
             dat1 = self.thinning1.thinned_image.data
@@ -231,7 +264,7 @@ class ComputeDistances:
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_1im_3d(self):
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = sct.get_dimension(self.im1.absolutepath)
-        self.dim_pix = px1
+        self.dim_pix = py1
 
         if param.thinning:
             dat1 = self.thinning1.thinned_image.data
@@ -244,8 +277,8 @@ class ComputeDistances:
 
         self.res = 'Hausdorff\'s distance  -  First relative Hausdorff\'s distance median - Second relative Hausdorff\'s distance median(all in mm)\n'
         for i, d in enumerate(self.distances):
-            med1 = np.median(d.min_distances_1[np.nonzero(d.min_distances_1)])
-            med2 = np.median(d.min_distances_2[np.nonzero(d.min_distances_2)])
+            med1 = np.median(self.dist1_distribution[i])
+            med2 = np.median(self.dist2_distribution[i])
             self.res += 'Slice ' + str(i) + ' - slice ' + str(i+1) + ': ' + str(d.H*self.dim_pix) + '  -  ' + str(med1*self.dim_pix) + '  -  ' + str(med2*self.dim_pix) + ' \n'
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -254,7 +287,7 @@ class ComputeDistances:
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = sct.get_dimension(self.im2.absolutepath)
         assert pz1 == pz2 and py1 == py2 and pz1 == py1
         assert nx1 == nx2
-        self.dim_pix = px1
+        self.dim_pix = py1
 
         if param.thinning:
             dat1 = self.thinning1.thinned_image.data
@@ -266,17 +299,68 @@ class ComputeDistances:
         self.distances = []
         for slice1, slice2 in zip(dat1, dat2):
             self.distances.append(HausdorffDistance(slice1, slice2))
-            
+
         self.res = 'Hausdorff\'s distance  -  First relative Hausdorff\'s distance median - Second relative Hausdorff\'s distance median(all in mm)\n'
         for i, d in enumerate(self.distances):
             med1 = np.median(d.min_distances_1[np.nonzero(d.min_distances_1)])
             med2 = np.median(d.min_distances_2[np.nonzero(d.min_distances_2)])
             self.res += 'Slice ' + str(i) + ': ' + str(d.H*self.dim_pix) + '  -  ' + str(med1*self.dim_pix) + '  -  ' + str(med2*self.dim_pix) + ' \n'
+            print 'H: ', d.H
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def show_results(self):
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        plt.hold(True)
+        sns.set(style="whitegrid", palette="pastel", color_codes=True)
+
+        data_dist = {"distances": [], "image": [], "slice": []}
+
+        if self.dim_im == 2:
+            data_dist["distances"].append([dist*self.dim_pix for dist in self.dist1_distribution])
+            data_dist["image"].append(len(self.dist1_distribution)*[1])
+            data_dist["slice"].append(len(self.dist1_distribution)*[0])
+
+            data_dist["distances"].append([dist*self.dim_pix for dist in self.dist2_distribution])
+            data_dist["image"].append(len(self.dist2_distribution)*[2])
+            data_dist["slice"].append(len(self.dist2_distribution)*[0])
+
+        if self.dim_im == 3:
+            pass
+            for i in range(len(self.distances)):
+                data_dist["distances"].append([dist*self.dim_pix for dist in self.dist1_distribution[i]])
+                data_dist["image"].append(len(self.dist1_distribution[i])*[1])
+                data_dist["slice"].append(len(self.dist1_distribution[i])*[i])
+
+                data_dist["distances"].append([dist*self.dim_pix for dist in self.dist2_distribution[i]])
+                data_dist["image"].append(len(self.dist2_distribution[i])*[2])
+                data_dist["slice"].append(len(self.dist2_distribution[i])*[i])
+
+        for k in data_dist.keys():  # flatten the lists in data_dist
+            data_dist[k] = [item for sublist in data_dist[k] for item in sublist]
+
+        data_dist = pd.DataFrame(data_dist)
+        sns.violinplot(x="slice", y="distances", hue="image", data=data_dist, split=True, inner="quart")
+        plt.savefig('test_violin_plot.png')
+        plt.show()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 def bin_data(data):
     return np.asarray((data > 0).astype(int))
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+def non_zero_coord(data):
+    dim = len(data.shape)
+    if dim == 3:
+        X, Y, Z = (data > 0).nonzero()
+        list_coordinates = [(X[i], Y[i], Z[i]) for i in range(0, len(X))]
+    elif dim == 2:
+        X, Y = (data > 0).nonzero()
+        list_coordinates = [(X[i], Y[i]) for i in range(0, len(X))]
+    return list_coordinates
 
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
@@ -328,7 +412,7 @@ if __name__ == "__main__":
         input_fname = arguments["-i"]
         input_second_fname = ''
         output_fname = 'hausdorff_distance.txt'
-        resample_to = 0.3
+        resample_to = 0.1
 
         if "-r" in arguments:
             input_second_fname = arguments["-r"]
@@ -350,7 +434,7 @@ if __name__ == "__main__":
             im2_name = None
 
         os.chdir(tmp_dir)
-
+        now = time.time()
         input_im1 = Image(sct_gm.resample_image(im1_name, binary=True, npx=resample_to, npy=resample_to))
         if im2_name is not None:
             input_im2 = Image(sct_gm.resample_image(im2_name, binary=True, npx=resample_to, npy=resample_to))
@@ -365,6 +449,10 @@ if __name__ == "__main__":
         res_fic.close()
 
         #TODO change back the orientatin of the thinned image
-        sct.run('cp ' + computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext + ' ../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
+        if param.thinning:
+            sct.run('cp ' + computation.thinning1.thinned_image.file_name + computation.thinning1.thinned_image.ext + ' ../' + sct.extract_fname(input_fname)[1] + '_thinned' + sct.extract_fname(input_fname)[2])
+            if im2_name is not None:
+                sct.run('cp ' + computation.thinning2.thinned_image.file_name + computation.thinning2.thinned_image.ext + ' ../' + sct.extract_fname(input_second_fname)[1] + '_thinned' + sct.extract_fname(input_second_fname)[2])
 
         os.chdir('..')
+        print 'Total time: ', time.time() - now
