@@ -427,6 +427,8 @@ class Pipeline(object):
                         sc_straight.all_labels = int(dict_params_straightening["all_labels"])
                     if "use_continuous_labels" in dict_params_straightening:
                         sc_straight.use_continuous_labels = int(dict_params_straightening["use_continuous_labels"])
+                    if "cpu-nb" in dict_params_straightening:
+                        sc_straight.cpu_number = int(dict_params_straightening["cpu-nb"])
 
                 sct.printv(cmd_straightening, self.verbose)
                 sc_straight.remove_temp_files = 0

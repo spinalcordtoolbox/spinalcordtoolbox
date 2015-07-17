@@ -17,7 +17,7 @@ from msct_parser import Parser
 from msct_image import Image
 
 
-from matplotlib.widgets import Slider, Button, RadioButtons
+# from matplotlib.widgets import Slider, Button, RadioButtons
 
 
 class TrioPlot:

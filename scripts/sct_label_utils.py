@@ -39,7 +39,13 @@ class ProcessLabels(object):
         if fname_ref is not None:
             self.image_ref = Image(fname_ref, verbose=verbose)
 
-        self.fname_output = fname_output
+        if isinstance(fname_output, list):
+            if len(fname_output) == 1:
+                self.fname_output = fname_output[0]
+            else:
+                self.fname_output = fname_output
+        else:
+            self.fname_output = fname_output
         self.cross_radius = cross_radius
         self.dilate = dilate
         self.coordinates = coordinates
@@ -62,8 +68,6 @@ class ProcessLabels(object):
         elif type_process == 'remove':
             self.output_image = self.remove_label()
         elif type_process == 'remove-symm':
-            print self.fname_output
-            self.fname_output = self.fname_output.split(',')
             self.output_image = self.remove_label(symmetry=True)
         elif type_process == 'centerline':
             self.extract_centerline()
@@ -87,7 +91,6 @@ class ProcessLabels(object):
 
         # save the output image as minimized integers
         if self.fname_output is not None:
-            print self.fname_output
             self.output_image.setFileName(self.fname_output)
             if type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
@@ -439,7 +442,8 @@ class ProcessLabels(object):
 
         return image_output
 
-    def remove_label_coord(self, coord_input, coord_ref, symmetry=False):
+    @staticmethod
+    def remove_label_coord(coord_input, coord_ref, symmetry=False):
         result_coord_ref = coord_ref
         result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
         if symmetry:
@@ -465,11 +469,9 @@ class ProcessLabels(object):
             for coord in result_coord_ref:
                 image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
             image_output_ref.setFileName(self.fname_output[1])
-            image_output_ref.save()
+            image_output_ref.save('minimize_int')
 
-            print self.fname_output
             self.fname_output = self.fname_output[0]
-            print self.fname_output
 
         return image_output
 
@@ -605,10 +607,7 @@ if __name__ == "__main__":
     input_dilate = False
     input_coordinates = None
     input_verbose = '1'
-    if len(arguments["-o"]) == 1:
-        input_fname_output = arguments["-o"][0]
-    else:
-        input_fname_output = arguments["-o"]
+    input_fname_output = arguments["-o"]
     if "-r" in arguments:
         input_fname_ref = arguments["-r"]
     if "-x" in arguments:
