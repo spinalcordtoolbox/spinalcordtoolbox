@@ -170,7 +170,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                '--shrink-factors '+paramreg.shrink+' '
                '--smoothing-sigmas '+paramreg.smooth+'mm '
                #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
-               '--output [transform_' + num + '] '    #--> file.mat (contains Tx,Ty, theta)
+               '--output [transform_' + num + ','+root_i+'_z'+ num_2 +'.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                +masking)
 

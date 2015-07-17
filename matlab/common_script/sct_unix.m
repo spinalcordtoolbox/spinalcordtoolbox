@@ -1,4 +1,4 @@
 function sct_unix(cmd)
-disp(['>> ' cmd]);
+disp(['<strong> >> ' cmd '</strong>']);
 status=unix(cmd);
-if status, disp('ERROR!!!!!!!!!!'); end
+if status, disp('ERROR!!!!!!!!!!'); pause; end
