@@ -306,7 +306,7 @@ for indice_index = 1:length(param.index)
         if strcmp(todo,'estimate') && strcmp(program,'ANTS')
             j_disp(fname_log,['Process with ANTS'])
             mat_tmp=[folder_mat,'mat.T',num2str(iT),'_tmp']; 
-            if ~exist([folder_mat 'nifti_reg'],'dir'), mkdir('nifti_reg'); end
+            if ~exist([folder_mat 'nifti_reg'],'dir'), mkdir([folder_mat 'nifti_reg']); end
             out= [folder_mat 'nifti_reg' filesep num2str(iT) '.nii'];
             cmd = ['isct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
             j_disp(fname_log,['>> ',cmd]);

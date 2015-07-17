@@ -31,11 +31,13 @@ for iZ=unique(Z_index)
 %     v=minL1Potts(X(Z_index==iZ), 10, 'samples',T(Z_index==iZ));
 %[ind_ab TZ(find(diff(u))) TZ(find(diff(v)))];
 end
+drawnow;
 
 %% Get abrupt motion volume #
 ind_ab = inputdlg('Enter space-separated numbers:',...
              'Volume# before abrupt motion (starting at 1)',[1 150]);
 if isempty(ind_ab), ind_ab=[]; else ind_ab = str2num(ind_ab{:}); end
+j_disp(log_spline,['Abrupt motion on Volume #: ' num2str(ind_ab)])
 ind_ab=[0 ind_ab max(T)];
 
 
@@ -85,13 +87,14 @@ for iZ=unique(Z_index)
         disp(['Generate motion splines...'])
         Tpiece=ind_ab(iab-1)+1:ind_ab(iab);
         
-        index=Ttmp>ind_ab(iab-1) &Ttmp<=ind_ab(iab);% Piece index
+        index=Ttmp>ind_ab(iab-1) & Ttmp<=ind_ab(iab);% Piece index
         if length(find(index))>1
-        Xfitresult=spline(Ttmp(index),Xtmp(index),smoothness); Yfitresult=spline(Ttmp(index),Ytmp(index),smoothness);
-        Xout(iZ,Tpiece) = feval(Xfitresult,Tpiece); Yout(iZ,Tpiece)=feval(Yfitresult,Tpiece);
+            Xfitresult=spline(Ttmp(index),Xtmp(index),smoothness); Yfitresult=spline(Ttmp(index),Ytmp(index),smoothness);
+            Xout(iZ,Tpiece) = feval(Xfitresult,Tpiece); Yout(iZ,Tpiece)=feval(Yfitresult,Tpiece);
         else
-            Xout(iZ,Tpiece)=(Xtmp(find(index)+1)-Xtmp(index))/(max(Tpiece)-min(Tpiece))*(Tpiece-Tpiece(1))+Xtmp(index);
-            Yout(iZ,Tpiece)=(Ytmp(find(index)+1)-Ytmp(index))/(max(Tpiece)-min(Tpiece))*(Tpiece-Tpiece(1))+Ytmp(index);
+            [~,closestT_l]=min(abs(Ttmp-mean([ind_ab(iab), ind_ab(iab-1)])));
+            Xout(iZ,Tpiece)=Xtmp(closestT_l);
+            Yout(iZ,Tpiece)=Ytmp(closestT_l);
         end
     end
     % plot splines
@@ -102,6 +105,7 @@ for iZ=unique(Z_index)
     subplot(2,1,2); plot(T(Z_index==iZ),Y(Z_index==iZ),'+','Color',color(iZ,:)); ylim([min(Y)-0.5 max(Y)+0.5]); hold on
     subplot(2,1,2); plot(Ttotal,Yout(iZ,:),'-','Color',color(iZ,:));  ylim([min(Y)-0.5 max(Y)+0.5]); legend('raw moco', 'smooth moco', 'Location', 'NorthEast' ); grid on; ylabel( 'Y Displacement (mm)' ); xlabel('volume #');
 end
+drawnow;
 
 
 function fitresult = spline(T,M_motion_t,smoothness)
