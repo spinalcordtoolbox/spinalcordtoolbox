@@ -297,7 +297,7 @@ for indice_index = 1:length(param.index)
         fname_data_splitT_splitZ = [fname_data_splitT_num{iT},'_splitZ'];
         cmd = [fsloutput,'fslsplit ',fname_data_splitT_num{iT},' ',fname_data_splitT_splitZ,' -z'];
         j_disp(fname_log,['>> ',cmd]);
-        [status result] = unix(cmd);
+        [status, result] = unix(cmd);
         if status, error(result); end
         
         
@@ -306,10 +306,11 @@ for indice_index = 1:length(param.index)
         if strcmp(todo,'estimate') && strcmp(program,'ANTS')
             j_disp(fname_log,['Process with ANTS'])
             mat_tmp=[folder_mat,'mat.T',num2str(iT),'_tmp']; 
-            out= [folder_mat 'unused.nii'];
+            if ~exist([folder_mat 'nifti_reg'],'dir'), mkdir('nifti_reg'); end
+            out= [folder_mat 'nifti_reg' filesep num2str(iT) '.nii'];
             cmd = ['isct_antsSliceRegularizedRegistration -p 2 --output [' mat_tmp ', ' out '] --transform Translation[0.1] --metric MeanSquares[ ' fname_target '.nii* , ' fname_data_splitT_num{iT} '.nii*  , 1 , 16 , Regular , 0.2 ] --iterations 20 -f 1 -s 2'];
             j_disp(fname_log,['>> ',cmd]);
-            [status result] = unix(cmd);
+            [status, result] = unix(cmd); if status, error(result); end
             unix(['rm ' out ' ' mat_tmp 'W* ' mat_tmp 'I*'])
             mat_tmp=[mat_tmp 'TxTy_poly.csv'];
         end
