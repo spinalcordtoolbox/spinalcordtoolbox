@@ -177,7 +177,7 @@ class SpinalCordStraightener(object):
         self.bspline_order = '2'
         self.algo_landmark_rigid = 'translation-xy'
         self.all_labels = 1
-        self.use_continuous_labels = 1
+        self.use_continuous_labels = 0
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
