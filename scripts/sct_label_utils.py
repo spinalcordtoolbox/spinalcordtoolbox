@@ -444,10 +444,23 @@ class ProcessLabels(object):
 
     @staticmethod
     def remove_label_coord(coord_input, coord_ref, symmetry=False):
-        result_coord_ref = coord_ref
-        result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
-        if symmetry:
-            result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
+        """
+        coord_input and coord_ref should be sets of CoordinateValue in order to improve speed of intersection
+        :param coord_input: set of CoordinateValue
+        :param coord_ref: set of CoordinateValue
+        :param symmetry: boolean,
+        :return: intersection of CoordinateValue: list
+        """
+        from msct_types import CoordinateValue
+        if isinstance(coord_input[0], CoordinateValue) and isinstance(coord_ref[0], CoordinateValue) and symmetry:
+            coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
+            result_coord_input = [coord for coord in coord_input if coord in coord_intersection]
+            result_coord_ref = [coord for coord in coord_ref if coord in coord_intersection]
+        else:
+            result_coord_ref = coord_ref
+            result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
+            if symmetry:
+                result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
 
         return result_coord_input, result_coord_ref
 
@@ -458,8 +471,8 @@ class ProcessLabels(object):
         """
         image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
 
-        result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(),
-                                                                       self.image_ref.getNonZeroCoordinates(), symmetry)
+        result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
+                                                                       self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
 
         for coord in result_coord_input:
             image_output.data[coord.x, coord.y, coord.z] = int(round(coord.value))
