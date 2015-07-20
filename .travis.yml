@@ -1,7 +1,6 @@
 language: python
 python:
   - 2.7
-sudo: false
 
 install:
 
@@ -23,8 +22,8 @@ install:
   - source /etc/fsl/fsl.sh
 
 # The next couple lines fix a crash with multiprocessing on Travis
-#  - sudo rm -rf /dev/shm
-#  - sudo ln -s /run/shm /dev/shm
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
