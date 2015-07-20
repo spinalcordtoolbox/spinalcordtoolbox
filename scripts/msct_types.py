@@ -85,3 +85,21 @@ class Coordinate(Point):
 
     def hasEqualValue(self, other):
         return self.value == other.value
+
+
+class CoordinateValue(Coordinate):
+    def __init__(self, coord=None, mode='index'):
+        super(CoordinateValue, self).__init__(coord, mode)
+
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return float(self.value) == float(other.value)
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.value)
