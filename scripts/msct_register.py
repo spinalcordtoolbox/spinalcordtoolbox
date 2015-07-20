@@ -188,10 +188,10 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
     #Smoothing of results along z
     print'\n\tSmoothing results...'
-    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
-    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
-    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
-    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_no_outliers)
+    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_inverse_no_outliers)
+    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_no_outliers)
+    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_inverse_no_outliers)
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
@@ -213,7 +213,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     print'\tFile ' + warp_inverse_out + ' saved.'
 
 def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
-                            fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1,
+                            fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from nibabel import load, Nifti1Image, save
@@ -247,10 +247,10 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
     #Smoothing of results along z
     print'\n\tSmoothing results...'
-    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
-    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
-    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
-    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_no_outliers)
+    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_inverse_no_outliers)
+    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_no_outliers)
+    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_inverse_no_outliers)
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
@@ -273,7 +273,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
 
 
 def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
-                                   fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1,
+                                   fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
     from nibabel import load, Nifti1Image, save
@@ -307,10 +307,10 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     data_warp_y_inverse_no_outliers = apply_along_axis(lambda m: outliers_completion(m, verbose=0), axis=-1, arr=mask_y_inverse_a)
     #Smoothing of results along z
     print'\n\tSmoothing results...'
-    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_no_outliers)
-    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_x_inverse_no_outliers)
-    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_no_outliers)
-    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=0), axis=-1, arr=data_warp_y_inverse_no_outliers)
+    data_warp_x_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_no_outliers)
+    data_warp_x_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_x_inverse_no_outliers)
+    data_warp_y_smooth = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_no_outliers)
+    data_warp_y_smooth_inverse = apply_along_axis(lambda m: smoothing_window(m, window_len=int(window_length), window='hanning', verbose=verbose), axis=-1, arr=data_warp_y_inverse_no_outliers)
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
