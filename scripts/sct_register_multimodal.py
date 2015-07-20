@@ -316,9 +316,12 @@ def main():
         warp_forward.append(warp_forward_out)
         warp_inverse.append(warp_inverse_out)
 
+    # Put warp_forward_0 at the end of the list
+    warp_forward_0 = warp_forward.pop(0)
+    warp_forward.append(warp_forward_0)
+
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', verbose)
-    warp_forward.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_forward)+' -d dest.nii -o warp_src2dest.nii.gz', verbose)
     warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+' -d dest.nii -o warp_dest2src.nii.gz', verbose)
