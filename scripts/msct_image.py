@@ -232,16 +232,20 @@ class Image(object):
             slices.append(slc.flatten())
         return slices
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        from msct_types import Coordinate
 
         X, Y, Z = (self.data > 0.0).nonzero()
-        list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        if coordValue:
+            from msct_types import CoordinateValue
+            list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        else:
+            from msct_types import Coordinate
+            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
 
         if sorting is not None:
             if reverse_coord not in [True, False]:
