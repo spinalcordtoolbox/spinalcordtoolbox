@@ -175,9 +175,9 @@ class SpinalCordStraightener(object):
         self.bspline_meshsize = '5x5x10'
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '2'
-        self.algo_landmark_rigid = None
-        self.all_labels = 0
-        self.use_continuous_labels = 0
+        self.algo_landmark_rigid = 'translation-xy'
+        self.all_labels = 1
+        self.use_continuous_labels = 1
 
         self.mse_straightening = 0.0
         self.max_distance_straightening = 0.0
@@ -572,15 +572,12 @@ class SpinalCordStraightener(object):
                 sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
 
                 # This stands to avoid overlapping between landmarks
-                sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
+                # TODO: do symmetric removal
+                sct.printv('\nMake sure all labels between landmark_straight and landmark_curved match 1...', verbose)
                 label_process_straight = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
-                                              fname_output="tmp.landmarks_straight.nii.gz",
+                                              fname_output=["tmp.landmarks_straight.nii.gz", "tmp.landmarks_curved.nii.gz"],
                                               fname_ref="tmp.landmarks_curved.nii.gz", verbose=verbose)
-                label_process_straight.process('remove')
-                label_process_curved = ProcessLabels(fname_label="tmp.landmarks_curved.nii.gz",
-                                              fname_output="tmp.landmarks_curved.nii.gz",
-                                              fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
-                label_process_curved.process('remove')
+                label_process_straight.process('remove-symm')
 
                 # Estimate rigid transformation
                 sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
@@ -635,10 +632,10 @@ class SpinalCordStraightener(object):
                 sct.run('isct_ANTSUseLandmarkImagesWithTextFileToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' LandmarksRealCurve.txt LandmarksRealStraight.txt '+self.bspline_order+' 0', verbose)
             else:
                 # This stands to avoid overlapping between landmarks
-                sct.printv('\nMake sure all labels between landmark_curved and landmark_curved match...', verbose)
-                label_process = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
-                                              fname_output=["tmp.landmarks_straight.nii.gz", "tmp.landmarks_curved_rigid.nii.gz"],
-                                              fname_ref="tmp.landmarks_curved_rigid.nii.gz", verbose=verbose)
+                sct.printv('\nMake sure all labels between landmark_straight and landmark_curved match 2...', verbose)
+                label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
+                                              fname_output=["tmp.landmarks_curved_rigid.nii.gz", "tmp.landmarks_straight.nii.gz"],
+                                              fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
                 label_process.process('remove-symm')
 
                 # Estimate b-spline transformation curve --> straight
