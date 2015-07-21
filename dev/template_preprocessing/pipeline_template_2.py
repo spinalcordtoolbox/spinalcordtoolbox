@@ -3,16 +3,17 @@
 # WHAT DOES IT DO:
 # pre-process data for template.
 #
-# LOCATION OF pipeline_template.sh
+# LOCATION OF pipeline_template.py
 # $SCT_DIR/dev/template_preprocessing
 #
 # HOW TO USE:
-# run: pipeline_template.sh
+# run: pipeline_template.py
 #
 # REQUIRED DATA:
 # ~/subject/t2/centerline_propseg_RPI.nii.gz --> a series of binary labels along the cord to help propseg. To be done on the image cropped and in RPI orientation ! (Use command: "matlab_batcher.sh sct_get_centerline "'image_RPI_crop.nii.gz'" if image_RPI_crop.nii.gz is your anatomic image, cropped and in RPI orientation)
 # ~/subject/t2/crop.txt --> ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
-# ~/subject/t2/labels_updown.nii.gz --> a series of binary labels to complete the centerline from brainstem to L2/L3.
+# [optional :~/subject/t2/labels_updown.nii.gz --> a series of binary labels to complete the centerline from brainstem to L2/L3.]
+#        -> this file was historically important. Now it is replace by centerline_propseg_RPI.nii.gz. However for old sets of data, a labels_updown.nii.gz file may be used.
 # ~/subject/t2/labels_vertebral.nii.gz --> a series of labels to identify vertebral level(to be done on the original RPI image i.e. non crop image). These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 20 labels: [name of point at top] + PMJ + 18 labels of vertebral level going until the frontier T12/L1 I.e., Brainstem [name first label]=1, (PMJ)=2, C2/C3=3, C3/C4=4, C4/C5=5, C5/C6=6, T1/T2=7, T2/T3=8, T3/T4=9 ... T11/T12=19, T12/L1=20.
 # cf snapshot in $SCT_DIR/dev/template_preprocessing/snap1, 2, etc.
 
@@ -30,12 +31,10 @@ from numpy import array
 import matplotlib.pyplot as plt
 
 # add path to scripts
-PATH_DICOM = '/Volumes/data_shared/' #sert a rien
 PATH_OUTPUT = '/Users/tamag/data/data_template/test_new_pipeline' #folder where you want the results to be stored
-PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects'  # eventually to be replaced by URL from github
+PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects'  #folder where your info files are stored  (eventually to be replaced by URL from github)
 
 # define subject
-# SUBJECTS_LIST=[['errsm_14', ,'pathtodicomt1', 'pathtodicomt2']
 SUBJECTS_LIST_test=[['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_14/5003-SPINE_T2'], ['errsm_16', '/Volumes/data_shared/montreal_criugm/errsm_16/23-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_16/39-SPINE_T2'], ['errsm_17', '/Volumes/data_shared/montreal_criugm/errsm_17/41-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_17/42-SPINE_T2'], ['errsm_18', '/Volumes/data_shared/montreal_criugm/errsm_18/36-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_18/33-SPINE_T2']]
 SUBJECTS_LIST_total = [['errsm_02', '/Volumes/data_shared/montreal_criugm/errsm_02/22-SPINE_T1', '/Volumes/data_shared/montreal_criugm/errsm_02/28-SPINE_T2'],['errsm_04', '/Volumes/data_shared/montreal_criugm/errsm_04/16-SPINE_memprage/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_04/18-SPINE_space'],\
                        ['errsm_05', '/Volumes/data_shared/montreal_criugm/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_05/24-SPINE_SPACE'],['errsm_09', '/Volumes/data_shared/montreal_criugm/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_09/33-SPINE_SPACE'],\
@@ -71,17 +70,16 @@ SUBJECTS_LIST_TO_ADD = [['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_
                         ['T045', '/Volumes/data_shared/marseille/T045/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/T045/01_0101_t2-3d-composing'],['TM', '/Volumes/data_shared/marseille/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TM_T057c/01_0105_t2-composing'],\
                         ['TR', '/Volumes/data_shared/marseille/TR_T076/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TR_T076/01_0016_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-19']]
 
+# List of data that could not be used for the template generation as they were not working with the pipeline
 SUBJECTS_LIST_BUG_T2 = [['AP', '/Volumes/data_shared/marseille/AP_T077/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-7', '/Volumes/data_shared/marseille/AP_T077/01_0102_t2comp'],['TT', '/Volumes/data_shared/marseille/TT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', '/Volumes/data_shared/marseille/TT/01_0100_compo-space']]
 SUBJECTS_LIST_BUG_T1 = [['FL', '/Volumes/data_shared/marseille/FL_T056b/01_0044_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/FL_T056b/01_0049_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7'],['MD','/Volumes/data_shared/marseille/MD_T075/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-7','/Volumes/data_shared/marseille/MD_T075/01_0100_t2-compo']]
+
+# List of subject containing only a T1 or only a T2
 SUBJECTS_LIST_INCOMPLETE = [['T020b', '/Volumes/data_shared/marseille/T020b/01_0010_sc-mprage-1mm-2palliers-fov384-comp-sp-15', None],['errsm_26', None, '/Volumes/data_shared/montreal_criugm/errsm_26/31-SPINE_T2']]
 
 SUBJECTS_LIST_STR = [['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2'],['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_34/41-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_34/40-SPINE_T2'],['errsm_35','/Volumes/data_shared/montreal_criugm/errsm_35/37-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_35/38-SPINE_T2']]
 
 SUBJECTS_LIST = SUBJECTS_LIST_total
-# add path to scripts
-#export PATH=${PATH}:$SCT_DIR/dev/template_creation
-#export PATH_OUTPUT=/Users/tamag/data/template/
-#export PATH_DICOM='/Volumes/data_shared/'
 
 #Parameters:
 height_of_template_space = 1100
@@ -91,27 +89,24 @@ number_labels_for_template = 20
 
 def main():
     # Processing of T1 data for template
-    do_preprocessing('T1')
-    create_cross('T1')
-    push_into_templace_space('T1')
-    average_levels('T1')
-    align_vertebrae('T1')
+    # do_preprocessing('T1')
+    # create_cross('T1')
+    # push_into_templace_space('T1')
+    # average_levels('T1')
+    # align_vertebrae('T1')
 
     # Processing of T2 data for template
     do_preprocessing('T2')
     create_cross('T2')
     push_into_templace_space('T2')
     average_levels('T2')
-    align_vertebrae('T2')
+    #align_vertebrae('T2')
 
 
 def do_preprocessing(contrast):
-   # Create folder to gather all labels_vertebral.nii.gz files
-    if not os.path.isdir(PATH_OUTPUT + '/'+'labels_vertebral'):
-        os.makedirs(PATH_OUTPUT + '/'+'labels_vertebral')
 
    # Loop across subjects
-    for i in range(3,len(SUBJECTS_LIST)):
+    for i in range(0,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # Should check all inputs before starting the processing of the data
@@ -174,10 +169,10 @@ def do_preprocessing(contrast):
 
         # propseg
         # input:
-        # - data__crop_denoised.nii.gz
+        # - data_RPI_crop.nii.gz
         # - labels_propseg.nii.gz
         # output:
-        # - data_crop_denoised_seg.nii.gz
+        # - data_RPI_crop_seg.nii.gz
         print '\nExtracting segmentation...'
         list_dir = os.listdir(PATH_INFO + '/' + contrast + '/'+subject)
         centerline_proseg = False
@@ -213,15 +208,14 @@ def do_preprocessing(contrast):
 
         # crop segmentation (but keep same dimension)
         # input:
-        # - data_crop_denoised_seg.nii.gz
+        # - data_crop_denoised_seg_mod.nii.gz
         # - crop.txt
         # output:
-        # - data_crop_denoised_seg_crop.nii.gz
+        # - data_crop_denoised_seg_mod_crop.nii.gz
         print '\nCropping segmentation...'
         if zmax_seg == 'max':
             nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
-            sct.printv('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
-            os.system('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
+            sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
         else: sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
 
         # Concatenate segmentation and labels_updown if labels_updown is inputed. If not, it concatenates the segmentation and centerline_propseg_RPI.
@@ -239,22 +233,21 @@ def do_preprocessing(contrast):
         else: sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
-        # Add creation of centerline from seg and labels
+        # Creation of centerline from seg and labels for intensity normalization.
         print '\nExtracting centerline for intensity normalization...'
         sct.run('sct_get_centerline_from_labels -i seg_and_labels.nii.gz')
 
-        # Add normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
+        # Normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
         print '\nNormalizing intensity...'
         sct.run('sct_normalize.py -i data_RPI_crop.nii.gz -c generated_centerline.nii.gz')
 
         # straighten image using the concatenation of the segmentation and the labels
         # function: sct_straighten_spinalcord (option: nurbs)
         # input:
-        # - data_crop_denoised.nii.gz
-        # - centerline.nii.gz
+        # - data_crop_normalized.nii.gz
         # output:
         # - warp_curve2straight.nii.gz
-        # - data_crop_denoised_straight.nii.gz
+        # - data_RPI_crop_normalized_straight.nii.gz
         print '\nStraightening image using centerline...'
         cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz')
         sct.printv(cmd_straighten)
@@ -263,23 +256,23 @@ def do_preprocessing(contrast):
         # # # normalize intensity
         # print '\nNormalizing intensity of the straightened image...'
         # sct.run('sct_normalize.py -i data_RPI_crop_straight.nii.gz')
-        #
+
         # Crop labels_vertebral file
         print '\nCropping labels_vertebral file...'
         if ymin_anatomic == None and ymax_anatomic == None:
             sct.run('sct_crop_image -i '+PATH_INFO + '/' + contrast + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + zmin_anatomic + ' -end ' + zmax_anatomic + ' -dim 2')
         else: sct.run('sct_crop_image -i '+PATH_INFO + '/' + contrast + '/' + subject+ '/labels_vertebral.nii.gz -o labels_vertebral_crop.nii.gz -start ' + ymin_anatomic+','+zmin_anatomic + ' -end ' + ymax_anatomic+','+ zmax_anatomic + ' -dim 1,2')
-        #Dilate labels from labels_vertebral file
+        # Dilate labels from labels_vertebral file before straightening
         print '\nDilating labels from labels_vertebral file...'
         sct.run('fslmaths '+ PATH_OUTPUT + '/subjects/' + subject+ '/' + contrast + '/labels_vertebral_crop.nii.gz -dilF labels_vertebral_dilated.nii.gz')
 
-        # apply straightening to labels_vertebral.nii.gz and to seg_and_labels.nii.gz
+        # apply straightening to labels_vertebral_dilated.nii.gz and to seg_and_labels.nii.gz
         # function: sct_apply_transfo
         # input:
-        # - centerline.nii.gz + labels_vertebral.nii.gz
+        # - labels_vertebral_dilated.nii.gz
         # - warp_curve2straight.nii.gz
         # output:
-        # - centerline_straight.nii.gz
+        # - labels_vertebral_dilated_reg.nii.gz
         print '\nApplying straightening to labels_vertebral_dilated.nii.gz...'
         sct.run('sct_apply_transfo -i labels_vertebral_dilated.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
@@ -292,29 +285,14 @@ def do_preprocessing(contrast):
         print'\nApplying transfo to seg_and_labels.nii.gz ...'
         sct.run('sct_apply_transfo -i seg_and_labels.nii.gz -d data_RPI_crop_normalized_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
-        ##Calculate the extrem non zero points of the straightened centerline file
+        ##Calculate the extrem non zero points of the straightened centerline file to crop image one last time
         file = nibabel.load('seg_and_labels_reg.nii.gz')
         data_c = file.get_data()
-        hdr = file.get_header()
-        # Get center of mass of the centerline
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('seg_and_labels_reg.nii.gz')
-        z_centerline = [iz for iz in range(0, nz, 1) if data_c[:,:,iz].any() ]
-        nz_nonz = len(z_centerline)
-        x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        for iz in xrange(len(z_centerline)):
-           x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data_c[:,:,z_centerline[iz]]))
 
         X,Y,Z = (data_c>0).nonzero()
 
-        x_max,y_max = (data_c[:,:,max(Z)]).nonzero()
-        x_max = x_max[0]
-        y_max = y_max[0]
         z_max = max(Z)
 
-        x_min,y_min = (data_c[:,:,min(Z)]).nonzero()
-        x_min = x_min[0]
-        y_min = y_min[0]
         z_min = min(Z)
 
         # Crop image one last time
@@ -358,7 +336,7 @@ def create_cross(contrast):
         list_distances_1.append(distance_1)
         list_distances_2.append(distance_2)
 
-        #Create a cross on each subject at first and last labels (modify create cross to do so or do it )
+        # Create a cross on each subject at first and last labels
         print '\nCreating a cross at first and last labels...'
         os.system('sct_create_cross.py -i data_RPI_crop_normalized_straight_crop.nii.gz -x ' +str(int(round(nx/2.0)))+' -y '+str(int(round(ny/2.0)))+ ' -s '+str(coordinates_last_label[2])+ ' -e '+ str(coordinates_first_label[2]))
 
@@ -407,7 +385,7 @@ def push_into_templace_space(contrast):
         sct.run('cp labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz '+PATH_OUTPUT +'/labels_vertebral_' + contrast + '/'+subject+'.nii.gz')
 
 # Check position of labels crop_2temp with image crop_2temp
-# if no good: check position of labels reg with image straight_normalized
+# if no good: check position of labels reg with image normalized_straight
 # if no good: check position of labels dilated with image crop
 
 
@@ -434,18 +412,13 @@ def align_vertebrae(contrast):
         sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
         os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
 
-        # # Normalize intensity of result
-        # print'\nNormalizing intensity of results...'
-        # sct.run('sct_normalize.py -i '+subject+'_aligned_' + contrast + '.nii.gz')
-
-        # Warning that results for the subject is ready
+        # Inform that results for the subject is ready
         print'\nThe results for subject '+subject+' are ready. You can visualize them by tapping: fslview '+subject+'_aligned_normalized.nii.gz'
 
         # Copy final results into final results
         if not os.path.isdir(PATH_OUTPUT +'/Final_results'):
             os.makedirs(PATH_OUTPUT +'/Final_results')
         sct.run('cp '+subject+'_aligned.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
-        # sct.run('cp '+subject+'_aligned_normalized.nii.gz ' +PATH_OUTPUT +'/Final_results/'+subject+'_aligned_normalized_' + contrast + '.nii.gz')
 
         #Save png images of the results into a different folder
         print '\nSaving png image of the final result into ' + PATH_OUTPUT +'/Image_results...'
@@ -466,7 +439,6 @@ def align_vertebrae(contrast):
         for i in range(2):
             ax[i].set_axis_off()
         fig1 = plt.gcf()
-        #plt.show()
         fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
 
 
