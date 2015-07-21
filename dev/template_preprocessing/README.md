@@ -6,7 +6,7 @@ TEMPLATE PREPROCESSING
     pipeline_template.py
     =======
 
-        - Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering this two templates onto one another can be done.
+        - Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering those two templates onto one another can be done.
 
         - the list of commands is included in the file: pipeline_template.py
 
@@ -117,6 +117,6 @@ TEMPLATE PREPROCESSING
     preprocess_data_template.py
     ========
 
-        This file was made to ease the generation of the template. It enables one to generate all the necessary files that are subject specific from scratch.
+        This file was made to ease the generation of the template. It enables one to generate all the necessary files that are subject specific from scratch (PATH_INFO in the script pipeline_template.py).
 
-         N.B.: IF SUBJECTS ARE ADDED TO THE TEMPLATE GENERATION, THE FILE preprocess_data_template SHOULD BE MODIFIED
+         N.B.: IF SUBJECTS ARE ADDED TO THE TEMPLATE GENERATION, THE FILE preprocess_data_template SHOULD BE MODIFIED !!!!
