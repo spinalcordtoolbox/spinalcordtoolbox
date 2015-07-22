@@ -89,18 +89,18 @@ number_labels_for_template = 20
 
 def main():
     # Processing of T1 data for template
-    # do_preprocessing('T1')
-    # create_cross('T1')
-    # push_into_templace_space('T1')
-    # average_levels('T1')
-    # align_vertebrae('T1')
+    do_preprocessing('T1')
+    create_cross('T1')
+    push_into_templace_space('T1')
+    average_levels('T1')
+    align_vertebrae('T1')
 
     # Processing of T2 data for template
     do_preprocessing('T2')
     create_cross('T2')
     push_into_templace_space('T2')
     average_levels('T2')
-    #align_vertebrae('T2')
+    align_vertebrae('T2')
 
 
 def do_preprocessing(contrast):
