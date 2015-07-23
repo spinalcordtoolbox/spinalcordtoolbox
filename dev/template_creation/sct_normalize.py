@@ -163,7 +163,7 @@ def main():
 
 
 
-   #Test smoothing with nurbs
+   # #Smoothing with nurbs
    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
    #nurbs = NURBS(3,1000,points)
    #P = nurbs.getCourbe3D()
