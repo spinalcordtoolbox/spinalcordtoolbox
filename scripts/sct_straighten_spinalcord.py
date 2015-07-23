@@ -153,7 +153,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=40, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -644,11 +644,11 @@ class SpinalCordStraightener(object):
 
             # remove padding for straight labels
             nx_, ny_, nz_, nt_, px_, py_, pz_, pt_ = sct.get_dimension("tmp.landmarks_straight.nii.gz")
-            crop_y_start = int(round(ny_/2)) - gapxy - 20
-            crop_y_end = int(round(ny_/2)) + gapxy + 20
+            crop_y_start = int(round(ny_/2)) - gapxy - 21 #(21 to crop of 20 further gapxy)
+            crop_y_end = int(round(ny_/2)) + gapxy + 21 #(21 to crop of 20 further gapxy)
             if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0,2], bmax=True, verbose=verbose).crop()
-                ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[1], start=[crop_y_start], end=[crop_y_end], verbose=verbose).crop()
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0,1,2], bmax=True, verbose=verbose).crop()
+                #ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim=[1], start=[crop_y_start], end=[crop_y_end], verbose=verbose).crop()
                 #ImageCropper(input_file="tmp.landmarks_straight_crop.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="2", bmax=True, verbose=verbose).crop()
                 #ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0,1,2", bmax=True, verbose=verbose).crop()
 
@@ -723,6 +723,12 @@ class SpinalCordStraightener(object):
             print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
             print e
 
+        #Crop image due to change of gapxy
+        # remove padding for straight labels
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension("tmp.anat_rigid_warp.nii.gz")
+        crop_max = nx-21
+        sct.run('sct_crop_image -i tmp.anat_rigid_warp.nii.gz -dim 0 -start 20 -end ' +str(crop_max)+ ' -o tmp.anat_rigid_warp.nii.gz')
+
         os.chdir('..')
 
         # Generate output file (in current folder)
@@ -734,6 +740,9 @@ class SpinalCordStraightener(object):
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
         else:
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', fname_output, verbose)  # straightened anatomic
+
+
+
         # Remove temporary files
         if remove_temp_files:
             sct.printv('\nRemove temporary files...', verbose)
