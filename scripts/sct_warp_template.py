@@ -230,10 +230,10 @@ if __name__ == "__main__":
 
     fname_src = arguments["-d"]
     fname_transfo = arguments["-w"]
-    warp_atlas = arguments["-w"]
-    warp_spinal_levels = arguments["-w"]
-    folder_out = arguments["-w"]
-    path_template = arguments["-w"]
+    warp_atlas = arguments["-a"]
+    warp_spinal_levels = arguments["-s"]
+    folder_out = arguments["-o"]
+    path_template = arguments["-t"]
     verbose = arguments["-v"]
 
     # call main function
