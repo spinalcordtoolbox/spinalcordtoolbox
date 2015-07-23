@@ -669,7 +669,8 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R '+file_anat+ext_anat+' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+            #cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz'
+            cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' tmp.warp_straight2curve.nii.gz -i tmp.curve2straight_rigid.txt'
             sct.printv(cmd, verbose, 'code')
             #commands.getstatusoutput(cmd)
             sct.run(cmd, self.verbose)
