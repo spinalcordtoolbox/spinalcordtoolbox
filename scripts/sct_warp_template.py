@@ -215,11 +215,10 @@ if __name__ == "__main__":
                       default_value=param_default.folder_out,
                       example="label")
     parser.add_option(name="-t",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
+                      type_value="folder",
+                      description="Specify path to template data.",
                       mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
+                      default_value=str(param_default.path_template))
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
