@@ -86,21 +86,17 @@ class WarpTemplate:
             self.path_template = path_template
             self.verbose = verbose
 
-        # display usage if a mandatory argument is not provided
-        if self.fname_src == '' or self.fname_transfo == '':
-            usage()
-
         # Check file existence
         sct.printv('\nCheck file existence...', self.verbose)
         sct.check_file_exist(self.fname_src)
         sct.check_file_exist(self.fname_transfo)
 
         # add slash at the end of folder name (in case there is no slash)
-        path_template = sct.slash_at_the_end(self.path_template, 1)
-        folder_out = sct.slash_at_the_end(self.folder_out, 1)
-        folder_template = sct.slash_at_the_end(self.folder_template, 1)
-        folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
-        folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
+        self.path_template = sct.slash_at_the_end(self.path_template, 1)
+        self.folder_out = sct.slash_at_the_end(self.folder_out, 1)
+        self.folder_template = sct.slash_at_the_end(self.folder_template, 1)
+        self.folder_atlas = sct.slash_at_the_end(self.folder_atlas, 1)
+        self.folder_spinal_levels = sct.slash_at_the_end(self.folder_spinal_levels, 1)
 
         # print arguments
         print '\nCheck parameters:'
