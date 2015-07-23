@@ -3,8 +3,13 @@
 # WHAT DOES IT DO:
 # pre-process data for template.
 #
-# LOCATION OF pipeline_template.py
-# $SCT_DIR/dev/template_preprocessing
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Tanguy Magnan
+# Modified: 2015-07-23
+#
+# License: see the LICENSE.TXT
+#=======================================================================================================================
 #
 # HOW TO USE:
 # run: pipeline_template.py
@@ -89,8 +94,8 @@ number_labels_for_template = 20
 
 def main():
     # Processing of T1 data for template
-    do_preprocessing('T1')
-    create_cross('T1')
+    #do_preprocessing('T1')
+    # create_cross('T1')
     push_into_templace_space('T1')
     average_levels('T1')
     align_vertebrae('T1')
@@ -373,6 +378,9 @@ def push_into_templace_space(contrast):
         sct.run('sct_push_into_template_space.py -i data_RPI_crop_normalized_straight_crop.nii.gz -n landmark_native.nii.gz')
         sct.run('sct_push_into_template_space.py -i labels_vertebral_dilated_reg_2point_crop.nii.gz -n landmark_native.nii.gz -a nn')
 
+        # Change image type from float64 to uint16
+        sct.run('sct_change_image_type.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -o data_RPI_crop_normalized_straight_crop_2temp.nii.gz -t uint16')
+
         # get center of mass of each label group
         print '\nGet center of mass of each label group due to affine transformation...'
         sct.run('sct_label_utils -i labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -o labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -t cubic-to-point')
@@ -412,6 +420,9 @@ def align_vertebrae(contrast):
         sct.printv('\nsct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
         os.system('sct_align_vertebrae.py -i data_RPI_crop_normalized_straight_crop_2temp.nii.gz -l ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz -R ' +PATH_OUTPUT +'/labels_vertebral_' + contrast + '/template_landmarks.nii.gz -o '+ subject+'_aligned.nii.gz -t SyN -w spline')
 
+        # Change image type from float64 to uint16
+        sct.run('sct_change_image_type.py -i ' + subject+'_aligned.nii.gz -o ' + subject+'_aligned.nii.gz -t uint16')
+
         # Inform that results for the subject is ready
         print'\nThe results for subject '+subject+' are ready. You can visualize them by tapping: fslview '+subject+'_aligned_normalized.nii.gz'
 
@@ -440,7 +451,7 @@ def align_vertebrae(contrast):
             ax[i].set_axis_off()
         fig1 = plt.gcf()
         fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
-
+        fig1.close()
 
 #=======================================================================================================================
 # Start program
