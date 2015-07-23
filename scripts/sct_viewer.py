@@ -16,8 +16,8 @@ import sys
 from msct_parser import Parser
 from msct_image import Image
 
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button, RadioButtons
+
+# from matplotlib.widgets import Slider, Button, RadioButtons
 
 
 class TrioPlot:
@@ -150,6 +150,7 @@ class VolViewer(object):
             self.fig.canvas.draw()
 
     def show(self):
+        import matplotlib.pyplot as plt
         self.fig = plt.figure()
         self.fig.subplots_adjust(bottom=0.1, left=0.1)
 
