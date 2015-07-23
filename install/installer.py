@@ -568,7 +568,7 @@ class Installer:
             print "WARNING: The distribution of Python that you are using is not supported by the SCToolbox.\n" \
                   "You still can use your own distribution of Python but you will have to install our dependencies by yourself.\n" \
                   "Do you still want to continue?"
-            install_new = "no"
+            install_new = "yes"
             signal.alarm(120)
             while install_new not in ["yes", "no"]:
                 install_new = input_timeout("[yes|no]: ")

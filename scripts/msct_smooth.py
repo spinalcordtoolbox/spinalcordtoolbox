@@ -551,3 +551,104 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
         plt.show()
 
     return y
+
+
+
+def outliers_detection(data, type='std', factor=2, return_filtered_signal='no', verbose=0):
+    from numpy import mean, median, std, isnan
+    from copy import copy
+    # data: numpy array
+    # filtered: list
+    # mask: numpy array
+    if type == 'std':
+        u = mean(data)
+        s = std(data)
+        index_1 = data > (u + factor * s)
+        index_2 = (u - factor * s) > data
+        filtered = [e for e in data if (u - factor * s < e < u + factor * s)]
+        mask = copy(data)
+        mask[index_1] = None
+        mask[index_2] = None
+
+    if type == 'median':
+        # Detect extrem outliers using median
+        d = abs(data - median(data))
+        mdev = 1.4826 * median(d)
+        s = d/mdev if mdev else 0.
+        mean_s = mean(s)
+        index_1 = s>5* mean_s
+        # index_2 = s<mean_s
+        mask_1 = copy(data)
+        mask_1[index_1] = None
+        # mask_1[index_2] = None
+        filtered_1 = [e for i,e in enumerate(data.tolist()) if not isnan(mask_1[i])]
+        # Recalculate std using filtered variable and detect outliers with threshold factor * std
+        u = mean(filtered_1)
+        std_1 = std(filtered_1)
+        filtered = [e for e in data if (u - factor * std_1 < e < u + factor * std_1)]
+        index_1_2 = data > (u + factor * std_1)
+        index_2_2 = (u - factor * std_1) > data
+        mask = copy(data)
+        mask[index_1_2] = None
+        mask[index_2_2] = None
+
+    if verbose==2:
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(data, 'bo')
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.title("Before outliers deletion")
+        plt.subplot(212)
+        plt.plot(mask, 'bo')
+        plt.ylim(y_lim)
+        plt.title("After outliers deletion")
+        plt.show()
+    if return_filtered_signal=='yes:':
+        return filtered, mask
+    else:
+        return mask
+
+def outliers_completion(mask, verbose=0):
+    from numpy import nan_to_num, nonzero, transpose, append, insert, isnan
+    # Complete mask that as nan values by linear interpolation of the closest points
+    #Define extended mask
+    mask_completed = nan_to_num(mask)
+    # take index of all non nan points
+    X_mask_completed = nonzero(mask_completed)
+    X_mask_completed = transpose(X_mask_completed)
+    #initialization: we set the extrem values to avoid edge effects
+    if len(X_mask_completed) != 0:
+        mask_completed[0] = mask_completed[X_mask_completed[0]]
+        mask_completed[-1] = mask_completed[X_mask_completed[-1]]
+        #Add two rows to the vector X_mask_completed:
+        # one before as mask_completed[0] is now diff from 0
+        # one after as mask_completed[-1] is now diff from 0
+        X_mask_completed = append(X_mask_completed, len(mask_completed)-1)
+        X_mask_completed = insert(X_mask_completed, 0, 0)
+        #linear interpolation
+        count_zeros=0
+        for i in range(1,len(mask_completed)-1):
+            if mask_completed[i]==0:
+            #mask_completed[i] = ((X_mask_completed[i-count_zeros]-i) * mask_completed[X_mask_completed[i-1-count_zeros]] + (i-X_mask_completed[i-1-count_zeros]) * mask_completed[X_mask_completed[i-count_zeros]])/float(X_mask_completed[i-count_zeros]-X_mask_completed[i-1-count_zeros]) # linear interpolation ponderate by distance with closest non zero points
+            #mask_completed[i] = 0.25 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]] + mask_completed[X_mask_completed[i-2-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros+1]]) # linear interpolation with closest non zero points (2 points on each side)
+                mask_completed[i] = 0.5 * (mask_completed[X_mask_completed[i-1-count_zeros]] + mask_completed[X_mask_completed[i-count_zeros]]) # linear interpolation with closest non zero points
+                #redefine X_mask_completed
+                X_mask_completed = nonzero(mask_completed)
+                X_mask_completed = transpose(X_mask_completed)
+                #count_zeros += 1
+    if verbose==2:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.subplot(2,1,1)
+        plt.plot(mask, 'bo')
+        plt.title("Before outliers completion")
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.subplot(2,1,2)
+        plt.plot(mask_completed, 'bo')
+        plt.title("After outliers completion")
+        plt.ylim(y_lim)
+        plt.show()
+    return mask_completed

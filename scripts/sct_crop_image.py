@@ -16,8 +16,7 @@ import sys
 import os
 import math
 import scipy
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+
 import nibabel
 import time
 from sct_orientation import set_orientation
@@ -120,6 +119,8 @@ class ImageCropper(object):
 
     # shows the gui to crop the image
     def crop_with_gui(self):
+        import matplotlib.pyplot as plt
+        import matplotlib.image as mpimg
         # Initialization
         fname_data = self.input_filename
         suffix_out = '_crop'

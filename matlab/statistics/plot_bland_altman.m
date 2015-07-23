@@ -27,6 +27,13 @@ plot(average, mean_diff*ones(1,length(average)),'b-', 'LineWidth',3.0)
 plot(average, mean_diff+1.96*std_diff*ones(1,length(average)),'r:')
 plot(average, mean_diff-1.96*std_diff*ones(1,length(average)),'r:')
 hold off
+[xa_nfu,ya_nfu] = ds2nfu([average(1),average(1)],[mean_diff-1.96*std_diff,mean_diff+1.96*std_diff]);
+annotation('doublearrow',[0.8,0.8],ya_nfu,'Color','red')
+coord_tb = ds2nfu([max(average) mean_diff 1 1]);
+annotation('textbox', [0.8 coord_tb(2)+0.01 0.001 0.001],'String', '95%', 'Color','red');
+coord_tb2 = ds2nfu([max(average) mean_diff 1 1]);
+annotation('textbox', [0.7 ya_nfu(1)-0.001 0.001 0.001],'String', '-1.96.STD', 'Color','red');
+annotation('textbox', [0.7 ya_nfu(2)+0.01 0.001 0.001],'String', '+1.96.STD', 'Color','red');
 grid minor
 xlabel('Average of the 2 measures', 'FontSize', 30.0);
 ylabel('Difference between the 2 measures', 'FontSize', 30.0);
