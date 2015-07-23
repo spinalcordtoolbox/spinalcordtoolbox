@@ -554,7 +554,23 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
 
 
 
-def outliers_detection(data, type='std', factor=2, return_filtered_signal='no', verbose=0):
+def outliers_detection(data, type='median', factor=2, return_filtered_signal='no', verbose=0):
+    """Detect outliers in a
+
+    This method is based on the convolution of a scaled window with the signal.
+    The signal is prepared by introducing reflected copies of the signal
+    (with the window size) in both ends so that transient parts are minimized
+    in the begining and end part of the output signal.
+
+    input:
+        data: the input signal
+        type: 2 type of outlier detection
+            -std: uses only the distance between the mean and the point and compare it to the std
+            -median: first uses median and then std
+
+    output:
+        
+    """
     from numpy import mean, median, std, isnan
     from copy import copy
     # data: numpy array
