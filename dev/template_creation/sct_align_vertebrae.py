@@ -228,8 +228,8 @@ def main():
         sct.run('cp '+ warping+' ../'+warping)
 
         os.chdir('..')
-        # if remove_temp_files:
-        #     sct.run('rm -rf '+tmp_name)
+        if remove_temp_files:
+            sct.run('rm -rf '+tmp_name)
 
 
 

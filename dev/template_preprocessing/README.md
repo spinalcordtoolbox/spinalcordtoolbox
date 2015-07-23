@@ -2,6 +2,11 @@ TEMPLATE PREPROCESSING
 =============
 
 
+    Adding_a_subject_to_the_template_data_set
+    =======
+        MicrosoftWord file summarizing the steps to follow if one wants to add a subject to the dataset of the template. Self explanatory.
+
+
 
     pipeline_template.py
     =======
@@ -73,9 +78,9 @@ TEMPLATE PREPROCESSING
         17. Use sct_align_vertebrae -t SyN (transformation) -w spline (interpolation) to align the vertebrae using transformation along Z (sct_align_vertebrae -t SyN -w sline -R template_landmarks.nii.gz)(output: <subject>_aligned_normalized.nii.gz)
 
 
-        All data are located in:
+        All data (inputs, outputs and info files) are located in:
         ~~~
-        tatum: /Users/tamag/data/data_template/Results_template
+        tatum: /Volumes/Usagers/Etudiants/tamag/data/data_template
         ~~~
     
 
@@ -117,6 +122,6 @@ TEMPLATE PREPROCESSING
     preprocess_data_template.py
     ========
 
-        This file was made to ease the generation of the template. It enables one to generate all the necessary files that are subject specific from scratch (PATH_INFO in the script pipeline_template.py).
+        This file was made to ease the generation of the template. It enables one to generate all the necessary files that are subject specific, from scratch (PATH_INFO in the script pipeline_template.py).
 
          N.B.: IF SUBJECTS ARE ADDED TO THE TEMPLATE GENERATION, THE FILE preprocess_data_template SHOULD BE MODIFIED !!!!

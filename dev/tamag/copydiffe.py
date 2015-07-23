@@ -11,18 +11,45 @@ status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 sys.path.append(path_sct + '/dev/tamag')
 
-from numpy import mean, append, isnan, array
 import sct_utils as sct
-from scipy import ndimage
 
-path = '/Users/tamag/data/data_template/info/template_subjects'
-os.chdir(path)
+# path = '/Users/tamag/Desktop/bug_straightening/all_data'
+#
+# path_info = '/Users/tamag/data/data_template/test_new_pipeline/subjects'
+#
+# list_dir = os.listdir(path_info)
+#
+#
+# os.chdir(path + '/T1')
+# for subject in list_dir:
+#     if os.path.isdir(path_info+'/'+subject):
+#         cmd = 'sct_straighten_spinalcord.py -i ' +subject+ '.nii.gz -c '+ subject + '_centerline.nii.gz -a nurbs -o ' + subject+ '_straight.nii.gz -r 0'
+#         sct.printv(cmd)
+#         os.system(cmd)
+#
+#
+# os.chdir(path + '/T2')
+# for subject in list_dir:
+#     if os.path.isdir(path_info+'/'+subject):
+#         cmd = 'sct_straighten_spinalcord.py -i ' +subject+ '.nii.gz -c '+ subject + '_centerline.nii.gz -a nurbs -o ' + subject+ '_straight.nii.gz'
+#         sct.printv(cmd)
+#         os.system(cmd)
 
-status, output = sct.run('sct_label_utils -i labels_vertebral.nii.gz -t display-voxel')
-nb = output.find('notation')
-int_nb = nb + 10
-labels = output[int_nb:]
-
-bla
 
 
+path_2 = '/Volumes/Usagers/Etudiants/tamag/data/data_template/subject_specific_files/T1'
+
+list_dir_2 = os.listdir(path_2) # subjects
+
+
+os.chdir(path_2)
+
+for i in range(len(list_dir_2)):
+    if os.path.isdir(path_2 +'/'+list_dir_2[i]):
+        list_dir_3 = os.listdir(path_2 +'/'+list_dir_2[i])
+        if os.path.isdir(path_2 +'/'+list_dir_2[i]):
+            os.chdir(path_2 +'/'+list_dir_2[i])
+            for file in list_dir_3:
+                if file not in ['centerline_propseg_RPI.nii.gz', 'crop.txt', 'labels_vertebral_value_1.nii.gz', 'labels_vertebral.nii.gz', 'labels_updown.nii.gz']:
+                    os.remove(file)
+            os.chdir('..')
