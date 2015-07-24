@@ -699,7 +699,15 @@ def save_by_slice(dic_dir):
 
 # ------------------------------------------------------------------------------------------------------------------
 def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
+    status, orientation = sct.run('sct_orientation -i ' + fname)
+    orientation = orientation[4:7]
+    if orientation != 'RPI':
+        sct.run('sct_orientation -i ' + fname + ' -s RPI')
+        fname = fname[:-7] + '_RPI.nii.gz'
+    print fname
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+    print 'BEFORE RESAMPLING px, py, pz: ', px, py, pz
+
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
         name_pad = fname[:-7] + '_pad.nii.gz'
         name_resample = name_pad[:-7] + suffix
@@ -712,12 +720,21 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
         sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
 
+        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_resample)
+        print 'fx, fy :', fx, fy
+        print 'AFTER RESAMPLING px, py, pz: ', px, py, pz
         if binary:
             sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
             sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
 
+        if orientation != 'RPI':
+            sct.run('sct_orientation -i ' + name_resample + ' -s ' + orientation)
+            name_resample = name_resample[:-7] + '_' + orientation + '.nii.gz'
         return name_resample
     else:
+        if orientation != 'RPI':
+            sct.run('sct_orientation -i ' + fname + ' -s ' + orientation)
+            fname = fname[:-7] + '_' + orientation + '.nii.gz'
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
 
@@ -1204,6 +1221,7 @@ def leave_one_out_by_subject(param):
         t = time.time() - init
         print 'Done in ' + str(t) + ' sec'
 
+
 # ------------------------------------------------------------------------------------------------------------------
 def compute_error_map(data_path):
     error_map_sum = None
@@ -1252,6 +1270,7 @@ compute_error_map_by_level('with_levels_gamma1.2_Affine_Zregularisation')
 '''
 
 
+# ------------------------------------------------------------------------------------------------------------------
 def compute_error_map_by_level(data_path):
     original_path = os.path.abspath('.')
     diff_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
@@ -1342,6 +1361,138 @@ def compute_error_map_by_level(data_path):
 
 
 # ------------------------------------------------------------------------------------------------------------------
+def compute_hausdorff_dist_on_loocv_results(data_path):
+    import sct_compute_hausdorff_distance as hd
+    import xlsxwriter as xl
+
+    original_path = os.path.abspath('.')
+    os.chdir(data_path)
+    workbook = xl.Workbook('results_hausdorff.xlsx', {'nan_inf_to_errors': True})
+    w1 = workbook.add_worksheet('hausdorff_distance')
+    w2 = workbook.add_worksheet('median_distance')
+    bold = workbook.add_format({'bold': True, 'text_wrap': True})
+    w1.write(1, 0, 'Subject', bold)
+    w1.write(1, 1, 'Slice #', bold)
+    w1.write(1, 2, 'Slice level', bold)
+    w2.write(1, 0, 'Subject', bold)
+    w2.write(1, 1, 'Slice #', bold)
+    w2.write(1, 2, 'Slice level', bold)
+
+    first = True
+    col1 = 3
+    col2 = 3
+
+    for modality in os.listdir('.'):
+        if os.path.isdir(modality) and 'dictionary' not in modality and 'dic' not in modality:
+            os.chdir(modality)
+            w1.write(0, col1, modality, bold)
+            w2.merge_range(0, col2, 0, col2+1, modality, bold)
+
+            row = 2
+            for subject_dir in os.listdir('.'):
+                if os.path.isdir(subject_dir) and 'dictionary' not in subject_dir and 'dic' not in subject_dir:
+                    os.chdir(subject_dir)
+
+                    subject = '_'.join(subject_dir.split('_')[1:3])
+                    if 'pilot' in subject:
+                        subject = subject.split('_')[0]
+
+                    # ref_gm_seg = ''
+                    # ref_sc_seg = ''
+                    sq_mask = ''
+                    level = ''
+                    res_gm_seg = ''
+                    res_dir = None
+                    for fname in os.listdir('.'):
+                        if 'tmp_' + subject in fname and os.path.isdir(fname):
+                            res_dir = fname
+
+                    os.chdir(res_dir)
+                    for fname in os.listdir('.'):
+
+                        if 'level' in fname and 't2star' not in fname and 'IRP' in fname:
+                           level = fname
+
+                        elif 'square_mask' in fname and 'IRP' in fname:
+                            sq_mask = fname
+                        elif 'res_gmseg' in fname and 'original_dimension' not in fname and 'thinned' not in fname:
+                            res_gm_seg = fname
+                    if res_gm_seg != '' and sq_mask != '' and level != '':
+                        ref_gm_seg = 'ref_gm_seg.nii.gz'
+                        status, ref_ori = sct.run('sct_orientation -i ' + ref_gm_seg)
+                        ref_ori = ref_ori[4:7]
+                        if ref_ori != 'IRP':
+                            sct.run('sct_orientation -i ' + ref_gm_seg + ' -s IRP')
+                            ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_IRP' + sct.extract_fname(ref_gm_seg)[2]
+
+                        level_im = Image(level)
+
+                        sct.run('sct_crop_over_mask.py -i ' + ref_gm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[1] + '_croped')
+                        ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2]
+
+                        sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
+
+                        resample_to = 0.1
+                        ref_gm_seg_im = Image(resample_image(ref_gm_seg, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+                        res_gm_seg_im = Image(resample_image(res_gm_seg, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
+
+                        compute_param = hd.Param
+                        compute_param.thinning = True
+                        compute_param.verbose = 2
+                        comp = hd.ComputeDistances(res_gm_seg_im, im2=ref_gm_seg_im, param=compute_param)
+                        res_fic = open('../hausdorff_dist.txt', 'w')
+                        res_fic.write(comp.res)
+                        res_fic.write('\n\nInput 1: ' + res_gm_seg_im.file_name)
+                        res_fic.write('\nInput 2: ' + ref_gm_seg_im.file_name)
+                        res_fic.close()
+
+
+                        label_by_slice = {}
+                        level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2',
+                                       10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+                        nz_coord = level_im.getNonZeroCoordinates()
+                        for i_level_slice, level_slice in enumerate(level_im.data):
+                            nz_val = []
+                            for coord in nz_coord:
+                                if coord.x == i_level_slice:
+                                    nz_val.append(level_slice[coord.y, coord.z])
+                            try:
+                                label_by_slice[i_level_slice] = int(round(sum(nz_val)/len(nz_val)))
+                            except ZeroDivisionError:
+                                sct.printv('No level label for slice ' + str(i_level_slice) + ' of subject ' + subject_dir)
+                                label_by_slice[i_level_slice] = 0
+
+                        for i_slice in range(len(ref_gm_seg_im.data)):
+                            slice_level = level_label[label_by_slice[i_slice]]
+                            if first:
+
+                                w1.write(row, 0, subject)
+                                w1.write(row, 1, i_slice)
+                                w1.write(row, 2, slice_level)
+
+                                w2.write(row, 0, subject)
+                                w2.write(row, 1, i_slice)
+                                w2.write(row, 2, slice_level)
+                            w1.write(row, col1, comp.distances[i_slice].H*comp.dim_pix)
+
+                            med1 = np.median(comp.dist1_distribution[i_slice])
+                            med2 = np.median(comp.dist2_distribution[i_slice])
+                            w2.write(row, col2, med1*comp.dim_pix)
+                            w2.write(row, col2+1, med2*comp.dim_pix)
+
+                            row += 1
+                    os.chdir('../..')
+            os.chdir('..')
+            col1 += 1
+            col2 += 2
+            first =False
+    workbook.close()
+
+    os.chdir('../..')
+    os.chdir(original_path)
+
+
+# ------------------------------------------------------------------------------------------------------------------
 def compute_level_similarities(data_path):
     similarity_sum = 0
     n_slices = 0
@@ -1404,6 +1555,11 @@ if __name__ == "__main__":
                           description="Path to a dictionary folder to be saved by slice",
                           mandatory=False,
                           example='dictionary/')
+        parser.add_option(name="-hausdorff",
+                          type_value="folder",
+                          description="Path to a folder with various loocv results",
+                          mandatory=False,
+                          example='dictionary/')
         parser.add_option(name="-treat-AMU",
                           type_value="folder",
                           description="Path to a dictionary folder with images in the AMU format to be treated",
@@ -1433,6 +1589,8 @@ if __name__ == "__main__":
             leave_one_out_by_subject(arguments['-loocv'])
         if "-error-map" in arguments:
             compute_error_map(arguments['-error-map'])
+        if "-hausdorff" in arguments:
+            compute_hausdorff_dist_on_loocv_results(arguments['-hausdorff'])
         if "-save-dic-by-slice" in arguments:
             save_by_slice(arguments['-save-dic-by-slice'])
         if "-treat-AMU" in arguments:
