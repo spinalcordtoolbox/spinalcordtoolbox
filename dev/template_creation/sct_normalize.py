@@ -144,28 +144,33 @@ def main():
 
    print '\nGet mean intensity along the centerline ...'
    for iz in xrange(len(z_centerline)):
-       # print iz
-  #      print iz-min(z_centerline)
-  #      print x_centerline[iz-min(z_centerline)]
        means[iz] =  np.mean(data[(int(round(x_centerline[iz]))-padding):(int(round(x_centerline[iz]))+padding),(int(round(y_centerline[iz]))-padding):(int(round(y_centerline[iz]))+padding),z_centerline[iz]])
-   #print("means=", means)
 
-   print('\nSmoothing results with spline...')
-   # Smoothing with scipy library (Julien Touati's code)
-   m =np.mean(means)
-   sigma = np.std(means)
-   smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
-   #Equivalent to : m*sigma**2
-   tck = splrep(z_centerline, means, s=smoothing_param)
-   means_smooth = splev(z_centerline, tck)
 
-   #Test smoothing with nurbs
+   # print('\nSmoothing results with spline...')
+   # # Smoothing with scipy library (Julien Touati's code)
+   # m =np.mean(means)
+   # sigma = np.std(means)
+   # smoothing_param = (((m + np.sqrt(2*m))*(sigma**2))+((m - np.sqrt(2*m))*(sigma**2)))/2
+   # #Equivalent to : m*sigma**2
+   # tck = splrep(z_centerline, means, s=smoothing_param)
+   # means_smooth = splev(z_centerline, tck)
+
+   # Smoothing with low-pass filter
+   print '\nSmoothing with lowpass filter: butterworth order 5...'
+   from msct_smooth import lowpass
+   means_smooth = lowpass(means)
+
+
+
+   # #Smoothing with nurbs
    #points = [[means[n],0, z_centerline[n]] for n in range(len(z_centerline))]
    #nurbs = NURBS(3,1000,points)
    #P = nurbs.getCourbe3D()
    #means_smooth=P[0]  #size of means_smooth? should be bigger than len(z_centerline)
 
    # #Smoothing with hanning
+   # print('\nSmoothing results with hanning windowing...')
    # means = np.asarray(means)
    # means_smooth = smoothing_window(means, window_len=window_length)
    # print means.shape[0], means_smooth.shape[0]
@@ -181,8 +186,6 @@ def main():
    print('\nNormalizing intensity along centerline...')
 
 
-
-
    #Define extended meaned intensity for all the spinal cord
    means_smooth_extended = [0 for i in range(0, data.shape[2], 1)]
    for iz in range(len(z_centerline)):
@@ -192,26 +195,33 @@ def main():
    X_means_smooth_extended = np.nonzero(means_smooth_extended)
    X_means_smooth_extended = np.transpose(X_means_smooth_extended)
 
-   #initialization: we set the extrem values to avoid edge effects
-   means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
-   means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
-
-   #Add two rows to the vector X_means_smooth_extended:
-   # one before as means_smooth_extended[0] is now diff from 0
-   # one after as means_smooth_extended[-1] is now diff from 0
-   X_means_smooth_extended = np.append(X_means_smooth_extended, len(means_smooth_extended)-1)
-   X_means_smooth_extended = np.insert(X_means_smooth_extended, 0, 0)
+   if len(X_means_smooth_extended) != 0:
+        means_smooth_extended[0] = means_smooth_extended[X_means_smooth_extended[0]]
+        means_smooth_extended[-1] = means_smooth_extended[X_means_smooth_extended[-1]]
+        #Add two rows to the vector X_mask_completed:
+        # one before as mask_completed[0] is now diff from 0
+        # one after as mask_completed[-1] is now diff from 0
+        X_means_smooth_extended = np.append(X_means_smooth_extended, len(means_smooth_extended)-1)
+        X_means_smooth_extended = np.insert(X_means_smooth_extended, 0, 0)
+        #linear interpolation
+        count_zeros=0
+        for i in range(1,len(means_smooth_extended)-1):
+            if means_smooth_extended[i]==0:
+                means_smooth_extended[i] = 0.5 * (means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]]) # linear interpolation with closest non zero points
+                #redefine X_mask_completed
+                X_means_smooth_extended = np.nonzero(means_smooth_extended)
+                X_means_smooth_extended = np.transpose(X_means_smooth_extended)
 
 
    #recurrence
-   count_zeros=0
-   for i in range(1,len(means_smooth_extended)-1):
-       if means_smooth_extended[i]==0:
-            means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
-            # redefine X_mask_extended
-            X_mask_completed = np.nonzero(means_smooth_extended)
-            X_mask_completed = np.transpose(X_mask_completed)
-            #count_zeros += 1
+   # count_zeros=0
+   # for i in range(1,len(means_smooth_extended)-1):
+   #     if means_smooth_extended[i]==0:
+   #          means_smooth_extended[i] = 0.5*(means_smooth_extended[X_means_smooth_extended[i-1-count_zeros]] + means_smooth_extended[X_means_smooth_extended[i-count_zeros]])
+   #          # redefine X_mask_extended
+   #          X_mask_completed = np.nonzero(means_smooth_extended)
+   #          X_mask_completed = np.transpose(X_mask_completed)
+   #          #count_zeros += 1
    if verbose :
        plt.figure()
 
