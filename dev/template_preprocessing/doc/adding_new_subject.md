@@ -20,7 +20,7 @@ N.B.: Those files need to be generated for both contrasts T1 and T2 (i.e., 6 fil
 
 All subjects need to have both a full T1 and a full T2 image.
 
-Step-by-step procedure:
+Step-by-step procedure (to do for each contrast):
 
 * Convert the DICOM to NIFTI (e.g., using dcm2nii, output file name: data.nii.gz)
 * Change orientation to RPI
@@ -37,6 +37,23 @@ Step-by-step procedure:
 * Save the mask under: ``labels_vertebral.nii.gz`` (cmd+s).
 * Crop **data_RPI.nii.gz** slightly above the brainstem and slightly below L2-L3.
   * ``sct_crop_image –i data_RPI.nii.gz –dim 2 XXX -o data_RPI_crop.nii.gz``
-* Report where you are cropping the image in the file **crop.txt**:
-  * Format: zmin_anatomic,zmax_anatomic  (e.g.: 15,623 if you are cropping between slices 15 and 623). If there is a need to crop along y axis (as for some data from marseille that present artefacts) please specify as follow: zmin_anatomic,zmax_anatomic,ymin_anatomic, ymax_anatomic (e.g.: 15,623,30,200 if you are adding a crop along y axis between slices 30 and 200).
-
+* Report where you are cropping the image in the file **crop.txt** using this format:
+  * zmin_anatomic,zmax_anatomic  (e.g.: 15,623 if you are cropping between slices 15 and 623).
+    * If there is a need to crop along y axis (as for some data from marseille that present artefacts) please specify as follow: 
+      * zmin_anatomic,zmax_anatomic,ymin_anatomic, ymax_anatomic (e.g.: 15,623,30,200 if you are adding a crop along y axis between slices 30 and 200).
+* From the cropped image ``data_RPI_crop.nii.gz``, create a label file ``centerline_propseg_RPI.nii.gz`` that will be used to initiate the segmentation of propseg. 
+  * Open ``data_RPI_crop.nii.gz`` with flsview and create a mask (cmd+c).
+  * Put labels of value 1 at the center of the cord all along the spinal cord, approximately every 30 slices. Note that you need to put a label at the first slice (z=0) and at the last slice (z=nz) as this file will be used for the straightening of the image.
+* Generate the segmentation using propseg
+  * ``sct_propseg -i data_RPI_crop.nii.gz -t XXX -init-centerline centerline_propseg_RPI.nii.gz`` (here, XXX is t1 or t2 depending on the contrast)
+  * Check if the segmentation is correct. Since propseg often diverges at edges, you need to crop the segmentation and report the crop values in the file ``crop.txt`` that was previously created. Use this format:
+    * zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg (or: zmin_anatomic,zmax_anatomic,ymin_anatomic,ymax_anatomic,zmin_seg,zmax_seg if you cropped along y at the previous step).
+      * N.B.: If you only want to crop the segmentation at the bottom, you can write **max** instead of zmax_seg (e.g.: 15,max  if you are cropping at slice 15).
+* You have now generated all the necessary files for the pipeline to work. Test the pipeline’s **do_preprocessing** in file ``pipeline_template.py``. To do so:
+  * Open ``pipeline_template.py``
+    * Comment variable: ``SUBJECTS_LIST`` and create a temporary variable with only your subject to test.
+    * Under ``def main():``, comment all processes, except ``do_preprocessing('T1')`` (or ``do_preprocessing('T2')``)
+  * Run ``pipeline_template.py`` ,  step for this subject and make sure results are good. Notably: 
+  * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
+  * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
+    * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
