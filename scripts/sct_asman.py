@@ -789,6 +789,7 @@ class TargetSegmentationPairwise:
         else:
             self.model.pca.plot_projected_dic(nb_modes=nb_modes, target_coord=self.coord_projected_target, target_levels=[t_slice.level for t_slice in self.target], to_highlight=(to_highlight, self.selected_k_slices[to_highlight])) if self.coord_projected_target is not None \
             else self.model.pca.plot_projected_dic()
+
     # ------------------------------------------------------------------------------------------------------------------
     def save_selected_slices(self, target_name):
         slice_levels = np.asarray([(dic_slice.id, self.model.dictionary.level_label[dic_slice.level]) for dic_slice in self.model.dictionary.slices])
@@ -871,10 +872,9 @@ sct_Image
         sct.printv('\nShowing PCA mode graphs ...')
         self.model.pca.show_mode_variation()
 
-        '''
-        sct.printv('\nShowing the projected target ...')
-        self.target_seg_methods.show_projected_target()
-        '''
+        # sct.printv('\nShowing the projected target ...')
+        # self.target_seg_methods.show_projected_target()
+
 
 
 ########################################################################################################################
@@ -991,11 +991,12 @@ if __name__ == "__main__":
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-v" in arguments:
-            param.verbose = arguments["-v"]
+            param.verbose = int(arguments["-v"])
 
     model = Model(model_param=param, k=0.8)
     if input_target_fname is not None:
         gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, model, gm_seg_param=param)
-
+        print param.verbose == 2
         if param.verbose == 2:
+            print 'hello'
             gm_seg_method.show()
