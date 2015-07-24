@@ -5,7 +5,7 @@ This is a step-by-step procedure for adding a subject to the template data set. 
 ## Summary of steps
 
 ### Files to be created
-- ‘crop.txt’: ASCII file to indicate where to crop the data
+- ''crop.txt'': ASCII file to indicate where to crop the data
 - ‘centerline_propseg_RPI.nii.gz’: labeled NIFTI image (binary) to help propseg generating the segmentation of the spinal cord
 - ‘labels_vertebral.nii.gz’: labeled NIFTI image (not binary) to indicate fiducial markers corresponding to the brainstem and the vertebral bodies (from C2-C3 to T12-L1)
 
