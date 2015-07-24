@@ -26,18 +26,18 @@ Two folders must be precised for the pipeline to work:
 
 Data organisation for PATH_INFO is as follow:
 
-PATH_INFO/
-........./T1
-............/subject
-..................../crop.txt
-..................../centerline_propseg_RPI.nii.gz
-..................../labels_vertebral.nii.gz
-..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
-........./T2
-............/subject
-..................../crop.txt
-..................../centerline_propseg_RPI.nii.gz
-..................../labels_vertebral.nii.gz
+PATH_INFO/ 
+........./T1 
+............/subject 
+..................../crop.txt 
+..................../centerline_propseg_RPI.nii.gz 
+..................../labels_vertebral.nii.gz 
+..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
+........./T2 
+............/subject 
+..................../crop.txt 
+..................../centerline_propseg_RPI.nii.gz 
+..................../labels_vertebral.nii.gz 
 ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
 
 PATH_INFO/subject must contains those elements:
@@ -51,10 +51,10 @@ PATH_INFO/subject must contains those elements:
 List of steps of the pipeline is below. Functions involved are in brackets ():
 
 
-  1. Import dicom files and convert to NIFTI format (dcm2nii) (output: data_RPI.nii.gz).
+  1. Import dicom files and convert to NIFTI format (``dcm2nii) (output: data_RPI.nii.gz``).
   2. Change orientation to RPI (sct_orientation).
   3. Crop image a little above the brainstem and a little under L2/L3 vertebral disk (``sct_crop_image``)(output: ``data_RPI_crop.nii.gz``).
-  4. Process segmentation of the spinal cord (``sct_propseg -i data_RPI_crop.nii.gz -init-centerline centerline_propseg_RI.nii.gz``)(output: ``data_RPI_crop_seg.nii.gz)
+  4. Process segmentation of the spinal cord (``sct_propseg -i data_RPI_crop.nii.gz -init-centerline centerline_propseg_RI.nii.gz``)(output: ``data_RPI_crop_seg.nii.gz``)
   5. Erase three bottom and top slices from the segmentation to avoid edge effects from propseg (output: ``data_RPI_crop_seg_mod.nii.gz``)
   6. Check segmentation results and crop if needed (``sct_crop_image``)(output: ``data_RPI_crop_seg_mod_crop.nii.gz``)
   7. Concatenation of segmentation and original label file centerline_propseg_RPI.nii.gz (``fslmaths -add``)(output: ``seg_and_labels.nii.gz``).
@@ -63,17 +63,17 @@ List of steps of the pipeline is below. Functions involved are in brackets ():
   10. Straighten volume using this concatenation (``sct_straighten_spinalcord -c seg_and_labels.nii.gz -a nurbs``)(output: ``data_RPI_crop_normalized_straight.nii.gz``).
   11. Apply those transformation to labels_vertebral.nii.gz:
     * crop with zmin_anatomic and zmax_anatomic (``sct_crop_image``)(output: ``labels_vertebral_crop.nii.gz``)
-    * dilate labels before applying warping fields to avoid the disapearance of a label (fslmaths -dilF)(output: labels_vertebral_crop_dilated.nii.gz)
-    * apply warping field curve2straight (sct_apply_transfo -x nn) (output: labels_vertebral_crop_dialeted_reg.nii.gz)
-    * select center of mass of labels volume due to past dilatation (sct_label_utils -t cubic-to-point)(output: labels_vertebral_crop_dilated_reg_2point.nii.gz)
-  12. Apply transfo to seg_and_labels.nii.gz (sct_apply_transfo)(output: seg_and_labels_reg.nii.gz).
-  13. Crop volumes one more time to erase the blank spaces due to the straightening (sct_crop_image ). To do this, the pipeline uses your straight centerline as input and returns the slices number of the upper and lower nonzero points. It then crops your volume (sct_crop_image)(outputs: data_RPI_crop_normalized_straight_crop.nii.gz, labels_vertebral_crop_dilated_reg_crop.nii.gz).
-  14. For each subject of your list, the pipeline creates a cross of 5 mm at the top label from labels_vertebral_crop_dilated_reg_crop.nii.gz in the center of the plan xOy and a point at the bottom label from labels_vertebral.nii.gz in the center of the plan xOy (sct_create_cross)(output:landmark_native.nii.gz).
-  15. Calculate mean position of top and bottom labels from your list of subjects to create cross on a template shape file (sct_create_cross)
-  16. Push the straightened volumes into the template space. The template space has crosses in it for registration. (sct_push_into_template_space)(outputs: data_RPI_crop_straight_normalized_crop_2temp.nii.gz, labels_vertebral_crop_dilated_reg_crop_2temp.nii.gz)
-  17. Apply cubic to point to the label file as it now presents cubic group of labels instead of discrete labels (sct_label_utils -t cubic-to-point) (output: labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz)
-  18. Use sct_average_levels to calculate the mean landmarks for vertebral levels in the template space. This scripts take the folder containing all the masks created in previous step and for a given landmark it averages values across all subjects and put a landmark at this averaged value. You only have to do this once for a given preprocessing process. If you change the preprocessing or if you add subjects you have 2 choices : assume that it will not change the average too much and use the previous mask, or generate a new one. (sct_average_levels) (output: template_landmarks.nii.gz)
-  19. Use sct_align_vertebrae -t SyN (transformation) -w spline (interpolation) to align the vertebrae using transformation along Z (sct_align_vertebrae -t SyN -w sline -R template_landmarks.nii.gz)(output: <subject>_aligned_normalized.nii.gz)
+    * dilate labels before applying warping fields to avoid the disapearance of a label (``fslmaths -dilF)(output: labels_vertebral_crop_dilated.nii.gz``)
+    * apply warping field curve2straight (``sct_apply_transfo -x nn) (output: labels_vertebral_crop_dialeted_reg.nii.gz``)
+    * select center of mass of labels volume due to past dilatation (``sct_label_utils -t cubic-to-point)(output: labels_vertebral_crop_dilated_reg_2point.nii.gz``)
+  12. Apply transfo to seg_and_labels.nii.gz (``sct_apply_transfo)(output: seg_and_labels_reg.nii.gz``).
+  13. Crop volumes one more time to erase the blank spaces due to the straightening. To do this, the pipeline uses your straight centerline as input and returns the slices number of the upper and lower nonzero points. It then crops your volume (``sct_crop_image)(outputs: data_RPI_crop_normalized_straight_crop.nii.gz, labels_vertebral_crop_dilated_reg_crop.nii.gz``).
+  14. For each subject of your list, the pipeline creates a cross of 5 mm at the top label from labels_vertebral_crop_dilated_reg_crop.nii.gz in the center of the plan xOy and a point at the bottom label from labels_vertebral.nii.gz in the center of the plan xOy (``sct_create_cross)(output:landmark_native.nii.gz``).
+  15. Calculate mean position of top and bottom labels from your list of subjects to create cross on a template shape file (``sct_create_cross``)
+  16. Push the straightened volumes into the template space. The template space has crosses in it for registration. (``sct_push_into_template_space)(outputs: data_RPI_crop_straight_normalized_crop_2temp.nii.gz, labels_vertebral_crop_dilated_reg_crop_2temp.nii.gz``)
+  17. Apply cubic to point to the label file as it now presents cubic group of labels instead of discrete labels (``sct_label_utils -t cubic-to-point) (output: labels_vertebral_dilated_reg_2point_crop_2temp.nii.gz``)
+  18. Use sct_average_levels to calculate the mean landmarks for vertebral levels in the template space. This scripts take the folder containing all the masks created in previous step and for a given landmark it averages values across all subjects and put a landmark at this averaged value. You only have to do this once for a given preprocessing process. If you change the preprocessing or if you add subjects you have 2 choices : assume that it will not change the average too much and use the previous mask, or generate a new one. (``sct_average_levels) (output: template_landmarks.nii.gz``)
+  19. Use sct_align_vertebrae -t SyN (transformation) -w spline (interpolation) to align the vertebrae using transformation along Z (``sct_align_vertebrae -t SyN -w sline -R template_landmarks.nii.gz)(output: <subject>_aligned_normalized.nii.gz``)
 
 
         All data (inputs, outputs and info files) are located in:
