@@ -26,19 +26,18 @@ Two folders must be precised for the pipeline to work:
 
 Data organisation for PATH_INFO is as follow:
 
-PATH_INFO/ 
-........./T1 
-............/subject 
-..................../crop.txt 
-..................../centerline_propseg_RPI.nii.gz 
-..................../labels_vertebral.nii.gz 
-..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
-........./T2 
-............/subject 
-..................../crop.txt 
-..................../centerline_propseg_RPI.nii.gz 
-..................../labels_vertebral.nii.gz 
-..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
+* PATH_INFO/ 
+  * ........./T1 ............/subject 
+  * ..................../crop.txt 
+  * ..................../centerline_propseg_RPI.nii.gz 
+  * ..................../labels_vertebral.nii.gz 
+  * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
+  * ........./T2 
+  * ............/subject 
+  * ..................../crop.txt 
+  * ..................../centerline_propseg_RPI.nii.gz 
+  * ..................../labels_vertebral.nii.gz 
+  * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
 
 PATH_INFO/subject must contains those elements:
 - crop.txt: ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
@@ -174,6 +173,6 @@ Step-by-step procedure (to do for each contrast):
     * Comment variable: ``SUBJECTS_LIST`` and create a temporary variable with only your subject to test.
     * Under ``def main():``, comment all processes, except ``do_preprocessing('T1')`` (or ``do_preprocessing('T2')``)
   * Run ``pipeline_template.py`` ,  step for this subject and make sure results are good. Notably: 
-  * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
-  * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
-    * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
+    * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
+    * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
+      * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
