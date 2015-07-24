@@ -17,7 +17,7 @@ For this script to work, you just have to specify a path for the variable path_r
 
 ## pipeline_template.py
 ============================
-- Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering those two templates onto one another can be done.
+Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering those two templates onto one another can be done.
 
 
 Two folders must be precised for the pipeline to work:
@@ -25,6 +25,7 @@ Two folders must be precised for the pipeline to work:
   * PATH_OUTPUT: which will gather all the results from the template creation process.
 
 Data organisation for PATH_INFO is as follow:
+
 PATH_INFO/
 ........./T1
 ............/subject
@@ -47,27 +48,21 @@ PATH_INFO/subject must contains those elements:
 
   * PATH_INFO can be entirely generated from scratch by the script preprocess_data_template.py (see above).
 
-List of steps of the pipeline is below. The name of the pipeline is pipeline_template.py. Functions involved are in brackets ():
+List of steps of the pipeline is below. Functions involved are in brackets ():
 
 
   1. Import dicom files and convert to NIFTI format (dcm2nii) (output: data_RPI.nii.gz).
   2. Change orientation to RPI (sct_orientation).
-    * NB: You must create a label file from data_RPI.nii.gz to localise each vertebral level.
-  These are placed on the left side of the vertebral body, at the edge of the cartilage separating two vertebra. The value of the label corresponds to the level. There are 20 labels: [name of point at top] + PMJ + 18 labels of vertebral level going until the frontier T12/L1 I.e., Brainstem [name first label]=1, (PMJ)=2, C2/C3=3, C3/C4=4, C4/C5=5, C5/C6=6, T1/T2=7, T2/T3=8, T3/T4=9 ... T11/T12=19, T12/L1=20. Screenshots can be seen at: /dev/template_preprocessing.
-  (output: labels_vertebral.nii.gz, to be saved in PATH_INFO/[contrast]/subject)
-  3. Crop image a little above the brainstem and a little under L2/L3 vertebral disk (sct_crop_image)(output: data_RPI_crop.nii.gz).
-    * N.B.: you should note at which slice you are cropping in the crop.txt file in the PATH_INFO folder.
-    * N.B.: You must create a label file from data_RPI_crop.nii.gz to help propseg following the spinal cord (output: centerline_propseg_RPI.nii.gz). First label and last label must be respectively placed at z=0 and z=max (important for what follows). Distance between labels depends on the image quality but 30 slices (i.e. 3cm) is usually a good setting for the settings of propseg.
-  4. Process segmentation of the spinal cord (sct_propseg -i data_RPI_crop.nii.gz -init-centerline centerline_propseg_RI.nii.gz)(output: data_RPI_crop_seg.nii.gz)
-  5. Erase three bottom and top slices from the segmentation to avoid edge effects from propseg (output: data_RPI_crop_seg_mod.nii.gz)
-  6. Check segmentation results and crop if needed (sct_crop_image)(output: data_RPI_crop_seg_mod_crop.nii.gz)
-    * N.B.: you should note at which slice you are cropping in the crop.txt file in the PATH_INFO folder. If no need to crop, just put 0 and max for zmin_seg and zmax_seg.
-  7. Concatenation of segmentation and original label file centerline_propseg_RPI.nii.gz (fslmaths -add)(output: seg_and_labels.nii.gz).
-  8. Extraction of the centerline for normalizing intensity along the spinalcord before straightening (sct_get_centerline_from_labels)(output: generated_centerline.nii.gz)
-  9. Normalize intensity along z (sct_normalize -c generated_centerline.nii.gz)(output: data_RPI_crop_normalized.nii.gz)
-  10. Straighten volume using this concatenation (sct_straighten_spinalcord -c seg_and_labels.nii.gz -a nurbs)(output: data_RPI_crop_normalized_straight.nii.gz).
+  3. Crop image a little above the brainstem and a little under L2/L3 vertebral disk (``sct_crop_image``)(output: ``data_RPI_crop.nii.gz``).
+  4. Process segmentation of the spinal cord (``sct_propseg -i data_RPI_crop.nii.gz -init-centerline centerline_propseg_RI.nii.gz``)(output: ``data_RPI_crop_seg.nii.gz)
+  5. Erase three bottom and top slices from the segmentation to avoid edge effects from propseg (output: ``data_RPI_crop_seg_mod.nii.gz``)
+  6. Check segmentation results and crop if needed (``sct_crop_image``)(output: ``data_RPI_crop_seg_mod_crop.nii.gz``)
+  7. Concatenation of segmentation and original label file centerline_propseg_RPI.nii.gz (``fslmaths -add``)(output: ``seg_and_labels.nii.gz``).
+  8. Extraction of the centerline for normalizing intensity along the spinalcord before straightening (``sct_get_centerline_from_labels``)(output: ``generated_centerline.nii.gz``)
+  9. Normalize intensity along z (``sct_normalize -c generated_centerline.nii.gz``)(output: ``data_RPI_crop_normalized.nii.gz``)
+  10. Straighten volume using this concatenation (``sct_straighten_spinalcord -c seg_and_labels.nii.gz -a nurbs``)(output: ``data_RPI_crop_normalized_straight.nii.gz``).
   11. Apply those transformation to labels_vertebral.nii.gz:
-    * crop with zmin_anatomic and zmax_anatomic (sct_crop_image)(output: labels_vertebral_crop.nii.gz)
+    * crop with zmin_anatomic and zmax_anatomic (``sct_crop_image``)(output: ``labels_vertebral_crop.nii.gz``)
     * dilate labels before applying warping fields to avoid the disapearance of a label (fslmaths -dilF)(output: labels_vertebral_crop_dilated.nii.gz)
     * apply warping field curve2straight (sct_apply_transfo -x nn) (output: labels_vertebral_crop_dialeted_reg.nii.gz)
     * select center of mass of labels volume due to past dilatation (sct_label_utils -t cubic-to-point)(output: labels_vertebral_crop_dilated_reg_2point.nii.gz)
