@@ -96,22 +96,22 @@ def main():
     # Processing of T1 data for template
     #do_preprocessing('T1')
     # create_cross('T1')
-    push_into_templace_space('T1')
-    average_levels('T1')
-    align_vertebrae('T1')
+    # push_into_templace_space('T1')
+    # average_levels('T1')
+    # align_vertebrae('T1')
 
     # Processing of T2 data for template
-    do_preprocessing('T2')
-    create_cross('T2')
-    push_into_templace_space('T2')
-    average_levels('T2')
+    # do_preprocessing('T2')
+    # create_cross('T2')
+    # push_into_templace_space('T2')
+    # average_levels('T2')
     align_vertebrae('T2')
 
 
 def do_preprocessing(contrast):
 
    # Loop across subjects
-    for i in range(0,len(SUBJECTS_LIST)):
+    for i in range(32,len(SUBJECTS_LIST)):
         subject = SUBJECTS_LIST[i][0]
 
         # Should check all inputs before starting the processing of the data
@@ -451,7 +451,7 @@ def align_vertebrae(contrast):
             ax[i].set_axis_off()
         fig1 = plt.gcf()
         fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
-        fig1.close()
+        #fig1.close()
 
 #=======================================================================================================================
 # Start program

@@ -1,47 +1,40 @@
-TEMPLATE PREPROCESSING
-=============
+# TEMPLATE PREPROCESSING
+
+## Adding_a_subject_to_the_template_data_set
+
+MicrosoftWord file summarizing the steps to follow if one wants to add a subject to the dataset of the template. Self explanatory.
 
 
-    Adding_a_subject_to_the_template_data_set
-    =======
-        MicrosoftWord file summarizing the steps to follow if one wants to add a subject to the dataset of the template. Self explanatory.
+### pipeline_template.py
+- Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering those two templates onto one another can be done.
+
+- the list of commands is included in the file: pipeline_template.py
 
 
+Two folders must be precised for the pipeline to work:
+- PATH_INFO: which will contain all the information necessary for each subject (it can be generated from scratch with the scripts preprocess_data_template.py)
+- PATH_OUTPUT: which will gather all the results from the template creation process.
 
-    pipeline_template.py
-    =======
+Data organisation for PATH_INFO is as follow:
+PATH_INFO/
+........./T1
+............/subject
+..................../crop.txt
+..................../centerline_propseg_RPI.nii.gz
+..................../labels_vertebral.nii.gz
+..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
+........./T2
+............/subject
+..................../crop.txt
+..................../centerline_propseg_RPI.nii.gz
+..................../labels_vertebral.nii.gz
+..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
 
-        - Process is done for each subject. The process is done independently for T2 and T1 which leads to the creation of two templates: one for T2 and one for T1. Then registering those two templates onto one another can be done.
-
-        - the list of commands is included in the file: pipeline_template.py
-
-
-        Two folders must be precised for the pipeline to work:
-        - PATH_INFO: which will contain all the information necessary for each subject (it can be generated from scratch with the scripts preprocess_data_template.py)
-        - PATH_OUTPUT: which will gather all the results from the template creation process.
-
-        Data organisation for PATH_INFO is as follow:
-        PATH_INFO/
-        ........./T1
-        ............/subject
-        ..................../crop.txt
-        ..................../centerline_propseg_RPI.nii.gz
-        ..................../labels_vertebral.nii.gz
-        ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
-        ........./T2
-        ............/subject
-        ..................../crop.txt
-        ..................../centerline_propseg_RPI.nii.gz
-        ..................../labels_vertebral.nii.gz
-        ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
-
-
-
-        PATH_INFO/subject must contains those elements:
-        - crop.txt: ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
-            -> cropping the anatomic image must be done a little above the brainstem and at L2-L3 (if the size of the data allows it)
-        - centerline_propseg_RPI.nii.gz: a label file to help propseg initiation.
-        - labels_vertebral.nii.gz: a label file to localise the vertebral levels.
+PATH_INFO/subject must contains those elements:
+- crop.txt: ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
+    -> cropping the anatomic image must be done a little above the brainstem and at L2-L3 (if the size of the data allows it)
+- centerline_propseg_RPI.nii.gz: a label file to help propseg initiation.
+- labels_vertebral.nii.gz: a label file to localise the vertebral levels.
 
 
         List of steps of the pipeline is below. The name of the pipeline is pipeline_template.py. Functions involved are in brackets ():
