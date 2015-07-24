@@ -27,17 +27,18 @@ Two folders must be precised for the pipeline to work:
 Data organisation for PATH_INFO is as follow:
 
 * PATH_INFO/ 
-  * ........./T1 ............/subject 
-  * ..................../crop.txt 
-  * ..................../centerline_propseg_RPI.nii.gz 
-  * ..................../labels_vertebral.nii.gz 
-  * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
+  * ........./T1 
+    * ............/subject 
+      * ..................../crop.txt 
+      * ..................../centerline_propseg_RPI.nii.gz 
+      * ..................../labels_vertebral.nii.gz 
+      * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
   * ........./T2 
-  * ............/subject 
-  * ..................../crop.txt 
-  * ..................../centerline_propseg_RPI.nii.gz 
-  * ..................../labels_vertebral.nii.gz 
-  * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
+    * ............/subject 
+      * ..................../crop.txt 
+      * ..................../centerline_propseg_RPI.nii.gz 
+      * ..................../labels_vertebral.nii.gz 
+      * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
 
 PATH_INFO/subject must contains those elements:
 - crop.txt: ASCII txt file that indicates zmin and zmax for cropping the anatomic image and the segmentation . Format: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg  If there is a need to crop along y axis the RPI image, please specify as follow: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic
