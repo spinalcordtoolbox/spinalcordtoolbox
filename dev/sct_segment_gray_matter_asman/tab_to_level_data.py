@@ -185,7 +185,7 @@ data_by_n_slice.write('\n\n')
 data_by_n_slice.close()
 """
 
-
+'''
 # #################  CSA
 path = sys.argv[1]
 level_dic = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
@@ -211,13 +211,7 @@ while data_line != '\n' and data_line != '':
 dice_file.close()
 
 
-'''
-for slice_line in data_lines:
-    slice_line = slice_line.split('\t')
 
-    level = slice_line[-1][1:-1]
-    dic[level].append(slice_line[1])
-'''
 
 data_by_level = open(path + '/' + sc_part + '_csa_by_level.txt', 'w')
 
@@ -230,5 +224,41 @@ data_by_level.write('\n\n')
 
 
 data_by_level.close()
+'''
+
+# #################  HAUSDORFF DISTANCE RESULTS SAVED AS TXT
+fic_name = sys.argv[1]
+
+
+fic = open(fic_name, 'r')
+col_title = fic.readline().split('\t')
+lines = fic.readline().split('\r')
+fic.close()
+
+data_dic = {}
+mod_list = col_title[3:]
+mod_list[-1] = mod_list[-1][:-2]
+for modality in mod_list:
+    data_dic[modality] = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': []}
+
+for j, line in enumerate(lines):
+    l = line.split('\t')
+    level = l[2]
+    for i, mod in enumerate(mod_list):
+        data_dic[mod][level].append(l[i+3])
+
+for mod in mod_list:
+    data_by_level = open(mod + '_hausdorff_dist_by_level.txt', 'w')
+
+    for level in data_dic[mod].keys():
+        str_hd = ''
+        for hd in data_dic[mod][level]:
+            str_hd += hd + ' , '
+        data_by_level.write(level + ' : ' + str_hd[:-2] + '\n')
+    data_by_level.close()
+
+
+
+
 
 
