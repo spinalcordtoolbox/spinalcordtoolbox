@@ -3,6 +3,7 @@
 #########################################################################################
 # Generate necessary files to preprocess all data for the template preprocessing.
 #
+# N.B.: For this script to work, you just have to specify a path for the variable path_results (line 28).
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -26,11 +27,11 @@ import sct_utils as sct
 # Specify the output folder
 path_results =''
 
-if not os.path.isdir(path_results +'/' + 'T1'):
-    os.makedirs(path_results +'/' + 'T1')
+if not os.path.isdir(path_results + '/' + 'T1'):
+    os.makedirs(path_results + '/' + 'T1')
 
-if not os.path.isdir(path_results +'/' + 'T2'):
-    os.makedirs(path_results +'/' + 'T2')
+if not os.path.isdir(path_results + '/' + 'T2'):
+    os.makedirs(path_results + '/' + 'T2')
 
 
 # Creation of necessary files for T1 preprocessing
