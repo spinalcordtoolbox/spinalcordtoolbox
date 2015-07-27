@@ -229,8 +229,8 @@ if __name__ == "__main__":
     warp_atlas = int(arguments["-a"])
     warp_spinal_levels = int(arguments["-s"])
     folder_out = arguments["-o"]
-    path_template = int(arguments["-t"])
-    verbose = arguments["-v"]
+    path_template = arguments["-t"]
+    verbose = int(arguments["-v"])
 
     # call main function
     WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
