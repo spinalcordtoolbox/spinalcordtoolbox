@@ -2,7 +2,7 @@
 
 ## Step-by-step procedure
 
-These functions are used to preprocess T1 and T2 data for generating a template of the spinal cord. Steps to follow:
+The following functions are used to preprocess T1 and T2 data for generating a template of the spinal cord. Steps to follow:
 - Open: **preprocess_data_template.py**
   - edit variable ``path_results`` and specify output results. E.g.: /Users/julien/data/template_results
 - Run **preprocess_data_template.py**:
@@ -14,11 +14,11 @@ These functions are used to preprocess T1 and T2 data for generating a template 
   - ``python ~/code/spinalcordtoolbox/dev/template_preprocessing/pipeline_template.py``
 - Use output data for generating the template.
 
-## DATA
+## Data
 
-All data (inputs, outputs and info files) are located in:
+All data (inputs, outputs and info files) are located in (NeuroPoly lab):
 ~~~
-polygrammes: /Volumes/Usagers/Etudiants/tamag/data/data_template
+/Volumes/Usagers/Etudiants/tamag/data/data_template
 ~~~
 
 The following data were not selected:
@@ -37,25 +37,29 @@ This is a step-by-step procedure for adding a subject to the template data set. 
 ### Summary of the steps
 
 #### Files to be created
-- ``crop.txt``: ASCII file to indicate where to crop the data
-- ``centerline_propseg_RPI.nii.gz``: labeled NIFTI image (binary) to help propseg generating the segmentation of the spinal cord
-- ``labels_vertebral.nii.gz``: labeled NIFTI image (not binary) to indicate fiducial markers corresponding to the brainstem and the vertebral bodies (from C2-C3 to T12-L1)
+- **crop.txt**: ASCII file to indicate where to crop the data
+- **centerline_propseg_RPI.nii.gz**: labeled NIFTI image (binary) to help propseg generating the segmentation of the spinal cord
+- **labels_vertebral.nii.gz**: labeled NIFTI image (not binary) to indicate fiducial markers corresponding to the brainstem and the vertebral bodies (from C2-C3 to T12-L1)
 
 N.B.: Those files need to be generated for both contrasts T1 and T2 (i.e., 6 files in total).
 
 #### Data structure
-  * ........./T1 
-    * ............/<subject>
-      * ..................../crop.txt 
-      * ..................../centerline_propseg_RPI.nii.gz 
-      * ..................../labels_vertebral.nii.gz 
-      * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz) 
-  * ........./T2 
-    * ............/<subject> 
-      * ..................../crop.txt 
-      * ..................../centerline_propseg_RPI.nii.gz 
-      * ..................../labels_vertebral.nii.gz 
-      * ..................../labels_updown.nii.gz (optional now and not advised as it can be incorporated into centerline_propseg_RPI.nii.gz)
+~~~~
+PATH_INFO
+    |--- T1
+    |     |---<subject>
+    |            |--- crop.txt 
+    |            |--- centerline_propseg_RPI.nii.gz 
+    |            |--- labels_vertebral.nii.gz
+    |            |--- (labels_updown.nii.gz) (this file is not required anymore)
+    |
+    |--- T2
+    |     |---<subject>
+    |            |--- crop.txt 
+    |            |--- centerline_propseg_RPI.nii.gz 
+    |            |--- labels_vertebral.nii.gz
+    |            |--- (labels_updown.nii.gz) (this file is not required anymore)
+~~~~
 
 #### Files to modify
 - ``dev/template_preprocessing/pipeline_template.py``: the batch used to create the template for both T1 and T2 data.

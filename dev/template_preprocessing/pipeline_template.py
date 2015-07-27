@@ -53,8 +53,8 @@ from numpy import array
 import matplotlib.pyplot as plt
 
 # add path to scripts
-PATH_OUTPUT = '/Users/tamag/data/data_template/test_new_pipeline' #folder where you want the results to be stored
-PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects'  #folder where your info files are stored  (eventually to be replaced by URL from github)
+PATH_INFO = ''  # corresponds to the variable 'path_results' in file preprocess_data_template.py
+PATH_OUTPUT = '' # folder where you want the results to be stored
 
 # define subject
 SUBJECTS_LIST = [['errsm_02', '/Volumes/data_shared/montreal_criugm/errsm_02/22-SPINE_T1', '/Volumes/data_shared/montreal_criugm/errsm_02/28-SPINE_T2'],['errsm_04', '/Volumes/data_shared/montreal_criugm/errsm_04/16-SPINE_memprage/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_04/18-SPINE_space'],\
