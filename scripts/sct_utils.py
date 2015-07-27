@@ -80,7 +80,7 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if process.returncode:
         # from inspect import stack
-        printv(output_final[0:-1], 1, 'error')
+        printv("ERROR\n"+output_final[0:-1], 1, 'error')
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
     else:
