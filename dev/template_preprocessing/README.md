@@ -14,7 +14,7 @@ The following functions are used to preprocess T1 and T2 data for generating a t
   - ``python ~/code/spinalcordtoolbox/dev/template_preprocessing/pipeline_template.py``
 - Use output data for generating the template.
 - Once you have generated the T1 and T2 template, you need to co-register them.
-
+  - ``TODO``
 
 ## Data
 
