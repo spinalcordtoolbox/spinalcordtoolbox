@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 #########################################################################################
-# Generate necessary files to preprocess all data for the template preprocessing.
-#
-# N.B.: For this script to work, you just have to specify a path for the variable path_results (line 28).
+# This batch prepare all data for each subject, before preprocessing.
+# N.B.: Specify an output path in variable 'path_results'. E.g.:
+# path_results ='/Users/julien/data/test_template'
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -21,10 +21,9 @@ sys.path.append(path_sct + '/scripts')
 
 import sct_utils as sct
 
-
 ##Commands to generate label and txt files for T1 and T2 (first is T1 then T2)
 
-# Specify the output folder
+# Specify the output folder (no slash at the end)
 path_results =''
 
 if not os.path.isdir(path_results + '/' + 'T1'):
