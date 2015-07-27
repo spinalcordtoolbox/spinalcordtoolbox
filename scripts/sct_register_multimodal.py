@@ -486,6 +486,8 @@ def register(src, dest, paramreg, param, i_step_str):
                '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
                '--interpolation BSpline[3] '
                +masking)
+        if param.verbose >= 1:
+            cmd += ' --verbose 1'
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
             warp_forward_out = 'step'+i_step_str+'0GenericAffine.mat'
             warp_inverse_out = '-step'+i_step_str+'0GenericAffine.mat'
