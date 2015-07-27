@@ -13,6 +13,8 @@ The following functions are used to preprocess T1 and T2 data for generating a t
 - Run **pipeline_template.py**:
   - ``python ~/code/spinalcordtoolbox/dev/template_preprocessing/pipeline_template.py``
 - Use output data for generating the template.
+- Once you have generated the T1 and T2 template, you need to co-register them.
+
 
 ## Data
 
@@ -62,9 +64,9 @@ PATH_INFO
 ~~~~
 
 #### Files to modify
-- ``dev/template_preprocessing/pipeline_template.py``: the batch used to create the template for both T1 and T2 data.
-  - you need to add your subject to the variable SUBJECT_LIST_TOTAL
-- ``dev/template_preprocessing/preprocess_data_template.py``: batch that creates all the files that you will have bravely generated yourself (see above)
+- **preprocess_data_template.py**: batch that creates all the files that you will have bravely generated yourself (see above)
+- **pipeline_template.py**: batch used to create the template for both T1 and T2 data.
+  - you need to add your subject to the variable SUBJECT_LIST
 
 ### Detailed pocedure
 
@@ -107,5 +109,3 @@ Step-by-step procedure (to do for each contrast):
     * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
     * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
       * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
-
-
