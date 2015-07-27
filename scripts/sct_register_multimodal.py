@@ -497,6 +497,7 @@ def register(src, dest, paramreg, param, i_step_str):
 
     # run registration
     status, output = sct.run(cmd, param.verbose)
+
     if os.path.isfile(warp_forward_out):
         # rename warping fields
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
