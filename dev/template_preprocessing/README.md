@@ -7,6 +7,8 @@
 ## Step-by-step procedure
 
 The following functions are used to preprocess T1 and T2 data for generating a template of the spinal cord. Steps to follow:
+- Make sure you add this line into your .bashrc:
+  - ``export PATH=${PATH}:$SCT_DIR/dev/template_creation``
 - Open: **preprocess_data_template.py**
   - edit variable ``path_results`` and specify output results. E.g.: /Users/julien/data/template_results
 - Run **preprocess_data_template.py**:
