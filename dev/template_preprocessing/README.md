@@ -18,7 +18,12 @@ The following functions are used to preprocess T1 and T2 data for generating a t
   - ``python ~/code/spinalcordtoolbox/dev/template_preprocessing/pipeline_template.py``
 - Use output data for generating the template.
 - Once you have generated the T1 and T2 template, you need to co-register them.
-  - ``TODO``
+  - This is a work in progress. Here is the best registration command that we used so far:
+  ~~~~
+isct_c3d t2_avg_RPI.nii.gz -pad 5x5x5vox 5x5x5vox 0 -o t2_avg_RPI_pad.nii.gz   #padd file to avoid edge effect
+isct_antsRegistration --dimensionality 3 --transform syn[0.1,3,0] --metric MI[t2_avg_RPI_pad.nii.gz,t1_avg.independent_RPI.nii.gz,1,32] --convergence 100x100 --shrink-factors 2x1 --smoothing-sigmas 0mm --output [step1,t1_avg.independent_RPI_reg.nii.gz] --interpolation BSpline[3]
+sct_crop_image -i t1_avg.independent_RPI_reg.nii.gz -o t1_avg.independent_RPI_reg_unpad.nii.gz -dim 0,1,2 -start 5,5,5 -end 104,204,1104  #unpadd file afterwards
+  ~~~~
 
 ## Adding a new subject to the pipeline
 
@@ -87,7 +92,7 @@ Step-by-step procedure (to do for each contrast):
 * Generate the segmentation using propseg
   * ``sct_propseg -i data_RPI_crop.nii.gz -t XXX -init-centerline centerline_propseg_RPI.nii.gz`` (here, XXX is t1 or t2 depending on the contrast)
   * Check if the segmentation is correct. Since propseg often diverges at edges, you need to crop the segmentation and report the crop values in the file ``crop.txt`` that was previously created. Use this format:
-    * zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg (or: zmin_anatomic,zmax_anatomic,ymin_anatomic,ymax_anatomic,zmin_seg,zmax_seg if you cropped along y at the previous step).
+    * zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg (or: zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg,ymin_anatomic,ymax_anatomic if you cropped along y at the previous step).
       * N.B.: If you only want to crop the segmentation at the bottom, you can write **max** instead of zmax_seg (e.g.: 15,max  if you are cropping at slice 15).
   * Open ``pipeline_template.py``
 * You have now generated all the necessary files for the pipeline to work in one subject. Test the pipeline’s ``do_preprocessing`` in file **pipeline_template.py**. To do so:
