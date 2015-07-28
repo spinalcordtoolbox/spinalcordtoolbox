@@ -26,12 +26,17 @@ This is a step-by-step procedure for adding a subject to the template data set. 
 
 ### Summary of the steps
 
-#### Files to be created
+#### Files to be created (temporarily)
 - **crop.txt**: ASCII file to indicate where to crop the data
 - **centerline_propseg_RPI.nii.gz**: labeled NIFTI image (binary) to help propseg generating the segmentation of the spinal cord
 - **labels_vertebral.nii.gz**: labeled NIFTI image (not binary) to indicate fiducial markers corresponding to the brainstem and the vertebral bodies (from C2-C3 to T12-L1)
 
 N.B.: Those files need to be generated for both contrasts T1 and T2 (i.e., 6 files in total).
+
+#### Files to modify
+- **preprocess_data_template.py**: batch that automatically creates all the files described above.
+- **pipeline_template.py**: batch used to create the template for both T1 and T2 data.
+  - you need to add your subject to the variable SUBJECT_LIST
 
 #### Data structure
 ~~~~
@@ -50,11 +55,6 @@ PATH_INFO
     |            |--- labels_vertebral.nii.gz
     |            |--- (labels_updown.nii.gz) (this file is not required anymore)
 ~~~~
-
-#### Files to modify
-- **preprocess_data_template.py**: batch that creates all the files that you will have bravely generated yourself (see above)
-- **pipeline_template.py**: batch used to create the template for both T1 and T2 data.
-  - you need to add your subject to the variable SUBJECT_LIST
 
 ### Detailed pocedure
 
