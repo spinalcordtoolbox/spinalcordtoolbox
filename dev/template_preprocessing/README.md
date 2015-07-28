@@ -1,6 +1,8 @@
 # TEMPLATE PREPROCESSING
 
-[Adding a new subject to the pipeline](https://github.com/neuropoly/spinalcordtoolbox/tree/template/dev/template_preprocessing#adding-a-new-subject-to-the-pipeline)
+- [Step-by-step procedure](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#step-by-step-procedure)
+- [Data](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#Data)
+- [Adding a new subject to the pipeline](https://github.com/neuropoly/spinalcordtoolbox/tree/template/dev/template_preprocessing#adding-a-new-subject-to-the-pipeline)
 
 ## Step-by-step procedure
 
