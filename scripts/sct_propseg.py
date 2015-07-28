@@ -222,6 +222,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     if "-d" in arguments:
         cmd += " -d " + str(arguments["-d"])
 
+    # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
+    from sct_utils import get_dimension
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(input_filename)
+    if nt > 1:
+        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+
     sct.run(cmd, verbose)
 
     sct.printv('\nDone! To view results, type:', verbose)
