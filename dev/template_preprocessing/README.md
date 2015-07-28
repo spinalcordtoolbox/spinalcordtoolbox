@@ -89,14 +89,38 @@ Step-by-step procedure (to do for each contrast):
   * Check if the segmentation is correct. Since propseg often diverges at edges, you need to crop the segmentation and report the crop values in the file ``crop.txt`` that was previously created. Use this format:
     * zmin_anatomic,zmax_anatomic,zmin_seg,zmax_seg (or: zmin_anatomic,zmax_anatomic,ymin_anatomic,ymax_anatomic,zmin_seg,zmax_seg if you cropped along y at the previous step).
       * N.B.: If you only want to crop the segmentation at the bottom, you can write **max** instead of zmax_seg (e.g.: 15,max  if you are cropping at slice 15).
-* You have now generated all the necessary files for the pipeline to work. Test the pipeline’s **do_preprocessing** in file ``pipeline_template.py``. To do so:
   * Open ``pipeline_template.py``
+* You have now generated all the necessary files for the pipeline to work in one subject. Test the pipeline’s ``do_preprocessing`` in file **pipeline_template.py**. To do so:
     * Comment variable: ``SUBJECTS_LIST`` and create a temporary variable with only your subject to test.
     * Under ``def main():``, comment all processes, except ``do_preprocessing('T1')`` (or ``do_preprocessing('T2')``)
   * Run ``pipeline_template.py`` ,  step for this subject and make sure results are good. Notably: 
     * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
     * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
       * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
+* If everything is good, append the following code to the file **XX** (example for T1):
+~~~~
+#Preprocessing for subject XXX
+os.makedirs(path_results + '/T1/XXX')
+os.chdir(path_results + '/T1/XXX')
+sct.run('dcm2nii -o . -r N /Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09 /*.dcm')
+sct.run('mv *.nii.gz data.nii.gz')
+sct.run('sct_orientation -i data.nii.gz -s RPI')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x LIST_OF_LABELS')
+sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start  7 -end 559 ')
+f_crop = open('crop.txt', 'w')
+f_crop.write('7,559,0,484')
+f_crop.close()
+sct.run('sct_crop_image -i data_RPI_crop.nii.gz -dim 2 -start 2 -end 1 -b 0 -o centerline_propseg_RPI.nii.gz')
+sct.run('sct_label_utils -i centerline_propseg_RPI.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x LIST_CENTERLINE')
+os.remove('data.nii.gz')
+os.remove('data_RPI.nii.gz')
+os.remove('data_RPI_crop.nii.gz')
+os.chdir('../..')
+~~~~
+* LIST_OF_LABELS:
+  * ``sct_label_utils -i labels_vertebral.nii.gz -t display-voxel``
+* LIST_CENTERLINE:
+  * ``sct_label_utils -i centerline_propseg_RPI.nii.gz -t display-voxel``
 
 ## Data
 
