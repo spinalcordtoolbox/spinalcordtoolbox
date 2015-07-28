@@ -103,6 +103,8 @@ class Option:
         self.deprecated_rm = deprecated_rm
         self.deprecated = deprecated
 
+        # TODO: check if the option is correctly set
+
     def __safe_cast__(self, val, to_type):
         return to_type(val)
 
@@ -288,8 +290,8 @@ class Parser:
         arguments = arguments_temp
 
         skip = False
-        for index,arg in enumerate(arguments):
-            if skip: # if argument need to be skipped, we pass
+        for index, arg in enumerate(arguments):
+            if skip:  # if argument need to be skipped, we pass
                 skip = False
                 continue
 
