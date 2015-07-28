@@ -427,8 +427,24 @@ class Image(object):
         if coordi != None:
 
             coordi_pix = transpose(asarray(coordi))
+            print ''
+            print 'coordi_pix'
+            print coordi_pix
+            print ''
+            print 'm_p2f_transfo'
+            print m_p2f_transfo
+            print ''
+            print 'coord_origin'
+            print coord_origin
+            print ''
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
+            print 'coordi_phys'
+            print coordi_phys
+            print ''
             coordi_phys_list = coordi_phys.tolist()
+            print 'coordi_phys_list'
+            print coordi_phys_list
+            print ''
 
             return coordi_phys_list
 
