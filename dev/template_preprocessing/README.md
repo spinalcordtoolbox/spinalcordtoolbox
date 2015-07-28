@@ -1,8 +1,8 @@
 # TEMPLATE PREPROCESSING
 
 - [Step-by-step procedure](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#step-by-step-procedure)
-- [Data](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#Data)
 - [Adding a new subject to the pipeline](https://github.com/neuropoly/spinalcordtoolbox/tree/template/dev/template_preprocessing#adding-a-new-subject-to-the-pipeline)
+- [data](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#Data)
 
 ## Step-by-step procedure
 
@@ -19,22 +19,6 @@ The following functions are used to preprocess T1 and T2 data for generating a t
 - Use output data for generating the template.
 - Once you have generated the T1 and T2 template, you need to co-register them.
   - ``TODO``
-
-## Data
-
-All data (inputs, outputs and info files) are located in (NeuroPoly lab):
-~~~
-/Volumes/Usagers/Etudiants/tamag/data/data_template
-~~~
-
-The following data were not selected:
-- T020b: only has one contrast (T1 or T2)
-- errsm_26: only has one contrast (T1 or T2)
-- FL: T1 data of poor quality
-- MD: T1 data of poor quality
-- TR: T1 data of poor quality (bad stitching)
-- AP: T2 data of poor quality
-- TT: T2 data of poor quality
 
 ## Adding a new subject to the pipeline
 
@@ -113,3 +97,19 @@ Step-by-step procedure (to do for each contrast):
     * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
     * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
       * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
+
+## Data
+
+All data (inputs, outputs and info files) are located in (NeuroPoly lab):
+~~~
+/Volumes/Usagers/Etudiants/tamag/data/data_template
+~~~
+
+The following data were not selected:
+- T020b: only has one contrast (T1 or T2)
+- errsm_26: only has one contrast (T1 or T2)
+- FL: T1 data of poor quality
+- MD: T1 data of poor quality
+- TR: T1 data of poor quality (bad stitching)
+- AP: T2 data of poor quality
+- TT: T2 data of poor quality
