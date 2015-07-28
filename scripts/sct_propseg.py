@@ -31,7 +31,7 @@ Cross-sectional areas along the spinal cord can be available (-cross).
 Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
 If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.''')
     parser.add_option(name="-i",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="input image.",
                       mandatory=True,
                       example="t2.nii.gz")
@@ -106,7 +106,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
     parser.usage.addSection("\nOptions helping the segmentation")
     parser.add_option(name="-init-centerline",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="filename of centerline to use for the propagation, format .txt or .nii, see file structure in documentation",
                       mandatory=False)
     parser.add_option(name="-init",
@@ -114,7 +114,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="axial slice where the propagation starts, default is middle axial slice",
                       mandatory=False)
     parser.add_option(name="-init-mask",
-                      type_value="file",
+                      type_value="image_nifti",
                       description="mask containing three center of the spinal cord, used to initiate the propagation",
                       mandatory=False)
     parser.add_option(name="-radius",
