@@ -97,7 +97,7 @@ Step-by-step procedure (to do for each contrast):
     * Checking the resulting image: ``data_RPI_crop_normalized_straight_crop.nii.gz``
     * Checking that no vertebral label has disappeared in the process (i.e. that labels_vertebral_dilated_reg_2point_crop.nii.gz still contains 20 labels).
       * ``sct_label_utils -i labels_vertebral_dilated_reg_2point_crop.nii.gz -t display-voxel``
-* If everything is good, append the following code to the file **XX** (example for T1):
+* If everything is good, append the following code to the file **preprocess_data_template.py** (example for T1):
 ~~~~
 #Preprocessing for subject XXX
 os.makedirs(path_results + '/T1/XXX')
@@ -110,8 +110,7 @@ sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start
 f_crop = open('crop.txt', 'w')
 f_crop.write('7,559,0,484')
 f_crop.close()
-sct.run('sct_crop_image -i data_RPI_crop.nii.gz -dim 2 -start 2 -end 1 -b 0 -o centerline_propseg_RPI.nii.gz')
-sct.run('sct_label_utils -i centerline_propseg_RPI.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x LIST_CENTERLINE')
+sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x LIST_CENTERLINE')
 os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
