@@ -1,5 +1,7 @@
 # TEMPLATE PREPROCESSING
 
+[Adding a new subject to the pipeline](https://github.com/neuropoly/spinalcordtoolbox/tree/template/dev/template_preprocessing#adding-a-new-subject-to-the-pipeline)
+
 ## Step-by-step procedure
 
 The following functions are used to preprocess T1 and T2 data for generating a template of the spinal cord. Steps to follow:
