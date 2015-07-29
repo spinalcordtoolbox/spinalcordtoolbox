@@ -118,6 +118,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     translation_array = matrix([0.0, 0.0, 0.0])
+    points_moving_barycenter = [0.0, 0.0, 0.0]
 
     if constraints == 'rigid' or constraints == 'none' or constraints is None:
         initial_parameters = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
