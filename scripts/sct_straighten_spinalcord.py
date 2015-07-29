@@ -153,7 +153,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
 class SpinalCordStraightener(object):
 
-    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=20, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
+    def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -175,7 +175,7 @@ class SpinalCordStraightener(object):
         self.bspline_meshsize = '5x5x10'
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '2'
-        self.algo_landmark_rigid = 'translation-xy'
+        self.algo_landmark_rigid = 'rigid-decomposed'
         self.all_labels = 1
         self.use_continuous_labels = 1
 
@@ -397,42 +397,45 @@ class SpinalCordStraightener(object):
             else:
                 iz_straight = [0 for i in range(0, nb_landmark)]
 
-            # print iz_straight,len(iz_straight)
-            iz_straight[0] = iz_curved[0]
-            for index in range(1, n_iz_curved, 1):
-                # compute vector between two consecutive points on the curved centerline
-                vector_centerline = [x_centerline_fit[iz_curved[index]] - x_centerline_fit[iz_curved[index-1]], \
-                                     y_centerline_fit[iz_curved[index]] - y_centerline_fit[iz_curved[index-1]], \
-                                     z_centerline[iz_curved[index]] - z_centerline[iz_curved[index-1]] ]
-                # compute norm of this vector
-                norm_vector_centerline = linalg.norm(vector_centerline, ord=2)
-                # round to closest integer value
-                norm_vector_centerline_rounded = int(round(norm_vector_centerline, 0))
-                # assign this value to the current z-coordinate on the straight centerline
-                iz_straight[index] = iz_straight[index-1] + norm_vector_centerline_rounded
+            # compute the length of the spinal cord based on fitted centerline and size of centerline in z direction
+            length_centerline, size_z_centerline = 0.0, 0.0
+            from math import sqrt
+            for iz in range(0, len(z_centerline)-1):
+                length_centerline += sqrt(((x_centerline_fit[iz] - x_centerline_fit[iz+1])*px)**2 +
+                                          ((y_centerline_fit[iz] - y_centerline_fit[iz+1])*py)**2 +
+                                          ((z_centerline[iz] - z_centerline[iz+1])*pz)**2)
+                size_z_centerline += abs((z_centerline[iz] - z_centerline[iz+1])*pz)
+
+            # compute the size factor between initial centerline and straight bended centerline
+            factor_curved_straight = length_centerline/size_z_centerline
+            middle_slice = z_centerline[int((min(iz_curved) + max(iz_curved))/2.0 - 1.0)]
+            if verbose == 2:
+                print 'Length of spinal cord = ', str(length_centerline)
+                print 'Size of spinal cord in z direction = ', str(size_z_centerline)
+                print 'Ratio length/size = ', str(factor_curved_straight)
 
             # initialize x0 and y0 to be at the center of the FOV
             x0 = int(round(nx/2))
             y0 = int(round(ny/2))
             landmark_curved_value = 1
             for iz in range(min(iz_curved), max(iz_curved)+1, 1):
+                # compute new z-coordinate based on iz, middle slice and factor_curved_straight
+                z0 = (z_centerline[iz] - middle_slice) * factor_curved_straight + middle_slice
                 if iz in iz_curved:
-                    index = iz_curved.index(iz)
                     # set coordinates for landmark at the center of the cross
-                    landmark_straight.append(Coordinate([x0, y0, iz_straight[index], landmark_curved_value]))
+                    landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
                     # set x, y and z coordinates for landmarks +x
-                    landmark_straight.append(Coordinate([x0 + gapxy, y0, iz_straight[index], landmark_curved_value+1]))
+                    landmark_straight.append(Coordinate([x0 + gapxy, y0, z0, landmark_curved_value+1]))
                     # set x, y and z coordinates for landmarks -x
-                    landmark_straight.append(Coordinate([x0 - gapxy, y0, iz_straight[index], landmark_curved_value+2]))
+                    landmark_straight.append(Coordinate([x0 - gapxy, y0, z0, landmark_curved_value+2]))
                     # set x, y and z coordinates for landmarks +y
-                    landmark_straight.append(Coordinate([x0, y0 + gapxy, iz_straight[index], landmark_curved_value+3]))
+                    landmark_straight.append(Coordinate([x0, y0 + gapxy, z0, landmark_curved_value+3]))
                     # set x, y and z coordinates for landmarks -y
-                    landmark_straight.append(Coordinate([x0, y0 - gapxy, iz_straight[index], landmark_curved_value+4]))
+                    landmark_straight.append(Coordinate([x0, y0 - gapxy, z0, landmark_curved_value+4]))
                     landmark_curved_value += 5
-                else:
-                    if self.all_labels >= 1:
-                        landmark_straight.append(Coordinate([x0, y0, iz, landmark_curved_value]))
-                        landmark_curved_value += 1
+                elif self.all_labels >= 1:
+                    landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
+                    landmark_curved_value += 1
 
             # Create NIFTI volumes with landmarks
             #==========================================================================================
@@ -674,7 +677,9 @@ class SpinalCordStraightener(object):
 
             # remove padding for straight labels
             if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz", output_file="tmp.landmarks_straight_crop.nii.gz", dim="0,1,2", bmax=True, verbose=verbose).crop()
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
+                             output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
+                             verbose=verbose).crop()
                 pass
             else:
                 sct.run('cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz', verbose)
@@ -684,10 +689,7 @@ class SpinalCordStraightener(object):
             #sct.run('isct_ComposeMultiTransform 3 tmp.warp_rigid.nii -R tmp.landmarks_straight.nii tmp.warp.nii tmp.curve2straight_rigid.txt')
             # !!! DO NOT USE sct.run HERE BECAUSE isct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
             if self.algo_landmark_rigid == 'rigid-decomposed':
-                # cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight_translation.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.empty_warping_field.nii.gz tmp.curve2straight_rigid1.txt '
-                # sct.run(cmd, self.verbose)
-
-                cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.curve2straight_rigid1.txt tmp.curve2straight_rigid2.txt tmp.warp_curve2straight.nii.gz'
+                cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid1.txt tmp.curve2straight_rigid2.txt'
                 sct.run(cmd, self.verbose)
             else:
                 cmd = 'isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt'
@@ -701,12 +703,10 @@ class SpinalCordStraightener(object):
             else:
                 sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_curved_rigid.nii.gz tmp.landmarks_straight.nii.gz tmp.warp_straight2curve.nii.gz '+self.bspline_meshsize+' '+self.bspline_numberOfLevels+' '+self.bspline_order+' 0', verbose)
 
-
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            print 'TEST: ', self.algo_landmark_rigid
             if self.algo_landmark_rigid == 'rigid-decomposed':
-                cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid1.txt tmp.warp_straight2curve.nii.gz'  # old
+                cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid2.txt -i tmp.curve2straight_rigid1.txt tmp.warp_straight2curve.nii.gz'  # old
             else:
                 cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz' # old
             #cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' tmp.warp_straight2curve.nii.gz -i tmp.curve2straight_rigid.txt' # new
@@ -758,6 +758,13 @@ class SpinalCordStraightener(object):
 
         os.chdir('..')
 
+        # Crop image due to change of gapxy
+        # remove padding for straight labels
+        # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension("tmp.anat_rigid_warp.nii.gz")
+        # crop_max = nx - 21
+        # sct.run('sct_crop_image -i tmp.anat_rigid_warp.nii.gz -dim 0 -start 20 -end ' + str(crop_max) +
+        #         ' -o tmp.anat_rigid_warp.nii.gz')
+
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
         sct.printv('\nGenerate output file (in current folder)...', verbose)
@@ -767,6 +774,7 @@ class SpinalCordStraightener(object):
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', file_anat+'_straight'+ext_anat, verbose)  # straightened anatomic
         else:
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz', fname_output, verbose)  # straightened anatomic
+
         # Remove temporary files
         if remove_temp_files:
             sct.printv('\nRemove temporary files...', verbose)
