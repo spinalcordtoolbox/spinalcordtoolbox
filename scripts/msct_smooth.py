@@ -507,7 +507,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # if x.size < window_len:
     #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
-        sct.printv('Window size is too small. No smoothing was applied.', 1, 'warning')
+        sct.printv('Window size is too small. No smoothing was applied.', verbose=verbose, type='warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
@@ -517,7 +517,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     #The number of points of the curve must be superior to int(window_length/(2.0*pz))
     if window_len > int(nb_points):
         window_len = int(nb_points)
-        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), 'warning')
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), verbose=verbose, type='warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
@@ -582,12 +582,12 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
         the accuracy of the algorithm. (http://eurekastatistics.com/using-the-median-absolute-deviation-to-find-outliers)
 
     input:
-        data: the input signal (must be an array)
-        type: the type of algorithm process ('median' or 'std')
-        factor: the sensibility of outlier detection (if infinite no outlier will be find)
+        data: the input signal (type: array)
+        type: the type of algorithm process ('median' or 'std') (type: string)
+        factor: the sensibility of outlier detection (if infinite no outlier will be find) (type: int or float)
         return_filtered_signal: option to ask for the 'filtered signal' (i.e. the signal of smaller shape that present
             no outliers) ('yes' or 'no')
-        verbose: display parameter; specify 'verbose = 2' if display is desired
+        verbose: display parameter; specify 'verbose = 2' if display is desired (type: int)
 
     output:
         mask: a mask of same shape as the input signal that takes same values for non outlier points and 'nan' values for
@@ -600,9 +600,6 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
 
     from numpy import mean, median, std, isnan, asarray
     from copy import copy
-    # data: numpy array
-    # filtered: list
-    # mask: numpy array
     if type == 'std':
         u = mean(data)
         s = std(data)
@@ -662,8 +659,8 @@ def outliers_completion(mask, verbose=0):
     To be used after outlier_detection.
 
     input:
-        mask: the input signal (must be an array) that takes 'nan' values at the position of the outlier to be retrieved
-        verbose: display parameters; specify 'verbose = 2' if display is desired
+        mask: the input signal (type: array) that takes 'nan' values at the position of the outlier to be retrieved
+        verbose: display parameters; specify 'verbose = 2' if display is desired (type: int)
 
     output:
         signal_completed: the signal of input that has been completed (type: array)

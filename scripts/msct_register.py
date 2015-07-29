@@ -1,5 +1,15 @@
 #!/usr/bin/env python
-
+#
+#
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
+# Authors: Tanguy Magnan
+# Modified: 2015-07-29
+#
+# License: see the LICENSE.TXT
+#=======================================================================================================================
+#
 import sys, commands
 
 # Get path of the toolbox
@@ -10,7 +20,31 @@ from sct_register_multimodal import Paramreg
 
 
 
-def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step=0, type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5), warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, verbose=0):
+def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step=0, type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+                                  warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, verbose=0):
+    """Slice-by-slice regularized registration by translation of two segmentations.
+
+    First we estimate for each slice the translation vector by calculating the difference of position of the two centers of
+    mass of the two segmentations. Then we remove outliers using Median Absolute Deviation technique (MAD) and smooth
+    the translation along x and y axis using moving average hanning window. Eventually, we generate two warping fields
+    (forward and inverse) resulting from this regularized registration technique.
+    The segmentations must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        warp_forward_out: name of output forward warp (type: string)
+        warp_inverse_out: name of output inverse warp (type: string)
+        factor: sensibility factor for outlier detection (higher the factor, smaller the detection) (type: int or float)
+        verbose: display parameter (type: int, value: 0,1 or 2)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+
+    """
     if paramreg.type != 'seg':
         print '\nERROR: Algorithm slicereg2d_pointwise only operates for segmentation type.'
         sys.exit(2)
@@ -42,6 +76,32 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
                                     fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    """Slice-by-slice regularized registration by translation of two images.
+
+    We first register slice-by-slice the two images using antsRegistration in 2D. Then we remove outliers using
+    Median Absolute Deviation technique (MAD) and smooth the translations along x and y axis using moving average
+    hanning window. Eventually, we generate two warping fields (forward and inverse) resulting from this regularized
+    registration technique.
+    The images must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length[optional]: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        warp_forward_out[optional]: name of output forward warp (type: string)
+        warp_inverse_out[optional]: name of output inverse warp (type: string)
+        factor[optional]: sensibility factor for outlier detection (higher the factor, smaller the detection)
+            (type: int or float)
+        remove_temp_files[optional]: 1 to remove, 0 to keep (type: int)
+        verbose[optional]: display parameter (type: int, value: 0,1 or 2)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+    """
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
@@ -70,6 +130,32 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                               ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    """Slice-by-slice regularized registration (rigid) of two images.
+
+    We first register slice-by-slice the two images using antsRegistration in 2D. Then we remove outliers using
+    Median Absolute Deviation technique (MAD) and smooth the translations and angle of rotation along x and y axis using
+    moving average hanning window. Eventually, we generate two warping fields (forward and inverse) resulting from this
+    regularized registration technique.
+    The images must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length[optional]: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        warp_forward_out[optional]: name of output forward warp (type: string)
+        warp_inverse_out[optional]: name of output inverse warp (type: string)
+        factor[optional]: sensibility factor for outlier detection (higher the factor, smaller the detection)
+            (type: int or float)
+        remove_temp_files[optional]: 1 to remove, 0 to keep (type: int)
+        verbose[optional]: display parameter (type: int, value: 0,1 or 2)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+    """
     from msct_register_regularized import register_images, generate_warping_field
     from numpy import asarray
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
@@ -98,63 +184,38 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine_old(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
-                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
-                                    ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-                                                              'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
-    from msct_register_regularized import register_images, generate_warping_field
-    from numpy import asarray, array, sum
-    from numpy.linalg import inv
-    from msct_smooth import smoothing_window, outliers_detection, outliers_completion
-    from nibabel import load
-
-    # Calculate displacement
-    x_disp, y_disp, matrix_def = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
-    # Change to array
-    x_disp_a = asarray(x_disp)
-    y_disp_a = asarray(y_disp)
-    matrix_def_0_a = asarray([matrix_def[j][0][0] for j in range(len(matrix_def))])
-    matrix_def_1_a = asarray([matrix_def[j][0][1] for j in range(len(matrix_def))])
-    matrix_def_2_a = asarray([matrix_def[j][1][0] for j in range(len(matrix_def))])
-    matrix_def_3_a = asarray([matrix_def[j][1][1] for j in range(len(matrix_def))])
-    # Detect outliers
-    mask_x_a = outliers_detection(x_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    mask_y_a = outliers_detection(y_disp_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    mask_0_a = outliers_detection(matrix_def_0_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    mask_1_a = outliers_detection(matrix_def_1_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    mask_2_a = outliers_detection(matrix_def_2_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    mask_3_a = outliers_detection(matrix_def_3_a, type='median', factor=factor, return_filtered_signal='no', verbose=verbose)
-    # Replace value of outliers by linear interpolation using closest non-outlier points
-    x_disp_a_no_outliers = outliers_completion(mask_x_a, verbose=0)
-    y_disp_a_no_outliers = outliers_completion(mask_y_a, verbose=0)
-    matrix_def_0_a_no_outliers = outliers_completion(mask_0_a, verbose=0)
-    matrix_def_1_a_no_outliers = outliers_completion(mask_1_a, verbose=0)
-    matrix_def_2_a_no_outliers = outliers_completion(mask_2_a, verbose=0)
-    matrix_def_3_a_no_outliers = outliers_completion(mask_3_a, verbose=0)
-    # Smooth results
-    x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    matrix_def_smooth_0 = smoothing_window(matrix_def_0_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    matrix_def_smooth_1 = smoothing_window(matrix_def_1_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    matrix_def_smooth_2 = smoothing_window(matrix_def_2_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    matrix_def_smooth_3 = smoothing_window(matrix_def_3_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
-    matrix_def_smooth = [[[matrix_def_smooth_0[iz], matrix_def_smooth_1[iz]], [matrix_def_smooth_2[iz], matrix_def_smooth_3[iz]]] for iz in range(len(matrix_def_smooth_0))]
-    matrix_def_smooth_inv = inv(asarray(matrix_def_smooth)).tolist()
-    # Calculate barycenters of intensity
-    data_src = load(src).get_data()
-    bar_intensity_src = (1.0/(sum(data_src))) * sum(array([[data_src[i,j,k] * i, data_src[i,j,k] * j, data_src[i,j,k] * k] for i in range(data_src.shape[0]) for j in range(data_src.shape[1]) for k in range(data_src.shape[2])]), axis=0)
-    data_dest = load(dest).get_data()
-    bar_intensity_dest = (1.0/(sum(data_dest))) * sum(array([[data_dest[i,j,k] * i, data_dest[i,j,k] * j, data_dest[i,j,k] * k] for i in range(data_dest.shape[0]) for j in range(data_dest.shape[1]) for k in range(data_dest.shape[2])]), axis=0)
-
-    # Generate warping field
-    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, center_rotation=None, matrix_def=matrix_def_smooth, fname=warp_forward_out)
-    # Inverse warping field
-    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, center_rotation=None, matrix_def=matrix_def_smooth_inv, fname=warp_inverse_out)  #bar intensity dest?
-
 def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
                                fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    """Slice-by-slice regularized registration (affine) of two images.
+
+    We first register slice-by-slice the two images using antsRegistration in 2D (algo: affine) and create 3D warping
+    fields (forward and inverse) by merging the 2D warping fields along z. Then we directly detect outliers and smooth
+    the 3d warping fields applying a moving average hanning window on each pixel of the plan xOy (i.e. we consider that
+    for a position (x,y) in the plan xOy, the variation along z of the vector of displacement (xo, yo, zo) of the
+    warping field should not be too abrupt). Eventually, we generate two warping fields (forward and inverse) resulting
+    from this regularized registration technique.
+    The images must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length[optional]: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        warp_forward_out[optional]: name of output forward warp (type: string)
+        warp_inverse_out[optional]: name of output inverse warp (type: string)
+        factor[optional]: sensibility factor for outlier detection (higher the factor, smaller the detection)
+            (type: int or float)
+        remove_temp_files[optional]: 1 to remove, 0 to keep (type: int)
+        verbose[optional]: display parameter (type: int, value: 0,1 or 2)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+    """
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -216,6 +277,34 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
                             fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    """Slice-by-slice regularized registration (syn) of two images.
+
+    We first register slice-by-slice the two images using antsRegistration in 2D (algo: syn) and create 3D warping
+    fields (forward and inverse) by merging the 2D warping fields along z. Then we directly detect outliers and smooth
+    the 3d warping fields applying a moving average hanning window on each pixel of the plan xOy (i.e. we consider that
+    for a position (x,y) in the plan xOy, the variation along z of the vector of displacement (xo, yo, zo) of the
+    warping field should not be too abrupt). Eventually, we generate two warping fields (forward and inverse) resulting
+    from this regularized registration technique.
+    The images must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length[optional]: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        warp_forward_out[optional]: name of output forward warp (type: string)
+        warp_inverse_out[optional]: name of output inverse warp (type: string)
+        factor[optional]: sensibility factor for outlier detection (higher the factor, smaller the detection)
+            (type: int or float)
+        remove_temp_files[optional]: 1 to remove, 0 to keep (type: int)
+        verbose[optional]: display parameter (type: int, value: 0,1 or 2)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+    """
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
@@ -276,6 +365,34 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
                                    fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
+    """Slice-by-slice regularized registration (bsplinesyn) of two images.
+
+    We first register slice-by-slice the two images using antsRegistration in 2D (algo: bsplinesyn) and create 3D warping
+    fields (forward and inverse) by merging the 2D warping fields along z. Then we directly detect outliers and smooth
+    the 3d warping fields applying a moving average hanning window on each pixel of the plan xOy (i.e. we consider that
+    for a position (x,y) in the plan xOy, the variation along z of the vector of displacement (xo, yo, zo) of the
+    warping field should not be too abrupt). Eventually, we generate two warping fields (forward and inverse) resulting
+    from this regularized registration technique.
+    The images must be of same size (otherwise generate_warping_field will not work for forward or inverse
+    creation).
+
+    input:
+        src: name of moving image (type: string)
+        dest: name of fixed image (type: string)
+        window_length[optional]: size of window for moving average smoothing (type: int)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        warp_forward_out[optional]: name of output forward warp (type: string)
+        warp_inverse_out[optional]: name of output inverse warp (type: string)
+        factor[optional]: sensibility factor for outlier detection (higher the factor, smaller the detection)
+            (type: int or float)
+        remove_temp_files[optional]: 1 to remove, 0 to keep (type: int)
+        verbose[optional]: display parameter (type: int, value: 0,1 or 2)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        creation of warping field files of name 'warp_forward_out' and 'warp_inverse_out'.
+    """
     from nibabel import load, Nifti1Image, save
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
