@@ -431,6 +431,38 @@ class Image(object):
 
             return coordi_pix_list
 
+    def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
+        """
+        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
+        This vector is the pixel position of the point in the space of the image.
+        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
+
+        If coordi is different from none:
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+
+
+        :return:
+        """
+        from numpy import array, transpose, dot, asarray
+        from numpy.linalg import inv
+        from copy import copy
+
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3, 0:3]
+        m_f2p_transfo = inv(m_p2f_transfo)
+        # e = dot(m_p2f_transfo, m_f2p_transfo)
+
+        coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+
+        if coordi != None:
+            coordi_phys = transpose(asarray(coordi))
+            coordi_pix = transpose(dot(m_f2p_transfo, (coordi_phys - coord_origin)))
+            coordi_pix_tmp = coordi_pix.tolist()
+            coordi_pix_list = [[coordi_pix_tmp[j][i] for i in range(len(coordi_pix_tmp[j]))] for j in
+                               range(len(coordi_pix_tmp))]
+
+            return coordi_pix_list
+
 
 def pad_image(fname_in, file_out, padding):
     import sct_utils as sct
