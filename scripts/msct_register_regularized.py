@@ -3,22 +3,11 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Tanguy Magnan
-# Modified: 2015-07-23
+# Modified: 2015-07-29
 #
 # License: see the LICENSE.TXT
 #=======================================================================================================================
 #
-# INPUT:
-#   volume_src
-#   volume_dest
-#   paramreg (class inherited in sct_register_multimodal)
-#   (mask)
-#   fname_warp
-# OUTPUT:
-#   none
-#   (write warping field)
-
-
 
 
 import os, sys, commands
@@ -41,13 +30,22 @@ from math import asin
 
 
 
-
-# FUNCTION
-# register_seg
-# First step to register a segmentation onto another by calculating precisely the displacement.
-# (The segmentations can be of different size but the output segmentation must be smaller thant the input segmentation)?????? necessary or done before????
-
 def register_seg(seg_input, seg_dest):
+    """Slice-by-slice registration by translation of two segmentations.
+
+    For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
+    mass.
+    The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
+
+    input:
+        seg_input: name of moving segmentation file (type: string)
+        seg_dest: name of fixed segmentation file (type: string)
+
+    output:
+        x_displacement: list of translation along x axis for each slice (type: list)
+        y_displacement: list of translation along y axis for each slice (type: list)
+
+    """
     seg_input_img = Image(seg_input)
     seg_dest_img = Image(seg_dest)
     seg_input_data = seg_input_img.data
@@ -80,17 +78,38 @@ def register_seg(seg_input, seg_dest):
     return x_displacement, y_displacement
 
 
-
-# FUNCTION
-# register_image
-# First step to register a 3D image onto another by splitting the images into 2D images and calculating the displacement by splice by image correlation algorithms.
-# (The images can be of different size but the output image must be smaller thant the input image)?????? necessary or done before????
-# If the mask is inputed, it must also be 3D and it must be in the same space as the destination image.
-
 def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, remove_tmp_folder = 1):
+    """Slice-by-slice registration of two images.
 
+    We first split the 3D images into 2D images (and the mask if inputted). Then we register slices of the two images
+    that physically correspond to one another looking at the physical origin of each image. The images can be of
+    different sizes but the destination image must be smaller thant the input image. We do that using antsRegistration
+    in 2D. Once this has been done for each slices, we gather the results and return them.
+    Algorithms implemented: translation, rigid, affine, syn and BsplineSyn.
+    N.B.: If the mask is inputted, it must also be 3D and it must be in the same space as the destination image.
+
+    input:
+        im_input: name of moving image (type: string)
+        im_dest: name of fixed image (type: string)
+        mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
+        paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
+        ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
+
+    output:
+        if algo==translation:
+            x_displacement: list of translation along x axis for each slice (type: list)
+            y_displacement: list of translation along y axis for each slice (type: list)
+        if algo==rigid:
+            x_displacement: list of translation along x axis for each slice (type: list)
+            y_displacement: list of translation along y axis for each slice (type: list)
+            theta_rotation: list of rotation angle in radian (and in ITK's coordinate system) for each slice (type: list)
+        if algo==affine or algo==syn or algo==bsplinesyn:
+            creation of two 3D warping fields (forward and inverse) that are the concatenations of the slice-by-slice
+            warps.
+    """
+    # Extracting names
     path_i, root_i, ext_i = sct.extract_fname(im_input)
     path_d, root_d, ext_d = sct.extract_fname(im_dest)
 
@@ -100,10 +119,6 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
-    # # initiate default parameters of antsRegistration transformation
-    # ants_registration_params = {'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '',
-    #                             'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
-    #                             'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
@@ -115,7 +130,6 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     x_displacement = [0 for i in range(nz)]
     y_displacement = [0 for i in range(nz)]
     theta_rotation = [0 for i in range(nz)]
-    matrix_def = [0 for i in range(nz)]
 
     # create temporary folder
     print('\nCreate temporary folder...')
@@ -133,18 +147,15 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     # Split input volume along z
     print '\nSplit input volume...'
     sct.run(sct.fsloutput + 'fslsplit '+im_input+' '+root_i+'_z -z')
-    #file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
 
     # Split destination volume along z
     print '\nSplit destination volume...'
     sct.run(sct.fsloutput + 'fslsplit '+im_dest+' '+root_d+'_z -z')
-    #file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
 
     # Split mask volume along z
     if mask:
         print '\nSplit mask volume...'
         sct.run(sct.fsloutput + 'fslsplit mask.nii.gz mask_z -z')
-        #file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
 
     im_dest_img = Image(im_dest)
     im_input_img = Image(im_input)
@@ -172,12 +183,12 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
         cmd = ('isct_antsRegistration '
                '--dimensionality 2 '
-               '--transform '+paramreg.algo+'['+paramreg.gradStep +
+               '--transform '+paramreg.algo+'['+str(paramreg.gradStep) +
                ants_registration_params[paramreg.algo.lower()]+'] '
                '--metric '+paramreg.metric+'['+root_d+'_z'+ num +'.nii' +','+root_i+'_z'+ num_2 +'.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-               '--convergence '+paramreg.iter+' '
-               '--shrink-factors '+paramreg.shrink+' '
-               '--smoothing-sigmas '+paramreg.smooth+'mm '
+               '--convergence '+str(paramreg.iter)+' '
+               '--shrink-factors '+str(paramreg.shrink)+' '
+               '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
                #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
                '--output [transform_' + num + ','+root_i+'_z'+ num_2 +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
@@ -203,7 +214,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 name_warp_null = 'warp_null_' + num + '.nii.gz'
                 name_warp_null_dest = 'warp_null_dest' + num + '.nii.gz'
                 name_warp_mat = 'transform_' + num + '0GenericAffine.mat'
-                #Generating null nifti warping fields
+                # Generating null nifti warping fields
                 nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_reg)
                 nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = sct.get_dimension(name_dest)
                 x_trans = [0 for i in range(nz)]
@@ -226,6 +237,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
             if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
                 # Split the warping fields into two for displacement along x and y before merge
+                # Need to separate the merge for x and y displacement as merge of 3d warping fields does not work properly
                 sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
                 sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
                 # List names of warping fields for futur merge
@@ -233,13 +245,12 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
                 list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
                 list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
-        #if an exception occurs with ants, take the last values for the transformation
+        # if an exception occurs with ants, take the last value for the transformation
         except:
                 if paramreg.algo == 'Rigid' or paramreg.algo == 'Translation':
                     x_displacement[i] = x_displacement[i-1]
                     y_displacement[i] = y_displacement[i-1]
                     theta_rotation[i] = theta_rotation[i-1]
-
 
 
                 if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
@@ -255,10 +266,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                     list_warp_y.append('transform_'+num+'0Warp_y.nii.gz')
                     list_warp_y_inv.append('transform_'+num+'0InverseWarp_y.nii.gz')
 
-        #TO DO: different treatment for other algo
-
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
-        print'\nMerge along z of the warping fields...' #need to separate the merge for x and y displacement
+        print'\nMerge along z of the warping fields...'
         sct.run('fslmerge -z ' + name_warp_final + '_x ' + " ".join(list_warp_x))
         sct.run('fslmerge -z ' + name_warp_final + '_x_inverse ' + " ".join(list_warp_x_inv))
         sct.run('fslmerge -z ' + name_warp_final + '_y ' + " ".join(list_warp_y))
@@ -284,13 +293,23 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp)
     if paramreg.algo == 'Rigid':
-        return x_displacement, y_displacement, theta_rotation   # check if the displacement are not inverted (x_dis = -x_disp...)   theta is in radian
+        return x_displacement, y_displacement, theta_rotation
     if paramreg.algo == 'Translation':
         return x_displacement, y_displacement
 
 
 
 def numerotation(nb):
+    """Indexation of number for matching fslsplit's index.
+
+    Given a slice number, this function returns the corresponding number in fslsplit indexation system.
+
+    input:
+        nb: the number of the slice (type: int)
+
+    output:
+        nb_output: the number of the slice for fslsplit (type: string)
+    """
     if nb < 0:
         print 'ERROR: the number is negative.'
         sys.exit(status = 2)
@@ -308,30 +327,29 @@ def numerotation(nb):
     return nb_output
 
 
+def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
+    """Generation of a warping field towards an image and given transformation parameters.
 
-# FUNCTION REGULARIZE
-# input: x_displacement,y_displacement
-# output: x_displacement_reg,y_displacement_reg
-# use msct_smooth smoothing window
+    Given a destination image and transformation parameters this functions creates a NIFTI 3D warping field that can be
+    applied afterwards. The transformation parameters corresponds to a slice-by-slice registration of images, thus the
+    transformation parameters must be precised for each slice of the image.
 
+    inputs:
+        im_dest: name of destination image (type: string)
+        x_trans: list of translations along x axis for each slice (type: list, length: height of im_dest)
+        y_trans: list of translations along y axis for each slice (type: list, length: height of im_dest)
+        theta_rot[optional]: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
+        center_rotation[optional]: pixel coordinates in plan xOy of the wanted center of rotation (type: list,
+            length: 2, example: [0,ny/2])
+        fname[optional]: name of output warp (type: string)
+        verbose: display parameter (type: int)
 
-
-
-# FUNCTION: generate warping field that is homogeneous by slice
-#input:
-#   image_destination to recover the header
-#   x_trans in ITK'S coordinate system -x_trans in fslview coordinate system
-#   y_trans in ITK'S and fslview's coordinate systems
-#   theta_rot in ITK'S coordinate system (minus theta for fslview)
-#   fname_warp
-#   center_rotation if different from the middle of the image (in fslview coordinate system)
-#   matrix_def for affine transformation
-
-def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, matrix_def=None, fname='warping_field.nii.gz', verbose=1):
+    output:
+        creation of a warping field of name 'fname' with an header similar to the destination image.
+    """
     from nibabel import load
     from math import cos, sin
     from sct_orientation import get_orientation
-    from numpy import matrix
 
     #Make sure image is in rpi format
     sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
@@ -354,8 +372,8 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Center of rotation
     if center_rotation == None:
-        x_a = int(round(nx/2)) # int(round(nx/2))-200
-        y_a = int(round(ny/2)) # 0
+        x_a = int(round(nx/2))
+        y_a = int(round(ny/2))
     else:
         x_a = center_rotation[0]
         y_a = center_rotation[1]
@@ -363,7 +381,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
     # Calculate displacement for each voxel
     data_warp = zeros(((((nx, ny, nz, 1, 3)))))
     # For translations
-    if theta_rot == None and matrix_def == None:
+    if theta_rot == None:
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
@@ -392,30 +410,8 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
             for i in range(nx):
                 data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
                 data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
-    # # For affine transforms (not optimized)
-    # if theta_rot == None and matrix_def != None:
-    #     matrix_def_0 = [matrix_def[j][0][0] for j in range(len(matrix_def))]
-    #     matrix_def_1 = [matrix_def[j][0][1] for j in range(len(matrix_def))]
-    #     matrix_def_2 = [matrix_def[j][1][0] for j in range(len(matrix_def))]
-    #     matrix_def_3 = [matrix_def[j][1][1] for j in range(len(matrix_def))]
-    #     for i in range(nx):
-    #         for j in range(ny):
-    #             for k in range(nz):
-    #                 data_warp[i, j, k, 0, 0] = (matrix_def_0[k] - 1) * (i - x_a) + matrix_def_1[k] * (j - y_a) + x_trans[k]  # same equation as for rigid
-    #                 data_warp[i, j, k, 0, 1] = matrix_def_2[k] * (i - x_a) - (matrix_def_3[k] - 1) * (j - y_a) + y_trans[k] # same equation as for rigid (est ce qu'il y a vraiment un moins devant matrix_def_3?)
-    #                 data_warp[i, j, k, 0, 2] = 0
 
-    # For affine transforms with array (time optimization)
-    if theta_rot == None and matrix_def != None:
-        vector_i = [[[i-x_a],[j-y_a]] for i in range(nx) for j in range(ny)]
-        matrix_def_a = asarray([[[matrix_def[j][0][0], matrix_def[j][0][1]], [matrix_def[j][1][0], matrix_def[j][1][1]]] for j in range(len(matrix_def))])
-        for k in range(nz):
-            tmp = matrix_def_a[k] + array(((-1,0),(0,-1)))
-            result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-            for i in range(nx):
-                data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-                data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
-
+    # Generate warp file as a warping field
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
     img = nibabel.Nifti1Image(data_warp, None, hdr_warp)
