@@ -143,3 +143,7 @@ The following data were not selected:
 - TR: T1 data of poor quality (bad stitching)
 - AP: T2 data of poor quality
 - TT: T2 data of poor quality
+
+## Todo
+
+- add denoising (ornlm with h=10)
