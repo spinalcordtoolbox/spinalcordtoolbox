@@ -100,7 +100,7 @@ def main():
 
     # Estimate rigid transformation using msct_register_landmarks
     import msct_register_landmarks
-    (rotation_matrix, translation_array, moving_points_reg) = msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='xy', show=False)
+    (rotation_matrix, translation_array, moving_points_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='xy', show=False)
 
     # writing rigid transformation file
     text_file = open("curve2straight_rigid.txt", "w")
@@ -112,7 +112,8 @@ def main():
         rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
         rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1],
         translation_array[0, 2]))
-    text_file.write("FixedParameters: 0 0 0\n")
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (
+        points_moving_barycenter[0], points_moving_barycenter[1], points_moving_barycenter[2]))
     text_file.close()
 
     # Apply rigid transformation
