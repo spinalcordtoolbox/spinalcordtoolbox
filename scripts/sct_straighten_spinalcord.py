@@ -175,7 +175,7 @@ class SpinalCordStraightener(object):
         self.bspline_meshsize = '5x5x10'
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '2'
-        self.algo_landmark_rigid = 'translation-xy'#'rigid-decomposed'
+        self.algo_landmark_rigid = 'translation-xy'
         self.all_labels = 1
         self.use_continuous_labels = 1
 
@@ -450,24 +450,31 @@ class SpinalCordStraightener(object):
             landmark_curved_rigid = []
 
             if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None':
+                # converting landmarks straight and curved to physical coordinates
+                from msct_image import Image
+                image_curved = Image(fname_centerline_orient)
                 # Reorganize landmarks
                 points_fixed, points_moving = [], []
                 for coord in landmark_straight:
-                    points_fixed.append([coord.x, coord.y, coord.z])
+                    point_straight = image_curved.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+                    points_fixed.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
                 for coord in landmark_curved:
-                    points_moving.append([coord.x, coord.y, coord.z])
+                    point_curved = image_curved.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+                    points_moving.append([point_curved[0][0], point_curved[0][1], point_curved[0][2]])
 
+                points_moving_barycenter = [0.0, 0.0, 0.0]
                 # Register curved landmarks on straight landmarks based on python implementation
                 sct.printv('\nComputing rigid transformation (algo='+self.algo_landmark_rigid+') ...', verbose)
                 import msct_register_landmarks
                 (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(
-                    points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=True)
+                    points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=False)
 
                 # reorganize registered pointsx
-
+                image_curved = Image(fname_centerline_orient)
                 for index_curved, ind in enumerate(range(0, len(points_moving_reg), 1)):
                     coord = Coordinate()
-                    coord.x, coord.y, coord.z, coord.value = points_moving_reg[ind][0], points_moving_reg[ind][1], points_moving_reg[ind][2], index_curved+1
+                    point_curved = image_curved.transfo_phys2continuouspix([[points_moving_reg[ind][0], points_moving_reg[ind][1], points_moving_reg[ind][2]]])
+                    coord.x, coord.y, coord.z, coord.value = point_curved[0][0], point_curved[0][1], point_curved[0][2], index_curved+1
                     landmark_curved_rigid.append(coord)
 
                 # Create volumes containing curved and straight landmarks
@@ -524,7 +531,7 @@ class SpinalCordStraightener(object):
                     text_file.write("#Transform 0\n")
                     text_file.write("Transform: AffineTransform_double_3_3\n")
                     text_file.write("Parameters: 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 %.9f %.9f %.9f\n" % (
-                        -translation_array[0, 0], translation_array[0, 1], -translation_array[0, 2]))
+                        translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
                     text_file.write("FixedParameters: 0 0 0\n")
                     text_file.close()
 
@@ -536,12 +543,8 @@ class SpinalCordStraightener(object):
                         rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0],
                         rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
                         rotation_matrix[2, 2]))
-                    from msct_image import Image
-                    image_input = Image(fname_centerline_orient)
-                    points_moving_barycenter = image_input.transfo_pix2phys(
-                        [[points_moving_barycenter[0,0], points_moving_barycenter[0,1], points_moving_barycenter[0,2]]])
                     text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (
-                        points_moving_barycenter[0][0], points_moving_barycenter[0][1], points_moving_barycenter[0][2]))
+                        points_moving_barycenter[0,0], points_moving_barycenter[0,1], points_moving_barycenter[0,2]))
                     text_file.close()
                 else:
                     # writing rigid transformation file
@@ -552,13 +555,9 @@ class SpinalCordStraightener(object):
                     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
                         rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2], rotation_matrix[1, 0],
                         rotation_matrix[1, 1], rotation_matrix[1, 2], rotation_matrix[2, 0], rotation_matrix[2, 1],
-                        rotation_matrix[2, 2], -translation_array[0, 0], translation_array[0, 1],
-                        -translation_array[0, 2]))
-                    # transforming pix coord to phys coordinates
-                    from msct_image import Image
-                    image_input = Image(fname_centerline_orient)
-                    points_moving_barycenter = image_input.transfo_pix2phys([[points_moving_barycenter[0], points_moving_barycenter[1], points_moving_barycenter[2]]])
-                    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0][0], points_moving_barycenter[0][1], points_moving_barycenter[0][2]))
+                        rotation_matrix[2, 2], translation_array[0, 0], translation_array[0, 1],
+                        translation_array[0, 2]))
+                    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0], points_moving_barycenter[1], points_moving_barycenter[2]))
                     text_file.close()
 
             else:
@@ -707,7 +706,6 @@ class SpinalCordStraightener(object):
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
             print 'TEST: ', self.algo_landmark_rigid
             if self.algo_landmark_rigid == 'rigid-decomposed':
-                print 'HOLLLLLAAAAAAAAAAA'
                 cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid1.txt tmp.warp_straight2curve.nii.gz'  # old
             else:
                 cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz' # old
