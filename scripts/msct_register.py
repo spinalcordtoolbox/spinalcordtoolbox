@@ -20,7 +20,7 @@ from sct_register_multimodal import Paramreg
 
 
 
-def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step=0, type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step='0', type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                   warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, verbose=0):
     """Slice-by-slice regularized registration by translation of two segmentations.
 
@@ -72,7 +72,7 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Translation', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                     fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -126,7 +126,7 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Rigid', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                               ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -184,7 +184,7 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='Affine', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Affine', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -273,7 +273,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     save(img_inverse, filename=warp_inverse_out)
     print'\tFile ' + warp_inverse_out + ' saved.'
 
-def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='SyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='SyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                             fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -361,7 +361,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     print'\tFile ' + warp_inverse_out + ' saved.'
 
 
-def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step=0, type='im', algo='BSplineSyN', metric='MeanSquares', iter= 10, shrink=1, smooth=0, gradStep=0.5),
+def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='BSplineSyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                    fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
