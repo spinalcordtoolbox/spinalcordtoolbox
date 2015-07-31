@@ -43,7 +43,7 @@ class Pretreatments:
 
         self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=75)
 
-        self.treated_target = self.t2star[:-7] + '_seg_in_croped.nii.gz'
+        self.treated_target = sct.extract_fname(self.t2star)[1] + '_seg_in_croped.nii.gz'
 
         self.level_fname = None
         if t2_data is not None:
@@ -91,6 +91,7 @@ class FullGmSegmentation:
         self.gm_seg = None
         self.res_names = {}
         self.dice_name = None
+        self.hausdorff_name = None
 
         self.segmentation_pipeline()
         os.chdir('..')
@@ -121,8 +122,8 @@ class FullGmSegmentation:
         self.post_treatments()
 
         if self.ref_gm_seg is not None:
-            sct.printv('Computing Dice coefficient ...', verbose=self.param.verbose, type='normal')
-            self.dice_name = self.validation()
+            sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.param.verbose, type='normal')
+            self.dice_name, self.hausdorff_name = self.validation()
 
     # ------------------------------------------------------------------------------------------------------------------
     def post_treatments(self):
@@ -132,7 +133,7 @@ class FullGmSegmentation:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
             sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s RPI')
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(self.pretreat.treated_target[:-7]):] + '.nii.gz'
+            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.pretreat.treated_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
@@ -176,17 +177,22 @@ class FullGmSegmentation:
         res_wm_seg_bin.file_name = 'res_wm_seg_bin'
         res_wm_seg_bin.ext = '.nii.gz'
         res_wm_seg_bin.save()
+
+        # Dice
         try:
             status_gm, output_gm = sct.run('sct_dice_coefficient ref_gm_seg.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             sct.run('c3d res_gm_seg_bin.nii.gz  ref_gm_seg.nii.gz -reslice-identity -o ref_in_res_space_gm.nii.gz ')
+            sct.run('fslmaths ref_in_res_space_gm.nii.gz -thr 0.1 ref_in_res_space_gm.nii.gz')
             status_gm, output_gm = sct.run('sct_dice_coefficient ref_in_res_space_gm.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
         try:
             status_wm, output_wm = sct.run('sct_dice_coefficient ref_wm_seg.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             sct.run('c3d res_wm_seg_bin.nii.gz  ref_wm_seg.nii.gz -reslice-identity -o ref_in_res_space_wm.nii.gz ')
+            sct.run('fslmaths ref_in_res_space_wm.nii.gz -thr 0.1 ref_in_res_space_wm.nii.gz')
             status_wm, output_wm = sct.run('sct_dice_coefficient ref_in_res_space_wm.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
-        dice_name = 'dice_' + self.param.res_type + '.txt'
+
+        dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
         dice_fic = open('../' + dice_name, 'w')
         if self.param.res_type == 'prob':
             dice_fic.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
@@ -197,7 +203,11 @@ class FullGmSegmentation:
         dice_fic.close()
         # sct.run(' mv ./' + dice_name + ' ../')
 
-        return dice_name
+        hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
+        sct.run('sct_compute_hausdorff_distance.py -i ' + res_gm_seg_bin.absolutepath + ' -r ' + im_ref_gm_seg.absolutepath + ' -t 1 -o ' + hd_name + ' -v ' + str(self.param.verbose))
+        sct.run('mv ./' + hd_name + ' ../')
+
+        return dice_name, hd_name
 
 
 
