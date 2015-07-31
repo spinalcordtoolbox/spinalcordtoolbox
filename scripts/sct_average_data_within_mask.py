@@ -117,7 +117,7 @@ def main():
     data = asarray(data)
     weight = asarray(weight)
     n = len(data)
-    # weighted_average = mean(data / weight)
+    # compute weighted_average
     weighted_average = sum(data*weight) / sum(weight)
     # compute weighted STD
     weighted_std = sqrt(sum(weight*(data-weighted_average)**2) / ( (n/(n-1)) * sum(weight) ))
