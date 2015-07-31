@@ -238,10 +238,10 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             elif transfo_type == 'SyN':
                 transfo_params = ',1,1'
             gradientstep = 0.5  # 0.3
-            metric = 'MeanSquares'
-            metric_params = ',1,4'  # ',5'
-            # metric = 'MI'
-            # metric_params = ',1,2'
+            # metric = 'MeanSquares'
+            # metric_params = ',1,4'  # ',5'
+            metric = 'MI'
+            metric_params = ',1,2'
             niter = 5  # 20
             smooth = 0
             shrink = 1
@@ -613,7 +613,7 @@ def save_by_slice(dic_dir):
                     path_file_levels = subject_path + '/' + file_name
                     if 'IRP' not in file_name:
                         sct.run('sct_orientation -i ' + subject_path + '/' + file_name + ' -s IRP')
-                        path_file_levels = subject_path + '/' + file_name[:-7] + '_IRP.nii.gz'
+                        path_file_levels = subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
 
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
@@ -703,15 +703,15 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     orientation = orientation[4:7]
     if orientation != 'RPI':
         sct.run('sct_orientation -i ' + fname + ' -s RPI')
-        fname = fname[:-7] + '_RPI.nii.gz'
+        fname = sct.extract_fname(fname)[1] + '_RPI.nii.gz'
     print fname
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
     print 'BEFORE RESAMPLING px, py, pz: ', px, py, pz
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
-        name_pad = fname[:-7] + '_pad.nii.gz'
-        name_resample = name_pad[:-7] + suffix
-        # name_croped = name_resample[:-7] + '_croped.nii.gz'
+        name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
+        name_resample = sct.extract_fname(name_pad)[1] + suffix
+        # name_croped = sct.extract_fname(name_resample)[1] + '_croped.nii.gz'
         if binary:
             interpolation = 'NearestNeighbor'
         sct.run('c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
@@ -729,18 +729,18 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
 
         if orientation != 'RPI':
             sct.run('sct_orientation -i ' + name_resample + ' -s ' + orientation)
-            name_resample = name_resample[:-7] + '_' + orientation + '.nii.gz'
+            name_resample = sct.extract_fname(name_resample)[1] + '_' + orientation + '.nii.gz'
         return name_resample
     else:
         if orientation != 'RPI':
             sct.run('sct_orientation -i ' + fname + ' -s ' + orientation)
-            fname = fname[:-7] + '_' + orientation + '.nii.gz'
+            fname = sct.extract_fname(fname)[1] + '_' + orientation + '.nii.gz'
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def dataset_pretreatments(path_to_dataset):
+def dataset_pretreatments(path_to_dataset, denoise=True):
     """
     pretreatment function for a dataset of 3D images to be integrated to the model
     the dataset should contain for each subject :
@@ -771,20 +771,34 @@ def dataset_pretreatments(path_to_dataset):
                 elif 'seg' in file_name and 'gm' not in file_name:
                     scseg = file_name
 
-            t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
-            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
-            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
-
             new_names = []
             for f_name in [t2star, scseg, gmseg]:
                 status, output = sct.run('sct_orientation -i ' + f_name)
-                if output != 'RPI':
+                if output[4:7] != 'RPI':
                     status, output = sct.run('sct_orientation -i ' + f_name + ' -s RPI')
                     new_names.append(output.split(':')[1][1:-1])
+                else:
+                    new_names.append(f_name)
+
             t2star = new_names[0]
             scseg = new_names[1]
             gmseg = new_names[2]
 
+            t2star = resample_image(t2star, npx=axial_pix_dim, npy=axial_pix_dim, interpolation=interpolation)
+            scseg = resample_image(scseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+            gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
+
+            if denoise:
+                from ornlm import ornlm
+                t2star_im = Image(t2star)
+                t2star_data = t2star_im.data.astype(np.float64)
+                denoised = np.array(ornlm.ornlm(t2star_data, 3, 1, np.max(t2star_data)*0.01))
+                t2star = sct.extract_fname(t2star)[1] + '_denoised.nii.gz'
+                denoised_t2star_im = Image(param=denoised, hdr=t2star_im.hdr)
+                denoised_t2star_im.file_name = sct.extract_fname(t2star)[1]
+                denoised_t2star_im.path = t2star_im.path
+                denoised_t2star_im.ext = '.nii.gz'
+                denoised_t2star_im.save()
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
             sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
@@ -1078,6 +1092,7 @@ def leave_one_out_by_subject(param):
     gm_dice_file = open('gm_dice_coeff.txt', 'w')
     wm_csa_file = open('wm_csa.txt', 'w')
     gm_csa_file = open('gm_csa.txt', 'w')
+    hd_file = open('hd.txt', 'w')
     n_slices = 0
     e = None
 
@@ -1114,7 +1129,7 @@ def leave_one_out_by_subject(param):
                 sc_seg = ''
                 ref_gm_seg = ''
                 level = ''
-                for file_name in os.listdir(subject_dir): # 3d files
+                for file_name in os.listdir(subject_dir):  # 3d files
 
                     if 'im' in file_name:
                         target = subject_dir + '/' + file_name
@@ -1173,9 +1188,28 @@ def leave_one_out_by_subject(param):
 
                     gm_dice_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + gm_dice + ' ; nslices: ' + str(n_slices_model) + '\n')
 
+                # hausdorff distance
+                subject_hd = open(full_gmseg.hausdorff_name, 'r')
+                hd_res_list = subject_hd.readlines()[1:-4]
+                for line in hd_res_list:
+                    n_slice, res_slice = line.split(':')
+                    hd, med1, med2 = res_slice.split('-')
+                    n_slice = n_slice[-1:]
+                    med1 = float(med1)
+                    med2 = float(med2[:-2])
+
+                    if int(n_slice) < 10:
+                        target_slice = 'slice0' + n_slice
+                    else:
+                        target_slice = 'slice' + n_slice
+                    slice_level = subject_slices_levels[target_slice]
+                    hd_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + str(hd) + ' - ' + str(max(med1, med2)) + '\n')
+
+
                 # error map
                 # TODO : error map by level
 
+                # csa
                 sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['corrected_wm_seg'] + ' -p csa')
                 tmp_csa_file = open('csa.txt')
                 csa_lines = tmp_csa_file.readlines()
@@ -1541,8 +1575,8 @@ if __name__ == "__main__":
                           example='dictionary/')
         parser.add_option(name="-loocv",
                           type_value=[[','], 'str'],# "folder",
-                          description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by : without white space"
-                                      "dictionary_by_slice/,dictionary_3d/,use_levels,weight_param,registration_type,z_regularisation",
+                          description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by \":\" without white space "
+                                      "dictionary-by-slice/,dictionary3d/,use_levels,weight_param,registration_type,z_regularisation",
                           mandatory=False,
                           example='dic_by_slice/,dic_3d/,1,1.2,Rigid:Affine,1') # 'dictionary/')
         parser.add_option(name="-error-map",
