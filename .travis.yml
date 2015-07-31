@@ -1,6 +1,11 @@
 language: python
 python:
   - 2.7
+  
+notifications:
+  slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
+    on_success: :change
+    on_failure: always
 
 install:
 

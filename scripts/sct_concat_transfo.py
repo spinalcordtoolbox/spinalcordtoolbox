@@ -87,9 +87,9 @@ def main():
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_dest)
+    sct.check_file_exist(fname_dest, verbose)
     for i in range(len(fname_warp_list)):
-        sct.check_file_exist(fname_warp_list[i])
+        sct.check_file_exist(fname_warp_list[i], verbose)
 
     # Get output folder and file name
     if fname_warp_final == '':

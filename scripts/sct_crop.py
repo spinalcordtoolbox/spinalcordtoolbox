@@ -107,7 +107,7 @@ def main():
 
     # Check file existence
     sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_data)
+    sct.check_file_exist(fname_data, verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)

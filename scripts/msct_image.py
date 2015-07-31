@@ -13,7 +13,6 @@
 #########################################################################################
 
 
-
 class Image(object):
     """
 
@@ -38,6 +37,8 @@ class Image(object):
             self.hdr = hdr
 
         self.dim = None
+
+        self.verbose = verbose
 
         # load an image from file
         if type(param) is str:
@@ -90,20 +91,21 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
+        from sct_utils import check_file_exist, printv, extract_fname, get_dimension
         from sct_orientation import get_orientation
 
         check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
-            printv('Error: make sure ' + path + ' is an image.')
+            printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
-        self.dim = self.data.shape
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
+        nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        self.dim = [nx, ny, nz]
 
     def setFileName(self, filename):
         from sct_utils import extract_fname
@@ -214,7 +216,6 @@ class Image(object):
         from nibabel import Nifti1Image, save
         from sct_utils import printv
 
-
         if type != '':
             self.changeType(type)
 
@@ -236,7 +237,7 @@ class Image(object):
             slices.append(slc.flatten())
         return slices
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -253,6 +254,14 @@ class Image(object):
                 list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         except Exception, e:
             printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+
+        X, Y, Z = (self.data > 0.0).nonzero()
+        if coordValue:
+            from msct_types import CoordinateValue
+            list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        else:
+            from msct_types import Coordinate
+            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
 
         if sorting is not None:
             if reverse_coord not in [True, False]:
@@ -436,6 +445,107 @@ class Image(object):
         imgplot.set_cmap('gray')
         imgplot.set_interpolation('nearest')
         show()
+
+    def transfo_pix2phys(self, coordi=None):
+        """
+
+
+        This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
+        (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
+        coordinates of the points in the space of the image.
+
+        Example:
+        img = Image('file.nii.gz')
+        coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
+        coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
+
+        :return:
+        """
+        from numpy import zeros, array, transpose, dot, asarray
+
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3,0:3]
+        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+
+        if coordi != None:
+            coordi_pix = transpose(asarray(coordi))
+            coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
+            coordi_phys_list = coordi_phys.tolist()
+
+            return coordi_phys_list
+
+    def transfo_phys2pix(self, coordi=None):
+        """
+        This function returns the pixels coordinates of all points of 'coordi'
+        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+
+
+        :return:
+        """
+        from numpy import array, transpose, dot, asarray
+        from numpy.linalg import inv
+
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3,0:3]
+        m_f2p_transfo = inv(m_p2f_transfo)
+
+        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+
+        if coordi != None:
+            coordi_phys = transpose(asarray(coordi))
+            coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))
+            coordi_pix_tmp = coordi_pix.tolist()
+            coordi_pix_list = [[int(round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
+
+            return coordi_pix_list
+
+    def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
+        """
+        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
+        This vector is the pixel position of the point in the space of the image.
+        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
+
+        If coordi is different from none:
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+
+
+        :return:
+        """
+        from numpy import array, transpose, dot, asarray
+        from numpy.linalg import inv
+        from copy import copy
+
+        m_p2f = self.hdr.get_sform()
+        m_p2f_transfo = m_p2f[0:3, 0:3]
+        m_f2p_transfo = inv(m_p2f_transfo)
+        # e = dot(m_p2f_transfo, m_f2p_transfo)
+
+        coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+
+        if coordi != None:
+            coordi_phys = transpose(asarray(coordi))
+            coordi_pix = transpose(dot(m_f2p_transfo, (coordi_phys - coord_origin)))
+            coordi_pix_tmp = coordi_pix.tolist()
+            coordi_pix_list = [[coordi_pix_tmp[j][i] for i in range(len(coordi_pix_tmp[j]))] for j in
+                               range(len(coordi_pix_tmp))]
+
+            return coordi_pix_list
+
+
+def pad_image(fname_in, file_out, padding):
+    import sct_utils as sct
+    sct.run('isct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
+    return
+
+
+def find_zmin_zmax(fname):
+    import sct_utils as sct
+    # crop image
+    status, output = sct.run('sct_crop_image -i '+fname+' -dim 2 -bmax -o tmp.nii')
+    # parse output
+    zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
+    return int(zmin), int(zmax)
+
 
 # =======================================================================================================================
 # Start program
