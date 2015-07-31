@@ -154,7 +154,7 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting)
+        fname_output = extract_centerline(fname_segmentation, remove_temp_files, name_output=name_output, verbose=param.verbose, algo_fitting=param.algo_fitting)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
@@ -166,7 +166,9 @@ def main():
         sct.printv('\nDone!', param.verbose)
         if (volume_output):
             sct.printv('Output CSA volume: '+name_output, param.verbose, 'info')
-        sct.printv('Output CSA file: '+param.fname_csa+'\n', param.verbose, 'info')
+        if slices or vert_lev:
+            sct.printv('Output CSA file (averaged): csa_mean.txt', param.verbose, 'info')
+        sct.printv('Output CSA file (all slices): '+param.fname_csa+'\n', param.verbose, 'info')
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -220,7 +222,7 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def extract_centerline(fname_segmentation, remove_temp_files, name_output='', verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -309,18 +311,23 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     sct.printv('\nWrite NIFTI volumes...', verbose)
     img = nibabel.Nifti1Image(data, None, hdr)
     nibabel.save(img, 'centerline.nii.gz')
-    sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, verbose)
+    # Define name if output name is not specified
+    if name_output=='csa_volume.nii.gz' or name_output=='':
+        # sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, verbose)
+        name_output = file_data+'_centerline'+ext_data
+    sct.generate_output_file('centerline.nii.gz', name_output, verbose)
 
     # create a txt file with the centerline
-    file_name = file_data+'_centerline'+'.txt'
+    path, rad_output, ext = sct.extract_fname(name_output)
+    name_output_txt = rad_output + '.txt'
     sct.printv('\nWrite text file...', verbose)
-    file_results = open(file_name, 'w')
+    file_results = open(name_output_txt, 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
     file_results.close()
 
     # Copy result into parent folder
-    sct.run('cp '+file_name+' ../')
+    sct.run('cp '+name_output_txt+' ../')
 
     del data
 
@@ -330,14 +337,14 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # Change orientation of the output centerline into input orientation
     sct.printv('\nOrient centerline image to input orientation: ' + orientation, verbose)
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    set_orientation(path_tmp+'/'+file_data+'_centerline'+ext_data, orientation, file_data+'_centerline'+ext_data)
+    set_orientation(path_tmp+'/'+name_output, orientation, name_output)
 
    # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf '+path_tmp, verbose)
 
-    return file_data+'_centerline'+ext_data
+    return name_output
 
 
 # compute_csa
@@ -490,13 +497,12 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
         path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(fname_segmentation)
         create_info_label('info_label.txt', path_tmp_extract_metric, file_fname_seg+ext_fname_seg)
 
+        # average CSA
         if slices:
-            # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -z "+slices)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
         if vert_levels:
             sct.run('cp -R '+abs_path_to_template+' .')
-            # average CSA
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o "+sct.slash_at_the_end(path_data)+"mean_csa -v "+vert_levels)
+            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -v "+vert_levels)
 
         os.chdir('..')
 
@@ -655,7 +661,7 @@ OPTIONAL ARGUMENTS
   -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
   -b {0,1}              Outputs a volume in which each slice\'s value is equal to the CSA in
                           mm^2. Default="""+str(param_default.volume_output)+"""
-  -o <output_name>      Name of the output volume if -b 1. Default="""+str(param_default.name_output)+"""
+  -o <output_name>      Name of the output volume. Default="""+str(param_default.name_output)+"""
   -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p csa\").
                           Example: 5:23. First slice is 0.
                           You can also select specific slices using commas. Example: 0,2,3,5,12

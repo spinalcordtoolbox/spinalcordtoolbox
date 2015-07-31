@@ -33,13 +33,19 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose='1'):
-        self.image_input = Image(fname_label)
+                 coordinates=None, verbose=1):
+        self.image_input = Image(fname_label, verbose=verbose)
 
         if fname_ref is not None:
-            self.image_ref = Image(fname_ref)
+            self.image_ref = Image(fname_ref, verbose=verbose)
 
-        self.fname_output = fname_output
+        if isinstance(fname_output, list):
+            if len(fname_output) == 1:
+                self.fname_output = fname_output[0]
+            else:
+                self.fname_output = fname_output
+        else:
+            self.fname_output = fname_output
         self.cross_radius = cross_radius
         self.dilate = dilate
         self.coordinates = coordinates
@@ -61,6 +67,8 @@ class ProcessLabels(object):
             self.fname_output = None
         elif type_process == 'remove':
             self.output_image = self.remove_label()
+        elif type_process == 'remove-symm':
+            self.output_image = self.remove_label(symmetry=True)
         elif type_process == 'centerline':
             self.extract_centerline()
         elif type_process == 'display-voxel':
@@ -86,11 +94,12 @@ class ProcessLabels(object):
             self.output_image.setFileName(self.fname_output)
             if type_process != 'plan_ref':
                 self.output_image.save('minimize_int')
-            else: self.output_image.save()
+            else:
+                self.output_image.save()
 
 
     def cross(self):
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -136,7 +145,7 @@ class ProcessLabels(object):
         """
         This function creates a plan of thickness="width" and changes its value with an offset and a gap between labels.
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
 
@@ -151,11 +160,11 @@ class ProcessLabels(object):
         This function generate a plan in the reference space for each label present in the input image
         """
 
-        image_output = Image(self.image_ref)
+        image_output = Image(self.image_ref, self.verbose)
         image_output.data *= 0
 
-        image_input_neg = Image(self.image_input).copy()
-        image_input_pos = Image(self.image_input).copy()
+        image_input_neg = Image(self.image_input, self.verbose).copy()
+        image_input_pos = Image(self.image_input, self.verbose).copy()
         image_input_neg.data *=0
         image_input_pos.data *=0
         X, Y, Z = (self.image_input.data< 0).nonzero()
@@ -312,7 +321,7 @@ class ProcessLabels(object):
         Therefore, labels are incremented from top to bottom, assuming a RPI orientation
         Labels are assumed to be non-zero.
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
@@ -329,7 +338,7 @@ class ProcessLabels(object):
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
         image_output.data *= 0
         coordinates_input = self.image_input.getNonZeroCoordinates()
         coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
@@ -349,7 +358,7 @@ class ProcessLabels(object):
         :param side: string 'left' or 'right'. Side that will be copied on the other side.
         :return:
         """
-        image_output = Image(self.image_input)
+        image_output = Image(self.image_input, self.verbose)
 
         image_output[0:]
 
@@ -429,28 +438,53 @@ class ProcessLabels(object):
             # display info
             sct.printv('Label #' + str(i) + ': ' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ' --> ' +
                        str(coord.value), 1)
-            image_output.data[coord.x, coord.y, coord.z] = int(coord.value)
+            image_output.data[coord.x, coord.y, coord.z] = coord.value
 
         return image_output
 
-    def remove_label(self):
+    @staticmethod
+    def remove_label_coord(coord_input, coord_ref, symmetry=False):
+        """
+        coord_input and coord_ref should be sets of CoordinateValue in order to improve speed of intersection
+        :param coord_input: set of CoordinateValue
+        :param coord_ref: set of CoordinateValue
+        :param symmetry: boolean,
+        :return: intersection of CoordinateValue: list
+        """
+        from msct_types import CoordinateValue
+        if isinstance(coord_input[0], CoordinateValue) and isinstance(coord_ref[0], CoordinateValue) and symmetry:
+            coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
+            result_coord_input = [coord for coord in coord_input if coord in coord_intersection]
+            result_coord_ref = [coord for coord in coord_ref if coord in coord_intersection]
+        else:
+            result_coord_ref = coord_ref
+            result_coord_input = [coord for coord in coord_input if filter(lambda x: x.value == coord.value, coord_ref)]
+            if symmetry:
+                result_coord_ref = [coord for coord in coord_ref if filter(lambda x: x.value == coord.value, result_coord_input)]
+
+        return result_coord_input, result_coord_ref
+
+    def remove_label(self, symmetry=False):
         """
         This function compares two label images and remove any labels in input image that are not in reference image.
+        The symmetry option enables to remove labels from reference image that are not in input image
         """
-        image_output = Image(self.image_input)
-        coordinates_input = self.image_input.getNonZeroCoordinates()
-        coordinates_ref = self.image_ref.getNonZeroCoordinates()
+        image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
 
-        for coord in coordinates_input:
-            value = self.image_input.data[coord.x, coord.y, coord.z]
-            isInRef = False
-            for coord_ref in coordinates_ref:
-                # the following line could make issues when down sampling input, for example 21,00001 not = 21,0
-                if abs(coord.value - coord_ref.value) < 0.1:
-                    image_output.data[coord.x, coord.y, coord.z] = int(round(coord_ref.value))
-                    isInRef = True
-            if isInRef == False:
-                image_output.data[coord.x, coord.y, coord.z] = 0
+        result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
+                                                                       self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
+
+        for coord in result_coord_input:
+            image_output.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+
+        if symmetry:
+            image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
+            for coord in result_coord_ref:
+                image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
+            image_output_ref.setFileName(self.fname_output[1])
+            image_output_ref.save('minimize_int')
+
+            self.fname_output = self.fname_output[0]
 
         return image_output
 
@@ -481,7 +515,7 @@ class ProcessLabels(object):
             useful_notation = useful_notation + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ',' + str(coord.value)
         print 'Useful notation:'
         print useful_notation
-        return useful_notation
+        return coordinates_input
 
     def diff(self):
         """
@@ -544,14 +578,14 @@ if __name__ == "__main__":
                       mandatory=True,
                       example="t2_labels.nii.gz")
     parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="output volume.",
+                      type_value=[[','], "file_output"],
+                      description="output volume. For 'remove_symm' option, provide two names (for input and ref files) separated by a comma.",
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
+                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\nremove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names.\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",

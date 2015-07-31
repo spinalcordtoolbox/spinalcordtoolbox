@@ -20,9 +20,9 @@ import time
 
 import sct_utils as sct
 from sct_orientation import set_orientation
-from sct_register_multimodal import Paramreg, ParamregMultiStep, register, find_zmin_zmax
+from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
-from msct_image import Image
+from msct_image import Image, find_zmin_zmax
 
 
 # get path of the toolbox
@@ -270,6 +270,10 @@ def main():
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
     sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
+    # Remove unused label on template. Keep only label present in the input label image
+    sct.printv('\nRemove labels that do not correspond with each others.', verbose)
+    sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
+
     # Estimate affine transfo: straight --> template (landmark-based)'
     sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
     sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
@@ -378,17 +382,13 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     # read labels
     from sct_label_utils import ProcessLabels
     processor = ProcessLabels(fname_labels)
-    label_list = processor.display_voxel().split(':')
-    # parse to get each label
-    # TODO: modify sct_label_utils to output list of coordinates instead of string.
+    label_list = processor.display_voxel()
     label_new_list = []
     for label in label_list:
-        label_sub = label.split(',')
-        label_sub_new = []
-        for i_label in range(0, 3):
-            label_single = round(int(label_sub[i_label])/sampling_factor[i_label])
-            label_sub_new.append(str(int(label_single)))
-        label_sub_new.append(str(int(float(label_sub[3]))))
+        label_sub_new = [str(int(round(int(label.x)/sampling_factor[0]))),
+                         str(int(round(int(label.y)/sampling_factor[1]))),
+                         str(int(round(int(label.z)/sampling_factor[2]))),
+                         str(int(float(label.value)))]
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels

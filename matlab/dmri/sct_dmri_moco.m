@@ -7,23 +7,24 @@ function sct_dmri_moco(varargin)
 %
 % EXAMPLES:
 % >> sct_dmri_moco()
-% >> sct_dmri_moco('data','qspace.nii.gz','bvec','bvecs.txt','crop','none','eddy',0)
+% >> sct_dmri_moco('data','qspace.nii.gz','bvec','bvecs.txt','crop','autobox','eddy',0)
 %
 % Option Names:
 %     bval  (bval text file)
 %     bvec (bvec text file)
-%     method : 'b0','dwi'*,'dwi_lowbvalue'
+%     scheme (Camino schemefile.. don't need bvec or bval then)
+%     method : 'b0','dwi','dwi_lowbvalue'*
 %     crop : 'manual', 'box', 'none'*, 'centerline', 'autobox'
 %     eddy : 0 | 1*
 %     interp : 'nearestneighbour', 'spline'*, 'sinc'
 %     gaussian_mask : <sigma>. Default: 0. Weigth with gaussian mask? Sigma in mm --> std of the kernel. Can be a vector ([sigma_x sigma_y])
-%     smooth_moco :   0 | 1*    
+%     smooth_moco :   0 | 1*   
 
 
 dbstop if error
 p = inputParser;
 crops = {'manual', 'box', 'none', 'centerline', 'autobox'};
-addOptional(p,'crop','none',@(x) any(validatestring(x,crops)));
+addOptional(p,'crop','autobox',@(x) any(validatestring(x,crops)));
 addOptional(p,'eddy',1,@isnumeric);
 moco_methods={'b0','dwi','dwi_lowbvalue','none'};
 addOptional(p,'method','dwi_lowbvalue',@(x) any(validatestring(x,moco_methods)));
@@ -31,6 +32,7 @@ addOptional(p,'crop_margin',25,@isnumeric);
 addOptional(p,'data','');
 addOptional(p,'bvec','');
 addOptional(p,'bval','');
+addOptional(p,'scheme','');
 addOptional(p,'smooth_moco',1,@isnumeric);
 addOptional(p,'apply_moco_on_croped',1,@isnumeric);
 interp={'nearestneighbour', 'spline', 'sinc'};
@@ -47,6 +49,11 @@ if isempty(in.data)
 else
     [sct.dmri.path, sct.dmri.file, ext] = fileparts(in.data); if ~isempty(sct.dmri.path), sct.dmri.path=[sct.dmri.path, filesep]; end; sct.dmri.file=[sct.dmri.file,ext];
 end
+
+if ~isempty(in.scheme)
+    [in.bvec, in.bval]=scd_scheme2bvecsbvals(in.scheme,sct_tool_remove_extension(in.scheme,1));
+end
+
 if isempty(in.bvec)
     [sct.dmri.file_bvecs,sct.dmri.path_bvecs] = uigetfile('*','Select bvecs file') ;
     if sct.dmri.file_bvecs==0, return; end
