@@ -18,8 +18,15 @@ class param:
         self.gapxy = 15.0  # millimeters or voxel
         self.cross = 'mm'
 # check if needed Python libraries are already installed or not
-import sys
+import sys, commands
 import getopt
+
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
+
 import sct_utils as sct
 import nibabel
 import os
@@ -34,9 +41,11 @@ def main():
     cross = param.cross
     x = ''
     y = ''
-        
+    zmin = ''
+    zmax = ''
+
     try:
-         opts, args = getopt.getopt(sys.argv[1:],'hi:x:y:c:t:v:')
+         opts, args = getopt.getopt(sys.argv[1:],'hi:x:y:s:e:c:t:v:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts :
@@ -48,10 +57,15 @@ def main():
             x = int(arg)
         elif opt in ('-y'):
             y = int(arg)
+        elif opt in ('-s'):
+            zmin = int(arg)
+        elif opt in ('-e'):
+            zmax = int(arg)
         elif opt in ('-c'):
             cross = arg    
         elif opt in ("-t"):
-            fname_template = arg                              
+            fname_template = arg
+
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -88,26 +102,47 @@ def main():
         hdr = file.get_header()
     
         data = data*0
-    
-        if cross == 'mm' : 
+
+        list_opts = []
+        for i in range(len(opts)):
+            list_opts.append(opts[i][0])
+
+        if cross == 'mm' :
             gapx = int(round(gapxy/px))
             gapy = int(round(gapxy/py))
-    
-            data[x,y,0] = 1
-            data[x,y,nz-1] = 2
-            data[x+gapx,y,nz-1] = 3
-            data[x-gapx,y,nz-1] = 4
-            data[x,y+gapy,nz-1] = 5
-            data[x,y-gapy,nz-1] = 6
+
+            if ("-s") in list_opts and ("-e") in list_opts and zmax < nz:
+                data[x,y,zmin] = 1
+                data[x,y,zmax] = 2
+                data[x+gapx,y,zmax] = 3
+                data[x-gapx,y,zmax] = 4
+                data[x,y+gapy,zmax] = 5
+                data[x,y-gapy,zmax] = 6
+            else:
+                data[x,y,0] = 1
+                data[x,y,nz-1] = 2
+                data[x+gapx,y,nz-1] = 3
+                data[x-gapx,y,nz-1] = 4
+                data[x,y+gapy,nz-1] = 5
+                data[x,y-gapy,nz-1] = 6
     
         if cross == 'voxel' :
             gapxy = int(gapxy)
-            data[x,y,0] = 1
-            data[x,y,nz-1] = 2
-            data[x+gapxy,y,nz-1] = 3
-            data[x-gapxy,y,nz-1] = 4
-            data[x,y+gapxy,nz-1] = 5
-            data[x,y-gapxy,nz-1] = 6
+
+            if ("-s") in list_opts and ("-e") in list_opts and zmax < nz:
+                data[x,y,zmin] = 1
+                data[x,y,zmax] = 2
+                data[x+gapx,y,zmax] = 3
+                data[x-gapx,y,zmax] = 4
+                data[x,y+gapy,zmax] = 5
+                data[x,y-gapy,zmax] = 6
+            else:
+                data[x,y,0] = 1
+                data[x,y,nz-1] = 2
+                data[x+gapx,y,nz-1] = 3
+                data[x-gapx,y,nz-1] = 4
+                data[x,y+gapy,nz-1] = 5
+                data[x,y-gapy,nz-1] = 6
     
         print '\nSave volume ...'
         hdr.set_data_dtype('float32') # set imagetype to uint8
@@ -137,25 +172,50 @@ def main():
             gapx = int(round(gapxy/px))
             gapy = int(round(gapxy/py))
 
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)),0] = 1
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)),nz-1] = 2
-            data_t[int(round(nx/2.0)) + gapx,int(round(ny/2.0)),nz-1] = 3
-            data_t[int(round(nx/2.0)) - gapx,int(round(ny/2.0)),nz-1] = 4
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapy,nz-1] = 5
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapy,nz-1] = 6
+            if ("-s") in list_opts and ("-e") in list_opts and zmax < nz:
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),zmin] = 1
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),zmax] = 2
+                data_t[int(round(nx/2.0)) + gapx,int(round(ny/2.0)),zmax] = 3
+                data_t[int(round(nx/2.0)) - gapx,int(round(ny/2.0)),zmax] = 4
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapy,zmax] = 5
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapy,zmax] = 6
+
+            else:
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),0] = 1
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),nz-1] = 2
+                data_t[int(round(nx/2.0)) + gapx,int(round(ny/2.0)),nz-1] = 3
+                data_t[int(round(nx/2.0)) - gapx,int(round(ny/2.0)),nz-1] = 4
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapy,nz-1] = 5
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapy,nz-1] = 6
  
         if cross == 'voxel':
             
             gapxy = int(gapxy)
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)),0] = 1
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)),nz-1] = 2
-            data_t[int(round(nx/2.0)) + gapxy,int(round(ny/2.0)),nz-1] = 3
-            data_t[int(round(nx/2.0)) - gapxy,int(round(ny/2.0)),nz-1] = 4
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapxy,nz-1] = 5
-            data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapxy,nz-1] = 6
+
+            # data_t[int(round(nx/2.0)),int(round(ny/2.0)),0] = 1
+            # data_t[int(round(nx/2.0)),int(round(ny/2.0)),nz-1] = 2
+            # data_t[int(round(nx/2.0)) + gapxy,int(round(ny/2.0)),nz-1] = 3
+            # data_t[int(round(nx/2.0)) - gapxy,int(round(ny/2.0)),nz-1] = 4
+            # data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapxy,nz-1] = 5
+            # data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapxy,nz-1] = 6
+
+            if ("-s") in list_opts and ("-e") in list_opts and zmax < nz:
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),zmin] = 1
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),zmax] = 2
+                data_t[int(round(nx/2.0)) + gapxy,int(round(ny/2.0)),zmax] = 3
+                data_t[int(round(nx/2.0)) - gapxy,int(round(ny/2.0)),zmax] = 4
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapxy,zmax] = 5
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapxy,zmax] = 6
+
+            else:
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),0] = 1
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)),nz-1] = 2
+                data_t[int(round(nx/2.0)) + gapxy,int(round(ny/2.0)),nz-1] = 3
+                data_t[int(round(nx/2.0)) - gapxy,int(round(ny/2.0)),nz-1] = 4
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapxy,nz-1] = 5
+                data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapxy,nz-1] = 6
             
-            
-    
+
         print '\nSave volume ...'
         hdr_t.set_data_dtype('float32') # set imagetype to uint8
         # save volume
@@ -179,6 +239,7 @@ DESCRIPTION
 
   Create a cross at the top and bottom of the volume (i.e., Zmin and Zmax). This script assumes that
   the input image is a cropped straighten spinalcord volume. Does the same for the template if inputed.
+  Zmin and zmax can also be specified if needed.
 
 USAGE
   """+os.path.basename(__file__)+"""  -i <input_volume> -x <x_centerline> -y <y_centerline>
@@ -189,6 +250,8 @@ MANDATORY ARGUMENTS
   -y                        y coordinate of the centerline. See sct_detect_extrema.py
  
 OPTIONAL ARGUMENTS
+  -s                         z bottom coordinate
+  -e                         z top coordinate
   -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
   -t <template>              template if you want to create landmarks in 
                              the template space

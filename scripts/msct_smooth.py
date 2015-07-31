@@ -12,6 +12,7 @@
 #########################################################################################
 
 from scipy.interpolate import splrep, splev
+import sct_utils as sct
 
 
 #=======================================================================================================================
@@ -34,7 +35,7 @@ def spline_2D(z_centerline, x_centerline):
     print (m - sqrt(2*m))*(sigma**2), (m + sqrt(2*m))*(sigma**2)
 
     smoothing_param = (((m + sqrt(2*m))*(sigma**2))+((m - sqrt(2*m))*(sigma**2)))/2
-    print('\nSmoothing results with spline...')
+    sct.printv('\nSmoothing results with spline...')
     tck = splrep(z_centerline, x_centerline, s = smoothing_param)
     x_centerline_fit = splev(z_centerline, tck)
     return x_centerline_fit
@@ -185,11 +186,11 @@ def opt_f(x, y, z):
             msex = mean_squared_error(x, x_fit)
             msey = mean_squared_error(y, y_fit)
 
-            if msx < msx_min:
-                msx_min = msx
+            if msex < msx_min:
+                msx_min = msex
                 f_opt_x = f
-            if msy < msy_min:
-                msy_min = msy
+            if msey < msy_min:
+                msy_min = msey
                 f_opt_y = f
 
             x_fit_d, y_fit_d, z_d = evaluate_derivative_3D(x_fit, y_fit, z)
@@ -252,7 +253,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y.reverse()
     z.reverse()"""
           
-    print '\nFitting centerline using B-spline approximation...'
+    sct.printv('\nFitting centerline using B-spline approximation...', verbose)
     data = [[x[n], y[n], z[n]] for n in range(len(x))]
 
     # if control_points == 0:
@@ -410,6 +411,19 @@ def b_spline_python(x, y, z, s = 0, k = 3, nest = -1):
 # lowpass filter  
 #=======================================================================================================================
 def lowpass(y):
+    """Signal smoothing by low pass filtering.
+
+    This method is based on the application of a butterworth low pas filter of order 5 to the signal. It skims out the
+    higher frequencies that are responsible for abrupt changes thus smoothing the signal. Output edges are different
+    from input edges.
+
+    input:
+        y: input signal (type: list)
+
+    output:
+        y_smooth : filtered signal (type: ndarray)
+
+    """
     from scipy.fftpack import fftfreq, fft
     from scipy.signal import filtfilt, iirfilter
     from numpy import abs, amax
@@ -463,13 +477,13 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     in the begining and end part of the output signal.
 
     input:
-        x: the input signal
+        x: the input signal (type: array)
         window_len: the dimension of the smoothing window (in number of points); should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
 
     output:
-        the smoothed signal
+        y: the smoothed signal (type: array)
 
     example:
 
@@ -493,7 +507,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     # if x.size < window_len:
     #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
-        sct.printv('Window size is too small. No smoothing was applied.', 1, 'warning')
+        sct.printv('Window size is too small. No smoothing was applied.', verbose=verbose, type='warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
@@ -503,7 +517,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     #The number of points of the curve must be superior to int(window_length/(2.0*pz))
     if window_len > int(nb_points):
         window_len = int(nb_points)
-        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), 'warning')
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), verbose=verbose, type='warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
@@ -550,3 +564,153 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
         plt.show()
 
     return y
+
+
+
+def outliers_detection(data, type='median', factor=2, return_filtered_signal='no', verbose=0):
+    """Detect outliers within a signal.
+
+    This method is based on the comparison of the distance between points of the signal and the mean of the signal.
+    There are two types of detection process.
+        -'std' process compares the distance between the mean of the signal
+    and the points of the signal with the std. If the distance is superior to factor * std than the point is considered
+    as an outlier
+        -'median' process first detect extreme outliers using the Median Absolute Deviation (MAD) and then calculate the
+        std with the filtered signal (i.e. the signal without the extreme outliers). It then uses the same process as the
+        'std' process comparing the distance between the mean and the points to the std. The idea beneath is that the
+        calculation of the std is biased by the presence of the outliers; retrieving extreme ones before hand improves
+        the accuracy of the algorithm. (http://eurekastatistics.com/using-the-median-absolute-deviation-to-find-outliers)
+
+    input:
+        data: the input signal (type: array)
+        type: the type of algorithm process ('median' or 'std') (type: string)
+        factor: the sensibility of outlier detection (if infinite no outlier will be find) (type: int or float)
+        return_filtered_signal: option to ask for the 'filtered signal' (i.e. the signal of smaller shape that present
+            no outliers) ('yes' or 'no')
+        verbose: display parameter; specify 'verbose = 2' if display is desired (type: int)
+
+    output:
+        mask: a mask of same shape as the input signal that takes same values for non outlier points and 'nan' values for
+        outliers (type: array)
+        filtered [optional]: signal of smaller shape that present no outliers (type: array)
+
+
+    TODO: other outlier detection algorithms could be implemented
+    """
+
+    from numpy import mean, median, std, isnan, asarray
+    from copy import copy
+    if type == 'std':
+        u = mean(data)
+        s = std(data)
+        index_1 = data > (u + factor * s)
+        index_2 = (u - factor * s) > data
+        filtered = [e for e in data if (u - factor * s < e < u + factor * s)]
+        mask = copy(data)
+        mask[index_1] = None
+        mask[index_2] = None
+
+    if type == 'median':
+        # Detect extrem outliers using median
+        d = abs(data - median(data))
+        mdev = 1.4826 * median(d)
+        s = d/mdev if mdev else 0.
+        mean_s = mean(s)
+        index_1 = s>5* mean_s
+        mask_1 = copy(data)
+        mask_1[index_1] = None
+        filtered_1 = [e for i,e in enumerate(data.tolist()) if not isnan(mask_1[i])]
+        # Recalculate std using filtered variable and detect outliers with threshold factor * std
+        u = mean(filtered_1)
+        std_1 = std(filtered_1)
+        filtered = [e for e in data if (u - factor * std_1 < e < u + factor * std_1)]
+        index_1_2 = data > (u + factor * std_1)
+        index_2_2 = (u - factor * std_1) > data
+        mask = copy(data)
+        mask[index_1_2] = None
+        mask[index_2_2] = None
+
+    if verbose==2:
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        plt.subplot(211)
+        plt.plot(data, 'bo')
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.title("Before outliers deletion")
+        plt.subplot(212)
+        plt.plot(mask, 'bo')
+        plt.ylim(y_lim)
+        plt.title("After outliers deletion")
+        plt.show()
+    if return_filtered_signal == 'yes:':
+        filtered = asarray(filtered)
+        return filtered, mask
+    else:
+        return mask
+
+def outliers_completion(mask, verbose=0):
+    """Replace outliers within a signal.
+
+    This method is based on the replacement of outlier using linear interpolation with closest non outlier points by
+    recurrence. We browse through the signal from 'left to right' replacing each outlier by the average of the two
+    closest non outlier points. Once one outlier is replaced, it is no longer consider as an outlier and may be used for
+    the calculation of the replacement value of the next outlier (recurrence process).
+    To be used after outlier_detection.
+
+    input:
+        mask: the input signal (type: array) that takes 'nan' values at the position of the outlier to be retrieved
+        verbose: display parameters; specify 'verbose = 2' if display is desired (type: int)
+
+    output:
+        signal_completed: the signal of input that has been completed (type: array)
+
+    example:
+
+    mask_x = outliers_detection(x, type='median', factor=factor, return_filtered_signal='no', verbose=0)
+    x_no_outliers = outliers_completion(mask_x, verbose=0)
+
+    N.B.: this outlier replacement technique is not a good statistical solution. Our desire of replacing outliers comes
+    from the fact that we need to treat data of same shape but by doing so we are also flawing the signal.
+    """
+    from numpy import nan_to_num, nonzero, transpose, append, insert, isnan
+    # Complete mask that as nan values by linear interpolation of the closest points
+    #Define signal completed
+    signal_completed = nan_to_num(mask)
+    # take index of all non nan points
+    X_signal_completed = nonzero(signal_completed)
+    X_signal_completed = transpose(X_signal_completed)
+    #initialization: we set the extrem values to avoid edge effects
+    if len(X_signal_completed) != 0:
+        signal_completed[0] = signal_completed[X_signal_completed[0]]
+        signal_completed[-1] = signal_completed[X_signal_completed[-1]]
+        #Add two rows to the vector X_signal_completed:
+        # one before as signal_completed[0] is now diff from 0
+        # one after as signal_completed[-1] is now diff from 0
+        X_signal_completed = append(X_signal_completed, len(signal_completed)-1)
+        X_signal_completed = insert(X_signal_completed, 0, 0)
+        #linear interpolation
+        #count_zeros=0
+        for i in range(1,len(signal_completed)-1):
+            if signal_completed[i]==0:
+            #signal_completed[i] = ((X_signal_completed[i-count_zeros]-i) * signal_completed[X_signal_completed[i-1-count_zeros]] + (i-X_signal_completed[i-1-count_zeros]) * signal_completed[X_signal_completed[i-count_zeros]])/float(X_signal_completed[i-count_zeros]-X_signal_completed[i-1-count_zeros]) # linear interpolation ponderate by distance with closest non zero points
+            #signal_completed[i] = 0.25 * (signal_completed[X_signal_completed[i-1-count_zeros]] + signal_completed[X_signal_completed[i-count_zeros]] + signal_completed[X_signal_completed[i-2-count_zeros]] + signal_completed[X_signal_completed[i-count_zeros+1]]) # linear interpolation with closest non zero points (2 points on each side)
+                signal_completed[i] = 0.5 * (signal_completed[X_signal_completed[i-1]] + signal_completed[X_signal_completed[i]]) # linear interpolation with closest non zero points
+                #redefine X_signal_completed
+                X_signal_completed = nonzero(signal_completed)
+                X_signal_completed = transpose(X_signal_completed)
+                #count_zeros += 1
+    if verbose==2:
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.subplot(2,1,1)
+        plt.plot(mask, 'bo')
+        plt.title("Before outliers completion")
+        axes = plt.gca()
+        y_lim = axes.get_ylim()
+        plt.subplot(2,1,2)
+        plt.plot(signal_completed, 'bo')
+        plt.title("After outliers completion")
+        plt.ylim(y_lim)
+        plt.show()
+    return signal_completed

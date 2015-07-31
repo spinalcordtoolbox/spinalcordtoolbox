@@ -83,8 +83,8 @@ def main():
 
     # Check existence of input files
     print('\nCheck existence of input files...')
-    sct.check_file_exist(fname_anat)
-    sct.check_file_exist(fname_centerline)
+    sct.check_file_exist(fname_anat, verbose)
+    sct.check_file_exist(fname_centerline, verbose)
 
     # Extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
