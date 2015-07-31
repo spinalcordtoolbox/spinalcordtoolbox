@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import xlsxwriter as xl
 import os
+from msct_gmseg_utils import *
 
 path = '.'
 
@@ -197,7 +198,7 @@ workbook3.close()
 
 # ############################# MULTIPLE LOOCV FROM MAGMA - HAUSDORFF DISTANCE #############################
 # Create a workbook and add a worksheet.
-workbook = xl.Workbook('results_wmseg_dices.xlsx')
+workbook = xl.Workbook('results_hausdorff_dist.xlsx')
 worksheet_36 = workbook.add_worksheet('36subjects')
 worksheet_28 = workbook.add_worksheet('28subjects')
 worksheet_20 = workbook.add_worksheet('20subjects')
@@ -217,8 +218,8 @@ for w in worksheets.values():
     w[0].write(1, 2, 'Slice level', bold)
 
     for mod in range(8):
-        w[0].write(1, 3+3*mod, 'Dice - gamma 1.2', bold)
-        w[0].write(1, 3+3*mod+1, 'Dice - gamma 0', bold)
+        w[0].write(1, 3+3*mod, 'HD - gamma 1.2', bold)
+        w[0].write(1, 3+3*mod+1, 'HD - gamma 0', bold)
         w[0].write(1, 3+3*mod+2, 'Number of model slices', bold)
         w[0].merge_range(0, 3+3*mod, 0, 3+3*mod+2, str(mod), bold)
 
@@ -234,6 +235,8 @@ for loocv_dir in os.listdir(path):
         else:
             to_add_col = 1
 
+        # something = get_hausdorff_dists(path + '/' + loocv_dir)
+        # TODO : continuer result extraction ici
         dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
         dice_lines = dice_file.readlines()
         dice_file.close()
@@ -259,6 +262,144 @@ for loocv_dir in os.listdir(path):
                 worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+2, float(line[-1]))
 
 workbook.close()
+
+
+def get_hausdorff_dists(mod_path):
+    from sct_asman import Param, Model
+    hd_dic = {}
+    original_path = os.path.abspath('.')
+    os.chdir(mod_path)
+    for sub_dir in os.listdir('.'):
+        if os.path.isdir(sub_dir) and 'dictionary' not in sub_dir:
+            os.chdir(sub_dir)
+            model_dir = 'gm_seg_model_data/'
+            par = Param()
+            par.path_dictionary = './' + model_dir
+            par.todo_model = 'load'
+            model = Model(model_param=par)
+
+            subject = '_'.join(sub_dir.split('_')[1:3])
+            if 'pilot' in subject:
+                subject = subject.split('_')[0]
+
+            for file_name in os.listdir('./' + subject + '/'):
+                if 'im' in file_name:
+                    slice_name = sct.extract_fname(file_name)[1][:-2]
+                    slice_level = slice_name.split('_')[-2]
+                    ref = slice_name + '_seg' + sct.extract_fname(file_name)[2]
+
+                    #todo: read selected slice file
+                    target_seg = TargetSegmentationPairwiseNOTFULL(model, target_image=Image(file_name), levels_image=slice_level)
+                    res_im = Image(param=target_seg.target[0].gm_seg, absolutepath='./' + slice_name + '_res_gmseg.nii.gz')
+                    res_im.save()
+                    res = res_im.file_name + res_im.ext
+
+                    hausdorff_fname = 'hausdorff_distance_' + slice_name
+                    sct.run('sct_compute_hausdorff_distance.py  -i ' + res + ' -r ' + ref + ' -o ' + hausdorff_fname)
+                    hd_fic = open(hausdorff_fname, 'r')
+                    hd = hd_fic.readline().split(' ')[-2]
+                    hd_fic.readline()
+                    hd_fic.close()
+                    med1 = hd_fic.readline().split(' ')[-2]
+                    med2 = hd_fic.readline().split(' ')[-2]
+                    med = max(med1, med2)
+                    hd_dic[slice_name] = (hd, med)
+
+            os.chdir('..')
+    os.chdir(original_path)
+    return hd_dic
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# TARGET SEGMENTATION PAIRWISE -----------------------------------------------------------------------------------------
+class TargetSegmentationPairwiseNOTFULL:
+    """
+    Contains all the function to segment the gray matter an a target image given a model
+
+        - registration of the target to the model space
+
+        - projection of the target slices on the reduced model space
+
+        - selection of the model slices most similar to the target slices
+
+        - computation of the resulting target segmentation by label fusion of their segmentation
+    """
+    def __init__(self, model, target_image=None, levels_image=None, selected_slices_id=None):
+        """
+        Target gray matter segmentation constructor
+
+        :param model: Model used to compute the segmentation, type: Model
+
+        :param target_image: Target image to segment gray matter on, type: Image
+
+        """
+        self.model = model
+
+        # Initialization of the target image
+        self.target = [Slice(slice_id=0, im=target_image.data, reg_to_m=[])]
+        self.target_dim = 2
+
+        self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, levels_image.upper()))
+
+        self.target_pairwise_registration()
+
+        self.selected_k_slices = [False]*self.model.dictionary.J
+
+        for i in range(self.model.dictionary.J):
+            if i in selected_slices_id:
+                self.selected_k_slices[i] = True
+
+        self.model.label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
+
+        sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
+                   model.param.verbose, 'normal')
+        self.target_pairwise_registration(inverse=True)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def target_pairwise_registration(self, inverse=False):
+        """
+        Register the target image into the model space
+
+        Affine (or rigid + affine) registration of the target on the mean model image --> pairwise
+
+        :param inverse: if True, apply the inverse warping field of the registration target -> model space
+        to the result gray matter segmentation of the target
+        (put it back in it's original space)
+
+        :return None: the target attributes are set in the function
+        """
+        if not inverse:
+            # Registration target --> model space
+            mean_dic_im = self.model.pca.mean_image
+            for i, target_slice in enumerate(self.target):
+                if not self.model.param.first_reg:
+                    moving_target_slice = target_slice.im
+                else:
+                    moving_target_slice = target_slice.im_M
+                for transfo in self.model.dictionary.coregistration_transfos:
+                    transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
+                    target_slice.reg_to_M.append((transfo, transfo_name))
+
+                    moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False, transfo_type=transfo, transfo_name=transfo_name)
+                self.target[i].set(im_m=moving_target_slice)
+
+        else:
+            # Inverse registration result in model space --> target original space
+            for i, target_slice in enumerate(self.target):
+                moving_wm_seg_slice = target_slice.wm_seg_M
+                moving_gm_seg_slice = target_slice.gm_seg_M
+
+                for transfo in target_slice.reg_to_M:
+                    if self.model.param.res_type == 'binary':
+                        bin = True
+                    else:
+                        bin = False
+                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+
+                target_slice.set(wm_seg=moving_wm_seg_slice)
+                target_slice.set(gm_seg=moving_gm_seg_slice)
+
 
 
 '''
