@@ -24,12 +24,13 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
+
 import os
 import sys
 import commands
-import time
 import platform
 import getopt
+
 import sct_utils as sct
 
 
@@ -185,16 +186,6 @@ def main():
     except ImportError:
         print_fail()
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
-
-    # check dipy
-    print_line('Check if dipy is installed ')
-    try:
-        import dipy
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  dipy is not installed! You can install it using: http://nipy.org/dipy/installation.html'
         install_software = 1
 
     # check if FSL is declared
