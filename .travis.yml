@@ -4,8 +4,8 @@ python:
   
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
-    on_success: change
-    on_failure: always
+    on_success:change
+    on_failure:always
 
 install:
 
