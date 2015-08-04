@@ -10,7 +10,7 @@
 #==========================================================================#
 
 # internal stuff or stuff under development that should not be linked
-FILES_TO_REMOVE="sct_otsu msct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct sct_change_image_type sct_invert_image sct_convert msct_moco msct_parser msct_smooth sct_viewer"
+FILES_TO_REMOVE="sct_otsu msct_nurbs sct_segment_graymatter sct_utils sct_dmri_eddy_correct sct_change_image_type sct_invert_image sct_convert msct_moco msct_parser msct_smooth sct_viewer sct_denoising_onlm"
 
 function usage()
 {
