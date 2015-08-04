@@ -3,4 +3,3 @@ scipy==0.14.0
 pillow==2.5.1
 sympy==0.7.6
 matplotlib==1.4.0
-nibabel==2.0.0
