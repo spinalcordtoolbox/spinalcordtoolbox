@@ -378,23 +378,15 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         show()
 
-    def transfo_pix2phys(self, coordi=None, data_pix=None):
+    def transfo_pix2phys(self, coordi=None):
         """
 
-        If data_pix is different from None:
-        This function returns the physical coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_pix) but containing a 3D vector.
-        This vector is the physical position of the point.
-        data_pix must be an array of 3 dimensions.
 
-        If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+        This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
+        (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
+        coordinates of the points in the space of the image.
 
-        Example1:
-        img = Image('file.nii.gz')
-        data = img.data
-        data_phys = img.transfo_pix2phys(data_pix=data)
-
-        Example2:
+        Example:
         img = Image('file.nii.gz')
         coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
         coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
@@ -403,76 +395,35 @@ class Image(object):
         """
         from numpy import zeros, array, transpose, dot, asarray
 
-
         m_p2f = self.hdr.get_sform()
         m_p2f_transfo = m_p2f[0:3,0:3]
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        # if data_pix != None:
-        #
-        #     data_phys = zeros((((data_pix.shape[0], data_pix.shape[1], data_pix.shape[2], 3))))
-        #     for i in range(data_pix.shape[0]):
-        #         print i
-        #         for j in range(data_pix.shape[1]):
-        #             for k in range(data_pix.shape[2]):
-        #                 #b = dot(m_p2f_transfo, array([[i],[j],[k]]))
-        #                 #c = coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]]))
-        #                 #d = data_phys[i,j,k,:]
-        #                 #e= transpose(c)
-        #                 #f = e[0]
-        #                 data_phys[i,j,k,:] = transpose(coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]])))[0]
-        #
-        #     return data_phys
-
         if coordi != None:
-
             coordi_pix = transpose(asarray(coordi))
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
 
             return coordi_phys_list
 
-    def transfo_phys2pix(self, coordi=None, data_phys=None):
+    def transfo_phys2pix(self, coordi=None):
         """
-        This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
-        This vector is the pixel position of the point in the space of the image.
-        data_phys must be an array of 3 dimensions for which each point contains a vector (physical position of the point).
-
-        If coordi is different from none:
-        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
+        This function returns the pixels coordinates of all points of 'coordi'
+        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
 
         :return:
         """
         from numpy import array, transpose, dot, asarray
         from numpy.linalg import inv
-        from copy import copy
 
         m_p2f = self.hdr.get_sform()
         m_p2f_transfo = m_p2f[0:3,0:3]
         m_f2p_transfo = inv(m_p2f_transfo)
-        #e = dot(m_p2f_transfo, m_f2p_transfo)
 
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
 
-        # if data_phys != None:
-        #
-        #     data_pix = copy(data_phys)
-        #     for i in range(data_phys.shape[0]):
-        #         print i
-        #         for j in range(data_phys.shape[1]):
-        #             for k in range(data_phys.shape[2]):
-        #                 # c = array([data_phys[i,j,k,:]])
-        #                 # d = transpose(c)
-        #                 # e = c[0]
-        #                 # f= data_pix[i,j,k,:]
-        #                 # g= dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin))
-        #                 data_pix[i,j,k,:] = transpose(dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin)))[0]  #take int value for pixel
-        #                 # data_pix[i,j,k] = m_f2p_transfo * (data_phys[i,j,k] - coord_origin)
-        #     return data_pix
-
         if coordi != None:
-
             coordi_phys = transpose(asarray(coordi))
             coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()

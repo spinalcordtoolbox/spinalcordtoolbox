@@ -16,11 +16,8 @@
 import sys
 import getopt
 import os
-try:
-    import nibabel
-except ImportError, e:
-    print str(e)+"\nUse the following command line for installation: sudo easy_install nibabel"
-    sys.exit()
+from numpy import asarray, sqrt
+import nibabel
 
 
 # PARAMETERS
@@ -75,7 +72,7 @@ def main():
 
     # print arguments
     if verbose:
-        print 'Check input parameters...'
+        print '\nCheck input parameters...'
         print '.. Image:    '+fname_src
         print '.. Mask:     '+fname_mask
         print '.. tmask:    '+tmask
@@ -107,24 +104,26 @@ def main():
     ind_nonzero = data_mask.nonzero()
 
     # perform a weighted average for all nonzero indices from the mask
-    weighted_val = 0
-    weighted_mask = 0
+    data = []
+    weight = []
     for i in range(0, len(ind_nonzero[0][:])):
         # retrieve coordinates from mask
         x, y, z = ind_nonzero[0][i], ind_nonzero[1][i], ind_nonzero[2][i]
         # get values in mask
-        val_mask = data_mask[x,y,z]
+        weight.append(data_mask[x, y, z])
         # get value in the image
-        val_image = data_src[x,y,z]
-        # multiply value image by value mask and add iteratively
-        weighted_val += val_image * val_mask
-        # calculate weight iteratively
-        weighted_mask += val_mask
-    # divide cumulative sum value by sum of weights
-    weighted_average = weighted_val / weighted_mask
+        data.append(data_src[x, y, z])
+    # compute weighted average
+    data = asarray(data)
+    weight = asarray(weight)
+    n = len(data)
+    # compute weighted_average
+    weighted_average = sum(data*weight) / sum(weight)
+    # compute weighted STD
+    weighted_std = sqrt(sum(weight*(data-weighted_average)**2) / ( (n/(n-1)) * sum(weight) ))
 
     # print result
-    print str(weighted_average)
+    print '\n'+str(weighted_average)+' +/- '+str(weighted_std)
 
     return weighted_average
 
@@ -156,19 +155,23 @@ def usage():
     path_func, file_func, ext_func = extract_fname(sys.argv[0])
     print '\n' \
         ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
+        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
         'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
         '\n'\
         'DESCRIPTION\n' \
-        '  Average data within mask. Compute a weighted average if mask is non-binary (values distributed between 0 and 1).\n' \
+        'Average data within mask. Compute a weighted average if mask is non-binary (values distributed ' \
+        'between 0 and 1).\n' \
         '\n' \
         'USAGE\n' \
-        '   '+file_func+ext_func+' -i <inputvol> -m <mask>\n\n' \
-        'Options:' \
+        +file_func+ext_func+' -i <inputvol> -m <mask>\n\n' \
+        '' \
+        'MANDATORY ARGUMENTS\n' \
         '  -i inputvol          image to extract values from\n' \
-        '  -m mask              mask with values between 0 and 1. If non-binary, a weighted average will be done\n' \
-        '  -t numbvol           number of volume if mask is 4D.\n' \
-        '  -z slice             number of z-slice to compute average on (other slices will not be considered)\n' \
+        '  -m mask              binary or weighted mask (values between 0 and 1).\n' \
+        '' \
+        'OPTIONAL ARGUMENTS\n' \
+        '  -t numbvol           volume number (if mask is 4D).\n' \
+        '  -z slice             slice number to compute average on (other slices will not be considered)\n' \
         '  -v verbose           verbose. 0 or 1. (default=1).\n' \
         '\n' \
 
