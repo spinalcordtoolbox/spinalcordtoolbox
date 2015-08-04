@@ -1,5 +1,6 @@
 numpy==1.8.1
 scipy==0.14.0
 pillow==2.5.1
-sympy
+sympy==0.7.6
 matplotlib==1.4.0
+nibabel==2.0.0

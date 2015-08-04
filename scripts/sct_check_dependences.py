@@ -128,11 +128,18 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    version_requirements = get_version_requirements()
+
     # check pillow
     print_line("Check if pillow is installed ")
     try:
         import PIL
-        print_ok()
+        pillow_version = get_package_version("pillow")
+        if check_package_version(pillow_version, version_requirements, "pillow"):
+            print_ok()
+        else:
+            print_warning()
+            print "pillow version: "+pillow_version+" detected. SCT requires version "+version_requirements["pillow"]
     except ImportError:
         print_fail()
         print '  pillow is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -142,7 +149,12 @@ def main():
     print_line('Check if numpy is installed ')
     try:
         import numpy
-        print_ok()
+        numpy_version = get_package_version("numpy")
+        if check_package_version(numpy_version, version_requirements, "numpy"):
+            print_ok()
+        else:
+            print_warning()
+            print "numpy version: "+numpy_version+" detected. SCT requires version "+version_requirements["numpy"]
     except ImportError:
         print_fail()
         print '  numpy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -152,7 +164,12 @@ def main():
     print_line('Check if scipy is installed ')
     try:
         import scipy
-        print_ok()
+        scipy_version = get_package_version("scipy")
+        if check_package_version(scipy_version, version_requirements, "scipy"):
+            print_ok()
+        else:
+            print_warning()
+            print "scipy version: "+scipy_version+" detected. SCT requires version "+version_requirements["scipy"]
     except ImportError:
         print_fail()
         print '  scipy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -162,7 +179,12 @@ def main():
     print_line('Check if sympy is installed ')
     try:
         import sympy
-        print_ok()
+        sympy_version = get_package_version("sympy")
+        if check_package_version(sympy_version, version_requirements, "sympy"):
+            print_ok()
+        else:
+            print_warning()
+            print "sympy version: "+sympy_version+" detected. SCT requires version "+version_requirements["sympy"]
     except ImportError:
         print_fail()
         print '  sympy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -172,7 +194,12 @@ def main():
     print_line('Check if matplotlib is installed ')
     try:
         import matplotlib
-        print_ok()
+        matplotlib_version = get_package_version("matplotlib")
+        if check_package_version(matplotlib_version, version_requirements, "matplotlib"):
+            print_ok()
+        else:
+            print_warning()
+            print "matplotlib version: "+matplotlib_version+" detected. SCT requires version "+version_requirements["matplotlib"]
     except ImportError:
         print_fail()
         print '  matplotlib is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -182,7 +209,12 @@ def main():
     print_line('Check if nibabel is installed ')
     try:
         import nibabel
-        print_ok()
+        nibabel_version = get_package_version("nibabel")
+        if check_package_version(nibabel_version, version_requirements, "nibabel"):
+            print_ok()
+        else:
+            print_warning()
+            print "nibabel version: "+nibabel_version+" detected. SCT requires version "+version_requirements["nibabel"]
     except ImportError:
         print_fail()
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -370,6 +402,37 @@ def add_bash_profile(string):
     # with open("test.txt", "a") as file_bash:
         file_bash.write("\n"+string)
 
+
+def get_version_requirements():
+    file = open("../install/requirements/requirementsConda.txt")
+    req_list = []
+    line = ""
+    dict = {}
+    while True:
+        line = file.readline()
+        if line == "":
+            break  # OH GOD HELP
+        arg = line.split("==")
+        dict[arg[0]] = arg[1].rstrip("\n")
+    file.close()
+    return dict
+
+
+def get_package_version(package_name):
+    cmd = "pip show "+package_name
+    output = commands.getoutput(cmd)
+    line = output.split("\n")
+    for i in line:
+        if i.find("Version:") != -1 and i.find("Metadata-Version:") == -1:
+            vers = i.split(": ")
+            return vers[1]
+
+
+def check_package_version(installed, required, package_name):
+    if package_name in required:
+        if required[package_name] == installed:
+            return True
+        return False
 
 
 # Print usage
