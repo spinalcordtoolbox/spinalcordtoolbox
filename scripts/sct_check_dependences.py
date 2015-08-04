@@ -419,12 +419,14 @@ def get_version_requirements():
 
 
 def get_package_version(package_name):
-    cmd = "pip show "+package_name
+    cmd = "conda list "+package_name
     output = commands.getoutput(cmd)
-    line = output.split("\n")
-    for i in line:
-        if i.find("Version:") != -1 and i.find("Metadata-Version:") == -1:
-            vers = i.split(": ")
+    while True:
+        line = output.readline()
+        if line == "":
+            break
+        if line.find(package_name) != -1:
+            vers = line.split(' ')
             return vers[1]
 
 
