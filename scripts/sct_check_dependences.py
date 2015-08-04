@@ -137,6 +137,7 @@ def main():
         pillow_version = get_package_version("pillow")
         if check_package_version(pillow_version, version_requirements, "pillow"):
             print_ok()
+            print "pillow :" + pillow_version
         else:
             print_warning()
             print "pillow version: "+pillow_version+" detected. SCT requires version "+version_requirements["pillow"]
@@ -152,6 +153,7 @@ def main():
         numpy_version = get_package_version("numpy")
         if check_package_version(numpy_version, version_requirements, "numpy"):
             print_ok()
+            print "numpy :" + numpy_version
         else:
             print_warning()
             print "numpy version: "+numpy_version+" detected. SCT requires version "+version_requirements["numpy"]
@@ -167,6 +169,7 @@ def main():
         scipy_version = get_package_version("scipy")
         if check_package_version(scipy_version, version_requirements, "scipy"):
             print_ok()
+            print "scipy :" + scipy_version
         else:
             print_warning()
             print "scipy version: "+scipy_version+" detected. SCT requires version "+version_requirements["scipy"]
@@ -182,6 +185,7 @@ def main():
         sympy_version = get_package_version("sympy")
         if check_package_version(sympy_version, version_requirements, "sympy"):
             print_ok()
+            print "sympy :" + sympy_version
         else:
             print_warning()
             print "sympy version: "+sympy_version+" detected. SCT requires version "+version_requirements["sympy"]
@@ -197,6 +201,7 @@ def main():
         matplotlib_version = get_package_version("matplotlib")
         if check_package_version(matplotlib_version, version_requirements, "matplotlib"):
             print_ok()
+            print "matplotlib :" + matplotlib_version
         else:
             print_warning()
             print "matplotlib version: "+matplotlib_version+" detected. SCT requires version "+version_requirements["matplotlib"]
