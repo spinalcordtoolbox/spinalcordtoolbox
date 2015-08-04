@@ -209,12 +209,12 @@ def main():
     print_line('Check if nibabel is installed ')
     try:
         import nibabel
-        nibabel_version = get_package_version("nibabel")
-        if check_package_version(nibabel_version, version_requirements, "nibabel"):
-            print_ok()
-        else:
-            print_warning()
-            print "nibabel version: "+nibabel_version+" detected. SCT requires version "+version_requirements["nibabel"]
+        # nibabel_version = get_package_version("nibabel")
+        # if check_package_version(nibabel_version, version_requirements, "nibabel"):
+        print_ok()
+        # else:
+        #    print_warning()
+        #    print "nibabel version: "+nibabel_version+" detected. SCT requires version "+version_requirements["nibabel"]
     except ImportError:
         print_fail()
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
@@ -406,8 +406,6 @@ def add_bash_profile(string):
 def get_version_requirements():
     status, path_sct = sct.run('echo $SCT_DIR', 0)
     file = open(path_sct+"/install/requirements/requirementsConda.txt")
-    req_list = []
-    line = ""
     dict = {}
     while True:
         line = file.readline()
@@ -423,12 +421,13 @@ def get_package_version(package_name):
     cmd = "conda list "+package_name
     output = commands.getoutput(cmd)
     while True:
-        line = output.readline()
-        if line == "":
-            break
-        if line.find(package_name) != -1:
-            vers = line.split(' ')
-            return vers[1]
+        line = output.split("\n")
+        for i in line:
+            if i.find(package_name) != -1:
+                vers = i.split(' ')
+                vers[:] = (value for value in vers if value != "")
+                return vers[1]
+        raise Exception("Could not find package: "+package_name)
 
 
 def check_package_version(installed, required, package_name):
