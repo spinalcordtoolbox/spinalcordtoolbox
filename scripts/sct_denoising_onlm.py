@@ -4,19 +4,13 @@ import sys, commands
 import numpy as np
 from time import time
 import nibabel as nib
-from dipy.denoise.nlmeans import nlmeans
+from msct_parser import Parser
+import sct_utils as sct
 
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
-
-from msct_parser import Parser
-import sct_utils as sct
-
-
-
-
 
 
 # DEFAULT PARAMETERS
@@ -29,7 +23,6 @@ class Param:
         self.parameter = "Rician"
         self.file_to_denoise = ''
         self.output_file_name = ''
-
 
 
 def main(file_to_denoise, param, output_file_name) :
@@ -51,6 +44,8 @@ def main(file_to_denoise, param, output_file_name) :
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
+
+    from dipy.denoise.nlmeans import nlmeans
 
     if '-std' in arguments:
         sigma = std_noise
@@ -106,7 +101,6 @@ def main(file_to_denoise, param, output_file_name) :
     else: output_file_name = file + '_denoised' + ext
     nib.save(img_denoise,output_file_name)
     nib.save(img_diff, file + '_difference' +ext)
-
 
 
 #=======================================================================================================================
