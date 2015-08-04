@@ -404,7 +404,8 @@ def add_bash_profile(string):
 
 
 def get_version_requirements():
-    file = open("../install/requirements/requirementsConda.txt")
+    status, path_sct = sct.run('echo $SCT_DIR', 0)
+    file = open(path_sct+"/install/requirements/requirementsConda.txt")
     req_list = []
     line = ""
     dict = {}
