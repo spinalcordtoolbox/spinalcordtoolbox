@@ -14,6 +14,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from __future__ import division
 from math import sqrt
 
 class Point(object):
@@ -36,7 +37,7 @@ class Point(object):
         return not self.__eq__(other)
 
 class Coordinate(Point):
-    def __init__(self, coord=None, mode='index'):
+    def __init__(self, coord=None, mode='continuous'):
         super(Coordinate, self).__init__()
         if coord is None:
             self.value = 0
@@ -85,6 +86,15 @@ class Coordinate(Point):
 
     def hasEqualValue(self, other):
         return self.value == other.value
+
+    def __add__(self, other):
+        return Coordinate([self.x + other.x, self.y + other.y, self.z + other.z, self.value])
+
+    def __div__(self, scalar):
+        return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
+
+    def __truediv__(self, scalar):
+        return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
 
 
 class CoordinateValue(Coordinate):
