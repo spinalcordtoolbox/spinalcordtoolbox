@@ -39,13 +39,38 @@ class Param:
         self.todo_model = None  # 'compute'
         self.model_dir = './gm_seg_model_data'
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
-        self.target_reg = 'pairwise'  # TODO : REMOVE THAT PARAM WHEN GROUPWISE/PAIR IS OPTIMIZED
+        self.reg_metric = 'MI'
+        self.target_denoising = True
         self.first_reg = False
         self.use_levels = True
-        self.weight_beta = 1.2
+        self.weight_gamma = 1.2
+        self.equation_id = 1
+        self.weight_label_fusion = False
+        self.mode_weight_similarity = False
         self.z_regularisation = False
         self.res_type = 'binary'
         self.verbose = 1
+
+    def __repr__(self):
+        s = ''
+        s += 'path_dictionary: ' + str(self.path_dictionary) + '\n'
+        s += 'todo_model: ' + str(self.todo_model) + '\n'
+        s += 'model_dir: ' + str(self.model_dir) + '\n'
+        s += 'reg: ' + str(self.reg) + '\n'
+        s += 'reg_metric: ' + str(self.reg_metric) + '\n'
+        s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in sct_asman***\n'
+        s += 'first_reg: ' + str(self.first_reg) + '\n'
+        s += 'use_levels: ' + str(self.use_levels) + '\n'
+        s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
+        s += 'equation_id: ' + str(self.equation_id) + '\n'
+        s += 'weight_label_fusion: ' + str(self.weight_label_fusion) + '\n'
+        s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
+        s += 'z_regularisation: ' + str(self.z_regularisation) + '\n'
+        s += 'res_type: ' + str(self.res_type) + '\n'
+        s += 'verbose: ' + str(self.verbose) + '\n'
+
+        return s
+
 
 
 ########################################################################################################################
@@ -96,7 +121,9 @@ class ModelDictionary:
 
         sct.printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
         sct.run('mkdir ' + self.param.model_dir)
-
+        param_fic = open(self.param.model_dir + '/info.txt', 'w')
+        param_fic.write(str(self.param))
+        param_fic.close()
         sct.printv('\nLoading data dictionary ...', self.param.verbose, 'normal')
         # List of T2star images (im) and their label decision (gmseg) (=segmentation of the gray matter), slice by slice
         self.slices = self.load_data_dictionary()  # type: list of slices
@@ -224,9 +251,9 @@ class ModelDictionary:
             dic_slice.set(reg_to_m=new_reg_list)
 
             if first:
-                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type)
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
             else:
-                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type)
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
             dic_slice.set(wm_seg_m=seg_m.astype(int))
             dic_slice.set(wm_seg_m_flat=seg_m.flatten().astype(int))
 
@@ -266,8 +293,8 @@ class ModelDictionary:
 
         for dic_slice in self.slices:
             for n_transfo, transfo in enumerate(transfo_to_apply):
-                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.model_dir+'/', transfo_type=transfo)
-                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.model_dir+'/', transfo_type=transfo)
+                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
+                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
 
             dic_slice.set(im_m=im_m)
@@ -398,7 +425,6 @@ class Model:
         if self.param.verbose == 2:
             self.pca.plot_projected_dic()
 
-
     # ------------------------------------------------------------------------------------------------------------------
     def compute_beta(self, coord_target, target_levels=None, dataset_coord=None, dataset_levels=None, tau=0.006):
         """
@@ -422,23 +448,32 @@ class Model:
             dataset_levels = [dic_slice.level for dic_slice in self.dictionary.slices]
 
         beta = []
+        if self.param.mode_weight_similarity:
+            mode_weight = [val/sum(self.pca.kept_eigenval) for val in self.pca.kept_eigenval]
+        else:
+            mode_weight = None
 
         # 3D TARGET
         if isinstance(coord_target[0], (list, np.ndarray)):
             for i_target, coord_projected_slice in enumerate(coord_target):
                 beta_slice = []
                 for j_slice, coord_slice_j in enumerate(dataset_coord):
-                    square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
+                    if mode_weight is None:
+                        square_norm = np.linalg.norm((coord_projected_slice - coord_slice_j), 2)
+                    else:
+                        from scipy.spatial.distance import wminkowski
+                        square_norm = wminkowski(coord_projected_slice, coord_slice_j, 2, mode_weight)
+
                     if target_levels is not None and target_levels is not [None] and self.param.use_levels:
-                        # EQUATION #2
-                        '''
-                        if target_levels[i_target] == dataset_levels[j_slice]:
-                            beta_slice.append(exp(tau*square_norm))
-                        else:
-                            beta_slice.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice])) #TODO: before = no absolute
-                        '''
-                        # EQUATION #1 (better results ==> kept)
-                        beta_slice.append(exp(-self.param.weight_beta*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm))  # TODO: before = no absolute
+                        if self.param.equation_id == 1:
+                            # EQUATION #1 (better results ==> kept)
+                            beta_slice.append(exp(-self.param.weight_gamma*abs(target_levels[i_target] - dataset_levels[j_slice]))*exp(-tau*square_norm))  # TODO: before = no absolute
+                        elif self.param.equation_id == 2:
+                            # EQUATION #2
+                            if target_levels[i_target] == dataset_levels[j_slice]:
+                                beta_slice.append(exp(tau*square_norm))
+                            else:
+                                beta_slice.append(exp(-tau*square_norm)/self.param.weight_gamma*abs(target_levels[i_target] - dataset_levels[j_slice])) #TODO: before = no absolute
 
                     else:
                         beta_slice.append(exp(-tau*square_norm))
@@ -454,15 +489,19 @@ class Model:
         # 2D TARGET
         else:
             for j_slice, coord_slice_j in enumerate(dataset_coord):
-                square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
+                if mode_weight is None:
+                    square_norm = np.linalg.norm((coord_target - coord_slice_j), 2)
+                else:
+                    from scipy.spatial.distance import wminkowski
+                    square_norm = wminkowski(coord_target, coord_slice_j, 2, mode_weight)
                 if target_levels is not None and self.param.use_levels:
                     '''
                     if target_levels == dataset_levels[j_slice]:
                         beta.append(exp(tau*square_norm))
                     else:
-                        beta.append(exp(-tau*square_norm)/self.param.weight_beta*abs(target_levels - dataset_levels[j_slice]))
+                        beta.append(exp(-tau*square_norm)/self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))
                     '''
-                    beta.append(exp(-self.param.weight_beta*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
+                    beta.append(exp(-self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
                 else:
                     beta.append(exp(-tau*square_norm))
 
@@ -507,7 +546,11 @@ class Model:
                 else:
                     beta_dic_slice = self.compute_beta(projected_dic_slice_coord, target_levels=None, dataset_coord=coord_dic_slice_dataset, dataset_levels=None, tau=tau)
                 kj = self.select_k_slices(beta_dic_slice)
-                est_segm_j = self.label_fusion(dic_slice, kj)[0]
+                if self.param.weight_label_fusion:
+                    est_segm_j = self.label_fusion(dic_slice, kj, beta=beta_dic_slice)[0]
+                else:
+                    # default case
+                    est_segm_j = self.label_fusion(dic_slice, kj)[0]
 
                 sum_norm += l0_norm(dic_slice.wm_seg_M, est_segm_j.data)
 
@@ -542,7 +585,7 @@ class Model:
         return np.asarray(kept_slice_index)
 
     # ------------------------------------------------------------------------------------------------------------------
-    def label_fusion(self, target, selected_index, type='binary'):
+    def label_fusion(self, target, selected_index, beta=None, type='binary'):
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
 
@@ -557,19 +600,32 @@ class Model:
         res_gm_seg_model_space = []
 
         if isinstance(selected_index[0], (list, np.ndarray)):
-
+            # 3D image
             for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
-                wm_slice_seg = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_ind_by_slice], type=type, threshold=0.50001)
+                if beta is None:
+                    n_selected_dic_slices = wm_segmentation_slices[selected_ind_by_slice].shape[0]
+                    weights = [1.0/n_selected_dic_slices] * n_selected_dic_slices
+                else:
+                    weights = beta[i][selected_ind_by_slice]
+                    weights = [w/sum(weights) for w in weights]
+                wm_slice_seg = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_ind_by_slice], weights=weights, type=type, threshold=0.50001)
                 res_wm_seg_model_space.append(wm_slice_seg)
                 target[i].set(wm_seg_m=wm_slice_seg)
 
-                gm_slice_seg = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_ind_by_slice], type=type)
+                gm_slice_seg = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_ind_by_slice], weights=weights, type=type)
                 res_gm_seg_model_space.append(gm_slice_seg)
                 target[i].set(gm_seg_m=gm_slice_seg)
 
         else:
-            res_wm_seg_model_space = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_index], type=type, threshold=0.50001)
-            res_gm_seg_model_space = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_index], type=type)
+            # 2D image
+            if beta is None:
+                n_selected_dic_slices = wm_segmentation_slices[selected_index].shape[0]
+                weights = [1.0/n_selected_dic_slices] * n_selected_dic_slices
+            else:
+                weights = beta[selected_index]
+                weights = [w/sum(weights) for w in weights]
+            res_wm_seg_model_space = compute_majority_vote_mean_seg(wm_segmentation_slices[selected_index], weights=weights, type=type, threshold=0.50001)
+            res_gm_seg_model_space = compute_majority_vote_mean_seg(gm_segmentation_slices[selected_index], weights=weights, type=type)
 
         res_wm_seg_model_space = np.asarray(res_wm_seg_model_space)
         res_gm_seg_model_space = np.asarray(res_gm_seg_model_space)
@@ -636,7 +692,11 @@ class TargetSegmentationPairwise:
             self.plot_projected_dic(nb_modes=3, to_highlight='all')  # , to_highlight=(6, self.selected_k_slices[6]))
 
         sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
-        self.model.label_fusion(self.target, self.selected_k_slices, type=self.model.param.res_type)
+        if self.model.param.weight_label_fusion:
+            use_beta = self.beta
+        else:
+            use_beta = None
+        self.model.label_fusion(self.target, self.selected_k_slices, beta=use_beta, type=self.model.param.res_type)
 
         if self.model.param.z_regularisation:
             sct.printv('\nRegularisation of the segmentation along the Z axis ...', model.param.verbose, 'normal')
@@ -683,8 +743,8 @@ class TargetSegmentationPairwise:
             transfo = 'BSplineSyN'
             transfo_name = transfo + '_first_reg_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
 
-            apply_ants_transfo(mean_sc_seg, moving_target_seg, binary=True, apply_transfo=False, transfo_type=transfo, transfo_name=transfo_name)
-            moved_target_slice = apply_ants_transfo(mean_sc_seg, target_slice.im, binary=False, search_reg=False, transfo_type=transfo, transfo_name=transfo_name)
+            apply_ants_transfo(mean_sc_seg, moving_target_seg, binary=True, apply_transfo=False, transfo_type=transfo, transfo_name=transfo_name, metric=self.model.param.reg_metric)
+            moved_target_slice = apply_ants_transfo(mean_sc_seg, target_slice.im, binary=False, search_reg=False, transfo_type=transfo, transfo_name=transfo_name, metric=self.model.param.reg_metric)
 
             target_slice.set(im_m=moved_target_slice)
             target_slice.reg_to_M.append((transfo, transfo_name))
@@ -717,7 +777,7 @@ class TargetSegmentationPairwise:
                     transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
                     target_slice.reg_to_M.append((transfo, transfo_name))
 
-                    moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False, transfo_type=transfo, transfo_name=transfo_name)
+                    moving_target_slice = apply_ants_transfo(mean_dic_im, moving_target_slice, binary=False, transfo_type=transfo, transfo_name=transfo_name, metric=self.model.param.reg_metric)
                 self.target[i].set(im_m=moving_target_slice)
 
         else:
@@ -731,8 +791,8 @@ class TargetSegmentationPairwise:
                         bin = True
                     else:
                         bin = False
-                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
-                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1])
+                    moving_wm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_wm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
+                    moving_gm_seg_slice = apply_ants_transfo(self.model.dictionary.mean_seg, moving_gm_seg_slice, search_reg=False, binary=bin, inverse=1, transfo_type=transfo[0], transfo_name=transfo[1], metric=self.model.param.reg_metric)
 
                 target_slice.set(wm_seg=moving_wm_seg_slice)
                 target_slice.set(gm_seg=moving_gm_seg_slice)
@@ -836,11 +896,11 @@ sct_Image
 
         # get & save the result gray matter segmentation
         suffix = '_'
-        suffix += gm_seg_param.target_reg + '_' + gm_seg_param.res_type
+        suffix += '_' + gm_seg_param.res_type
         for transfo in self.model.dictionary.coregistration_transfos:
             suffix += '_' + transfo
         if self.model.param.use_levels:
-            suffix += '_with_levels_' + str(self.model.param.weight_beta)
+            suffix += '_with_levels_' + str(self.model.param.weight_gamma)
         else:
             suffix += '_no_levels'
         if self.model.param.z_regularisation:
@@ -856,8 +916,16 @@ sct_Image
             self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_wmseg + '.nii.gz')
             self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_gmseg + '.nii.gz')
 
-        save_image(self.res_wm_seg.data, name_res_wmseg, hdr=original_hdr)
-        save_image(self.res_gm_seg.data, name_res_gmseg, hdr=original_hdr)
+        self.res_wm_seg.hdr = original_hdr
+        self.res_wm_seg.file_name = name_res_wmseg
+        self.res_wm_seg.save(type='minimize')
+
+        self.res_gm_seg.hdr = original_hdr
+        self.res_gm_seg.file_name = name_res_gmseg
+        self.res_gm_seg.save(type='minimize')
+
+        # save_image(self.res_wm_seg.data, name_res_wmseg, hdr=original_hdr)
+        # save_image(self.res_gm_seg.data, name_res_gmseg, hdr=original_hdr)
 
         self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res_wmseg, original_hdr)
 
@@ -923,14 +991,6 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=['Affine'],
                           example=['SyN'])
-        parser.add_option(name="-target-reg",
-                          type_value='multiple_choice',
-                          description="type of registration of the target to the model space "
-                                      "(if pairwise, the registration applied to the target are the same as"
-                                      " those of the -reg flag)",
-                          mandatory=False,
-                          default_value='pairwise',
-                          example=['pairwise', 'groupwise'])
         parser.add_option(name="-weight",
                           type_value='float',
                           description="weight parameter on the level differences to compute the similarities (beta)",
@@ -949,9 +1009,27 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-denoising",
+                          type_value='multiple_choice',
+                          description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
                           description="Apply a Bspline registration using the spinal cord edges target --> model first",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-weighted-label-fusion",
+                          type_value='multiple_choice',
+                          description="Use the similarities as a weights for the label fusion",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-weighted-similarity",
+                          type_value='multiple_choice',
+                          description="Use a PCA mode weighted norm for the computation of the similarities instead of the euclidean square norm",
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
@@ -976,16 +1054,20 @@ if __name__ == "__main__":
             input_target_fname = arguments["-i"]
         if "-reg" in arguments:
             param.reg = arguments["-reg"]
-        if "-target-reg" in arguments:
-            param.target_reg = arguments["-target-reg"]
         if "-l" in arguments:
             input_level_fname = arguments["-l"]
         if "-weight" in arguments:
-            param.weight_beta = arguments["-weight"]
+            param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
+        if "-weighted-label-fusion" in arguments:
+            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
+        if "-weighted-similarity" in arguments:
+            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
         if "-z" in arguments:
             param.z_regularisation = bool(int(arguments["-z"]))
+        if "-denoising" in arguments:
+            param.target_denoising = bool(int(arguments["-denoising"]))
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
         if "-res-type" in arguments:
@@ -998,5 +1080,4 @@ if __name__ == "__main__":
         gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, model, gm_seg_param=param)
         print param.verbose == 2
         if param.verbose == 2:
-            print 'hello'
             gm_seg_method.show()
