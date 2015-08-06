@@ -255,14 +255,18 @@ class Image(object):
         except Exception, e:
             printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
-        X, Y, Z = (self.data > 0.0).nonzero()
         if coordValue:
             from msct_types import CoordinateValue
-            list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            if len(self.dim) == 3:
+                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            else:
+                list_coordinates = [CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         else:
             from msct_types import Coordinate
-            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-
+            if len(self.dim) == 3:
+                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            else:
+                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -284,30 +288,35 @@ class Image(object):
     # rectangles of the same size
     #orientation must be IRP to be able to go trough slices as first dimension
     # This method is called in sct_crop_over_mask script
-    def crop_from_square_mask(self, mask):
+    def crop_from_square_mask(self, mask, save=True):
         from numpy import asarray, zeros
 
         data_array = self.data
         data_mask = mask.data
+        assert self.orientation == 'IRP'
+        assert mask.orientation == 'IRP'
 
         print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
         #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
-            pad = int((data_mask.shape[1] - old_data_array.shape[1])/2 +1)
+            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
+            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2])/2 + 1)
 
             data_array = zeros(data_mask.shape)
-            for n_slice, slice in enumerate(data_array):
+            for n_slice, data_slice in enumerate(data_array):
+                data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
+            '''
+            for n_slice, data_slice in enumerate(data_array):
                 n_row_old_data_array = 0
-                for row in slice[pad:-pad-1]:
-
-                    row[pad:pad + old_data_array.shape[1]] = old_data_array[n_slice,n_row_old_data_array]
+                for row in data_slice[pad_2:-pad_2-1]:
+                    row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
                     n_row_old_data_array += 1
+            '''
             self.data = data_array
-            self.file_name = self.file_name + '_resized'
-            self.save()
-            #print data_array
-
+            if save:
+                self.file_name += '_resized'
+                self.save()
 
         data_array = asarray(data_array)
         data_mask = asarray(data_mask)
@@ -316,14 +325,11 @@ class Image(object):
         buffer_mask = []
 
         if len(data_array.shape) == 3:
-            for n_slice, slice in enumerate(data_mask):
-
-                for n_row, row in enumerate(slice):
+            for n_slice, mask_slice in enumerate(data_mask):
+                for n_row, row in enumerate(mask_slice):
                     if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                         buffer_mask.append(row)
                         buffer.append(data_array[n_slice][n_row])
-
-
 
                 new_slice_mask = asarray(buffer_mask).T
                 new_slice = asarray(buffer).T
@@ -355,7 +361,7 @@ class Image(object):
         new_data = asarray(new_data)
         # print data_mask
         self.data = new_data
-
+        self.dim = self.data.shape
 
 
     # crop the image in order to keep only voxels in the mask
@@ -377,6 +383,14 @@ class Image(object):
             new_data = einsum('ij,ij->ij', data_mask, array)
         print 'SHAPE ', new_data.shape
         self.data = new_data
+
+    def denoise_ornlm(self):
+        from ornlm import ornlm
+        import numpy as np
+        dat = self.data.astype(np.float64)
+        denoised = np.array(ornlm.ornlm(dat, 3, 1, np.max(dat)*0.01))
+        self.file_name += '_denoised'
+        self.data = denoised
 
     def invert(self):
         self.data = self.data.max() - self.data
