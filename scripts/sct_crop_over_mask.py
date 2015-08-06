@@ -62,28 +62,27 @@ def main():
         if input_img.data.shape[2] == 1:
             input_img.data = input_img.data.reshape(input_img.data.shape[:-1])
 
+    mask = Image(fname_mask)
     if square:
         if len(input_img.data.shape) == 3:
-            status, orientation_init = sct.run('sct_orientation -i ' + fname_input)
-            orientation_init = orientation_init[4:7]
-            print 'orientation init : ', orientation_init
+            orientation_init = input_img.orientation
 
             if orientation_init != 'IRP':
                 status, output = sct.run('sct_orientation -i ' + fname_input + ' -s IRP ')
-                fname_input = sct.extract_fname(fname_input)[1] + '_IRP.nii.gz'
+                fname_input = sct.extract_fname(fname_input)[0] + sct.extract_fname(fname_input)[1] + '_IRP.nii.gz'
                 input_img = Image(fname_input)
-                status, output = sct.run('sct_orientation -i ' + fname_mask + ' -s IRP ')
-                fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
-            elif sct.run('sct_orientation -i ' + fname_mask)[1][4:7] != 'IRP':
-                fname_mask = sct.extract_fname(fname_mask)[1] + '_IRP.nii.gz'
+
+            if mask.orientation != 'IRP':
+                # elif sct.run('sct_orientation -i ' + fname_mask)[1][4:7] != 'IRP':
+                status, output = sct.run('sct_orientation -i ' + mask.absolutepath + ' -s IRP ')
+                mask.file_name += '_IRP'
+                mask = Image(mask.path+mask.file_name+mask.ext)
 
 
-
-    mask = Image(fname_mask)
+    # mask = Image(fname_mask)
     if len(mask.data.shape) == 3:
         if mask.data.shape[2] == 1:
             mask.data = mask.data.reshape(mask.data.shape[:-1])
-
 
     if square:
         input_img.crop_from_square_mask(mask)
