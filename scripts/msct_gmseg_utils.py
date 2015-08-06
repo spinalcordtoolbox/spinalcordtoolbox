@@ -176,12 +176,13 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True):
     res_wm_seg_im.hdr = original_hdr
     if save:
         res_wm_seg_im.save()
+    res_wm_seg_im.orientation = gm_seg.orientation
 
     return res_wm_seg_im
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', apply_transfo=True, transfo_name='', binary=True, path='./', inverse=0, verbose=0):
+def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', metric='MI', apply_transfo=True, transfo_name='', binary=True, path='./', inverse=0, verbose=0):
     """
     Compute and/or apply a registration using ANTs
 
@@ -239,9 +240,9 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
                 transfo_params = ',1,1'
             gradientstep = 0.5  # 0.3
             # metric = 'MeanSquares'
-            # metric_params = ',1,4'  # ',5'
-            metric = 'MI'
-            metric_params = ',1,2'
+            # metric_params = ',1,4'  # for MeanSquares
+            # metric = 'MI'
+            metric_params = ',1,2'  # for MI
             niter = 5  # 20
             smooth = 0
             shrink = 1
@@ -326,7 +327,7 @@ def l0_norm(x, y):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, type='binary'):
+def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, weights=None, type='binary'):
     """
     Compute the mean segmentation image for a given segmentation data set seg_data_set by Majority Vote
 
@@ -335,10 +336,14 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, type='binary'):
     :param threshold: threshold to select the value of a pixel
     :return:
     """
-    if type == 'binary':
-        return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set)) >= threshold).astype(int)
+    if weights is None:
+        average = np.sum(seg_data_set, axis=0) / float(len(seg_data_set))
     else:
-        return (np.sum(seg_data_set, axis=0) / float(len(seg_data_set))).astype(float)
+        average = np.sum(np.einsum('ijk,i->ijk', seg_data_set, weights), axis=0)
+    if type == 'binary':
+        return (average >= threshold).astype(int)
+    else:
+        return average.astype(float)
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -704,9 +709,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     if orientation != 'RPI':
         sct.run('sct_orientation -i ' + fname + ' -s RPI')
         fname = sct.extract_fname(fname)[1] + '_RPI.nii.gz'
-    print fname
     nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
-    print 'BEFORE RESAMPLING px, py, pz: ', px, py, pz
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
         name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
@@ -721,8 +724,6 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
 
         nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_resample)
-        print 'fx, fy :', fx, fy
-        print 'AFTER RESAMPLING px, py, pz: ', px, py, pz
         if binary:
             sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
             sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
@@ -740,9 +741,9 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def dataset_pretreatments(path_to_dataset, denoise=True):
+def dataset_preprocessing(path_to_dataset, denoise=True):
     """
-    pretreatment function for a dataset of 3D images to be integrated to the model
+    preprocessing function for a dataset of 3D images to be integrated to the model
     the dataset should contain for each subject :
         - a T2*-w image containing 'im' in its name
         - a segmentation of the spinal cord containing 'seg' in its name
@@ -789,16 +790,9 @@ def dataset_pretreatments(path_to_dataset, denoise=True):
             gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
 
             if denoise:
-                from ornlm import ornlm
                 t2star_im = Image(t2star)
-                t2star_data = t2star_im.data.astype(np.float64)
-                denoised = np.array(ornlm.ornlm(t2star_data, 3, 1, np.max(t2star_data)*0.01))
-                t2star = sct.extract_fname(t2star)[1] + '_denoised.nii.gz'
-                denoised_t2star_im = Image(param=denoised, hdr=t2star_im.hdr)
-                denoised_t2star_im.file_name = sct.extract_fname(t2star)[1]
-                denoised_t2star_im.path = t2star_im.path
-                denoised_t2star_im.ext = '.nii.gz'
-                denoised_t2star_im.save()
+                t2star_im.denoise_ornlm()
+                t2star_im.save()
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
             sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
@@ -1042,15 +1036,34 @@ def vanderbilt_treatments(data_path):
 
 # ------------------------------------------------------------------------------------------------------------------
 def inverse_square_crop(croped_image, square_mask):
+    if square_mask.orientation != 'IRP':
+        sct.run('sct_orientation -i ' + square_mask.file_name + square_mask.ext + ' -s IRP')
+        square_mask.file_name += '_IRP'
+        square_mask = Image(square_mask.file_name + square_mask.ext)
     nz_coord = square_mask.getNonZeroCoordinates()
 
     assert len(nz_coord) == croped_image.data.size
     dim = len(croped_image.data.shape)
 
     inverse_croped = square_mask.copy()
-    if dim == 3 :
+    if dim == 3:
         done_slices = []
         for coord in nz_coord:
+            '''
+            x_y_z = [coord.x, coord.y, coord.z]
+            if 'I' in square_mask.orientation:
+                IS_dim_coord = x_y_z[square_mask.orientation.find('I')]
+            else:
+                IS_dim_coord = x_y_z[square_mask.orientation.find('S')]
+            if 'R' in square_mask.orientation:
+                RL_dim_coord = x_y_z[square_mask.orientation.find('R')]
+            else:
+                RL_dim_coord = x_y_z[square_mask.orientation.find('L')]
+            if 'P' in square_mask.orientation:
+                PA_dim_coord = x_y_z[square_mask.orientation.find('P')]
+            else:
+                PA_dim_coord = x_y_z[square_mask.orientation.find('A')]
+            '''
             if coord.x not in done_slices:
                 inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
                 done_slices.append(coord.x)
@@ -1068,7 +1081,7 @@ def inverse_square_crop(croped_image, square_mask):
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def leave_one_out_by_subject(param):
+def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', metric='MI', use_levels=True, weight=2.5, eq=1, mode_weighted_sim=False, weighted_label_fusion=False):
     """
     Leave one out cross validation taking 1 SUBJECT out of the dictionary at each step
     and computing the resulting dice coefficient, the time of computation and an error map
@@ -1081,13 +1094,6 @@ def leave_one_out_by_subject(param):
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
-    dic_path, dic_3d, use_levels, weight, reg, z_reg = param
-    use_levels = bool(int(use_levels))
-    print 'use-levels: ', use_levels
-    z_reg = bool(int(z_reg))
-    weight = float(weight)
-    print 'weight gamma: ', weight
-
     wm_dice_file = open('wm_dice_coeff.txt', 'w')
     gm_dice_file = open('gm_dice_coeff.txt', 'w')
     wm_csa_file = open('wm_csa.txt', 'w')
@@ -1097,6 +1103,9 @@ def leave_one_out_by_subject(param):
     e = None
 
     level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+    # for the error map
+    gm_diff_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
+    wm_diff_by_level = {'C1': [], 'C2': [], 'C3': [], 'C4': [], 'C5': [], 'C6': [], 'C7': [], 'T1': [], 'T2': [], '': []}
 
     for subject_dir in os.listdir(dic_path):
         subject_path = dic_path + '/' + subject_dir
@@ -1107,7 +1116,7 @@ def leave_one_out_by_subject(param):
 
                 tmp_dic_name = 'dic'
                 sct.run('cp -r ' + dic_path + ' ./' + tmp_dir + '/' + tmp_dic_name + '/')
-                sct.run('cp -r ' + dic_3d + '/' + subject_dir +' ./' + tmp_dir + '/' )
+                sct.run('cp -r ' + dic_3d + '/' + subject_dir + ' ./' + tmp_dir + '/')
                 sct.run('mv ./' + tmp_dir + '/' + tmp_dic_name + '/' + subject_dir + ' ./' + tmp_dir + '/' + subject_dir + '_by_slice')
 
                 # Gray matter segmentation using this subject as target
@@ -1115,11 +1124,15 @@ def leave_one_out_by_subject(param):
                 model_param = Param()
                 model_param.path_dictionary = tmp_dic_name
                 model_param.todo_model = 'compute'
-                model_param.weight_beta = weight
+                model_param.weight_gamma = float(weight)
                 model_param.use_levels = use_levels
                 model_param.res_type = 'prob'
                 model_param.reg = reg.split(':')
-                model_param.z_regularisation = z_reg
+                model_param.reg_metric = metric
+                model_param.equation_id = eq
+                model_param.mode_weight_similarity = mode_weighted_sim
+                model_param.weight_label_fusion = weighted_label_fusion
+                model_param.target_denoising = denoising
 
                 model = Model(model_param=model_param, k=0.8)
 
@@ -1127,7 +1140,7 @@ def leave_one_out_by_subject(param):
 
                 target = ''
                 sc_seg = ''
-                ref_gm_seg = ''
+                ref_gm_seg_im = ''
                 level = ''
                 for file_name in os.listdir(subject_dir):  # 3d files
 
@@ -1136,12 +1149,12 @@ def leave_one_out_by_subject(param):
                     elif 'level' in file_name:
                         level = subject_dir + '/' + file_name
                     elif 'gm' in file_name:
-                        ref_gm_seg = subject_dir + '/' + file_name
+                        ref_gm_seg_im = subject_dir + '/' + file_name
                     elif 'seg' in file_name:
                         sc_seg = subject_dir + '/' + file_name
 
 
-                full_gmseg = FullGmSegmentation(target, sc_seg, None, level, ref_gm_seg=ref_gm_seg, model=model, param=model_param)
+                full_gmseg = FullGmSegmentation(target, sc_seg, None, level, ref_gm_seg=ref_gm_seg_im, model=model, param=model_param)
 
                 # ## VALIDATION ##
                 # Dice coeff
@@ -1154,7 +1167,7 @@ def leave_one_out_by_subject(param):
                 n_subject_slices = len(full_gmseg.gm_seg.target_seg_methods.target)
                 n_slices += n_subject_slices
 
-                for i,line in enumerate(dice_lines_list):
+                for i, line in enumerate(dice_lines_list):
                     if 'Gray Matter' in line:
                         gm_dices = dice_lines_list[i+10:i+10+n_subject_slices]
 
@@ -1205,9 +1218,70 @@ def leave_one_out_by_subject(param):
                     slice_level = subject_slices_levels[target_slice]
                     hd_file.write(subject_dir + ' ' + target_slice + ' ' + slice_level + ': ' + str(hd) + ' - ' + str(max(med1, med2)) + '\n')
 
-
                 # error map
-                # TODO : error map by level
+
+                print 'ERROR MAP BY LEVEL COMPUTATION'
+                path_validation = full_gmseg.tmp_dir + '/validation/'
+                ref_gm_seg_im = Image(path_validation + 'ref_gm_seg.nii.gz')
+                ref_wm_seg_im = Image(path_validation + 'ref_wm_seg.nii.gz')
+                res_gm_seg_im = Image(path_validation + 'res_gm_seg_bin_RPI.nii.gz')
+                res_wm_seg_im = Image(path_validation + 'res_wm_seg_bin_RPI.nii.gz')
+
+                ref_gm_seg_im.change_orientation('IRP')
+                ref_wm_seg_im.change_orientation('IRP')
+                res_gm_seg_im.change_orientation('IRP')
+                res_wm_seg_im.change_orientation('IRP')
+                '''
+                for file_name in os.listdir(full_gmseg.tmp_dir):
+                    if 'square' in file_name and 'IRP' not in file_name:
+                        square_mask = full_gmseg.tmp_dir + '/' + file_name
+
+                res_gm_seg = full_gmseg.tmp_dir + '/res_gm_seg_bin.nii.gz'
+                res_wm_seg = full_gmseg.tmp_dir + '/res_wm_seg_bin.nii.gz'
+
+                ref_gm_seg = full_gmseg.tmp_dir + '/ref_gm_seg.nii.gz'
+                ref_wm_seg = full_gmseg.tmp_dir + '/ref_wm_seg.nii.gz'
+                '''
+                '''
+                nx_mask, ny_mask, nz_mask, nt_mask, px_mask, py_mask, pz_mask, pt_mask = sct.get_dimension(square_mask)
+                nx_seg, ny_seg, nz_seg, nt_seg, px_seg, py_seg, pz_seg, pt_seg = sct.get_dimension(res_gm_seg)
+                if px_mask != px_seg or py_mask != py_seg or pz_mask != pz_seg:
+                    status, seg_ori = sct.run('sct_orientation -i ' + res_gm_seg)
+                    seg_ori = seg_ori[4:7]
+                    if seg_ori[-1] == 'I' or seg_ori[-1] == 'S':
+                        square_mask = resample_image(square_mask, npx=px_seg, npy=py_seg, binary=True)
+                    elif seg_ori[0] == 'I' or seg_ori[0] == 'S':
+                        square_mask = resample_image(square_mask, npx=py_seg, npy=pz_seg, binary=True)
+                    else:
+                        square_mask = resample_image(square_mask, npx=px_seg, npy=pz_seg, binary=True)
+                '''
+                '''
+                sct.run('sct_crop_over_mask.py -i ' + res_gm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(res_gm_seg)[0] + sct.extract_fname(res_gm_seg)[1] + '_croped' )
+                sct.run('sct_crop_over_mask.py -i ' + ref_gm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' )
+
+                sct.run('sct_crop_over_mask.py -i ' + res_wm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(res_wm_seg)[0] + sct.extract_fname(res_wm_seg)[1] + '_croped' )
+                sct.run('sct_crop_over_mask.py -i ' + ref_wm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' )
+
+                res_gm_seg_im = Image(sct.extract_fname(res_gm_seg)[0] + sct.extract_fname(res_gm_seg)[1] + '_croped' + sct.extract_fname(res_gm_seg)[2])
+                # res_gm_seg_im.change_orientation(orientation='IRP')
+                ref_gm_seg_im = Image(sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2])
+                # ref_gm_seg_im.change_orientation(orientation='IRP')
+
+                res_wm_seg_im = Image(sct.extract_fname(res_wm_seg)[0] + sct.extract_fname(res_wm_seg)[1] + '_croped' + sct.extract_fname(res_wm_seg)[2])
+                # res_wm_seg_im.change_orientation(orientation='IRP')
+                ref_wm_seg_im = Image(sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' + sct.extract_fname(ref_wm_seg)[2])
+                # ref_wm_seg_im.change_orientation(orientation='IRP')
+                '''
+                for i_slice in range(len(ref_gm_seg_im.data)):
+                    slice_gm_error = abs(ref_gm_seg_im.data[i_slice] - res_gm_seg_im.data[i_slice])
+                    slice_wm_error = abs(ref_wm_seg_im.data[i_slice] - res_wm_seg_im.data[i_slice])
+                    if int(i_slice) < 10:
+                        target_slice = 'slice0' + str(i_slice)
+                    else:
+                        target_slice = 'slice' + str(i_slice)
+                    slice_level = subject_slices_levels[target_slice]
+                    gm_diff_by_level[slice_level].append(slice_gm_error)
+                    wm_diff_by_level[slice_level].append(slice_wm_error)
 
                 # csa
                 sct.run('sct_process_segmentation -i ' + full_gmseg.res_names['corrected_wm_seg'] + ' -p csa')
@@ -1245,11 +1319,29 @@ def leave_one_out_by_subject(param):
                 print e
             # else:
             #    sct.run('rm -rf ' + tmp_dir)
+    # error map
+    for l, level_error in gm_diff_by_level.items():
+        try:
+            n = len(level_error)
+            if n != 0:
+                Image(param=sum(level_error)/n, absolutepath='error_map_gm_' + str(l) + '.nii.gz').save()
+        except ZeroDivisionError:
+            sct.printv('WARNING: no data for level ' + str(l), 1, 'warning')
+
+    for l, level_error in wm_diff_by_level.items():
+        try:
+            n = len(level_error)
+            if n != 0:
+                Image(param=sum(level_error)/n, absolutepath='error_map_wm_' + str(l) + '.nii.gz').save()
+        except ZeroDivisionError:
+            sct.printv('WARNING: no data for level ' + str(l), 1, 'warning')
+
     if e is None:
         wm_dice_file.close()
         gm_dice_file.close()
         wm_csa_file.close()
         gm_csa_file.close()
+        hd_file.close()
 
         # Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs.nii.gz').save()
         t = time.time() - init
@@ -1341,7 +1433,7 @@ def compute_error_map_by_level(data_path):
                     res_wm_seg = fname
             if res_wm_seg != '' and level != '' and sq_mask!= '':
 
-                ref_wm_seg = 'ref_wm_seg.nii.gz'
+                ref_wm_seg = 'validation/ref_wm_seg.nii.gz'
                 status, ref_ori = sct.run('sct_orientation -i ' + ref_wm_seg)
                 ref_ori = ref_ori[4:7]
                 if ref_ori != 'IRP':
@@ -1382,11 +1474,11 @@ def compute_error_map_by_level(data_path):
                     error_map_abs_sum += error_3d_abs
                     n_slices += 1
             os.chdir('../..')
-    for l, errors in diff_by_level.items():
+    for l, level_error in diff_by_level.items():
         try:
-            n = len(errors)
+            n = len(level_error)
             if n != 0:
-                Image(param=sum(errors)/n, absolutepath='error_map_corrected_wm_' + str(l) + '.nii.gz').save()
+                Image(param=sum(level_error)/n, absolutepath='error_map_corrected_wm_' + str(l) + '.nii.gz').save()
         except ZeroDivisionError:
             sct.printv('WARNING: no data for level ' + str(l), 1, 'warning')
     Image(param=error_map_abs_sum/n_slices, absolutepath='error_map_abs_corrected_wm.nii.gz').save()
@@ -1557,7 +1649,6 @@ def compute_level_similarities(data_path):
             slice_similarity = float(similar_levels)/len(levels)
             similarity_sum += slice_similarity
             level_file.write(subject + ' slice ' + n_slice + ': ' + str(slice_similarity*100) + '% (' + str(slice_level) + ')\n')
-            n_slices += 1
             os.chdir('..')
     level_file.write('\nmean similarity: ' + str(similarity_sum/n_slices) + '% ')
     level_file.close()
@@ -1570,15 +1661,17 @@ if __name__ == "__main__":
         parser.add_option(name="-crop",
                           type_value="folder",
                           description="Path to the folder containing all your subjects' data "
-                                      "to be croped as pretreatment",
+                                      "to be croped as preprocessing",
                           mandatory=False,
                           example='dictionary/')
         parser.add_option(name="-loocv",
                           type_value=[[','], 'str'],# "folder",
                           description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by \":\" without white space "
-                                      "dictionary-by-slice/,dictionary3d/,use_levels,weight_param,registration_type,z_regularisation",
+                                      "dictionary-by-slice/,dictionary3d/,denoising,registration_type,metric,use_levels,weight,eq_id,mode_weighted_similarity,weighted_label_fusion"
+                                      "If you use denoising, the di-by-slice should be denoised, no need to change the 3d-dic.",
+                          # dic_path_original, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion
                           mandatory=False,
-                          example='dic_by_slice/,dic_3d/,1,1.2,Rigid:Affine,1') # 'dictionary/')
+                          example='dic_by_slice/,dic_3d/,1,Rigid:Affine,MI,1,2.5,1,0,0')
         parser.add_option(name="-error-map",
                           type_value="folder",
                           description="Path to a dictionary folder to compute the error map on",
@@ -1604,9 +1697,9 @@ if __name__ == "__main__":
                           description="Path to a dictionary folder with images in the vanderbilt format to be treated",
                           mandatory=False,
                           example='dictionary/')
-        parser.add_option(name="-pretreat",
+        parser.add_option(name="-preprocess",
                           type_value="folder",
-                          description="Path to a dictionary folder of data to be pre-treated. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
+                          description="Path to a dictionary folder of data to be pre-processed. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
                           mandatory=False,
                           example='dictionary/')
         parser.add_option(name="-gmseg-to-wmseg",
@@ -1620,9 +1713,10 @@ if __name__ == "__main__":
         if "-crop" in arguments:
             crop_t2_star_pipeline(arguments['-crop'])
         if "-loocv" in arguments:
-            leave_one_out_by_subject(arguments['-loocv'])
+            dic_path, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion = arguments['-loocv']
+            leave_one_out_by_subject(dic_path, dic_3d, denoising=bool(int(denoising)), reg=reg, metric=metric, weight=float(weight), eq=int(eq), mode_weighted_sim=bool(int(mode_weighted_sim)), weighted_label_fusion=bool(int(weighted_label_fusion)))
         if "-error-map" in arguments:
-            compute_error_map(arguments['-error-map'])
+            compute_error_map_by_level(arguments['-error-map'])
         if "-hausdorff" in arguments:
             compute_hausdorff_dist_on_loocv_results(arguments['-hausdorff'])
         if "-save-dic-by-slice" in arguments:
@@ -1631,8 +1725,8 @@ if __name__ == "__main__":
             amu_treatments(arguments['-treat-AMU'])
         if "-treat-vanderbilt" in arguments:
             vanderbilt_treatments(arguments['-treat-vanderbilt'])
-        if "-pretreat" in arguments:
-            dataset_pretreatments(arguments['-pretreat'])
+        if "-preprocess" in arguments:
+            dataset_preprocessing(arguments['-preprocess'])
         if "-gmseg-to-wmseg" in arguments:
             gmseg = arguments['-gmseg-to-wmseg'][0]
             gmseg_im = Image(gmseg)
