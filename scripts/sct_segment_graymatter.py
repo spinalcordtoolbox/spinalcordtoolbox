@@ -20,26 +20,35 @@ from sct_asman import Model, Param, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 
 
-class Pretreatments:
-    def __init__(self, target_fname, sc_seg_fname, t2_data=None):
+class Preprocessing:
+    def __init__(self, target_fname, sc_seg_fname, t2_data=None, denoising=True):
 
         self.t2star = 't2star.nii.gz'
         self.sc_seg = 't2star_sc_seg.nii.gz'
         self.t2 = 't2.nii.gz'
         self.t2_seg = 't2_seg.nii.gz'
         self.t2_landmarks = 't2_landmarks.nii.gz'
+        self.resample_to = 0.3
 
         sct.run('cp ../' + target_fname + ' ./' + self.t2star)
         sct.run('cp ../' + sc_seg_fname + ' ./' + self.sc_seg)
 
         nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = sct.get_dimension(self.t2star)
 
-        if round(self.original_px, 2) != 0.3 or round(self.original_py, 2) != 0.3:
-            self.t2star = resample_image(self.t2star)
-            self.sc_seg = resample_image(self.sc_seg, binary=True)
+        if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
+            self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
+            self.sc_seg = resample_image(self.sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
+        t2star_im = Image(self.t2star)
+        if denoising:
+            t2star_im.denoise_ornlm()
+            t2star_im.save()
+            self.t2star = t2star_im.file_name + t2star_im.ext
+        '''
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
         self.original_orientation = t2_star_orientation[4:7]
+        '''
+        self.original_orientation = t2star_im.orientation
 
         self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=75)
 
@@ -71,7 +80,7 @@ class FullGmSegmentation:
         self.sc_seg_fname = check_file_to_niigz(sc_seg_fname)
         self.t2_data = t2_data
 
-        self.ref_gm_seg = ref_gm_seg
+        self.ref_gm_seg_fname = ref_gm_seg
 
         self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir ' + self.tmp_dir)
@@ -110,36 +119,36 @@ class FullGmSegmentation:
 
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
-        sct.printv('\nDoing target pretreatments ...', verbose=self.param.verbose, type='normal')
-        self.pretreat = Pretreatments(self.target_fname, self.sc_seg_fname, self.t2_data)
-        if self.pretreat.level_fname is not None:
-            self.level_to_use = self.pretreat.level_fname
+        sct.printv('\nDoing target pre-processing ...', verbose=self.param.verbose, type='normal')
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, self.t2_data, denoising=self.param.target_denoising)
+        if self.preprocessed.level_fname is not None:
+            self.level_to_use = self.preprocessed.level_fname
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
-        self.gm_seg = GMsegSupervisedMethod(self.pretreat.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
+        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
 
-        sct.printv('\nDoing result post-treatments ...', verbose=self.param.verbose, type='normal')
-        self.post_treatments()
-
-        if self.ref_gm_seg is not None:
+        if self.ref_gm_seg_fname is not None:
             sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.param.verbose, type='normal')
             self.dice_name, self.hausdorff_name = self.validation()
 
+        sct.printv('\nDoing result post-processing ...', verbose=self.param.verbose, type='normal')
+        self.post_processing()
+
     # ------------------------------------------------------------------------------------------------------------------
-    def post_treatments(self):
-        square_mask = Image(self.pretreat.square_mask)
+    def post_processing(self):
+        square_mask = Image(self.preprocessed.square_mask)
         tmp_res_names = []
         for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg, self.gm_seg.corrected_wm_seg]:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
-            sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s RPI')
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.pretreat.treated_target)[1]):] + '.nii.gz'
+            sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s ' + self.preprocessed.original_orientation)
+            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.treated_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
             else:
                 bin = False
-            old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.pretreat.original_px, npy=self.pretreat.original_py, binary=bin)
+            old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
                 sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
@@ -153,65 +162,113 @@ class FullGmSegmentation:
 
     # ------------------------------------------------------------------------------------------------------------------
     def validation(self):
-        name_ref_gm_seg = sct.extract_fname(self.ref_gm_seg)
-        im_ref_gm_seg = Image('../' + self.ref_gm_seg)
+        ext = '.nii.gz'
+        validation_dir = 'validation'
+        sct.run('mkdir ' + validation_dir)
 
-        res_gm_seg_bin = Image('../' + self.res_names['gm_seg'])
-        res_wm_seg_bin = Image('../' + self.res_names['wm_seg'])
+        # loading the images
+        im_ref_gm_seg = Image('../' + self.ref_gm_seg_fname)
+        im_ref_wm_seg = inverse_gmseg_to_wmseg(im_ref_gm_seg, Image('../' + self.sc_seg_fname), im_ref_gm_seg.path + im_ref_gm_seg.file_name, save=False)
 
-        sct.run('cp ../' + self.ref_gm_seg + ' ./ref_gm_seg.nii.gz')
-        im_ref_wm_seg = inverse_gmseg_to_wmseg(im_ref_gm_seg, Image('../' + self.sc_seg_fname), 'ref_gm_seg')
-        im_ref_wm_seg.file_name = 'ref_wm_seg'
-        im_ref_wm_seg.ext = '.nii.gz'
-        im_ref_wm_seg.save()
+        res_gm_seg_bin = self.gm_seg.res_gm_seg.copy()
+        res_wm_seg_bin = self.gm_seg.res_wm_seg.copy()
 
         if self.param.res_type == 'prob':
             res_gm_seg_bin.data = np.asarray((res_gm_seg_bin.data >= 0.5).astype(int))
             res_wm_seg_bin.data = np.asarray((res_wm_seg_bin.data >= 0.50001).astype(int))
 
+        mask = Image(self.preprocessed.square_mask)
+
+        # doing the validation
+        os.chdir(validation_dir)
+
+        im_ref_gm_seg.path = './'
+        im_ref_gm_seg.file_name = 'ref_gm_seg'
+        im_ref_gm_seg.ext = ext
+        im_ref_gm_seg.save()
+        ref_gm_seg_new_name = resample_image(im_ref_gm_seg.file_name + ext, npx=self.preprocessed.resample_to, npy=self.preprocessed.resample_to, binary=True)
+        im_ref_gm_seg = Image(ref_gm_seg_new_name)
+        sct.run('rm ' + ref_gm_seg_new_name)
+
+        im_ref_wm_seg.path = './'
+        im_ref_wm_seg.file_name = 'ref_wm_seg'
+        im_ref_wm_seg.ext = ext
+        im_ref_wm_seg.save()
+        ref_wm_seg_new_name = resample_image(im_ref_wm_seg.file_name + ext, npx=self.preprocessed.resample_to, npy=self.preprocessed.resample_to, binary=True)
+        im_ref_wm_seg = Image(ref_wm_seg_new_name)
+        sct.run('rm ' + ref_wm_seg_new_name)
+
+        ref_orientation = im_ref_gm_seg.orientation
+        im_ref_gm_seg.change_orientation('IRP')
+        im_ref_wm_seg.change_orientation('IRP')
+
+        im_ref_gm_seg.crop_from_square_mask(mask, save=False)
+        im_ref_wm_seg.crop_from_square_mask(mask, save=False)
+
+        im_ref_gm_seg.change_orientation('RPI')
+        im_ref_wm_seg.change_orientation('RPI')
+
+        # saving the images to call the validation functions
         res_gm_seg_bin.path = './'
         res_gm_seg_bin.file_name = 'res_gm_seg_bin'
-        res_gm_seg_bin.ext = '.nii.gz'
+        res_gm_seg_bin.ext = ext
         res_gm_seg_bin.save()
+
         res_wm_seg_bin.path = './'
         res_wm_seg_bin.file_name = 'res_wm_seg_bin'
-        res_wm_seg_bin.ext = '.nii.gz'
+        res_wm_seg_bin.ext = ext
         res_wm_seg_bin.save()
+
+        im_ref_gm_seg.path = './'
+        im_ref_gm_seg.file_name = 'ref_gm_seg'
+        im_ref_gm_seg.ext = ext
+        im_ref_gm_seg.save()
+
+        im_ref_wm_seg.path = './'
+        im_ref_wm_seg.file_name = 'ref_wm_seg'
+        im_ref_wm_seg.ext = ext
+        im_ref_wm_seg.save()
+
+        sct.run('sct_orientation -i ' + res_gm_seg_bin.file_name + ext + ' -s RPI')
+        res_gm_seg_bin.file_name += '_RPI'
+        sct.run('sct_orientation -i ' + res_wm_seg_bin.file_name + ext + ' -s RPI')
+        res_wm_seg_bin.file_name += '_RPI'
 
         # Dice
         try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient ref_gm_seg.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
-            sct.run('c3d res_gm_seg_bin.nii.gz  ref_gm_seg.nii.gz -reslice-identity -o ref_in_res_space_gm.nii.gz ')
-            sct.run('fslmaths ref_in_res_space_gm.nii.gz -thr 0.1 ref_in_res_space_gm.nii.gz')
-            status_gm, output_gm = sct.run('sct_dice_coefficient ref_in_res_space_gm.nii.gz res_gm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
+            sct.run('c3d ' + res_gm_seg_bin.file_name + ext + ' ' + im_ref_gm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
+            sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
         try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient ref_wm_seg.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
-            sct.run('c3d res_wm_seg_bin.nii.gz  ref_wm_seg.nii.gz -reslice-identity -o ref_in_res_space_wm.nii.gz ')
-            sct.run('fslmaths ref_in_res_space_wm.nii.gz -thr 0.1 ref_in_res_space_wm.nii.gz')
-            status_wm, output_wm = sct.run('sct_dice_coefficient ref_in_res_space_wm.nii.gz res_wm_seg_bin.nii.gz  -2d-slices 2', error_exit='warning')
+            sct.run('c3d ' + res_wm_seg_bin.file_name + ext + ' ' + im_ref_wm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
-        dice_fic = open('../' + dice_name, 'w')
+        dice_fic = open('../../' + dice_name, 'w')
         if self.param.res_type == 'prob':
             dice_fic.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
-        dice_fic.write('\n--------------------------------------------------------------\nDice coefficient on the Gray Matter segmentation:\n')
+        dice_fic.write('\n--------------------------------------------------------------\n'
+                       'Dice coefficient on the Gray Matter segmentation:\n')
         dice_fic.write(output_gm)
-        dice_fic.write('\n\n--------------------------------------------------------------\nDice coefficient on the White Matter segmentation:\n')
+        dice_fic.write('\n\n--------------------------------------------------------------\n'
+                       'Dice coefficient on the White Matter segmentation:\n')
         dice_fic.write(output_wm)
         dice_fic.close()
         # sct.run(' mv ./' + dice_name + ' ../')
 
         hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
-        sct.run('sct_compute_hausdorff_distance.py -i ' + res_gm_seg_bin.absolutepath + ' -r ' + im_ref_gm_seg.absolutepath + ' -t 1 -o ' + hd_name + ' -v ' + str(self.param.verbose))
-        sct.run('mv ./' + hd_name + ' ../')
+        sct.run('sct_compute_hausdorff_distance.py -i ' + res_gm_seg_bin.file_name + ext + ' -r ' + im_ref_gm_seg.file_name + ext + ' -t 1 -o ' + hd_name + ' -v ' + str(self.param.verbose))
+        sct.run('mv ./' + hd_name + ' ../../')
 
+        os.chdir('..')
         return dice_name, hd_name
-
-
-
-
 
 
 ########################################################################################################################
@@ -281,9 +338,27 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1.2,
                           example=2.0)
+        parser.add_option(name="-denoising",
+                          type_value='multiple_choice',
+                          description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1'])
         parser.add_option(name="-z",
                           type_value='multiple_choice',
                           description="1: Z regularisation, 0: no ",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-weighted-label-fusion",
+                          type_value='multiple_choice',
+                          description="Use the similarities as a weights for the label fusion",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-weighted-similarity",
+                          type_value='multiple_choice',
+                          description="Use a PCA mode weighted norm for the computation of the similarities instead of the euclidean square norm",
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
@@ -320,11 +395,17 @@ if __name__ == "__main__":
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:
-            param.weight_beta = arguments["-weight"]
+            param.weight_gamma = arguments["-weight"]
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-z" in arguments:
             param.z_regularisation = bool(int(arguments["-z"]))
+        if "-denoising" in arguments:
+            param.target_denoising = bool(int(arguments["-denoising"]))
+        if "-weighted-label-fusion" in arguments:
+            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
+        if "-weighted-similarity" in arguments:
+            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
         if "-v" in arguments:
