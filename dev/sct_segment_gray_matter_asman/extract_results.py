@@ -70,8 +70,10 @@ for loocv_dir in os.listdir(path):
                 worksheets[n_sub][0].write(worksheets[n_sub][2][slice_id], 3+3*mod+2, float(line[-1]))
 
 workbook.close()
+'''
 
-# ############################# MULTIPLE LOOCV FROM MAGMA :  get n_sice data #############################
+# ############################# MULTIPLE LOOCV FROM MAGMA :  get n_slice data #############################
+'''
 workbook2 = xl.Workbook('results_wmseg_dices_by_n_slices.xlsx')
 worksheet_36 = workbook2.add_worksheet('36subjects')
 worksheet_28 = workbook2.add_worksheet('28subjects')
@@ -197,6 +199,7 @@ workbook3.close()
 '''
 
 # ############################# MULTIPLE LOOCV FROM MAGMA - HAUSDORFF DISTANCE #############################
+'''
 # Create a workbook and add a worksheet.
 workbook = xl.Workbook('results_hausdorff_dist.xlsx')
 worksheet_36 = workbook.add_worksheet('36subjects')
@@ -399,12 +402,10 @@ class TargetSegmentationPairwiseNOTFULL:
 
                 target_slice.set(wm_seg=moving_wm_seg_slice)
                 target_slice.set(gm_seg=moving_gm_seg_slice)
-
-
-
 '''
-# ############################# CLASSICAL LOOCV #############################
 
+# ############################# CLASSICAL LOOCV #############################
+'''
 workbook = xl.Workbook('results_loocv_subjects_resampled.xlsx')
 
 worksheet_wm = workbook.add_worksheet('wm_dice')
@@ -566,3 +567,178 @@ worksheet_wm.conditional_format('E3:' + wm_lim, {'type':     'cell',
 workbook.close()
 
 '''
+
+
+# ###################### L8 DESIGN OF EXPERIMENT ON STARK ######################
+# Create a workbook and add a worksheet.
+workbook = xl.Workbook('L8_exp.xlsx')
+worksheet_wm_dc = workbook.add_worksheet('wm_dice')
+worksheet_gm_dc = workbook.add_worksheet('gm_dice')
+worksheet_hd = workbook.add_worksheet('hausdorff_dist')
+worksheet_med_d = workbook.add_worksheet('median_dist')
+worksheet_wm_csa = workbook.add_worksheet('wm_csa')
+worksheet_gm_csa = workbook.add_worksheet('gm_csa')
+
+bold = workbook.add_format({'bold': True})
+
+start_row = 2
+start_col = 3
+worksheets = {'wm_dice': [worksheet_wm_dc, start_row], 'gm_dice': [worksheet_gm_dc, start_row], 'hausdorff_dist': [worksheet_hd, start_row], 'median_dist': [worksheet_med_d, start_row], 'wm_csa': [worksheet_wm_csa, start_row], 'gm_csa': [worksheet_gm_csa, start_row]}
+
+exp_dir = []
+for i in range(8):
+    exp_dir.append('exp' + str(i))
+
+for w in worksheets.values():
+    w[0].write(1, 0, 'Subject', bold)
+    w[0].write(1, 1, 'Slice #', bold)
+    w[0].write(1, 2, 'Slice level', bold)
+    for exp in exp_dir:
+        w[0].write(1, int(exp[-1])+start_col, exp, bold)
+
+i_max = 0
+for loocv_dir in os.listdir(path):
+    if loocv_dir in exp_dir:
+        # wm_dice
+        worksheets['wm_dice'][0].write(0, 0, 'WHITE MATTER DICE COEFFICIENT', bold)
+        wm_dice_file = open(path + '/' + loocv_dir + '/wm_dice_coeff.txt', 'r')
+        wm_dice_lines = wm_dice_file.readlines()
+        wm_dice_file.close()
+
+        wm_dice_lines = [line.split(' ') for line in wm_dice_lines]
+
+        for i, line in enumerate(wm_dice_lines):
+            line[2] = line[2][:-1]
+            line[-1] = line[-1][:-1]
+            line.pop(4)
+            line.pop(4)
+
+            subject, slice_num, level, dice, n_slices = line
+            worksheets['wm_dice'][0].write(worksheets['wm_dice'][1]+i, 0, subject)
+            worksheets['wm_dice'][0].write(worksheets['wm_dice'][1]+i, 1, slice_num)
+            worksheets['wm_dice'][0].write(worksheets['wm_dice'][1]+i, 2, level)
+            if dice != '':
+                worksheets['wm_dice'][0].write(worksheets['wm_dice'][1]+i, int(loocv_dir[-1])+start_col, float(dice))
+            if i > i_max:
+                i_max = i
+
+        # gm_dice
+        worksheets['gm_dice'][0].write(0, 0, 'GRAY MATTER DICE COEFFICIENT', bold)
+        gm_dice_file = open(path + '/' + loocv_dir + '/gm_dice_coeff.txt', 'r')
+        gm_dice_lines = gm_dice_file.readlines()
+        gm_dice_file.close()
+
+        gm_dice_lines = [line.split(' ') for line in gm_dice_lines]
+
+        for i, line in enumerate(gm_dice_lines):
+            line[2] = line[2][:-1]
+            line[-1] = line[-1][:-1]
+            line.pop(4)
+            line.pop(4)
+
+            subject, slice_num, level, dice, n_slices = line
+            worksheets['gm_dice'][0].write(worksheets['gm_dice'][1]+i, 0, subject)
+            worksheets['gm_dice'][0].write(worksheets['gm_dice'][1]+i, 1, slice_num)
+            worksheets['gm_dice'][0].write(worksheets['gm_dice'][1]+i, 2, level)
+            if dice != '':
+                worksheets['gm_dice'][0].write(worksheets['gm_dice'][1]+i, int(loocv_dir[-1])+start_col, float(dice))
+            if i > i_max:
+                i_max = i
+
+        # hausdorff distance and median distance
+        worksheets['hausdorff_dist'][0].write(0, 0, 'HAUSDORFF DISTANCE IN mm', bold)
+        worksheets['median_dist'][0].write(0, 0, 'MEDIAN DISTANCE IN mm', bold)
+        hd_file = open(path + '/' + loocv_dir + '/hd.txt', 'r')
+        hd_lines = hd_file.readlines()
+        hd_file.close()
+
+        hd_lines = [line.split(' ') for line in hd_lines]
+
+        for i, line in enumerate(hd_lines):
+            line[2] = line[2][:-1]
+            line[-1] = line[-1][:-1]
+            line.pop(3)
+            line.pop(4)
+            line.pop(4)
+            line.pop(4)
+            subject, slice_num, level, hd, med_dist = line
+
+            worksheets['hausdorff_dist'][0].write(worksheets['hausdorff_dist'][1]+i, 0, subject)
+            worksheets['hausdorff_dist'][0].write(worksheets['hausdorff_dist'][1]+i, 1, slice_num)
+            worksheets['hausdorff_dist'][0].write(worksheets['hausdorff_dist'][1]+i, 2, level)
+
+            worksheets['median_dist'][0].write(worksheets['median_dist'][1]+i, 0, subject)
+            worksheets['median_dist'][0].write(worksheets['median_dist'][1]+i, 1, slice_num)
+            worksheets['median_dist'][0].write(worksheets['median_dist'][1]+i, 2, level)
+
+            if hd != '':
+                worksheets['hausdorff_dist'][0].write(worksheets['hausdorff_dist'][1]+i, int(loocv_dir[-1])+start_col, float(hd))
+            if med_dist != '':
+                worksheets['median_dist'][0].write(worksheets['median_dist'][1]+i, int(loocv_dir[-1])+start_col, float(med_dist))
+
+            if i > i_max:
+                i_max = i
+
+        # wm_csa
+        worksheets['wm_csa'][0].write(0, 0, 'WHITE MATTER CROSS SECTIONAL AREA IN mm2', bold)
+        wm_csa_file = open(path + '/' + loocv_dir + '/wm_csa.txt', 'r')
+        wm_csa_lines = wm_csa_file.readlines()
+        wm_csa_file.close()
+
+        wm_csa_lines = [line.split(' ') for line in wm_csa_lines]
+
+        for i, line in enumerate(wm_csa_lines):
+            line[2] = line[2][:-1]
+            line[-1] = line[-1][:-1]
+
+            subject, slice_num, level, csa = line
+            worksheets['wm_csa'][0].write(worksheets['wm_csa'][1]+i, 0, subject)
+            worksheets['wm_csa'][0].write(worksheets['wm_csa'][1]+i, 1, slice_num)
+            worksheets['wm_csa'][0].write(worksheets['wm_csa'][1]+i, 2, level)
+            if csa != '':
+                worksheets['wm_csa'][0].write(worksheets['wm_csa'][1]+i, int(loocv_dir[-1])+start_col, float(csa))
+
+            if i > i_max:
+                i_max = i
+
+        # gm_csa
+        worksheets['gm_csa'][0].write(0, 0, 'GRAY MATTER CROSS SECTIONAL AREA IN mm2', bold)
+        gm_csa_file = open(path + '/' + loocv_dir + '/gm_csa.txt', 'r')
+        gm_csa_lines = gm_csa_file.readlines()
+        gm_csa_file.close()
+
+        gm_csa_lines = [line.split(' ') for line in gm_csa_lines]
+
+        for i, line in enumerate(gm_csa_lines):
+            line[2] = line[2][:-1]
+            line[-1] = line[-1][:-1]
+
+            subject, slice_num, level, csa = line
+            worksheets['gm_csa'][0].write(worksheets['gm_csa'][1]+i, 0, subject)
+            worksheets['gm_csa'][0].write(worksheets['gm_csa'][1]+i, 1, slice_num)
+            worksheets['gm_csa'][0].write(worksheets['gm_csa'][1]+i, 2, level)
+            if csa != '':
+                worksheets['gm_csa'][0].write(worksheets['gm_csa'][1]+i, int(loocv_dir[-1])+start_col, float(csa))
+            if i > i_max:
+                i_max = i
+
+col_by_exp = {'exp0': 'D', 'exp1': 'E', 'exp2': 'F', 'exp3': 'G', 'exp4': 'H', 'exp5': 'I', 'exp6': 'J', 'exp7': 'K', }
+next_free_row = start_row + i_max + 2
+for w in worksheets.values():
+    w[0].write(next_free_row, 2, 'AVERAGE', bold)
+    w[0].write(next_free_row+1, 2, 'STD', bold)
+    w[0].write(next_free_row+3, 2, 'MIN', bold)
+    w[0].write(next_free_row+4, 2, 'Q1', bold)
+    w[0].write(next_free_row+5, 2, 'MEDIAN', bold)
+    w[0].write(next_free_row+6, 2, 'Q3', bold)
+    w[0].write(next_free_row+7, 2, 'MAX', bold)
+    for exp in exp_dir:
+        w[0].write_formula(next_free_row, start_col+int(exp[-1]), '=AVERAGE('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+')')
+        w[0].write_formula(next_free_row+1, start_col+int(exp[-1]), '=STDEV('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+')')
+        w[0].write_formula(next_free_row+3, start_col+int(exp[-1]), '=MIN('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+')')
+        w[0].write_formula(next_free_row+4, start_col+int(exp[-1]), '=QUARTILE('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+', 1)')
+        w[0].write_formula(next_free_row+5, start_col+int(exp[-1]), '=MEDIAN('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+')')
+        w[0].write_formula(next_free_row+6, start_col+int(exp[-1]), '=QUARTILE('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+', 3)')
+        w[0].write_formula(next_free_row+7, start_col+int(exp[-1]), '=MAX('+col_by_exp[exp]+str(start_row)+':'+col_by_exp[exp]+str(next_free_row-1)+')')
+
+workbook.close()
