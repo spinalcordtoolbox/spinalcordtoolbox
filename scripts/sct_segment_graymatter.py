@@ -234,6 +234,14 @@ class FullGmSegmentation:
         sct.run('sct_orientation -i ' + res_wm_seg_bin.file_name + ext + ' -s RPI')
         res_wm_seg_bin.file_name += '_RPI'
 
+        res_gm_seg_bin = Image(res_gm_seg_bin.file_name + ext)
+        im_ref_gm_seg.hdr.set_zooms(res_gm_seg_bin.hdr.get_zooms())  # correcting the pix dimension
+        im_ref_gm_seg.save()
+
+        res_wm_seg_bin = Image(res_wm_seg_bin.file_name + ext)
+        im_ref_wm_seg.hdr.set_zooms(res_wm_seg_bin.hdr.get_zooms())  # correcting the pix dimension
+        im_ref_wm_seg.save()
+
         # Dice
         try:
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
