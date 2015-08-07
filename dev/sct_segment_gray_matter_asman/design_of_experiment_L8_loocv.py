@@ -96,4 +96,5 @@ if __name__ == '__main__':
 
     pool = mp.Pool()
     pool.map(do_loocv, experiments_dir)
+    pool.close()
     pool.join()
