@@ -246,7 +246,7 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             niter = 5  # 20
             smooth = 0
             shrink = 1
-            cmd_reg = 'antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
+            cmd_reg = 'isct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
                       '-m ' + metric + '[' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + metric_params + '] -o reg  -c ' + str(niter) + \
                       ' -s ' + str(smooth) + ' -f ' + str(shrink) + ' -v ' + str(verbose)  # + ' -r [' + fixed_im_name + '.nii.gz,' + moving_im_name + '.nii.gz ' + ',1]'
 
@@ -1231,47 +1231,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
                 ref_wm_seg_im.change_orientation('IRP')
                 res_gm_seg_im.change_orientation('IRP')
                 res_wm_seg_im.change_orientation('IRP')
-                '''
-                for file_name in os.listdir(full_gmseg.tmp_dir):
-                    if 'square' in file_name and 'IRP' not in file_name:
-                        square_mask = full_gmseg.tmp_dir + '/' + file_name
 
-                res_gm_seg = full_gmseg.tmp_dir + '/res_gm_seg_bin.nii.gz'
-                res_wm_seg = full_gmseg.tmp_dir + '/res_wm_seg_bin.nii.gz'
-
-                ref_gm_seg = full_gmseg.tmp_dir + '/ref_gm_seg.nii.gz'
-                ref_wm_seg = full_gmseg.tmp_dir + '/ref_wm_seg.nii.gz'
-                '''
-                '''
-                nx_mask, ny_mask, nz_mask, nt_mask, px_mask, py_mask, pz_mask, pt_mask = sct.get_dimension(square_mask)
-                nx_seg, ny_seg, nz_seg, nt_seg, px_seg, py_seg, pz_seg, pt_seg = sct.get_dimension(res_gm_seg)
-                if px_mask != px_seg or py_mask != py_seg or pz_mask != pz_seg:
-                    status, seg_ori = sct.run('sct_orientation -i ' + res_gm_seg)
-                    seg_ori = seg_ori[4:7]
-                    if seg_ori[-1] == 'I' or seg_ori[-1] == 'S':
-                        square_mask = resample_image(square_mask, npx=px_seg, npy=py_seg, binary=True)
-                    elif seg_ori[0] == 'I' or seg_ori[0] == 'S':
-                        square_mask = resample_image(square_mask, npx=py_seg, npy=pz_seg, binary=True)
-                    else:
-                        square_mask = resample_image(square_mask, npx=px_seg, npy=pz_seg, binary=True)
-                '''
-                '''
-                sct.run('sct_crop_over_mask.py -i ' + res_gm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(res_gm_seg)[0] + sct.extract_fname(res_gm_seg)[1] + '_croped' )
-                sct.run('sct_crop_over_mask.py -i ' + ref_gm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' )
-
-                sct.run('sct_crop_over_mask.py -i ' + res_wm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(res_wm_seg)[0] + sct.extract_fname(res_wm_seg)[1] + '_croped' )
-                sct.run('sct_crop_over_mask.py -i ' + ref_wm_seg + ' -mask ' + square_mask + ' -square 1 -o ' + sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' )
-
-                res_gm_seg_im = Image(sct.extract_fname(res_gm_seg)[0] + sct.extract_fname(res_gm_seg)[1] + '_croped' + sct.extract_fname(res_gm_seg)[2])
-                # res_gm_seg_im.change_orientation(orientation='IRP')
-                ref_gm_seg_im = Image(sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2])
-                # ref_gm_seg_im.change_orientation(orientation='IRP')
-
-                res_wm_seg_im = Image(sct.extract_fname(res_wm_seg)[0] + sct.extract_fname(res_wm_seg)[1] + '_croped' + sct.extract_fname(res_wm_seg)[2])
-                # res_wm_seg_im.change_orientation(orientation='IRP')
-                ref_wm_seg_im = Image(sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' + sct.extract_fname(ref_wm_seg)[2])
-                # ref_wm_seg_im.change_orientation(orientation='IRP')
-                '''
                 for i_slice in range(len(ref_gm_seg_im.data)):
                     slice_gm_error = abs(ref_gm_seg_im.data[i_slice] - res_gm_seg_im.data[i_slice])
                     slice_wm_error = abs(ref_wm_seg_im.data[i_slice] - res_wm_seg_im.data[i_slice])
