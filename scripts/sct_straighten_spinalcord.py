@@ -475,7 +475,7 @@ class SpinalCordStraightener(object):
             if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None':
                 # converting landmarks straight and curved to physical coordinates
                 from msct_image import Image
-                image_curved = Image(fname_centerline_orient)
+                image_curved = Image(fname_centerline_orient, verbose=verbose)
                 # Reorganize landmarks
                 points_fixed, points_moving = [], []
                 for coord in landmark_straight:
@@ -493,7 +493,7 @@ class SpinalCordStraightener(object):
                     points_fixed, points_moving, constraints=self.algo_landmark_rigid, show=False)
 
                 # reorganize registered pointsx
-                image_curved = Image(fname_centerline_orient)
+                image_curved = Image(fname_centerline_orient, verbose=verbose)
                 for index_curved, ind in enumerate(range(0, len(points_moving_reg), 1)):
                     coord = Coordinate()
                     point_curved = image_curved.transfo_phys2continuouspix([[points_moving_reg[ind][0],
@@ -553,7 +553,7 @@ class SpinalCordStraightener(object):
                     text_file.write("#Insight Transform File V1.0\n")
                     text_file.write("#Transform 0\n")
                     text_file.write("Transform: AffineTransform_double_3_3\n")
-                    text_file.write("Parameters: 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 %.9f %.9f %.9f\n" % (
+                    text_file.write("Parameters: 1 0 0 0 1 0 0 0 1 %.9f %.9f %.9f\n" % (
                         translation_array[0, 0], translation_array[0, 1], translation_array[0, 2]))
                     text_file.write("FixedParameters: 0 0 0\n")
                     text_file.close()
@@ -732,13 +732,13 @@ class SpinalCordStraightener(object):
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
             # TODO: !!! DO NOT USE sct.run HERE BECAUSE isct_ComposeMultiTransform OUTPUTS A NON-NULL STATUS !!!
             if self.algo_landmark_rigid == 'rigid-decomposed':
-                cmd = "isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz " \
-                      "tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid1.txt tmp.curve2straight_rigid2.txt"
-                sct.run(cmd, self.verbose)
+                cmd = "sct_concat_transfo -w tmp.curve2straight_rigid1.txt,tmp.curve2straight_rigid2.txt," \
+                      "tmp.warp_curve2straight.nii.gz -d tmp.landmarks_straight_crop.nii.gz " \
+                      "-o tmp.curve2straight.nii.gz"
             else:
                 cmd = "isct_ComposeMultiTransform 3 tmp.curve2straight.nii.gz -R tmp.landmarks_straight_crop.nii.gz " \
                       "tmp.warp_curve2straight.nii.gz tmp.curve2straight_rigid.txt"
-                sct.run(cmd, self.verbose)
+            sct.run(cmd, self.verbose)
 
             # Estimate b-spline transformation straight --> curve
             # TODO: invert warping field instead of estimating a new one
@@ -758,9 +758,8 @@ class SpinalCordStraightener(object):
             # Concatenate rigid and non-linear transformations...
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
             if self.algo_landmark_rigid == "rigid-decomposed":
-                cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
-                      " -i tmp.curve2straight_rigid2.txt -i tmp.curve2straight_rigid1.txt " \
-                      "tmp.warp_straight2curve.nii.gz"
+                cmd = "sct_concat_transfo -w tmp.warp_straight2curve.nii.gz,-tmp.curve2straight_rigid2.txt," \
+                      "-tmp.curve2straight_rigid1.txt -d " + file_anat + ext_anat + " -o tmp.straight2curve.nii.gz"
             else:
                 cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
                       " -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz"
