@@ -745,7 +745,8 @@ class Installer:
 
         # install required software
         print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
-        os.chdir("requirements")
+        current_dir = os.get_cwd()
+        os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
         print ">> " + cmd
         status, output = runProcess(cmd)
@@ -754,7 +755,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
-        os.chdir("..")
+        os.chdir(current_dir)
 
         # Create links to python scripts
         print "\nCreate links to python scripts..."
