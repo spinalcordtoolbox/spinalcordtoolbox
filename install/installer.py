@@ -745,7 +745,7 @@ class Installer:
 
         # install required software
         print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
-        current_dir = os.get_cwd()
+        current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
         print ">> " + cmd
