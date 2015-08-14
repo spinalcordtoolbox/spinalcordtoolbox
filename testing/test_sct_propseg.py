@@ -11,15 +11,15 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
-import commands
 
+import commands
 
 def test(path_data):
 
     # parameters
     folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_manual_segmentation.nii.gz', 't2_seg.nii.gz']
+    file_data = ['t2.nii.gz', 't2_seg.nii.gz', 't2_seg_orig.nii.gz']
+    dice_threshold = 0.99
 
     # define command
     cmd = 'sct_propseg -i ' + path_data + folder_data + file_data[0] \
@@ -28,14 +28,20 @@ def test(path_data):
         + ' -cross'\
         + ' -centerline-binary'\
         + ' -v 1'
-    '''
-    cmd2 = 'sct_dice_coefficient ' + path_data + folder_data + file_data[1] \
-                + ' ' + f[2] \
-                + ' -bmax'
-    '''
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+
+    # run command
+    status, output = commands.getstatusoutput(cmd)
+
+    # if command ran without error, test integrity
+    if status == 0:
+        # compute dice coefficient between generated image and image from database
+        cmd = 'sct_dice_coefficient ' + path_data + folder_data + file_data[2] + ' ' + file_data[1]
+        status, output = commands.getstatusoutput(cmd)
+        # parse output and compare to acceptable threshold
+        if float(output.split('3D Dice coefficient = ')[1]) < dice_threshold:
+            status = 5
+
+    return status, output
 
 
 if __name__ == "__main__":

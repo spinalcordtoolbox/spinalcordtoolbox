@@ -11,7 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+
 import commands
 
 
@@ -25,7 +25,7 @@ def test(data_path):
     cmd = 'sct_crop_image -i ' + data_path + folder_data + file_data[0] \
           + ' -o cropped_normal.nii.gz -dim 1 -start 10 -end 50'
 
-    status, output = sct.run(cmd, 0)
+    status, output = commands.getstatusoutput(cmd)
 
     if status == 0:
         # check if cropping was correct
