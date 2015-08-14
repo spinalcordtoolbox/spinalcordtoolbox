@@ -17,6 +17,7 @@ import commands
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
+sys.path.append(path_sct + '/testing')
 import sct_utils as sct
 from os import listdir
 from os.path import isfile, join
@@ -146,7 +147,7 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = []
-    functions.append('test_debug')
+    #functions.append('test_debug')  --> removed by jcohenadad. No more use for it now.
     functions.append('sct_apply_transfo')
     functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
@@ -253,7 +254,10 @@ def test_function(script_name):
         if status == 0:
             print_ok()
         else:
-            print_fail()
+            if status == 5:
+                print_warning()
+            else:
+                print_fail()
             print output
             # log file
             write_to_log_file(fname_log, output, 'w')
