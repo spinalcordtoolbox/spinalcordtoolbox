@@ -97,7 +97,7 @@ def main():
         downloaddata()
 
     # display path to data
-    sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data:\n.. '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
