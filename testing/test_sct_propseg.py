@@ -18,7 +18,7 @@ def test(path_data):
 
     # parameters
     folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz', 't2_seg_orig.nii.gz']
+    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
     dice_threshold = 0.99
 
     # define command
@@ -35,7 +35,7 @@ def test(path_data):
     # if command ran without error, test integrity
     if status == 0:
         # compute dice coefficient between generated image and image from database
-        cmd = 'sct_dice_coefficient ' + path_data + folder_data + file_data[2] + ' ' + file_data[1]
+        cmd = 'sct_dice_coefficient ' + path_data + folder_data + file_data[1] + ' ' + file_data[1]
         status, output = commands.getstatusoutput(cmd)
         # parse output and compare to acceptable threshold
         if float(output.split('3D Dice coefficient = ')[1]) < dice_threshold:
