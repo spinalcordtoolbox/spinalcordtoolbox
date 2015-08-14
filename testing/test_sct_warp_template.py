@@ -28,8 +28,8 @@ def test(path_data):
     cmd = 'sct_warp_template' \
         ' -d '+path_data+folder_data[0]+file_data[0]+ \
         ' -w '+path_data+folder_data[0]+file_data[1]+ \
-        ' -a 1 '+ \
-        ' -s 1 '+ \
+        ' -a 0 '+ \
+        ' -s 0 '+ \
         ' -o label'+ \
         ' -t '+path_data+folder_data[1]+ \
         ' -v 1'
