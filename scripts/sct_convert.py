@@ -13,7 +13,6 @@
 
 from msct_parser import Parser
 import sys
-from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -49,6 +48,16 @@ def get_parser():
     return parser
 
 
+# conversion
+# ==========================================================================================
+def convert(fname_in, fname_out):
+    from msct_image import Image
+    # Open file
+    im = Image(fname_in)
+    # Save file
+    im.setFileName(fname_out)
+    im.save()
+
 
 # MAIN
 # ==========================================================================================
@@ -63,12 +72,8 @@ def main(args = None):
     fname_in = arguments["-i"]
     fname_out = arguments["-o"]
 
-    # Open file
-    im = Image(fname_in)
-
-    # Save file
-    im.setFileName(fname_out)
-    im.save()
+    # convert file
+    convert(fname_in, fname_out)
 
 
 
