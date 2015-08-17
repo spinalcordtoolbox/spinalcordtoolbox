@@ -16,7 +16,7 @@ import sys
 import getopt
 from msct_parser import *
 from msct_image import Image
-from sct_asman import Model, Param, GMsegSupervisedMethod
+from msct_multiatlas_seg import Model, Param, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 
 
