@@ -23,6 +23,7 @@ import sys
 import commands
 import numpy as np
 import sct_utils as sct
+from msct_image import Image
 
 
 #=======================================================================================================================
@@ -61,7 +62,7 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data).dim
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # copy file_target to a temporary file

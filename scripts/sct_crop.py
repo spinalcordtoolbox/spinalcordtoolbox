@@ -25,6 +25,7 @@ import nibabel
 import time
 from sct_orientation import set_orientation
 import sct_utils as sct
+from msct_image import Image
 
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -111,7 +112,7 @@ def main():
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     # check if 4D data
     if not nt == 1:

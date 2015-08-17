@@ -21,6 +21,7 @@ import math
 import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
+from msct_image import Image
 
 
 class Param:
@@ -182,7 +183,7 @@ def fmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension

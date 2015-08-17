@@ -20,15 +20,14 @@ import getopt
 import os
 import commands
 import time
-
 import numpy as np
 import scipy
 import nibabel
-
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_orientation import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -204,7 +203,7 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
 
     # Get dimension
     sct.printv('\nGet dimensions...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    nx, ny, nz, nt, px, py, pz, pt = Iamge(fname_segmentation_orient).dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
@@ -245,7 +244,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
 
     # Get dimension
     sct.printv('\nGet dimensions...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_segmentation_orient).dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
@@ -373,7 +372,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # Get size of data
     sct.printv('\nGet data dimensions...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_segmentation_orient)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_segmentation_orient).dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
     # Open segmentation volume
