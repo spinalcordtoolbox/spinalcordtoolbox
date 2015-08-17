@@ -62,9 +62,11 @@ class Image(object):
             self.data = self.split_data()
         """
 
+
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -79,6 +81,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
+
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -86,7 +89,7 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname, get_dimension
+        from sct_utils import check_file_exist, printv, extract_fname
         from sct_orientation import get_orientation
 
         check_file_exist(path, verbose=verbose)
@@ -99,8 +102,10 @@ class Image(object):
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
-        nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
-        self.dim = [nx, ny, nz]
+        self.dim = get_dimension(im_file)
+        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        # self.dim = [nx, ny, nz]
+
 
     def setFileName(self, filename):
         """
@@ -112,8 +117,6 @@ class Image(object):
         self.path, self.file_name, self.ext = extract_fname(filename)
 
     def changeType(self, type=''):
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
-
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -135,6 +138,8 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
+        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
+
         if type == '':
             type = self.hdr.get_data_dtype()
 
@@ -482,6 +487,29 @@ def find_zmin_zmax(fname):
     # parse output
     zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
+
+
+def get_dimension(im_file):
+    """
+    Get dimension from nibabel object. Manages 2D, 3D or 4D images.
+    :return: nx, ny, nz, nt, px, py, pz, pt
+    """
+
+    # initialization
+    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
+
+    nb_dims = len(im_file.header.get_data_shape())
+    if nb_dims == 2:
+        nx, ny = im_file.header.get_data_shape()
+        px, py = im_file.header.get_zooms()
+    if nb_dims == 3:
+        nx, ny, nz = im_file.header.get_data_shape()
+        px, py, pz = im_file.header.get_zooms()
+    if nb_dims == 4:
+        nx, ny, nz, nt = im_file.header.get_data_shape()
+        px, py, pz, pt = im_file.header.get_zooms()
+
+    return nx, ny, nz, nt, px, py, pz, pt
 
 
 # =======================================================================================================================

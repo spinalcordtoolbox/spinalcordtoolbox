@@ -285,31 +285,39 @@ def find_file_within_folder(fname, directory):
 #=======================================================================================================================
 # get_dimension
 #=======================================================================================================================
-# Get dimensions of a nifti file using FSL
-def get_dimension(fname):
-    # apply fslsize on data
-    cmd = 'fslsize '+fname
-    status, output = commands.getstatusoutput(cmd)
-    # split output according to \n field
-    output_split = output.split()
-
-    if output_split[0] == 'ERROR:':
-        printv('\n'+output, 1, 'error')
-    else:
-        # extract dimensions as integer
-        try:
-            nx = int(output_split[1])
-            ny = int(output_split[3])
-            nz = int(output_split[5])
-            nt = int(output_split[7])
-            px = float(output_split[9])
-            py = float(output_split[11])
-            pz = float(output_split[13])
-            pt = float(output_split[15])
-            return nx, ny, nz, nt, px, py, pz, pt
-        except Exception, e:
-            print "Output of the command: \n", output_split
-            raise Exception
+# def get_dimension(fname):
+#     """ Get dimensions of a NIFTI file using nibabel
+#     :param fname: file name
+#     :return: nx, ny, nz, nt, px, py, pz, pt
+#     """
+#     from msct_image import Image
+#     # Open file
+#     im = Image(fname)
+#
+#     return nx, ny, nz, nt, px, py, pz, pt
+    # # apply fslsize on data
+    # cmd = 'fslsize '+fname
+    # status, output = commands.getstatusoutput(cmd)
+    # # split output according to \n field
+    # output_split = output.split()
+    #
+    # if output_split[0] == 'ERROR:':
+    #     printv('\n'+output, 1, 'error')
+    # else:
+    #     # extract dimensions as integer
+    #     try:
+    #         nx = int(output_split[1])
+    #         ny = int(output_split[3])
+    #         nz = int(output_split[5])
+    #         nt = int(output_split[7])
+    #         px = float(output_split[9])
+    #         py = float(output_split[11])
+    #         pz = float(output_split[13])
+    #         pt = float(output_split[15])
+    #         return nx, ny, nz, nt, px, py, pz, pt
+    #     except Exception, e:
+    #         print "Output of the command: \n", output_split
+    #         raise Exception
 
 
 #=======================================================================================================================

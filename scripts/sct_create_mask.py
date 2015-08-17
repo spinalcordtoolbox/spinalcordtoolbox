@@ -24,6 +24,8 @@ import numpy
 import nibabel
 from scipy import ndimage
 from sct_orientation import get_orientation, set_orientation
+from sct_convert import convert
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -154,11 +156,13 @@ def create_mask():
     os.chdir(path_tmp)
 
     # convert to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
+    convert('data'+ext_data, 'data.nii')
+    # sct_convert -i data'+ext_data+' -o data.nii', param.verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
+    # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
