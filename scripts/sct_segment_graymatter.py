@@ -328,12 +328,6 @@ if __name__ == "__main__":
                                       "If -l is used, no need to provide t2 data",
                           mandatory=False,
                           example='MNI-Poly-AMU_level_IRP.nii.gz')
-        parser.add_option(name="-first-reg",
-                          type_value='multiple_choice',
-                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
                           description="Use the level information for the model or not",
@@ -351,6 +345,13 @@ if __name__ == "__main__":
                           description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
                           mandatory=False,
                           default_value=1,
+                          example=['0', '1'])
+        '''
+        parser.add_option(name="-first-reg",
+                          type_value='multiple_choice',
+                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
+                          mandatory=False,
+                          default_value=0,
                           example=['0', '1'])
         parser.add_option(name="-z",
                           type_value='multiple_choice',
@@ -370,6 +371,7 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        '''
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
@@ -398,22 +400,24 @@ if __name__ == "__main__":
             input_t2_data = arguments["-t2"]
         if "-l" in arguments:
             input_level_fname = arguments["-l"]
-        if "-first-reg" in arguments:
-            param.first_reg = bool(int(arguments["-first-reg"]))
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:
             param.weight_gamma = arguments["-weight"]
-        if "-res-type" in arguments:
-            param.res_type = arguments["-res-type"]
-        if "-z" in arguments:
-            param.z_regularisation = bool(int(arguments["-z"]))
         if "-denoising" in arguments:
             param.target_denoising = bool(int(arguments["-denoising"]))
+        '''
+        if "-first-reg" in arguments:
+            param.first_reg = bool(int(arguments["-first-reg"]))
+        if "-z" in arguments:
+            param.z_regularisation = bool(int(arguments["-z"]))
         if "-weighted-label-fusion" in arguments:
             param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
         if "-weighted-similarity" in arguments:
             param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
+        '''
+        if "-res-type" in arguments:
+            param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
         if "-v" in arguments:

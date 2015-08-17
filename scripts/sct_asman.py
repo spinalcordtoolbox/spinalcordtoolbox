@@ -43,7 +43,7 @@ class Param:
         self.target_denoising = True
         self.first_reg = False
         self.use_levels = True
-        self.weight_gamma = 1.2
+        self.weight_gamma = 2.5
         self.equation_id = 1
         self.weight_label_fusion = False
         self.mode_weight_similarity = False
@@ -70,7 +70,6 @@ class Param:
         s += 'verbose: ' + str(self.verbose) + '\n'
 
         return s
-
 
 
 ########################################################################################################################
@@ -495,13 +494,15 @@ class Model:
                     from scipy.spatial.distance import wminkowski
                     square_norm = wminkowski(coord_target, coord_slice_j, 2, mode_weight)
                 if target_levels is not None and self.param.use_levels:
-                    '''
-                    if target_levels == dataset_levels[j_slice]:
-                        beta.append(exp(tau*square_norm))
-                    else:
-                        beta.append(exp(-tau*square_norm)/self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))
-                    '''
-                    beta.append(exp(-self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
+                    if self.param.equation_id == 1:
+                        # EQUATION #1 (better results ==> kept)
+                        beta.append(exp(-self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))*exp(-tau*square_norm) )#TODO: before = no absolute
+                    elif self.param.equation_id == 2:
+                        # EQUATION #2
+                        if target_levels == dataset_levels[j_slice]:
+                            beta.append(exp(tau*square_norm))
+                        else:
+                            beta.append(exp(-tau*square_norm)/self.param.weight_gamma*abs(target_levels - dataset_levels[j_slice]))
                 else:
                     beta.append(exp(-tau*square_norm))
 
@@ -737,7 +738,8 @@ class TargetSegmentationPairwise:
         :return None: the target moved image is set in the function
         """
         mean_sc_seg = (np.asarray(self.model.pca.mean_image) > 0).astype(int)
-        save_image(self.model.pca.mean_image, 'mean_image')
+        Image(param=self.model.pca.mean_image, absolutepath='mean_image.nii.gz').save(type='minimize')
+        # save_image(self.model.pca.mean_image, 'mean_image')
         for i, target_slice in enumerate(self.target):
             moving_target_seg = (np.asarray(target_slice.im) > 0).astype(int)
             transfo = 'BSplineSyN'
@@ -749,8 +751,10 @@ class TargetSegmentationPairwise:
             target_slice.set(im_m=moved_target_slice)
             target_slice.reg_to_M.append((transfo, transfo_name))
 
-            save_image(target_slice.im, 'slice' + str(target_slice.id) + '_original_im')
-            save_image(target_slice.im_M, 'slice' + str(target_slice.id) + '_moved_im')
+            Image(param=target_slice.im, absolutepath='slice' + str(target_slice.id) + '_original_im.nii.gz').save(type='minimize')
+            Image(param=target_slice.im_M, absolutepath='slice' + str(target_slice.id) + '_moved_im.nii.gz').save(type='minimize')
+            # save_image(target_slice.im, 'slice' + str(target_slice.id) + '_original_im')
+            # save_image(target_slice.im_M, 'slice' + str(target_slice.id) + '_moved_im')
 
     # ------------------------------------------------------------------------------------------------------------------
     def target_pairwise_registration(self, inverse=False):
@@ -861,6 +865,7 @@ class TargetSegmentationPairwise:
                 fic_selected_slices.write('slice ' + str(target_slice.id) + ': ' + str(slice_levels[self.selected_k_slices[target_slice.id]]) + '\n')
         fic_selected_slices.close()
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # GRAY MATTER SEGMENTATION SUPERVISED METHOD ---------------------------------------------------------------------------
 class GMsegSupervisedMethod():
@@ -924,9 +929,6 @@ sct_Image
         self.res_gm_seg.file_name = name_res_gmseg
         self.res_gm_seg.save(type='minimize')
 
-        # save_image(self.res_wm_seg.data, name_res_wmseg, hdr=original_hdr)
-        # save_image(self.res_gm_seg.data, name_res_gmseg, hdr=original_hdr)
-
         self.corrected_wm_seg = correct_wmseg(self.res_gm_seg, self.target_image, name_res_wmseg, original_hdr)
 
     def show(self):
@@ -940,8 +942,6 @@ sct_Image
         sct.printv('\nShowing PCA mode graphs ...')
         self.model.pca.show_mode_variation()
 
-        # sct.printv('\nShowing the projected target ...')
-        # self.target_seg_methods.show_projected_target()
 
 
 
@@ -983,7 +983,6 @@ if __name__ == "__main__":
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level",
                           mandatory=False,
-
                           example='MNI-Poly-AMU_level_IRP.nii.gz')
         parser.add_option(name="-reg",
                           type_value=[[','], 'str'],
@@ -995,7 +994,7 @@ if __name__ == "__main__":
                           type_value='float',
                           description="weight parameter on the level differences to compute the similarities (beta)",
                           mandatory=False,
-                          default_value=1.2,
+                          default_value=2.5,
                           example=2.0)
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
@@ -1003,21 +1002,34 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
-        parser.add_option(name="-z",
-                          type_value='multiple_choice',
-                          description="1: Z regularisation, 0: no ",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
         parser.add_option(name="-denoising",
                           type_value='multiple_choice',
                           description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-res-type",
+                          type_value='multiple_choice',
+                          description="Type of result segmentation : binary or probabilistic",
+                          mandatory=False,
+                          default_value='binary',
+                          example=['binary', 'prob'])
+        parser.add_option(name="-v",
+                          type_value='multiple_choice',
+                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1', '2'])
+        '''
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
                           description="Apply a Bspline registration using the spinal cord edges target --> model first",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-z",
+                          type_value='multiple_choice',
+                          description="1: Z regularisation, 0: no ",
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
@@ -1033,18 +1045,8 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
-        parser.add_option(name="-res-type",
-                          type_value='multiple_choice',
-                          description="Type of result segmentation : binary or probabilistic",
-                          mandatory=False,
-                          default_value='binary',
-                          example=['binary', 'prob'])
-        parser.add_option(name="-v",
-                          type_value='multiple_choice',
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1', '2'])
+        '''
+
 
         arguments = parser.parse(sys.argv[1:])
         param.path_dictionary = arguments["-dic"]
@@ -1060,20 +1062,22 @@ if __name__ == "__main__":
             param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
-        if "-weighted-label-fusion" in arguments:
-            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
-        if "-weighted-similarity" in arguments:
-            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
-        if "-z" in arguments:
-            param.z_regularisation = bool(int(arguments["-z"]))
         if "-denoising" in arguments:
             param.target_denoising = bool(int(arguments["-denoising"]))
-        if "-first-reg" in arguments:
-            param.first_reg = bool(int(arguments["-first-reg"]))
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-v" in arguments:
             param.verbose = int(arguments["-v"])
+        '''
+        if "-first-reg" in arguments:
+            param.first_reg = bool(int(arguments["-first-reg"]))
+        if "-z" in arguments:
+            param.z_regularisation = bool(int(arguments["-z"]))
+        if "-weighted-label-fusion" in arguments:
+            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
+        if "-weighted-similarity" in arguments:
+            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
+        '''
 
     model = Model(model_param=param, k=0.8)
     if input_target_fname is not None:

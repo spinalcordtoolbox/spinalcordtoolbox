@@ -18,8 +18,6 @@ import os
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-# import time
-# from scipy.optimize import minimize
 
 from msct_image import Image
 import sct_utils as sct
@@ -131,12 +129,12 @@ class Slice:
         s = '\nSlice #' + str(self.id)
         if self.level is not None:
             s += 'Level : ' + str(self.level)
-        s += '\nAtlas : \n' + str(self.im) + '\nDecision : \n' + str(self.gm_seg) +\
+        s += '\nImage : \n' + str(self.im) + '\nGray matter segmentation : \n' + str(self.gm_seg) +\
              '\nTransformation to model space : ' + self.reg_to_M
         if self.im_M is not None:
-            s += '\nAtlas in the common model space: \n' + str(self.im_M)
+            s += '\nImage in the common model space: \n' + str(self.im_M)
         if self.gm_seg_M is not None:
-            s += '\nDecision in the common model space: \n' + str(self.gm_seg_M)
+            s += '\nGray matter segmentation : \n' + str(self.gm_seg_M)
         return s
 
 
@@ -182,7 +180,7 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid', metric='MI', apply_transfo=True, transfo_name='', binary=True, path='./', inverse=0, verbose=0):
+def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affine', metric='MI', apply_transfo=True, transfo_name='', binary=True, path='./', inverse=0, verbose=0):
     """
     Compute and/or apply a registration using ANTs
 
@@ -222,9 +220,9 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             t = ''
 
         fixed_im_name = 'fixed_im'
-        save_image(fixed_im, fixed_im_name, im_type=t, verbose=verbose)
+        Image(param=np.asarray(fixed_im), absolutepath='./'+fixed_im_name+'.nii.gz').save(type=t)
         moving_im_name = 'moving_im'
-        save_image(moving_im, moving_im_name, im_type=t, verbose=verbose)
+        Image(param=np.asarray(moving_im), absolutepath='./'+moving_im_name+'.nii.gz').save(type=t)
 
         mat_name, inverse_mat_name = find_ants_transfo_name(transfo_type)
 
@@ -239,11 +237,9 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Rigid
             elif transfo_type == 'SyN':
                 transfo_params = ',1,1'
             gradientstep = 0.5  # 0.3
-            # metric = 'MeanSquares'
             # metric_params = ',1,4'  # for MeanSquares
-            # metric = 'MI'
             metric_params = ',1,2'  # for MI
-            niter = 5  # 20
+            niter = 5
             smooth = 0
             shrink = 1
             cmd_reg = 'isct_antsRegistration -d 2 -n ' + reg_interpolation + ' -t ' + transfo_type + '[' + str(gradientstep) + transfo_params + '] ' \
@@ -366,6 +362,7 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
 ########################################################################################################################
 # ----------------------------------------------- OTHER UTILS FUNCTIONS ---------------------------------------------- #
 ########################################################################################################################
+'''
 # ----------------------------------------------------------------------------------------------------------------------
 def save_image(im_array, im_name, path='', hdr=None, im_type='minimize', verbose=1):
     """
@@ -395,43 +392,7 @@ def save_image(im_array, im_name, path='', hdr=None, im_type='minimize', verbose
     if hdr is not None:
         im.hdr = hdr
     im.save(type=im_type)
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-def show(coord_projected_img, pca, target):
-    """
-    Display an image projected in the reduced PCA space
-
-    :param coord_projected_img: Coordinates of the target image in the PCA reduced space
-
-    :param pca: PCA instance (used to get the mean image)
-
-    :param target: image to display
-    """
-    import copy
-
-    img_reduced_space = copy.copy(pca.mean_image)
-    for i in range(0, coord_projected_img.shape[0]):
-        img_reduced_space += int(coord_projected_img[i][0]) * pca.kept_modes.T[i].reshape(pca.N, 1)
-
-    n = int(sqrt(pca.N))
-    imgplot = plt.imshow(pca.mean_image)
-    imgplot.set_interpolation('nearest')
-    imgplot.set_cmap('gray')
-    plt.title('Mean PCA Image')
-    plt.show()
-
-    imgplot = plt.imshow(target.reshape(n, n))
-    imgplot.set_interpolation('nearest')
-    # imgplot.set_cmap('gray')
-    plt.title('Original Image')
-    plt.show()
-
-    imgplot = plt.imshow(img_reduced_space.reshape(n, n))
-    imgplot.set_interpolation('nearest')
-    # imgplot.set_cmap('gray')
-    plt.title('Projected Image (projected in the PCA reduced space)')
-    plt.show()
+'''
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -440,7 +401,9 @@ def get_key_from_val(dic, val):
     inversed dictionary getter
 
     :param dic: dictionary
+
     :param val: value
+
     :return k: associated key
     """
     for k, v in dic.items():
@@ -451,9 +414,12 @@ def get_key_from_val(dic, val):
 # ------------------------------------------------------------------------------------------------------------------
 def check_file_to_niigz(file_name, verbose=1):
     """
-    Check if the input is really a file and change the type to nii.gz if diferent
+    Check if the input is really a file and change the type to nii.gz if different
+
     :param file_name: name to check
+
     :param verbose:
+
     :return: file_name if the input is really a file, False otherwise
     """
     if os.path.isfile(file_name):
@@ -467,7 +433,12 @@ def check_file_to_niigz(file_name, verbose=1):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def save_data_by_slice(path_to_model):
+def save_dic_slices(path_to_model):
+    """
+    Save all the dictionary slices of a computed model
+
+    :param path_to_model: path to the compute model used to load the dictionary
+    """
     import pickle
     model_slices_list = pickle.load(open(path_to_model + '/dictionary_slices.pkl', 'rb'))
     sct.run('mkdir ' + path_to_model + '/model_slices')
@@ -504,30 +475,22 @@ def crop_t2_star_pipeline(path, box_size=75):
 
             for subject_file in os.listdir(path + '/' + subject_dir):
                 file_low = subject_file.lower()
-                if 't2star' in file_low or 'im' in file_low  in file_low and 'mask' not in file_low and 'seg' not in file_low and 'IRP' not in file_low:
+                if 't2star' in file_low or 'im' in file_low  in file_low and 'mask' not in file_low and 'seg' not in file_low and 'irp' not in file_low:
                     t2star = subject_file
                     t2star_path, t2star_name, ext = sct.extract_fname(t2star)
-                elif 'square' in file_low and 'mask' in file_low and 'IRP' not in file_low:
+                elif 'square' in file_low and 'mask' in file_low and 'irp' not in file_low:
                     mask_box = subject_file
-                elif 'seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'IRP' not in file_low:
+                elif 'seg' in file_low and 'in' not in file_low and 'croped' not in file_low and 'gm' not in file_low and 'irp' not in file_low:
                     sc_seg = subject_file
-                elif 'gm' in file_low and 'croped.nii' not in file_low and 'IRP' not in file_low:
+                elif 'gm' in file_low and 'croped.nii' not in file_low and 'irp' not in file_low:
                     manual_seg = subject_file
                     manual_seg_name = sct.extract_fname(manual_seg)[1]
-                elif '_croped.nii' in file_low and 'gm' in file_low and 'IRP' not in file_low:
+                elif '_croped.nii' in file_low and 'gm' in file_low and 'irp' not in file_low:
                     manual_seg_croped = subject_file
 
             if t2star != '' and sc_seg != '':
                 subject_path = path + '/' + subject_dir + '/'
-                print 'path : ', subject_path
                 os.chdir(subject_path)
-                '''
-                now = str(time.time())
-                sct.run('mkdir tmp_'+ now)
-                sct.run('cp ./' + t2star + ' ./tmp_'+now+'/'+t2star)
-                sct.run('cp ./' + sc_seg + ' ./tmp_'+now+'/'+sc_seg)
-                os.chdir('./tmp_'+now)
-                '''
                 try:
                     if seg_in == '':
                         sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
@@ -552,7 +515,6 @@ def crop_t2_star_pipeline(path, box_size=75):
                     sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
                 else:
                     print 'Done !'
-                    # sct.run('rm -rf ./tmp_' + now)
                 os.chdir('..')
 
 
@@ -704,6 +666,17 @@ def save_by_slice(dic_dir):
 
 # ------------------------------------------------------------------------------------------------------------------
 def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
+    """
+    Resampling function: add a padding, resample, crop the padding
+    :param fname: name of the image file to be resampled
+    :param suffix: suffix added to the original fname after resampling
+    :param binary: boolean, image is binary or not
+    :param npx: new pixel size in the x direction
+    :param npy: new pixel size in the y direction
+    :param thr: if the image is binary, it will be thresholded at thr (default=0) after the resampling
+    :param interpolation: type of interpolation used for the resampling
+    :return: file name after resampling (or original fname if it was already in the correct resolution)
+    """
     status, orientation = sct.run('sct_orientation -i ' + fname)
     orientation = orientation[4:7]
     if orientation != 'RPI':
@@ -750,7 +723,6 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
         - a manual segmentation of the gray matter containing 'gm' in its name
         - a 'level image' containing 'level' in its name : the level image is an image containing a level label per slice indicating at wich vertebral level correspond this slice
     :param path:
-    :return:
     """
 
     axial_pix_dim = 0.3
@@ -803,6 +775,15 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
 # ------------------------------------------------------------------------------------------------------------------
 def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fname, landmarks_fname):
+    """
+    mini registration pipeline to get the vertebral levels for a T2 star using the anatomic image (T2) and a segmentation of the spinal cord
+    :param t2star_fname:
+    :param t2star_sc_seg_fname:
+    :param t2_fname:
+    :param t2_seg_fname:
+    :param landmarks_fname:
+    :return: path ofr the level image
+    """
     # Registration to template
     cmd_register_template = 'sct_register_to_template -i ' + t2_fname + ' -s ' + t2_seg_fname + ' -l ' + landmarks_fname
     sct.run(cmd_register_template)
@@ -827,208 +808,6 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     return './label/template/MNI-Poly-AMU_level_IRP.nii.gz'
 
 
-########################################################################################################################
-# --------------------------------------------- SPECIAL DATA TREATMENTS ---------------------------------------------- #
-########################################################################################################################
-
-# ------------------------------------------------------------------------------------------------------------------
-def amu_treatments(data_path):
-    """
-    get a segmentation image of the spinal cord an of the graymatter from a three level mask
-
-    :param data_path: path to the data
-
-    :return:
-    """
-    im_ext = '.nii'
-    if data_path[-1] == '/':
-        data_path = data_path[:-1]
-    original_path = os.path.abspath('.')
-    os.chdir(data_path)
-    for subject_dir in os.listdir('.'):
-        subject_path = data_path + '/' + subject_dir
-        if os.path.isdir(subject_dir):
-            os.chdir(subject_dir)
-            sc_seg_list = []
-            gm_seg_list = []
-            im_list = []
-            for file_name in os.listdir('.'):
-                ext = sct.extract_fname(file_name)[2]
-                if 'mask' in file_name and ext != '.hdr':
-                    mask_im = Image(file_name)
-
-                    sc_seg_im = mask_im.copy()
-                    sc_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg'
-                    sc_seg_im.ext = '.nii.gz'
-                    sc_seg_im.data = (sc_seg_im.data > 1).astype(int)
-                    # sc_seg_im = Image(param=sc_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_sc_seg.nii.gz')
-                    # sc_seg_im.orientation = 'RPI'
-                    sc_seg_im.save()
-                    sc_seg_list.append(sc_seg_im.file_name + sc_seg_im.ext)
-
-                    gm_seg_im = mask_im.copy()
-                    gm_seg_im.file_name = sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg'
-                    gm_seg_im.ext = '.nii.gz'
-                    gm_seg_im.data = (gm_seg_im.data > 2).astype(int)
-                    # gm_seg_im = Image(param=gm_seg, absolutepath=subject_path + '/' + sct.extract_fname(file_name)[1][:-5] + '_manual_gm_seg.nii.gz')
-                    # gm_seg_im.orientation = 'RPI'
-                    gm_seg_im.save()
-                    gm_seg_list.append(gm_seg_im.file_name + gm_seg_im.ext)
-
-                    im_list.append(file_name[:2] + im_ext)
-
-            # merging the slice images into a 3D image
-            im_list.reverse()
-            gm_seg_list.reverse()
-            sc_seg_list.reverse()
-            cmd_merge = 'fslmerge -z '
-            im_name = subject_dir + '_im.nii.gz '
-            cmd_merge_im = cmd_merge + im_name
-            gmseg_name = subject_dir + '_manual_gmseg.nii.gz '
-            cmd_merge_gm_seg = cmd_merge + gmseg_name
-            scseg_name = subject_dir + '_manual_scseg.nii.gz '
-            cmd_merge_sc_seg = cmd_merge + scseg_name
-
-            for im_i, gm_i, sc_i in zip(im_list, gm_seg_list, sc_seg_list):
-                cmd_merge_im += im_i + ' '
-                cmd_merge_gm_seg += gm_i + ' '
-                cmd_merge_sc_seg += sc_i + ' '
-
-            sct.run(cmd_merge_im)
-            sct.run(cmd_merge_gm_seg)
-            sct.run(cmd_merge_sc_seg)
-
-            # creating a level image
-            level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
-            level_dat = np.zeros((mask_im.data.shape[0], mask_im.data.shape[1], len(im_list)))
-            for i, im_i_name in enumerate(im_list):
-                level_dat.T[:][:][i] = get_key_from_val(level_label, im_i_name[:2].upper())
-            Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
-
-            # resampling
-            resample_image(im_name)
-            resample_image(gmseg_name, binary=True, thr=0.45)
-            resample_image(scseg_name, binary=True, thr=0.55)
-
-            # organizing data
-            sct.run('mkdir original_data/')
-            sct.run('mkdir extracted_data/')
-            sct.run('mkdir 3d_data/')
-            sct.run('mkdir 3d_resampled_data/')
-
-            for file_name in os.listdir('.'):
-                if 'mask' in file_name:
-                    sct.run('mv ' + file_name + ' original_data/')
-                elif 'manual' in file_name and 'G1' not in file_name:
-                    sct.run('mv ' + file_name + ' extracted_data/')
-                elif 'resampled.nii' in file_name:
-                    sct.run('mv ' + file_name + ' 3d_resampled_data/')
-                elif 'G1' in file_name:
-                    sct.run('mv ' + file_name + ' 3d_data/')
-                elif not os.path.isdir(os.path.abspath('.') + '/' + file_name):
-                    sct.run('mv ' + file_name + ' original_data/')
-
-            os.chdir('..')
-    os.chdir(original_path)
-
-
-# ------------------------------------------------------------------------------------------------------------------
-def vanderbilt_treatments(data_path):
-    """
-    get a segmentation image of the spinal cord an of the graymatter from a three level mask
-
-    :param data_path: path to the data
-
-    :return:
-    """
-    im_ext = '.nii.gz'
-    if data_path[-1] == '/':
-        data_path = data_path[:-1]
-    original_path = os.path.abspath('.')
-    os.chdir(data_path)
-    for subject_dir in os.listdir('.'):
-        if os.path.isdir(subject_dir):
-            os.chdir(subject_dir)
-            sc_seg_list = []
-            gm_seg_list = []
-            im_list = []
-            for file_name in os.listdir('.'):
-                if 'seg' in file_name:
-                    mask_im = Image(file_name)
-
-                    sc_seg_im = mask_im.copy()
-                    sc_seg_im.file_name = sct.extract_fname(file_name)[1][:-4] + '_manual_sc_seg'
-                    sc_seg_im.ext = '.nii.gz'
-                    sc_seg_im.data = (sc_seg_im.data > 0).astype(int)
-                    sc_seg_im.save()
-                    sc_seg_list.append(sc_seg_im.file_name + sc_seg_im.ext)
-
-                    gm_seg_im = mask_im.copy()
-                    gm_seg_im.file_name = sct.extract_fname(file_name)[1][:-4] + '_manual_gm_seg'
-                    gm_seg_im.ext = '.nii.gz'
-                    gm_seg_im.data = (gm_seg_im.data > 1).astype(int)
-                    gm_seg_im.save()
-                    gm_seg_list.append(gm_seg_im.file_name + gm_seg_im.ext)
-
-                    im_list.append(file_name[:17] + im_ext)
-
-            # merging the slice images into a 3D image
-            cmd_merge = 'fslmerge -z '
-            im_name = subject_dir + '_im.nii.gz'
-            cmd_merge_im = cmd_merge + im_name
-            gmseg_name = subject_dir + '_manual_gmseg.nii.gz'
-            cmd_merge_gm_seg = cmd_merge + gmseg_name
-            scseg_name = subject_dir + '_manual_scseg.nii.gz'
-            cmd_merge_sc_seg = cmd_merge + scseg_name
-
-            for im_i, gm_i, sc_i in zip(im_list, gm_seg_list, sc_seg_list):
-                cmd_merge_im += ' ' + im_i
-                cmd_merge_gm_seg += ' ' + gm_i
-                cmd_merge_sc_seg += ' ' + sc_i
-
-            sct.run(cmd_merge_im)
-            sct.run(cmd_merge_gm_seg)
-            sct.run(cmd_merge_sc_seg)
-
-            label_slices = [im_slice.split('_')[-1][2:4] for im_slice in im_list]
-            i_slice_to_level = {0: 6, 1: 6, 2: 6, 3: 6, 4: 6, 5: 5, 6: 5, 7: 5, 8: 5, 9: 5, 10: 4, 11: 4, 12: 4, 13: 4, 14: 4, 15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3, 21: 2, 22: 2, 23: 2, 24: 2, 25: 1, 26: 1, 27: 1, 28: 1, 29: 1}
-
-            level_dat = np.zeros((mask_im.data.shape[0], mask_im.data.shape[1], len(im_list)))
-            for i, l_slice in enumerate(label_slices):
-                i_slice = int(l_slice) - 1
-                level_dat.T[:][:][i] = i_slice_to_level[i_slice]
-            Image(param=level_dat, absolutepath=subject_dir + '_levels.nii.gz').save()
-
-            # resampling
-            resample_image(im_name)
-            resample_image(gmseg_name, binary=True)
-            resample_image(scseg_name, binary=True)
-
-            # organizing data
-            sct.run('mkdir original_data/')
-            sct.run('mkdir extracted_data/')
-            sct.run('mkdir 3d_data/')
-            sct.run('mkdir 3d_resampled_data/')
-            sct.run('mkdir dic_data/')
-
-            for file_name in os.listdir('.'):
-                if '_manual_gm_seg' in file_name and 'sl' in file_name:
-                    sct.run('cp ' + file_name + ' dic_data/')
-                    sct.run('cp ' + file_name[:-21] + '.nii.gz dic_data/')
-            for file_name in os.listdir('.'):
-                if 'sl' in file_name and 'manual' not in file_name:
-                    sct.run('mv ' + file_name + ' original_data/')
-                elif 'manual' in file_name and 'sl' in file_name:
-                    sct.run('mv ' + file_name + ' extracted_data/')
-                elif 'resampled.nii' in file_name:
-                    sct.run('mv ' + file_name + ' 3d_resampled_data/')
-                elif '_sl' not in file_name and not os.path.isdir(os.path.abspath('.') + '/' + file_name) or 'level' in file_name:
-                    sct.run('mv ' + file_name + ' 3d_data/')
-                elif not os.path.isdir(os.path.abspath('.') + '/' + file_name):
-                    sct.run('mv ' + file_name + ' original_data/')
-
-            os.chdir('..')
-    os.chdir(original_path)
 
 ########################################################################################################################
 # ------------------------------------------------- POST-TREATMENTS -------------------------------------------------- #
@@ -1647,16 +1426,6 @@ if __name__ == "__main__":
                           description="Path to a folder with various loocv results",
                           mandatory=False,
                           example='dictionary/')
-        parser.add_option(name="-treat-AMU",
-                          type_value="folder",
-                          description="Path to a dictionary folder with images in the AMU format to be treated",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-treat-vanderbilt",
-                          type_value="folder",
-                          description="Path to a dictionary folder with images in the vanderbilt format to be treated",
-                          mandatory=False,
-                          example='dictionary/')
         parser.add_option(name="-preprocess",
                           type_value="folder",
                           description="Path to a dictionary folder of data to be pre-processed. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
@@ -1681,10 +1450,6 @@ if __name__ == "__main__":
             compute_hausdorff_dist_on_loocv_results(arguments['-hausdorff'])
         if "-save-dic-by-slice" in arguments:
             save_by_slice(arguments['-save-dic-by-slice'])
-        if "-treat-AMU" in arguments:
-            amu_treatments(arguments['-treat-AMU'])
-        if "-treat-vanderbilt" in arguments:
-            vanderbilt_treatments(arguments['-treat-vanderbilt'])
         if "-preprocess" in arguments:
             dataset_preprocessing(arguments['-preprocess'])
         if "-gmseg-to-wmseg" in arguments:
