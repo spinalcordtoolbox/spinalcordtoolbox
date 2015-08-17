@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ########################################################################################################################
 #
-# Asman et al. groupwise multi-atlas segmentation method implementation
+# Asman et al. groupwise multi-atlas segmentation method implementation, with a lot of changes
 #
 #
 # ----------------------------------------------------------------------------------------------------------------------
