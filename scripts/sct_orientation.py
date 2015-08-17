@@ -18,6 +18,7 @@ import getopt
 import commands
 import sct_utils as sct
 import time
+from sct_convert import convert
 
 
 # DEFAULT PARAMETERS
@@ -128,7 +129,8 @@ def get_or_set_orientation():
     os.chdir(path_tmp)
 
     # convert to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
+    convert('data'+ext_data, 'data.nii')
+    # sct.run('fslchfiletype NIFTI data', param.verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
