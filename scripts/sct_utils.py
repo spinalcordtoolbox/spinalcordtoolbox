@@ -252,7 +252,8 @@ def create_folder(folder):
 # check_if_3d
 #=======================================================================================================================
 def check_if_3d(fname):
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
         printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
 
