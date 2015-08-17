@@ -25,15 +25,15 @@ from sct_crop_image import ImageCropper
 
 
 class Transform:
-    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
+    def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         if isinstance(warp, str):
             self.warp_input = list([warp])
         else:
             self.warp_input = warp
+        self.fname_dest = fname_dest
         self.output_filename = output_filename
         self.interp = interp
-        self.source_reg = source_reg
         self.crop = crop
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
@@ -43,22 +43,11 @@ class Transform:
         # Initialization
         fname_src = self.input_filename  # source image (moving)
         fname_warp_list = self.warp_input  # list of warping fields
-        fname_dest = self.output_filename  # destination image (fix)
-        fname_src_reg = self.source_reg
+        fname_out = self.output_filename  # output
+        fname_dest = self.fname_dest  # destination image (fix)
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
-        fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
-
-        # Parameters for debug mode
-        if self.debug:
-            print '\n*** WARNING: DEBUG MODE ON ***\n'
-            # get path of the testing data
-            status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-            fname_src = path_sct_data+'/template/MNI-Poly-AMU_T2.nii.gz'
-            fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz'
-            fname_dest = path_sct_data+'/t2/t2.nii.gz'
-            verbose = 1
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
 
@@ -81,7 +70,7 @@ class Transform:
         # need to check if last warping field is an affine transfo
         isLastAffine = False
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1])
-        if ext_fname in ['.txt','.mat']:
+        if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
         # Check file existence
@@ -103,17 +92,17 @@ class Transform:
         path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
 
         # Get output folder and file name
-        if fname_src_reg == '':
+        if fname_out == '':
             path_out = ''  # output in user's current directory
             file_out = file_src+'_reg'
             ext_out = ext_src
             fname_out = path_out+file_out+ext_out
-        else:
-            fname_out = fname_src_reg
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_src).dim
+        # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
         sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
         # if 3d
@@ -225,7 +214,7 @@ if __name__ == "__main__":
                       description="registered source.",
                       mandatory=False,
                       default_value='',
-                      example="source_reg.nii.gz")
+                      example="dest.nii.gz")
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="interpolation method",
@@ -248,15 +237,15 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    output_filename = arguments["-d"]
+    fname_dest = arguments["-d"]
     warp_filename = arguments["-w"]
 
-    transform = Transform(input_filename=input_filename, output_filename=output_filename, warp=warp_filename)
+    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
     if "-c" in arguments:
         transform.crop = arguments["-c"]
     if "-o" in arguments:
-        transform.source_reg = arguments["-o"]
+        transform.output_filename = arguments["-o"]
     if "-x" in arguments:
         transform.interp = arguments["-x"]
     if "-r" in arguments:
