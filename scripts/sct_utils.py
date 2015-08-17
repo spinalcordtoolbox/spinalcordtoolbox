@@ -327,6 +327,7 @@ def find_file_within_folder(fname, directory):
 def generate_output_file(fname_in, fname_out, verbose=1):
     # import stuff
     import shutil  # for moving files
+    from sct_convert import convert
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -346,10 +347,12 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     shutil.move(fname_in, path_out+file_out+ext_in)
     # convert to nii (only if necessary)
     if ext_out == '.nii' and ext_in != '.nii':
-        os.system('fslchfiletype NIFTI '+path_out+file_out)
+        convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+        # os.system('fslchfiletype NIFTI '+path_out+file_out)
     # convert to nii.gz (only if necessary)
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-        os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
+        convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+        # os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
     if verbose:
         print '  File created: '+path_out+file_out+ext_out
