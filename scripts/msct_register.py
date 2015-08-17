@@ -256,7 +256,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
@@ -343,7 +343,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
@@ -398,6 +398,8 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     from msct_register_regularized import register_images
     from numpy import apply_along_axis, zeros
     import sct_utils as sct
+    from msct_image import Image
+
     name_warp_syn = 'Warp_total'
     # Registrating images
     register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
@@ -431,7 +433,7 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth

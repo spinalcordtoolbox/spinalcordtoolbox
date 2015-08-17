@@ -46,11 +46,11 @@ def register_seg(seg_input, seg_dest):
         y_displacement: list of translation along y axis for each slice (type: list)
 
     """
+
     seg_input_img = Image(seg_input)
     seg_dest_img = Image(seg_dest)
     seg_input_data = seg_input_img.data
     seg_dest_data = seg_dest_img.data
-
 
     x_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
     y_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
@@ -122,7 +122,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(im_dest).dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
@@ -215,8 +215,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 name_warp_null_dest = 'warp_null_dest' + num + '.nii.gz'
                 name_warp_mat = 'transform_' + num + '0GenericAffine.mat'
                 # Generating null nifti warping fields
-                nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_reg)
-                nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = sct.get_dimension(name_dest)
+                nx, ny, nz, nt, px, py, pz, pt = Image(name_reg).dim
+                nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(name_dest).dim
                 x_trans = [0 for i in range(nz)]
                 x_trans_d = [0 for i in range(nz_d)]
                 y_trans= [0 for i in range(nz)]
@@ -366,7 +366,7 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     # Get image dimensions
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(im_dest).dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 

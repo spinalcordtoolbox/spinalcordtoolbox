@@ -11,7 +11,17 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: check input param with -s flag
+import os
+import getopt
+import sys
+import commands
+import nibabel
+import numpy
+import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_utils import fsloutput
+from sct_orientation import get_orientation, set_orientation
+from msct_image import Image
 
 
 ## Default parameters
@@ -22,20 +32,6 @@ class Param:
         self.interp = 'sinc'  # final interpolation
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.remove_temp_files = 1  # remove temporary files
-
-# check if needed Python libraries are already installed or not
-import os
-import getopt
-import sys
-import commands
-
-import nibabel
-import numpy
-
-import sct_utils as sct
-from msct_nurbs import NURBS
-from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
 
 
 
@@ -113,7 +109,7 @@ def main():
     # Open centerline
     #==========================================================================================
     print '\nGet dimensions of input centerline...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('tmp.centerline_orient.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.centerline_orient.nii').dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
