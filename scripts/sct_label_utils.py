@@ -13,12 +13,11 @@
 
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
-from msct_parser import Parser
-from msct_image import Image
-
 import sys
 import sct_utils as sct
 import math
+from msct_parser import Parser
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -100,7 +99,7 @@ class ProcessLabels(object):
 
     def cross(self):
         image_output = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
+        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
         d = self.cross_radius  # cross radius in pixel

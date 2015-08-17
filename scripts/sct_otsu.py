@@ -112,7 +112,7 @@ def otsu():
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     if nt == 1:
         dim = 3

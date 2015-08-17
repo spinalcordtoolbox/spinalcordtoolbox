@@ -17,13 +17,8 @@ import os
 import commands
 import getopt
 import time
-# import matplotlib.pyplot as plt
 import numpy as np
-
-# get path of the toolbox
-status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-# append path that contains scripts, to be able to load modules
-sys.path.append(path_sct + '/scripts')
+from msct_image import Image
 import sct_utils as sct
 
 
@@ -153,7 +148,7 @@ def eddy_correct(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...',verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt),verbose)
 
     # split along T dimension
