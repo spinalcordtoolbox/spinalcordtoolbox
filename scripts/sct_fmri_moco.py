@@ -20,6 +20,7 @@ import time
 import math
 import sct_utils as sct
 import msct_moco as moco
+from sct_convert import convert
 
 
 class Param:
@@ -139,7 +140,8 @@ def main():
     os.chdir(path_tmp)
 
     # convert fmri to nii format
-    sct.run('fslchfiletype NIFTI fmri', param.verbose)
+    convert('fmri'+ext_data, 'fmri.nii')
+    # sct.run('fslchfiletype NIFTI fmri', param.verbose)
 
     # run moco
     fmri_moco(param)

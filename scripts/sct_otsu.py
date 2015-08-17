@@ -18,6 +18,8 @@ import getopt
 import commands
 import sct_utils as sct
 import time
+from sct_convert import convert
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -104,8 +106,9 @@ def otsu():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # convert fmri to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
+    # convert to nii format
+    convert('data'+ext_data, 'data.nii')
+    # sct.run('fslchfiletype NIFTI data', param.verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
