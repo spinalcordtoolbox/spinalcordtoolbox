@@ -17,7 +17,6 @@ import sys
 import os
 import commands
 import time
-
 import sct_utils as sct
 from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
@@ -376,8 +375,8 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label using the old and new voxel size.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_labels)
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = sct.get_dimension(fname_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
+    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
     sampling_factor = [float(nx)/nxd, float(ny)/nyd, float(nz)/nzd]
     # read labels
     from sct_label_utils import ProcessLabels

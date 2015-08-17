@@ -71,6 +71,7 @@ import numpy
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
+from msct_image import Image
 
 
 ## Default parameters
@@ -188,7 +189,7 @@ def main():
 
     # Get image dimensions
     print '\nGet image dimensions...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('tmp.anat_orient')
+    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.anat_orient').dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 

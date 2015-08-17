@@ -21,7 +21,7 @@ import time
 import commands
 import numpy
 import sct_utils as sct
-
+from msct_image import Image
 
 class Param:
     def __init__(self):
@@ -124,7 +124,7 @@ def main():
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('dmri'+ext_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image('dmri'+ext_data).dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images

@@ -19,6 +19,7 @@ import commands
 import sct_utils as sct
 import time
 from sct_convert import convert
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -134,7 +135,7 @@ def get_or_set_orientation():
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
 
     # if 4d, loop across the data
