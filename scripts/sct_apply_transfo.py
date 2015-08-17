@@ -141,7 +141,7 @@ class Transform:
             os.chdir(path_tmp)
             try:
                 # convert to nii format
-                sct.run('fslchfiletype NIFTI data', verbose)
+                sct.run('sct_convert -i data'+ext_src+' -o data.nii', verbose)
 
                 # split along T dimension
                 sct.printv('\nSplit along T dimension...', verbose)
