@@ -151,7 +151,7 @@ def fill_functions():
     functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
     functions.append('sct_concat_transfo')
-    #functions.append('sct_convert')
+    functions.append('sct_convert')
     #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
