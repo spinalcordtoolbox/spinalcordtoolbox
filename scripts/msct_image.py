@@ -103,6 +103,10 @@ class Image(object):
         self.dim = [nx, ny, nz]
 
     def setFileName(self, filename):
+        """
+        :param filename: file name with extension
+        :return:
+        """
         from sct_utils import extract_fname
         self.absolutepath = filename
         self.path, self.file_name, self.ext = extract_fname(filename)
@@ -191,7 +195,7 @@ class Image(object):
     def save(self, type=''):
         """
         Write an image in a nifti file
-        :param type:    if not set, the image is saved in standard type
+        :param type:    if not set, the image is saved in the same type as input data
                         if 'minimize', image space is minimize
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
