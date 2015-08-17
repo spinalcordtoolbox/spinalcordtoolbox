@@ -146,7 +146,7 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = []
-    functions.append('test_debug')
+    #functions.append('test_debug')
     functions.append('sct_apply_transfo')
     functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
