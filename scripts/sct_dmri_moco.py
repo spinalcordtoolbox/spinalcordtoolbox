@@ -41,6 +41,7 @@ import sct_utils as sct
 import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
+from sct_convert import convert
 
 
 class Param:
@@ -196,7 +197,7 @@ def main():
     os.chdir(path_tmp)
 
     # convert dmri to nii format
-    sct.run('fslchfiletype NIFTI dmri', param.verbose)
+    convert('dmri'+ext_data, 'dmri.nii')
 
     # update field in param (because used later).
     # TODO: make this cleaner...

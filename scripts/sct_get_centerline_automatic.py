@@ -59,17 +59,6 @@
 # TODO: subsample input data for faster processing (but might create problems of coordinate)-- alternatively, find appropriate schedule file without the 1mm at the end
 
 
-## Default parameters
-class Param:
-    ## The constructor
-    def __init__(self):
-        self.debug = 0
-        self.schedule_file = 'flirtsch/schedule_TxTy.sch'
-        self.gap = 4  # default gap between co-registered slices.
-        self.gaussian_kernel = 4 # gaussian kernel for creating gaussian mask from center point.
-        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
-        self.remove_tmp_files = 1 # remove temporary files
-
 # check if needed Python libraries are already installed or not
 import os
 import commands
@@ -81,6 +70,19 @@ import nibabel
 import numpy
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
+from sct_convert import convert
+
+
+## Default parameters
+class Param:
+    ## The constructor
+    def __init__(self):
+        self.debug = 0
+        self.schedule_file = 'flirtsch/schedule_TxTy.sch'
+        self.gap = 4  # default gap between co-registered slices.
+        self.gaussian_kernel = 4 # gaussian kernel for creating gaussian mask from center point.
+        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
+        self.remove_tmp_files = 1 # remove temporary files
 
 
 #=======================================================================================================================
@@ -172,8 +174,8 @@ def main():
     os.chdir(path_tmp)
 
     # convert to nii
-    sct.run('fslchfiletype NIFTI tmp.anat')
-    sct.run('fslchfiletype NIFTI tmp.point')
+    convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
+    convert('tmp.point'+ext_point, 'tmp.point.nii')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
