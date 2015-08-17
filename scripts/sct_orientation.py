@@ -211,19 +211,6 @@ def get_orientation(fname):
     orientation = output[26:]
     return orientation
 
-    # status, output = sct.run('fslhd '+fname, 0)
-    # # status, output = sct.run('isct_orientation3d -i '+fname+' -get', 0)
-    # # orientation = output[26:]
-    # orientation = output[output.find('sform_xorient')+15:output.find('sform_xorient')+16]+ \
-    #               output[output.find('sform_yorient')+15:output.find('sform_yorient')+16]+ \
-    #               output[output.find('sform_zorient')+15:output.find('sform_zorient')+16]
-    #
-    # # check if orientation is specified in an other part of the header
-    # if orientation == 'UUU':
-    #     orientation = output[output.find('qform_xorient')+15:output.find('qform_xorient')+16]+ \
-    #                   output[output.find('qform_yorient')+15:output.find('qform_yorient')+16]+ \
-    #                   output[output.find('qform_zorient')+15:output.find('qform_zorient')+16]
-
 
 # set_orientation
 # ==========================================================================================
