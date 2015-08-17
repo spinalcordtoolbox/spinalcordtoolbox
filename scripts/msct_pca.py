@@ -24,11 +24,9 @@
 #           kept_modes [NxV]
 #           y is x projected in the PCA space
 #
-#   TODO: add datashape arg in __init__ in order to remove if split etc...
-#
 # ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Augustin Roux
+# Authors: Augustin Roux, Sara Dupont
 # Modified: 2014-12-05
 #
 # About the license: see the file LICENSE.TXT
@@ -279,28 +277,6 @@ class PCA:
         pca_data = np.asarray([self.mean_data_vect, self.eig_pairs])
         pickle.dump(pca_data, open('./pca_data.pkl', 'wb'), protocol=2)
 
-        '''
-        fic_data = open('data_pca.txt', 'w')
-
-        for i, m in enumerate(self.mean_data_vect):
-            if i == len(self.mean_data_vect) - 1:
-                fic_data.write(str(m[0]))
-            else:
-                fic_data.write(str(m[0]) + ' , ')
-        fic_data.write('\n')
-
-        for i, eig in enumerate(self.eig_pairs):
-            eig_vect_string = ''
-            for v in eig[1]:
-                eig_vect_string += str(v) + ' '
-            if i == len(self.eig_pairs) - 1:
-                fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string)
-            else:
-                fic_data.write(str(eig[0]) + ' ; ' + eig_vect_string + ' , ')
-        fic_data.write('\n')
-
-        fic_data.close()
-        '''
         os.chdir(previous_path)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -347,12 +323,6 @@ class PCA:
         minus_3vect = np.asarray(mean_vect - 3 * eigen_value * eigen_vector)
         minus_3vect /= (max(minus_3vect) - min(minus_3vect))
 
-        print '\n\n-------> minus_3vect min :', min(minus_3vect), ' max :', max(minus_3vect)
-        print 'mean  min :', min(mean_vect), ' max : ', max(mean_vect)
-        print 'eig  min :', min(eigen_vector), ' max : ', max(eigen_vector)
-
-        print 'eig Val', self.eig_pairs[mode][0]
-
         plot_minus3 = fig.add_subplot(1, 5, 1)
         plot_minus3.set_title('Mean - 3 lambda * eigen vector')
         im_minus3 = plot_minus3.imshow(minus_3vect.reshape(n, n).astype(np.float))
@@ -361,11 +331,7 @@ class PCA:
 
         minus_vect = mean_vect - eigen_value * eigen_vector
         minus_vect /= (max(minus_vect) - min(minus_vect))
-        '''
-        print '\n\n-------> minus_vect', minus_vect
-        print 'mean ', mean_vect
-        print 'eig ', eigen_V
-        '''
+
         plot_minus = fig.add_subplot(1, 5, 2)
         plot_minus.set_title('Mean - 1 lambda * eigen vector')
         im_minus = plot_minus.imshow(minus_vect.reshape(n, n).astype(np.float))
@@ -447,12 +413,6 @@ class PCA:
                     graph.scatter(i_dat, j_dat, c=c_dat, cmap=cmap, vmin=cmin, vmax=cmax, s=marker_size**2, alpha=0.5)  # , alpha=0.5, label='dictionary')
 
                     if to_highlight is not None:
-                        '''
-                        for j_point, (x, y) in enumerate(zip(self.dataset_coord[i, 0:self.J],
-                                                             self.dataset_coord[j, 0:self.J])):
-                            graph.annotate(s=str(j_point), xy=(x, y), xytext=(x, y))  # arrowprops={width:0}
-                        '''
-
                         graph.plot(self.dataset_coord[i, to_highlight[1]], self.dataset_coord[j, to_highlight[1]], 'o', markersize=marker_size, color='black', alpha=0.6, label='chosen dictionary')
 
                     # Plot the projected image's coord
