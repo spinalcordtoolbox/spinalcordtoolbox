@@ -37,7 +37,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Split data. Output files will have suffix "_d0000", "_d0002", etc., "d" being the split dimension.')
+    parser.usage.set_description('Split data. By default, output files will have suffix "_0000", "_0002", etc.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Input file.",
@@ -49,19 +49,24 @@ def get_parser():
                       mandatory=False,
                       default_value='t',
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name="-suffix",
+                      type_value="str",
+                      description="""Output suffix.""",
+                      mandatory=False,
+                      default_value='_',
+                      example='_')
     return parser
 
 
 # concatenation
 # ==========================================================================================
-def split_data(fname_in, dim):
+def split_data(fname_in, dim, suffix):
     """
     Split data
     :param fname_in: input file.
     :param dim: dimension: 0, 1, 2, 3.
     :return: none
     """
-    dim_list = ['x', 'y', 'z', 't']
     # Parse file name
     path_in, file_in, ext_in = extract_fname(fname_in)
     # Open first file.
@@ -72,11 +77,11 @@ def split_data(fname_in, dim):
     # Write each file
     for i in range(len(data_split)):
         # Build suffix
-        suffix = '_'+dim_list[dim]+str(i).zfill(4)
+        suffix_output = suffix+str(i).zfill(4)
         # Write file
         im_split = im
         im_split.data = data_split[i]
-        im_split.setFileName(path_in+file_in+suffix+ext_in)
+        im_split.setFileName(path_in+file_in+suffix_output+ext_in)
         im_split.save()
 
 
@@ -94,12 +99,13 @@ def main(args = None):
     arguments = parser.parse(sys.argv[1:])
     fname_in = arguments["-i"]
     dim_concat = arguments["-dim"]
+    suffix = arguments["-suffix"]
 
     # convert dim into numerical values:
     dim = dim_list.index(dim_concat)
 
     # convert file
-    split_data(fname_in, dim)
+    split_data(fname_in, dim, suffix)
 
 
 # START PROGRAM
