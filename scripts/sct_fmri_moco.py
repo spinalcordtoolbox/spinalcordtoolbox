@@ -22,6 +22,7 @@ import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
 from msct_image import Image
+from sct_copy_header import copy_header
 
 
 class Param:
@@ -177,6 +178,7 @@ def main():
 def fmri_moco(param):
 
     file_data = 'fmri'
+    ext_data = '.nii'
     mat_final = 'mat_final/'
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
@@ -188,7 +190,8 @@ def fmri_moco(param):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    # status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
 
     # assign an index to each volume
     index_fmri = range(0, nt)
@@ -218,9 +221,13 @@ def fmri_moco(param):
         # Merge Images
         sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
-        cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
+        # for it in range(nt_i):
+        #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
+        cmd = 'sct_concat_data -dim t -o ' + file_data_merge_i + ext_data + ' -i '
         for it in range(nt_i):
-            cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
+            cmd = cmd + file_data + '_T' + str(index_fmri_i[it]).zfill(4) + ext_data + ','
+        cmd = cmd[:-1]  # remove ',' at the end of the string
         sct.run(cmd, param.verbose)
 
         # Average Images
@@ -232,9 +239,13 @@ def fmri_moco(param):
     # Merge groups means
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
-    cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
+    # cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
+    # for iGroup in range(nb_groups):
+    #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
+    cmd = 'sct_concat_data -dim t -o ' + file_data_groups_means_merge + ext_data + ' -i '
     for iGroup in range(nb_groups):
-        cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
+        cmd = cmd + file_data + '_mean_' + str(iGroup) + ext_data + ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
     sct.run(cmd, param.verbose)
 
     # Estimate moco on dwi groups
@@ -275,7 +286,8 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    sct.run(fsloutput+'fslcpgeom fmri fmri_moco')
+    copy_header('fmri.nii', 'fmri_moco.nii')
+    # sct.run(fsloutput+'fslcpgeom fmri fmri_moco')
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
