@@ -13,7 +13,6 @@
 
 import sys
 from numpy import concatenate
-import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 
