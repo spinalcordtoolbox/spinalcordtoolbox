@@ -238,6 +238,7 @@ def main():
 def dmri_moco(param):
 
     file_data = 'dmri'
+    ext_data = '.nii'
     file_b0 = 'b0'
     file_dwi = 'dwi'
     mat_final = 'mat_final/'
@@ -263,13 +264,19 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    # status, output = sct.run('fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', param.verbose)
-    cmd = fsloutput + 'fslmerge -t ' + file_b0
+    # cmd = fsloutput + 'fslmerge -t ' + file_b0
+    # for it in range(nb_b0):
+    #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
+    cmd = 'sct_concat_data -dim z -o ' + file_b0 + ext_data + ' -i '
     for it in range(nb_b0):
-        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
+        cmd = cmd + file_data + '_T' + str(index_b0[it]).zfill(4) + ext_data + ','
+    # remove ',' at the end of the string
+    cmd = cmd[:-1]
     status, output = sct.run(cmd, param.verbose)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
