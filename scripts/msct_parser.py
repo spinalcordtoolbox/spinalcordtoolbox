@@ -180,7 +180,7 @@ class Option:
 
     def checkFile(self, param):
         # check if the file exist
-        sct.printv("Check file existence...")
+        sct.printv("Check file existence...", 0)
         sct.check_file_exist(param, 0)
         return param
 
