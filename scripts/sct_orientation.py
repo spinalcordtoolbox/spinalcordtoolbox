@@ -11,6 +11,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add exception in case set_orientation does not output file.
 
 import sys
 import os
