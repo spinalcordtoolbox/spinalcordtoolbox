@@ -70,12 +70,17 @@ def concat_data(fname_in, fname_out, dim):
     # Open first file.
     nii = Image(fname_in[0])
     im = nii.data
+    # If concatenate in 3rd dimension, add one dimension.
+    if dim == 2:
+        im = im[:, :, None]
     # If concatenate in 4th dimension, add one dimension.
     if dim == 3:
         im = im[:, :, :, None]
     # Concatenate other files
     for i in range(1, len(fname_in)):
         new_data = Image(fname_in[i]).data
+        if dim == 2:
+            new_data = new_data[:, :, None]
         if dim == 3:
             new_data = new_data[:, :, :, None]
         im = concatenate((im, new_data), axis=dim)
