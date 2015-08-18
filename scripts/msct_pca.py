@@ -435,7 +435,11 @@ class PCA:
                                 else:
                                     graph.plot(slice_coord[i], slice_coord[j], '^', markersize=marker_size, color='black', alpha=0.6, label='this target')
 
-                    plt.title('Dictionary images and target slices in the PCA space. (' + str(len(self.kept_eigenval))
+                    title = 'Dictionary images'
+                    if target_coord is not None:
+                        title += ' and target slices'
+                    title += ' in the PCA space.'
+                    plt.title(title + ' (' + str(len(self.kept_eigenval))
                               + ' modes in total)')
                     plt.xlabel('Mode ' + str(i))
                     plt.ylabel('Mode ' + str(j))
