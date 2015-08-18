@@ -40,7 +40,7 @@ def get_parser():
     parser.usage.set_description('Concatenate data.')
     parser.add_option(name="-i",
                       type_value=[[','], "file"],
-                      description='Multiple files separated with ",". Possible to use "*"',
+                      description='Multiple files separated with ",".',
                       mandatory=True,
                       example="data1.nii.gz,data2.nii.gz")
     parser.add_option(name="-o",
