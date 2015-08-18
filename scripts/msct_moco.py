@@ -62,7 +62,7 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data).dim
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+ext).dim
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # copy file_target to a temporary file
@@ -72,8 +72,9 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
+    # sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
+    status, output = sct.run('sct_split_data -i ' + file_data + ext + ' -dim t -suffix _T', param.verbose)
     file_data_splitT = file_data + '_T'
-    sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # Motion correction: initialization
     index = np.arange(nt)
@@ -122,9 +123,13 @@ def moco(param):
     file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # for indice_index in range(len(index)):
+        #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+        cmd = 'sct_concat_data -dim t -o ' + file_data_moco + ext + ' -i '
         for indice_index in range(len(index)):
-            cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+            cmd = cmd + file_data_splitT_moco_num[indice_index] + ext + ','
+        cmd = cmd[:-1]  # remove ',' at the end of the string
         sct.run(cmd, verbose)
 
 
