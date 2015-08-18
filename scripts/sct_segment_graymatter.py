@@ -21,46 +21,75 @@ from msct_gmseg_utils import *
 
 
 class Preprocessing:
-    def __init__(self, target_fname, sc_seg_fname, t2_data=None, denoising=True):
+    def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True):
 
+        # initiate de file names and copy the files into the temporary directory
         self.t2star = 't2star.nii.gz'
         self.sc_seg = 't2star_sc_seg.nii.gz'
-        self.t2 = 't2.nii.gz'
-        self.t2_seg = 't2_seg.nii.gz'
-        self.t2_landmarks = 't2_landmarks.nii.gz'
         self.resample_to = 0.3
 
-        sct.run('cp ../' + target_fname + ' ./' + self.t2star)
-        sct.run('cp ../' + sc_seg_fname + ' ./' + self.sc_seg)
+        if level_fname is not None:
+            t2_data = None
+            level_fname_nii = check_file_to_niigz(level_fname)
+            if level_fname_nii:
+                level_path, level_file_name, level_ext = sct.extract_fname(level_fname_nii)
+                sct.run('cp ' + level_fname_nii + ' ' + tmp_dir + '/' + level_file_name + level_ext)
+        else:
+            level_path = level_file_name = level_ext = None
 
+        if t2_data is not None:
+            self.t2 = 't2.nii.gz'
+            self.t2_seg = 't2_seg.nii.gz'
+            self.t2_landmarks = 't2_landmarks.nii.gz'
+        else:
+            self.t2 = self.t2_seg = self.t2_landmarks = None
+
+        sct.run('cp ' + target_fname + ' ' + tmp_dir + '/' + self.t2star)
+        sct.run('cp ' + sc_seg_fname + ' ' + tmp_dir + '/' + self.sc_seg)
+        if t2_data is not None:
+            sct.run('cp ' + t2_data[0] + ' ' + tmp_dir + '/' + self.t2)
+            sct.run('cp ' + t2_data[1] + ' ' + tmp_dir + '/' + self.t2_seg)
+            sct.run('cp ' + t2_data[2] + ' ' + tmp_dir + '/' + self.t2_landmarks)
+
+        # preprocessing
+        os.chdir(tmp_dir)
+
+        # resampling of the images
         nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = sct.get_dimension(self.t2star)
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
             self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
+        # denoising (optional)
         t2star_im = Image(self.t2star)
         if denoising:
             t2star_im.denoise_ornlm()
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
+
         '''
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
         self.original_orientation = t2_star_orientation[4:7]
         '''
         self.original_orientation = t2star_im.orientation
 
-        self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=75)
+        self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
 
         self.treated_target = sct.extract_fname(self.t2star)[1] + '_seg_in_croped.nii.gz'
 
         self.level_fname = None
         if t2_data is not None:
-            sct.run('cp ../' + t2_data[0] + ' ./' + self.t2)
-            sct.run('cp ../' + t2_data[1] + ' ./' + self.t2_seg)
-            sct.run('cp ../' + t2_data[2] + ' ./' + self.t2_landmarks)
-
             self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
+        else:
+            status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext)
+            level_orientation = level_orientation[4:7]
+            if level_orientation != 'IRP':
+                status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext + ' -s IRP')
+                level_file_name += '_IRP'
+            self.level_fname = level_file_name + level_ext
+
+        os.chdir('..')
 
 
 class FullGmSegmentation:
@@ -79,23 +108,15 @@ class FullGmSegmentation:
         self.target_fname = check_file_to_niigz(target_fname)
         self.sc_seg_fname = check_file_to_niigz(sc_seg_fname)
         self.t2_data = t2_data
+        if level_fname is not None:
+            self.level_fname = check_file_to_niigz(level_fname)
+        else:
+            self.level_fname = level_fname
 
         self.ref_gm_seg_fname = ref_gm_seg
 
         self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir ' + self.tmp_dir)
-        os.chdir(self.tmp_dir)
-
-        self.level_to_use = None
-        if level_fname is not None:
-            t2_data = None
-            if check_file_to_niigz('../' + level_fname):
-                sct.run('cp ../' + level_fname + ' .')
-                level_fname = sct.extract_fname(level_fname)[1]+sct.extract_fname(level_fname)[2]
-                sct.run('sct_orientation -i ' + level_fname + ' -s IRP')
-                self.level_to_use = sct.extract_fname(level_fname)[1] + '_IRP.nii.gz'
-            else:
-                self.level_to_use = level_fname
 
         self.gm_seg = None
         self.res_names = {}
@@ -103,7 +124,6 @@ class FullGmSegmentation:
         self.hausdorff_name = None
 
         self.segmentation_pipeline()
-        os.chdir('..')
 
         after = time.time()
         sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
@@ -120,7 +140,9 @@ class FullGmSegmentation:
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
         sct.printv('\nDoing target pre-processing ...', verbose=self.param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, self.t2_data, denoising=self.param.target_denoising)
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
+
+        os.chdir(self.tmp_dir)
         if self.preprocessed.level_fname is not None:
             self.level_to_use = self.preprocessed.level_fname
 
@@ -128,11 +150,17 @@ class FullGmSegmentation:
         self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
 
         if self.ref_gm_seg_fname is not None:
+            os.chdir('..')
+            sct.run('cp ' + self.ref_gm_seg_fname + ' ' + self.tmp_dir + '/' + sct.extract_fname(self.ref_gm_seg_fname)[1] + sct.extract_fname(self.ref_gm_seg_fname)[2])
+            sct.run('cp ' + self.sc_seg_fname + ' ' + self.tmp_dir + '/' + sct.extract_fname(self.sc_seg_fname)[1] + sct.extract_fname(self.sc_seg_fname)[2])
+            os.chdir(self.tmp_dir)
+
             sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.param.verbose, type='normal')
             self.dice_name, self.hausdorff_name = self.validation()
 
         sct.printv('\nDoing result post-processing ...', verbose=self.param.verbose, type='normal')
         self.post_processing()
+        os.chdir('..')
 
     # ------------------------------------------------------------------------------------------------------------------
     def post_processing(self):
@@ -167,8 +195,8 @@ class FullGmSegmentation:
         sct.run('mkdir ' + validation_dir)
 
         # loading the images
-        im_ref_gm_seg = Image('../' + self.ref_gm_seg_fname)
-        im_ref_wm_seg = inverse_gmseg_to_wmseg(im_ref_gm_seg, Image('../' + self.sc_seg_fname), im_ref_gm_seg.path + im_ref_gm_seg.file_name, save=False)
+        im_ref_gm_seg = Image(sct.extract_fname(self.ref_gm_seg_fname)[1] + ext)
+        im_ref_wm_seg = inverse_gmseg_to_wmseg(im_ref_gm_seg, Image(sct.extract_fname(self.sc_seg_fname)[1] + ext), im_ref_gm_seg.file_name, save=False)
 
         res_gm_seg_bin = self.gm_seg.res_gm_seg.copy()
         res_wm_seg_bin = self.gm_seg.res_wm_seg.copy()
@@ -317,8 +345,8 @@ if __name__ == "__main__":
                           example='/home/jdoe/gm_seg_model_data/')
         parser.add_option(name="-t2",
                           type_value=[[','], 'file'],
-                          description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels"
-                                      "In this order : t2 image, t2 segmentation, t2 landmarks (see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
+                          description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
+                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks (see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
                           mandatory=False,
                           default_value=None,
                           example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
