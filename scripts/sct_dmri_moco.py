@@ -23,6 +23,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: Do not merge per group if no group is asked.
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
@@ -43,6 +44,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 from sct_convert import convert
 from msct_image import Image
+from sct_copy_header import copy_header
 
 class Param:
     def __init__(self):
@@ -54,7 +56,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 1  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -272,11 +274,10 @@ def dmri_moco(param):
     # cmd = fsloutput + 'fslmerge -t ' + file_b0
     # for it in range(nb_b0):
     #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
-    cmd = 'sct_concat_data -dim z -o ' + file_b0 + ext_data + ' -i '
+    cmd = 'sct_concat_data -dim t -o ' + file_b0 + ext_data + ' -i '
     for it in range(nb_b0):
         cmd = cmd + file_data + '_T' + str(index_b0[it]).zfill(4) + ext_data + ','
-    # remove ',' at the end of the string
-    cmd = cmd[:-1]
+    cmd = cmd[:-1]  # remove ',' at the end of the string
     status, output = sct.run(cmd, param.verbose)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
@@ -311,10 +312,14 @@ def dmri_moco(param):
         # Merge DW Images
         sct.printv('Merge DW images...', param.verbose)
         file_dwi_merge_i = file_dwi + '_' + str(iGroup)
-        cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
+        cmd = 'sct_concat_data -dim t -o ' + file_dwi_merge_i + ext_data + ' -i '
         for it in range(nb_dwi_i):
-            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
+            cmd = cmd + file_data + '_T' + str(index_dwi_i[it]).zfill(4) + ext_data + ','
+        cmd = cmd[:-1]  # remove ',' at the end of the string
         sct.run(cmd, param.verbose)
+        # cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
+        # for it in range(nb_dwi_i):
+        #     cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
 
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
@@ -325,10 +330,14 @@ def dmri_moco(param):
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
-    cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
+    cmd = 'sct_concat_data -dim t -o ' + file_dwi_group + ext_data + ' -i '
     for iGroup in range(nb_groups):
-        cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
+        cmd = cmd + file_dwi + '_mean_' + str(iGroup) + ext_data + ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
     sct.run(cmd, param.verbose)
+    # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
+    # for iGroup in range(nb_groups):
+    #     cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
 
     # Average DW Images
     # TODO: USEFULL ???
@@ -425,7 +434,8 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    sct.run(fsloutput+'fslcpgeom dmri dmri_moco')
+    copy_header('dmri.nii', 'dmri_moco.nii')
+    # sct.run(fsloutput+'fslcpgeom dmri dmri_moco')
 
     # generate b0_moco_mean and dwi_moco_mean
     cmd = 'sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1'
@@ -459,7 +469,7 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
+  -g <nvols>       group nvols successive dMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
