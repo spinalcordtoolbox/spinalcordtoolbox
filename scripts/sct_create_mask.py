@@ -26,6 +26,7 @@ from scipy import ndimage
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
+from sct_copy_header import copy_header
 
 
 # DEFAULT PARAMETERS
@@ -224,12 +225,7 @@ def create_mask():
     status, output = sct.run(cmd, param.verbose)
 
     # copy geometry
-    nii_data = Image('data.nii')
-    mask = Image('mask.nii.gz').data
-    nii_mask = nii_data
-    nii_mask.data = mask
-    nii_mask.setFileName('mask.nii.gz')
-    nii_mask.save
+    copy_header('data.nii', 'mask.nii.gz')
     # sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
     # sct.run('fslchfiletype NIFTI mask', param.verbose)
 
