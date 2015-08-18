@@ -92,7 +92,7 @@ class Image(object):
         from sct_utils import check_file_exist, printv, extract_fname
         from sct_orientation import get_orientation
 
-        check_file_exist(path, verbose=verbose)
+        # check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
