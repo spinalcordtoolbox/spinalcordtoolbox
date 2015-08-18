@@ -68,10 +68,14 @@ import time
 import sct_utils as sct
 import nibabel
 import numpy
+import glob
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
+from sct_split_data import split_data
+from sct_concat_data import concat_data
+from sct_copy_header import copy_header
 
 
 ## Default parameters
@@ -184,19 +188,20 @@ def main():
     set_orientation('tmp.anat.nii', 'RPI', 'tmp.anat_orient.nii')
     # Reorient binary point into RL PA IS orientation
     print '\nReorient binary point into RL PA IS orientation...'
-    sct.run(sct.fsloutput + 'fslswapdim tmp.point RL PA IS tmp.point_orient')
-    set_orientation('tmp.point.nii', 'RPI', 'tmp.point_orient')
+    # sct.run(sct.fsloutput + 'fslswapdim tmp.point RL PA IS tmp.point_orient')
+    set_orientation('tmp.point.nii', 'RPI', 'tmp.point_orient.nii')
 
     # Get image dimensions
     print '\nGet image dimensions...'
-    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.anat_orient').dim
+    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.anat_orient.nii').dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
     # Split input volume
     print '\nSplit input volume...'
-    sct.run(sct.fsloutput + 'fslsplit tmp.anat_orient tmp.anat_orient_z -z')
-    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    # sct.run(sct.fsloutput + 'fslsplit tmp.anat_orient tmp.anat_orient_z -z')
+    split_data('tmp.anat_orient.nii', 2, '_z')
+    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
     # Get the coordinates of the input point
     print '\nGet the coordinates of the input point...'
@@ -422,15 +427,21 @@ def main():
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
-    sct.run(fsloutput+'fslmerge -z tmp.mask_orient_fit tmp.mask_orient_fit_z*')
-    sct.run(fsloutput+'fslmerge -z tmp.point_orient_fit tmp.point_orient_fit_z*')
+    # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
+    # sct.run(fsloutput+'fslmerge -z tmp.mask_orient_fit tmp.mask_orient_fit_z*')
+    # sct.run(fsloutput+'fslmerge -z tmp.point_orient_fit tmp.point_orient_fit_z*')
+    concat_data(glob.glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
+    concat_data(glob.glob('tmp.mask_orient_fit_z*.nii'), 'tmp.point_orient_fit', dim=2)
+    concat_data(glob.glob('tmp.point_orient_fit_z*.nii'), 'tmp.point_orient_fit.nii', dim=2)
 
     # Copy header geometry from input data
     print '\nCopy header geometry from input data...'
-    sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.anat_orient_fit.nii ')
-    sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.mask_orient_fit.nii ')
-    sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.point_orient_fit.nii ')
+    copy_header('tmp.anat_orient.nii', 'tmp.anat_orient_fit.nii')
+    copy_header('tmp.anat_orient.nii', 'tmp.mask_orient_fit.nii')
+    copy_header('tmp.anat_orient.nii', 'tmp.point_orient_fit.nii')
+    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.anat_orient_fit.nii ')
+    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.mask_orient_fit.nii ')
+    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.point_orient_fit.nii ')
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
