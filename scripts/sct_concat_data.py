@@ -12,7 +12,8 @@
 
 
 import sys
-from numpy import concatenate
+from numpy import concatenate, expand_dims
+import sct_utils as sct
 from msct_parser import Parser
 from msct_image import Image
 
@@ -39,7 +40,7 @@ def get_parser():
     parser.usage.set_description('Concatenate data.')
     parser.add_option(name="-i",
                       type_value=[[','], "file"],
-                      description="Multiple files.",
+                      description='Multiple files separated with ",". Possible to use "*"',
                       mandatory=True,
                       example="data1.nii.gz,data2.nii.gz")
     parser.add_option(name="-o",
@@ -65,29 +66,28 @@ def concat_data(fname_in, fname_out, dim):
     :param dim: dimension: 0, 1, 2, 3.
     :return: none
     """
+    # create empty list
+    list_data = []
 
-    # Open first file.
-    nii = Image(fname_in[0])
-    im = nii.data
-    # If concatenate in 3rd dimension, add one dimension.
-    if dim == 2:
-        im = im[:, :, None]
-    # If concatenate in 4th dimension, add one dimension.
-    if dim == 3:
-        im = im[:, :, :, None]
-    # Concatenate other files
-    for i in range(1, len(fname_in)):
-        new_data = Image(fname_in[i]).data
-        if dim == 2:
-            new_data = new_data[:, :, None]
-        if dim == 3:
-            new_data = new_data[:, :, :, None]
-        im = concatenate((im, new_data), axis=dim)
+    # loop across files
+    for i in range(len(fname_in)):
+        # append data to list
+        list_data.append(Image(fname_in[i]).data)
+
+    # expand dimension of all elements in the list if necessary
+    if dim > list_data[0].ndim-1:
+        list_data = [expand_dims(i, dim) for i in list_data]
+    # concatenate
+    try:
+        data_concat = concatenate(list_data, axis=dim)
+    except Exception as e:
+        sct.printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
+
     # write file
-    nii_concat = nii
-    nii_concat.data = im
-    nii_concat.setFileName(fname_out)
-    nii.save()
+    im = Image(fname_in[0])
+    im.data = data_concat
+    im.setFileName(fname_out)
+    im.save()
 
 
 # MAIN
