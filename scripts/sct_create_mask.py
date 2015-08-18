@@ -215,12 +215,22 @@ def create_mask():
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
-    cmd = 'fslmerge -z mask '
+    # cmd = 'fslmerge -z mask '
+    cmd = 'sct_concat_data -dim z -o mask.nii.gz -i '
     for iz in range(nz):
-        cmd = cmd + file_mask+str(iz)+' '
+        cmd = cmd + file_mask+str(iz)+'.nii,'
+    # remove ',' at the end of the string
+    cmd = cmd[:-1]
     status, output = sct.run(cmd, param.verbose)
+
     # copy geometry
-    sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
+    nii_data = Image('data.nii')
+    mask = Image('mask.nii.gz').data
+    nii_mask = nii_data
+    nii_mask.data = mask
+    nii_mask.setFileName('mask.nii.gz')
+    nii_mask.save
+    # sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
     # sct.run('fslchfiletype NIFTI mask', param.verbose)
 
     # come back to parent folder
