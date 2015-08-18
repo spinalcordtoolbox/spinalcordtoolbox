@@ -431,7 +431,7 @@ def main():
     # sct.run(fsloutput+'fslmerge -z tmp.mask_orient_fit tmp.mask_orient_fit_z*')
     # sct.run(fsloutput+'fslmerge -z tmp.point_orient_fit tmp.point_orient_fit_z*')
     concat_data(glob.glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
-    concat_data(glob.glob('tmp.mask_orient_fit_z*.nii'), 'tmp.point_orient_fit', dim=2)
+    concat_data(glob.glob('tmp.mask_orient_fit_z*.nii'), 'tmp.mask_orient_fit.nii', dim=2)
     concat_data(glob.glob('tmp.point_orient_fit_z*.nii'), 'tmp.point_orient_fit.nii', dim=2)
 
     # Copy header geometry from input data
