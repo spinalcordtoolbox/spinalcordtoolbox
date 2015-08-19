@@ -166,11 +166,14 @@ def get_or_set_orientation():
                 set_orientation(file_data_split, param.orientation, file_data_split_orient)
             # Merge files back
             sct.printv('\nMerge file back...', param.verbose)
-            cmd = fsloutput+'fslmerge -t data_orient'
-            for it in range(nt):
-                file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-                cmd = cmd+' '+file_data_split_orient
-            sct.run(cmd, param.verbose)
+            from sct_concat_data import concat_data
+            from glob import glob
+            concat_data(glob('data_orient_T*.nii'), 'data_orient.nii', dim=3)
+            # cmd = fsloutput+'fslmerge -t data_orient'
+            # for it in range(nt):
+            #     file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
+            #     cmd = cmd+' '+file_data_split_orient
+            # sct.run(cmd, param.verbose)
 
         elif todo == 'get_orientation':
             sct.printv('\nGet orientation...', param.verbose)
