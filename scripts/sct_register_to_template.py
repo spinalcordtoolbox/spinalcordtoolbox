@@ -185,7 +185,7 @@ def main():
     # check if label image contains coherent labels
     image_label = Image(fname_landmarks)
     # -> all labels must be different
-    labels = image_label.getNonZeroCoordinates()
+    labels = image_label.getNonZeroCoordinates(sorting='value')
     hasDifferentLabels = True
     for lab in labels:
         for otherlabel in labels:
@@ -194,6 +194,14 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
+    # all labels must be available in tempalte
+    image_label_template = Image(fname_template_label)
+    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
+    if labels[-1].value > labels_template[-1].value:
+        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondance in tempalte space. \nLabel max '
+                   'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
+                   str(labels_template[-1].value), verbose, 'error')
+
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
@@ -301,12 +309,17 @@ def main():
         point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
 
+    print points_moving
+    print points_fixed
+
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
     import msct_register_landmarks
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
         msct_register_landmarks.getRigidTransformFromLandmarks(
             points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+
+    print rotation_matrix
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
