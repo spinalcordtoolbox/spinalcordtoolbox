@@ -226,8 +226,6 @@ def create_mask():
 
     # copy geometry
     copy_header('data.nii', 'mask.nii.gz')
-    # sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
-    # sct.run('fslchfiletype NIFTI mask', param.verbose)
 
     # come back to parent folder
     os.chdir('..')

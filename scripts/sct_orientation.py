@@ -132,7 +132,6 @@ def get_or_set_orientation():
 
     # convert to nii format
     convert('data'+ext_data, 'data.nii')
-    # sct.run('fslchfiletype NIFTI data', param.verbose)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
