@@ -84,7 +84,6 @@ def main():
 #=======================================================================================================================
 def resample():
 
-    dim = 4  # by default, will be adjusted later
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext = '.nii'
 
@@ -140,10 +139,11 @@ def resample():
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
+    dim = 4  # by default, will be adjusted later
     if nt == 1:
-        dim == 3
+        dim = 3
     if nz == 1:
-        dim == 2
+        dim = 2
         sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
 
     # Calculate new dimensions
