@@ -214,7 +214,8 @@ class Image(object):
         if type != '':
             self.changeType(type)
 
-        self.hdr.set_data_shape(self.data.shape)
+        if self.hdr:
+            self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
         save(img, self.path + self.file_name + self.ext)
