@@ -690,7 +690,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         # name_croped = sct.extract_fname(name_resample)[1] + '_croped.nii.gz'
         if binary:
             interpolation = 'NearestNeighbor'
-        sct.run('c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
+        sct.run('isct_c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
         fx = px/npx
         fy = py/npy
         sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
