@@ -20,6 +20,7 @@ import commands
 import subprocess
 import re
 
+# TODO: clean generate_output_file wrt. nii and nii.gz
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
 
