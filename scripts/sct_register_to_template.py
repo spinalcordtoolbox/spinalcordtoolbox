@@ -269,7 +269,7 @@ def main():
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
     sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
-    # Remove unused label on template. Keep only label present in the input label image
+    # Remove labels that do not correspond with each others.
     sct.printv('\nRemove labels that do not correspond with each others.', verbose)
     sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
 
