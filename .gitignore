@@ -824,3 +824,8 @@ testing/tmp.150729142358/results_sct_apply_transfo/results_sct_check_atlas_integ
 testing/tmp.150729142358/results_sct_apply_transfo/results_sct_check_atlas_integrity/results_sct_compute_mtr/results_sct_concat_transfo/results_sct_create_mask/tmp.150729142420/data_mask2.nii
 testing/tmp.150729142358/results_sct_apply_transfo/results_sct_check_atlas_integrity/results_sct_compute_mtr/results_sct_concat_transfo/results_sct_create_mask/tmp.150729142420/data_mask3.nii
 testing/tmp.150729142358/results_sct_apply_transfo/results_sct_check_atlas_integrity/results_sct_compute_mtr/results_sct_concat_transfo/results_sct_create_mask/tmp.150729142420/data_mask4.nii
+scripts/.idea/misc.xml
+scripts/.idea/modules.xml
+scripts/.idea/scripts.iml
+scripts/.idea/vcs.xml
+scripts/.idea/workspace.xml
