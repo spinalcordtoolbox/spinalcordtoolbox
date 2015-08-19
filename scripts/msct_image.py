@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: update function to reflect the new get_dimension
+
 class Image(object):
     """
 
