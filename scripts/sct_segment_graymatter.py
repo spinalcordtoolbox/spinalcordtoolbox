@@ -24,8 +24,8 @@ class Preprocessing:
     def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True):
 
         # initiate de file names and copy the files into the temporary directory
-        self.t2star = 't2star.nii.gz'
-        self.sc_seg = 't2star_sc_seg.nii.gz'
+        self.t2star = 'target.nii.gz'
+        self.sc_seg = 'target_sc_seg.nii.gz'
         self.resample_to = 0.3
 
         if level_fname is not None:
@@ -81,7 +81,7 @@ class Preprocessing:
         self.level_fname = None
         if t2_data is not None:
             self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
-        else:
+        elif level_fname is not None:
             status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext)
             level_orientation = level_orientation[4:7]
             if level_orientation != 'IRP':
@@ -135,7 +135,7 @@ class FullGmSegmentation:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
             b = '0.5,1'
-        sct.printv('fslview ' + self.target_fname + ' -b 0,700 ' + self.res_names['wm_seg'] + ' -l ' + wm_col + ' -t 0.4 -b ' + b + ' ' + self.res_names['gm_seg'] + ' -l ' + gm_col + ' -t 0.4  -b ' + b + ' &', param.verbose, 'info')
+        sct.printv('fslview ' + self.target_fname + ' ' + self.res_names['wm_seg'] + ' -l ' + wm_col + ' -t 0.4 -b ' + b + ' ' + self.res_names['gm_seg'] + ' -l ' + gm_col + ' -t 0.4  -b ' + b + ' &', param.verbose, 'info')
 
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
@@ -145,6 +145,8 @@ class FullGmSegmentation:
         os.chdir(self.tmp_dir)
         if self.preprocessed.level_fname is not None:
             self.level_to_use = self.preprocessed.level_fname
+        else:
+            self.level_to_use = None
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
         self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
@@ -366,7 +368,7 @@ if __name__ == "__main__":
                           type_value='float',
                           description="weight parameter on the level differences to compute the similarities (beta)",
                           mandatory=False,
-                          default_value=1.2,
+                          default_value=2.5,
                           example=2.0)
         parser.add_option(name="-denoising",
                           type_value='multiple_choice',
@@ -411,7 +413,7 @@ if __name__ == "__main__":
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
                           mandatory=False,
-                          default_value='binary',
+                          default_value='prob',
                           example=['binary', 'prob'])
         parser.add_option(name="-ref",
                           type_value="file",
