@@ -157,7 +157,9 @@ def resample():
     if dim == 4:
         # Split into T dimension
         sct.printv('\nSplit along T dimension...', param.verbose)
-        status, output = sct.run(fsloutput+'fslsplit data data_T', param.verbose)
+        # status, output = sct.run(fsloutput+'fslsplit data data_T', param.verbose)
+        from sct_split_data import split_data
+        split_data('data.nii', 3, '_T')
     elif dim == 3:
         # rename file to have compatible code with 4d
         status, output = sct.run('cp data.nii data_T0000.nii', param.verbose)
@@ -180,10 +182,9 @@ def resample():
     # merge data back along T
     file_data_resample = file_data+param.file_suffix
     sct.printv('\nMerge data back along T...', param.verbose)
-    cmd = fsloutput + 'fslmerge -t ' + file_data_resample
-    for it in range(nt):
-        cmd = cmd + ' ' + 'data_T'+str(it).zfill(4)+'r'
-    sct.run(cmd, param.verbose)
+    from sct_concat_data import concat_data
+    import glob
+    concat_data(glob.glob('data_T*r.nii'), file_data_resample, dim=3)
 
     # come back to parent folder
     os.chdir('..')
