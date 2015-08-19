@@ -278,10 +278,6 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
         copy_header(im_input, name_warp_final + '_x_inverse.nii.gz')
         copy_header(im_dest, name_warp_final + '_y.nii.gz')
         copy_header(im_input, name_warp_final + '_y_inverse.nii.gz')
-        # sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_final + '_x.nii.gz')
-        # sct.run('fslcpgeom ' + im_input + ' ' + name_warp_final + '_x_inverse.nii.gz')
-        # sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_final + '_y.nii.gz')
-        # sct.run('fslcpgeom ' + im_input + ' ' + name_warp_final + '_y_inverse.nii.gz')
         print'\nMerge translation fields along x and y into one global warping field '
         sct.run('isct_c3d ' + name_warp_final + '_x.nii.gz ' + name_warp_final + '_y.nii.gz -omc 2 ' + name_warp_final + '.nii.gz')
         sct.run('isct_c3d ' + name_warp_final + '_x_inverse.nii.gz ' + name_warp_final + '_y_inverse.nii.gz -omc 2 ' + name_warp_final + '_inverse.nii.gz')

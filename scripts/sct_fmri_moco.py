@@ -286,7 +286,6 @@ def fmri_moco(param):
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
     copy_header('fmri.nii', 'fmri_moco.nii')
-    # sct.run(fsloutput+'fslcpgeom fmri fmri_moco')
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
