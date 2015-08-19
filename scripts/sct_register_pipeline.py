@@ -407,6 +407,8 @@ class Pipeline(object):
                                    + name + " using sct_straighten_spinalcord ...", verbose=self.verbose, type="normal")
 
                 from sct_straighten_spinalcord import SpinalCordStraightener
+                # straightening uses ITK so we need to set ITK Multithreading env variable to OFF
+                os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
                 sc_straight = SpinalCordStraightener(name, name_seg)
 
@@ -431,7 +433,7 @@ class Pipeline(object):
                         sc_straight.cpu_number = int(dict_params_straightening["cpu-nb"])
 
                 sct.printv(cmd_straightening, self.verbose)
-                sc_straight.remove_temp_files = 0
+                sc_straight.remove_temp_files = 1
                 sc_straight.verbose = self.verbose  # for visualization purpose
                 sc_straight.straighten()
 
