@@ -59,7 +59,7 @@ class Param:
         s += 'model_dir: ' + str(self.model_dir) + '\n'
         s += 'reg: ' + str(self.reg) + '\n'
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
-        s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in sct_asman***\n'
+        s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***\n'
         s += 'target_normalization: ' + str(self.target_normalization) + '\n'
         s += 'first_reg: ' + str(self.first_reg) + '\n'
         s += 'use_levels: ' + str(self.use_levels) + '\n'
@@ -930,6 +930,8 @@ sct_Image
                 level_im = level_fname
             else:
                 level_im = Image(level_fname)
+        else:
+            gm_seg_param.use_levels = False
 
         # TARGET PAIRWISE SEGMENTATION
         if level_im is not None:
