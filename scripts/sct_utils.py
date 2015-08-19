@@ -350,12 +350,10 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if ext_out == '.nii' and ext_in != '.nii':
         convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
         os.remove(path_out+file_out+ext_in)  # remove nii.gz file
-        # os.system('fslchfiletype NIFTI '+path_out+file_out)
     # convert to nii.gz (only if necessary)
     if ext_out == '.nii.gz' and ext_in != '.nii.gz':
         convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
         os.remove(path_out+file_out+ext_in)  # remove nii file
-        # os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
     # display message
     if verbose:
         print '  File created: '+path_out+file_out+ext_out
