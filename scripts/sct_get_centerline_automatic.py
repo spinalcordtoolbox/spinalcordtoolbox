@@ -439,9 +439,6 @@ def main():
     copy_header('tmp.anat_orient.nii', 'tmp.anat_orient_fit.nii')
     copy_header('tmp.anat_orient.nii', 'tmp.mask_orient_fit.nii')
     copy_header('tmp.anat_orient.nii', 'tmp.point_orient_fit.nii')
-    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.anat_orient_fit.nii ')
-    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.mask_orient_fit.nii ')
-    # sct.run(fsloutput+'fslcpgeom tmp.anat_orient.nii tmp.point_orient_fit.nii ')
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
