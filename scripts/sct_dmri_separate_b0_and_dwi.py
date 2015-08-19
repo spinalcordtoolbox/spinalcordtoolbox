@@ -22,6 +22,8 @@ import commands
 import numpy
 import sct_utils as sct
 from msct_image import Image
+from sct_concat_data import concat_data
+import glob
 
 class Param:
     def __init__(self):
@@ -136,10 +138,15 @@ def main():
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = fsloutput + 'fslmerge -t b0'
-    for iT in range(nb_b0):
-        cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_concat_data -dim t -o b0.nii -i '
+    for it in range(nb_b0):
+        cmd = cmd + 'dmri_T' + str(index_b0[it]).zfill(4) + '.nii,'
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    status, output = sct.run(cmd, param.verbose)
+    # cmd = fsloutput + 'fslmerge -t b0'
+    # for iT in range(nb_b0):
+    #     cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
+    # sct.run(cmd, verbose)
 
     # Average b=0 images
     if average:
@@ -148,10 +155,15 @@ def main():
 
     # Merge DWI
     sct.printv('\nMerge DWI...', verbose)
-    cmd = fsloutput + 'fslmerge -t dwi'
-    for iT in range(nb_dwi):
-        cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_concat_data -dim t -o dwi.nii -i '
+    for it in range(nb_dwi):
+        cmd = cmd + 'dmri_T' + str(index_dwi[it]).zfill(4) + '.nii,'
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    status, output = sct.run(cmd, param.verbose)
+    # cmd = fsloutput + 'fslmerge -t dwi'
+    # for iT in range(nb_dwi):
+    #     cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
+    # sct.run(cmd, verbose)
 
     # Average DWI images
     if average:

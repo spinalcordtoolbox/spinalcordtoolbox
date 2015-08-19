@@ -211,7 +211,10 @@ def main():
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
+    from sct_concat_data import concat_data
+    from glob import glob
+    concat_data(glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
+    # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'

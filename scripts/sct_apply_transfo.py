@@ -144,12 +144,15 @@ class Transform:
 
                 # Merge files back
                 sct.printv('\nMerge file back...', verbose)
+                from sct_concat_data import concat_data
+                import glob
+                concat_data(glob.glob('data_reg_T*.nii'), fname_out, dim=3)
                 #cmd = fsloutput+'fslmerge -t '+fname_out
-                cmd = 'fslmerge -t '+fname_out
-                for it in range(nt):
-                    file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                    cmd = cmd+' '+file_data_split_reg
-                sct.run(cmd, verbose)
+                # cmd = 'fslmerge -t '+fname_out
+                # for it in range(nt):
+                #     file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
+                #     cmd = cmd+' '+file_data_split_reg
+                # sct.run(cmd, verbose)
 
             except Exception, e:
                 raise e

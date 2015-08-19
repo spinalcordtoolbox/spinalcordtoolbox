@@ -268,10 +268,15 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
         print'\nMerge along z of the warping fields...'
-        sct.run('fslmerge -z ' + name_warp_final + '_x ' + " ".join(list_warp_x))
-        sct.run('fslmerge -z ' + name_warp_final + '_x_inverse ' + " ".join(list_warp_x_inv))
-        sct.run('fslmerge -z ' + name_warp_final + '_y ' + " ".join(list_warp_y))
-        sct.run('fslmerge -z ' + name_warp_final + '_y_inverse ' + " ".join(list_warp_y_inv))
+        from sct_concat_data import concat_data
+        concat_data(','.join(list_warp_x), name_warp_final+'_x.nii.gz', dim=2)
+        concat_data(','.join(list_warp_x_inv), name_warp_final+'_x_inverse.nii.gz', dim=2)
+        concat_data(','.join(list_warp_y), name_warp_final+'_y.nii.gz', dim=2)
+        concat_data(','.join(list_warp_y_inv), name_warp_final+'_y_inverse.nii.gz', dim=2)
+        # sct.run('fslmerge -z ' + name_warp_final + '_x ' + " ".join(list_warp_x))
+        # sct.run('fslmerge -z ' + name_warp_final + '_x_inverse ' + " ".join(list_warp_x_inv))
+        # sct.run('fslmerge -z ' + name_warp_final + '_y ' + " ".join(list_warp_y))
+        # sct.run('fslmerge -z ' + name_warp_final + '_y_inverse ' + " ".join(list_warp_y_inv))
         print'\nChange resolution of warping fields to match the resolution of the destination image...'
         from sct_copy_header import copy_header
         copy_header(im_dest, name_warp_final + '_x.nii.gz')
