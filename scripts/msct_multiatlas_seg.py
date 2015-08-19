@@ -41,6 +41,7 @@ class Param:
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.reg_metric = 'MI'
         self.target_denoising = True
+        self.target_normalization = False
         self.first_reg = False
         self.use_levels = True
         self.weight_gamma = 2.5
@@ -48,7 +49,7 @@ class Param:
         self.weight_label_fusion = False
         self.mode_weight_similarity = False
         self.z_regularisation = False
-        self.res_type = 'binary'
+        self.res_type = 'prob'
         self.verbose = 1
 
     def __repr__(self):
@@ -59,6 +60,7 @@ class Param:
         s += 'reg: ' + str(self.reg) + '\n'
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
         s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in sct_asman***\n'
+        s += 'target_normalization: ' + str(self.target_normalization) + '\n'
         s += 'first_reg: ' + str(self.first_reg) + '\n'
         s += 'use_levels: ' + str(self.use_levels) + '\n'
         s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
@@ -587,6 +589,7 @@ class Model:
 
     # ------------------------------------------------------------------------------------------------------------------
     def label_fusion(self, target, selected_index, beta=None, type='binary'):
+
         """
         Compute the resulting segmentation by label fusion of the segmentation of the selected dictionary slices
 
@@ -605,7 +608,10 @@ class Model:
             for i, selected_ind_by_slice in enumerate(selected_index):  # selected_slices:
                 if beta is None:
                     n_selected_dic_slices = wm_segmentation_slices[selected_ind_by_slice].shape[0]
-                    weights = [1.0/n_selected_dic_slices] * n_selected_dic_slices
+                    if n_selected_dic_slices > 0:
+                        weights = [1.0/n_selected_dic_slices] * n_selected_dic_slices
+                    else:
+                        weights = None
                 else:
                     weights = beta[i][selected_ind_by_slice]
                     weights = [w/sum(weights) for w in weights]
@@ -672,6 +678,9 @@ class TargetSegmentationPairwise:
 
         if self.model.param.first_reg:
             self.first_reg()
+
+        if self.model.param.target_normalization:
+            self.target_normalization()
 
         self.target_pairwise_registration()
 
@@ -755,6 +764,35 @@ class TargetSegmentationPairwise:
             Image(param=target_slice.im_M, absolutepath='slice' + str(target_slice.id) + '_moved_im.nii.gz').save(type='minimize')
             # save_image(target_slice.im, 'slice' + str(target_slice.id) + '_original_im')
             # save_image(target_slice.im_M, 'slice' + str(target_slice.id) + '_moved_im')
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def target_normalization(self):
+        """
+        Normalization of the target using the intensity values of the mean dictionary image
+        :return None: the target image is modified
+        """
+        min_sum = 0
+        for model_slice in self.model.dictionary.slices:
+            min_sum += model_slice.im_M[model_slice.im_M > 1].min()
+        new_min = min_sum/self.model.dictionary.J
+        # new_min = self.model.dictionary.mean_image[self.model.dictionary.mean_image > 300].min()
+        new_max = self.model.dictionary.mean_image.max()
+
+        for target_slice in self.target:
+            # with mean image as reference
+            # target_slice.im = target_slice.im/self.model.dictionary.mean_image*self.model.dictionary.mean_image.max()
+
+            # linear with min=0
+            # target_slice.im = target_slice.im*self.model.dictionary.mean_image.max()/(target_slice.im.max()-target_slice.im.min())
+
+            # linear with actual min (WM min)
+            old_image = target_slice.im
+            old_min = target_slice.im[target_slice.im > 0].min()
+            old_max = target_slice.im.max()
+            new_image = (old_image - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
+            new_image[new_image < new_min+1] = 0  # put a 0 the min background
+
+            target_slice.im = new_image
 
     # ------------------------------------------------------------------------------------------------------------------
     def target_pairwise_registration(self, inverse=False):
@@ -910,6 +948,8 @@ sct_Image
             suffix += '_no_levels'
         if self.model.param.z_regularisation:
             suffix += '_Zregularisation'
+        if self.model.param.target_normalization:
+            suffix += '_normalized'
 
         name_res_wmseg = sct.extract_fname(target_fname)[1] + '_res_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
         name_res_gmseg = sct.extract_fname(target_fname)[1] + '_res_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
@@ -1008,11 +1048,17 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-normalize",
+                          type_value='multiple_choice',
+                          description="1: Normalization of the target image's intensity using the mean dictionary image : should be use especially for target image of another contrast than T2star",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
                           mandatory=False,
-                          default_value='binary',
+                          default_value='prob',
                           example=['binary', 'prob'])
         parser.add_option(name="-v",
                           type_value='multiple_choice',
@@ -1064,6 +1110,8 @@ if __name__ == "__main__":
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-denoising" in arguments:
             param.target_denoising = bool(int(arguments["-denoising"]))
+        if "-normalize" in arguments:
+            param.target_normalization = bool(int(arguments["-normalize"]))
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-v" in arguments:
