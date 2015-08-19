@@ -470,6 +470,7 @@ class ProcessLabels(object):
         """
         # image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
         image_output = Image(self.image_input, verbose=self.verbose)
+        image_output.data *= 0  # put all voxels to 0
 
         result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
                                                                        self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
