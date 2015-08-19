@@ -143,7 +143,6 @@ def main():
 
     # convert fmri to nii format
     convert('fmri'+ext_data, 'fmri.nii')
-    # sct.run('fslchfiletype NIFTI fmri', param.verbose)
 
     # run moco
     fmri_moco(param)
