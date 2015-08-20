@@ -309,9 +309,6 @@ def main():
         point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
 
-    print points_moving
-    print points_fixed
-
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
     import msct_register_landmarks
@@ -319,7 +316,6 @@ def main():
         msct_register_landmarks.getRigidTransformFromLandmarks(
             points_fixed, points_moving, constraints='translation-scaling-z', show=False)
 
-    print rotation_matrix
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
