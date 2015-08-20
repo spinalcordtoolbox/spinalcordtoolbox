@@ -82,7 +82,7 @@ def run(cmd, verbose=1):
     status_output = process.returncode
     # process.stdin.close()
     # process.stdout.close()
-    process.terminate()
+    # process.terminate()
 
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
