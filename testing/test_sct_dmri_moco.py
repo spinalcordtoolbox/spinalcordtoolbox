@@ -28,9 +28,6 @@ def test(path_data):
                 + ' -r 1'\
                 + ' -x spline'
 
-    # return
-    #return sct.run(cmd, 0)
-    print cmd
     return commands.getstatusoutput(cmd)
 
 
