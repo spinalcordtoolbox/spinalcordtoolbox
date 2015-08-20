@@ -258,6 +258,7 @@ def test_function(script_name):
             print_ok()
         else:
             print_fail()
+            print output
         # go back to parent folder
         os.chdir('..')
 

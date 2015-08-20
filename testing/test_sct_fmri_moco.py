@@ -25,7 +25,7 @@ def test(path_data):
                 + ' -g 5' \
                 + ' -x spline' \
                 + ' -r 0' \
-                + ' -v 1'
+                + ' -v 2'
 
     # return
     #return sct.run(cmd, 0)
