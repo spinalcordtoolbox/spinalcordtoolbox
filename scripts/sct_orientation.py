@@ -213,8 +213,11 @@ def check_orientation_input():
 # get_orientation (uses FSL)
 # ==========================================================================================
 def get_orientation(fname):
+    print "TEST: get_orientation: 0"
     status, output = sct.run('isct_orientation3d -i '+fname+' -get ', 0)
+    print "TEST: get_orientation: 1"
     orientation = output[26:]
+    print "TEST: get_orientation: 2"
     return orientation
 
 
