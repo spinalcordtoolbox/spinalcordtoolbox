@@ -221,8 +221,11 @@ def write_to_log_file(fname_log, string, mode='w'):
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
              + string
-
-    f = open('../' + fname_log, mode)
+    # open file
+    try:
+        f = open('../' + fname_log, mode)
+    except Exception as ex:
+        raise Exception('WARNING: Cannot open log file.')
     f.write(string+'\n')
     f.close()
 
@@ -248,17 +251,15 @@ def test_function(script_name):
         script_tested = importlib.import_module(script_name)
         # test function
         status, output = script_tested.test(param.path_data)
+        # write log file
+        write_to_log_file(fname_log, output, 'w')
         # manage status
         if status == 0:
             print_ok()
         else:
             print_fail()
-            print output
-            # log file
-            write_to_log_file(fname_log, output, 'w')
-
-            # go back to parent folder
-            os.chdir('..')
+        # go back to parent folder
+        os.chdir('..')
 
         # return
         return status
