@@ -20,9 +20,6 @@ import commands
 import subprocess
 import re
 
-# TODO: clean generate_output_file wrt. nii and nii.gz
-# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
-# TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
@@ -351,19 +348,22 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Move file to output folder (keep the same extension as input)
-    shutil.move(fname_in, path_out+file_out+ext_in)
-    # convert to nii (only if necessary)
-    if ext_out == '.nii' and ext_in != '.nii':
-        convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-        os.remove(path_out+file_out+ext_in)  # remove nii.gz file
-    # convert to nii.gz (only if necessary)
-    if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-        convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
-        os.remove(path_out+file_out+ext_in)  # remove nii file
+    # Generate output file
+    convert(fname_in, fname_out)
+    # # Move file to output folder (keep the same extension as input)
+    # shutil.move(fname_in, path_out+file_out+ext_in)
+    # # convert to nii (only if necessary)
+    # if ext_out == '.nii' and ext_in != '.nii':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    # # convert to nii.gz (only if necessary)
+    # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii file
     # display message
-    if verbose:
-        print '  File created: '+path_out+file_out+ext_out
+    printv('  File created: '+path_out+file_out+ext_out, verbose)
+    # if verbose:
+    #     print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
