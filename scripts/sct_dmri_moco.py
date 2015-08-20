@@ -360,7 +360,11 @@ def dmri_moco(param):
         file_dwi_group = file_dwi_group+'_seg'
 
     # extract first DWI volume as target for registration
-    sct.run(fsloutput + 'fslroi ' + file_dwi_group + ' target_dwi.nii ' + str(index_dwi[0]) + ' 1', param.verbose)
+    nii = Image(file_dwi_group+'.nii')
+    data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
+    nii.data = data_crop
+    nii.setFileName('target_dwi.nii')
+    nii.save()
 
 
     # START MOCO
