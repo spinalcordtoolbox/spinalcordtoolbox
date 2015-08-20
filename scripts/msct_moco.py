@@ -162,7 +162,8 @@ def register(param, file_src, file_dest, file_mat, file_out):
             cmd += ' -x '+param.fname_mask
     if param.todo == 'apply':
         cmd = 'sct_apply_transfo -i '+file_src+'.nii -d '+file_dest+'.nii -w '+file_mat+'Warp.nii.gz'+' -o '+file_out+'.nii'+' -x '+param.interp
-    status, output = sct.run(cmd, param.verbose)
+    #status, output = sct.run(cmd, param.verbose)
+    sct.run(cmd, 0)
 
     # check if output file exists
     if not os.path.isfile(file_out+'.nii'):
