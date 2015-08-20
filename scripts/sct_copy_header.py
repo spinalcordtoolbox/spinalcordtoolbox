@@ -62,12 +62,14 @@ def copy_header(fname_src, fname_dest):
     """
     nii_src = Image(fname_src)
     print "INSIDE_COPY_HEADER0"
+    print nii_src.hdr
     data_dest = Image(fname_dest).data
     print "INSIDE_COPY_HEADER1"
     nii_src.setFileName(fname_dest)
     print "INSIDE_COPY_HEADER2"
     nii_src.data = data_dest
     print "INSIDE_COPY_HEADER3"
+    print nii_src.hdr
     nii_src.save()
     print "INSIDE_COPY_HEADER4"
 
