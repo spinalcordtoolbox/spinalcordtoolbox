@@ -233,7 +233,11 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         print "SAVE3"
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-        fname_out = self.path + self.file_name + '__TEST' + self.ext
+        import os
+        import sct_utils as sct
+        fname_out = self.path + self.file_name + self.ext
+        print "CHECK FILE EXIST"
+        sct.check_file_exist(fname_out, 1)
         print fname_out
         save(img, fname_out)
         print "SAVE4"
