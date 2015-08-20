@@ -70,6 +70,7 @@ def concat_data(fname_in, fname_out, dim):
     list_data = []
 
     # loop across files
+    print fname_in[0]+"___0"
     for i in range(len(fname_in)):
         # append data to list
         print fname_in[i]+"___1"
@@ -112,6 +113,7 @@ def main(args = None):
     dim = dim_list.index(dim_concat)
 
     # convert file
+    print "HOLA"
     concat_data(fname_in, fname_out, dim)
 
 
