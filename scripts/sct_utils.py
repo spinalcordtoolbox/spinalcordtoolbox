@@ -55,7 +55,7 @@ def add_suffix(file_ext, suffix):
 # run
 #=======================================================================================================================
 # Run UNIX command
-def run(cmd, verbose=1):
+def run_old(cmd, verbose=1):
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
@@ -64,29 +64,35 @@ def run(cmd, verbose=1):
     else:
         return status, output
 
-# def run(cmd, verbose=1):
-#     # print sys._getframe().f_back.f_code.co_name
-#     # if verbose:
-#     #     print(bcolors.blue+cmd+bcolors.normal)
-#     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-#     output_final = ''
-#     # while True:
-#     #     output = process.stdout.readline()
-#     #     if output == '' and process.poll() is not None:
-#     #         break
-#     #     if output:
-#     #         if verbose == 2:
-#     #             print output.strip()
-#     #         output_final += output.strip()+'\n'
-#     # need to remove the last \n character in the output -> return output_final[0:-1]
-#     if process.returncode:
-#         # from inspect import stack
-#         printv("ERROR\n"+output_final[0:-1], 1, 'error')
-#         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
-#         # sys.exit()
-#     else:
-#         # no need to output process.returncode (because different from 0)
-#         return process.returncode, output_final[0:-1]
+
+def run(cmd, verbose=1):
+    print sys._getframe().f_back.f_code.co_name
+    if verbose:
+        print(bcolors.blue+cmd+bcolors.normal)
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output_final = ''
+    while True:
+        output = process.stdout.readline()
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            if verbose == 2:
+                print output.strip()
+            output_final += output.strip()+'\n'
+    status_output = process.returncode
+    process.stdin.close()
+    process.stdout.close()
+    #process.kill()
+
+    # need to remove the last \n character in the output -> return output_final[0:-1]
+    if status_output:
+        # from inspect import stack
+        printv("ERROR\n"+output_final[0:-1], 1, 'error')
+        # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
+        # sys.exit()
+    else:
+        # no need to output process.returncode (because different from 0)
+        return status_output, output_final[0:-1]
 
 
 
