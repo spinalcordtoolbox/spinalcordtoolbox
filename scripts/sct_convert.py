@@ -55,9 +55,9 @@ def convert(fname_in, fname_out):
     # Open file
     print "TEST_convert_0"
     print fname_in
-    # im = Image(fname_in)
-    import nibabel
-    im = nibabel.load(fname_in)
+    im = Image(fname_in)
+    # import nibabel
+    # im = nibabel.load(fname_in)
     print "TEST_convert_1"
     # Save file
     im.setFileName(fname_out)
