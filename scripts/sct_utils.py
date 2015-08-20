@@ -56,8 +56,8 @@ def add_suffix(file_ext, suffix):
 #=======================================================================================================================
 # Run UNIX command
 def run_old(cmd, verbose=1):
-    if verbose:
-        print(bcolors.blue+cmd+bcolors.normal)
+    # if verbose:
+    #     print(bcolors.blue+cmd+bcolors.normal)
     status, output = commands.getstatusoutput(cmd)
     if status != 0:
         printv('\nERROR! \n'+output+'\nExit program.\n', 1, 'error')
