@@ -72,7 +72,9 @@ def concat_data(fname_in, fname_out, dim):
     # loop across files
     for i in range(len(fname_in)):
         # append data to list
+        print fname_in[i]+"___1"
         list_data.append(Image(fname_in[i]).data)
+        print fname_in[i]+"___2"
 
     # expand dimension of all elements in the list if necessary
     if dim > list_data[0].ndim-1:
