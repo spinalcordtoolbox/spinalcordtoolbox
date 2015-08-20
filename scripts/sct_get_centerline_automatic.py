@@ -216,7 +216,11 @@ def main():
     # Extract the slice corresponding to z=z_init
     print '\nExtract the slice corresponding to z='+str(z_init)+'...'
     file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    sct.run(sct.fsloutput+'fslroi tmp.point_orient '+file_point_split[z_init]+' 0 -1 0 -1 '+str(z_init)+' 1')
+    nii = Image('tmp.point_orient.nii')
+    data_crop = nii.data[:, :, z_init:z_init+1]
+    nii.data = data_crop
+    nii.setFileName(file_point_split[z_init]+'.nii')
+    nii.save()
 
     # Create gaussian mask from point
     print '\nCreate gaussian mask from point...'
