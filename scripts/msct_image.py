@@ -233,8 +233,9 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         print "SAVE3"
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-        print self.path + self.file_name + self.ext
-        save(img, self.path + self.file_name + self.ext)
+        fname_out = self.path + self.file_name + '__TEST' + self.ext
+        print fname_out
+        save(img, fname_out)
         print "SAVE4"
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
