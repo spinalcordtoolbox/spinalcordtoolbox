@@ -339,7 +339,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     """
     # import stuff
     import shutil  # for moving files
-    print "TEST_generate_output_file_0"
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # if input image does not exist, give error
@@ -356,7 +355,6 @@ def generate_output_file(fname_in, fname_out, verbose=1):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
     # Generate output file
-    print "TEST_generate_output_file_1"
     from sct_convert import convert
     convert(fname_in, fname_out)
     # # Move file to output folder (keep the same extension as input)
