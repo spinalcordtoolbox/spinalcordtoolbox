@@ -233,6 +233,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         print "SAVE3"
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
+        print self.path + self.file_name + self.ext
         save(img, self.path + self.file_name + self.ext)
         print "SAVE4"
 
