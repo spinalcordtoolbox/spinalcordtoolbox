@@ -95,21 +95,13 @@ class Image(object):
         from sct_orientation import get_orientation
 
         # check_file_exist(path, verbose=verbose)
-        print "TEST: msct_image/loadFromPath: 0"
         try:
             im_file = load(path)
-            print "TEST: msct_image/loadFromPath: 1"
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        try:
-            self.orientation = get_orientation(path)
-        except Exception:
-            raise Exception('ERROR in get_orientation.')
-        print "TEST: msct_image/loadFromPath: 2"
+        self.orientation = get_orientation(path)
         self.data = im_file.get_data()
-        print "TEST: msct_image/loadFromPath: 3"
         self.hdr = im_file.get_header()
-        print "TEST: msct_image/loadFromPath: 4"
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
         self.dim = get_dimension(im_file)

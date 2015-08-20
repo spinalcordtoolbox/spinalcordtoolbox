@@ -136,13 +136,14 @@ def main():
     # Copying input data to tmp folder and convert to nii
     # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
-
+    convert(param.fname_data, path_tmp+'fmri.nii')
+    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
+    #
     # go to tmp folder
     os.chdir(path_tmp)
-
-    # convert fmri to nii format
-    convert('fmri'+ext_data, 'fmri.nii')
+    #
+    # # convert fmri to nii format
+    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)
@@ -154,15 +155,11 @@ def main():
     path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    print "TEST0"
     if os.path.isfile(path_tmp+'fmri'+param.suffix+'.nii'):
-        print "TEST_FILE_EXIST"
         print path_tmp+'fmri'+param.suffix+'.nii'
         print path_out+file_data+param.suffix+ext_data
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'.nii', path_out+file_data+param.suffix+ext_data, param.verbose)
-    print "TEST1"
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'_mean.nii', path_out+file_data+param.suffix+'_mean'+ext_data, param.verbose)
-    print "TEST2"
 
     # Delete temporary files
     if param.remove_tmp_files == 1:
