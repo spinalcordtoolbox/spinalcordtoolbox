@@ -154,8 +154,11 @@ def main():
     path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
+    print "TEST0"
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'.nii', path_out+file_data+param.suffix+ext_data, param.verbose)
+    print "TEST1"
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'_mean.nii', path_out+file_data+param.suffix+'_mean'+ext_data, param.verbose)
+    print "TEST2"
 
     # Delete temporary files
     if param.remove_tmp_files == 1:
