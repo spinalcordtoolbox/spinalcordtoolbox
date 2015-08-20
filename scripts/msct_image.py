@@ -237,11 +237,16 @@ class Image(object):
         import sct_utils as sct
         fname_out = self.path + self.file_name + self.ext
         print "CHECK FILE EXIST"
-        import os
-        if os.path.isfile(fname_out):
-            print "DELETE FILE"
-            os.remove(fname_out)
-        save(img, fname_out)
+        # import os
+        # if os.path.isfile(fname_out):
+        #     print "DELETE FILE"
+        #     os.remove(fname_out)
+        try:
+            save(img, fname_out)
+        except Exception as inst:
+            print "HEY"
+            print inst
+
         print "SAVE4"
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
