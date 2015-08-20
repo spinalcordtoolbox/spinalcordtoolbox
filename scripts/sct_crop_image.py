@@ -203,7 +203,6 @@ class ImageCropper(object):
 
         # crop image
         sct.printv('\nCrop image...', verbose)
-        # sct.run(fsloutput+'fslroi data_rpi.nii data_rpi_crop.nii 0 -1 0 -1 '+str(zcrop[0])+' '+str(zcrop[1]-zcrop[0]+1))
         nii = Image('data_rpi.nii')
         data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
         nii.data = data_crop
