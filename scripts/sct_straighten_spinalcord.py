@@ -709,7 +709,6 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            print 'TEST: ', self.algo_landmark_rigid
             if self.algo_landmark_rigid == 'rigid-decomposed':
                 cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid1.txt tmp.warp_straight2curve.nii.gz'  # old
             else:

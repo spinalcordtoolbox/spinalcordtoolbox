@@ -53,17 +53,10 @@ def get_parser():
 def convert(fname_in, fname_out):
     from msct_image import Image
     # Open file
-    print "TEST_convert_0"
-    print fname_in
     im = Image(fname_in)
-    # import nibabel
-    # im = nibabel.load(fname_in)
-    print "TEST_convert_1"
     # Save file
     im.setFileName(fname_out)
-    print "TEST_convert_2"
     im.save()
-    print "TEST_convert_3"
 
 
 # MAIN
