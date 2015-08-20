@@ -168,7 +168,7 @@ def main(args = None):
         else:
             # get orientation
             sct.printv('\nGet orientation...', verbose)
-            sct.printv(get_orientation('data.nii'), 1)
+            print get_orientation('data.nii')
     else:
         # split along T dimension
         sct.printv('\nSplit along T dimension...', verbose)
@@ -189,7 +189,7 @@ def main(args = None):
 
         else:
             sct.printv('\nGet orientation...', verbose)
-            sct.printv(get_orientation('data_T0000.nii'), 1)
+            print get_orientation('data_T0000.nii')
 
     # come back to parent folder
     os.chdir('..')
