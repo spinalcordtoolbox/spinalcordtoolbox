@@ -20,7 +20,7 @@ import commands
 def test(path_data):
     folder_data = ['t2/', 'template/', 't2/label/template/']
     file_data = ['t2.nii.gz', 'labels.nii.gz', 't2_seg.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']
-    dice_threshold = 0.9
+    dice_threshold = 0.85
 
     cmd = 'sct_register_to_template -i ' + path_data + folder_data[0] + file_data[0] \
           + ' -l ' + path_data + folder_data[0] + file_data[1] \
