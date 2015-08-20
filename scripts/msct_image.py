@@ -221,14 +221,11 @@ class Image(object):
         """
         from nibabel import Nifti1Image, save
         from sct_utils import printv
-        print "TEST0"
         if type != '':
             self.changeType(type)
-        print "TEST1"
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        print "TEST2"
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
 
         from os import path, remove
@@ -237,9 +234,7 @@ class Image(object):
             printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
             remove(fname_out)
         # save file
-        print "TEST3"
         save(img, fname_out)
-        print "TEST4"
 
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
