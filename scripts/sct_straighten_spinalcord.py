@@ -887,7 +887,7 @@ class SpinalCordStraightener(object):
             else:
                 if self.algo_landmark_rigid == 'euler':
                     cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
-                          " tmp.straight2curve_rigid.txt tmp.warp_straight2curve.nii.gz"
+                          " tmp.warp_straight2curve.nii.gz tmp.straight2curve_rigid.txt"
                 else:
                     cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
                           " -i tmp.curve2straight_rigid.txt tmp.warp_straight2curve.nii.gz"
