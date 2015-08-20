@@ -66,7 +66,8 @@ def run_old(cmd, verbose=1):
 
 
 def run(cmd, verbose=1):
-    print sys._getframe().f_back.f_code.co_name
+    if verbose==2:
+        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -395,6 +396,8 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.blue
     elif type == 'bold':
         color = bcolors.bold
+    elif type == 'process':
+        color = bcolors.purple
 
     # print message
     if verbose:
