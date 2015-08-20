@@ -132,8 +132,6 @@ def moco(param):
         for indice_index in range(len(index)):
             cmd = cmd + file_data_splitT_moco_num[indice_index] + ext + ','
         cmd = cmd[:-1]  # remove ',' at the end of the string
-        print "HOLA"
-        verbose=2
         sct.run(cmd, verbose)
 
 
