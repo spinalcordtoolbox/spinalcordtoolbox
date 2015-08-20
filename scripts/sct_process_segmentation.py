@@ -467,7 +467,9 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
+    from shutil import copyfile
+    copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
+    # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
     if volume_output:
         sct.generate_output_file(fname_csa_volume, path_data+name_output)  # extension already included in name_output
 
