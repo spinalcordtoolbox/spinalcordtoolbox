@@ -70,12 +70,9 @@ def concat_data(fname_in, fname_out, dim):
     list_data = []
 
     # loop across files
-    print fname_in[0]+"___0"
     for i in range(len(fname_in)):
         # append data to list
-        print fname_in[i]+"___1"
         list_data.append(Image(fname_in[i]).data)
-        print fname_in[i]+"___2"
 
     # expand dimension of all elements in the list if necessary
     if dim > list_data[0].ndim-1:
@@ -87,15 +84,10 @@ def concat_data(fname_in, fname_out, dim):
         sct.printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
 
     # write file
-    print "WRITE_BEFORE"
     im = Image(fname_in[0])
-    print "WRITE_AFTER1"
     im.data = data_concat
-    print "WRITE_AFTER2"
     im.setFileName(fname_out)
-    print "WRITE_AFTER3"
     im.save()
-    print "WRITE_AFTER4"
 
 
 # MAIN
@@ -118,7 +110,6 @@ def main(args = None):
     dim = dim_list.index(dim_concat)
 
     # convert file
-    print "HOLA"
     concat_data(fname_in, fname_out, dim)
 
 
