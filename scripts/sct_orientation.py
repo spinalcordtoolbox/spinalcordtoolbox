@@ -214,7 +214,7 @@ def check_orientation_input():
 # ==========================================================================================
 def get_orientation(fname):
     print "TEST: get_orientation: 0"
-    status, output = sct.run('isct_orientation3d -i '+fname+' -get ', 0)
+    status, output = sct.run('isct_orientation3d -i '+fname+' -get ', 1)
     if status != 0:
         from sct_utils import printv
         printv('ERROR in get_orientation.', 1, 'error')
