@@ -80,9 +80,9 @@ def run(cmd, verbose=1):
                 print output.strip()
             output_final += output.strip()+'\n'
     status_output = process.returncode
-    process.stdin.close()
-    process.stdout.close()
-    #process.kill()
+    # process.stdin.close()
+    # process.stdout.close()
+    process.terminate()
 
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
