@@ -54,6 +54,8 @@ def convert(fname_in, fname_out):
     from msct_image import Image
     # Open file
     im = Image(fname_in)
+    print "FIRST HEADER"
+    print im.hdr
     # Save file
     im.setFileName(fname_out)
     im.save()
