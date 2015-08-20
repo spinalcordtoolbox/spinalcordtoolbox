@@ -87,10 +87,15 @@ def concat_data(fname_in, fname_out, dim):
         sct.printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
 
     # write file
+    print "WRITE_BEFORE"
     im = Image(fname_in[0])
+    print "WRITE_AFTER1"
     im.data = data_concat
+    print "WRITE_AFTER2"
     im.setFileName(fname_out)
+    print "WRITE_AFTER3"
     im.save()
+    print "WRITE_AFTER4"
 
 
 # MAIN
