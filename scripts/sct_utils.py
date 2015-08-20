@@ -70,14 +70,14 @@ def run(cmd, verbose=1):
     #     print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
-    while True:
-        output = process.stdout.readline()
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            if verbose == 2:
-                print output.strip()
-            output_final += output.strip()+'\n'
+    # while True:
+    #     output = process.stdout.readline()
+    #     if output == '' and process.poll() is not None:
+    #         break
+    #     if output:
+    #         if verbose == 2:
+    #             print output.strip()
+    #         output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if process.returncode:
         # from inspect import stack
