@@ -330,6 +330,13 @@ def find_file_within_folder(fname, directory):
 # generate_output_file
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, verbose=1):
+    """
+    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
     # import stuff
     import shutil  # for moving files
     from sct_convert import convert
