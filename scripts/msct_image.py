@@ -227,11 +227,11 @@ class Image(object):
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-        from os import path
+        from os import path, remove
         fname_out = self.path + self.file_name + self.ext
-        if isfile(fname_out):
+        if path.isfile(fname_out):
             printv('WARNING: File already exists. Deleting it.', 1, 'warning')
-            os.remove(fname_out)
+            remove(fname_out)
         # save file
         save(img, fname_out)
 
