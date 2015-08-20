@@ -237,7 +237,8 @@ class Image(object):
         import sct_utils as sct
         fname_out = self.path + self.file_name + self.ext
         print "CHECK FILE EXIST"
-        sct.check_file_exist(fname_out, 1)
+        import os
+        print os.path.isfile(fname_out)
         print fname_out
         save(img, fname_out)
         print "SAVE4"
