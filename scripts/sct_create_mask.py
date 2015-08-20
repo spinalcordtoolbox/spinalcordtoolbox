@@ -172,7 +172,6 @@ def create_mask():
         data3d = nii.data[:,:,:,0]
         nii.data = data3d
         nii.save()
-        # sct.run(fsloutput+'fslroi data data -0 1', param.verbose)
 
     if method_type == 'coord':
         # parse to get coordinate
