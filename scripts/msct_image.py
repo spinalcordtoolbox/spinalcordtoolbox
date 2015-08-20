@@ -510,17 +510,11 @@ def get_dimension(im_file):
         nx, ny = im_file.header.get_data_shape()
         px, py = im_file.header.get_zooms()
     if nb_dims == 3:
-        print 1
         nx, ny, nz = im_file.header.get_data_shape()
-        print 2
         px, py, pz = im_file.header.get_zooms()
-        print 3
     if nb_dims == 4:
-        print 5
         nx, ny, nz, nt = im_file.header.get_data_shape()
-        print 6
         px, py, pz, pt = im_file.header.get_zooms()
-        print 7
 
     return nx, ny, nz, nt, px, py, pz, pt
 
