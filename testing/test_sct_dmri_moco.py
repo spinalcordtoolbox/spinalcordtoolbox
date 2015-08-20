@@ -30,6 +30,7 @@ def test(path_data):
 
     # return
     #return sct.run(cmd, 0)
+    print cmd
     return commands.getstatusoutput(cmd)
 
 
