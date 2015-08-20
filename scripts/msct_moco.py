@@ -73,7 +73,9 @@ def moco(param):
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
     # sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
-    status, output = sct.run('sct_split_data -i ' + file_data + ext + ' -dim t -suffix _T', param.verbose)
+    from sct_split_data import split_data
+    split_data(file_data+ext, 3, '_T')
+    # status, output = sct.run('sct_split_data -i ' + file_data + ext + ' -dim t -suffix _T', param.verbose)
     file_data_splitT = file_data + '_T'
 
     # Motion correction: initialization
