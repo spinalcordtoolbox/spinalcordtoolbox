@@ -155,7 +155,8 @@ def get_or_set_orientation():
     else:
         # split along T dimension
         sct.printv('\nSplit along T dimension...', param.verbose)
-        sct.run(fsloutput+'fslsplit data data_T', param.verbose)
+        from sct_split_data import split_data
+        split_data('data.nii', 3, '_T')
 
         if todo == 'set_orientation':
             # set orientation
@@ -169,11 +170,6 @@ def get_or_set_orientation():
             from sct_concat_data import concat_data
             from glob import glob
             concat_data(glob('data_orient_T*.nii'), 'data_orient.nii', dim=3)
-            # cmd = fsloutput+'fslmerge -t data_orient'
-            # for it in range(nt):
-            #     file_data_split_orient = 'data_orient_T'+str(it).zfill(4)+'.nii'
-            #     cmd = cmd+' '+file_data_split_orient
-            # sct.run(cmd, param.verbose)
 
         elif todo == 'get_orientation':
             sct.printv('\nGet orientation...', param.verbose)
