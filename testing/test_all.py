@@ -191,7 +191,8 @@ def make_dot_lines(string):
     if len(string) < 52:
         dot_lines = '.'*(52 - len(string))
         return dot_lines
-    else: return ''
+    else:
+        return ''
 
 
 # print in color
