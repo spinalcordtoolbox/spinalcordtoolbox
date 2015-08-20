@@ -238,8 +238,9 @@ class Image(object):
         fname_out = self.path + self.file_name + self.ext
         print "CHECK FILE EXIST"
         import os
-        print os.path.isfile(fname_out)
-        print fname_out
+        if os.path.isfile(fname_out):
+            print "DELETE FILE"
+            os.remove(fname_out)
         save(img, fname_out)
         print "SAVE4"
 
