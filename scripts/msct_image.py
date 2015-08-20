@@ -98,7 +98,7 @@ class Image(object):
         print "TEST: msct_image/loadFromPath: 0"
         try:
             im_file = load(path)
-        print "TEST: msct_image/loadFromPath: 1"
+            print "TEST: msct_image/loadFromPath: 1"
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
         self.orientation = get_orientation(path)
