@@ -11,21 +11,23 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sct_utils as sct
+
 import commands
+
+import sct_utils as sct
 
 
 def test(data_path):
 
     # parameters
     folder_data = 't2/'
-    file_data = ['t2.nii.gz','t2_seg.nii.gz']
+    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
 
     # test normal crop
     cmd = 'sct_crop_image -i ' + data_path + folder_data + file_data[0] \
           + ' -o cropped_normal.nii.gz -dim 1 -start 10 -end 50'
 
-    status, output = sct.run(cmd, 0)
+    status, output = commands.getstatusoutput(cmd)
 
     if status == 0:
         # check if cropping was correct
