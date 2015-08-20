@@ -27,7 +27,7 @@ def test(path_data):
           + ' -c ' + path_data + folder_data + file_data[1] \
           + ' -r 0' \
           + ' -v 1'
-    return sct.run(cmd, 0)
+    # return sct.run(cmd, 0)
     return commands.getstatusoutput(cmd)
 
 

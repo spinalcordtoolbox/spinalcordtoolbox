@@ -52,7 +52,6 @@ class param:
 def main():
     path_data = param.path_data
     function_to_test = param.function_to_test
-    # function_to_avoid = param.function_to_avoid
     remove_tmp_file = param.remove_tmp_file
 
     # Check input parameters
@@ -96,7 +95,7 @@ def main():
         downloaddata()
 
     # display path to data
-    sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
+    sct.printv('\nCheck path to testing data: \n  OK... '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
