@@ -11,14 +11,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
 import commands
 
 
 def test(data_path):
 
     # parameters
-    folder_data = ['template/label/atlas/']
+    folder_data = ['mt/label/atlas/']
 
     # define command
     cmd = 'sct_check_atlas_integrity -i ' + data_path + folder_data[0]
