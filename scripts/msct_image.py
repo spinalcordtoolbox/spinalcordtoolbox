@@ -230,7 +230,7 @@ class Image(object):
         from os import path, remove
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File already exists. Deleting it.', 1, 'warning')
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
