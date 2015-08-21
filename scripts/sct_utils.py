@@ -381,7 +381,10 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit program
     if type == 'error':
-        #raise NameError('Error!')
+        from inspect import stack
+        frame,filename,line_number,function_name,lines,index = stack()[1]
+        # print(frame,filename,line_number,function_name,lines,index)
+        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 
