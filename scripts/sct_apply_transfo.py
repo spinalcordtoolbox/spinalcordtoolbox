@@ -82,7 +82,8 @@ class Transform:
             sct.check_file_exist(fname_warp_list[i], self.verbose)
 
         # check if destination file is 3d
-        sct.check_if_3d(fname_dest)
+        if not sct.check_if_3d(fname_dest):
+            sct.printv('ERROR: Destination data must be 3d')
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
@@ -119,48 +120,28 @@ class Transform:
             # sct.run('mkdir '+path_tmp, verbose)
             sct.run('mkdir '+path_tmp, verbose)
 
-            # Copying input data to tmp folder
-            # NB: cannot use c3d here because c3d cannot convert 4D data.
+            # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
-            sct.run('cp '+fname_dest+' '+path_tmp+'dest'+ext_dest, verbose)
-            for i,warp in enumerate(fname_warp_list_invert):
-                sct.run('cp ' + warp + ' ' + path_tmp + warp, verbose)
-            # go to tmp folder
-            os.chdir(path_tmp)
-            try:
-                # convert to nii format
-                sct.run('sct_convert -i data'+ext_src+' -o data.nii', verbose)
+            from sct_convert import convert
+            convert(fname_src, path_tmp+'data.nii')
+            # split along T dimension
+            sct.printv('\nSplit along T dimension...', verbose)
+            from sct_split_data import split_data
+            if not split_data(path_tmp+'data.nii', 3, '_T'):
+                sct.printv('ERROR in split_data.', 1, 'error')
+            # sct.run(fsloutput+'fslsplit data data_T', verbose)
+            # apply transfo
+            sct.printv('\nApply transformation to each 3D volume...', verbose)
+            for it in range(nt):
+                file_data_split = path_tmp+'data_T'+str(it).zfill(4)+'.nii'
+                file_data_split_reg = path_tmp+'data_reg_T'+str(it).zfill(4)+'.nii'
+                sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
-                # split along T dimension
-                sct.printv('\nSplit along T dimension...', verbose)
-                sct.run(fsloutput+'fslsplit data data_T', verbose)
-                # apply transfo
-                sct.printv('\nApply transformation to each 3D volume...', verbose)
-                for it in range(nt):
-                    file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
-                    file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                    sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r dest'+ext_dest+interp, verbose)
-
-                # Merge files back
-                sct.printv('\nMerge file back...', verbose)
-                from sct_concat_data import concat_data
-                import glob
-                concat_data(glob.glob('data_reg_T*.nii'), fname_out, dim=3)
-                #cmd = fsloutput+'fslmerge -t '+fname_out
-                # cmd = 'fslmerge -t '+fname_out
-                # for it in range(nt):
-                #     file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                #     cmd = cmd+' '+file_data_split_reg
-                # sct.run(cmd, verbose)
-
-            except Exception, e:
-                raise e
-            # Copy result to parent folder
-            sct.run('cp ' + fname_out + ' ../' + fname_out)
-
-            # come back to parent folder
-            os.chdir('..')
+            # Merge files back
+            sct.printv('\nMerge file back...', verbose)
+            from sct_concat_data import concat_data
+            import glob
+            concat_data(glob.glob(path_tmp+'data_reg_T*.nii'), fname_out, dim=3)
 
             # Delete temporary folder if specified
             if int(remove_temp_files):
