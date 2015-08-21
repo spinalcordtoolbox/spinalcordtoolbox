@@ -295,7 +295,7 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    if not average_data_across_dimension(fmri_moco+'.nii', fmri_moco_mean+'.nii', 3):
+    if not average_data_across_dimension('fmri_moco.nii', 'fmri_moco_mean.nii', 3):
         sct.printv('ERROR in average_data_across_dimension', 1, 'error')
     # cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
     # status, output = sct.run(cmd, param.verbose)
