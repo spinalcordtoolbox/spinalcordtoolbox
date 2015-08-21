@@ -12,6 +12,7 @@
 #########################################################################################
 
 # TODO: add test.
+# TODO: remove FSL dependency
 
 # check if needed Python libraries are already installed or not
 import sys

@@ -21,6 +21,7 @@ import getopt
 import os
 from numpy import asarray, sqrt
 import nibabel
+from sct_utils import printv
 
 
 # PARAMETERS
@@ -90,7 +91,7 @@ def main():
     return weighted_average
 
 
-def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=0):
+def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=1):
     """
     Average data within mask
     :param fname_src:
@@ -141,7 +142,7 @@ def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=0):
     weighted_std = sqrt(sum(weight*(data-weighted_average)**2) / ( (n/(n-1)) * sum(weight) ))
 
     # print result
-    print '\n'+str(weighted_average)+' +/- '+str(weighted_std)
+    printv('\n'+str(weighted_average)+' +/- '+str(weighted_std), verbose)
 
     return weighted_average, weighted_std
 
