@@ -66,7 +66,7 @@ def get_parser():
 
 # concatenation
 # ==========================================================================================
-def average_data_across_dimension(fname_in, fname_out='', dim=3):
+def average_data_across_dimension(fname_in, fname_out, dim):
     """
     Average data
     :param fname_in: input file.
@@ -74,20 +74,16 @@ def average_data_across_dimension(fname_in, fname_out='', dim=3):
     :param dim: dimension: 0, 1, 2, 3
     :return: True/False
     """
-    # Parse file name
-    path_in, file_in, ext_in = extract_fname(fname_in)
     # Open file.
     im = Image(fname_in)
     data = im.data
     # Average
     data_mean = mean(data, dim)
     # Write output
-    if fname_out == '':
-        fname_out = path_in+file_in+'_mean'+ext_in
     im.data = data_mean
     im.setFileName(fname_out)
     im.save()
-    return fname_out
+    return True
 
 
 # MAIN
@@ -112,8 +108,14 @@ def main(args = None):
     # convert dim into numerical values:
     dim = dim_list.index(dim_concat)
 
+    # Build fname_out
+    if fname_out == '':
+        path_in, file_in, ext_in = extract_fname(fname_in)
+        fname_out = path_in+file_in+'_mean'+ext_in
+
     # average data
-    fname_out = average_data_across_dimension(fname_in, fname_out, dim)
+    if not average_data_across_dimension(fname_in, fname_out, dim):
+        printv('ERROR in average_data_across_dimension', 1, 'error')
 
     # display message
     printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
