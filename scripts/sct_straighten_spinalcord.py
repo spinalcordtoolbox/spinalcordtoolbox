@@ -30,6 +30,7 @@ import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D
 from sct_orientation import set_orientation
 from msct_types import Coordinate
+#from msct_image import Image
 
 import copy_reg
 import types
@@ -79,7 +80,8 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     sct.printv('\nSmooth centerline/segmentation...', verbose)
 
     # get dimensions (again!)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_centerline).dim
 
     # open centerline
     file = load(fname_centerline)
@@ -316,7 +318,10 @@ class SpinalCordStraightener(object):
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
-            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
+            from msct_image import Image
+            image_centerline = Image(fname_centerline_orient)
+            nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
+            # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
@@ -704,7 +709,6 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
-            print 'TEST: ', self.algo_landmark_rigid
             if self.algo_landmark_rigid == 'rigid-decomposed':
                 cmd = 'isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R ' + file_anat + ext_anat + ' -i tmp.curve2straight_rigid1.txt tmp.warp_straight2curve.nii.gz'  # old
             else:
@@ -716,7 +720,7 @@ class SpinalCordStraightener(object):
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            Transform(input_filename=str(file_anat+ext_anat), source_reg="tmp.anat_rigid_warp.nii.gz", output_filename="tmp.landmarks_straight_crop.nii.gz", interp=interpolation_warp, warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
+            Transform(input_filename=str(file_anat+ext_anat), fname_dest="tmp.landmarks_straight_crop.nii.gz", warp="tmp.curve2straight.nii.gz", output_filename="tmp.anat_rigid_warp.nii.gz", interp=interpolation_warp, verbose=verbose).apply()
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.

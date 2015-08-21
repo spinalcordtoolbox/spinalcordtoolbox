@@ -17,7 +17,6 @@ import sys
 import os
 import commands
 import time
-
 import sct_utils as sct
 from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
@@ -270,7 +269,7 @@ def main():
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
     sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
-    # Remove unused label on template. Keep only label present in the input label image
+    # Remove labels that do not correspond with each others.
     sct.printv('\nRemove labels that do not correspond with each others.', verbose)
     sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
 
@@ -284,8 +283,14 @@ def main():
     sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
 
+    # threshold to 0.5
+    nii = Image('segmentation_rpi_straight2templateAffine.nii.gz')
+    data = nii.data
+    data[data < 0.5] = 0
+    nii.data = data
+    nii.setFileName('segmentation_rpi_straight2templateAffine_th.nii.gz')
+    nii.save()
     # find min-max of anat2template (for subsequent cropping)
-    sct.run('export FSLOUTPUTTYPE=NIFTI; fslmaths segmentation_rpi_straight2templateAffine.nii.gz -thr 0.5 segmentation_rpi_straight2templateAffine_th.nii.gz', param.verbose)
     zmin_template, zmax_template = find_zmin_zmax('segmentation_rpi_straight2templateAffine_th.nii.gz')
 
     # crop template in z-direction (for faster processing)
@@ -376,8 +381,8 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label using the old and new voxel size.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_labels)
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = sct.get_dimension(fname_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
+    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
     sampling_factor = [float(nx)/nxd, float(ny)/nyd, float(nz)/nzd]
     # read labels
     from sct_label_utils import ProcessLabels
