@@ -11,23 +11,41 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
 import commands
+import sys
+# get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
+range_mtr = [32.69, 32.70]
 
 
 def test(data_path):
 
     # parameters
     folder_data = 'mt/'
-    file_data = ['mt0.nii.gz','mt1.nii.gz']
+    file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt1_seg.nii.gz']
 
     # define command
     cmd = 'sct_compute_mtr -i ' + data_path + folder_data + file_data[0] \
           + ' -j ' + data_path + folder_data + file_data[1]
 
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    status, output = commands.getstatusoutput(cmd)
+
+    # if command ran without error, test integrity
+    if status == 0:
+        # compute mtr within mask
+        from sct_average_data_within_mask import average_within_mask
+        mtr_mean, mtr_std = average_within_mask('mtr.nii.gz', data_path+folder_data+file_data[2])
+        # status, output = sct.run('sct_average_data_within_mask -i mtr.nii.gz -m '+data_path+folder_data+file_data[2])
+        # print float(str(output.split(' +/-', 1)[0]))
+        # mtr = float(output.split(' +/-', 1)[0])
+        if not (mtr_mean > range_mtr[0] and mtr_mean < range_mtr[1]):
+            status = 99
+            output += '\nMean MTR = '+str(mtr_mean)+'\nAuthorized range: '+str(range_mtr)
+
+    return status, output
 
 
 if __name__ == "__main__":

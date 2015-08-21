@@ -109,7 +109,17 @@ def main():
 
     # compute MTR
     sct.printv('\nCompute MTR...', verbose)
-    sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
+    from msct_image import Image
+    nii_mt1 = Image('mt1.nii')
+    data_mt1 = nii_mt1.data
+    data_mt0 = Image('mt0.nii').data
+    data_mtr = 100 * (data_mt0 - data_mt1) / data_mt0
+    # save MTR file
+    nii_mtr = nii_mt1
+    nii_mtr.data = data_mtr
+    nii_mtr.setFileName('mtr.nii')
+    nii_mtr.save()
+    # sct.run(fsloutput+'fslmaths -dt double mt0.nii -sub mt1.nii -mul 100 -div mt0.nii -thr 0 -uthr 100 mtr.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')

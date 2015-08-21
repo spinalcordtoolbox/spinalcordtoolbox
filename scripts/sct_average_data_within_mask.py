@@ -90,7 +90,7 @@ def main():
     return weighted_average
 
 
-def average_within_mask(fname_src, fname_mask, tmask, zmask, verbose):
+def average_within_mask(fname_src, fname_mask, tmask='', zmask='', verbose=0):
     """
     Average data within mask
     :param fname_src:
