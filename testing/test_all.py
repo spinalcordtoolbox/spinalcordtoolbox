@@ -92,7 +92,7 @@ def main():
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # check existence of testing data folder
-    if not sct.return_folder_exist(param.path_data):
+    if not sct.check_folder_exist(param.path_data, 0):
         downloaddata()
 
     # display path to data
