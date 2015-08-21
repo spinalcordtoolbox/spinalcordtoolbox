@@ -129,7 +129,6 @@ class Transform:
             from sct_split_data import split_data
             if not split_data(path_tmp+'data.nii', 3, '_T'):
                 sct.printv('ERROR in split_data.', 1, 'error')
-            # sct.run(fsloutput+'fslsplit data data_T', verbose)
             # apply transfo
             sct.printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):

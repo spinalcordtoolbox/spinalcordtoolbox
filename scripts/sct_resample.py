@@ -156,7 +156,6 @@ def resample():
     if dim == 4:
         # Split into T dimension
         sct.printv('\nSplit along T dimension...', param.verbose)
-        # status, output = sct.run(fsloutput+'fslsplit data data_T', param.verbose)
         from sct_split_data import split_data
         split_data('data.nii', 3, '_T')
     elif dim == 3:
