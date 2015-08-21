@@ -193,7 +193,6 @@ def fmri_moco(param):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    # status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
     status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
 
     # assign an index to each volume
