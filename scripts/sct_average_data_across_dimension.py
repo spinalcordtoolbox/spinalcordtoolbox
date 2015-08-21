@@ -13,7 +13,7 @@
 # TODO: add check output in average_across_dimension
 
 import sys
-from numpy import mean
+from numpy import mean, std
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import extract_fname, printv
@@ -55,6 +55,12 @@ def get_parser():
                       description='Output file. If output specified, adding suffix "_mean"',
                       mandatory=False,
                       example=['data_mean.nii.gz'])
+    parser.add_option(name="-std",
+                      type_value="multiple_choice",
+                      description='Compute std instead of mean.',
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -66,19 +72,23 @@ def get_parser():
 
 # concatenation
 # ==========================================================================================
-def average_data_across_dimension(fname_in, fname_out, dim):
+def average_data_across_dimension(fname_in, fname_out, dim, compute_std=0):
     """
     Average data
     :param fname_in: input file.
     :param fname_out: output file
     :param dim: dimension: 0, 1, 2, 3
+    :param compute_std: 0
     :return: True/False
     """
     # Open file.
     im = Image(fname_in)
     data = im.data
-    # Average
-    data_mean = mean(data, dim)
+    if compute_std:
+        data_mean = std(data, dim)
+    else:
+        # Average
+        data_mean = mean(data, dim)
     # Write output
     im.data = data_mean
     im.setFileName(fname_out)
@@ -103,6 +113,7 @@ def main(args = None):
     if '-o' in arguments:
         fname_out = arguments["-o"]
     dim_concat = arguments["-dim"]
+    compute_std = int(arguments['-std'])
     verbose = int(arguments['-v'])
 
     # convert dim into numerical values:
@@ -114,7 +125,7 @@ def main(args = None):
         fname_out = path_in+file_in+'_mean'+ext_in
 
     # average data
-    if not average_data_across_dimension(fname_in, fname_out, dim):
+    if not average_data_across_dimension(fname_in, fname_out, dim, compute_std):
         printv('ERROR in average_data_across_dimension', 1, 'error')
 
     # display message

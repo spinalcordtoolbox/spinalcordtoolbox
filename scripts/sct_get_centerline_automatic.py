@@ -30,18 +30,6 @@
 # - centerline fitted
 # - transformation matrices Tx,Ty smoothed
 # - straighted spinal cord
-#
-#
-# DEPENDENCIES
-# ---------------------------------------------------------------------------------------
-# EXTERNAL PYTHON PACKAGES
-# - nibabel: <http://nipy.sourceforge.net/nibabel/>
-# - numpy: <http://www.numpy.org>
-#
-# EXTERNAL SOFTWARE
-# - FSL: <http://fsl.fmrib.ox.ac.uk/fsl/>
-#
-#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Geoffrey Leveque
@@ -66,8 +54,8 @@ import getopt
 import sys
 import time
 import sct_utils as sct
-import nibabel
-import numpy
+# import nibabel
+from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
@@ -102,6 +90,7 @@ def main():
     remove_tmp_files = param.remove_tmp_files
     gaussian_kernel = param.gaussian_kernel
     start_time = time.time()
+    verbose = 1
 
     # get path of the toolbox
     status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -201,41 +190,77 @@ def main():
     print '\nSplit input volume...'
     split_data('tmp.anat_orient.nii', 2, '_z')
     file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    split_data('tmp.point_orient.nii', 2, '_z')
+    file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
-    # Get the coordinates of the input point
-    print '\nGet the coordinates of the input point...'
-    file = nibabel.load('tmp.point_orient.nii')
-    data = file.get_data()
-    x_init, y_init, z_init = (data > 0).nonzero()
-    x_init = x_init[0]
-    y_init = y_init[0]
-    z_init = z_init[0]
-    print '('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')'
+    # Extract coordinates of input point
+    # sct.printv('\nExtract the slice corresponding to z='+str(z_init)+'...', verbose)
+    #
+    data_point = Image('tmp.point_orient.nii').data
+    x_init, y_init, z_init = unravel_index(data_point.argmax(), data_point.shape)
+    sct.printv('Coordinates of input point: ('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')', verbose)
 
-    # Extract the slice corresponding to z=z_init
-    print '\nExtract the slice corresponding to z='+str(z_init)+'...'
-    file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    nii = Image('tmp.point_orient.nii')
-    data_crop = nii.data[:, :, z_init:z_init+1]
-    nii.data = data_crop
-    nii.setFileName(file_point_split[z_init]+'.nii')
-    nii.save()
+    # Create 2D gaussian mask
+    sct.printv('\nCreate gaussian mask from point...', verbose)
+    xx, yy = mgrid[:nx, :ny]
+    mask2d = zeros((nx, ny))
+    radius = round(float(gaussian_kernel+1)/2)  # add 1 because the radius includes the center.
+    sigma = float(radius)
+    mask2d = exp(-(((xx-x_init)**2)/(2*(sigma**2)) + ((yy-y_init)**2)/(2*(sigma**2))))
 
-    # Create gaussian mask from point
-    print '\nCreate gaussian mask from point...'
+    # Save mask to 2d file
     file_mask_split = ['tmp.mask_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    sct.run(sct.fsloutput+'fslmaths '+file_point_split[z_init]+' -s '+str(gaussian_kernel)+' '+file_mask_split[z_init])
+    nii_mask2d = Image('tmp.anat_orient_z0000.nii')
+    nii_mask2d.data = mask2d
+    nii_mask2d.setFileName(file_mask_split[z_init]+'.nii')
+    nii_mask2d.save()
+    #
+    # # Get the coordinates of the input point
+    # print '\nGet the coordinates of the input point...'
+    # data_point = Image('tmp.point_orient.nii').data
+    # x_init, y_init, z_init = unravel_index(data_point.argmax(), data_point.shape)
+    # print '('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')'
 
-    # Obtain max value from mask
-    print '\nFind maximum value from mask...'
-    file = nibabel.load(file_mask_split[z_init]+'.nii')
-    data = file.get_data()
-    max_value_mask = numpy.max(data)
-    print '..'+str(max_value_mask)
-
-    # Normalize mask beween 0 and 1
-    print '\nNormalize mask beween 0 and 1...'
-    sct.run(sct.fsloutput+'fslmaths '+file_mask_split[z_init]+' -div '+str(max_value_mask)+' '+file_mask_split[z_init])
+    # x_init, y_init, z_init = (data > 0).nonzero()
+    # x_init = x_init[0]
+    # y_init = y_init[0]
+    # z_init = z_init[0]
+    # print '('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')'
+    #
+    # numpy.unravel_index(a.argmax(), a.shape)
+    #
+    # file = nibabel.load('tmp.point_orient.nii')
+    # data = file.get_data()
+    # x_init, y_init, z_init = (data > 0).nonzero()
+    # x_init = x_init[0]
+    # y_init = y_init[0]
+    # z_init = z_init[0]
+    # print '('+str(x_init)+', '+str(y_init)+', '+str(z_init)+')'
+    #
+    # # Extract the slice corresponding to z=z_init
+    # print '\nExtract the slice corresponding to z='+str(z_init)+'...'
+    # file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    # nii = Image('tmp.point_orient.nii')
+    # data_crop = nii.data[:, :, z_init:z_init+1]
+    # nii.data = data_crop
+    # nii.setFileName(file_point_split[z_init]+'.nii')
+    # nii.save()
+    #
+    # # Create gaussian mask from point
+    # print '\nCreate gaussian mask from point...'
+    # file_mask_split = ['tmp.mask_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    # sct.run(sct.fsloutput+'fslmaths '+file_point_split[z_init]+' -s '+str(gaussian_kernel)+' '+file_mask_split[z_init])
+    #
+    # # Obtain max value from mask
+    # print '\nFind maximum value from mask...'
+    # file = nibabel.load(file_mask_split[z_init]+'.nii')
+    # data = file.get_data()
+    # max_value_mask = numpy.max(data)
+    # print '..'+str(max_value_mask)
+    #
+    # # Normalize mask beween 0 and 1
+    # print '\nNormalize mask beween 0 and 1...'
+    # sct.run(sct.fsloutput+'fslmaths '+file_mask_split[z_init]+' -div '+str(max_value_mask)+' '+file_mask_split[z_init])
 
     ## Take the square of the mask
     #print '\nCalculate the square of the mask...'
@@ -294,7 +319,7 @@ def main():
             # check if transformation is bigger than 1.5x slice_gap
             tx = float(output.split()[3])
             ty = float(output.split()[7])
-            norm_txy = numpy.linalg.norm([tx, ty],ord=2)
+            norm_txy = linalg.norm([tx, ty],ord=2)
             if norm_txy > 1.5*slice_gap:
                 print 'WARNING: Transformation is too large --> using previous one.'
                 warning_count = warning_count + 1
@@ -334,25 +359,25 @@ def main():
 
     # fit centerline in the Z-X plane using polynomial function
     print '\nFit centerline in the Z-X plane using polynomial function...'
-    coeffsx = numpy.polyfit(z_centerline, x_centerline, deg=param.deg_poly)
-    polyx = numpy.poly1d(coeffsx)
-    x_centerline_fit = numpy.polyval(polyx, z_centerline)
+    coeffsx = polyfit(z_centerline, x_centerline, deg=param.deg_poly)
+    polyx = poly1d(coeffsx)
+    x_centerline_fit = polyval(polyx, z_centerline)
     # calculate RMSE
-    rmse = numpy.linalg.norm(x_centerline_fit-x_centerline)/numpy.sqrt( len(x_centerline) )
+    rmse = linalg.norm(x_centerline_fit-x_centerline)/sqrt( len(x_centerline) )
     # calculate max absolute error
-    max_abs = numpy.max( numpy.abs(x_centerline_fit-x_centerline) )
+    max_abs = max( abs(x_centerline_fit-x_centerline) )
     print '.. RMSE (in mm): '+str(rmse*px)
     print '.. Maximum absolute error (in mm): '+str(max_abs*px)
 
     # fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
-    coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=param.deg_poly)
-    polyy = numpy.poly1d(coeffsy)
-    y_centerline_fit = numpy.polyval(polyy, z_centerline)
+    coeffsy = polyfit(z_centerline, y_centerline, deg=param.deg_poly)
+    polyy = poly1d(coeffsy)
+    y_centerline_fit = polyval(polyy, z_centerline)
     # calculate RMSE
-    rmse = numpy.linalg.norm(y_centerline_fit-y_centerline)/numpy.sqrt( len(y_centerline) )
+    rmse = linalg.norm(y_centerline_fit-y_centerline)/sqrt( len(y_centerline) )
     # calculate max absolute error
-    max_abs = numpy.max( numpy.abs(y_centerline_fit-y_centerline) )
+    max_abs = max( abs(y_centerline_fit-y_centerline) )
     print '.. RMSE (in mm): '+str(rmse*py)
     print '.. Maximum absolute error (in mm): '+str(max_abs*py)
 
@@ -375,8 +400,8 @@ def main():
     z_centerline_full = [iz for iz in range(0, nz, 1)]
 
     # calculate X and Y values for the full centerline
-    x_centerline_fit_full = numpy.polyval(polyx, z_centerline_full)
-    y_centerline_fit_full = numpy.polyval(polyy, z_centerline_full)
+    x_centerline_fit_full = polyval(polyx, z_centerline_full)
+    y_centerline_fit_full = polyval(polyy, z_centerline_full)
 
     # Generate fitted transformation matrices and write centerline coordinates in text file
     print '\nGenerate fitted transformation matrices and write centerline coordinates in text file...'
@@ -412,8 +437,8 @@ def main():
         fid.close()
 
     # write polynomial coefficients
-    numpy.savetxt('tmp.centerline_polycoeffs_x.txt',coeffsx)
-    numpy.savetxt('tmp.centerline_polycoeffs_y.txt',coeffsy)
+    savetxt('tmp.centerline_polycoeffs_x.txt',coeffsx)
+    savetxt('tmp.centerline_polycoeffs_y.txt',coeffsy)
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'

@@ -23,6 +23,7 @@ import msct_moco as moco
 from sct_convert import convert
 from msct_image import Image
 from sct_copy_header import copy_header
+from sct_average_data_across_dimension import average_data_across_dimension
 
 
 class Param:
@@ -235,8 +236,10 @@ def fmri_moco(param):
         # Average Images
         sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
-        sct.run(cmd, param.verbose)
+        if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
+            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
+        # sct.run(cmd, param.verbose)
 
     # Merge groups means
     sct.printv('\nMerging volumes...', param.verbose)
@@ -292,8 +295,10 @@ def fmri_moco(param):
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
-    status, output = sct.run(cmd, param.verbose)
+    if not average_data_across_dimension(fmri_moco+'.nii', fmri_moco_mean+'.nii', 3):
+        sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
+    # status, output = sct.run(cmd, param.verbose)
 
 
 #=======================================================================================================================
