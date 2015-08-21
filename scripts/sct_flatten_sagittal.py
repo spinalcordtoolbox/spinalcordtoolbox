@@ -162,8 +162,10 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    sct.run(sct.fsloutput + 'fslsplit tmp.anat_orient.nii tmp.anat_z -z')
-    file_anat_split = ['tmp.anat_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    from sct_split_data import split_data
+    if not split_data('tmp.anat_orient.nii', 2, '_z'):
+        sct.printv('ERROR in split_data.', 1, 'error')
+    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
     # initialize variables
     file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]

@@ -199,7 +199,6 @@ def main():
 
     # Split input volume
     print '\nSplit input volume...'
-    # sct.run(sct.fsloutput + 'fslsplit tmp.anat_orient tmp.anat_orient_z -z')
     split_data('tmp.anat_orient.nii', 2, '_z')
     file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
