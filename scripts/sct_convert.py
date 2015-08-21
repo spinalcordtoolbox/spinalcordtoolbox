@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add output check in convert
 
 from msct_parser import Parser
 import sys
@@ -51,12 +52,17 @@ def get_parser():
 # conversion
 # ==========================================================================================
 def convert(fname_in, fname_out):
+    """
+    Convert data
+    :return True/False
+    """
     from msct_image import Image
     # Open file
     im = Image(fname_in)
     # Save file
     im.setFileName(fname_out)
     im.save()
+    return True
 
 
 # MAIN

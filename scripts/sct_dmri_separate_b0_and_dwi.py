@@ -116,9 +116,11 @@ def main():
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
-    # copy files into tmp folder
+    # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
-    sct.run('cp '+fname_data+' '+path_tmp+'dmri'+ext_data, verbose)
+    from sct_convert import convert
+    if not convert(fname_data, path_tmp+'dmri.nii'):
+        sct.printv('ERROR in convert.', 1, 'error')
     sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
 
     # go to tmp folder
@@ -126,7 +128,7 @@ def main():
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image('dmri'+ext_data).dim
+    nx, ny, nz, nt, px, py, pz, pt = Image('dmri.nii').dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images
@@ -134,7 +136,9 @@ def main():
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    sct.run(fsloutput+' fslsplit dmri dmri_T', verbose)
+    from sct_split_data import split_data
+    if not split_data('dmri.nii', 3, '_T'):
+        sct.printv('ERROR in split_data.', 1, 'error')
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
@@ -143,10 +147,6 @@ def main():
         cmd = cmd + 'dmri_T' + str(index_b0[it]).zfill(4) + '.nii,'
     cmd = cmd[:-1]  # remove ',' at the end of the string
     status, output = sct.run(cmd, param.verbose)
-    # cmd = fsloutput + 'fslmerge -t b0'
-    # for iT in range(nb_b0):
-    #     cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
-    # sct.run(cmd, verbose)
 
     # Average b=0 images
     if average:
@@ -160,10 +160,7 @@ def main():
         cmd = cmd + 'dmri_T' + str(index_dwi[it]).zfill(4) + '.nii,'
     cmd = cmd[:-1]  # remove ',' at the end of the string
     status, output = sct.run(cmd, param.verbose)
-    # cmd = fsloutput + 'fslmerge -t dwi'
-    # for iT in range(nb_dwi):
-    #     cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
-    # sct.run(cmd, verbose)
+
 
     # Average DWI images
     if average:

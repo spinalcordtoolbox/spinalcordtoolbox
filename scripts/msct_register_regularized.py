@@ -148,18 +148,15 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
     print '\nSplit input volume...'
     from sct_split_data import split_data
     split_data(fname_source, 2, '_z')
-    # sct.run(sct.fsloutput + 'fslsplit '+fname_source+' '+root_i+'_z -z')
 
     # Split destination volume along z
     print '\nSplit destination volume...'
     split_data(fname_dest, 2, '_z')
-    # sct.run(sct.fsloutput + 'fslsplit '+fname_dest+' '+root_d+'_z -z')
 
     # Split mask volume along z
     if mask:
         print '\nSplit mask volume...'
         split_data('mask.nii.gz', 2, '_z')
-        # sct.run(sct.fsloutput + 'fslsplit mask.nii.gz mask_z -z')
 
     im_dest_img = Image(fname_dest)
     im_input_img = Image(fname_source)
