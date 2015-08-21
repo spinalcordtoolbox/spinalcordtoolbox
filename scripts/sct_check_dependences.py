@@ -225,20 +225,20 @@ def main():
         print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
         install_software = 1
 
-    # check if FSL is declared
-    print_line('Check if FSL is declared ')
-    cmd = 'which fsl'
-    status, output = commands.getstatusoutput(cmd)
-    if output:
-        print_ok()
-        path_fsl = output[:-7]
-        print '  '+path_fsl
-    else:
-        print_fail()
-        print '  FSL is either not installed or not declared.'
-        print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
-        print '  - To declare it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup'
-        e = 1
+    # # check if FSL is declared
+    # print_line('Check if FSL is declared ')
+    # cmd = 'which fsl'
+    # status, output = commands.getstatusoutput(cmd)
+    # if output:
+    #     print_ok()
+    #     path_fsl = output[:-7]
+    #     print '  '+path_fsl
+    # else:
+    #     print_fail()
+    #     print '  FSL is either not installed or not declared.'
+    #     print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
+    #     print '  - To declare it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup'
+    #     e = 1
 
     # check if git is installed
     print_line('Check if git is installed ')
