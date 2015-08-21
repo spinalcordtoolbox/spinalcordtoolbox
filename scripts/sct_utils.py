@@ -257,11 +257,18 @@ def create_folder(folder):
 # check_if_3d
 #=======================================================================================================================
 def check_if_3d(fname):
+    """
+    Check if input volume is 3d or less.
+    :param fname:
+    :return: True or False
+    """
     from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
-
+        return False
+        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+    else:
+        return True
 
 #=======================================================================================================================
 # check_if_rpi:  check if data are in RPI orientation
