@@ -37,6 +37,7 @@
 # License: see the LICENSE.TXT
 # ==========================================================================================
 
+# TODO: remove FSL dependency
 # TODO: apply previous transfo to mask (assuming spatial autocorrelation --> transformation is expected to be close to previous one)
 # TODO: output data in short instead of float
 # TODO: try to fit in 3D instead of 2D
