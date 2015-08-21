@@ -23,6 +23,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: Do not merge per group if no group is asked.
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
@@ -41,7 +42,10 @@ import sct_utils as sct
 import msct_moco as moco
 from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
-
+from sct_convert import convert
+from msct_image import Image
+from sct_copy_header import copy_header
+from sct_average_data_across_dimension import average_data_across_dimension
 
 class Param:
     def __init__(self):
@@ -53,7 +57,7 @@ class Param:
         self.fname_mask = ''
         self.mat_final = ''
         self.todo = ''
-        self.group_size = 3  # number of images averaged for 'dwi' method.
+        self.group_size = 1  # number of images averaged for 'dwi' method.
         self.spline_fitting = 0
         self.remove_tmp_files = 1
         self.verbose = 1
@@ -196,7 +200,7 @@ def main():
     os.chdir(path_tmp)
 
     # convert dmri to nii format
-    sct.run('fslchfiletype NIFTI dmri', param.verbose)
+    convert('dmri'+ext_data, 'dmri.nii')
 
     # update field in param (because used later).
     # TODO: make this cleaner...
@@ -237,6 +241,7 @@ def main():
 def dmri_moco(param):
 
     file_data = 'dmri'
+    ext_data = '.nii'
     file_b0 = 'b0'
     file_dwi = 'dwi'
     mat_final = 'mat_final/'
@@ -246,7 +251,7 @@ def dmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
@@ -262,21 +267,27 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', param.verbose)
-    cmd = fsloutput + 'fslmerge -t ' + file_b0
+    # cmd = fsloutput + 'fslmerge -t ' + file_b0
+    # for it in range(nb_b0):
+    #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
+    cmd = 'sct_concat_data -dim t -o ' + file_b0 + ext_data + ' -i '
     for it in range(nb_b0):
-        cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
+        cmd = cmd + file_data + '_T' + str(index_b0[it]).zfill(4) + ext_data + ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
     status, output = sct.run(cmd, param.verbose)
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0+'_mean'
-    cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
-    status, output = sct.run(cmd, param.verbose)
+    if not average_data_across_dimension(file_b0+'.nii', file_b0_mean+'.nii', 3):
+        sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
+    # status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi/param.group_size))
@@ -303,30 +314,42 @@ def dmri_moco(param):
         # Merge DW Images
         sct.printv('Merge DW images...', param.verbose)
         file_dwi_merge_i = file_dwi + '_' + str(iGroup)
-        cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
+        cmd = 'sct_concat_data -dim t -o ' + file_dwi_merge_i + ext_data + ' -i '
         for it in range(nb_dwi_i):
-            cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
+            cmd = cmd + file_data + '_T' + str(index_dwi_i[it]).zfill(4) + ext_data + ','
+        cmd = cmd[:-1]  # remove ',' at the end of the string
         sct.run(cmd, param.verbose)
+        # cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
+        # for it in range(nb_dwi_i):
+        #     cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
 
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
         file_dwi_mean = file_dwi + '_mean_' + str(iGroup)
-        cmd = fsloutput + 'fslmaths ' + file_dwi_merge_i + ' -Tmean ' + file_dwi_mean
-        sct.run(cmd, param.verbose)
+        if not average_data_across_dimension(file_dwi_merge_i+'.nii', file_dwi_mean+'.nii', 3):
+            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # cmd = fsloutput + 'fslmaths ' + file_dwi_merge_i + ' -Tmean ' + file_dwi_mean
+        # sct.run(cmd, param.verbose)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
-    cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
+    cmd = 'sct_concat_data -dim t -o ' + file_dwi_group + ext_data + ' -i '
     for iGroup in range(nb_groups):
-        cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
+        cmd = cmd + file_dwi + '_mean_' + str(iGroup) + ext_data + ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
     sct.run(cmd, param.verbose)
+    # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
+    # for iGroup in range(nb_groups):
+    #     cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)
 
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     fname_dwi_mean = 'dwi_mean'  
-    sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
+    if not average_data_across_dimension(file_dwi_group+'.nii', file_dwi_group+'_mean.nii', 3):
+        sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -343,7 +366,11 @@ def dmri_moco(param):
         file_dwi_group = file_dwi_group+'_seg'
 
     # extract first DWI volume as target for registration
-    sct.run(fsloutput + 'fslroi ' + file_dwi_group + ' target_dwi.nii ' + str(index_dwi[0]) + ' 1', param.verbose)
+    nii = Image(file_dwi_group+'.nii')
+    data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
+    nii.data = data_crop
+    nii.setFileName('target_dwi.nii')
+    nii.save()
 
 
     # START MOCO
@@ -417,7 +444,7 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    sct.run(fsloutput+'fslcpgeom dmri dmri_moco')
+    copy_header('dmri.nii', 'dmri_moco.nii')
 
     # generate b0_moco_mean and dwi_moco_mean
     cmd = 'sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1'
@@ -451,7 +478,7 @@ MANDATORY ARGUMENTS
   -b <bvecs>       bvecs file
 
 OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
+  -g <nvols>       group nvols successive dMRI volumes for more robustness. Default="""+str(param_default.group_size)+"""
   -m <mask>        binary mask to limit voxels considered by the registration metric.
   -p <param>       parameters for registration.
                    ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""

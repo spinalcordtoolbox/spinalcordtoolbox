@@ -11,7 +11,19 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: check input param with -s flag
+# TODO: remove FSL dependency
+
+import os
+import getopt
+import sys
+import commands
+import nibabel
+import numpy
+import sct_utils as sct
+from msct_nurbs import NURBS
+from sct_utils import fsloutput
+from sct_orientation import get_orientation, set_orientation
+from msct_image import Image
 
 
 ## Default parameters
@@ -22,20 +34,6 @@ class Param:
         self.interp = 'sinc'  # final interpolation
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.remove_temp_files = 1  # remove temporary files
-
-# check if needed Python libraries are already installed or not
-import os
-import getopt
-import sys
-import commands
-
-import nibabel
-import numpy
-
-import sct_utils as sct
-from msct_nurbs import NURBS
-from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
 
 
 
@@ -113,7 +111,7 @@ def main():
     # Open centerline
     #==========================================================================================
     print '\nGet dimensions of input centerline...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('tmp.centerline_orient.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.centerline_orient.nii').dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
@@ -166,8 +164,10 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    sct.run(sct.fsloutput + 'fslsplit tmp.anat_orient.nii tmp.anat_z -z')
-    file_anat_split = ['tmp.anat_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    from sct_split_data import split_data
+    if not split_data('tmp.anat_orient.nii', 2, '_z'):
+        sct.printv('ERROR in split_data.', 1, 'error')
+    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
     # initialize variables
     file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]
@@ -215,7 +215,10 @@ def main():
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
+    from sct_concat_data import concat_data
+    from glob import glob
+    concat_data(glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
+    # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
