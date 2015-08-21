@@ -11,8 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
+#import sct_utils as sct
 import commands
+
 
 def test(path_data):
 
