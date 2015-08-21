@@ -20,7 +20,7 @@ from sct_register_multimodal import Paramreg
 
 
 
-def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg(step='0', type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_pointwise(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='seg', algo='slicereg2d_pointwise', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                   warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, verbose=0):
     """Slice-by-slice regularized registration by translation of two segmentations.
 
@@ -32,8 +32,8 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         warp_forward_out: name of output forward warp (type: string)
@@ -53,7 +53,7 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         from numpy import asarray
         from msct_smooth import smoothing_window, outliers_detection, outliers_completion
         # Calculate displacement
-        x_disp, y_disp = register_seg(src, dest)
+        x_disp, y_disp = register_seg(fname_source, fname_dest)
         # Change to array
         x_disp_a = asarray(x_disp)
         y_disp_a = asarray(y_disp)
@@ -67,12 +67,12 @@ def register_slicereg2d_pointwise(src, dest, window_length=31, paramreg=Paramreg
         x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
         y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose=verbose)
         # Generate warping field
-        generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_smooth, y_disp_smooth, fname=warp_forward_out)  #name_warp= 'step'+str(paramreg.step)
         # Inverse warping field
-        generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
+        generate_warping_field(fname_source, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_translation(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                     fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -86,8 +86,8 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length[optional]: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
@@ -107,7 +107,7 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # Calculate displacement
-    x_disp, y_disp = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    x_disp, y_disp = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     # Change to array
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
@@ -121,12 +121,12 @@ def register_slicereg2d_translation(src, dest, window_length=31, paramreg=Paramr
     x_disp_smooth = smoothing_window(x_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
     y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
     # Generate warping field
-    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, fname=warp_forward_out)
+    generate_warping_field(fname_dest, x_disp_smooth, y_disp_smooth, fname=warp_forward_out)
     # Inverse warping field
-    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
+    generate_warping_field(fname_source, -x_disp_smooth, -y_disp_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_rigid(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Rigid', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                               fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                               ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -140,8 +140,8 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length[optional]: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
@@ -161,7 +161,7 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
 
     # Calculate displacement
-    x_disp, y_disp, theta_rot = register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    x_disp, y_disp, theta_rot = register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     # Change to array
     x_disp_a = asarray(x_disp)
     y_disp_a = asarray(y_disp)
@@ -179,12 +179,12 @@ def register_slicereg2d_rigid(src, dest, window_length=31, paramreg=Paramreg(ste
     y_disp_smooth = smoothing_window(y_disp_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
     theta_rot_smooth = smoothing_window(theta_rot_a_no_outliers, window_len=int(window_length), window='hanning', verbose = verbose)
     # Generate warping field
-    generate_warping_field(dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname=warp_forward_out)
+    generate_warping_field(fname_dest, x_disp_smooth, y_disp_smooth, theta_rot_smooth, fname=warp_forward_out)
     # Inverse warping field
-    generate_warping_field(src, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
+    generate_warping_field(fname_source, -x_disp_smooth, -y_disp_smooth, -theta_rot_smooth, fname=warp_inverse_out)
 
 
-def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Affine', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_affine(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='Affine', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -200,8 +200,8 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length[optional]: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
@@ -224,7 +224,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     name_warp_syn = 'Warp_total'
 
     # Calculate displacement
-    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
 
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
@@ -256,7 +256,8 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
@@ -273,7 +274,7 @@ def register_slicereg2d_affine(src, dest, window_length=31, paramreg=Paramreg(st
     save(img_inverse, filename=warp_inverse_out)
     print'\tFile ' + warp_inverse_out + ' saved.'
 
-def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='SyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='SyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                             fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -289,8 +290,8 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length[optional]: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
@@ -312,7 +313,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     import sct_utils as sct
     name_warp_syn = 'Warp_total'
     # Registrating images
-    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
     sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
@@ -343,7 +344,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
@@ -361,7 +362,7 @@ def register_slicereg2d_syn(src, dest, window_length=31, paramreg=Paramreg(step=
     print'\tFile ' + warp_inverse_out + ' saved.'
 
 
-def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='BSplineSyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
+def register_slicereg2d_bsplinesyn(fname_source, fname_dest, window_length=31, paramreg=Paramreg(step='0', type='im', algo='BSplineSyN', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5'),
                                    fname_mask='', warp_forward_out='step0Warp.nii.gz', warp_inverse_out='step0InverseWarp.nii.gz', factor=2, remove_temp_files=1, verbose=0,
                                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}):
@@ -377,8 +378,8 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     creation).
 
     input:
-        src: name of moving image (type: string)
-        dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         window_length[optional]: size of window for moving average smoothing (type: int)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         fname_mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
@@ -398,9 +399,11 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
     from msct_register_regularized import register_images
     from numpy import apply_along_axis, zeros
     import sct_utils as sct
+    from msct_image import Image
+
     name_warp_syn = 'Warp_total'
     # Registrating images
-    register_images(src, dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
+    register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
     sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
@@ -431,7 +434,7 @@ def register_slicereg2d_bsplinesyn(src, dest, window_length=31, paramreg=Paramre
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
     data_warp_smooth[:,:,:,0,1] = data_warp_y_smooth
