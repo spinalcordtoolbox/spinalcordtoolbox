@@ -45,6 +45,7 @@ import importlib
 from sct_convert import convert
 from msct_image import Image
 from sct_copy_header import copy_header
+from sct_average_data_across_dimension import average_data_across_dimension
 
 class Param:
     def __init__(self):
@@ -283,8 +284,10 @@ def dmri_moco(param):
     # Average b=0 images
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0+'_mean'
-    cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
-    status, output = sct.run(cmd, param.verbose)
+    if not average_data_across_dimension(file_b0+'.nii', file_b0_mean+'.nii', 3):
+        sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
+    # status, output = sct.run(cmd, param.verbose)
 
     # Number of DWI groups
     nb_groups = int(math.floor(nb_dwi/param.group_size))
@@ -323,8 +326,10 @@ def dmri_moco(param):
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
         file_dwi_mean = file_dwi + '_mean_' + str(iGroup)
-        cmd = fsloutput + 'fslmaths ' + file_dwi_merge_i + ' -Tmean ' + file_dwi_mean
-        sct.run(cmd, param.verbose)
+        if not average_data_across_dimension(file_dwi_merge_i+'.nii', file_dwi_mean+'.nii', 3):
+            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # cmd = fsloutput + 'fslmaths ' + file_dwi_merge_i + ' -Tmean ' + file_dwi_mean
+        # sct.run(cmd, param.verbose)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
@@ -342,7 +347,9 @@ def dmri_moco(param):
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
     fname_dwi_mean = 'dwi_mean'  
-    sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
+    if not average_data_across_dimension(file_dwi_group+'.nii', file_dwi_group+'_mean.nii', 3):
+        sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
