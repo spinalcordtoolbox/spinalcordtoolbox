@@ -8,10 +8,13 @@
 # Author: Julien Cohen-Adad
 # Modified: 2013-11-10
 #
-# TODO: do a zmin zmax
 #
 # About the license: see the file LICENSE.TXT
 # ==========================================================================================
+
+
+# TODO: add test
+# TODO: do a zmin zmax
 
 import sys
 import getopt
@@ -82,6 +85,21 @@ def main():
     #path_src, file_src, ext_src = extract_fname(fname_src)
     #path_mask, file_mask, ext_mask = extract_fname(fname_mask)
 
+    weighted_average, weighted_std = average_within_mask(fname_src, fname_mask, tmask, zmask, verbose)
+
+    return weighted_average
+
+
+def average_within_mask(fname_src, fname_mask, tmask, zmask, verbose):
+    """
+    Average data within mask
+    :param fname_src:
+    :param fname_mask:
+    :param tmask:
+    :param zmask:
+    :param verbose:
+    :return: [mean, std]
+    """
     # Quantify image within mask
     header_src = nibabel.load(fname_src)
     header_mask = nibabel.load(fname_mask)
@@ -125,7 +143,7 @@ def main():
     # print result
     print '\n'+str(weighted_average)+' +/- '+str(weighted_std)
 
-    return weighted_average
+    return weighted_average, weighted_std
 
     # Display created files
 
