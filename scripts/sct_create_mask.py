@@ -24,6 +24,9 @@ import numpy
 import nibabel
 from scipy import ndimage
 from sct_orientation import get_orientation, set_orientation
+from sct_convert import convert
+from msct_image import Image
+from sct_copy_header import copy_header
 
 
 # DEFAULT PARAMETERS
@@ -122,7 +125,9 @@ def create_mask():
         sct.check_file_exist(method_val, param.verbose)
 
     # check if orientation is RPI
-    if not get_orientation(param.fname_data) == 'RPI':
+    sct.printv('\nCheck if orientation is RPI...', param.verbose)
+    status, output = sct.run('sct_orientation -i '+param.fname_data)
+    if not output == 'RPI':
         sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
 
     # display input parameters
@@ -146,25 +151,27 @@ def create_mask():
     # Copying input data to tmp folder and convert to nii
     # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
+    convert(param.fname_data, path_tmp+'data.nii')
+    # sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
-        sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
+        convert(method_val, path_tmp+'centerline.nii.gz')
+        # sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # convert to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
-
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
         sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        sct.run(fsloutput+'fslroi data data -0 1', param.verbose)
+        nii = Image('data.nii')
+        data3d = nii.data[:,:,:,0]
+        nii.data = data3d
+        nii.save()
 
     if method_type == 'coord':
         # parse to get coordinate
@@ -213,13 +220,16 @@ def create_mask():
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
-    cmd = 'fslmerge -z mask '
+    # cmd = 'fslmerge -z mask '
+    cmd = 'sct_concat_data -dim z -o mask.nii.gz -i '
     for iz in range(nz):
-        cmd = cmd + file_mask+str(iz)+' '
+        cmd = cmd + file_mask+str(iz)+'.nii,'
+    # remove ',' at the end of the string
+    cmd = cmd[:-1]
     status, output = sct.run(cmd, param.verbose)
+
     # copy geometry
-    sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
-    # sct.run('fslchfiletype NIFTI mask', param.verbose)
+    copy_header('data.nii', 'mask.nii.gz')
 
     # come back to parent folder
     os.chdir('..')

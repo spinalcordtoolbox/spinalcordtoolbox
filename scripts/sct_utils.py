@@ -20,8 +20,6 @@ import commands
 import subprocess
 import re
 
-# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
-# TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
@@ -63,8 +61,10 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
+
 def run(cmd, verbose=1):
-    # print sys._getframe().f_back.f_code.co_name
+    if verbose==2:
+        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -77,15 +77,20 @@ def run(cmd, verbose=1):
             if verbose == 2:
                 print output.strip()
             output_final += output.strip()+'\n'
+    status_output = process.returncode
+    # process.stdin.close()
+    # process.stdout.close()
+    # process.terminate()
+
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    if process.returncode:
+    if status_output:
         # from inspect import stack
         printv("ERROR\n"+output_final[0:-1], 1, 'error')
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
     else:
         # no need to output process.returncode (because different from 0)
-        return process.returncode, output_final[0:-1]
+        return status_output, output_final[0:-1]
 
 
 
@@ -239,10 +244,18 @@ def create_folder(folder):
 # check_if_3d
 #=======================================================================================================================
 def check_if_3d(fname):
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    """
+    Check if input volume is 3d or less.
+    :param fname:
+    :return: True or False
+    """
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
-
+        return False
+        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+    else:
+        return True
 
 #=======================================================================================================================
 # check_if_rpi:  check if data are in RPI orientation
@@ -270,39 +283,16 @@ def find_file_within_folder(fname, directory):
 
 
 #=======================================================================================================================
-# get_dimension
-#=======================================================================================================================
-# Get dimensions of a nifti file using FSL
-def get_dimension(fname):
-    # apply fslsize on data
-    cmd = 'fslsize '+fname
-    status, output = commands.getstatusoutput(cmd)
-    # split output according to \n field
-    output_split = output.split()
-
-    if output_split[0] == 'ERROR:':
-        printv('\n'+output, 1, 'error')
-    else:
-        # extract dimensions as integer
-        try:
-            nx = int(output_split[1])
-            ny = int(output_split[3])
-            nz = int(output_split[5])
-            nt = int(output_split[7])
-            px = float(output_split[9])
-            py = float(output_split[11])
-            pz = float(output_split[13])
-            pt = float(output_split[15])
-            return nx, ny, nz, nt, px, py, pz, pt
-        except Exception, e:
-            print "Output of the command: \n", output_split
-            raise Exception
-
-
-#=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, verbose=1):
+    """
+    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
     # import stuff
     import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
@@ -320,17 +310,23 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Move file to output folder (keep the same extension as input)
-    shutil.move(fname_in, path_out+file_out+ext_in)
-    # convert to nii (only if necessary)
-    if ext_out == '.nii' and ext_in != '.nii':
-        os.system('fslchfiletype NIFTI '+path_out+file_out)
-    # convert to nii.gz (only if necessary)
-    if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-        os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
+    # Generate output file
+    from sct_convert import convert
+    convert(fname_in, fname_out)
+    # # Move file to output folder (keep the same extension as input)
+    # shutil.move(fname_in, path_out+file_out+ext_in)
+    # # convert to nii (only if necessary)
+    # if ext_out == '.nii' and ext_in != '.nii':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    # # convert to nii.gz (only if necessary)
+    # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii file
     # display message
-    if verbose:
-        print '  File created: '+path_out+file_out+ext_out
+    printv('  File created: '+path_out+file_out+ext_out, verbose)
+    # if verbose:
+    #     print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
@@ -363,6 +359,8 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.blue
     elif type == 'bold':
         color = bcolors.bold
+    elif type == 'process':
+        color = bcolors.purple
 
     # print message
     if verbose:
@@ -370,7 +368,10 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit program
     if type == 'error':
-        #raise NameError('Error!')
+        from inspect import stack
+        frame,filename,line_number,function_name,lines,index = stack()[1]
+        # print(frame,filename,line_number,function_name,lines,index)
+        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 
