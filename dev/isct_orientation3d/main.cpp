@@ -158,10 +158,41 @@ int changeOrientationMethod(string inputFilename, string outputFilename, Orienta
     orientationFilter.setInputImage(reader->GetOutput());
     
 	if (displayInitialOrientation)
-		cout << "Input image orientation : " << FlagToString(orientationFilter.getInitialImageOrientation()) << endl;
+    {
+        try {
+            io->SetFileName(inputFilename);
+            io->ReadImageInformation();
+            //reader->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while reading input image " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        
+        typename ImageType::DirectionType direction;
+        vector<double> dir0 = io->GetDirection(0);
+        for (int i=0; i<dir0.size(); i++)
+            direction(i,0) = dir0[i];
+        vector<double> dir1 = io->GetDirection(1);
+        for (int i=0; i<dir1.size(); i++)
+            direction(i,1) = dir1[i];
+        vector<double> dir2 = io->GetDirection(2);
+        for (int i=0; i<dir2.size(); i++)
+            direction(i,2) = dir2[i];
+        cout << direction << endl;
+        cout << "Input image orientation : " << FlagToString(orientationFilter.getOrientationFromDirection(direction)) << endl;
+    }
     
 	if (changeOrientation)
 	{
+        try {
+            io->SetFileName(inputFilename);
+            io->ReadImageInformation();
+            //reader->Update();
+        } catch( itk::ExceptionObject & e ) {
+            std::cerr << "Exception caught while reading input image " << std::endl;
+            std::cerr << e << std::endl;
+        }
+        
 		orientationFilter.orientation(orientation);
         
 		typename WriterType::Pointer writer = WriterType::New();
