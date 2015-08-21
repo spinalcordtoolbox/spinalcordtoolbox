@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add check output in split_data
 
 import sys
 from numpy import concatenate, array_split
@@ -65,7 +66,7 @@ def split_data(fname_in, dim, suffix):
     Split data
     :param fname_in: input file.
     :param dim: dimension: 0, 1, 2, 3.
-    :return: none
+    :return: True/False
     """
     # Parse file name
     path_in, file_in, ext_in = extract_fname(fname_in)
@@ -83,6 +84,7 @@ def split_data(fname_in, dim, suffix):
         im_split.data = data_split[i]
         im_split.setFileName(path_in+file_in+suffix_output+ext_in)
         im_split.save()
+    return True
 
 
 # MAIN
