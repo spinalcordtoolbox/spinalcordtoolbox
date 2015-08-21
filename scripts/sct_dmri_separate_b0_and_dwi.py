@@ -22,8 +22,9 @@ import commands
 import numpy
 import sct_utils as sct
 from msct_image import Image
-from sct_concat_data import concat_data
-import glob
+# from sct_concat_data import concat_data
+# import glob
+from sct_average_data_across_dimension import average_data_across_dimension
 
 class Param:
     def __init__(self):
@@ -151,7 +152,9 @@ def main():
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run(fsloutput + 'fslmaths b0 -Tmean b0_mean', verbose)
+        if not average_data_across_dimension('b0.nii', 'b0_mean.nii', 3):
+            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # sct.run(fsloutput + 'fslmaths b0 -Tmean b0_mean', verbose)
 
     # Merge DWI
     sct.printv('\nMerge DWI...', verbose)
@@ -165,7 +168,9 @@ def main():
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
+        if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
+            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
     os.chdir('..')

@@ -283,8 +283,14 @@ def main():
     sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
 
+    # threshold to 0.5
+    nii = Image('segmentation_rpi_straight2templateAffine.nii.gz')
+    data = nii.data
+    data[data < 0.5] = 0
+    nii.data = data
+    nii.setFileName('segmentation_rpi_straight2templateAffine_th.nii.gz')
+    nii.save()
     # find min-max of anat2template (for subsequent cropping)
-    sct.run('export FSLOUTPUTTYPE=NIFTI; fslmaths segmentation_rpi_straight2templateAffine.nii.gz -thr 0.5 segmentation_rpi_straight2templateAffine_th.nii.gz', param.verbose)
     zmin_template, zmax_template = find_zmin_zmax('segmentation_rpi_straight2templateAffine_th.nii.gz')
 
     # crop template in z-direction (for faster processing)
