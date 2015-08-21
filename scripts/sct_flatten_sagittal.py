@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: remove FSL dependency
+
 import os
 import getopt
 import sys

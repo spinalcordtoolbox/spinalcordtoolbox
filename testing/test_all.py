@@ -159,7 +159,7 @@ def fill_functions():
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
-    functions.append('sct_flatten_sagittal')
+    # functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
     # functions.append('sct_get_centerline_automatic')
