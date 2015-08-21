@@ -89,13 +89,15 @@ def get_orientation(fname_in):
     :param verbose:
     :return:
     """
+    string_out = 'Input image orientation : '
     # get orientation
     status, output = sct.run('isct_orientation3d -i '+fname_in+' -get ', 0)
     # check status
     if status != 0:
         from sct_utils import printv
         printv('ERROR in get_orientation.', 1, 'error')
-    orientation = output[26:]
+    orientation = output[output.index(string_out)+len(string_out):]
+    # orientation = output[26:]
     return orientation
 
 
