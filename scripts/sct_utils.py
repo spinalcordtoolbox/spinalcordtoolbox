@@ -155,7 +155,6 @@ def checkRAM(os,verbose=1):
 #=======================================================================================================================
 # Extract path, file and extension
 def extract_fname(fname):
-
     # extract path
     path_fname = os.path.dirname(fname)+'/'
     # check if only single file was entered (without path)
@@ -169,8 +168,8 @@ def extract_fname(fname):
     if ext_fname == '.gz':
         file_fname = file_fname[0:len(file_fname)-4]
         ext_fname = ".nii.gz"
-
     return path_fname, file_fname, ext_fname
+
 
 #=======================================================================================================================
 # get_absolute_path
@@ -200,25 +199,13 @@ def check_file_exist(fname, verbose=1):
 #=======================================================================================================================
 def check_folder_exist(fname, verbose=1):
     if os.path.isdir(fname):
-        if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
+        printv('  OK: '+fname, verbose, 'normal')
+        return True
         pass
     else:
-        printv('\nERROR: The directory ' + str(fname) + ' does not exist. Exit program.\n', 1, 'error')
-
-#=======================================================================================================================
-# return_folder_exist:  Check existence of a folder.
-#   Does not create it. If you want to create a folder, use create_folder
-#=======================================================================================================================
-def return_folder_exist(fname, verbose=1):
-    if os.path.isdir(fname):
-        if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
-            return True
-        pass
-    else:
-        printv('\nERROR: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
+        printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
         return False
+
 
 #=======================================================================================================================
 # check_write_permission:  Check existence of a folder.
