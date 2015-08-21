@@ -161,7 +161,7 @@ def fill_functions():
     functions.append('sct_extract_metric')
     functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
-    functions.append('sct_fmri_moco')
+    #functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline_automatic')
     functions.append('sct_get_centerline_from_labels')
     functions.append('sct_label_utils')
@@ -265,22 +265,6 @@ def test_function(script_name):
 
         # return
         return status
-
-
-# def old_test_function(folder_test):
-#     fname_log = folder_test + ".log"
-#     print_line('Checking '+folder_test)
-#     os.chdir(folder_test)
-#     status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
-#     if status == 0:
-#         print_ok()
-#     else:
-#         print_fail()
-#     shutil.rmtree('./results')
-#     os.chdir('../')
-#     write_to_log_file(fname_log,output)
-#     return status
-
 
 def test_debug():
     print_line ('Checking if debug mode is on .......................')
