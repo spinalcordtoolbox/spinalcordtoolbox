@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: CHECK INTEGRITY OF ORIENTATION
+
 #import sct_utils as sct
 import commands
 

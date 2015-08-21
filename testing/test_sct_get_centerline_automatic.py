@@ -16,22 +16,27 @@
 #import sct_utils as sct
 import commands
 
-
 def test(path_data):
 
     # parameters
     folder_data = 't2/'
     file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz']
 
+    output = ''
+    status = 0
+
     # define command
     cmd = 'sct_get_centerline_automatic -i ' + path_data + folder_data + file_data[0] \
           + ' -p ' + path_data + folder_data + file_data[1] \
           + ' -g 1'\
           + ' -k 4'\
-          + ' -r 1'
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+          + ' -r 0'
+    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
+
+    return status, output
 
 
 if __name__ == "__main__":
