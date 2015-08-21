@@ -52,6 +52,7 @@ class param:
 def main():
     path_data = param.path_data
     function_to_test = param.function_to_test
+    # function_to_avoid = param.function_to_avoid
     remove_tmp_file = param.remove_tmp_file
 
     # Check input parameters
@@ -95,7 +96,7 @@ def main():
         downloaddata()
 
     # display path to data
-    sct.printv('\nCheck path to testing data: \n  OK... '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data:\n.. '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -145,6 +146,7 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = []
+    #functions.append('test_debug')  --> removed by jcohenadad. No more use for it now.
     #functions.append('test_debug')
     functions.append('sct_apply_transfo')
     functions.append('sct_check_atlas_integrity')
@@ -258,13 +260,32 @@ def test_function(script_name):
         if status == 0:
             print_ok()
         else:
-            print_fail()
+            if status == 5:
+                print_warning()
+            else:
+                print_fail()
             print output
         # go back to parent folder
         os.chdir('..')
 
         # return
         return status
+
+
+# def old_test_function(folder_test):
+#     fname_log = folder_test + ".log"
+#     print_line('Checking '+folder_test)
+#     os.chdir(folder_test)
+#     status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
+#     if status == 0:
+#         print_ok()
+#     else:
+#         print_fail()
+#     shutil.rmtree('./results')
+#     os.chdir('../')
+#     write_to_log_file(fname_log,output)
+#     return status
+
 
 def test_debug():
     print_line ('Checking if debug mode is on .......................')
