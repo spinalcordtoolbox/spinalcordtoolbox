@@ -451,6 +451,7 @@ class Model:
         beta = []
         if self.param.mode_weight_similarity:
             mode_weight = [val/sum(self.pca.kept_eigenval) for val in self.pca.kept_eigenval]
+            # WARNING: see if the weights shouldnt be inversed: a bigger weight for the first modes will make the distances along those modes bigger: maybe we want to do the opposite
         else:
             mode_weight = None
 
