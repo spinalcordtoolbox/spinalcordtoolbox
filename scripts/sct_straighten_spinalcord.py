@@ -899,16 +899,16 @@ class SpinalCordStraightener(object):
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            Transform(input_filename=str(file_anat+ext_anat), fname_dest="tmp.anat_rigid_warp.nii.gz",
-                      output_filename="tmp.landmarks_straight_crop.nii.gz", interp=interpolation_warp,
+            Transform(input_filename=str(file_anat+ext_anat), fname_dest="tmp.landmarks_straight_crop.nii.gz",
+                      output_filename="tmp.anat_rigid_warp.nii.gz", interp=interpolation_warp,
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename=fname_centerline_orient, fname_dest="tmp.centerline_straight.nii.gz",
-                      output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn",
+            Transform(input_filename=fname_centerline_orient, fname_dest="tmp.landmarks_straight_crop.nii.gz",
+                      output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
