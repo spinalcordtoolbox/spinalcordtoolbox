@@ -142,7 +142,12 @@ def main():
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
         try:
             module = importlib.import_module(module)
-            version = get_package_version(i)
+            # get version
+            if i == 'pillow':
+                version = module.PILLOW_VERSION
+            else:
+                version = module.__version__
+            # check if version matches requirements
             if check_package_version(version, version_requirements, i):
                 print_ok()
             else:
