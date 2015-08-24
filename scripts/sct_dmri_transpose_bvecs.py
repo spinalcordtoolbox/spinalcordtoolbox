@@ -64,16 +64,16 @@ def main(args = None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    fname_in = arguments['-i']
+    fname_bvecs = arguments['-i']
     verbose = int(arguments['-v'])
 
     # get bvecs
-    from sct_dmri_compute_dti import get_bvecs
-    bvecs = get_bvecs(fname_in)
+    from dipy.io import read_bvals_bvecs
+    bvals, bvecs = read_bvals_bvecs(None, fname_bvecs)
 
     # Transpose bvecs
     printv('Transpose bvecs...', verbose)
-    from numpy import transpose
+    # from numpy import transpose
     bvecs = bvecs.transpose()
 
     # Write new file
