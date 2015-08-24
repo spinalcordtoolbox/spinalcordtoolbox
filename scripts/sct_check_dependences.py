@@ -24,7 +24,6 @@ class Param:
         self.create_log_file = 0
         self.complete_test = 0
 
-
 import os
 import sys
 import commands
@@ -129,9 +128,8 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
-
-    # loop across python packages
     for i in version_requirements:
         if i == 'scikit-image':
             module = 'skimage'
@@ -158,21 +156,25 @@ def main():
             print '  '+i+' is not installed!'
             install_software = 1
 
-
-    # check nibabel
-    print_line('Check if nibabel is installed ')
-    try:
-        import nibabel
-        # nibabel_version = get_package_version("nibabel")
-        # if check_package_version(nibabel_version, version_requirements, "nibabel"):
-        print_ok()
-        # else:
-        #    print_warning()
-        #    print "nibabel version: "+nibabel_version+" detected. SCT requires version "+version_requirements["nibabel"]
-    except ImportError:
-        print_fail()
-        print '  nibabel is not installed!'
-        install_software = 1
+    # loop across python packages -- PIP
+    version_requirements_pip = get_version_requirements_pip()
+    for i in version_requirements_pip:
+        module = i
+        print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
+        try:
+            module = importlib.import_module(module)
+            # get version
+            version = module.__version__
+            # check if version matches requirements
+            if check_package_version(version, version_requirements_pip, i):
+                print_ok()
+            else:
+                print_warning()
+                print '  Detected version: '+version+'. Required version: '+version_requirements_pip[i]
+        except ImportError:
+            print_fail()
+            print '  '+i+' is not installed!'
+            install_software = 1
 
     # check if git is installed
     print_line('Check if git is installed ')
@@ -300,6 +302,18 @@ def get_version_requirements():
     file.close()
     return dict
 
+def get_version_requirements_pip():
+    status, path_sct = sct.run('echo $SCT_DIR', 0)
+    file = open(path_sct+"/install/requirements/requirementsPip.txt")
+    dict = {}
+    while True:
+        line = file.readline()
+        if line == "":
+            break  # OH GOD HELP
+        arg = line.split("==")
+        dict[arg[0]] = arg[1].rstrip("\n")
+    file.close()
+    return dict
 
 def get_package_version(package_name):
     cmd = "conda list "+package_name
