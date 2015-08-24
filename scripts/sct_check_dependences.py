@@ -131,9 +131,7 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        if i == 'scikit-image':
-            module = 'skimage'
-        elif i == 'pillow':
+        if i == 'pillow':
             module = 'PIL'
         else:
             module = i
@@ -153,13 +151,15 @@ def main():
                 print '  Detected version: '+version+'. Required version: '+version_requirements[i]
         except ImportError:
             print_fail()
-            print '  '+i+' is not installed!'
             install_software = 1
 
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        module = i
+        if i == 'scikit-image':
+            module = 'skimage'
+        else:
+            module = i
         print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
         try:
             module = importlib.import_module(module)
@@ -173,8 +173,8 @@ def main():
                 print '  Detected version: '+version+'. Required version: '+version_requirements_pip[i]
         except ImportError:
             print_fail()
-            print '  '+i+' is not installed!'
             install_software = 1
+
 
     # check if git is installed
     print_line('Check if git is installed ')
