@@ -12,6 +12,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: update function to reflect the new get_dimension
+
 class Image(object):
     """
 
@@ -62,9 +64,11 @@ class Image(object):
             self.data = self.split_data()
         """
 
+
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -79,6 +83,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
+
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -86,10 +91,10 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname, get_dimension
+        from sct_utils import check_file_exist, printv, extract_fname
         from sct_orientation import get_orientation
 
-        check_file_exist(path, verbose=verbose)
+        # check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
@@ -99,17 +104,21 @@ class Image(object):
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
-        nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
-        self.dim = [nx, ny, nz]
+        self.dim = get_dimension(im_file)
+        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        # self.dim = [nx, ny, nz]
+
 
     def setFileName(self, filename):
+        """
+        :param filename: file name with extension
+        :return:
+        """
         from sct_utils import extract_fname
         self.absolutepath = filename
         self.path, self.file_name, self.ext = extract_fname(filename)
 
     def changeType(self, type=''):
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
-
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -131,6 +140,8 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
+        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
+
         if type == '':
             type = self.hdr.get_data_dtype()
 
@@ -191,7 +202,7 @@ class Image(object):
     def save(self, type=''):
         """
         Write an image in a nifti file
-        :param type:    if not set, the image is saved in standard type
+        :param type:    if not set, the image is saved in the same type as input data
                         if 'minimize', image space is minimize
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
@@ -210,15 +221,21 @@ class Image(object):
         """
         from nibabel import Nifti1Image, save
         from sct_utils import printv
-
         if type != '':
             self.changeType(type)
-
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-        save(img, self.path + self.file_name + self.ext)
+
+        from os import path, remove
+        fname_out = self.path + self.file_name + self.ext
+        if path.isfile(fname_out):
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
+            remove(fname_out)
+        # save file
+        save(img, fname_out)
+
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -478,6 +495,29 @@ def find_zmin_zmax(fname):
     # parse output
     zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
+
+
+def get_dimension(im_file):
+    """
+    Get dimension from nibabel object. Manages 2D, 3D or 4D images.
+    :return: nx, ny, nz, nt, px, py, pz, pt
+    """
+
+    # initialization
+    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
+
+    nb_dims = len(im_file.header.get_data_shape())
+    if nb_dims == 2:
+        nx, ny = im_file.header.get_data_shape()
+        px, py = im_file.header.get_zooms()
+    if nb_dims == 3:
+        nx, ny, nz = im_file.header.get_data_shape()
+        px, py, pz = im_file.header.get_zooms()
+    if nb_dims == 4:
+        nx, ny, nz, nt = im_file.header.get_data_shape()
+        px, py, pz, pt = im_file.header.get_zooms()
+
+    return nx, ny, nz, nt, px, py, pz, pt
 
 
 # =======================================================================================================================

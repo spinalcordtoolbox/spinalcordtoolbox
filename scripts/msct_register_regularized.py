@@ -46,11 +46,11 @@ def register_seg(seg_input, seg_dest):
         y_displacement: list of translation along y axis for each slice (type: list)
 
     """
+
     seg_input_img = Image(seg_input)
     seg_dest_img = Image(seg_dest)
     seg_input_data = seg_input_img.data
     seg_dest_data = seg_dest_img.data
-
 
     x_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
     y_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
@@ -78,7 +78,7 @@ def register_seg(seg_input, seg_dest):
     return x_displacement, y_displacement
 
 
-def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
+def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5'),
                     ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '', 'translation': '','bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                               'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'}, remove_tmp_folder = 1):
     """Slice-by-slice registration of two images.
@@ -91,8 +91,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     N.B.: If the mask is inputted, it must also be 3D and it must be in the same space as the destination image.
 
     input:
-        im_input: name of moving image (type: string)
-        im_dest: name of fixed image (type: string)
+        fname_source: name of moving image (type: string)
+        fname_dest: name of fixed image (type: string)
         mask[optional]: name of mask file (type: string) (parameter -x of antsRegistration)
         paramreg[optional]: parameters of antsRegistration (type: Paramreg class from sct_register_multimodal)
         ants_registration_params[optional]: specific algorithm's parameters for antsRegistration (type: dictionary)
@@ -110,8 +110,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
             warps.
     """
     # Extracting names
-    path_i, root_i, ext_i = sct.extract_fname(im_input)
-    path_d, root_d, ext_d = sct.extract_fname(im_dest)
+    path_i, root_i, ext_i = sct.extract_fname(fname_source)
+    path_d, root_d, ext_d = sct.extract_fname(fname_dest)
 
     # set metricSize
     if paramreg.metric == 'MI':
@@ -122,7 +122,7 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     # Get image dimensions and retrieve nz
     print '\nGet image dimensions of destination image...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
 
@@ -136,8 +136,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
-    sct.run('cp '+im_input+ ' ' + path_tmp +'/'+ root_i+ext_i)
-    sct.run('cp '+im_dest+ ' ' + path_tmp +'/'+ root_d+ext_d)
+    sct.run('cp '+fname_source+ ' ' + path_tmp +'/'+ root_i+ext_i)
+    sct.run('cp '+fname_dest+ ' ' + path_tmp +'/'+ root_d+ext_d)
     if mask:
         sct.run('cp '+mask+ ' '+path_tmp +'/mask.nii.gz')
 
@@ -146,19 +146,20 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     # Split input volume along z
     print '\nSplit input volume...'
-    sct.run(sct.fsloutput + 'fslsplit '+im_input+' '+root_i+'_z -z')
+    from sct_split_data import split_data
+    split_data(fname_source, 2, '_z')
 
     # Split destination volume along z
     print '\nSplit destination volume...'
-    sct.run(sct.fsloutput + 'fslsplit '+im_dest+' '+root_d+'_z -z')
+    split_data(fname_dest, 2, '_z')
 
     # Split mask volume along z
     if mask:
         print '\nSplit mask volume...'
-        sct.run(sct.fsloutput + 'fslsplit mask.nii.gz mask_z -z')
+        split_data('mask.nii.gz', 2, '_z')
 
-    im_dest_img = Image(im_dest)
-    im_input_img = Image(im_input)
+    im_dest_img = Image(fname_dest)
+    im_input_img = Image(fname_source)
     coord_origin_dest = im_dest_img.transfo_pix2phys([[0,0,0]])
     coord_origin_input = im_input_img.transfo_pix2phys([[0,0,0]])
     coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
@@ -215,8 +216,8 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
                 name_warp_null_dest = 'warp_null_dest' + num + '.nii.gz'
                 name_warp_mat = 'transform_' + num + '0GenericAffine.mat'
                 # Generating null nifti warping fields
-                nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_reg)
-                nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = sct.get_dimension(name_dest)
+                nx, ny, nz, nt, px, py, pz, pt = Image(name_reg).dim
+                nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(name_dest).dim
                 x_trans = [0 for i in range(nz)]
                 x_trans_d = [0 for i in range(nz_d)]
                 y_trans= [0 for i in range(nz)]
@@ -268,24 +269,31 @@ def register_images(im_input, im_dest, mask='', paramreg=Paramreg(step='0', type
 
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
         print'\nMerge along z of the warping fields...'
-        sct.run('fslmerge -z ' + name_warp_final + '_x ' + " ".join(list_warp_x))
-        sct.run('fslmerge -z ' + name_warp_final + '_x_inverse ' + " ".join(list_warp_x_inv))
-        sct.run('fslmerge -z ' + name_warp_final + '_y ' + " ".join(list_warp_y))
-        sct.run('fslmerge -z ' + name_warp_final + '_y_inverse ' + " ".join(list_warp_y_inv))
+        # from sct_concat_data import concat_data
+        sct.run('sct_concat_data -i '+','.join(list_warp_x)+' -o '+name_warp_final+'_x.nii.gz -dim z')
+        sct.run('sct_concat_data -i '+','.join(list_warp_x_inv)+' -o '+name_warp_final+'_x_inverse.nii.gz -dim z')
+        sct.run('sct_concat_data -i '+','.join(list_warp_y)+' -o '+name_warp_final+'_y.nii.gz -dim z')
+        sct.run('sct_concat_data -i '+','.join(list_warp_y_inv)+' -o '+name_warp_final+'_y_inverse.nii.gz -dim z')
+        # concat_data(','.join(list_warp_x), name_warp_final+'_x.nii.gz', 2)
+        # concat_data(','.join(list_warp_x_inv), name_warp_final+'_x_inverse.nii.gz', 2)
+        # concat_data(','.join(list_warp_y), name_warp_final+'_y.nii.gz', 2)
+        # concat_data(','.join(list_warp_y_inv), name_warp_final+'_y_inverse.nii.gz', 2)
+        # sct.run('fslmerge -z ' + name_warp_final + '_x ' + " ".join(list_warp_x))
+        # sct.run('fslmerge -z ' + name_warp_final + '_x_inverse ' + " ".join(list_warp_x_inv))
+        # sct.run('fslmerge -z ' + name_warp_final + '_y ' + " ".join(list_warp_y))
+        # sct.run('fslmerge -z ' + name_warp_final + '_y_inverse ' + " ".join(list_warp_y_inv))
         print'\nChange resolution of warping fields to match the resolution of the destination image...'
-        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_final + '_x.nii.gz')
-        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_final + '_x_inverse.nii.gz')
-        sct.run('fslcpgeom ' + im_dest + ' ' + name_warp_final + '_y.nii.gz')
-        sct.run('fslcpgeom ' + im_input + ' ' + name_warp_final + '_y_inverse.nii.gz')
+        from sct_copy_header import copy_header
+        copy_header(fname_dest, name_warp_final + '_x.nii.gz')
+        copy_header(fname_source, name_warp_final + '_x_inverse.nii.gz')
+        copy_header(fname_dest, name_warp_final + '_y.nii.gz')
+        copy_header(fname_source, name_warp_final + '_y_inverse.nii.gz')
         print'\nMerge translation fields along x and y into one global warping field '
         sct.run('isct_c3d ' + name_warp_final + '_x.nii.gz ' + name_warp_final + '_y.nii.gz -omc 2 ' + name_warp_final + '.nii.gz')
         sct.run('isct_c3d ' + name_warp_final + '_x_inverse.nii.gz ' + name_warp_final + '_y_inverse.nii.gz -omc 2 ' + name_warp_final + '_inverse.nii.gz')
         print'\nCopy to parent folder...'
         sct.run('cp ' + name_warp_final + '.nii.gz ../')
         sct.run('cp ' + name_warp_final + '_inverse.nii.gz ../')
-
-
-
 
     #Delete tmp folder
     os.chdir('../')
@@ -327,7 +335,7 @@ def numerotation(nb):
     return nb_output
 
 
-def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
+def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_rotation=None, fname='warping_field.nii.gz', verbose=1):
     """Generation of a warping field towards an image and given transformation parameters.
 
     Given a destination image and transformation parameters this functions creates a NIFTI 3D warping field that can be
@@ -335,9 +343,9 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
     transformation parameters must be precised for each slice of the image.
 
     inputs:
-        im_dest: name of destination image (type: string)
-        x_trans: list of translations along x axis for each slice (type: list, length: height of im_dest)
-        y_trans: list of translations along y axis for each slice (type: list, length: height of im_dest)
+        fname_dest: name of destination image (type: string)
+        x_trans: list of translations along x axis for each slice (type: list, length: height of fname_dest)
+        y_trans: list of translations along y axis for each slice (type: list, length: height of fname_dest)
         theta_rot[optional]: list of rotation angles in radian (and in ITK's coordinate system) for each slice (type: list)
         center_rotation[optional]: pixel coordinates in plan xOy of the wanted center of rotation (type: list,
             length: 2, example: [0,ny/2])
@@ -353,20 +361,20 @@ def generate_warping_field(im_dest, x_trans, y_trans, theta_rot=None, center_rot
 
     #Make sure image is in rpi format
     sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
-    orientation = get_orientation(im_dest)
+    orientation = get_orientation(fname_dest)
     if orientation != 'RPI':
         sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
     else: sct.printv('\tOK', verbose)
 
     sct.printv('\n\nCreating warping field ' + fname + ' for transformations along z...', verbose)
 
-    file_dest = load(im_dest)
+    file_dest = load(fname_dest)
     hdr_file_dest = file_dest.get_header()
     hdr_warp = hdr_file_dest.copy()
 
     # Get image dimensions
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(im_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 

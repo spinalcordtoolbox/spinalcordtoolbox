@@ -11,8 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
+#import sct_utils as sct
 import commands
+
 
 def test(path_data):
 
@@ -39,7 +40,7 @@ def test(path_data):
         status, output = commands.getstatusoutput(cmd)
         # parse output and compare to acceptable threshold
         if float(output.split('3D Dice coefficient = ')[1]) < dice_threshold:
-            status = 5
+            status = 99
 
     return status, output
 
