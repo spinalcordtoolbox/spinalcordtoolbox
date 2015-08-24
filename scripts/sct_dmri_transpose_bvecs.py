@@ -77,7 +77,7 @@ def main(args = None):
     bvecs = bvecs.transpose()
 
     # Write new file
-    path_in, file_in, ext_in = extract_fname(fname_in)
+    path_in, file_in, ext_in = extract_fname(fname_bvecs)
     fname_out = path_in+file_in+'_t'+ext_in
     fid = open(fname_out, 'w')
     for iLine in range(bvecs.shape[0]):
