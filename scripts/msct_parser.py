@@ -180,7 +180,7 @@ class Option:
 
     def checkFile(self, param):
         # check if the file exist
-        sct.printv("Check file existence...")
+        sct.printv("Check file existence...", 0)
         sct.check_file_exist(param, 0)
         return param
 
@@ -418,7 +418,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+str(self.arguments[opt].default_value)+"."
+                    description += " Default value = "+str(self.arguments[opt].default_value)
                 if self.arguments[opt].deprecated:
                     description += " Deprecated argument!"
                 line = ["  "+opt+" "+type_value, self.align(description)]

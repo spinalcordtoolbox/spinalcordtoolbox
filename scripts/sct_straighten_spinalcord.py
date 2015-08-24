@@ -79,7 +79,8 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     sct.printv('\nSmooth centerline/segmentation...', verbose)
 
     # get dimensions (again!)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_centerline).dim
 
     # open centerline
     file_image = load(fname_centerline)
@@ -353,11 +354,14 @@ class SpinalCordStraightener(object):
             set_orientation(file_centerline+ext_centerline, "RPI", fname_centerline_orient)
 
             # Get dimension
-            sct.printv("\nGet dimensions...", verbose)
-            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
-            sct.printv(".. matrix size: {0} x {1} x {2}".format(str(nx), str(ny), str(nz)), verbose)
-            sct.printv('.. voxel size:  {0}mm x {1}mm x {2}mm'.format(str(px), str(py), str(pz)), verbose)
-
+            sct.printv('\nGet dimensions...', verbose)
+            from msct_image import Image
+            image_centerline = Image(fname_centerline_orient)
+            nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
+            # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline_orient)
+            sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
+            sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
+            
             # smooth centerline
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
                 z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting,
@@ -707,7 +711,7 @@ class SpinalCordStraightener(object):
 
                 # Apply rigid transformation
                 sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
-                Transform(input_filename="tmp.landmarks_curved.nii.gz", source_reg="tmp.landmarks_curved_rigid.nii.gz",
+                Transform(input_filename="tmp.landmarks_curved.nii.gz", fname_dest="tmp.landmarks_curved_rigid.nii.gz",
                           output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt",
                           interp="nn", verbose=verbose).apply()
 
@@ -895,7 +899,7 @@ class SpinalCordStraightener(object):
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            Transform(input_filename=str(file_anat+ext_anat), source_reg="tmp.anat_rigid_warp.nii.gz",
+            Transform(input_filename=str(file_anat+ext_anat), fname_dest="tmp.anat_rigid_warp.nii.gz",
                       output_filename="tmp.landmarks_straight_crop.nii.gz", interp=interpolation_warp,
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
 
@@ -903,7 +907,7 @@ class SpinalCordStraightener(object):
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename=fname_centerline_orient, source_reg="tmp.centerline_straight.nii.gz",
+            Transform(input_filename=fname_centerline_orient, fname_dest="tmp.centerline_straight.nii.gz",
                       output_filename="tmp.landmarks_straight_crop.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image

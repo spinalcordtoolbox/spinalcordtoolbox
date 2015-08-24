@@ -25,6 +25,17 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
+import os
+import getopt
+import sys
+import time
+import math
+import sct_utils as sct
+import nibabel
+import numpy as np
+from scipy import ndimage
+from sct_convert import convert
+
 ## Default parameters
 class param:
     ## The constructor
@@ -34,40 +45,9 @@ class param:
         self.remove_temp_files= 1
         self.deg_poly= 10
         self.width=25
-
-# check if needed Python libraries are already installed or not
-import os
-import getopt
-import sys
-import time
-import math
-import sct_utils as sct
-try:
-    import nibabel
-except ImportError:
-    print '--- nibabel not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    import numpy as np
-except ImportError:
-    print '--- numpy not installed! Exit program. ---'
-    sys.exit(2)
-try:
-    from scipy import ndimage
-except ImportError:
-    print '--- scipy not installed! Exit program. ---'
-    sys.exit(2)
-
-#import matplotlib.pyplot as plt
-#import matplotlib.image as mpimg
-from numpy import size
-import scipy
-from scipy import interpolate
+        self.verbose = 1
 
 
-
-#check if dependant software are installed
-sct.check_if_installed('flirt -help', 'FSL')
 
 #=======================================================================================================================
 # main
@@ -81,6 +61,7 @@ def main():
     width=param.width
     remove_temp_files = param.remove_temp_files
     start_time = time.time()
+    verbose = param.verbose
 
     # extract path of the script
     path_script = os.path.dirname(__file__) + '/'
@@ -134,25 +115,49 @@ def main():
     print '.. Full width at half maximum:  ' + str(fwhm)
     print '.. Width of the square window: ' + str(width)
 
-    #Delete existing tmp file in the current folder to avoid problems
-        #Delete existing tmp file in the current folder to avoid problems
-    if os.path.isfile('tmp.anat.nii'):
-        sct.run('rm tmp.anat.nii')
-    if os.path.isfile('tmp.centerline.nii'):
-        sct.run('rm tmp.centerline.nii')
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, verbose)
 
-    # Convert to nii and delete nii.gz if still existing
-    print '\nCopy input data...'
-    sct.run('cp ' + fname_anat + ' tmp.anat'+ext_anat)
-    sct.run('fslchfiletype NIFTI tmp.anat')
-    if os.path.isfile('tmp.anat.nii.gz'):
-        sct.run('rm tmp.anat.nii.gz')
-    print '.. Anatomical image copied'
-    sct.run('cp ' + fname_centerline + ' tmp.centerline'+ext_centerline)
-    sct.run('fslchfiletype NIFTI tmp.centerline')
-    if os.path.isfile('tmp.centerline.nii.gz'):
-        sct.run('rm tmp.centerline.nii.gz')
-    print '.. Centerline image copied'
+    # Copying input data to tmp folder and convert to nii
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    sct.run('cp '+fname_anat+' '+path_tmp+'data'+ext_anat, verbose)
+    sct.run('cp '+fname_centerline+' '+path_tmp+'centerline'+ext_centerline, verbose)
+
+    # go to tmp folder
+    os.chdir(path_tmp)
+
+    # convert to nii format
+    convert('data'+ext_anat, 'data.nii')
+    convert('centerline'+ext_centerline, 'centerline.nii')
+
+    # # Get dimensions of data
+    # sct.printv('\nGet dimensions of data...', param.verbose)
+    # nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
+
+    #
+    # #Delete existing tmp file in the current folder to avoid problems
+    #     #Delete existing tmp file in the current folder to avoid problems
+    # if os.path.isfile('tmp.anat.nii'):
+    #     sct.run('rm tmp.anat.nii')
+    # if os.path.isfile('tmp.centerline.nii'):
+    #     sct.run('rm tmp.centerline.nii')
+    #
+    # # Convert to nii and delete nii.gz if still existing
+    # print '\nCopy input data...'
+    # sct.run('cp ' + fname_anat + ' tmp.anat'+ext_anat)
+    # convert('data'+ext_data, 'data.nii')
+    #
+    # sct.run('fslchfiletype NIFTI tmp.anat')
+    # if os.path.isfile('tmp.anat.nii.gz'):
+    #     sct.run('rm tmp.anat.nii.gz')
+    # print '.. Anatomical image copied'
+    # sct.run('cp ' + fname_centerline + ' tmp.centerline'+ext_centerline)
+    # sct.run('fslchfiletype NIFTI tmp.centerline')
+    # if os.path.isfile('tmp.centerline.nii.gz'):
+    #     sct.run('rm tmp.centerline.nii.gz')
+    # print '.. Centerline image copied'
 
 
     # Open anatomical image
@@ -219,8 +224,6 @@ def main():
     polyy = np.poly1d(coeffsy)
     y_centerline_fit = np.polyval(polyy, z_centerline)
 
-
-
     # Find tangent function of centerline along z
     #==========================================================================================
 
@@ -233,8 +236,6 @@ def main():
     print '\nFind tangent to centerline along z, in the Z-Y plane...'
     poly_tangent_yz = np.polyder(polyy)
     tangent_yz = np.polyval(poly_tangent_yz, z_centerline)
-
-
 
 	# Create a Gaussian kernel with users parameters
     #==========================================================================================

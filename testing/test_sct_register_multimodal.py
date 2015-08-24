@@ -22,6 +22,9 @@ def test(path_data):
     folder_data = 'mt/'
     file_data = ['mt0.nii.gz', 'mt1.nii.gz']
 
+    output = ''
+    status = 0
+
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
           + ' -o data_reg.nii.gz'  \
@@ -29,10 +32,38 @@ def test(path_data):
           + ' -x linear' \
           + ' -r 0' \
           + ' -v 1'
+    output += cmd+'\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
 
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    # check other method
+    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -o data_reg.nii.gz'  \
+          + ' -p step=1,algo=slicereg,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
+          + ' -x linear' \
+          + ' -r 0' \
+          + ' -v 1'
+    output += cmd+'\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
 
+    # check other method
+    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -o data_reg.nii.gz'  \
+          + ' -p step=1,algo=slicereg2d_affine,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
+          + ' -x linear' \
+          + ' -r 0' \
+          + ' -v 1'
+    output += cmd+'\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
+
+    return status, output
 
 if __name__ == "__main__":
     # call main function
