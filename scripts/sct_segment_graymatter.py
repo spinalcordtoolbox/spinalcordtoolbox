@@ -83,7 +83,7 @@ class Preprocessing:
             self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
         elif level_fname is not None:
             status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext)
-            level_orientation = level_orientation[4:7]
+            # level_orientation = level_orientation[4:7]
             if level_orientation != 'IRP':
                 status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext + ' -s IRP')
                 level_file_name += '_IRP'
@@ -181,8 +181,9 @@ class FullGmSegmentation:
             old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
-                # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
-                sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
+                sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
+                # WARNING: until sct_maths -thr option is changed, this will output a binary segmentation
+                # sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
 

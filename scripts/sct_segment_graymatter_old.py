@@ -131,18 +131,16 @@ def main(param):
     # sct.run(cmd)
 
 
-    #sct_register_to_template --> warp_template2anat
+    # sct_register_to_template --> warp_template2anat
     # register anat file to t2star
-    #sct_register_multimodal --> warp_anat2t2star
+    # sct_register_multimodal --> warp_anat2t2star
     # concatenate warp_template2anat with warp_anat2t2star
-    #--> warp_template2t2star
+    # --> warp_template2t2star
 
-
-
-    # registration of the grey matter
+    # registration of the gray matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "antsRegistration --dimensionality 3 --transform "+ param.transformation +"["+param.gradient_step+",3,0] --metric "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] --convergence "+param.iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = "isct_antsRegistration --dimensionality 3 --transform "+ param.transformation +"["+param.gradient_step+",3,0] --metric "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] --convergence "+param.iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
     if param.fname_seg_moving != '':
         cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
@@ -183,17 +181,17 @@ if __name__ == "__main__":
         parser.usage.set_description('Register the template on a gray matter segmentation')
         parser.add_option(name="-i",
                           type_value="file",
-                          description="Fixed image",  # TODO : specify which image to use
+                          description="Fixed image : the white matter automatic segmentation (should be probabilistic)",
                           mandatory=True,
                           example='wm_seg.nii.gz')
         parser.add_option(name="-d",
                           type_value="file",
-                          description="moving image",  # TODO : specify which image to use
+                          description="Moving image: the white matter probabilistic segmentation from the template",  # TODO : specify which image to use
                           mandatory=True,
                           example='MNI-Poly-AMU_WM.nii.gz')
         parser.add_option(name="-o",
                           type_value="str",
-                          description="output name",  # TODO : specify which image to use
+                          description="Output image name",
                           mandatory=False,
                           example='moving_to_fixed.nii.gz')
         parser.add_option(name="-s",
@@ -203,7 +201,7 @@ if __name__ == "__main__":
                           example='sc_seg.nii.gz')
         parser.add_option(name="-g",
                           type_value="file",
-                          description="Spinal cord segmentation of the moving image",  # TODO : specify which image to use
+                          description="Spinal cord segmentation of the moving image (should be the same)",  # TODO : specify which image to use
                           mandatory=True,
                           example='sc_seg.nii.gz')
         parser.add_option(name="-t",

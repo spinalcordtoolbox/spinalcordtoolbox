@@ -197,7 +197,7 @@ class ModelDictionary:
         for dic_slice in self.slices:
             im_dic = Image(param=dic_slice.im)
             sc = im_dic.copy()
-            nz_coord_sc = sc.getNonZeroCoordinates()
+            # nz_coord_sc = sc.getNonZeroCoordinates()
             im_seg = Image(param=dic_slice.gm_seg)
             '''
             nz_coord_d = im_seg.getNonZeroCoordinates()
@@ -710,7 +710,7 @@ class TargetSegmentationPairwise:
             self.target_normalization(method='mean')
 
         # TODO: remove after testing:
-        Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
+        Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved_after_normalization.nii.gz').save()
 
         sct.printv('\nProjecting the target image in the reduced common space ...', model.param.verbose, 'normal')
         # coord_projected_target is a list of all the coord of the target's projected slices
@@ -752,6 +752,7 @@ class TargetSegmentationPairwise:
         :return None: the target level is set in the function
         """
         if isinstance(level_image, Image):
+            '''
             nz_coord = level_image.getNonZeroCoordinates()
             for i_level_slice, level_slice in enumerate(level_image.data):
                 nz_val = []
@@ -763,6 +764,14 @@ class TargetSegmentationPairwise:
                 except ZeroDivisionError:
                             sct.printv('WARNING: No level label for slice ' + str(i_level_slice) + ' of target', self.model.param.verbose, 'warning')
                             self.target[i_level_slice].set(level=0)
+            '''
+            for i_level_slice, level_slice in enumerate(level_image.data):
+                try:
+                    l = int(round(np.mean(level_slice[level_slice > 0])))
+                    self.target[i_level_slice].set(level=l)
+                except Exception, e:
+                    sct.printv('WARNING: ' + str(e) + '\nNo level label for slice ' + str(i_level_slice) + ' of target', self.model.param.verbose, 'warning')
+                    self.target[i_level_slice].set(level=0)
         elif isinstance(level_image, str):
             self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image.upper()))
 
@@ -810,6 +819,7 @@ class TargetSegmentationPairwise:
             dic_wm_mean = np.mean(wm_means)
             dic_gm_mean = np.mean(gm_means)
 
+            # getting the mean values of WM and GM in the target
             if self.model.param.target_means is None:
                 if self.model.param.use_levels:
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
@@ -817,6 +827,21 @@ class TargetSegmentationPairwise:
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
                     target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, save=True, output='metric_in_target.txt')
+                    print 'USE AVERAGED TARGET METRIC'
+                    target_metric = [np.mean(target_metric, axis=0) for i in range(len(self.target))]
+
+                    '''
+                    target_metric_by_level = {}
+                    for target_slice in self.target:
+                        slice_metric = target_metric[target_slice.id]
+                        if target_slice.level in target_metric_by_level.keys():
+                            target_metric_by_level[target_slice.level].append(slice_metric)
+                        else:
+                            target_metric_by_level[target_slice.level] = [slice_metric]
+                    for l, metric in target_metric_by_level.items():
+                        target_metric_by_level[l] = np.mean(metric, axis=0)
+                    '''
+
                 else:
                     sct.printv('WARNING: No mean value of the white matter and gray matter intensity were provided, nor the target vertebral levels to estimate them\n'
                                'The target will not be normalized.', self.model.param.verbose, 'warning')
@@ -824,11 +849,18 @@ class TargetSegmentationPairwise:
                     target_metric = None
             else:
                 target_metric = [(self.model.param.target_means[0], self.model.param.target_means[1], 0, 0) for i in range(len(self.target))]
+
+            # normalizing
             if target_metric is not None:
                 i = 0
                 for target_slice in self.target:
                     old_image = target_slice.im_M
-
+                    '''
+                    if self.model.param.target_means is None and self.model.param.use_levels:
+                        wm_mean, gm_mean, wm_std, gm_std = target_metric_by_level[target_slice.level]
+                        print 'USE MEAN BY LEVEL OF THE TARGET METRIC'
+                    else:
+                    '''
                     wm_mean, gm_mean, wm_std, gm_std = target_metric[target_slice.id]
                     new_image = (old_image - wm_mean)*(dic_gm_mean - dic_wm_mean)/(gm_mean - wm_mean) + dic_wm_mean
                     new_image[old_image < 1] = 0  # put a 0 the min background
@@ -1041,7 +1073,7 @@ sct_Image
         # build a target segmentation
         level_im = None
         if level_fname is not None:
-            if len(level_fname) < 3:
+            if len(level_fname) < 3: #TODO: replace by a check if file
                 # in this case the level is a string and not an image
                 level_im = level_fname
             else:
@@ -1061,7 +1093,7 @@ sct_Image
         for transfo in self.model.dictionary.coregistration_transfos:
             suffix += '_' + transfo
         if self.model.param.use_levels:
-            suffix += '_with_levels_' + str(self.model.param.weight_gamma)
+            suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
         else:
             suffix += '_no_levels'
         if self.model.param.z_regularisation:
