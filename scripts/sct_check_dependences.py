@@ -27,9 +27,10 @@ class Param:
 import os
 import sys
 import commands
-import time
 import platform
 import getopt
+import importlib
+
 import sct_utils as sct
 
 
@@ -127,90 +128,53 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
-    # check pillow
-    print_line("Check if pillow is installed ")
-    try:
-        import PIL
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  pillow is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
+    # loop across python packages -- CONDA
+    version_requirements = get_version_requirements()
+    for i in version_requirements:
+        if i == 'pillow':
+            module = 'PIL'
+        else:
+            module = i
+        print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
+        try:
+            module = importlib.import_module(module)
+            # get version
+            if i == 'pillow':
+                version = module.PILLOW_VERSION
+            else:
+                version = module.__version__
+            # check if version matches requirements
+            if check_package_version(version, version_requirements, i):
+                print_ok()
+            else:
+                print_warning()
+                print '  Detected version: '+version+'. Required version: '+version_requirements[i]
+        except ImportError:
+            print_fail()
+            install_software = 1
 
-    # check numpy
-    print_line('Check if numpy is installed ')
-    try:
-        import numpy
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  numpy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
+    # loop across python packages -- PIP
+    version_requirements_pip = get_version_requirements_pip()
+    for i in version_requirements_pip:
+        if i == 'scikit-image':
+            module = 'skimage'
+        else:
+            module = i
+        print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
+        try:
+            module = importlib.import_module(module)
+            # get version
+            version = module.__version__
+            # check if version matches requirements
+            if check_package_version(version, version_requirements_pip, i):
+                print_ok()
+            else:
+                print_warning()
+                print '  Detected version: '+version+'. Required version: '+version_requirements_pip[i]
+        except ImportError:
+            print_fail()
+            install_software = 1
 
-    # check scipy
-    print_line('Check if scipy is installed ')
-    try:
-        import scipy
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  scipy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
-
-    # check sympy
-    print_line('Check if sympy is installed ')
-    try:
-        import sympy
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  sympy is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
-
-    # check matplotlib
-    print_line('Check if matplotlib is installed ')
-    try:
-        import matplotlib
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  matplotlib is not installed! Please install it via miniconda (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
-
-    # check nibabel
-    print_line('Check if nibabel is installed ')
-    try:
-        import nibabel
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  nibabel is not installed! See instructions (https://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/)'
-        install_software = 1
-
-    # check dipy
-    print_line('Check if dipy is installed ')
-    try:
-        import dipy
-        print_ok()
-    except ImportError:
-        print_fail()
-        print '  dipy is not installed! You can install it using: http://nipy.org/dipy/installation.html'
-        install_software = 1
-
-    # check if FSL is declared
-    print_line('Check if FSL is declared ')
-    cmd = 'which fsl'
-    status, output = commands.getstatusoutput(cmd)
-    if output:
-        print_ok()
-        path_fsl = output[:-7]
-        print '  '+path_fsl
-    else:
-        print_fail()
-        print '  FSL is either not installed or not declared.'
-        print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
-        print '  - To declare it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/ShellSetup'
-        e = 1
 
     # check if git is installed
     print_line('Check if git is installed ')
@@ -228,46 +192,6 @@ def main():
         print '>> '+cmd
         print (status, output), '\n'
 
-    # # check if FSL is installed
-    # if not fsl_is_working:
-    #     print_line('Check if FSL is installed ')
-    #     # check first under /usr for faster search
-    #     (status, output) = commands.getstatusoutput('find /usr -name "flirt" -type f -print -quit 2>/dev/null')
-    #     if output:
-    #         print_ok()
-    #         path_fsl = output[:-10]
-    #         print '  '+path_fsl
-    #     else:
-    #         # some users might have installed it under /home, so check it...
-    #         (status, output) = commands.getstatusoutput('find /home -name "flirt" -type f -print -quit 2>/dev/null')
-    #         if output:
-    #             print_ok()
-    #             path_fsl = output[:-10]
-    #             print '  '+path_fsl
-    #         else:
-    #             print_fail()
-    #             print '  FSL is either not installed.'
-    #             print '  - To install it: http://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation.'
-    #             fsl_is_installed = 0
-    #             install_software = 1
-
-    # # check ANTs
-    # print_line('Check which ANTs is running ')
-    # # (status, output) = commands.getstatusoutput('command -v isct_antsRegistration >/dev/null 2>&1 || { echo >&2 "nope";}')
-    # cmd = 'which isct_antsRegistration'
-    # status, output = commands.getstatusoutput(cmd)
-    # if output:
-    #     print_ok()
-    #     path_ants = output[:-20]
-    #     print '  '+path_ants
-    # else:
-    #     print_warning()
-    #     print '  ANTs is not declared.'
-    #     e = 1
-    # if complete_test:
-    #     print '>> '+cmd
-    #     print (status, output), '\n'
-
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_antsRegistration'
@@ -280,21 +204,6 @@ def main():
     if complete_test:
         print '>> '+cmd
         print (status, output), '\n'
-
-    # # check isct_c3d
-    # print_line('Check which isct_c3d is running ')
-    # # (status, output) = commands.getstatusoutput('command -v isct_c3d >/dev/null 2>&1 || { echo >&2 "nope";}')
-    # status, output = commands.getstatusoutput('which isct_c3d')
-    # if output:
-    #     print_ok()
-    #     path_isct_c3d = output[:-7]
-    #     print '  '+path_isct_c3d
-    # else:
-    #     print_warning()
-    #     print '  isct_c3d is not installed or not declared.'
-    #     install_software = 1
-    # if complete_test:
-    #     print (status, output), '\n'
 
     # check isct_c3d compatibility with OS
     print_line('Check c3d compatibility with OS ')
@@ -379,6 +288,51 @@ def add_bash_profile(string):
     # with open("test.txt", "a") as file_bash:
         file_bash.write("\n"+string)
 
+
+def get_version_requirements():
+    status, path_sct = sct.run('echo $SCT_DIR', 0)
+    file = open(path_sct+"/install/requirements/requirementsConda.txt")
+    dict = {}
+    while True:
+        line = file.readline()
+        if line == "":
+            break  # OH GOD HELP
+        arg = line.split("==")
+        dict[arg[0]] = arg[1].rstrip("\n")
+    file.close()
+    return dict
+
+def get_version_requirements_pip():
+    status, path_sct = sct.run('echo $SCT_DIR', 0)
+    file = open(path_sct+"/install/requirements/requirementsPip.txt")
+    dict = {}
+    while True:
+        line = file.readline()
+        if line == "":
+            break  # OH GOD HELP
+        arg = line.split("==")
+        dict[arg[0]] = arg[1].rstrip("\n")
+    file.close()
+    return dict
+
+def get_package_version(package_name):
+    cmd = "conda list "+package_name
+    output = commands.getoutput(cmd)
+    while True:
+        line = output.split("\n")
+        for i in line:
+            if i.find(package_name) != -1:
+                vers = i.split(' ')
+                vers[:] = (value for value in vers if value != "")
+                return vers[1]
+        raise Exception("Could not find package: "+package_name)
+
+
+def check_package_version(installed, required, package_name):
+    if package_name in required:
+        if required[package_name] == installed:
+            return True
+        return False
 
 
 # Print usage

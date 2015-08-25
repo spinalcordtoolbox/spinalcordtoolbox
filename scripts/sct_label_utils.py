@@ -13,12 +13,11 @@
 
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
-from msct_parser import Parser
-from msct_image import Image
-
 import sys
 import sct_utils as sct
 import math
+from msct_parser import Parser
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -100,7 +99,7 @@ class ProcessLabels(object):
 
     def cross(self):
         image_output = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(self.image_input.absolutepath)
+        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
         d = self.cross_radius  # cross radius in pixel
@@ -469,7 +468,9 @@ class ProcessLabels(object):
         This function compares two label images and remove any labels in input image that are not in reference image.
         The symmetry option enables to remove labels from reference image that are not in input image
         """
-        image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
+        # image_output = Image(self.image_input.dim, orientation=self.image_input.orientation, hdr=self.image_input.hdr, verbose=self.verbose)
+        image_output = Image(self.image_input, verbose=self.verbose)
+        image_output.data *= 0  # put all voxels to 0
 
         result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
                                                                        self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
@@ -478,7 +479,8 @@ class ProcessLabels(object):
             image_output.data[coord.x, coord.y, coord.z] = int(round(coord.value))
 
         if symmetry:
-            image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
+            # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
+            image_output_ref = Image(self.image_ref, verbose=self.verbose)
             for coord in result_coord_ref:
                 image_output_ref.data[coord.x, coord.y, coord.z] = int(round(coord.value))
             image_output_ref.setFileName(self.fname_output[1])

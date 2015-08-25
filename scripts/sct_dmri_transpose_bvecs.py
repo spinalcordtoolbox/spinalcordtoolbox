@@ -1,109 +1,103 @@
 #!/usr/bin/env python
 #=======================================================================================================================
-# Convert bvecs file to column, in case they are in line.
 #
+# Transpose bvecs file (if necessary) to get nx3 structure
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad
-# Modified: 2014-09-01
+#
+# About the license: see the file LICENSE.TXT
+#########################################################################################
+
+#!/usr/bin/env python
+#########################################################################################
+#
+# Compute DTI.
+#
+# ---------------------------------------------------------------------------------------
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Author: Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 import sys
-import os
+from msct_parser import Parser
+from sct_utils import extract_fname, printv
 
 
-# init
-#fname_in = '/Users/julien/MRI/david_cadotte/2013-10-19_multiparametric/bvecs.txt'
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+
+    # # initialize parameters
+    # param = Param()
+    # param_default = Param()
+
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Transpose bvecs file (if necessary) to get nx3 structure.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Input bvecs file.",
+                      mandatory=True,
+                      example="bvecs.txt")
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Output bvecs file. By default input file is overwritten.",
+                      mandatory=False,
+                      example="bvecs_t.txt")
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1', '2'])
+    return parser
 
 
-# Extracts path, file and extension
-#=======================================================================================================================
-def extract_fname(fname):
-    # extract path
-    path_fname = os.path.dirname(fname)+'/'
-    # check if only single file was entered (without path)
-    if path_fname == '/':
-        path_fname = ''
-    # extract file and extension
-    file_fname = fname
-    file_fname = file_fname.replace(path_fname,'')
-    file_fname, ext_fname = os.path.splitext(file_fname)
-    # check if .nii.gz file
-    if ext_fname == '.gz':
-        file_fname = file_fname[0:len(file_fname)-4]
-        ext_fname = ".nii.gz"
-    return path_fname, file_fname, ext_fname
+# MAIN
+# ==========================================================================================
+def main(args = None):
 
+    if not args:
+        args = sys.argv[1:]
 
-# Usage
-#=======================================================================================================================
-def usage():
-    print '\n' \
-    ''+os.path.basename(__file__)+'\n' \
-    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-    'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-    '\n'\
-    'DESCRIPTION\n' \
-    '  Convert bvecs file to column, in case they are in line.\n' \
-    '\n' \
-    'USAGE\n' \
-    '  sct_dmri_transpose_bvecs -i <bvecs> \n' \
-    '\n' \
-    'MANDATORY ARGUMENTS\n' \
-    '  -i <txt_file>        bvecs file.\n' \
-    '\n' \
-    'OPTIONAL ARGUMENTS\n' \
-    '  -h                help. Show this message.\n' \
-    '\n' \
-    'EXAMPLE\n' \
-    '  sct_dmri_transpose_bvecs -i bvec.txt \n' \
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    fname_in = arguments['-i']
+    if '-o' in arguments:
+        fname_out = arguments['-o']
+    else:
+        fname_out = ''
+    verbose = int(arguments['-v'])
 
-    sys.exit(2)
+    # get bvecs in proper orientation
+    from dipy.io import read_bvals_bvecs
+    bvals, bvecs = read_bvals_bvecs(None, fname_in)
 
-
-
-#=======================================================================================================================
-# Main
-#=======================================================================================================================
-
-
-def main():
-    # Check inputs
-    path_func, file_func, ext_func = extract_fname(sys.argv[0])
-    if len(sys.argv) < 2:
-        usage()
-    fname_in = sys.argv[1]
-
-    # Extracts path, file and extension
-    path_in, file_in, ext_in = extract_fname(fname_in)
-
-    # read ASCII file
-    print('Read file...')
-    text_file = open(fname_in, 'r')
-    bvecs = text_file.readlines()
-    text_file.close()
-
-    # Parse each line
-    # TODO: find a better way to do it, maybe with string or numpy...
-    lin0 = bvecs[0].split()
-    lin1 = bvecs[1].split()
-    lin2 = bvecs[2].split()
+    # # Transpose bvecs
+    # printv('Transpose bvecs...', verbose)
+    # # from numpy import transpose
+    # bvecs = bvecs.transpose()
 
     # Write new file
-    print('Transpose bvecs...')
-    fname_out = path_in+file_in+'_t'+ext_in
-    fid = open(fname_out,'w')
-    for iCol in xrange(0, len(lin0)):
-        fid.write(lin0[iCol]+' '+lin1[iCol]+' '+lin2[iCol]+'\n')
+    if fname_out == '':
+        path_in, file_in, ext_in = extract_fname(fname_in)
+        fname_out = path_in+file_in+ext_in
+    fid = open(fname_out, 'w')
+    for iLine in range(bvecs.shape[0]):
+        fid.write(' '.join(str(i) for i in bvecs[iLine, :])+'\n')
     fid.close()
 
-    # Display
-    print('File created: '+fname_out)
+    # display message
+    printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
 
-#=======================================================================================================================
+
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":

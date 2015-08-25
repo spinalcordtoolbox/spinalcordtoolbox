@@ -468,7 +468,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
+def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -501,6 +501,12 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     from numpy import append, insert, ones, convolve, hanning  # IMPORTANT: here, we only import hanning. For more windows, add here.
     from math import ceil, floor
     import sct_utils as sct
+
+
+    # outlier detection
+    if robust:
+        mask = outliers_detection(x)
+        x = outliers_completion(mask)
 
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."

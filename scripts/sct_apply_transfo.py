@@ -25,15 +25,15 @@ from sct_crop_image import ImageCropper
 
 
 class Transform:
-    def __init__(self,input_filename, warp, output_filename, source_reg='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
+    def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         if isinstance(warp, str):
             self.warp_input = list([warp])
         else:
             self.warp_input = warp
+        self.fname_dest = fname_dest
         self.output_filename = output_filename
         self.interp = interp
-        self.source_reg = source_reg
         self.crop = crop
         self.verbose = verbose
         self.remove_temp_files = remove_temp_files
@@ -43,22 +43,11 @@ class Transform:
         # Initialization
         fname_src = self.input_filename  # source image (moving)
         fname_warp_list = self.warp_input  # list of warping fields
-        fname_dest = self.output_filename  # destination image (fix)
-        fname_src_reg = self.source_reg
+        fname_out = self.output_filename  # output
+        fname_dest = self.fname_dest  # destination image (fix)
         verbose = self.verbose
         remove_temp_files = self.remove_temp_files
-        fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
         crop_reference = self.crop  # if = 1, put 0 everywhere around warping field, if = 2, real crop
-
-        # Parameters for debug mode
-        if self.debug:
-            print '\n*** WARNING: DEBUG MODE ON ***\n'
-            # get path of the testing data
-            status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-            fname_src = path_sct_data+'/template/MNI-Poly-AMU_T2.nii.gz'
-            fname_warp_list = path_sct_data+'/t2/warp_template2anat.nii.gz'
-            fname_dest = path_sct_data+'/t2/t2.nii.gz'
-            verbose = 1
 
         interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
 
@@ -81,7 +70,7 @@ class Transform:
         # need to check if last warping field is an affine transfo
         isLastAffine = False
         path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1])
-        if ext_fname in ['.txt','.mat']:
+        if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
         # Check file existence
@@ -93,7 +82,8 @@ class Transform:
             sct.check_file_exist(fname_warp_list[i], self.verbose)
 
         # check if destination file is 3d
-        sct.check_if_3d(fname_dest)
+        if not sct.check_if_3d(fname_dest):
+            sct.printv('ERROR: Destination data must be 3d')
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
@@ -103,17 +93,17 @@ class Transform:
         path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
 
         # Get output folder and file name
-        if fname_src_reg == '':
+        if fname_out == '':
             path_out = ''  # output in user's current directory
             file_out = file_src+'_reg'
             ext_out = ext_src
             fname_out = path_out+file_out+ext_out
-        else:
-            fname_out = fname_src_reg
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_src).dim
+        # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
         sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
         # if 3d
@@ -130,45 +120,27 @@ class Transform:
             # sct.run('mkdir '+path_tmp, verbose)
             sct.run('mkdir '+path_tmp, verbose)
 
-            # Copying input data to tmp folder
-            # NB: cannot use c3d here because c3d cannot convert 4D data.
+            # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            sct.run('cp '+fname_src+' '+path_tmp+'data'+ext_src, verbose)
-            sct.run('cp '+fname_dest+' '+path_tmp+'dest'+ext_dest, verbose)
-            for i,warp in enumerate(fname_warp_list_invert):
-                sct.run('cp ' + warp + ' ' + path_tmp + warp, verbose)
-            # go to tmp folder
-            os.chdir(path_tmp)
-            try:
-                # convert to nii format
-                sct.run('fslchfiletype NIFTI data', verbose)
+            from sct_convert import convert
+            convert(fname_src, path_tmp+'data.nii')
+            # split along T dimension
+            sct.printv('\nSplit along T dimension...', verbose)
+            from sct_split_data import split_data
+            if not split_data(path_tmp+'data.nii', 3, '_T'):
+                sct.printv('ERROR in split_data.', 1, 'error')
+            # apply transfo
+            sct.printv('\nApply transformation to each 3D volume...', verbose)
+            for it in range(nt):
+                file_data_split = path_tmp+'data_T'+str(it).zfill(4)+'.nii'
+                file_data_split_reg = path_tmp+'data_reg_T'+str(it).zfill(4)+'.nii'
+                sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
-                # split along T dimension
-                sct.printv('\nSplit along T dimension...', verbose)
-                sct.run(fsloutput+'fslsplit data data_T', verbose)
-                # apply transfo
-                sct.printv('\nApply transformation to each 3D volume...', verbose)
-                for it in range(nt):
-                    file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
-                    file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                    sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r dest'+ext_dest+interp, verbose)
-
-                # Merge files back
-                sct.printv('\nMerge file back...', verbose)
-                #cmd = fsloutput+'fslmerge -t '+fname_out
-                cmd = 'fslmerge -t '+fname_out
-                for it in range(nt):
-                    file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                    cmd = cmd+' '+file_data_split_reg
-                sct.run(cmd, verbose)
-
-            except Exception, e:
-                raise e
-            # Copy result to parent folder
-            sct.run('cp ' + fname_out + ' ../' + fname_out)
-
-            # come back to parent folder
-            os.chdir('..')
+            # Merge files back
+            sct.printv('\nMerge file back...', verbose)
+            from sct_concat_data import concat_data
+            import glob
+            concat_data(glob.glob(path_tmp+'data_reg_T*.nii'), fname_out, dim=3)
 
             # Delete temporary folder if specified
             if int(remove_temp_files):
@@ -225,7 +197,7 @@ if __name__ == "__main__":
                       description="registered source.",
                       mandatory=False,
                       default_value='',
-                      example="source_reg.nii.gz")
+                      example="dest.nii.gz")
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="interpolation method",
@@ -248,15 +220,15 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    output_filename = arguments["-d"]
+    fname_dest = arguments["-d"]
     warp_filename = arguments["-w"]
 
-    transform = Transform(input_filename=input_filename, output_filename=output_filename, warp=warp_filename)
+    transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
     if "-c" in arguments:
         transform.crop = arguments["-c"]
     if "-o" in arguments:
-        transform.source_reg = arguments["-o"]
+        transform.output_filename = arguments["-o"]
     if "-x" in arguments:
         transform.interp = arguments["-x"]
     if "-r" in arguments:
