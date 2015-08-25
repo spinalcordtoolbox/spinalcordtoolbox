@@ -16,7 +16,7 @@ import sys
 #import time
 from msct_parser import *
 import sct_utils as sct
-from sct_average_data_across_dimension import average_data_across_dimension
+# from sct_average_data_across_dimension import average_data_across_dimension
 
 
 class Param:
@@ -58,12 +58,14 @@ class Tsnr:
         # compute tsnr
         sct.printv('\nCompute the tSNR...', self.param.verbose, 'normal')
         fname_data_mean = sct.add_suffix(fname_data, '_mean.nii')
-        if not average_data_across_dimension(fname_data, fname_data_mean, 3):
-            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        sct.run('sct_maths -i '+fname_data+' -o '+fname_data_mean+' -mean t')
+        # if not average_data_across_dimension(fname_data, fname_data_mean, 3):
+        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run('fslmaths ' + fname_data + ' -Tmean ' + fname_data_mean)
         fname_data_std = sct.add_suffix(fname_data, '_std.nii')
-        if not average_data_across_dimension(fname_data, fname_data_std, 3, 1):
-            sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        sct.run('sct_maths -i '+fname_data+' -o '+fname_data_std+' -mean t')
+        # if not average_data_across_dimension(fname_data, fname_data_std, 3, 1):
+        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run('fslmaths ' + fname_data + ' -Tstd ' + fname_data_std)
         fname_tsnr = sct.add_suffix(fname_data, '_tsnr')
         from msct_image import Image
