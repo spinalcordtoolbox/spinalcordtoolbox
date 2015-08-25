@@ -19,7 +19,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-from msct_image import Image
+from msct_image import Image, get_dimension
 import sct_utils as sct
 from msct_parser import Parser
 
@@ -354,7 +354,8 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
     corrected_wm_seg.hdr = hdr
     corrected_wm_seg.save()
 
-    sct.run('fslmaths ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 ' + corrected_wm_seg.file_name + '.nii.gz')
+    # sct.run('fslmaths ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 ' + corrected_wm_seg.file_name + '.nii.gz')
+    sct.run('sct_maths -i ' + corrected_wm_seg.file_name + '.nii.gz -thr 0 -o ' + corrected_wm_seg.file_name + '.nii.gz')
 
     return corrected_wm_seg
 
@@ -422,11 +423,13 @@ def check_file_to_niigz(file_name, verbose=1):
 
     :return: file_name if the input is really a file, False otherwise
     """
+    ext = '.nii.gz'
     if os.path.isfile(file_name):
-        if sct.extract_fname(file_name)[2] != '.nii.gz':
-            sct.run('fslchfiletype NIFTI_GZ ' + file_name)
-            file_name = sct.extract_fname(file_name)[1] + '.nii.gz'
-        return file_name
+        if sct.extract_fname(file_name)[2] != ext:
+            # sct.run('fslchfiletype NIFTI_GZ ' + file_name)
+            new_file_name = sct.extract_fname(file_name)[1] + ext
+            sct.run('sct_convert -i ' + file_name + ' -o ' + new_file_name)
+        return new_file_name
     else:
         sct.printv('WARNING: ' + file_name + ' is not a file ...', verbose, 'warning')
         return False
@@ -745,7 +748,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     if orientation != 'RPI':
         sct.run('sct_orientation -i ' + fname + ' -s RPI')
         fname = sct.extract_fname(fname)[1] + '_RPI.nii.gz'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(Image(fname))
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
         name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
@@ -759,9 +762,9 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
         sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
 
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(name_resample)
         if binary:
-            sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
+            # sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
+            sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
             sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
 
         if orientation != 'RPI':
@@ -1358,7 +1361,8 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
                         sct.run('sct_crop_over_mask.py -i ' + ref_gm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[1] + '_croped')
                         ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2]
 
-                        sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
+                        # sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
+                        sct.run('sct_maths -i ' + res_gm_seg + ' -thr 0.5 -o ' + res_gm_seg)
 
                         resample_to = 0.1
                         ref_gm_seg_im = Image(resample_image(ref_gm_seg, binary=True, thr=0.5, npx=resample_to, npy=resample_to))
