@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sys
+
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import extract_fname, printv
@@ -63,7 +64,7 @@ def get_parser():
                       description="Threshold image using percentile of its histogram.",
                       mandatory=False)
     parser.add_option(name="-thr",
-                      type_value='int',
+                      type_value='float',
                       description='Use following number to threshold image (zero below number).',
                       mandatory=False,
                       example="")
@@ -153,7 +154,8 @@ def otsu(data, nbins):
 
 
 def otsu_adap(data, block_size, offset):
-    from skimage.filters import threshold_adaptive, threshold_otsu
+    from skimage.filters import threshold_adaptive
+
     mask = data
     for iz in range(data.shape[2]):
         mask[:, :, iz] = threshold_adaptive(data[:, :, iz], block_size, offset)
