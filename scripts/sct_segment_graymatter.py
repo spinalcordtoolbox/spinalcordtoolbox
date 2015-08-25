@@ -15,7 +15,7 @@ import time
 import sys
 import getopt
 from msct_parser import *
-from msct_image import Image
+from msct_image import Image, get_dimension
 from msct_multiatlas_seg import Model, Param, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 
@@ -55,7 +55,7 @@ class Preprocessing:
         os.chdir(tmp_dir)
 
         # resampling of the images
-        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = sct.get_dimension(self.t2star)
+        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = get_dimension(Image(self.t2star))
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
             self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
@@ -181,7 +181,8 @@ class FullGmSegmentation:
             old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
-                sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
+                # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
+                sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
 
@@ -277,14 +278,16 @@ class FullGmSegmentation:
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             sct.run('isct_c3d ' + res_gm_seg_bin.file_name + ext + ' ' + im_ref_gm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
-            sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            # sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            sct.run('sct_maths -i ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
             sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
         try:
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             sct.run('isct_c3d ' + res_wm_seg_bin.file_name + ext + ' ' + im_ref_wm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
-            sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            # sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            sct.run('sct_maths -i ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
 
