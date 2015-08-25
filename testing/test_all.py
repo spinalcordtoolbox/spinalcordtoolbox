@@ -92,11 +92,11 @@ def main():
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # check existence of testing data folder
-    if not sct.return_folder_exist(param.path_data):
+    if not sct.check_folder_exist(param.path_data, 0):
         downloaddata()
 
     # display path to data
-    sct.printv('\nCheck path to testing data: \n\tOK... '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data:\n.. '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -146,26 +146,29 @@ def downloaddata():
 # ==========================================================================================
 def fill_functions():
     functions = []
-    functions.append('test_debug')
+    #functions.append('test_debug')  --> removed by jcohenadad. No more use for it now.
+    #functions.append('test_debug')
     functions.append('sct_apply_transfo')
     functions.append('sct_check_atlas_integrity')
     functions.append('sct_compute_mtr')
     functions.append('sct_concat_transfo')
-    #functions.append('sct_convert')
+    functions.append('sct_convert')
     #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
+    functions.append('sct_dmri_compute_dti')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
     functions.append('sct_dmri_moco')
     functions.append('sct_dmri_separate_b0_and_dwi')
     functions.append('sct_extract_metric')
-    functions.append('sct_flatten_sagittal')
+    # functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
-    functions.append('sct_get_centerline_automatic')
+    # functions.append('sct_get_centerline_automatic')
     functions.append('sct_get_centerline_from_labels')
     functions.append('sct_label_utils')
+    functions.append('sct_maths')
     functions.append('sct_orientation')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
@@ -192,7 +195,8 @@ def make_dot_lines(string):
     if len(string) < 52:
         dot_lines = '.'*(52 - len(string))
         return dot_lines
-    else: return ''
+    else:
+        return ''
 
 
 # print in color
@@ -222,8 +226,11 @@ def write_to_log_file(fname_log, string, mode='w'):
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
              + string
-
-    f = open('../' + fname_log, mode)
+    # open file
+    try:
+        f = open('../' + fname_log, mode)
+    except Exception as ex:
+        raise Exception('WARNING: Cannot open log file.')
     f.write(string+'\n')
     f.close()
 
@@ -249,17 +256,19 @@ def test_function(script_name):
         script_tested = importlib.import_module(script_name)
         # test function
         status, output = script_tested.test(param.path_data)
+        # write log file
+        write_to_log_file(fname_log, output, 'w')
         # manage status
         if status == 0:
             print_ok()
         else:
-            print_fail()
+            if status == 5:
+                print_warning()
+            else:
+                print_fail()
             print output
-            # log file
-            write_to_log_file(fname_log, output, 'w')
-
-            # go back to parent folder
-            os.chdir('..')
+        # go back to parent folder
+        os.chdir('..')
 
         # return
         return status
