@@ -15,7 +15,7 @@ import time
 import os
 import numpy as np
 import sct_utils as sct
-from msct_image import Image
+from msct_image import Image, get_dimension
 from msct_parser import Parser
 import msct_gmseg_utils as sct_gm
 
@@ -46,7 +46,7 @@ class Thinning:
 
         elif self.dim_im == 3:
             status, orientation = sct.run('sct_orientation -i ' + self.image.absolutepath)
-            orientation = orientation[4:7]
+            # orientation = orientation[4:7]
             assert orientation == 'IRP'
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
@@ -203,14 +203,14 @@ class ComputeDistances:
 
         if self.dim_im == 3:
             status, orientation1 = sct.run('sct_orientation -i ' + self.im1.absolutepath)
-            self.orientation1 = orientation1[4:7]
+            self.orientation1 = orientation1  # [4:7]
             if self.orientation1 != 'IRP':
                 sct.run('sct_orientation -i ' + self.im1.absolutepath + ' -s IRP')
                 self.im1 = Image(self.im1.file_name + '_IRP' + self.im1.ext)
 
             if self.im2 is not None:
                 status, orientation2 = sct.run('sct_orientation -i ' + self.im2.absolutepath)
-                orientation2 = orientation2[4:7]
+                orientation2 = orientation2  # [4:7]
                 if orientation2 != 'IRP':
                     sct.run('sct_orientation -i ' + self.im2.absolutepath + ' -s IRP')
                     self.im2 = Image(self.im2.file_name + '_IRP' + self.im2.ext)
@@ -259,8 +259,8 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_2d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = sct.get_dimension(self.im1.absolutepath)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = sct.get_dimension(self.im2.absolutepath)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
         assert px1 == px2 and py1 == py2 and px1 == py1
         self.dim_pix = py1
 
@@ -278,7 +278,7 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_1im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = sct.get_dimension(self.im1.absolutepath)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
         self.dim_pix = py1
 
         if self.param.thinning:
@@ -292,8 +292,8 @@ class ComputeDistances:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_dist_2im_3d(self):
-        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = sct.get_dimension(self.im1.absolutepath)
-        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = sct.get_dimension(self.im2.absolutepath)
+        nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = get_dimension(self.im1)
+        nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = get_dimension(self.im2)
         assert round(pz1, 5) == round(pz2, 5) and round(py1, 5) == round(py2, 5)
         assert nx1 == nx2
         self.dim_pix = py1
