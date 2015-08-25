@@ -13,12 +13,14 @@
 # check if needed Python libraries are already installed or not
 
 # from msct_base_classes import BaseScript
+import sys
+from os import chdir
+
 import numpy as np
-from sct_straighten_spinalcord import smooth_centerline
-from sct_utils import extract_fname, printv, run
+
+from sct_utils import extract_fname, printv
 from msct_parser import Parser
 from msct_image import Image
-import sys
 
 
 class Param:
@@ -92,34 +94,65 @@ def main(args=None):
         fname_out = ''
     param.verbose = int(arguments['-v'])
 
+    # # create temporary folder
+    # printv('\nCreate temporary folder...', param.verbose)
+    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    # run('mkdir '+path_tmp, param.verbose)
+    #
+    # # Copying input data to tmp folder
+    # printv('\nCopying input data to tmp folder...', param.verbose)
+    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+
+    # Go go temp folder
+    path_tmp = '/Users/julien/data/sct_debug/tmp.150825142815'
+    chdir(path_tmp)
+
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+    #
+    # # Apply straightening to segmentation
+    # # N.B. Output is RPI
+    # printv('\nApply straightening to segmentation...', param.verbose)
+    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+
+    init_disk = [144, 5]
+    # detect vertebral levels on straight spinal cord
+    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', contrast, init_disk)
+
+    # un-straighten spinal cord
+
+    # find missing labels
+
     # Build fname_out
     if fname_out == '':
         path_in, file_in, ext_in = extract_fname(fname_in)
         fname_out = path_in+file_in+'_mean'+ext_in
 
-    # detect vertebral levels
-    vertebral_detection(fname_in, fname_seg, contrast)
 
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast):
+def vertebral_detection(fname, fname_seg, contrast, init_disk):
 
-    shift_AP = 14  # shift the centerline on the spine in mm default : 17 mm
-    size_AP = 3  # mean around the centerline in the anterior-posterior direction in mm
-    size_RL = 3  # mean around the centerline in the right-left direction in mm
+    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    size_AP = 5  # mean around the centerline in the anterior-posterior direction in mm
+    size_RL = 7  # mean around the centerline in the right-left direction in mm
     verbose = param.verbose
 
-    if verbose:
+    if verbose == 2:
         import matplotlib.pyplot as plt
+        plt.ion()  # enables interactive mode
 
     # open anatomical volume
     img = Image(fname)
     # orient to RPI
-    img.change_orientation()
+    # img.change_orientation()
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
 
+    # matshow(img.data[:, :, 100]), show()
 
     #==================================================
     # Compute intensity profile across vertebrae
@@ -129,302 +162,84 @@ def vertebral_detection(fname, fname_seg, contrast):
     size_AP = size_AP * py
     size_RL = size_RL * px
 
-    # orient segmentation to RPI
-    run('sct_orientation -i ' + fname_seg + ' -s RPI')
-    # smooth segmentation/centerline
-    path_centerline, file_centerline, ext_centerline = extract_fname(fname_seg)
-    x, y, z, Tx, Ty, Tz = smooth_centerline(path_centerline + file_centerline + '_RPI' + ext_centerline)
+    # define z: vector of indices along spine
+    z = range(nz)
 
-    # build intensity profile along the centerline
-    I = np.zeros((len(y), 1))
+    # define xc and yc (centered in the field of view)
+    xc = round(nx/2)  # direction RL
+    yc = round(ny/2)  # direction AP
+    I = np.zeros((nz, 1))
+    for iz in range(nz):
+        vox_in_spine = np.mgrid[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1]
+        # average intensity within box in the spine (shifted from spinal cord)
+        I[iz] = np.mean(img.data[vox_in_spine[0, :, :].ravel().astype(int),
+                                 vox_in_spine[1, :, :].ravel().astype(int),
+                                 iz])
 
-    #  mask where intensity profile will be taken
+    # display intensity along spine
     if verbose == 2:
-        mat = img.copy()
-        mat.data = np.zeros(mat.dim)
-
-    for iz in range(len(z)):
-        # define vector orthogonal to the cord in RL direction
-        P1 = np.array([1, 0, -Tx[iz]/Tz[iz]])
-        P1 = P1/np.linalg.norm(P1)
-        # define vector orthogonal to the cord in AP direction
-        P2 = np.array([0, 1, -Ty[iz]/Tz[iz]])
-        P2 = P2/np.linalg.norm(P2)
-        # define X and Y coordinates of the voxels to extract intensity profile from
-        indexRL = range(-np.int(round(size_RL)), np.int(round(size_RL)))
-        indexAP = range(0, np.int(round(size_AP)))+np.array(shift_AP)
-        # loop over coordinates of perpendicular plane
-        for i_RL in indexRL:
-            for i_AP in indexAP:
-                i_vect = np.round(np.array([x[iz], y[iz], z[iz]])+P1*i_RL+P2*i_AP)
-                i_vect = np.minimum(np.maximum(i_vect, 0), np.array([nx, ny, nz])-1)  # check if index stays in image dimension
-                I[iz] = I[iz] + img.data[i_vect[0], i_vect[1], i_vect[2]]
-
-                # create a mask with this perpendicular plane
-                if verbose == 2:
-                    mat.data[i_vect[0], i_vect[1], i_vect[2]] = 1
-
-    if verbose == 2:
-        mat.file_name = 'mask'
-        mat.save()
-
-    # Detrending Intensity
-    start_centerline_y = y[0]
-    X = np.where(I == 0)
-    mask2 = np.ones((len(y), 1), dtype=bool)
-    mask2[X, 0] = False
-
-    # low pass filtering
-    import scipy.signal
-    frequency = 2/pz
-    Wn = 0.1/frequency
-    N = 2              #Order of the filter
-    #    b, a = scipy.signal.butter(N, Wn, btype='low', analog=False, output='ba')
-    b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='high', analog=False, ftype='bessel', output='ba')
-    I_detrend = scipy.signal.filtfilt(b, a, I[:, 0], axis=-1, padtype='constant', padlen=None)
-    I_detrend = I_detrend/(np.amax(I_detrend))
-
-
-    #==================================================
-    # step 1 : Find the First Peak
-    #==================================================
-    if contrast == 't1':
-        I_detrend2 = np.diff(I_detrend)
-    elif contrast == 't2':
-        space = np.linspace(-10/pz, 10/pz, round(21/pz), endpoint=True)
-        pattern = (np.sinc((space*pz)/20)) ** 20
-        I_corr = scipy.signal.correlate(-I_detrend.squeeze().squeeze()+1,pattern,'same')
-        b, a = scipy.signal.iirfilter(N, Wn, rp=None, rs=None, btype='high', analog=False, ftype='bessel', output='ba')
-        I_detrend2 = scipy.signal.filtfilt(b, a, I_corr, axis=-1, padtype='constant', padlen=None)
-
-    I_detrend2[I_detrend2 < 0.2] = 0
-    ind_locs = np.squeeze(scipy.signal.argrelextrema(I_detrend2, np.greater))
-
-    # remove peaks that are too closed
-    locsdiff = np.diff(z[ind_locs])
-    ind = locsdiff > 10
-    ind_locs = np.hstack((ind_locs[ind], ind_locs[-1]))
-    locs = z[ind_locs]
-
-    if verbose == 2:
-        # x=0: most caudal, x=max: most rostral
         plt.figure()
-        plt.plot(I_detrend2)
-        plt.plot(ind_locs, I_detrend2[ind_locs], '+')
-        plt.show()
+        plt.plot(I)
+        plt.title('Averaged intensity within spine. x=0: most caudal.')
+        plt.draw()
 
+    # find local extrema
+    from scipy.signal import argrelextrema
+    peaks = argrelextrema(I, np.greater, order=10)[0]
+    nb_peaks = len(peaks)
 
-    #=====================================================================================
-    # step 2 : Cross correlation between the adjusted template and the intensity profile.
-    #          Local moving of template's peak from the first peak already found
-    #=====================================================================================
+    if verbose == 2:
+        plt.figure()
+        plt.plot(I)
+        plt.plot(peaks, I[peaks], 'ro')
+        plt.draw()
 
-    #For each loop, a peak is located at the most likely position and then local adjustment is done.
-    #The position of the next peak is calculated from previous positions
+    # LABEL PEAKS
+    # build labeled peak vector (inverted order because vertebral level decreases when z increases)
+    labeled_peaks = np.array(range(nb_peaks+1, 1, -1)).astype(int)
+    # find peak index closest to user input
+    peak_ind_closest = np.argmin(abs(peaks-init_disk[0]))
+    # build vector of peak labels
+    # labeled_peaks = np.array(range(nb_peaks))
+    # add the difference between "peak_ind_closest" and the init_disk value
+    labeled_peaks = labeled_peaks - peak_ind_closest + init_disk[1]
 
-    # TODO: use mean distance
-    mean_distance = [12.1600, 20.8300, 18.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
-    19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
-    33.0000,   31.3330]
-    #
-    # #Creating pattern
-    printv('\nFinding Cross correlation between the adjusted template and the intensity profile...', verbose)
-    space = np.linspace(-10/pz, 10/pz, round(21/pz), endpoint=True)
-    pattern = (np.sinc((space*pz)/20))**20
-    I_corr = scipy.signal.correlate(I_detrend2.squeeze().squeeze()+1, pattern, 'same')
-    #
-    # level_start=1
-    # if contrast == 'T1':
-    #     mean_distance = mean_distance[level_start-1:len(mean_distance)]
-    #     xmax_pattern = np.argmax(pattern)
-    # else:
-    #     mean_distance = mean_distance[level_start+1:len(mean_distance)]
-    #     xmax_pattern = np.argmin(pattern)          # position of the peak in the pattern
-    # pixend = len(pattern) - xmax_pattern       #number of pixel after the peaks in the pattern
-    #
-    #
-    # mean_distance_new = mean_distance
-    # mean_ratio = np.zeros(len(mean_distance))
-    #
-    # L = np.round(1.2*max(mean_distance)) - np.round(0.8*min(mean_distance))
-    # corr_peak  = np.zeros((L,len(mean_distance)))          # corr_peak  = np.nan #for T2
-    #
-    # #loop on each peak
-    # for i_peak in range(len(mean_distance)):
-    #     scale_min = np.round(0.80*mean_distance_new[i_peak]) - xmax_pattern - pixend
-    #     if scale_min<0:
-    #         scale_min = 0
-    #
-    #     scale_max = np.round(1.2*mean_distance_new[i_peak]) - xmax_pattern - pixend
-    #     scale_peak = np.arange(scale_min,scale_max+1)
-    #
-    #     for i_scale in range(len(scale_peak)):
-    #         template_resize_peak = np.concatenate([template_truncated,np.zeros(scale_peak[i_scale]),pattern])
-    #         if len(I_detrend[:,0])>len(template_resize_peak):
-    #             template_resize_peak1 = np.concatenate((template_resize_peak,np.zeros(len(I_detrend[:,0])-len(template_resize_peak))))
-    #
-    #         #cross correlation
-    #         corr_template = scipy.signal.correlate(I_detrend[:,0],template_resize_peak)
-    #
-    #         if len(I_detrend[:,0])>len(template_resize_peak):
-    #             val = np.dot(I_detrend[:,0],template_resize_peak1.T)
-    #         else:
-    #             I_detrend_2 = np.concatenate((I_detrend[:,0],np.zeros(len(template_resize_peak)-len(I_detrend[:,0]))))
-    #             val = np.dot(I_detrend_2,template_resize_peak.T)
-    #         corr_peak[i_scale,i_peak] = val
-    #
-    #         if verbose:
-    #             plt.xlim(0,len(I_detrend[:,0]))
-    #             plt.plot(I_detrend[:,0])
-    #             plt.plot(template_resize_peak)
-    #             plt.show(block=False)
-    #
-    #             plt.plot(corr_peak[:,i_peak],marker='+',linestyle='None',color='r')
-    #             plt.title('correlation value against the displacement of the peak (px)')
-    #             plt.show(block=False)
-    #
-    #     max_peak = np.amax(corr_peak[:,i_peak])
-    #     index_scale_peak = np.where(corr_peak[:,i_peak]==max_peak)
-    #     good_scale_peak = scale_peak[index_scale_peak][0]
-    #     Mcorr = Mcorr1
-    #     Mcorr = np.resize(Mcorr,i_peak+2)
-    #     Mcorr[i_peak+1] = np.amax(corr_peak[:,0:(i_peak+1)])
-    #     flag = 0
-    #
-    #     #If the correlation coefficient is too low, put the peak at the mean position
-    #     if i_peak>0:
-    #         if (Mcorr[i_peak+1]-Mcorr[i_peak])<0.4*np.mean(Mcorr[1:i_peak+2]-Mcorr[0:i_peak+1]):
-    #             test = i_peak
-    #             template_resize_peak = np.concatenate((template_truncated,np.zeros(round(mean_distance[i_peak])-xmax_pattern-pixend),pattern))
-    #             good_scale_peak = np.round(mean_distance[i_peak]) - xmax_pattern - pixend
-    #             flag = 1
-    #     if i_peak==0:
-    #         if (Mcorr[i_peak+1] - Mcorr[i_peak])<0.4*Mcorr[0]:
-    #             template_resize_peak = np.concatenate((template_truncated,np.zeros(round(mean_distance[i_peak])-xmax_pattern-pixend),pattern))
-    #             good_scale_peak = round(mean_distance[i_peak]) - xmax_pattern - pixend
-    #             flag = 1
-    #     if flag==0:
-    #         template_resize_peak=np.concatenate((template_truncated,np.zeros(good_scale_peak),pattern))
-    #
-    #     #update mean-distance by a adjustement ratio
-    #     mean_distance_new[i_peak] = good_scale_peak + xmax_pattern + pixend
-    #     mean_ratio[i_peak] = np.mean(mean_distance_new[:,0:i_peak]/mean_distance[:,0:i_peak])
-    #
-    #     template_truncated = template_resize_peak
-    #
-    #     if verbose:
-    #         plt.plot(I_detrend[:,0])
-    #         plt.plot(template_truncated)
-    #         plt.xlim(0,(len(I_detrend[:,0])-1))
-    #         plt.show()
-    #
-    # #finding the maxima of the adjusted template
-    # minpeakvalue = 0.5
-    # loc_disk = np.arange(len(template_truncated))
-    # index_disk = []
-    # for i in range(len(template_truncated)):
-    #     if template_truncated[i]>=minpeakvalue:
-    #         if i==0:
-    #             if template_truncated[i]<template_truncated[i+1]:
-    #                 index_disk.append(i)
-    #         elif i==(len(template_truncated)-1):
-    #             if template_truncated[i]<template_truncated[i-1]:
-    #                 index_disk.append(i)
-    #         else:
-    #             if template_truncated[i]<template_truncated[i+1]:
-    #                 index_disk.append(i)
-    #             elif template_truncated[i]<template_truncated[i-1]:
-    #                 index_disk.append(i)
-    #     else:
-    #         index_disk.append(i)
-    #
-    # mask_disk = np.ones(len(template_truncated), dtype=bool)
-    # mask_disk[index_disk] = False
-    # loc_disk = loc_disk[mask_disk]
-    # X1 = np.where(loc_disk > I_detrend.shape[0])
-    # mask_disk1 = np.ones(len(loc_disk), dtype=bool)
-    # mask_disk1[X1] = False
-    # loc_disk = loc_disk[mask_disk1]
-    # loc_disk = loc_disk + start_centerline_y - 1
+    # REMOVE WRONG LABELS (ASSUMING NO PEAK IS VISIBLE ABOVE C2/C3 DISK)
+    ind_true_labels = np.where(labeled_peaks>1)[0]
+    peaks = peaks[ind_true_labels]
+    labeled_peaks = labeled_peaks[ind_true_labels]
 
+    # ADD C1 label (ASSUMING DISTANCE FROM THE ADULT TEMPLATE)
+    distance_c1_c2 = 20.8300/pz  # in mm
+    # check if C2 disk is there
+    if np.min(labeled_peaks) == 2:
+        printv('\nC2 disk is present. Adding C1 labeling based on template.')
+        peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
+        labeled_peaks = np.append(labeled_peaks, 1)
 
-    #=====================================================================
-    # Step 3: Label segmentation
-    #=====================================================================
-
-    # # Project vertebral levels back to the centerline
-    # centerline = Image(fname_seg)
-    # raw_orientation = centerline.change_orientation()
-    # centerline.data[:, :, :] = 0
-    # for iz in range(locs[0]):
-    #         centerline.data[np.round(x[iz]), np.round(y[iz]), iz] = 1
-    # for i in range(len(locs)-1):
-    #     for iz in range(locs[i], min(locs[i+1], len(z))):
-    #         centerline.data[np.round(x[iz]), np.round(y[iz]), iz] = i+2
-    # for iz in range(locs[-1], len(z)):
-    #         centerline.data[np.round(x[iz]), np.round(y[iz]), iz] = i+3
-    #
-    # #centerline.change_orientation(raw_orientation)
-    # centerline.file_name += '_labeled'
-    # centerline.save()
-
-    # Label segmentation with vertebral number
-    # Method: loop across all voxels of the segmentation, project each voxel to the line passing through the vertebrae
-    # (using minimum distance) and assign vertebral level.
-    printv('\nLabel segmentation...', verbose)
+    # LABEL SEGMENTATION
+    # open segmentation
     seg = Image(fname_seg)
-    seg_raw_orientation = seg.change_orientation()
-    # find all voxels belonging to segmentation
-    x_seg, y_seg, z_seg = np.where(seg.data)
-    # loop across voxels in segmentation
-    for ivox in range(len(x_seg)):
-        # get voxel coordinate
-        vox_coord = np.array([x_seg[ivox], y_seg[ivox], z_seg[ivox]])
-        # find closest point to the curved line passing through the vertebrae
+    for iz in range(nz):
+        # get value of the disk above iz
+        ind_above_iz = np.nonzero((peaks-iz).clip(0))[0]
+        if not ind_above_iz.size:
+            # if ind_above_iz is empty, attribute value 0
+            # vertebral_level = np.min(labeled_peaks)
+            vertebral_level = 0
+        else:
+            # ind_disk_above = np.where(peaks-iz > 0)[0][0]
+            ind_disk_above = min(ind_above_iz)
+            # assign vertebral level (remove one because iz is BELOW the disk)
+            vertebral_level = labeled_peaks[ind_disk_above] + 1
+            # print vertebral_level
+        # get voxels in mask
+        ind_nonzero = np.nonzero(seg.data[:, :, iz])
+        seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
 
-        for iplane in range(len(locs)):
-            ind = np.where(z == locs[iplane])
-            vox_vector = vox_coord - np.hstack((x[ind], y[ind], z[ind]))
-            normal2plane_vector = np.hstack((Tx[ind], Ty[ind], Tz[ind]))  # Tx, Ty and Tz are the derivatives of the centerline
-
-            # if voxel is above the plane --> give the number of the plane
-            if np.dot(vox_vector, normal2plane_vector) > 0:
-                seg.data[vox_coord[0], vox_coord[1], vox_coord[2]] = iplane+2
-            else:  # if the voxel gets below the plane --> next voxel
-                break
-    seg.change_orientation(seg_raw_orientation)
+    # WRITE LABELED SEGMENTATION
     seg.file_name += '_labeled'
     seg.save()
-
-    # # color the segmentation with vertebral number
-    # printv('\nLabel input segmentation...', verbose)
-    # # if fname_segmentation:
-    # seg = Image(fname_seg)
-    # seg_raw_orientation = seg.change_orientation()
-    # x_seg, y_seg, z_seg = np.where(seg.data)  # find all voxels belonging to segmentation
-    # for ivox in range(len(x_seg)):  # loop across voxels in segmentation
-    #     vox_coord = np.array([x_seg[ivox], y_seg[ivox], z_seg[ivox]])  # get voxel coordinate
-    #     for iplane in range(len(locs)):
-    #         ind = np.where(z == locs[iplane])
-    #         vox_vector = vox_coord - np.hstack((x[ind], y[ind], z[ind]))
-    #         normal2plane_vector = np.hstack((Tx[ind], Ty[ind], Tz[ind]))  # Tx, Ty and Tz are the derivatives of the centerline
-    #
-    #         # if voxel is above the plane --> give the number of the plane
-    #         if np.dot(vox_vector, normal2plane_vector) > 0:
-    #             seg.data[vox_coord[0], vox_coord[1], vox_coord[2]] = iplane+2
-    #         else:  # if the voxel gets below the plane --> next voxel
-    #             break
-    # seg.change_orientation(seg_raw_orientation)
-    # seg.file_name += '_labeled'
-    # seg.save()
-
-    return locs
-
-# if __name__ == '__main__':
-#     parser = Script.get_parser()
-#     arguments = parser.parse(sys.argv[1:])
-#
-#     vertebral_detection(arguments["-i"],arguments["-centerline"],fname_segmentation=arguments["-seg"],contrast=arguments["-t"], verbose=1)
 
 
 # START PROGRAM
