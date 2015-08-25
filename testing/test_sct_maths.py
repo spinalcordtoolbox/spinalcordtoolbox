@@ -23,8 +23,9 @@ def test(path_data):
     output = ''
     status = 0
 
-    cmd = 'sct_otsu -i ' + path_data + folder_data + file_data[0] \
-                + ' -v 2'
+    cmd = 'sct_maths -i ' + path_data + folder_data + file_data[0] \
+                + ' -o test.nii.gz' \
+                + ' -percent 95'
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
 
     s, o = commands.getstatusoutput(cmd)
