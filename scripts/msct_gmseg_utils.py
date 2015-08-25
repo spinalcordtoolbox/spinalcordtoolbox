@@ -440,13 +440,76 @@ def save_dic_slices(path_to_model):
     :param path_to_model: path to the compute model used to load the dictionary
     """
     import pickle
+    level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
     model_slices_list = pickle.load(open(path_to_model + '/dictionary_slices.pkl', 'rb'))
     sct.run('mkdir ' + path_to_model + '/model_slices')
-    model_slices = [Slice(slice_id=i_slice, level=dic_slice[2], im_m=dic_slice[0], wm_seg_m=dic_slice[1], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices_list)]  # type: list of slices
+    model_slices = [Slice(slice_id=i_slice, level=dic_slice[3], im_m=dic_slice[0], wm_seg_m=dic_slice[1], gm_seg_m=dic_slice[2], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices_list)]  # type: list of slices
 
     for mod_slice in model_slices:
-        Image(param=mod_slice.im_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_level' + str(mod_slice.level) + '_im_m.nii.gz').save()
-        Image(param=mod_slice.wm_seg_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_level' + str(mod_slice.level) + '_wmseg_m.nii.gz').save()
+        Image(param=mod_slice.im_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_' + level_label[mod_slice.level] + '_im_m.nii.gz').save()
+        Image(param=mod_slice.wm_seg_M, absolutepath= path_to_model + '/model_slices/slice' + str(mod_slice.id) + '_' + level_label[mod_slice.level] + '_wmseg_m.nii.gz').save()
+
+
+# ------------------------------------------------------------------------------------------------------------------
+def extract_metric_from_dic(slices_set, seg_to_use=None, gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
+    """
+    uses the registereg images and GM segmentation (or another segmentation)to extract mean intensity values in the WM dn GM
+    :param slices_set:
+    :param seg_to_use: must be of GM not WM
+    :param gm_percentile:
+    :param wm_percentile:
+    :param save:
+    :return:
+    """
+    import copy
+    level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
+    if save:
+        f = open(output, 'w')
+        f.write('Slice id - Slice level - Mean in WM - Mean in GM - Std in WM - Std in GM\n')
+    else:
+        f = None
+    slice_set_metric = {}
+    for i, slice_i in enumerate(slices_set):
+        gm_dat = copy.deepcopy(slice_i.im_M)
+        wm_dat = copy.deepcopy(slice_i.im_M)
+
+        # mask with the gray matter segmentation
+        if seg_to_use is None:
+            gm_dat[slice_i.gm_seg_M == 0] = 0
+            wm_dat[slice_i.gm_seg_M == 1] = 0
+        else:
+            gm_dat[seg_to_use[i] == 0] = 0
+            wm_dat[seg_to_use[i] == 1] = 0
+
+        # threshold to 0.1 to get rid of the (almost) null values
+        gm_dat = gm_dat[gm_dat > 0.1]
+        wm_dat = wm_dat[wm_dat > 0.1]
+
+        if gm_percentile == 0:
+            gm_average = np.mean(gm_dat)
+            gm_std = np.std(gm_dat)
+        else:
+            gm_dat_flat = sorted(gm_dat.flatten())
+            gm_dat_flat = gm_dat_flat[int(round(gm_percentile*len(gm_dat_flat)/2.0)):-int(round(gm_percentile*len(gm_dat_flat)/2.0))]
+            gm_average = np.mean(gm_dat_flat)
+            gm_std = np.std(gm_dat_flat)
+
+        if wm_percentile == 0:
+            wm_average = np.mean(wm_dat)
+            wm_std = np.std(wm_dat)
+        else:
+            wm_dat_flat = sorted(wm_dat.flatten())
+            wm_dat_flat = wm_dat_flat[int(round(wm_percentile*len(wm_dat_flat)/2.0)):-int(round(wm_percentile*len(wm_dat_flat)/2.0))]
+            wm_average = np.mean(wm_dat_flat)
+            wm_std = np.std(wm_dat_flat)
+
+        slice_set_metric[slice_i.id] = (wm_average, gm_average, wm_std, gm_std)
+        if save:
+            f.write(str(slice_i.id) + ' - ' + level_label[slice_i.level] + ' - ' + str(wm_average) + ' - ' + str(gm_average) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
+    if save:
+        f.close()
+    return slice_set_metric
+
 
 
 ########################################################################################################################
@@ -869,7 +932,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
 
     """
     import time
-    from sct_asman import Model, Param, GMsegSupervisedMethod
+    from msct_multiatlas_seg import Model, Param, GMsegSupervisedMethod
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
