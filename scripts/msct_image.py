@@ -261,25 +261,35 @@ class Image(object):
         """
         from msct_types import Coordinate
         from sct_utils import printv
+        n_dim = 1
+        if self.dim[3] == 1:
+            n_dim = 3
+        else:
+            n_dim = 4
+        if self.dim[2] == 1:
+            n_dim = 2
+
+
         try:
-            if len(self.dim) == 3:
+            if n_dim == 3:
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            elif len(self.dim) == 2:
+            elif n_dim == 2:
                 X, Y = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         except Exception, e:
+            print 'ERROR', e
             printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
 
         if coordValue:
             from msct_types import CoordinateValue
-            if len(self.dim) == 3:
+            if n_dim == 3:
                 list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
             else:
                 list_coordinates = [CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         else:
             from msct_types import Coordinate
-            if len(self.dim) == 3:
+            if n_dim == 3:
                 list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
             else:
                 list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
@@ -299,6 +309,7 @@ class Image(object):
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
         return list_coordinates
+
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
@@ -576,25 +587,32 @@ def find_zmin_zmax(fname):
     return int(zmin), int(zmax)
 
 
-def get_dimension(im_file):
+def get_dimension(im_file, verbose=1):
     """
     Get dimension from nibabel object. Manages 2D, 3D or 4D images.
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-
+    import nibabel.nifti1
+    import sct_utils as sct
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-
-    nb_dims = len(im_file.header.get_data_shape())
+    if type(im_file) is nibabel.nifti1.Nifti1Image:
+        header = im_file.header
+    elif type(im_file) is Image:
+        header = im_file.hdr
+    else:
+        header = None
+        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
+    nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
-        nx, ny = im_file.header.get_data_shape()
-        px, py = im_file.header.get_zooms()
+        nx, ny = header.get_data_shape()
+        px, py = header.get_zooms()
     if nb_dims == 3:
-        nx, ny, nz = im_file.header.get_data_shape()
-        px, py, pz = im_file.header.get_zooms()
+        nx, ny, nz = header.get_data_shape()
+        px, py, pz = header.get_zooms()
     if nb_dims == 4:
-        nx, ny, nz, nt = im_file.header.get_data_shape()
-        px, py, pz, pt = im_file.header.get_zooms()
+        nx, ny, nz, nt = header.get_data_shape()
+        px, py, pz, pt = header.get_zooms()
 
     return nx, ny, nz, nt, px, py, pz, pt
 

@@ -363,38 +363,6 @@ def correct_wmseg(res_gmseg, original_im, name_wm_seg, hdr):
 ########################################################################################################################
 # ----------------------------------------------- OTHER UTILS FUNCTIONS ---------------------------------------------- #
 ########################################################################################################################
-'''
-# ----------------------------------------------------------------------------------------------------------------------
-def save_image(im_array, im_name, path='', hdr=None, im_type='minimize', verbose=1):
-    """
-    Save an image from an array,
-    if the array is a flatten image, the saved image will be square shaped
-
-    :param im_array: image to save
-
-    :param im_name: name of the image
-
-    :param path: path where to save it
-
-    :param im_type: type of image
-
-    :param verbose:
-    """
-    if isinstance(im_array, list):
-        n = int(sqrt(len(im_array)))
-        im_data = np.asarray(im_array).reshape(n, n)
-    else:
-        im_data = np.asarray(im_array)
-    im = Image(param=im_data, verbose=verbose)
-    im.file_name = im_name
-    im.ext = '.nii.gz'
-    if path != '':
-        im.path = path
-    if hdr is not None:
-        im.hdr = hdr
-    im.save(type=im_type)
-'''
-
 
 # ------------------------------------------------------------------------------------------------------------------
 def get_key_from_val(dic, val):
@@ -429,6 +397,8 @@ def check_file_to_niigz(file_name, verbose=1):
             # sct.run('fslchfiletype NIFTI_GZ ' + file_name)
             new_file_name = sct.extract_fname(file_name)[1] + ext
             sct.run('sct_convert -i ' + file_name + ' -o ' + new_file_name)
+        else:
+            new_file_name = file_name
         return new_file_name
     else:
         sct.printv('WARNING: ' + file_name + ' is not a file ...', verbose, 'warning')
@@ -744,7 +714,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
     status, orientation = sct.run('sct_orientation -i ' + fname)
-    orientation = orientation[4:7]
+    # orientation = orientation[4:7]
     if orientation != 'RPI':
         sct.run('sct_orientation -i ' + fname + ' -s RPI')
         fname = sct.extract_fname(fname)[1] + '_RPI.nii.gz'
@@ -813,7 +783,8 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             new_names = []
             for f_name in [t2star, scseg, gmseg]:
                 status, output = sct.run('sct_orientation -i ' + f_name)
-                if output[4:7] != 'RPI':
+                # if output[4:7] != 'RPI':
+                if output != 'RPI':
                     status, output = sct.run('sct_orientation -i ' + f_name + ' -s RPI')
                     new_names.append(output.split(':')[1][1:-1])
                 else:
@@ -1240,7 +1211,7 @@ def compute_error_map_by_level(data_path):
 
                 ref_wm_seg = 'validation/ref_wm_seg.nii.gz'
                 status, ref_ori = sct.run('sct_orientation -i ' + ref_wm_seg)
-                ref_ori = ref_ori[4:7]
+                # ref_ori = ref_ori[4:7]
                 if ref_ori != 'IRP':
                     sct.run('sct_orientation -i ' + ref_wm_seg + ' -s IRP')
                     ref_wm_seg = sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_IRP' + sct.extract_fname(ref_wm_seg)[2]
@@ -1351,7 +1322,7 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
                     if res_gm_seg != '' and sq_mask != '' and level != '':
                         ref_gm_seg = 'ref_gm_seg.nii.gz'
                         status, ref_ori = sct.run('sct_orientation -i ' + ref_gm_seg)
-                        ref_ori = ref_ori[4:7]
+                        # ref_ori = ref_ori[4:7]
                         if ref_ori != 'IRP':
                             sct.run('sct_orientation -i ' + ref_gm_seg + ' -s IRP')
                             ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_IRP' + sct.extract_fname(ref_gm_seg)[2]
