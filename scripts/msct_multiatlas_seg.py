@@ -820,6 +820,7 @@ class TargetSegmentationPairwise:
                 else:
                     sct.printv('WARNING: No mean value of the white matter and gray matter intensity were provided, nor the target vertebral levels to estimate them\n'
                                'The target will not be normalized.', self.model.param.verbose, 'warning')
+                    self.model.param.target_normalization = False
                     target_metric = None
             else:
                 target_metric = [(self.model.param.target_means[0], self.model.param.target_means[1], 0, 0) for i in range(len(self.target))]
