@@ -332,7 +332,7 @@ if __name__ == "__main__":
         parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
         parser.add_option(name="-i",
                           type_value="file",
-                          description="T2star image you want to segment",
+                          description="Target image to segment",
                           mandatory=True,
                           example='t2star.nii.gz')
         parser.add_option(name="-s",
@@ -378,11 +378,18 @@ if __name__ == "__main__":
                           example=['0', '1'])
         parser.add_option(name="-normalize",
                           type_value='multiple_choice',
-                          description="1: Normalization of the target image's intensity using the mean dictionary image : should be use especially for target image of another contrast than T2star\n"
-                                      "NOT TO BE USED ON T2STAR",
+                          description="1: Normalization of the target image's intensity using mean intensity values of the WM and the GM",
                           mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-means",
+                          type_value=[[','], 'float'],
+                          description="Mean intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
+                                      "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
+                                      "Only if the -normalize flag is used",
+                          mandatory=False,
+                          default_value=None,
+                          example=["450,540"])
         '''
         parser.add_option(name="-first-reg",
                           type_value='multiple_choice',
@@ -445,6 +452,8 @@ if __name__ == "__main__":
             param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
             param.target_normalization = bool(int(arguments["-normalize"]))
+        if "-means" in arguments:
+            param.target_means = arguments["-means"]
         '''
         if "-first-reg" in arguments:
             param.first_reg = bool(int(arguments["-first-reg"]))
