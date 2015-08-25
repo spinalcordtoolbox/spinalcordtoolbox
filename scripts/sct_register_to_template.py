@@ -17,7 +17,6 @@ import sys
 import os
 import commands
 import time
-
 import sct_utils as sct
 from sct_orientation import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
@@ -185,7 +184,7 @@ def main():
     # check if label image contains coherent labels
     image_label = Image(fname_landmarks)
     # -> all labels must be different
-    labels = image_label.getNonZeroCoordinates()
+    labels = image_label.getNonZeroCoordinates(sorting='value')
     hasDifferentLabels = True
     for lab in labels:
         for otherlabel in labels:
@@ -194,6 +193,14 @@ def main():
                 break
     if not hasDifferentLabels:
         sct.printv('ERROR: Wrong landmarks input. All labels must be different.', verbose, 'error')
+    # all labels must be available in tempalte
+    image_label_template = Image(fname_template_label)
+    labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
+    if labels[-1].value > labels_template[-1].value:
+        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondance in tempalte space. \nLabel max '
+                   'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
+                   str(labels_template[-1].value), verbose, 'error')
+
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
@@ -270,13 +277,58 @@ def main():
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
     sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
 
-    # Remove unused label on template. Keep only label present in the input label image
+    # Remove labels that do not correspond with each others.
     sct.printv('\nRemove labels that do not correspond with each others.', verbose)
     sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
+    # converting landmarks straight and curved to physical coordinates
+    image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
+    landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
+    image_template = Image('template_label_cross.nii.gz')
+    landmark_template = image_template.getNonZeroCoordinates(sorting='value')
+    # Reorganize landmarks
+    points_fixed, points_moving = [], []
+    landmark_straight_mean = []
+    for coord in landmark_straight:
+        if coord.value not in [c.value for c in landmark_straight_mean]:
+            temp_landmark = coord
+            temp_number = 1
+            for other_coord in landmark_straight:
+                if coord.hasEqualValue(other_coord) and coord != other_coord:
+                    temp_landmark += other_coord
+                    temp_number += 1
+            landmark_straight_mean.append(temp_landmark / temp_number)
+
+    for coord in landmark_straight_mean:
+        point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+    for coord in landmark_template:
+        point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+
+    # Register curved landmarks on straight landmarks based on python implementation
+    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    import msct_register_landmarks
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
+        msct_register_landmarks.getRigidTransformFromLandmarks(
+            points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+
+    # writing rigid transformation file
+    text_file = open("straight2templateAffine.txt", "w")
+    text_file.write("#Insight Transform File V1.0\n")
+    text_file.write("#Transform 0\n")
+    text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
+    text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+        1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
+        rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
+        rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
+        translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+                                                           points_moving_barycenter[1],
+                                                           points_moving_barycenter[2]))
+    text_file.close()
 
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
@@ -284,8 +336,14 @@ def main():
     sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
 
+    # threshold to 0.5
+    nii = Image('segmentation_rpi_straight2templateAffine.nii.gz')
+    data = nii.data
+    data[data < 0.5] = 0
+    nii.data = data
+    nii.setFileName('segmentation_rpi_straight2templateAffine_th.nii.gz')
+    nii.save()
     # find min-max of anat2template (for subsequent cropping)
-    sct.run('export FSLOUTPUTTYPE=NIFTI; fslmaths segmentation_rpi_straight2templateAffine.nii.gz -thr 0.5 segmentation_rpi_straight2templateAffine_th.nii.gz', param.verbose)
     zmin_template, zmax_template = find_zmin_zmax('segmentation_rpi_straight2templateAffine_th.nii.gz')
 
     # crop template in z-direction (for faster processing)
@@ -319,7 +377,7 @@ def main():
             dest = 'template_seg_crop_r.nii.gz'
             interp_step = 'nn'
         else:
-            sct.run('ERROR: Wrong image type.', 1, 'error')
+            sct.printv('ERROR: Wrong image type.', 1, 'error')
         # if step>1, apply warp_forward_concat to the src image to be used
         if i_step > 1:
             # sct.run('sct_apply_transfo -i '+src+' -d '+dest+' -w '+','.join(warp_forward)+' -o '+sct.add_suffix(src, '_reg')+' -x '+interp_step, verbose)
@@ -376,8 +434,8 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     label using the old and new voxel size.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_labels)
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = sct.get_dimension(fname_dest)
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
+    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
     sampling_factor = [float(nx)/nxd, float(ny)/nyd, float(nz)/nzd]
     # read labels
     from sct_label_utils import ProcessLabels

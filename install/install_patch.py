@@ -100,11 +100,8 @@ def main():
 
     # if patch is not compatible with this release, send message and quit.
     print 'Check compatibility... '
-    if version_sct == version_patch:
-        MsgUser.failed("You already have installed this patch.")
-        sys.exit(2)
-    elif version_sct > version_patch:
-        MsgUser.warning("You can't install a patch that is an oldest version than the one you have. Installing this patch can broke the SCToolbox stability. Are you sure you want to install it?")
+    if version_sct >= version_patch:
+        MsgUser.warning("This patch is not newer than the current version. Are you sure you want to install it?")
         install_new = ""
         signal.alarm(120)
         while install_new not in ["yes", "no"]:
@@ -148,7 +145,7 @@ def main():
     # re-create links
     print 'Update links...'
     sudo_links = ''
-    if issudo != "":
+    if issudo == "":
         sudo_links = ' -a'
     status, output = sct.run('${SCT_DIR}/install/create_links.sh'+sudo_links)
     print output

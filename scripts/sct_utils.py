@@ -63,6 +63,7 @@ def run_old(cmd, verbose=1):
     else:
         return status, output
 
+
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     # print sys._getframe().f_back.f_code.co_name
     if verbose:
@@ -77,8 +78,13 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
             if verbose == 2:
                 print output.strip()
             output_final += output.strip()+'\n'
+    status_output = process.returncode
+    # process.stdin.close()
+    # process.stdout.close()
+    # process.terminate()
+
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    if process.returncode:
+    if status_output:
         # from inspect import stack
         printv(output_final[0:-1], 1, error_exit)
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
@@ -87,7 +93,7 @@ def run(cmd, verbose=1, error_exit='error', raise_exception=False):
             raise Exception(output_final[0:-1])
     else:
         # no need to output process.returncode (because different from 0)
-        return process.returncode, output_final[0:-1]
+        return status_output, output_final[0:-1]
 
 
 
@@ -152,7 +158,6 @@ def checkRAM(os,verbose=1):
 #=======================================================================================================================
 # Extract path, file and extension
 def extract_fname(fname):
-
     # extract path
     path_fname = os.path.dirname(fname)+'/'
     # check if only single file was entered (without path)
@@ -166,8 +171,8 @@ def extract_fname(fname):
     if ext_fname == '.gz':
         file_fname = file_fname[0:len(file_fname)-4]
         ext_fname = ".nii.gz"
-
     return path_fname, file_fname, ext_fname
+
 
 #=======================================================================================================================
 # get_absolute_path
@@ -197,25 +202,13 @@ def check_file_exist(fname, verbose=1):
 #=======================================================================================================================
 def check_folder_exist(fname, verbose=1):
     if os.path.isdir(fname):
-        if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
+        printv('  OK: '+fname, verbose, 'normal')
+        return True
         pass
     else:
-        printv('\nERROR: The directory ' + str(fname) + ' does not exist. Exit program.\n', 1, 'error')
-
-#=======================================================================================================================
-# return_folder_exist:  Check existence of a folder.
-#   Does not create it. If you want to create a folder, use create_folder
-#=======================================================================================================================
-def return_folder_exist(fname, verbose=1):
-    if os.path.isdir(fname):
-        if verbose:
-            printv('  OK: '+fname, verbose, 'normal')
-            return True
-        pass
-    else:
-        printv('\nERROR: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
+        printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
         return False
+
 
 #=======================================================================================================================
 # check_write_permission:  Check existence of a folder.
@@ -254,10 +247,18 @@ def create_folder(folder):
 # check_if_3d
 #=======================================================================================================================
 def check_if_3d(fname):
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname)
+    """
+    Check if input volume is 3d or less.
+    :param fname:
+    :return: True or False
+    """
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
     if not nt == 1:
-        printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
-
+        return False
+        # printv('\nERROR: '+fname+' is not a 3D volume. Exit program.\n', 1, 'error')
+    else:
+        return True
 
 #=======================================================================================================================
 # check_if_rpi:  check if data are in RPI orientation
@@ -288,6 +289,7 @@ def find_file_within_folder(fname, directory):
 # get_dimension
 #=======================================================================================================================
 # Get dimensions of a nifti file using FSL
+#TODO: TO BE REMOVED
 def get_dimension(fname):
     # apply fslsize on data
     cmd = 'fslsize '+fname
@@ -318,6 +320,13 @@ def get_dimension(fname):
 # generate_output_file
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, verbose=1):
+    """
+    Generate output file. Only works for images (e.g., nifti, nifti_gz)
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
     # import stuff
     import shutil  # for moving files
     path_in, file_in, ext_in = extract_fname(fname_in)
@@ -335,17 +344,23 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Move file to output folder (keep the same extension as input)
-    shutil.move(fname_in, path_out+file_out+ext_in)
-    # convert to nii (only if necessary)
-    if ext_out == '.nii' and ext_in != '.nii':
-        os.system('fslchfiletype NIFTI '+path_out+file_out)
-    # convert to nii.gz (only if necessary)
-    if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-        os.system('fslchfiletype NIFTI_GZ '+path_out+file_out)
+    # Generate output file
+    from sct_convert import convert
+    convert(fname_in, fname_out)
+    # # Move file to output folder (keep the same extension as input)
+    # shutil.move(fname_in, path_out+file_out+ext_in)
+    # # convert to nii (only if necessary)
+    # if ext_out == '.nii' and ext_in != '.nii':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii.gz file
+    # # convert to nii.gz (only if necessary)
+    # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
+    #     convert(path_out+file_out+ext_in, path_out+file_out+ext_out)
+    #     os.remove(path_out+file_out+ext_in)  # remove nii file
     # display message
-    if verbose:
-        print '  File created: '+path_out+file_out+ext_out
+    printv('  File created: '+path_out+file_out+ext_out, verbose)
+    # if verbose:
+    #     print '  File created: '+path_out+file_out+ext_out
     return path_out+file_out+ext_out
 
 
@@ -378,6 +393,8 @@ def printv(string, verbose=1, type='normal'):
         color = bcolors.blue
     elif type == 'bold':
         color = bcolors.bold
+    elif type == 'process':
+        color = bcolors.purple
 
     # print message
     if verbose:
@@ -385,7 +402,10 @@ def printv(string, verbose=1, type='normal'):
 
     # if error, exit program
     if type == 'error':
-        #raise NameError('Error!')
+        from inspect import stack
+        frame,filename,line_number,function_name,lines,index = stack()[1]
+        # print(frame,filename,line_number,function_name,lines,index)
+        print(bcolors.red+filename+', line '+str(line_number)+bcolors.normal)  # print name of parent function
         sys.exit(2)
 
 

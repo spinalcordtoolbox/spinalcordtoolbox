@@ -1,11 +1,13 @@
 language: python
 python:
   - 2.7
+
+sudo: false
   
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
-    on_success: :change
-    on_failure: always
+    on_success:change
+    on_failure:always
 
 install:
 
@@ -21,14 +23,14 @@ install:
   - cd ../..
 
 # FSL
-  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-  - travis_retry sudo apt-get install -qq --no-install-recommends fsl
-  - travis_retry sudo apt-get install -qq fsl-atlases
-  - source /etc/fsl/fsl.sh
+#  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+#  - travis_retry sudo apt-get install -qq --no-install-recommends fsl
+#  - travis_retry sudo apt-get install -qq fsl-atlases
+#  - source /etc/fsl/fsl.sh
 
 # The next couple lines fix a crash with multiprocessing on Travis
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+#  - sudo rm -rf /dev/shm
+#  - sudo ln -s /run/shm /dev/shm
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"

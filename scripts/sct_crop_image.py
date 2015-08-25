@@ -136,7 +136,7 @@ class ImageCropper(object):
 
         # Get dimensions of data
         sct.printv('\nGet dimensions of data...', verbose)
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_data)
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_data).dim
         sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
         # check if 4D data
         if not nt == 1:
@@ -203,7 +203,11 @@ class ImageCropper(object):
 
         # crop image
         sct.printv('\nCrop image...', verbose)
-        sct.run(fsloutput+'fslroi data_rpi.nii data_rpi_crop.nii 0 -1 0 -1 '+str(zcrop[0])+' '+str(zcrop[1]-zcrop[0]+1))
+        nii = Image('data_rpi.nii')
+        data_crop = nii.data[:, :, zcrop[0]:zcrop[1]]
+        nii.data = data_crop
+        nii.setFileName('data_rpi_crop.nii')
+        nii.save()
 
         # come back to parent folder
         os.chdir('..')

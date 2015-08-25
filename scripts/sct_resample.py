@@ -21,6 +21,8 @@ import getopt
 import commands
 import sct_utils as sct
 import time
+from sct_convert import convert
+from msct_image import Image
 
 
 # DEFAULT PARAMETERS
@@ -82,7 +84,6 @@ def main():
 #=======================================================================================================================
 def resample():
 
-    dim = 4  # by default, will be adjusted later
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext = '.nii'
 
@@ -130,17 +131,18 @@ def resample():
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # convert fmri to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
+    # convert to nii format
+    convert('data'+ext_data, 'data.nii')
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
+    dim = 4  # by default, will be adjusted later
     if nt == 1:
-        dim == 3
+        dim = 3
     if nz == 1:
-        dim == 2
+        dim = 2
         sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
 
     # Calculate new dimensions
@@ -154,7 +156,8 @@ def resample():
     if dim == 4:
         # Split into T dimension
         sct.printv('\nSplit along T dimension...', param.verbose)
-        status, output = sct.run(fsloutput+'fslsplit data data_T', param.verbose)
+        from sct_split_data import split_data
+        split_data('data.nii', 3, '_T')
     elif dim == 3:
         # rename file to have compatible code with 4d
         status, output = sct.run('cp data.nii data_T0000.nii', param.verbose)
@@ -177,10 +180,9 @@ def resample():
     # merge data back along T
     file_data_resample = file_data+param.file_suffix
     sct.printv('\nMerge data back along T...', param.verbose)
-    cmd = fsloutput + 'fslmerge -t ' + file_data_resample
-    for it in range(nt):
-        cmd = cmd + ' ' + 'data_T'+str(it).zfill(4)+'r'
-    sct.run(cmd, param.verbose)
+    from sct_concat_data import concat_data
+    import glob
+    concat_data(glob.glob('data_T*r.nii'), file_data_resample, dim=3)
 
     # come back to parent folder
     os.chdir('..')

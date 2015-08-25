@@ -68,7 +68,6 @@ sct.run('mkdir '+folder_sct)
 # copy folders
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox')
 sct.run('cp installer.py '+folder_sct)
-sct.run('cp -r requirements '+folder_sct)
 sct.run('cp ../README.md '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
@@ -79,7 +78,8 @@ sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
 
 # install
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
-sct.run('cp -r ../install/create_links.sh '+folder_sct+'spinalcordtoolbox/install/')
+sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
+sct.run('cp -r ../install/requirements ' + folder_sct + 'spinalcordtoolbox/install/')
 
 # bin
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')

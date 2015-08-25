@@ -1,5 +1,8 @@
 # CHANGES TO RELEASE
 
+##(TBD)
+- BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
+
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
 
