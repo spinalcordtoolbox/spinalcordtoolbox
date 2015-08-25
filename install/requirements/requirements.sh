@@ -13,8 +13,8 @@ echo "-------------------------------"
 if which conda >/dev/null; then
     echo "* CONDA *"
     conda install --yes --file requirementsConda.txt
-    easy_install nibabel
-    pip install dipy
+    echo "* PIP *"
+    pip install -r requirementsPip.txt
 else
     echo "Conda is not installed"
     echo "Cannot install requirements "
