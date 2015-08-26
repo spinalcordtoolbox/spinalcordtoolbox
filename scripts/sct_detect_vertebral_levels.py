@@ -58,11 +58,15 @@ def get_parser():
                       description="Image contrast: t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
                       example=["t1", "t2"])
-    # parser.add_option(name="-seg",
-    #                   type_value="file",
-    #                   description="input image.",
-    #                   mandatory=True,
-    #                   example="segmentation.nii.gz")
+    parser.add_option(name="-initz",
+                      type_value=[[','], 'int'],
+                      description='Initialize labeling by providing slice number and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
+                      mandatory=False,
+                      example=['125,3'])
+    parser.add_option(name="-initcenter",
+                      type_value='int',
+                      description='Initialize labeling by providing the disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
+                      mandatory=False)
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -86,6 +90,10 @@ def get_parser():
 # ==========================================================================================
 def main(args=None):
 
+    # initializations
+    initz = ''
+    initcenter = ''
+
     # check user arguments
     if not args:
         args = sys.argv[1:]
@@ -100,6 +108,10 @@ def main(args=None):
         fname_out = arguments["-o"]
     else:
         fname_out = ''
+    if '-initz' in arguments:
+        initz = arguments['-initz']
+    if '-initcenter' in arguments:
+        initcenter = arguments['-initcenter']
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
@@ -116,6 +128,18 @@ def main(args=None):
     # Go go temp folder
     chdir(path_tmp)
 
+    # create label to identify disc
+    printv('\nCreate label to identify disc...', param.verbose)
+    if initz:
+        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    elif initcenter:
+        # find z centered in FOV
+        nii = Image(fname_seg)
+        nii.change_orientation('RPI')  # reorient to RPI
+        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+        z_center = int(round(nz/2))  # get z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', param.verbose)
     run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
@@ -127,9 +151,18 @@ def main(args=None):
     # Threshold segmentation to 0.5
     run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
 
-    init_disk = [144, 5]
+    # Apply straightening to z-label
+    printv('\nDilate z-label and apply straightening...', param.verbose)
+    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+
+    # get z value and disk value to initialize labeling
+    printv('\nGet z and disc values from straight label...', param.verbose)
+    init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+    printv('.. '+str(init_disc), param.verbose)
+
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', contrast, init_disk)
+    printv('\nDetect inter-vertebral discs and label vertebral levels...', param.verbose)
+    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', contrast, init_disc)
 
     # un-straighten spinal cord
     printv('\nUn-straighten labeling...', param.verbose)
@@ -163,7 +196,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, contrast, init_disk):
+def vertebral_detection(fname, fname_seg, contrast, init_disc):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 5  # mean around the centerline in the anterior-posterior direction in mm
@@ -216,6 +249,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disk):
     from scipy.signal import argrelextrema
     peaks = argrelextrema(I, np.greater, order=10)[0]
     nb_peaks = len(peaks)
+    printv('.. Number of peaks found: '+nb_peaks, verbose)
 
     if verbose == 2:
         plt.figure()
@@ -224,14 +258,13 @@ def vertebral_detection(fname, fname_seg, contrast, init_disk):
         plt.draw()
 
     # LABEL PEAKS
-    # build labeled peak vector (inverted order because vertebral level decreases when z increases)
-    labeled_peaks = np.array(range(nb_peaks+1, 1, -1)).astype(int)
+    labeled_peaks = np.array(range(nb_peaks, 0, -1)).astype(int)
     # find peak index closest to user input
-    peak_ind_closest = np.argmin(abs(peaks-init_disk[0]))
+    peak_ind_closest = np.argmin(abs(peaks-init_disc[0]))
     # build vector of peak labels
     # labeled_peaks = np.array(range(nb_peaks))
-    # add the difference between "peak_ind_closest" and the init_disk value
-    labeled_peaks = labeled_peaks - peak_ind_closest + init_disk[1]
+    # add the difference between "peak_ind_closest" and the init_disc value
+    labeled_peaks = init_disc[1] - labeled_peaks[peak_ind_closest] + labeled_peaks
 
     # REMOVE WRONG LABELS (ASSUMING NO PEAK IS VISIBLE ABOVE C2/C3 DISK)
     ind_true_labels = np.where(labeled_peaks>1)[0]
@@ -245,6 +278,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disk):
         printv('\nC2 disk is present. Adding C1 labeling based on template.')
         peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
         labeled_peaks = np.append(labeled_peaks, 1)
+    printv('.. Labeled peaks: '+str(labeled_peaks), verbose)
 
     # LABEL SEGMENTATION
     # open segmentation
@@ -269,6 +303,52 @@ def vertebral_detection(fname, fname_seg, contrast, init_disk):
     # WRITE LABELED SEGMENTATION
     seg.file_name += '_labeled'
     seg.save()
+
+
+# Create label
+# ==========================================================================================
+def create_label_z(fname_seg, z, value):
+    """
+    Create a label at coordinates x_center, y_center, z
+    :param fname_seg: segmentation
+    :param z: int
+    :return: fname_label
+    """
+    fname_label = 'labelz.nii.gz'
+    nii = Image(fname_seg)
+    nii.change_orientation('RPI')  # change orientation to RPI
+    nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+    # find x and y coordinates of the centerline at z using center of mass
+    from scipy.ndimage.measurements import center_of_mass
+    x, y = center_of_mass(nii.data[:, :, z])
+    x, y = int(round(x)), int(round(y))
+    nii.data[:, :, :] = 0
+    nii.data[x, y, z] = value
+    # dilate label to prevent it from disappearing due to nearestneighbor interpolation
+    from sct_maths import dilate
+    nii.data = dilate(nii.data, 3) * value  # multiplies by value because output of dilation is binary
+    nii.setFileName(fname_label)
+    nii.save()
+    return fname_label
+
+
+# Get z and label value
+# ==========================================================================================
+def get_z_and_disc_values_from_label(fname_label):
+    """
+    Find z-value and label-value based on labeled image
+    :param fname_label: image that contains label
+    :return: [z_label, value_label] int list
+    """
+    nii = Image(fname_label)
+    # get center of mass of label
+    from scipy.ndimage.measurements import center_of_mass
+    x_label, y_label, z_label = center_of_mass(nii.data)
+    x_label, y_label, z_label = int(round(x_label)), int(round(y_label)), int(round(z_label))
+    # get label value
+    value_label = int(nii.data[x_label, y_label, z_label])
+    return [z_label, value_label]
+
 
 
 # START PROGRAM
