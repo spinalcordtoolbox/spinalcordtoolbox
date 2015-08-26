@@ -249,7 +249,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
     from scipy.signal import argrelextrema
     peaks = argrelextrema(I, np.greater, order=10)[0]
     nb_peaks = len(peaks)
-    printv('.. Number of peaks found: '+nb_peaks, verbose)
+    printv('.. Number of peaks found: '+str(nb_peaks), verbose)
 
     if verbose == 2:
         plt.figure()
@@ -275,10 +275,10 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
     distance_c1_c2 = 20.8300/pz  # in mm
     # check if C2 disk is there
     if np.min(labeled_peaks) == 2:
-        printv('\nC2 disk is present. Adding C1 labeling based on template.')
+        printv('.. C2 disk is present. Adding C2 vertebrae based on template...')
         peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
         labeled_peaks = np.append(labeled_peaks, 1)
-    printv('.. Labeled peaks: '+str(labeled_peaks), verbose)
+    printv('.. Labeled peaks: '+str(labeled_peaks[:-1]), verbose)
 
     # LABEL SEGMENTATION
     # open segmentation
