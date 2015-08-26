@@ -15,10 +15,11 @@
 # from msct_base_classes import BaseScript
 import sys
 from os import chdir
+from time import strftime
 
 import numpy as np
 
-from sct_utils import extract_fname, printv
+from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
 from msct_parser import Parser
 from msct_image import Image
 
@@ -26,6 +27,7 @@ from msct_image import Image
 class Param:
     def __init__(self):
         self.verbose = '1'
+        self.remove_tmp_files = '1'
 
 
 # class Script(BaseScript):
@@ -61,6 +63,12 @@ def get_parser():
     #                   description="input image.",
     #                   mandatory=True,
     #                   example="segmentation.nii.gz")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="Remove temporary files.",
+                      mandatory=False,
+                      default_value=param.remove_tmp_files,
+                      example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -93,42 +101,63 @@ def main(args=None):
     else:
         fname_out = ''
     param.verbose = int(arguments['-v'])
+    param.remove_tmp_files = int(arguments['-r'])
 
-    # # create temporary folder
-    # printv('\nCreate temporary folder...', param.verbose)
-    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    # run('mkdir '+path_tmp, param.verbose)
-    #
-    # # Copying input data to tmp folder
-    # printv('\nCopying input data to tmp folder...', param.verbose)
-    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # create temporary folder
+    printv('\nCreate temporary folder...', param.verbose)
+    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    run('mkdir '+path_tmp, param.verbose)
+
+    # Copying input data to tmp folder
+    printv('\nCopying input data to tmp folder...', param.verbose)
+    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    path_tmp = '/Users/julien/data/sct_debug/tmp.150825142815'
     chdir(path_tmp)
 
-    # # Straighten spinal cord
-    # printv('\nStraighten spinal cord...', param.verbose)
-    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-    #
-    # # Apply straightening to segmentation
-    # # N.B. Output is RPI
-    # printv('\nApply straightening to segmentation...', param.verbose)
-    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # Straighten spinal cord
+    printv('\nStraighten spinal cord...', param.verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+
+    # Apply straightening to segmentation
+    # N.B. Output is RPI
+    printv('\nApply straightening to segmentation...', param.verbose)
+    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # Threshold segmentation to 0.5
+    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
 
     init_disk = [144, 5]
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', contrast, init_disk)
 
     # un-straighten spinal cord
+    printv('\nUn-straighten labeling...', param.verbose)
+    run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
-    # find missing labels
+    # clean labeled segmentation
+    # TODO: (i) find missing voxels wrt. original segmentation, and attribute value closest to neighboring label and (ii) remove additional voxels.
 
     # Build fname_out
     if fname_out == '':
-        path_in, file_in, ext_in = extract_fname(fname_in)
-        fname_out = path_in+file_in+'_mean'+ext_in
+        path_seg, file_seg, ext_seg = extract_fname(fname_seg)
+        fname_out = path_seg+file_seg+'_labeled'+ext_seg
+
+    # come back to parent folder
+    chdir('..')
+
+    # Generate output files
+    printv('\nGenerate output files...', param.verbose)
+    generate_output_file(path_tmp+'segmentation_labeled.nii.gz', fname_out)
+
+    # Remove temporary files
+    if param.remove_tmp_files == 1:
+        printv('\nRemove temporary files...', param.verbose)
+        run('rm -rf '+path_tmp)
+
+    # to view results
+    printv('\nDone! To view results, type:', param.verbose)
+    printv('fslview '+fname_in+' '+fname_out+' &\n', param.verbose, 'info')
 
 
 
