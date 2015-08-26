@@ -828,7 +828,7 @@ class TargetSegmentationPairwise:
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
                     target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, save=True, output='metric_in_target.txt')
                     print 'USE AVERAGED TARGET METRIC'
-                    target_metric = [np.mean(target_metric, axis=0) for i in range(len(self.target))]
+                    target_metric = [np.mean(target_metric.values(), axis=0) for i in range(len(self.target))]
 
                     '''
                     target_metric_by_level = {}
