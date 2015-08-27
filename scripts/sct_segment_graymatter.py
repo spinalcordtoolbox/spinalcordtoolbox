@@ -181,9 +181,9 @@ class FullGmSegmentation:
             old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
-                sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
+                # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
                 # WARNING: until sct_maths -thr option is changed, this will output a binary segmentation
-                # sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
+                sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
 
@@ -281,7 +281,8 @@ class FullGmSegmentation:
             sct.run('isct_c3d ' + res_gm_seg_bin.file_name + ext + ' ' + im_ref_gm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
             # sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             sct.run('sct_maths -i ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
-            sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            # sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            sct.run('sct_maths -i ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
         try:
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
@@ -289,7 +290,8 @@ class FullGmSegmentation:
             sct.run('isct_c3d ' + res_wm_seg_bin.file_name + ext + ' ' + im_ref_wm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             # sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             sct.run('sct_maths -i ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
-            sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            # sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            sct.run('sct_maths -i ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
