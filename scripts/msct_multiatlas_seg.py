@@ -38,6 +38,7 @@ class Param:
         self.path_dictionary = None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
         self.todo_model = None  # 'compute'
         self.model_dir = './gm_seg_model_data'
+        self.output_name = ''
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.reg_metric = 'MI'
         self.target_denoising = True
@@ -58,6 +59,7 @@ class Param:
         s += 'path_dictionary: ' + str(self.path_dictionary) + '\n'
         s += 'todo_model: ' + str(self.todo_model) + '\n'
         s += 'model_dir: ' + str(self.model_dir) + '\n'
+        s += 'output_name: ' + str(self.output_name) + '\n'
         s += 'reg: ' + str(self.reg) + '\n'
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
         s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***\n'
@@ -808,7 +810,7 @@ class TargetSegmentationPairwise:
         Normalization of the target using the intensity values of the mean dictionary image
         :return None: the target image is modified
         """
-        sct.printv('Linear normalization using '+method, self.model.param.verbose, 'normal')
+        sct.printv('Linear target normalization using '+method+' ...', self.model.param.verbose, 'normal')
 
         if method == 'mean' or method == 'median':
             dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, metric=method, save=True)
@@ -1105,28 +1107,34 @@ sct_Image
             self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image)
 
         # get & save the result gray matter segmentation
-        suffix = '_'
-        suffix += '_' + gm_seg_param.res_type
-        for transfo in self.model.dictionary.coregistration_transfos:
-            suffix += '_' + transfo
-        if self.model.param.use_levels:
-            suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
-        else:
-            suffix += '_no_levels'
-        if self.model.param.z_regularisation:
-            suffix += '_Zregularisation'
-        if self.model.param.target_normalization:
-            suffix += '_normalized'
+        if gm_seg_param.output_name == '':
+            suffix = ''
+            suffix += '_' + gm_seg_param.res_type
+            for transfo in self.model.dictionary.coregistration_transfos:
+                suffix += '_' + transfo
+            if self.model.param.use_levels:
+                suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
+            else:
+                suffix += '_no_levels'
+            if self.model.param.z_regularisation:
+                suffix += '_Zregularisation'
+            if self.model.param.target_normalization:
+                suffix += '_normalized'
 
-        name_res_wmseg = sct.extract_fname(target_fname)[1] + '_res_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
-        name_res_gmseg = sct.extract_fname(target_fname)[1] + '_res_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
+            name_res_wmseg = sct.extract_fname(target_fname)[1] + '_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
+            name_res_gmseg = sct.extract_fname(target_fname)[1] + '_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
+            ext = sct.extract_fname(target_fname)[2]
+        else:
+            name_res_wmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_wmseg'
+            name_res_gmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_gmseg'
+            ext = sct.extract_fname(gm_seg_param.output_name)[2]
 
         if len(self.target_seg_methods.target) == 1:
-            self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg), absolutepath=name_res_wmseg + '.nii.gz')
-            self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg), absolutepath=name_res_gmseg + '.nii.gz')
+            self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg), absolutepath=name_res_wmseg + ext)
+            self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg), absolutepath=name_res_gmseg + ext)
         else:
-            self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_wmseg + '.nii.gz')
-            self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_gmseg + '.nii.gz')
+            self.res_wm_seg = Image(param=np.asarray([target_slice.wm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_wmseg + ext)
+            self.res_gm_seg = Image(param=np.asarray([target_slice.gm_seg for target_slice in self.target_seg_methods.target]), absolutepath=name_res_gmseg + ext)
 
         self.res_wm_seg.hdr = original_hdr
         self.res_wm_seg.file_name = name_res_wmseg
@@ -1176,6 +1184,11 @@ if __name__ == "__main__":
                                       "if -i isn't used, only the model is computed/loaded",
                           mandatory=False,
                           example='t2star.nii.gz')
+        parser.add_option(name="-o",
+                          type_value="str",
+                          description="output name for the results",
+                          mandatory=False,
+                          example='t2star_res.nii.gz')
         parser.add_option(name="-dic",
                           type_value="folder",
                           description="Path to the dictionary of images",
@@ -1275,6 +1288,8 @@ if __name__ == "__main__":
 
         if "-i" in arguments:
             input_target_fname = arguments["-i"]
+        if "-o" in arguments:
+            param.output_name = arguments["-o"]
         if "-reg" in arguments:
             param.reg = arguments["-reg"]
         if "-l" in arguments:
