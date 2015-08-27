@@ -21,7 +21,10 @@ import time
 import commands
 import numpy
 import sct_utils as sct
-
+from msct_image import Image
+# from sct_concat_data import concat_data
+# import glob
+# from sct_average_data_across_dimension import average_data_across_dimension
 
 class Param:
     def __init__(self):
@@ -114,9 +117,11 @@ def main():
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
-    # copy files into tmp folder
+    # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
-    sct.run('cp '+fname_data+' '+path_tmp+'dmri'+ext_data, verbose)
+    from sct_convert import convert
+    if not convert(fname_data, path_tmp+'dmri.nii'):
+        sct.printv('ERROR in convert.', 1, 'error')
     sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
 
     # go to tmp folder
@@ -124,7 +129,7 @@ def main():
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('dmri'+ext_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image('dmri.nii').dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images
@@ -132,31 +137,39 @@ def main():
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    sct.run(fsloutput+' fslsplit dmri dmri_T', verbose)
+    from sct_split_data import split_data
+    if not split_data('dmri.nii', 3, '_T'):
+        sct.printv('ERROR in split_data.', 1, 'error')
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = fsloutput + 'fslmerge -t b0'
-    for iT in range(nb_b0):
-        cmd = cmd + ' dmri_T' + str(index_b0[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_concat_data -dim t -o b0.nii -i '
+    for it in range(nb_b0):
+        cmd = cmd + 'dmri_T' + str(index_b0[it]).zfill(4) + '.nii,'
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    status, output = sct.run(cmd, param.verbose)
 
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run(fsloutput + 'fslmaths b0 -Tmean b0_mean', verbose)
+        sct.run('sct_maths -i b0.nii -o b0_mean.nii -mean t', verbose)
 
     # Merge DWI
     sct.printv('\nMerge DWI...', verbose)
-    cmd = fsloutput + 'fslmerge -t dwi'
-    for iT in range(nb_dwi):
-        cmd = cmd + ' dmri_T' + str(index_dwi[iT]).zfill(4)
-    sct.run(cmd, verbose)
+    cmd = 'sct_concat_data -dim t -o dwi.nii -i '
+    for it in range(nb_dwi):
+        cmd = cmd + 'dmri_T' + str(index_dwi[it]).zfill(4) + '.nii,'
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    status, output = sct.run(cmd, param.verbose)
+
 
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
+        sct.run('sct_maths -i dwi.nii -o dwi_mean.nii -mean t', verbose)
+        # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
+        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
 
     # come back to parent folder
     os.chdir('..')
