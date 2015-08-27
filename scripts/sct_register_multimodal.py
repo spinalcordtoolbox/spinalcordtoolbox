@@ -386,9 +386,22 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_image import find_zmin_zmax
         # threshold images (otherwise, automatic crop does not work -- see issue #293)
         src_th = sct.add_suffix(src, '_th')
-        sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
+        from msct_image import Image
+        nii = Image(src)
+        data = nii.data
+        data[data < 0.1] = 0
+        nii.data = data
+        nii.setFileName(src_th)
+        nii.save()
+        # sct.run(fsloutput+'fslmaths '+src+' -thr 0.1 '+src_th, param.verbose)
         dest_th = sct.add_suffix(dest, '_th')
-        sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
+        nii = Image(dest)
+        data = nii.data
+        data[data < 0.1] = 0
+        nii.data = data
+        nii.setFileName(dest_th)
+        nii.save()
+        # sct.run(fsloutput+'fslmaths '+dest+' -thr 0.1 '+dest_th, param.verbose)
         # find zmin and zmax
         zmin_src, zmax_src = find_zmin_zmax(src_th)
         zmin_dest, zmax_dest = find_zmin_zmax(dest_th)

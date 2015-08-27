@@ -14,13 +14,14 @@
 #########################################################################################
 
 
+#import sct_utils as sct
 import commands
 
 
 def test(path_data):
     folder_data = ['t2/', 'template/', 't2/label/template/']
     file_data = ['t2.nii.gz', 'labels.nii.gz', 't2_seg.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']
-    dice_threshold = 0.9
+    dice_threshold = 0.85
 
     cmd = 'sct_register_to_template -i ' + path_data + folder_data[0] + file_data[0] \
           + ' -l ' + path_data + folder_data[0] + file_data[1] \
@@ -41,17 +42,17 @@ def test(path_data):
         status1, output1 = commands.getstatusoutput(cmd)
         # parse output and compare to acceptable threshold
         if float(output1.split('3D Dice coefficient = ')[1]) < dice_threshold:
-            status1 = 5
+            status1 = 99
         # compute dice coefficient between segmentation from anat warped into template and template segmentation
         # N.B. here we use -bmax because the FOV of the anat is smaller than the template
         cmd = 'sct_dice_coefficient ' + path_data + folder_data[1] + file_data[3] + ' test_anat2template.nii.gz -bmax'
         status2, output2 = commands.getstatusoutput(cmd)
         # parse output and compare to acceptable threshold
         if float(output2.split('3D Dice coefficient = ')[1]) < dice_threshold:
-            status2 = 5
+            status2 = 99
         # check if at least one integrity status was equal to 5
         if status1 == 5 or status2 == 5:
-            status = 5
+            status = 99
         # concatenate outputs
         output = output1+output2
 
