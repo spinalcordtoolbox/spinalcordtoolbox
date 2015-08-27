@@ -155,8 +155,8 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 class SpinalCordStraightener(object):
 
     def __init__(self, input_filename, centerline_filename, debug=0, deg_poly=10, gapxy=30, gapz=15, padding=30,
-                 interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning', type_window='hanning',
-                 window_length=50, crop=1, output_filename=''):
+                 leftright_width=150, interpolation_warp='spline', rm_tmp_files=1, verbose=1, algo_fitting='hanning',
+                 type_window='hanning', window_length=50, crop=1, output_filename=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -166,6 +166,7 @@ class SpinalCordStraightener(object):
         self.gapz = gapz  # gap between landmarks along z voxels
         self.padding = padding  # pad input volume in order to deal with the fact that some landmarks might be outside
         # the FOV due to the curvature of the spinal cord
+        self.leftright_width = leftright_width
         self.interpolation_warp = interpolation_warp
         self.remove_temp_files = rm_tmp_files  # remove temporary files
         self.verbose = verbose
@@ -213,6 +214,8 @@ class SpinalCordStraightener(object):
 
                 # set y coordinate to y_centerline_fit[iz] for elements 1 and 2 of the cross
                 cross_coordinates = [Coordinate(), Coordinate(), Coordinate(), Coordinate(),
+                                     Coordinate(), Coordinate(), Coordinate(), Coordinate(),
+                                     Coordinate(), Coordinate(), Coordinate(), Coordinate(),
                                      Coordinate(), Coordinate(), Coordinate(), Coordinate()]
 
                 cross_coordinates[0].y = y_centerline_fit[iz]
@@ -264,6 +267,56 @@ class SpinalCordStraightener(object):
                 cross_coordinates[6].z = (-1 / c) * (a * cross_coordinates[6].x + b * (y - self.gapxy) + d)  # z for +x
                 cross_coordinates[7].z = (-1 / c) * (a * cross_coordinates[7].x + b * (y - self.gapxy) + d)  # z for -x
 
+                gapxy = self.gapxy/2
+                cross_coordinates[8].y = y_centerline_fit[iz]
+                cross_coordinates[9].y = y_centerline_fit[iz]
+
+                # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
+                # and the distance landmark/curve to be gapxy
+                x_n = Symbol('x_n')
+                cross_coordinates[9].x, cross_coordinates[8].x = solve((x_n - x) ** 2 +
+                                                                       ((-1 / c) * (a * x_n + b * y + d) - z) ** 2 -
+                                                                       gapxy ** 2, x_n)  # x for -x and +x
+                cross_coordinates[8].z = (-1 / c) * (a * cross_coordinates[8].x + b * y + d)  # z for +x
+                cross_coordinates[9].z = (-1 / c) * (a * cross_coordinates[9].x + b * y + d)  # z for -x
+
+                # set x coordinate to x_centerline_fit[iz] for elements 3 and 4 of the cross
+                cross_coordinates[10].x = x_centerline_fit[iz]
+                cross_coordinates[11].x = x_centerline_fit[iz]
+
+                # set coordinates for landmarks +y and -y. Here, x coordinate is 0 (already initialized).
+                y_n = Symbol('y_n')
+                cross_coordinates[11].y, cross_coordinates[10].y = solve((y_n - y) ** 2 +
+                                                                       ((-1 / c) * (a * x + b * y_n + d) - z) ** 2 -
+                                                                       gapxy ** 2, y_n)  # y for -y and +y
+                cross_coordinates[10].z = (-1 / c) * (a * x + b * cross_coordinates[10].y + d)  # z for +y
+                cross_coordinates[11].z = (-1 / c) * (a * x + b * cross_coordinates[11].y + d)  # z for -y
+
+
+                # set the first corner
+                cross_coordinates[12].y = y_centerline_fit[iz] + gapxy
+                cross_coordinates[13].y = y_centerline_fit[iz] + gapxy
+
+                # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
+                # and the distance landmark/curve to be gapxy
+                cross_coordinates[13].x, cross_coordinates[12].x = solve((x_n - x) ** 2 +
+                                                                       ((-1 / c) * (a * x_n + b * (y + gapxy) + d)
+                                                                        - z) ** 2 - gapxy ** 2, x_n)
+                cross_coordinates[12].z = (-1 / c) * (a * cross_coordinates[12].x + b * (y + gapxy) + d)  # z for +x
+                cross_coordinates[13].z = (-1 / c) * (a * cross_coordinates[13].x + b * (y + gapxy) + d)  # z for -x
+
+                # set the other corner
+                cross_coordinates[14].y = y_centerline_fit[iz] - gapxy
+                cross_coordinates[15].y = y_centerline_fit[iz] - gapxy
+
+                # set x and z coordinates for landmarks +x and -x, forcing de landmark to be in the orthogonal plan
+                # and the distance landmark/curve to be gapxy
+                cross_coordinates[15].x, cross_coordinates[14].x = solve((x_n - x) ** 2 +
+                                                                       ((-1 / c) * (a * x_n + b * (y - gapxy) + d)
+                                                                        - z) ** 2 - gapxy ** 2, x_n)
+                cross_coordinates[14].z = (-1 / c) * (a * cross_coordinates[14].x + b * (y - gapxy) + d)  # z for +x
+                cross_coordinates[15].z = (-1 / c) * (a * cross_coordinates[15].x + b * (y - gapxy) + d)  # z for -x
+
                 for coord in cross_coordinates:
                     temp_results.append(coord)
             else:
@@ -297,6 +350,7 @@ class SpinalCordStraightener(object):
         gapxy = self.gapxy
         gapz = self.gapz
         padding = self.padding
+        leftright_width = self.leftright_width
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
         interpolation_warp = self.interpolation_warp
@@ -488,7 +542,26 @@ class SpinalCordStraightener(object):
                     landmark_straight.append(Coordinate([x0 + gapxy, y0 - gapxy, z0, landmark_curved_value + 7]))
                     # set x, y and z coordinates for landmarks -x-y
                     landmark_straight.append(Coordinate([x0 - gapxy, y0 - gapxy, z0, landmark_curved_value + 8]))
-                    landmark_curved_value += 9
+
+                    # internal crosses
+                    gapxy_internal = gapxy/2
+                    # set x, y and z coordinates for landmarks +x
+                    landmark_straight.append(Coordinate([x0 + gapxy_internal, y0, z0, landmark_curved_value + 9]))
+                    # set x, y and z coordinates for landmarks -x
+                    landmark_straight.append(Coordinate([x0 - gapxy_internal, y0, z0, landmark_curved_value + 10]))
+                    # set x, y and z coordinates for landmarks +y
+                    landmark_straight.append(Coordinate([x0, y0 + gapxy_internal, z0, landmark_curved_value + 11]))
+                    # set x, y and z coordinates for landmarks -y
+                    landmark_straight.append(Coordinate([x0, y0 - gapxy_internal, z0, landmark_curved_value + 12]))
+                    # set x, y and z coordinates for landmarks +x+y
+                    landmark_straight.append(Coordinate([x0 + gapxy_internal, y0 + gapxy_internal, z0, landmark_curved_value + 13]))
+                    # set x, y and z coordinates for landmarks -x+y
+                    landmark_straight.append(Coordinate([x0 - gapxy_internal, y0 + gapxy_internal, z0, landmark_curved_value + 14]))
+                    # set x, y and z coordinates for landmarks +x-y
+                    landmark_straight.append(Coordinate([x0 + gapxy_internal, y0 - gapxy_internal, z0, landmark_curved_value + 15]))
+                    # set x, y and z coordinates for landmarks -x-y
+                    landmark_straight.append(Coordinate([x0 - gapxy_internal, y0 - gapxy_internal, z0, landmark_curved_value + 16]))
+                    landmark_curved_value += 17
                 elif self.all_labels >= 1:
                     z0 = (z_centerline[iz] - middle_slice) * factor_curved_straight + middle_slice
                     landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
@@ -500,8 +573,11 @@ class SpinalCordStraightener(object):
             # outside the FOV
             # N.B. IT IS VERY IMPORTANT TO PAD ALSO ALONG X and Y, OTHERWISE SOME LANDMARKS MIGHT GET OUT OF THE FOV!!!
             sct.printv('\nPad input volume to account for landmarks that fall outside the FOV...', verbose)
-            sct.run("isct_c3d " + fname_centerline_orient + " -pad " + str(padding) + "x" + str(padding) + "x" +
-                    str(padding) + "vox " + str(padding) + "x" + str(padding) + "x" + str(padding) +
+            padding_x, padding_y, padding_z = padding, padding, padding
+            if nx + padding <= leftright_width:
+                padding_x = leftright_width - padding - nx
+            sct.run("isct_c3d " + fname_centerline_orient + " -pad " + str(padding_x) + "x" + str(padding_y) + "x" +
+                    str(padding_z) + "vox " + str(padding_x) + "x" + str(padding_y) + "x" + str(padding_z) +
                     "vox 0 -o tmp.centerline_pad.nii.gz", verbose)
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
@@ -552,15 +628,15 @@ class SpinalCordStraightener(object):
                               int(round(landmark_curved[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_curved_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                                          z + padding - 1:z + padding + 2] = landmark_curved[index].value
+                    data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                                          z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                     # get x, y and z coordinates of curved landmark (rounded to closest integer)
                     x, y, z = int(round(landmark_curved_rigid[index].x)), int(round(landmark_curved_rigid[index].y)),\
                               int(round(landmark_curved_rigid[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_curved_rigid_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
+                    data_curved_rigid_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
                                                 z + padding - 1:z + padding + 2] = landmark_curved_rigid[index].value
 
                     # get x, y and z coordinates of straight landmark (rounded to closest integer)
@@ -568,8 +644,8 @@ class SpinalCordStraightener(object):
                               int(round(landmark_straight[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_straight_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                                            z + padding - 1:z + padding + 2] = landmark_straight[index].value
+                    data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding - 1:y + padding + 2,
+                                            z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
                 # Write NIFTI volumes
                 sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -634,17 +710,16 @@ class SpinalCordStraightener(object):
                               int(round(landmark_curved[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_curved_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                    z + padding - 1:z + padding + 2] = landmark_curved[index].value
+                    data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                    z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                     # get x, y and z coordinates of straight landmark (rounded to closest integer)
                     x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
                               int(round(landmark_straight[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_straight_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                    z + padding - 1:z + padding + 2] = landmark_straight[index].value
-
+                    data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                    z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
                 # Write NIFTI volumes
                 sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -666,16 +741,16 @@ class SpinalCordStraightener(object):
                               int(round(landmark_curved[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_curved_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                                          z + padding - 1:z + padding + 2] = landmark_curved[index].value
+                    data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                                          z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                     # get x, y and z coordinates of straight landmark (rounded to closest integer)
                     x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
                               int(round(landmark_straight[index].z))
 
                     # attribute landmark_value to the voxel and its neighbours
-                    data_straight_landmarks[x + padding - 1:x + padding + 2, y + padding - 1:y + padding + 2,
-                                            z + padding - 1:z + padding + 2] = landmark_straight[index].value
+                    data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                                            z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
                 # Write NIFTI volumes
                 sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -762,14 +837,14 @@ class SpinalCordStraightener(object):
                     landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
                     for i in landmark_straight:
                         landmark_straight_file.write(
-                            str(i.x + padding) + "," + str(i.y + padding) + "," + str(i.z + padding) + "\n")
+                            str(i.x + padding_x) + "," + str(i.y + padding_y) + "," + str(i.z + padding_z) + "\n")
                     landmark_straight_file.close()
 
                     # Writing landmark curve in text file
                     landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
                     for i in landmark_curved_rigid:
                         landmark_curved_file.write(
-                            str(i.x + padding) + "," + str(i.y + padding) + "," + str(i.z + padding) + "\n")
+                            str(i.x + padding_x) + "," + str(i.y + padding_y) + "," + str(i.z + padding_z) + "\n")
                     landmark_curved_file.close()
 
                     # Estimate b-spline transformation curve --> straight
@@ -788,18 +863,18 @@ class SpinalCordStraightener(object):
                     landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
                     for i in landmark_straight:
                         landmark_straight_file.write(
-                            str(i.x + padding) + "," +
-                            str(i.y + padding) + "," +
-                            str(i.z + padding) + "\n")
+                            str(i.x + padding_x) + "," +
+                            str(i.y + padding_y) + "," +
+                            str(i.z + padding_z) + "\n")
                     landmark_straight_file.close()
 
                     # Writing landmark curve in text file
                     landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
                     for i in landmark_curved:
                         landmark_curved_file.write(
-                            str(i.x + padding) + "," +
-                            str(i.y + padding) + "," +
-                            str(i.z + padding) + "\n")
+                            str(i.x + padding_x) + "," +
+                            str(i.y + padding_y) + "," +
+                            str(i.z + padding_z) + "\n")
                     landmark_curved_file.close()
 
                     # Estimate b-spline transformation curve --> straight
@@ -890,6 +965,8 @@ class SpinalCordStraightener(object):
                       "-tmp.curve2straight_rigid1.txt -d " + file_anat + ext_anat + " -o tmp.straight2curve.nii.gz"
             else:
                 if self.algo_landmark_rigid == 'euler':
+                    #cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
+                    #      " tmp.warp_straight2curve.nii.gz tmp.straight2curve_rigid.txt"
                     cmd = "isct_ComposeMultiTransform 3 tmp.straight2curve.nii.gz -R " + file_anat + ext_anat + \
                           " tmp.warp_straight2curve.nii.gz tmp.straight2curve_rigid.txt"
                 else:
@@ -1046,7 +1123,9 @@ if __name__ == "__main__":
                                   "Default=3"
                                   "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
                                   "\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} "
-                                  "constraints on landmark-based rigid pre-registration",
+                                  "constraints on landmark-based rigid pre-registration"
+                                  "\nleftright_width: <int> Width of padded image in left-right direction. Can be set "
+                                  "improve warping field of straightening. Default=150.",
                       mandatory=False,
                       example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
 
@@ -1104,5 +1183,7 @@ if __name__ == "__main__":
                 sc_straight.use_continuous_labels = int(param_split[1])
             elif param_split[0] == 'gapz':
                 sc_straight.gapz = int(param_split[1])
+            elif param_split[0] == 'leftright_width':
+                sc_straight.leftright_width = int(param_split[1])
 
     sc_straight.straighten()

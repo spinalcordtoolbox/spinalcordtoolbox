@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sys
+
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import extract_fname, printv
@@ -43,6 +44,18 @@ def get_parser():
                       description='Output file.',
                       mandatory=True,
                       example=['data_mean.nii.gz'])
+    parser.usage.addSection("\nMathematical morphology")
+    parser.add_option(name='-dilate',
+                      type_value='int',
+                      description='Dilate binary image using specified ball radius.',
+                      mandatory=False,
+                      example="")
+    parser.add_option(name='-erode',
+                      type_value='int',
+                      description='Erode binary image using specified ball radius.',
+                      mandatory=False,
+                      example="")
+    parser.usage.addSection("\nThresholding methods")
     parser.add_option(name='-otsu',
                       type_value='int',
                       description='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
@@ -50,7 +63,7 @@ def get_parser():
                       example="")
     parser.add_option(name="-otsu_adap",
                       type_value=[[','], 'int'],
-                      description="Threshold image using Adaptive Otsu algorithm.\nblock_size:\noffset:\n",
+                      description="Threshold image using Adaptive Otsu algorithm.\nblock_size:\noffset:",
                       mandatory=False,
                       example="")
     parser.add_option(name="-otsu_median",
@@ -67,6 +80,10 @@ def get_parser():
                       description='Use following number to threshold image (zero below number).',
                       mandatory=False,
                       example="")
+    parser.usage.addSection("\nBasic operations")
+    parser.add_option(name="-bin",
+                      description='Use (input image>0) to binarise.',
+                      mandatory=False)
     parser.add_option(name='-mean',
                       type_value='multiple_choice',
                       description='Average data across dimension.',
@@ -77,6 +94,7 @@ def get_parser():
                       description='Compute STD across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.usage.addSection("\nMisc")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -127,12 +145,18 @@ def main(args = None):
     elif '-percent' in arguments:
         param = arguments['-percent']
         data_out = perc(data, param)
+    elif '-bin' in arguments:
+        data_out = binarise(data)
     elif '-mean' in arguments:
         dim = dim_list.index(arguments['-mean'])
         data_out = compute_mean(data, dim)
     elif '-std' in arguments:
         dim = dim_list.index(arguments['-std'])
         data_out = compute_std(data, dim)
+    elif '-dilate' in arguments:
+        data_out = dilate(data, arguments['-dilate'])
+    elif '-erode' in arguments:
+        data_out = erode(data, arguments['-dilate'])
     else:
         printv('No process applied.', 1, 'warning')
         return
@@ -153,7 +177,8 @@ def otsu(data, nbins):
 
 
 def otsu_adap(data, block_size, offset):
-    from skimage.filters import threshold_adaptive, threshold_otsu
+    from skimage.filters import threshold_adaptive
+
     mask = data
     for iz in range(data.shape[2]):
         mask[:, :, iz] = threshold_adaptive(data[:, :, iz], block_size, offset)
@@ -168,13 +193,18 @@ def otsu_median(data, size, n_iter):
 
 
 def threshold(data, thr_value):
-    return data > thr_value
+    data[data < thr_value] = 0
+    return data
 
 
 def perc(data, perc_value):
     from numpy import percentile
     perc = percentile(data, perc_value)
     return data > perc
+
+
+def binarise(data):
+    return data > 0
 
 
 def compute_mean(data, dim):
@@ -185,6 +215,30 @@ def compute_mean(data, dim):
 def compute_std(data, dim):
     from numpy import std
     return std(data, dim)
+
+
+def dilate(data, radius):
+    """
+    Dilate data using ball structuring element
+    :param data: 2d or 3d array
+    :param radius: radius of structuring element
+    :return: data dilated
+    """
+    from skimage.morphology import binary_dilation, ball
+    selem = ball(radius)
+    return binary_dilation(data, selem=selem, out=None)
+
+
+def erode(data, radius):
+    """
+    Erode data using ball structuring element
+    :param data: 2d or 3d array
+    :param radius: radius of structuring element
+    :return: data eroded
+    """
+    from skimage.morphology import binary_erosion, ball
+    selem = ball(radius)
+    return binary_erosion(data, selem=selem, out=None)
 
 
     # # random_walker
