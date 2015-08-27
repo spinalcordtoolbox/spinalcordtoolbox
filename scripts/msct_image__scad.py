@@ -12,33 +12,24 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: update function to reflect the new get_dimension
-
 class Image(object):
     """
 
     """
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
-        from numpy import zeros, ndarray, generic
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1, split=False):
+        from numpy import zeros, ndarray, generic, array
         from sct_utils import extract_fname
-        from nibabel import AnalyzeHeader
 
         # initialization of all parameters
-        self.verbose = verbose
         self.data = None
+        self.hdr = None
         self.orientation = None
         self.absolutepath = ""
         self.path = ""
         self.file_name = ""
         self.ext = ""
-        if hdr == None:
-            hdr = AnalyzeHeader()
-            self.hdr = AnalyzeHeader() # an empty header
-        else:
-            self.hdr = hdr
-
         self.dim = None
-
+        self.pixdim = None
         self.verbose = verbose
 
         # load an image from file
@@ -66,12 +57,14 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-
+        """
+        if split:
+            self.data = self.split_data()
+        """
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
-
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -86,7 +79,6 @@ class Image(object):
         else:
             return deepcopy(self)
 
-
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -94,10 +86,10 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
+        from sct_utils import check_file_exist, printv, extract_fname, get_dimension
         from sct_orientation import get_orientation
 
-        # check_file_exist(path, verbose=verbose)
+        check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
@@ -107,21 +99,18 @@ class Image(object):
         self.hdr = im_file.get_header()
         self.absolutepath = path
         self.path, self.file_name, self.ext = extract_fname(path)
-        self.dim = get_dimension(im_file)
-        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
-        # self.dim = [nx, ny, nz]
-
+        nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
+        self.dim = [nx, ny, nz]
+        self.pixdim = [px, py, pz]
 
     def setFileName(self, filename):
-        """
-        :param filename: file name with extension
-        :return:
-        """
         from sct_utils import extract_fname
         self.absolutepath = filename
         self.path, self.file_name, self.ext = extract_fname(filename)
 
     def changeType(self, type=''):
+        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
+
         """
         Change the voxel type of the image
         :param type:    if not set, the image is saved in standard type
@@ -143,8 +132,6 @@ class Image(object):
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
         :return:
         """
-        from numpy import uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64
-
         if type == '':
             type = self.hdr.get_data_dtype()
 
@@ -205,7 +192,7 @@ class Image(object):
     def save(self, type=''):
         """
         Write an image in a nifti file
-        :param type:    if not set, the image is saved in the same type as input data
+        :param type:    if not set, the image is saved in standard type
                         if 'minimize', image space is minimize
                         (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
                         (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
@@ -224,21 +211,14 @@ class Image(object):
         """
         from nibabel import Nifti1Image, save
         from sct_utils import printv
+
         if type != '':
             self.changeType(type)
-        if self.hdr:
-            self.hdr.set_data_shape(self.data.shape)
+
+        self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
         #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-
-        from os import path, remove
-        fname_out = self.path + self.file_name + self.ext
-        if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
-            remove(fname_out)
-        # save file
-        save(img, fname_out)
-
+        save(img, self.path + self.file_name + self.ext)
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -259,40 +239,15 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
-        from msct_types import Coordinate
-        from sct_utils import printv
-        n_dim = 1
-        if self.dim[3] == 1:
-            n_dim = 3
-        else:
-            n_dim = 4
-        if self.dim[2] == 1:
-            n_dim = 2
 
-
-        try:
-            if n_dim == 3:
-                X, Y, Z = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            elif n_dim == 2:
-                X, Y = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
-        except Exception, e:
-            print 'ERROR', e
-            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
-
+        X, Y, Z = (self.data > 0.0).nonzero()
         if coordValue:
             from msct_types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+            list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
         else:
             from msct_types import Coordinate
-            if n_dim == 3:
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -310,113 +265,51 @@ class Image(object):
 
         return list_coordinates
 
-
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
-    # orientation must be IRP to be able to go trough slices as first dimension
     # This method is called in sct_crop_over_mask script
-    def crop_from_square_mask(self, mask, save=True):
-        from numpy import asarray, zeros
+    def crop_from_square_mask(self, mask):
+        from numpy import asarray
 
-        data_array = self.data
+        array = self.data
         data_mask = mask.data
-        assert self.orientation == 'IRP'
-        assert mask.orientation == 'IRP'
-
-        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
-        #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
-        if data_array.shape != data_mask.shape:
-            old_data_array = data_array
-            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
-            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2])/2 + 1)
-
-            data_array = zeros(data_mask.shape)
-            for n_slice, data_slice in enumerate(data_array):
-                data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
-            '''
-            for n_slice, data_slice in enumerate(data_array):
-                n_row_old_data_array = 0
-                for row in data_slice[pad_2:-pad_2-1]:
-                    row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
-                    n_row_old_data_array += 1
-            '''
-            self.data = data_array
-            if save:
-                self.file_name += '_resized'
-                self.save()
-
-        data_array = asarray(data_array)
+        print 'ORIGINAL SHAPE: ', array.shape, '   ==   ', data_mask.shape
+        array = asarray(array)
         data_mask = asarray(data_mask)
         new_data = []
         buffer = []
         buffer_mask = []
-
-        if len(data_array.shape) == 3:
-            for n_slice, mask_slice in enumerate(data_mask):
-                for n_row, row in enumerate(mask_slice):
-                    if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
-                        buffer_mask.append(row)
-                        buffer.append(data_array[n_slice][n_row])
-
-                new_slice_mask = asarray(buffer_mask).T
-                new_slice = asarray(buffer).T
-                buffer = []
-                for n_row, row in enumerate(new_slice_mask):
-                    if sum(row) != 0:
-                        buffer.append(new_slice[n_row])
-                new_slice = asarray(buffer).T
-                buffer_mask = []
-                buffer = []
-                new_data.append(new_slice)
-
-        elif len(data_array.shape) == 2:
-            for n_row, row in enumerate(data_mask):
-                if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
+        s = 0
+        r = 0
+        ok = 0
+        for slice in data_mask:
+            # print 'SLICE ', s, slice
+            for row in slice:
+                if sum(row) > 0:
                     buffer_mask.append(row)
-                    buffer.append(data_array[n_row])
-
+                    buffer.append(array[s][r])
+                    #print 'OK1', ok
+                    ok += 1
+                r += 1
             new_slice_mask = asarray(buffer_mask).T
             new_slice = asarray(buffer).T
+            r = 0
             buffer = []
-            for n_row, row in enumerate(new_slice_mask):
+            for row in new_slice_mask:
                 if sum(row) != 0:
-                    buffer.append(new_slice[n_row])
-            new_data = asarray(buffer).T
+                    buffer.append(new_slice[r])
+                r += 1
+            #print buffer
+            new_slice = asarray(buffer).T
+            r = 0
             buffer_mask = []
             buffer = []
-
+            new_data.append(new_slice)
+            s += 1
         new_data = asarray(new_data)
         # print data_mask
+        print 'SHAPE ', new_data.shape
         self.data = new_data
-        self.dim = self.data.shape
-
-
-    # crop the image in order to keep only voxels in the mask
-    # doesn't change the image dimension
-    # This method is called in sct_crop_over_mask script
-    def crop_from_mask(self, mask):
-        from numpy import asarray, einsum
-        data_array = self.data
-        data_mask = mask.data
-        assert data_array.shape == data_mask.shape
-        array = asarray(data_array)
-        data_mask = asarray(data_mask)
-
-        #Element-wise matrix multiplication:
-        new_data = None
-        if len(data_array.shape) == 3:
-            new_data = einsum('ijk,ijk->ijk', data_mask, array)
-        elif len(data_array.shape) == 2:
-            new_data = einsum('ij,ij->ij', data_mask, array)
-        self.data = new_data
-
-    def denoise_ornlm(self):
-        from ornlm import ornlm
-        import numpy as np
-        dat = self.data.astype(np.float64)
-        denoised = np.array(ornlm.ornlm(dat, 3, 1, np.max(dat)*0.01))
-        self.file_name += '_denoised'
-        self.data = denoised
 
     def invert(self):
         self.data = self.data.max() - self.data
@@ -435,7 +328,6 @@ class Image(object):
         if self.orientation is None:
             from sct_orientation import get_orientation
             self.orientation = get_orientation(self.file_name)
-        # get orientation to return at the end of function
         raw_orientation = self.orientation
 
         if inversion_orient:
@@ -478,8 +370,8 @@ class Image(object):
             pass
         else:
             print 'Error: wrong orientation'
-        # from numpy import array
-        # self.dim = array(self.dim)[perm]
+        import numpy as np
+        self.dim = np.array(self.dim)[perm]
         self.orientation = orientation
         return raw_orientation
 
@@ -490,15 +382,23 @@ class Image(object):
         imgplot.set_interpolation('nearest')
         show()
 
-    def transfo_pix2phys(self, coordi=None):
+    def transfo_pix2phys(self, coordi=None, data_pix=None):
         """
 
+        If data_pix is different from None:
+        This function returns the physical coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_pix) but containing a 3D vector.
+        This vector is the physical position of the point.
+        data_pix must be an array of 3 dimensions.
 
-        This function returns the physical coordinates of all points of 'coordi'. 'coordi' is a list of list of size
-        (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical
-        coordinates of the points in the space of the image.
+        If coordi is different from none:
+        coordi is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
 
-        Example:
+        Example1:
+        img = Image('file.nii.gz')
+        data = img.data
+        data_phys = img.transfo_pix2phys(data_pix=data)
+
+        Example2:
         img = Image('file.nii.gz')
         coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
         coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
@@ -507,43 +407,36 @@ class Image(object):
         """
         from numpy import zeros, array, transpose, dot, asarray
 
+
         m_p2f = self.hdr.get_sform()
         m_p2f_transfo = m_p2f[0:3,0:3]
         coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
 
+        # if data_pix != None:
+        #
+        #     data_phys = zeros((((data_pix.shape[0], data_pix.shape[1], data_pix.shape[2], 3))))
+        #     for i in range(data_pix.shape[0]):
+        #         print i
+        #         for j in range(data_pix.shape[1]):
+        #             for k in range(data_pix.shape[2]):
+        #                 #b = dot(m_p2f_transfo, array([[i],[j],[k]]))
+        #                 #c = coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]]))
+        #                 #d = data_phys[i,j,k,:]
+        #                 #e= transpose(c)
+        #                 #f = e[0]
+        #                 data_phys[i,j,k,:] = transpose(coord_origin + dot(m_p2f_transfo, array([[i],[j],[k]])))[0]
+        #
+        #     return data_phys
+
         if coordi != None:
+
             coordi_pix = transpose(asarray(coordi))
             coordi_phys = transpose(coord_origin + dot(m_p2f_transfo, coordi_pix))
             coordi_phys_list = coordi_phys.tolist()
 
             return coordi_phys_list
 
-    def transfo_phys2pix(self, coordi=None):
-        """
-        This function returns the pixels coordinates of all points of 'coordi'
-        'coordi' is a list of list of size (nb_points * 3) containing the pixel coordinate of points. The function will return a list with the physical coordinates of the points in the space of the image.
-
-
-        :return:
-        """
-        from numpy import array, transpose, dot, asarray
-        from numpy.linalg import inv
-
-        m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3,0:3]
-        m_f2p_transfo = inv(m_p2f_transfo)
-
-        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
-
-        if coordi != None:
-            coordi_phys = transpose(asarray(coordi))
-            coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))
-            coordi_pix_tmp = coordi_pix.tolist()
-            coordi_pix_list = [[int(round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
-
-            return coordi_pix_list
-
-    def transfo_phys2continuouspix(self, coordi=None, data_phys=None):
+    def transfo_phys2pix(self, coordi=None, data_phys=None):
         """
         This function returns the pixels coordinates of all points of data_pix in the space of the image. The output is a matrix of size: size(data_phys) but containing a 3D vector.
         This vector is the pixel position of the point in the space of the image.
@@ -560,18 +453,34 @@ class Image(object):
         from copy import copy
 
         m_p2f = self.hdr.get_sform()
-        m_p2f_transfo = m_p2f[0:3, 0:3]
+        m_p2f_transfo = m_p2f[0:3,0:3]
         m_f2p_transfo = inv(m_p2f_transfo)
-        # e = dot(m_p2f_transfo, m_f2p_transfo)
+        #e = dot(m_p2f_transfo, m_f2p_transfo)
 
-        coord_origin = array([[m_p2f[0, 3]], [m_p2f[1, 3]], [m_p2f[2, 3]]])
+        coord_origin = array([[m_p2f[0, 3]],[m_p2f[1, 3]], [m_p2f[2, 3]]])
+
+        # if data_phys != None:
+        #
+        #     data_pix = copy(data_phys)
+        #     for i in range(data_phys.shape[0]):
+        #         print i
+        #         for j in range(data_phys.shape[1]):
+        #             for k in range(data_phys.shape[2]):
+        #                 # c = array([data_phys[i,j,k,:]])
+        #                 # d = transpose(c)
+        #                 # e = c[0]
+        #                 # f= data_pix[i,j,k,:]
+        #                 # g= dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin))
+        #                 data_pix[i,j,k,:] = transpose(dot(m_f2p_transfo, (transpose(array([data_phys[i,j,k,:]]))-coord_origin)))[0]  #take int value for pixel
+        #                 # data_pix[i,j,k] = m_f2p_transfo * (data_phys[i,j,k] - coord_origin)
+        #     return data_pix
 
         if coordi != None:
+
             coordi_phys = transpose(asarray(coordi))
-            coordi_pix = transpose(dot(m_f2p_transfo, (coordi_phys - coord_origin)))
+            coordi_pix =  transpose(dot(m_f2p_transfo, (coordi_phys-coord_origin)))
             coordi_pix_tmp = coordi_pix.tolist()
-            coordi_pix_list = [[coordi_pix_tmp[j][i] for i in range(len(coordi_pix_tmp[j]))] for j in
-                               range(len(coordi_pix_tmp))]
+            coordi_pix_list = [[int(round(coordi_pix_tmp[j][i])) for i in range(len(coordi_pix_tmp[j]))] for j in range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
 
@@ -589,36 +498,6 @@ def find_zmin_zmax(fname):
     # parse output
     zmin, zmax = output[output.find('Dimension 2: ')+13:].split('\n')[0].split(' ')
     return int(zmin), int(zmax)
-
-
-def get_dimension(im_file, verbose=1):
-    """
-    Get dimension from nibabel object. Manages 2D, 3D or 4D images.
-    :return: nx, ny, nz, nt, px, py, pz, pt
-    """
-    import nibabel.nifti1
-    import sct_utils as sct
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nibabel.nifti1.Nifti1Image:
-        header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
-    else:
-        header = None
-        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
-
-    return nx, ny, nz, nt, px, py, pz, pt
 
 
 # =======================================================================================================================
