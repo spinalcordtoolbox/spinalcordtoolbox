@@ -136,6 +136,8 @@ def main(args=None):
         z_center = int(round(nz/2))  # get z_center
         create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
 
+    # TODO: denoise data
+
     # # Straighten spinal cord
     # printv('\nStraighten spinal cord...', param.verbose)
     # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
@@ -194,6 +196,8 @@ def main(args=None):
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, contrast, init_disc):
 
+    from scipy.signal import argrelextrema
+
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 3  # mean around the centerline in the anterior-posterior direction in mm
     size_RL = 5  # mean around the centerline in the right-left direction in mm
@@ -205,6 +209,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
 
     # open anatomical volume
     img = Image(fname)
+    data = img.data
     # orient to RPI
     # img.change_orientation()
     # get dimension
@@ -222,75 +227,169 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
 
     # define z: vector of indices along spine
     z = range(nz)
-
     # define xc and yc (centered in the field of view)
     xc = round(nx/2)  # direction RL
     yc = round(ny/2)  # direction AP
-    I = np.zeros((nz, 1))
-    data_masked = img.data
-    data = img.data
-    for iz in range(nz):
-        vox_in_spine = np.mgrid[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1]
-        # average intensity within box in the spine (shifted from spinal cord)
-        I[iz] = np.mean(img.data[vox_in_spine[0, :, :].ravel().astype(int),
-                                 vox_in_spine[1, :, :].ravel().astype(int),
-                                 iz])
-        # just for visualization:
-        data_masked[vox_in_spine[0, :, :].ravel().astype(int),
-                    vox_in_spine[1, :, :].ravel().astype(int),
-                    iz] = 0
 
-    # Display mask
-    if verbose == 2:
-        plt.matshow(np.flipud(data[xc, :, :].transpose()), cmap=plt.cm.gray)
-        plt.title('Anatomical image')
-        plt.draw()
-        plt.matshow(np.flipud(data_masked[xc, :, :].transpose()), cmap=plt.cm.gray)
-        plt.title('Anatomical image with mask')
-        plt.draw()
+    # JULIEN <<<<<<<<<<<<
+    size_RL = 7  # x
+    size_AP = 5  # y
+    size_IS = 5  # z
 
-
-    # display intensity along spine
-    if verbose == 2:
-        plt.figure()
-        plt.plot(I)
-        plt.title('Averaged intensity within spine. x=0: most caudal.')
-        plt.draw()
-
-    # find local extrema
-    from scipy.signal import argrelextrema
-    peaks = argrelextrema(I, np.greater, order=10)[0]
-    nb_peaks = len(peaks)
-    printv('.. Number of peaks found: '+str(nb_peaks), verbose)
+    # define mean distance from C1 disc to XX
+    mean_distance = [12.1600, 20.8300, 18.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
+    19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
+    33.0000,   31.3330]
 
     if verbose == 2:
-        plt.figure()
-        plt.plot(I)
-        plt.plot(peaks, I[peaks], 'ro')
-        plt.draw()
+        plt.figure(1), plt.imshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
+        # plt.matshow(np.flipud(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose()), fignum=1, cmap=plt.cm.gray), plt.title('Anatomical image'), plt.draw()
+        # display init disc
+        plt.figure(1), plt.scatter(yc+shift_AP, init_disc[0], c='y'), plt.draw()
 
-    # LABEL PEAKS
-    labeled_peaks = np.array(range(nb_peaks, 0, -1)).astype(int)
-    # find peak index closest to user input
-    peak_ind_closest = np.argmin(abs(peaks-init_disc[0]))
-    # build vector of peak labels
-    # labeled_peaks = np.array(range(nb_peaks))
-    # add the difference between "peak_ind_closest" and the init_disc value
-    labeled_peaks = init_disc[1] - labeled_peaks[peak_ind_closest] + labeled_peaks
 
-    # REMOVE WRONG LABELS (ASSUMING NO PEAK IS VISIBLE ABOVE C2/C3 DISK)
-    ind_true_labels = np.where(labeled_peaks>1)[0]
-    peaks = peaks[ind_true_labels]
-    labeled_peaks = labeled_peaks[ind_true_labels]
+    # FIND DISCS
+    # ===========================================================================
+    list_disc_z = []
+    list_disc_value = []
+    # adjust to pix size
+    mean_distance = mean_distance * pz
+    # search peaks along z direction
+    current_z = init_disc[0]
+    current_disc = init_disc[1]
+    # append initial position to main list
+    list_disc_z = np.append(list_disc_z, current_z)
+    list_disc_value = np.append(list_disc_value, current_disc)
+    direction = 'superior'
+    # TODO: define correcting factor based on distance to previous discs
+    correcting_factor = 1
+    # define mean distance to next disc
+    approx_distance_to_next_disc = int(round(mean_distance[current_disc] * correcting_factor))
+    # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
+    # loop until potential new peak is inside of FOV
+    while current_z + approx_distance_to_next_disc < nz:
+        # Get pattern centered at z = current_z
+        pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
+        pattern1d = pattern.ravel()
+        if verbose == 2:
+            plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Pattern in sagittal averaged across R-L'), plt.draw()
+        # compute correlation between pattern and data within range of z defined by template distance
+        length_z_corr = approx_distance_to_next_disc * 2
+        I_corr = np.zeros((length_z_corr, 1))
+        ind_I = 0
+        for iz in range(current_z, current_z+length_z_corr):
+            data_chunk1d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, iz-size_IS:iz+size_IS+1].ravel()
+            # in case data_chunk1d is cropped (because beginning/end of  data), crop pattern
+            if len(data_chunk1d) < len(pattern1d):
+                crop_size = len(pattern1d) - len(data_chunk1d)
+                if direction == 'superior':
+                    # if direction is superior, crop end of pattern
+                    pattern1d = pattern1d[:-crop_size]
+                elif direction == 'inferior':
+                    # if direction is inferior, crop beginning of pattern
+                    pattern1d = pattern1d[crop_size:]
+            I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+            ind_I = ind_I + 1
 
-    # ADD C1 label (ASSUMING DISTANCE FROM THE ADULT TEMPLATE)
-    distance_c1_c2 = 20.8300/pz  # in mm
-    # check if C2 disk is there
-    if np.min(labeled_peaks) == 2:
-        printv('.. C2 disk is present. Adding C2 vertebrae based on template...')
-        peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
-        labeled_peaks = np.append(labeled_peaks, 1)
-    printv('.. Labeled peaks: '+str(labeled_peaks[:-1]), verbose)
+        if verbose == 2:
+            plt.figure(), plt.plot(I_corr), plt.title('Correlation of pattern with data.'), plt.draw()
+
+        # TODO: crop beginning of signal to remove correlation = 1 from pattern with data
+        # Find peak within local neighborhood defined by mean distance template
+        # TODO: adjust probability to be in the middle of I_corr (account for mean dist template)
+        peaks = argrelextrema(I_corr, np.greater, order=10)[0]
+        nb_peaks = len(peaks)
+        printv('.. Peaks found: '+str(peaks)+' with correlations: '+str(I_corr[peaks.tolist()]), verbose)
+        if len(peaks) > 1:
+            # retain the peak with maximum correlation
+            peaks = peaks[np.argmax(I_corr[peaks.tolist()])]
+            printv('.. WARNING: More than one peak found. Keeping: '+str(peaks), verbose)
+        if verbose == 2:
+            plt.plot(peaks, I_corr[peaks], 'ro'), plt.draw()
+        # assign new z_start and disc value
+        # if direction is superior: sign = -1, if direction is inferior: sign = +1
+        current_z = current_z + peaks
+        if direction == 'superior':
+            current_disc = current_disc - 1
+        elif direction == 'inferior':
+            current_disc = current_disc + 1
+
+        # append to main list
+        list_disc_z = np.append(list_disc_z, current_z)
+        list_disc_value = np.append(list_disc_value, current_disc)
+        # define mean distance to next disc
+        # TODO: define correcting factor
+        approx_distance_to_next_disc = int(round(mean_distance[current_disc] * correcting_factor))
+        # display
+        if verbose == 2:
+            plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r'), plt.draw()
+    # >>>>>>>>>>>>>>>>>>>>>
+
+    # I = np.zeros((nz, 1))
+    # # data_masked = img.data
+    # # data = img.data
+    # for iz in range(nz):
+    #     vox_in_spine = np.mgrid[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1]
+    #     # average intensity within box in the spine (shifted from spinal cord)
+    #     I[iz] = np.mean(img.data[vox_in_spine[0, :, :].ravel().astype(int),
+    #                              vox_in_spine[1, :, :].ravel().astype(int),
+    #                              iz])
+    #     # # just for visualization:
+    #     # data_masked[vox_in_spine[0, :, :].ravel().astype(int),
+    #     #             vox_in_spine[1, :, :].ravel().astype(int),
+    #     #             iz] = 0
+    #
+    # # Display mask
+    # if verbose == 2:
+    #     plt.matshow(np.flipud(np.mean(img.data[xc-3:xc+3, :, :], axis=0).transpose()), cmap=plt.cm.gray)
+    #     #plt.matshow(np.flipud(data[xc, :, :].transpose()), cmap=plt.cm.gray)
+    #     plt.title('Anatomical image')
+    #     plt.draw()
+    #     # plt.matshow(np.flipud(data_masked[xc, :, :].transpose()), cmap=plt.cm.gray)
+    #     # plt.title('Anatomical image with mask')
+    #     # plt.draw()
+    #
+    # # display intensity along spine
+    # if verbose == 2:
+    #     plt.figure()
+    #     plt.plot(I)
+    #     plt.title('Averaged intensity within spine. x=0: most caudal.')
+    #     plt.draw()
+    #
+    # # find local extrema
+    # from scipy.signal import argrelextrema
+    # peaks = argrelextrema(I, np.greater, order=10)[0]
+    # nb_peaks = len(peaks)
+    # printv('.. Number of peaks found: '+str(nb_peaks), verbose)
+    #
+    # if verbose == 2:
+    #     plt.figure()
+    #     plt.plot(I)
+    #     plt.plot(peaks, I[peaks], 'ro')
+    #     plt.draw()
+    #
+    # # LABEL PEAKS
+    # labeled_peaks = np.array(range(nb_peaks, 0, -1)).astype(int)
+    # # find peak index closest to user input
+    # peak_ind_closest = np.argmin(abs(peaks-init_disc[0]))
+    # # build vector of peak labels
+    # # labeled_peaks = np.array(range(nb_peaks))
+    # # add the difference between "peak_ind_closest" and the init_disc value
+    # labeled_peaks = init_disc[1] - labeled_peaks[peak_ind_closest] + labeled_peaks
+    #
+    # # REMOVE WRONG LABELS (ASSUMING NO PEAK IS VISIBLE ABOVE C2/C3 DISK)
+    # ind_true_labels = np.where(labeled_peaks>1)[0]
+    # peaks = peaks[ind_true_labels]
+    # labeled_peaks = labeled_peaks[ind_true_labels]
+    #
+    # # ADD C1 label (ASSUMING DISTANCE FROM THE ADULT TEMPLATE)
+    # distance_c1_c2 = 20.8300/pz  # in mm
+    # # check if C2 disk is there
+    # if np.min(labeled_peaks) == 2:
+    #     printv('.. C2 disk is present. Adding C2 vertebrae based on template...')
+    #     peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
+    #     labeled_peaks = np.append(labeled_peaks, 1)
+    # printv('.. Labeled peaks: '+str(labeled_peaks[:-1]), verbose)
 
     # LABEL SEGMENTATION
     # open segmentation
@@ -306,7 +405,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
             # ind_disk_above = np.where(peaks-iz > 0)[0][0]
             ind_disk_above = min(ind_above_iz)
             # assign vertebral level (remove one because iz is BELOW the disk)
-            vertebral_level = labeled_peaks[ind_disk_above] + 1
+            vertebral_level = labeled_peaks[ind_disk_above] - 1
             # print vertebral_level
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
