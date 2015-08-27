@@ -10,6 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+# TODO: add user input option (show sagittal slice)
+
 # check if needed Python libraries are already installed or not
 
 # from msct_base_classes import BaseScript
@@ -28,13 +30,6 @@ class Param:
     def __init__(self):
         self.verbose = '1'
         self.remove_tmp_files = '1'
-
-
-# class Script(BaseScript):
-#     def __init__(self):
-#         super(Script, self).__init__()
-#
-#     @staticmethod
 
 
 # PARSER
@@ -60,7 +55,7 @@ def get_parser():
                       example=["t1", "t2"])
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
-                      description='Initialize labeling by providing slice number and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
+                      description='Initialize labeling by providing slice number (in superior-inferior direction!!) and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
                       mandatory=False,
                       example=['125,3'])
     parser.add_option(name="-initcenter",
@@ -126,6 +121,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
+    path_tmp = '/Users/julien/data/sct_debug/tmp.150826170018/'
     chdir(path_tmp)
 
     # create label to identify disc
@@ -140,9 +136,9 @@ def main(args=None):
         z_center = int(round(nz/2))  # get z_center
         create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
 
-    # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -199,8 +195,8 @@ def main(args=None):
 def vertebral_detection(fname, fname_seg, contrast, init_disc):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
-    size_AP = 5  # mean around the centerline in the anterior-posterior direction in mm
-    size_RL = 7  # mean around the centerline in the right-left direction in mm
+    size_AP = 3  # mean around the centerline in the anterior-posterior direction in mm
+    size_RL = 5  # mean around the centerline in the right-left direction in mm
     verbose = param.verbose
 
     if verbose == 2:
@@ -231,12 +227,28 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
     xc = round(nx/2)  # direction RL
     yc = round(ny/2)  # direction AP
     I = np.zeros((nz, 1))
+    data_masked = img.data
+    data = img.data
     for iz in range(nz):
         vox_in_spine = np.mgrid[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1]
         # average intensity within box in the spine (shifted from spinal cord)
         I[iz] = np.mean(img.data[vox_in_spine[0, :, :].ravel().astype(int),
                                  vox_in_spine[1, :, :].ravel().astype(int),
                                  iz])
+        # just for visualization:
+        data_masked[vox_in_spine[0, :, :].ravel().astype(int),
+                    vox_in_spine[1, :, :].ravel().astype(int),
+                    iz] = 0
+
+    # Display mask
+    if verbose == 2:
+        plt.matshow(np.flipud(data[xc, :, :].transpose()), cmap=plt.cm.gray)
+        plt.title('Anatomical image')
+        plt.draw()
+        plt.matshow(np.flipud(data_masked[xc, :, :].transpose()), cmap=plt.cm.gray)
+        plt.title('Anatomical image with mask')
+        plt.draw()
+
 
     # display intensity along spine
     if verbose == 2:
@@ -316,7 +328,7 @@ def create_label_z(fname_seg, z, value):
     """
     fname_label = 'labelz.nii.gz'
     nii = Image(fname_seg)
-    nii.change_orientation('RPI')  # change orientation to RPI
+    orientation_origin = nii.change_orientation('RPI')  # change orientation to RPI
     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
     # find x and y coordinates of the centerline at z using center of mass
     from scipy.ndimage.measurements import center_of_mass
@@ -328,6 +340,7 @@ def create_label_z(fname_seg, z, value):
     from sct_maths import dilate
     nii.data = dilate(nii.data, 3) * value  # multiplies by value because output of dilation is binary
     nii.setFileName(fname_label)
+    nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
     return fname_label
 
