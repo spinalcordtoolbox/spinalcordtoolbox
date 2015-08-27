@@ -23,6 +23,7 @@ import sys
 import commands
 import numpy as np
 import sct_utils as sct
+from msct_image import Image
 
 
 #=======================================================================================================================
@@ -61,7 +62,7 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data)
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+ext).dim
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # copy file_target to a temporary file
@@ -71,8 +72,10 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
+    from sct_split_data import split_data
+    split_data(file_data+ext, 3, '_T')
+    # status, output = sct.run('sct_split_data -i ' + file_data + ext + ' -dim t -suffix _T', param.verbose)
     file_data_splitT = file_data + '_T'
-    sct.run(fsloutput + 'fslsplit ' + file_data + ' ' + file_data_splitT, verbose)
 
     # Motion correction: initialization
     index = np.arange(nt)
@@ -96,7 +99,7 @@ def moco(param):
 
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
-        if param.iterative_averaging and indice_index<10 and failed_transfo[it] == 0:
+        if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0:
             sct.run('isct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one
@@ -121,9 +124,13 @@ def moco(param):
     file_data_moco = file_data+suffix
     if todo != 'estimate':
         sct.printv('\nMerge data back along T...', verbose)
-        cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
+        # for indice_index in range(len(index)):
+        #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+        cmd = 'sct_concat_data -dim t -o ' + file_data_moco + ext + ' -i '
         for indice_index in range(len(index)):
-            cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
+            cmd = cmd + file_data_splitT_moco_num[indice_index] + ext + ','
+        cmd = cmd[:-1]  # remove ',' at the end of the string
         sct.run(cmd, verbose)
 
 
