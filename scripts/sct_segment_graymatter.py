@@ -343,9 +343,14 @@ if __name__ == "__main__":
                           example='t2star.nii.gz')
         parser.add_option(name="-s",
                           type_value="file",
-                          description="Spinal cord segmentation of the T2star target",
+                          description="Spinal cord segmentation of the target",
                           mandatory=True,
                           example='sc_seg.nii.gz')
+        parser.add_option(name="-o",
+                          type_value="str",
+                          description="output name for the results",
+                          mandatory=False,
+                          example='t2star_res.nii.gz')
         parser.add_option(name="-dic",
                           type_value="folder",
                           description="Path to the model data",
@@ -446,6 +451,8 @@ if __name__ == "__main__":
         param.path_dictionary = arguments["-dic"]
         param.todo_model = 'load'
 
+        if "-o" in arguments:
+            param.output_name = arguments["-o"]
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
         if "-l" in arguments:
