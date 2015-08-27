@@ -267,7 +267,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
     approx_distance_to_next_disc = int(round(mean_distance[current_disc] * correcting_factor))
     # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
     # loop until potential new peak is inside of FOV
-    while current_z + approx_distance_to_next_disc < nz:
+    search_next_disc = True
+    while search_next_disc:
         # Get pattern centered at z = current_z
         pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
         pattern1d = pattern.ravel()
@@ -299,16 +300,16 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
         # TODO: adjust probability to be in the middle of I_corr (account for mean dist template)
         peaks = argrelextrema(I_corr, np.greater, order=10)[0]
         nb_peaks = len(peaks)
-        printv('.. Peaks found: '+str(peaks)+' with correlations: '+str(I_corr[peaks.tolist()]), verbose)
+        printv('.. Peaks found: '+str(peaks)+' with correlations: '+str(I_corr[peaks]), verbose)
         if len(peaks) > 1:
             # retain the peak with maximum correlation
-            peaks = peaks[np.argmax(I_corr[peaks.tolist()])]
+            peaks = peaks[np.argmax(I_corr[peaks])]
             printv('.. WARNING: More than one peak found. Keeping: '+str(peaks), verbose)
         if verbose == 2:
             plt.plot(peaks, I_corr[peaks], 'ro'), plt.draw()
         # assign new z_start and disc value
         # if direction is superior: sign = -1, if direction is inferior: sign = +1
-        current_z = current_z + peaks
+        current_z = current_z + int(peaks)
         if direction == 'superior':
             current_disc = current_disc - 1
         elif direction == 'inferior':
@@ -323,6 +324,16 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
         # display
         if verbose == 2:
             plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r'), plt.draw()
+        # if current_z is larger than searching zone, switch direction (and start from initial z)
+        if current_z + approx_distance_to_next_disc >= nz:
+            direction = 'inferior'
+            current_z = init_disc[0]
+            current_disc = init_disc[1]
+        # if current_z is lower than searching zone, stop searching
+        if current_z - approx_distance_to_next_disc <= 0:
+            search_next_disc = False
+
+
     # >>>>>>>>>>>>>>>>>>>>>
 
     # I = np.zeros((nz, 1))
