@@ -19,9 +19,8 @@ import os
 import commands
 import getopt
 import time
-
 import sct_utils as sct
-
+from msct_image import Image
 
 class Param:
     def __init__(self):
@@ -107,7 +106,7 @@ def main():
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
     # upsample data
