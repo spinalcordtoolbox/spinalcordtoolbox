@@ -22,11 +22,12 @@ class Param:
         self.debug = False
         self.fname_ref = ''
         self.fname_moving = ''
-        self.transformation = 'SyN'
-        self.metric = 'MI'  # 'MeanSquares'  # 'CC'
+        self.transformation = 'BSplineSyN'  # 'SyN'
+        self.metric = 'CC'  # 'MeanSquares'
         self.gradient_step = '0.5'
-        self.radius = '4'
-        self.iteration='20x15'
+        self.radius = '2'  # '4'
+        self.interpolation = 'BSpline'
+        self.iteration = '10x5' # '20x15'
         self.fname_seg_fixed = ''
         self.fname_seg_moving = ''
         self.fname_output = ''
@@ -54,6 +55,7 @@ def main(param):
     sct.run("c3d "+param.fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
     sct.run("c3d "+param.fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
     if param.fname_seg_moving != '':
+        print 'seg not none'
         sct.run("c3d "+param.fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
     if param.fname_seg_fixed != '':
         sct.run("c3d "+param.fname_seg_fixed+" -o "+path_tmp+"/"+fixed_seg_name+".nii")
@@ -72,12 +74,14 @@ def main(param):
     # img = nibabel.Nifti1Image(data_denoised, None, hdr)
     # nibabel.save(img, fixed_name+".nii.gz")
 
-    # cropping in x & y directions
-    fixed_name_temp = fixed_name + "_crop"
-    cmd = "sct_crop_image -i " + fixed_name + ".nii -o " + fixed_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1"
-    sct.run(cmd)
-    fixed_name = fixed_name_temp
+
     if param.fname_seg_fixed != '':
+            # cropping in x & y directions
+        fixed_name_temp = fixed_name + "_crop"
+        cmd = "sct_crop_image -i " + fixed_name + ".nii -o " + fixed_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1"
+        sct.run(cmd)
+        fixed_name = fixed_name_temp
+
         fixed_seg_name_temp = fixed_seg_name+"_crop"
         sct.run("sct_crop_image -i " + fixed_seg_name + ".nii -o " + fixed_seg_name_temp + ".nii -m " + fixed_seg_name + ".nii -shift 10,10 -dim 0,1")
         fixed_seg_name = fixed_seg_name_temp
@@ -140,14 +144,25 @@ def main(param):
     # registration of the gray matter
     print('\nDeforming the image...')
     moving_name_temp = moving_name+"_deformed"
-    cmd = "isct_antsRegistration --dimensionality 3 --transform "+ param.transformation +"["+param.gradient_step+",3,0] --metric "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] --convergence "+param.iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+
+    if param.transformation == 'BSplineSyN':
+        transfo_params = ',3,0'
+    elif param.transforlation == 'SyN':     # SyN gives bad results : remove it
+        transfo_params = ',1,1'
+
+    # cmd = "isct_antsRegistration --dimensionality 3 --transform "+ param.transformation +"["+param.gradient_step+",3,0] --metric "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] --convergence "+param.iteration+" --shrink-factors 2x1 --smoothing-sigmas 0mm --Restrict-Deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    # cmd = "isct_antsRegistration --dimensionality 3 --transform "+ param.transformation +"["+param.gradient_step+",3,0] --metric "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] --interpolation "+param.interpolation+" --convergence "+param.iteration+" --shrink-factors 2x1x0  --restrict-deformation 1x1x0 --output ["+moving_name_temp+","+moving_name_temp+".nii]"
+    # cmd = "isct_antsRegistration -d 3 -t "+ param.transformation +"["+param.gradient_step+",3,0] -m "+param.metric+"["+fixed_name+".nii,"+moving_name+".nii,1,"+param.radius+"] -c "+param.iteration+" -f 2x1 -s 0mm -g 1x1x0 -o ["+moving_name_temp+","+moving_name_temp+".nii]"
+    cmd = 'isct_antsRegistration -d 3 -n '+param.interpolation+' -t '+param.transformation+'['+param.gradient_step+transfo_params+'] -m '+param.metric+'['+fixed_name+'.nii,'+moving_name+'.nii,1,4] -o ['+moving_name_temp+','+moving_name_temp+'.nii]  -c '+param.iteration+' -f 2x1 -s 0x0 '
+
     if param.fname_seg_moving != '':
         cmd += " --masks ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
+        # cmd += " -m ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
     sct.run(cmd)
     moving_name = moving_name_temp
 
     moving_name_temp = moving_name+"_unpadded"
-    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+param.padding+" -end -"+param.padding+" -o "+moving_name_temp+".nii")
+    sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+str(int(param.padding)-1)+" -end -"+param.padding+" -o "+moving_name_temp+".nii")
     sct.run("mv "+moving_name+"0Warp.nii.gz "+file_output+"0Warp"+ext_output)
     sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+file_output+"0InverseWarp"+ext_output)
     moving_name = moving_name_temp
@@ -194,27 +209,27 @@ if __name__ == "__main__":
                           description="Output image name",
                           mandatory=False,
                           example='moving_to_fixed.nii.gz')
-        parser.add_option(name="-s",
+        parser.add_option(name="-iseg",
                           type_value="file",
                           description="Spinal cord segmentation of the fixed image",  # TODO : specify which image to use
-                          mandatory=True,
+                          mandatory=False,
                           example='sc_seg.nii.gz')
-        parser.add_option(name="-g",
+        parser.add_option(name="-dseg",
                           type_value="file",
                           description="Spinal cord segmentation of the moving image (should be the same)",  # TODO : specify which image to use
-                          mandatory=True,
+                          mandatory=False,
                           example='sc_seg.nii.gz')
         parser.add_option(name="-t",
                           type_value='multiple_choice',
                           description="type of transformation",
                           mandatory=False,
-                          default_value='SyN',
+                          default_value='BSplineSyN',
                           example=['SyN', 'BSplineSyN'])
         parser.add_option(name="-m",
                           type_value='multiple_choice',
                           description="Metric used for the registration",
                           mandatory=False,
-                          default_value='MeanSquares',
+                          default_value='CC',
                           example=['CC', 'MeanSquares'])
         parser.add_option(name="-r",
                           type_value='multiple_choice',
@@ -227,9 +242,11 @@ if __name__ == "__main__":
 
 
         param.fname_ref = arguments["-i"]
-        param.fname_seg_fixed = arguments["-s"]
+        if "-iseg" in arguments:
+            param.fname_seg_fixed = arguments["-iseg"]
         param.fname_moving = arguments["-d"]
-        param.fname_seg_moving = arguments["-g"]
+        if "-dseg" in arguments:
+            param.fname_seg_moving = arguments["-dseg"]
 
         if "-o" in arguments:
             param.fname_output = arguments["-o"]
