@@ -827,9 +827,13 @@ class TargetSegmentationPairwise:
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
                     target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, save=True, output='metric_in_target.txt')
+
+                    # metric averaged overall
+                    '''
                     print 'USE AVERAGED TARGET METRIC'
                     target_metric = [np.mean(target_metric.values(), axis=0) for i in range(len(self.target))]
-
+                    '''
+                    # metric averaged by level
                     '''
                     target_metric_by_level = {}
                     for target_slice in self.target:
@@ -850,6 +854,13 @@ class TargetSegmentationPairwise:
             else:
                 target_metric = [(self.model.param.target_means[0], self.model.param.target_means[1], 0, 0) for i in range(len(self.target))]
 
+            if type(target_metric) == type({}): # if target_metric is a dictionary
+                differences = [m[1]-m[0] for m in target_metric.values()]
+                lim_diff = np.median(differences) - np.std(differences)
+            else:
+                differences = [0]
+                lim_diff = 0
+
             # normalizing
             if target_metric is not None:
                 i = 0
@@ -862,6 +873,9 @@ class TargetSegmentationPairwise:
                     else:
                     '''
                     wm_mean, gm_mean, wm_std, gm_std = target_metric[target_slice.id]
+                    if gm_mean-wm_mean < lim_diff:
+                        print 'CORRECTING WM VALUE FOR SLICE ', i
+                        wm_mean = gm_mean-np.median(differences)
                     new_image = (old_image - wm_mean)*(dic_gm_mean - dic_wm_mean)/(gm_mean - wm_mean) + dic_wm_mean
                     new_image[old_image < 1] = 0  # put a 0 the min background
 
