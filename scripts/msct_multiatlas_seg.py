@@ -707,7 +707,7 @@ class TargetSegmentationPairwise:
         self.target_pairwise_registration()
 
         if self.model.param.target_normalization:
-            self.target_normalization(method='mean')
+            self.target_normalization(method='median')  # 'mean')
 
         # TODO: remove after testing:
         Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved_after_normalization.nii.gz').save()
@@ -803,30 +803,33 @@ class TargetSegmentationPairwise:
             # save_image(target_slice.im_M, 'slice' + str(target_slice.id) + '_moved_im')
 
     # ------------------------------------------------------------------------------------------------------------------
-    def target_normalization(self, method='mean'):
+    def target_normalization(self, method='median'):
         """
         Normalization of the target using the intensity values of the mean dictionary image
         :return None: the target image is modified
         """
+        sct.printv('Linear normalization using '+method, self.model.param.verbose, 'normal')
 
-        if method == 'mean':
-            dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, save=True)
-            wm_means = []
-            gm_means = []
+        if method == 'mean' or method == 'median':
+            dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, metric=method, save=True)
+            wm_metrics = []
+            gm_metrics = []
             for wm_m, gm_m, wm_s, gm_s in dic_metrics.values():
-                wm_means.append(wm_m)
-                gm_means.append(gm_m)
-            dic_wm_mean = np.mean(wm_means)
-            dic_gm_mean = np.mean(gm_means)
+                wm_metrics.append(wm_m)
+                gm_metrics.append(gm_m)
+            dic_wm_mean = np.mean(wm_metrics)
+            dic_gm_mean = np.mean(gm_metrics)
 
             # getting the mean values of WM and GM in the target
             if self.model.param.target_means is None:
                 if self.model.param.use_levels:
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
                     mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target]
+
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
-                    target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, save=True, output='metric_in_target.txt')
+
+                    target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, metric=method, save=True, output='metric_in_target.txt')
 
                     # metric averaged overall
                     '''
@@ -872,11 +875,11 @@ class TargetSegmentationPairwise:
                         print 'USE MEAN BY LEVEL OF THE TARGET METRIC'
                     else:
                     '''
-                    wm_mean, gm_mean, wm_std, gm_std = target_metric[target_slice.id]
-                    if gm_mean-wm_mean < lim_diff:
+                    wm_metric, gm_metric, wm_std, gm_std = target_metric[target_slice.id]
+                    if gm_metric-wm_metric < lim_diff:
                         print 'CORRECTING WM VALUE FOR SLICE ', i
-                        wm_mean = gm_mean-np.median(differences)
-                    new_image = (old_image - wm_mean)*(dic_gm_mean - dic_wm_mean)/(gm_mean - wm_mean) + dic_wm_mean
+                        wm_metric = gm_metric-np.median(differences)
+                    new_image = (old_image - wm_metric)*(dic_gm_mean - dic_wm_mean)/(gm_metric - wm_metric) + dic_wm_mean
                     new_image[old_image < 1] = 0  # put a 0 the min background
 
                     target_slice.im_M = new_image
@@ -915,17 +918,17 @@ class TargetSegmentationPairwise:
             # test normalization with separate means
             import copy
             dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, save=True)
-            wm_means = []
-            gm_means = []
+            wm_metrics = []
+            gm_metrics = []
             wm_stds = []
             gm_stds = []
             for wm_m, gm_m, wm_s, gm_s in dic_metrics.values():
-                wm_means.append(wm_m)
-                gm_means.append(gm_m)
+                wm_metrics.append(wm_m)
+                gm_metrics.append(gm_m)
                 wm_stds.append(wm_s)
                 gm_stds.append(gm_s)
-            dic_wm_mean = np.mean(wm_means)
-            dic_gm_mean = np.mean(gm_means)
+            dic_wm_mean = np.mean(wm_metrics)
+            dic_gm_mean = np.mean(gm_metrics)
             dic_wm_std = np.std(wm_stds)
             dic_gm_std = np.std(gm_stds)
 
@@ -942,12 +945,12 @@ class TargetSegmentationPairwise:
             for i, target_slice in enumerate(self.target):
                 old_image = target_slice.im_M
                 # new_image = copy.deepcopy(old_image)
-                wm_mean, gm_mean, wm_std, gm_std = target_metric[target_slice.id]
+                wm_metric, gm_metric, wm_std, gm_std = target_metric[target_slice.id]
 
                 # GM:
-                new_gm = ((old_image - gm_mean)*dic_gm_std/gm_std+dic_gm_mean)*mean_seg_by_level_prob[i]
+                new_gm = ((old_image - gm_metric)*dic_gm_std/gm_std+dic_gm_mean)*mean_seg_by_level_prob[i]
                 # WM:
-                new_wm = ((old_image - gm_mean)*dic_gm_std/gm_std+dic_gm_mean)*(1-mean_seg_by_level_prob[i])
+                new_wm = ((old_image - gm_metric)*dic_gm_std/gm_std+dic_gm_mean)*(1-mean_seg_by_level_prob[i])
                 # concatenation of GM and WM:
                 new_image = new_wm + new_gm
 
