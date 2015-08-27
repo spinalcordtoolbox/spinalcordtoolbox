@@ -336,6 +336,7 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, weights=None, ty
         average = np.sum(seg_data_set, axis=0) / float(len(seg_data_set))
     else:
         average = np.sum(np.einsum('ijk,i->ijk', seg_data_set, weights), axis=0)
+    average[average > 1] = 1
     if type == 'binary':
         return (average >= threshold).astype(int)
     else:
