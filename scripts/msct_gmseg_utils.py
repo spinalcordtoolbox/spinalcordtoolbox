@@ -424,7 +424,7 @@ def save_dic_slices(path_to_model):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def extract_metric_from_dic(slices_set, seg_to_use=None, gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
+def extract_metric_from_dic(slices_set, seg_to_use=None, metric='Mean', gm_percentile=0.03, wm_percentile=0.05, save=False, output='metric_in_dictionary.txt'):
     """
     uses the registereg images and GM segmentation (or another segmentation)to extract mean intensity values in the WM dn GM
     :param slices_set:
@@ -438,7 +438,7 @@ def extract_metric_from_dic(slices_set, seg_to_use=None, gm_percentile=0.03, wm_
     level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
     if save:
         f = open(output, 'w')
-        f.write('Slice id - Slice level - Mean in WM - Mean in GM - Std in WM - Std in GM\n')
+        f.write('Slice id - Slice level - '+metric+' in WM - '+metric+' in GM - Std in WM - Std in GM\n')
     else:
         f = None
     slice_set_metric = {}
@@ -458,27 +458,33 @@ def extract_metric_from_dic(slices_set, seg_to_use=None, gm_percentile=0.03, wm_
         gm_dat = gm_dat[gm_dat > 0.1]
         wm_dat = wm_dat[wm_dat > 0.1]
 
-        if gm_percentile == 0:
-            gm_average = np.mean(gm_dat)
-            gm_std = np.std(gm_dat)
-        else:
-            gm_dat_flat = sorted(gm_dat.flatten())
-            gm_dat_flat = gm_dat_flat[int(round(gm_percentile*len(gm_dat_flat)/2.0)):-int(round(gm_percentile*len(gm_dat_flat)/2.0))]
-            gm_average = np.mean(gm_dat_flat)
-            gm_std = np.std(gm_dat_flat)
+        # metric in GM
+        if gm_percentile != 0:
+            # removing outliers with a percentile
+            gm_dat = sorted(gm_dat.flatten())
+            gm_dat = gm_dat[int(round(gm_percentile*len(gm_dat)/2.0)):-int(round(gm_percentile*len(gm_dat)/2.0))]
 
-        if wm_percentile == 0:
-            wm_average = np.mean(wm_dat)
-            wm_std = np.std(wm_dat)
-        else:
-            wm_dat_flat = sorted(wm_dat.flatten())
-            wm_dat_flat = wm_dat_flat[int(round(wm_percentile*len(wm_dat_flat)/2.0)):-int(round(wm_percentile*len(wm_dat_flat)/2.0))]
-            wm_average = np.mean(wm_dat_flat)
-            wm_std = np.std(wm_dat_flat)
+        if metric.lower() == 'mean':
+            gm_met = np.mean(gm_dat)
+        elif metric.lower() == 'median':
+            gm_met = np.median(gm_dat)
+        gm_std = np.std(gm_dat)
 
-        slice_set_metric[slice_i.id] = (wm_average, gm_average, wm_std, gm_std)
+        # metric in WM
+        if wm_percentile != 0:
+            # removing outliers with a percentile
+            wm_dat = sorted(wm_dat.flatten())
+            wm_dat = wm_dat[int(round(wm_percentile*len(wm_dat)/2.0)):-int(round(wm_percentile*len(wm_dat)/2.0))]
+
+        if metric.lower() == 'mean':
+            wm_met = np.mean(wm_dat)
+        elif metric.lower() == 'median':
+            wm_met = np.median(wm_dat)
+        wm_std = np.std(wm_dat)
+
+        slice_set_metric[slice_i.id] = (wm_met, gm_met, wm_std, gm_std)
         if save:
-            f.write(str(slice_i.id) + ' - ' + level_label[slice_i.level] + ' - ' + str(wm_average) + ' - ' + str(gm_average) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
+            f.write(str(slice_i.id) + ' - ' + level_label[slice_i.level] + ' - ' + str(wm_met) + ' - ' + str(gm_met) + ' - ' + str(wm_std) + ' - ' + str(gm_std) + '\n')
     if save:
         f.close()
     return slice_set_metric
@@ -735,7 +741,8 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             # sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
             sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
-            sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
+            # sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
+            sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
 
         if orientation != 'RPI':
             sct.run('sct_orientation -i ' + name_resample + ' -s ' + orientation)
