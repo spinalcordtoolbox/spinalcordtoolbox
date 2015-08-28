@@ -328,8 +328,8 @@ if __name__ == "__main__":
     input_ref_gm_seg = None
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_input = param.path_dictionary + "/errsm_34.nii.gz"
-        fname_input = param.path_dictionary + "/errsm_34_seg_in.nii.gz"
+        fname_input = param.path_model + "/errsm_34.nii.gz"
+        fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
         param_default = Param()
 
@@ -351,10 +351,10 @@ if __name__ == "__main__":
                           description="output name for the results",
                           mandatory=False,
                           example='t2star_res.nii.gz')
-        parser.add_option(name="-dic",
+        parser.add_option(name="-model",
                           type_value="folder",
                           description="Path to the model data",
-                          mandatory=True,
+                          mandatory=False,
                           example='/home/jdoe/gm_seg_model_data/')
         parser.add_option(name="-t2",
                           type_value=[[','], 'file'],
@@ -448,7 +448,8 @@ if __name__ == "__main__":
         arguments = parser.parse(sys.argv[1:])
         input_target_fname = arguments["-i"]
         input_sc_seg_fname = arguments["-s"]
-        param.path_dictionary = arguments["-dic"]
+        if "-model" in arguments:
+            param.path_model = arguments["-model"]
         param.todo_model = 'load'
 
         if "-o" in arguments:
