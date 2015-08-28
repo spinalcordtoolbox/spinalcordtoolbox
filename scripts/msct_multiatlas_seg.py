@@ -25,19 +25,19 @@ from msct_pca import PCA
 # from msct_parser import *
 from msct_gmseg_utils import *
 import sct_utils as sct
-import pickle
-
-from math import sqrt
+import pickle, gzip
+import commands
 from math import exp
-# from math import fabs
 
 
 class Param:
     def __init__(self):
+        status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+
         self.debug = 0
-        self.path_dictionary = None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
+        self.path_model = path_sct+'/data/gm_model' # None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
         self.todo_model = None  # 'compute'
-        self.model_dir = './gm_seg_model_data'
+        self.new_model_dir = './gm_model'
         self.output_name = ''
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.reg_metric = 'MI'
@@ -56,9 +56,9 @@ class Param:
 
     def __repr__(self):
         s = ''
-        s += 'path_dictionary: ' + str(self.path_dictionary) + '\n'
+        s += 'path_model: ' + str(self.path_model) + '\n'
         s += 'todo_model: ' + str(self.todo_model) + '\n'
-        s += 'model_dir: ' + str(self.model_dir) + '\n'
+        s += 'new_model_dir: ' + str(self.new_model_dir) + '  *** only used if todo_model=compute ***\n'
         s += 'output_name: ' + str(self.output_name) + '\n'
         s += 'reg: ' + str(self.reg) + '\n'
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
@@ -127,8 +127,8 @@ class ModelDictionary:
     def compute_model(self):
 
         sct.printv('\nComputing the model dictionary ...', self.param.verbose, 'normal')
-        sct.run('mkdir ' + self.param.model_dir)
-        param_fic = open(self.param.model_dir + '/info.txt', 'w')
+        sct.run('mkdir ' + self.param.new_model_dir)
+        param_fic = open(self.param.new_model_dir + '/info.txt', 'w')
         param_fic.write(str(self.param))
         param_fic.close()
         sct.printv('\nLoading data dictionary ...', self.param.verbose, 'normal')
@@ -171,8 +171,8 @@ class ModelDictionary:
         slices = []
         j = 0
         # TODO: change the name of files to find to a more general structure
-        for subject_dir in os.listdir(self.param.path_dictionary):
-            subject_path = self.param.path_dictionary + '/' + subject_dir
+        for subject_dir in os.listdir(self.param.path_model):
+            subject_path = self.param.path_model + '/' + subject_dir
             if os.path.isdir(subject_path):
                 for file_name in os.listdir(subject_path):
                     if 'im' in file_name:  # or 'seg_in' in file_name:
@@ -258,9 +258,9 @@ class ModelDictionary:
             dic_slice.set(reg_to_m=new_reg_list)
 
             if first:
-                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg,  transfo_name=name_j_transform, path=self.param.new_model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
             else:
-                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.param.model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
+                seg_m = apply_ants_transfo(mean_seg, dic_slice.wm_seg_M,  transfo_name=name_j_transform, path=self.param.new_model_dir + '/', transfo_type=transfo_type, metric=self.param.reg_metric)
             dic_slice.set(wm_seg_m=seg_m.astype(int))
             dic_slice.set(wm_seg_m_flat=seg_m.flatten().astype(int))
 
@@ -300,8 +300,8 @@ class ModelDictionary:
 
         for dic_slice in self.slices:
             for n_transfo, transfo in enumerate(transfo_to_apply):
-                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
-                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
+                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
+                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
 
             dic_slice.set(im_m=im_m)
@@ -311,13 +311,13 @@ class ModelDictionary:
         # Delete the directory containing the transformations : They are not needed anymore
         for transfo_type in transfo_to_apply:
             transfo_dir = transfo_type.lower() + '_transformations'
-            if transfo_dir in os.listdir(self.param.model_dir + '/'):
-                sct.run('rm -rf ' + self.param.model_dir + '/' + transfo_dir + '/')
+            if transfo_dir in os.listdir(self.param.new_model_dir + '/'):
+                sct.run('rm -rf ' + self.param.new_model_dir + '/' + transfo_dir + '/')
 
     # ------------------------------------------------------------------------------------------------------------------
     def save_model(self):
         model_slices = np.asarray([(dic_slice.im_M, dic_slice.wm_seg_M, dic_slice.gm_seg_M, dic_slice.level) for dic_slice in self.slices])
-        pickle.dump(model_slices, open(self.param.model_dir + '/dictionary_slices.pkl', 'wb'), protocol=2)
+        pickle.dump(model_slices, gzip.open(self.param.new_model_dir + '/dictionary_slices.pklz', 'wb'), protocol=2)
 
     # ------------------------------------------------------------------------------------------------------------------
     # END OF FUNCTIONS USED TO COMPUTE THE MODEL
@@ -326,7 +326,7 @@ class ModelDictionary:
     # ------------------------------------------------------------------------------------------------------------------
     def load_model(self):
 
-        model_slices = pickle.load(open(self.param.path_dictionary + '/dictionary_slices.pkl', 'rb'))
+        model_slices = pickle.load(gzip.open(self.param.path_model + '/dictionary_slices.pklz', 'rb'))
 
         self.slices = [Slice(slice_id=i_slice, level=dic_slice[3], im_m=dic_slice[0], wm_seg_m=dic_slice[1], gm_seg_m=dic_slice[2], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices)]  # type: list of slices
 
@@ -426,15 +426,14 @@ class Model:
         self.dictionary = ModelDictionary(dic_param=self.param)
 
         sct.printv("The shape of the dictionary used for the PCA is (" + str(self.dictionary.N) + "," + str(self.dictionary.J) + ")", verbose=self.param.verbose)
-
         # Instantiate a PCA object given the dictionary just build
         if self.param.todo_model == 'compute':
             sct.printv('\nCreating a reduced common space (using a PCA) ...', self.param.verbose, 'normal')
             self.pca = PCA(np.asarray(self.dictionary.slices), k=k)
-            self.pca.save_data(self.param.model_dir)
+            self.pca.save_data(self.param.new_model_dir)
         elif self.param.todo_model == 'load':
             sct.printv('\nLoading a reduced common space (using a PCA) ...', self.param.verbose, 'normal')
-            pca_data = pickle.load(open(self.param.path_dictionary + '/pca_data.pkl', 'rb'))
+            pca_data = pickle.load(gzip.open(self.param.path_model + '/pca_data.pklz', 'rb'))
             self.pca = PCA(np.asarray(self.dictionary.slices), mean_vect=pca_data[0], eig_pairs=pca_data[1], k=k)
 
         # updating the dictionary mean_image
@@ -445,9 +444,9 @@ class Model:
 
         if self.param.todo_model == 'compute':
             self.tau = self.compute_tau()
-            pickle.dump(self.tau, open(self.param.model_dir + '/tau.txt', 'w'), protocol=0)  # or protocol=2 and 'wb'
+            pickle.dump(self.tau, open(self.param.new_model_dir + '/tau_levels_'+str(self.param.use_levels)+'.txt', 'w'), protocol=0)  # or protocol=2 and 'wb'
         elif self.param.todo_model == 'load':
-            self.tau = pickle.load(open(self.param.path_dictionary + '/tau.txt', 'r'))  # if protocol was 2 : 'rb'
+            self.tau = pickle.load(open(self.param.path_model + '/tau_levels_'+str(self.param.use_levels)+'.txt', 'r'))  # if protocol was 2 : 'rb'
 
         if self.param.verbose == 2:
             self.pca.plot_projected_dic()
@@ -1170,8 +1169,8 @@ if __name__ == "__main__":
     input_level_fname = None
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_input = param.path_dictionary + "/errsm_34.nii.gz"
-        fname_input = param.path_dictionary + "/errsm_34_seg_in.nii.gz"
+        fname_input = param.path_model + "/errsm_34.nii.gz"
+        fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
         param_default = Param()
 
@@ -1189,12 +1188,12 @@ if __name__ == "__main__":
                           description="output name for the results",
                           mandatory=False,
                           example='t2star_res.nii.gz')
-        parser.add_option(name="-dic",
+        parser.add_option(name="-model",
                           type_value="folder",
                           description="Path to the dictionary of images",
                           mandatory=True,
                           example='/home/jdoe/data/dictionary')
-        parser.add_option(name="-model",
+        parser.add_option(name="-todo-model",
                           type_value="multiple_choice",
                           description="Load or compute the model",
                           mandatory=True,
@@ -1283,8 +1282,8 @@ if __name__ == "__main__":
 
 
         arguments = parser.parse(sys.argv[1:])
-        param.path_dictionary = arguments["-dic"]
-        param.todo_model = arguments["-model"]
+        param.path_model = arguments["-model"]
+        param.todo_model = arguments["-todo-model"]
 
         if "-i" in arguments:
             input_target_fname = arguments["-i"]

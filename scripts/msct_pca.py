@@ -270,12 +270,12 @@ class PCA:
 
         :param path: path where save the data
         """
-        import pickle
+        import pickle, gzip
         previous_path = os.getcwd()
         os.chdir(path)
 
         pca_data = np.asarray([self.mean_data_vect, self.eig_pairs])
-        pickle.dump(pca_data, open('./pca_data.pkl', 'wb'), protocol=2)
+        pickle.dump(pca_data, gzip.open('./pca_data.pklz', 'wb'), protocol=2)
 
         os.chdir(previous_path)
 
