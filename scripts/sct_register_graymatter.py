@@ -35,10 +35,11 @@ class RegistrationParam:
         self.fname_output = ''
         self.padding = '10'
 
+        self.verbose = 1
         self.remove_temp = 1
 
 
-def wm_registration(param):
+def wm_registration(param, path_tmp):
 
     moving_name = 'moving'
     fixed_name = 'fixed'
@@ -49,13 +50,8 @@ def wm_registration(param):
     # Extract path/file/extension
     path_output, file_output, ext_output = sct.extract_fname(param.fname_output)
 
-    # create temporary folder
-    print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
-
     # copy files to temporary folder
-    print('\nCopy files...')
+    sct.printv('\nCopy files...', reg_param.verbose, 'normal')
     sct.run("c3d "+param.fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
     sct.run("c3d "+param.fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
     if param.fname_seg_moving != '':
@@ -108,9 +104,8 @@ def wm_registration(param):
     moving_im.data = (moving_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
     moving_im.save()
 
-
     # registration of the gray matter
-    print('\nDeforming the image...')
+    sct.printv('\nDeforming the image...', reg_param.verbose, 'normal')
     moving_name_reg = moving_name+"_deformed"
 
     if param.transformation == 'BSplineSyN':
@@ -151,12 +146,7 @@ def wm_registration(param):
 
     # move output files to initial folder
     sct.run("cp "+file_output+"* ../")
-
-    # remove temporary file
-    if param.remove_temp == 1:
-        os.chdir('../')
-        print('\nRemove temporary files...')
-        sct.run("rm -rf "+path_tmp)
+    os.chdir('..')
 
 
 def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
@@ -170,14 +160,29 @@ def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
 
 def main(seg_params, reg_param, target_fname='', sc_seg_fname='', path_to_label=''):
     # TODO: make tmp folder
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose, 'normal' )
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
+
+    os.chdir(path_tmp)
+    sct.run('cp '+target_fname+' '+path_tmp+'/'+''.join(sct.extract_fname(target_fname)[0:1]))
     wm_fname, gm_fname = segment_gm(target_fname=target_fname, sc_seg_fname=sc_seg_fname, path_to_label=path_to_label, param=seg_params)
+    os.chdir('..')
 
     reg_param.fname_fixed = wm_fname
     reg_param.fname_moving = path_to_label + '/template/MNI-Poly-AMU_WM.nii.gz'
     reg_param.fname_seg_fixed = sc_seg_fname
     reg_param.fname_seg_moving = path_to_label + '/template/MNI-Poly-AMU_cord.nii.gz'
 
-    wm_registration(reg_param)
+    wm_registration(reg_param, path_tmp)
+
+    # remove temporary file
+    if reg_param.remove_temp == 1:
+        sct.printv('\nRemove temporary files...', verbose, 'normal')
+        sct.run("rm -rf "+path_tmp)
+
+
     # TODO: get output file for the warping field and the inverse
     # warp the T2star = output
     # sct.run('sct_apply_transfo -i ' + target_fname + ' -d ' + target_fname + ' -w ' + output_inverse_warp + ' -o ' + sct.extract_fname(target_fname)[1] + '_moved.nii.gz')
@@ -277,6 +282,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
+        parser.add_option(name="-v",
+                          type_value='multiple_choice',
+                          description="Verbose",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1', '2'])
 
         arguments = parser.parse(sys.argv[1:])
 
@@ -285,6 +296,7 @@ if __name__ == "__main__":
         gm_seg_param.path_model = arguments["-dic"]
         gm_seg_param.todo_model = 'load'
         path_to_label = arguments["-label"]
+        verbose = 1
 
         if "-seg-o" in arguments:
             gm_seg_param.output_name = arguments["-seg-o"]
@@ -307,6 +319,11 @@ if __name__ == "__main__":
             reg_param.metric = arguments["-m"]
         if "-r" in arguments:
             reg_param.remove_temp = int(arguments["-r"])
+        if "-v" in arguments:
+            verbose = int(arguments["-v"])
+
+        gm_seg_param.verbose = verbose
+        reg_param.verbose = verbose
 
     main(gm_seg_param, reg_param, target_fname=input_target_fname, sc_seg_fname=input_sc_seg_fname, path_to_label=path_to_label)
 
