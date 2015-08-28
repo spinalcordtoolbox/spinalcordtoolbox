@@ -32,7 +32,7 @@ class RegistrationParam:
         self.iteration = '10x5' # '20x15'
         self.fname_seg_fixed = ''
         self.fname_seg_moving = ''
-        self.fname_output = ''
+        self.fname_output = 'wm_registration.nii.gz'
         self.padding = '10'
 
         self.verbose = 1
@@ -53,7 +53,7 @@ def wm_registration(param, path_tmp):
     # copy files to temporary folder
     sct.printv('\nCopy files...', reg_param.verbose, 'normal')
     sct.run("c3d "+param.fname_moving+" -o "+path_tmp+"/"+moving_name+".nii")
-    sct.run("c3d "+param.fname_ref+" -o "+path_tmp+"/"+fixed_name+".nii")
+    sct.run("c3d "+param.fname_fixed+" -o "+path_tmp+"/"+fixed_name+".nii")
     if param.fname_seg_moving != '':
         sct.run("c3d "+param.fname_seg_moving+" -o "+path_tmp+"/"+moving_seg_name+".nii")
     if param.fname_seg_fixed != '':
@@ -132,13 +132,14 @@ def wm_registration(param, path_tmp):
     moving_im.data = (moving_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
     moving_im.save()
 
-
-
     # un-padding the images
     moving_name_unpad = moving_name+"_unpadded"
     sct.run("sct_crop_image -i "+moving_name+".nii -dim 2 -start "+str(int(param.padding)-1)+" -end -"+param.padding+" -o "+moving_name_unpad+".nii")
-    sct.run("mv "+moving_name+"0Warp.nii.gz "+file_output+"0Warp"+ext_output)
-    sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+file_output+"0InverseWarp"+ext_output)
+
+    warp_output = file_output+"0Warp"+ext_output
+    inverse_warp_output = file_output+"0InverseWarp"+ext_output
+    sct.run("mv "+moving_name+"0Warp.nii.gz "+warp_output)
+    sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+inverse_warp_output)
     moving_name = moving_name_unpad
 
     moving_name_out = file_output+ext_output
@@ -147,6 +148,8 @@ def wm_registration(param, path_tmp):
     # move output files to initial folder
     sct.run("cp "+file_output+"* ../")
     os.chdir('..')
+
+    return warp_output, inverse_warp_output
 
 
 def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
@@ -157,36 +160,29 @@ def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
     return gmsegfull.res_names['corrected_wm_seg'], gmsegfull.res_names['gm_seg']
 
 
-
 def main(seg_params, reg_param, target_fname='', sc_seg_fname='', path_to_label=''):
-    # TODO: make tmp folder
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose, 'normal' )
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
 
-    os.chdir(path_tmp)
-    sct.run('cp '+target_fname+' '+path_tmp+'/'+''.join(sct.extract_fname(target_fname)[0:1]))
     wm_fname, gm_fname = segment_gm(target_fname=target_fname, sc_seg_fname=sc_seg_fname, path_to_label=path_to_label, param=seg_params)
-    os.chdir('..')
 
     reg_param.fname_fixed = wm_fname
     reg_param.fname_moving = path_to_label + '/template/MNI-Poly-AMU_WM.nii.gz'
     reg_param.fname_seg_fixed = sc_seg_fname
     reg_param.fname_seg_moving = path_to_label + '/template/MNI-Poly-AMU_cord.nii.gz'
 
-    wm_registration(reg_param, path_tmp)
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose, 'normal' )
+    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    sct.run('mkdir '+path_tmp)
+    warp, inverse_warp = wm_registration(reg_param, path_tmp)
+
+    # warp the T2star = output
+    sct.run('sct_apply_transfo -i ' + target_fname + ' -d ' + target_fname + ' -w ' + inverse_warp + ' -o ' + sct.extract_fname(target_fname)[1] + '_moved.nii.gz')
+    sct.run('sct_apply_transfo -i ' + sc_seg_fname + ' -d ' + sc_seg_fname + ' -w ' + inverse_warp + ' -o ' + sct.extract_fname(sc_seg_fname)[1] + '_moved.nii.gz  -x nn ')
 
     # remove temporary file
     if reg_param.remove_temp == 1:
         sct.printv('\nRemove temporary files...', verbose, 'normal')
         sct.run("rm -rf "+path_tmp)
-
-
-    # TODO: get output file for the warping field and the inverse
-    # warp the T2star = output
-    # sct.run('sct_apply_transfo -i ' + target_fname + ' -d ' + target_fname + ' -w ' + output_inverse_warp + ' -o ' + sct.extract_fname(target_fname)[1] + '_moved.nii.gz')
-    # sct.run('sct_apply_transfo -i ' + sc_seg_fname + ' -d ' + sc_seg_fname + ' -w ' + output_inverse_warp + ' -o ' + sct.extract_fname(sc_seg_fname)[1] + '_moved.nii.gz  -x nn ')
 
 
 if __name__ == "__main__":
