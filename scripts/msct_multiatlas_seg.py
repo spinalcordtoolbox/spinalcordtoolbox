@@ -52,6 +52,7 @@ class Param:
         self.mode_weight_similarity = False
         self.z_regularisation = False
         self.res_type = 'prob'
+        self.dev = False
         self.verbose = 1
 
     def __repr__(self):
@@ -1108,17 +1109,18 @@ sct_Image
         # get & save the result gray matter segmentation
         if gm_seg_param.output_name == '':
             suffix = ''
-            suffix += '_' + gm_seg_param.res_type
-            for transfo in self.model.dictionary.coregistration_transfos:
-                suffix += '_' + transfo
-            if self.model.param.use_levels:
-                suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
-            else:
-                suffix += '_no_levels'
-            if self.model.param.z_regularisation:
-                suffix += '_Zregularisation'
-            if self.model.param.target_normalization:
-                suffix += '_normalized'
+            if self.model.param.dev:
+                suffix += '_' + gm_seg_param.res_type
+                for transfo in self.model.dictionary.coregistration_transfos:
+                    suffix += '_' + transfo
+                if self.model.param.use_levels:
+                    suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
+                else:
+                    suffix += '_no_levels'
+                if self.model.param.z_regularisation:
+                    suffix += '_Zregularisation'
+                if self.model.param.target_normalization:
+                    suffix += '_normalized'
 
             name_res_wmseg = sct.extract_fname(target_fname)[1] + '_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
             name_res_gmseg = sct.extract_fname(target_fname)[1] + '_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
