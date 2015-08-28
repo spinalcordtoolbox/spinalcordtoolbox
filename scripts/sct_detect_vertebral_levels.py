@@ -121,7 +121,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    path_tmp = '/Users/julien/data/sct_debug/tmp.150826170018/'
+    # path_tmp = '/Users/julien/data/sct_debug/tmp.150826170018/'
     chdir(path_tmp)
 
     # create label to identify disc
@@ -138,9 +138,9 @@ def main(args=None):
 
     # TODO: denoise data
 
-    # # Straighten spinal cord
-    # printv('\nStraighten spinal cord...', param.verbose)
-    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+    # Straighten spinal cord
+    printv('\nStraighten spinal cord...', param.verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -242,10 +242,14 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
     33.0000,   31.3330]
 
     if verbose == 2:
-        plt.figure(1), plt.imshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
+        # plt.figure(1), plt.imshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
+        plt.matshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), fignum=1, cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
         # plt.matshow(np.flipud(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose()), fignum=1, cmap=plt.cm.gray), plt.title('Anatomical image'), plt.draw()
         # display init disc
-        plt.figure(1), plt.scatter(yc+shift_AP, init_disc[0], c='y'), plt.draw()
+        plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
+        plt.figure(1), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50), plt.axis('off'), plt.draw()
+        plt.text(yc+shift_AP+4, init_disc[0], str(init_disc[1])+'/'+str(init_disc[1]+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15)
+
 
 
     # FIND DISCS
@@ -308,11 +312,11 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
         if verbose == 2:
             plt.plot(peaks, I_corr[peaks], 'ro'), plt.draw()
         # assign new z_start and disc value
-        # if direction is superior: sign = -1, if direction is inferior: sign = +1
-        current_z = current_z + int(peaks)
         if direction == 'superior':
+            current_z = current_z + int(peaks)
             current_disc = current_disc - 1
         elif direction == 'inferior':
+            current_z = current_z - int(peaks)
             current_disc = current_disc + 1
 
         # append to main list
@@ -323,7 +327,8 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
         approx_distance_to_next_disc = int(round(mean_distance[current_disc] * correcting_factor))
         # display
         if verbose == 2:
-            plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r'), plt.draw()
+            plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r', s=50), plt.draw()
+            plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='red', fontsize=15)
         # if current_z is larger than searching zone, switch direction (and start from initial z)
         if current_z + approx_distance_to_next_disc >= nz:
             direction = 'inferior'
@@ -333,81 +338,21 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
         if current_z - approx_distance_to_next_disc <= 0:
             search_next_disc = False
 
+    if verbose == 2:
+        # save figure with labels
+        plt.figure(1)
+        plt.savefig('anat_straight_with_labels.png')
 
-    # >>>>>>>>>>>>>>>>>>>>>
-
-    # I = np.zeros((nz, 1))
-    # # data_masked = img.data
-    # # data = img.data
-    # for iz in range(nz):
-    #     vox_in_spine = np.mgrid[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1]
-    #     # average intensity within box in the spine (shifted from spinal cord)
-    #     I[iz] = np.mean(img.data[vox_in_spine[0, :, :].ravel().astype(int),
-    #                              vox_in_spine[1, :, :].ravel().astype(int),
-    #                              iz])
-    #     # # just for visualization:
-    #     # data_masked[vox_in_spine[0, :, :].ravel().astype(int),
-    #     #             vox_in_spine[1, :, :].ravel().astype(int),
-    #     #             iz] = 0
-    #
-    # # Display mask
-    # if verbose == 2:
-    #     plt.matshow(np.flipud(np.mean(img.data[xc-3:xc+3, :, :], axis=0).transpose()), cmap=plt.cm.gray)
-    #     #plt.matshow(np.flipud(data[xc, :, :].transpose()), cmap=plt.cm.gray)
-    #     plt.title('Anatomical image')
-    #     plt.draw()
-    #     # plt.matshow(np.flipud(data_masked[xc, :, :].transpose()), cmap=plt.cm.gray)
-    #     # plt.title('Anatomical image with mask')
-    #     # plt.draw()
-    #
-    # # display intensity along spine
-    # if verbose == 2:
-    #     plt.figure()
-    #     plt.plot(I)
-    #     plt.title('Averaged intensity within spine. x=0: most caudal.')
-    #     plt.draw()
-    #
-    # # find local extrema
-    # from scipy.signal import argrelextrema
-    # peaks = argrelextrema(I, np.greater, order=10)[0]
-    # nb_peaks = len(peaks)
-    # printv('.. Number of peaks found: '+str(nb_peaks), verbose)
-    #
-    # if verbose == 2:
-    #     plt.figure()
-    #     plt.plot(I)
-    #     plt.plot(peaks, I[peaks], 'ro')
-    #     plt.draw()
-    #
-    # # LABEL PEAKS
-    # labeled_peaks = np.array(range(nb_peaks, 0, -1)).astype(int)
-    # # find peak index closest to user input
-    # peak_ind_closest = np.argmin(abs(peaks-init_disc[0]))
-    # # build vector of peak labels
-    # # labeled_peaks = np.array(range(nb_peaks))
-    # # add the difference between "peak_ind_closest" and the init_disc value
-    # labeled_peaks = init_disc[1] - labeled_peaks[peak_ind_closest] + labeled_peaks
-    #
-    # # REMOVE WRONG LABELS (ASSUMING NO PEAK IS VISIBLE ABOVE C2/C3 DISK)
-    # ind_true_labels = np.where(labeled_peaks>1)[0]
-    # peaks = peaks[ind_true_labels]
-    # labeled_peaks = labeled_peaks[ind_true_labels]
-    #
-    # # ADD C1 label (ASSUMING DISTANCE FROM THE ADULT TEMPLATE)
-    # distance_c1_c2 = 20.8300/pz  # in mm
-    # # check if C2 disk is there
-    # if np.min(labeled_peaks) == 2:
-    #     printv('.. C2 disk is present. Adding C2 vertebrae based on template...')
-    #     peaks = np.append(peaks, (np.max(peaks) + distance_c1_c2).astype(int))
-    #     labeled_peaks = np.append(labeled_peaks, 1)
-    # printv('.. Labeled peaks: '+str(labeled_peaks[:-1]), verbose)
+    # sort list_disc_z and list_disc_value
+    list_disc_z = np.array(sorted(list_disc_z, reverse=True))
+    list_disc_value.sort()
 
     # LABEL SEGMENTATION
     # open segmentation
     seg = Image(fname_seg)
     for iz in range(nz):
         # get value of the disk above iz
-        ind_above_iz = np.nonzero((peaks-iz).clip(0))[0]
+        ind_above_iz = np.nonzero((list_disc_z-iz).clip(0))[0]
         if not ind_above_iz.size:
             # if ind_above_iz is empty, attribute value 0
             # vertebral_level = np.min(labeled_peaks)
@@ -416,7 +361,7 @@ def vertebral_detection(fname, fname_seg, contrast, init_disc):
             # ind_disk_above = np.where(peaks-iz > 0)[0][0]
             ind_disk_above = min(ind_above_iz)
             # assign vertebral level (remove one because iz is BELOW the disk)
-            vertebral_level = labeled_peaks[ind_disk_above] - 1
+            vertebral_level = list_disc_value[ind_disk_above] - 1
             # print vertebral_level
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
