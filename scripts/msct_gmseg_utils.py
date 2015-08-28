@@ -413,9 +413,9 @@ def save_dic_slices(path_to_model):
 
     :param path_to_model: path to the compute model used to load the dictionary
     """
-    import pickle
+    import pickle, gzip
     level_label = {0: '', 1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7', 8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6'}
-    model_slices_list = pickle.load(open(path_to_model + '/dictionary_slices.pkl', 'rb'))
+    model_slices_list = pickle.load(gzip.open(path_to_model + '/dictionary_slices.pklz', 'rb'))
     sct.run('mkdir ' + path_to_model + '/model_slices')
     model_slices = [Slice(slice_id=i_slice, level=dic_slice[3], im_m=dic_slice[0], wm_seg_m=dic_slice[1], gm_seg_m=dic_slice[2], im_m_flat=dic_slice[0].flatten(),  wm_seg_m_flat=dic_slice[1].flatten()) for i_slice, dic_slice in enumerate(model_slices_list)]  # type: list of slices
 
@@ -946,7 +946,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
                 # Gray matter segmentation using this subject as target
                 os.chdir(tmp_dir)
                 model_param = Param()
-                model_param.path_dictionary = tmp_dic_name
+                model_param.path_model = tmp_dic_name
                 model_param.todo_model = 'compute'
                 model_param.weight_gamma = float(weight)
                 model_param.use_levels = use_levels

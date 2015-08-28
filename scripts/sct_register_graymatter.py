@@ -282,7 +282,7 @@ if __name__ == "__main__":
 
         input_target_fname = arguments["-i"]
         input_sc_seg_fname = arguments["-s"]
-        gm_seg_param.path_dictionary = arguments["-dic"]
+        gm_seg_param.path_model = arguments["-dic"]
         gm_seg_param.todo_model = 'load'
         path_to_label = arguments["-label"]
 
