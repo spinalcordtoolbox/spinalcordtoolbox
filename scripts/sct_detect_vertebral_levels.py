@@ -121,7 +121,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831095614/'
+    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831095614/'
     chdir(path_tmp)
 
     # create label to identify disc
