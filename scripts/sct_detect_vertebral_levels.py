@@ -11,8 +11,7 @@
 #########################################################################################
 
 # TODO: add user input option (show sagittal slice)
-
-# check if needed Python libraries are already installed or not
+# TODO: make better distance template
 
 # from msct_base_classes import BaseScript
 import sys
@@ -48,11 +47,6 @@ def get_parser():
                       description="Segmentation or centerline of the spinal cord.",
                       mandatory=True,
                       example="t2_seg.nii.gz")
-    # parser.add_option(name="-t",
-    #                   type_value="multiple_choice",
-    #                   description="Image contrast: t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-    #                   mandatory=True,
-    #                   example=["t1", "t2"])
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
                       description='Initialize labeling by providing slice number (in superior-inferior direction!!) and disc value. Value corresponds to vertebral level above disc (e.g., for C3/C4 disc, value=3). Separate with ","',
@@ -121,37 +115,37 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831111434/'
+    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831111434/'
     chdir(path_tmp)
 
-    # # create label to identify disc
-    # printv('\nCreate label to identify disc...', param.verbose)
-    # if initz:
-    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    # elif initcenter:
-    #     # find z centered in FOV
-    #     nii = Image(fname_seg)
-    #     nii.change_orientation('RPI')  # reorient to RPI
-    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-    #     z_center = int(round(nz/2))  # get z_center
-    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-    #
-    # # TODO: denoise data
-    #
-    # # Straighten spinal cord
-    # printv('\nStraighten spinal cord...', param.verbose)
-    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-    #
-    # # Apply straightening to segmentation
-    # # N.B. Output is RPI
-    # printv('\nApply straightening to segmentation...', param.verbose)
-    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # # Threshold segmentation to 0.5
-    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-    #
-    # # Apply straightening to z-label
-    # printv('\nDilate z-label and apply straightening...', param.verbose)
-    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # create label to identify disc
+    printv('\nCreate label to identify disc...', param.verbose)
+    if initz:
+        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    elif initcenter:
+        # find z centered in FOV
+        nii = Image(fname_seg)
+        nii.change_orientation('RPI')  # reorient to RPI
+        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+        z_center = int(round(nz/2))  # get z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+
+    # TODO: denoise data
+
+    # Straighten spinal cord
+    printv('\nStraighten spinal cord...', param.verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+
+    # Apply straightening to segmentation
+    # N.B. Output is RPI
+    printv('\nApply straightening to segmentation...', param.verbose)
+    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # Threshold segmentation to 0.5
+    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+
+    # Apply straightening to z-label
+    printv('\nDilate z-label and apply straightening...', param.verbose)
+    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -199,11 +193,17 @@ def vertebral_detection(fname, fname_seg, init_disc):
     from scipy.signal import argrelextrema
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
-    size_AP = 3  # mean around the centerline in the anterior-posterior direction in mm
-    size_RL = 5  # mean around the centerline in the right-left direction in mm
+    size_AP = 5  # window size in AP direction (=y) in mm
+    size_RL = 7  # window size in RL direction (=x) in mm
+    size_IS = 5  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 10  # size used for finding local maxima
     thr_corr = 0.3  # disc correlation threshold. Below this value, use template distance.
     verbose = param.verbose
+    # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
+    mean_distance = np.array([18, 16, 18.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
+    19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
+    33.0000,   31.3330])
+
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -212,8 +212,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
     # open anatomical volume
     img = Image(fname)
     data = img.data
-    # orient to RPI
-    # img.change_orientation()
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
 
@@ -232,16 +230,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
     # define xc and yc (centered in the field of view)
     xc = round(nx/2)  # direction RL
     yc = round(ny/2)  # direction AP
-
-    # JULIEN <<<<<<<<<<<<
-    size_RL = 7  # x
-    size_AP = 5  # y
-    size_IS = 5  # z
-
-    # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
-    mean_distance = np.array([18, 16, 18.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
-    19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
-    33.0000,   31.3330])
 
     if verbose == 2:
         # plt.figure(1), plt.imshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
@@ -286,35 +274,25 @@ def vertebral_detection(fname, fname_seg, init_disc):
         I_corr = np.zeros((length_z_corr, 1))
         ind_I = 0
         for iz in range(length_z_corr):
-            # plt.matshow(np.flipud(np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
-            # if data is shifted towards the edge, calculate size of missing data.
-            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
-            padding_size = pattern.shape[2] - data_chunk3d.shape[2]
             if direction == 'superior':
-                data3d = np.pad(data3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
+                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+                # if part of the data is missing, calculate size of missing data.
+                padding_size = pattern.shape[2] - data_chunk3d.shape[2]
+                # pad data with zeros
+                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
             elif direction == 'inferior':
-                data3d = np.pad(data3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
-            plt.matshow(np.flipud(np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
-            data_chunk1d = data3d.ravel()
-            # crop pattern if data_chunk1d is cropped (because beginning/end of data)
-            # if len(data_chunk1d) < len(pattern1d):
-            #     # TODO: DO NOT CROP! INSTEAD, FILL WITH 0
-            #     crop_size = len(pattern1d) - len(data_chunk1d)
-            #     if direction == 'superior':
-            #         # if direction is superior, crop end of pattern
-            #         data_chunk1d = np.append(data_chunk1d, np.zeros(crop_size))
-            #         # pattern1d = pattern1d[:-crop_size]
-            #     elif direction == 'inferior':
-            #         # if direction is inferior, crop beginning of pattern
-            #         # pattern1d = pattern1d[crop_size:]
-            #         data_chunk1d = np.append(np.zeros(crop_size), data_chunk1d)
-            #     printv('.. WARNING: cropping pattern. Length pattern = '+str(len(pattern1d)), verbose)
-            if not len(pattern1d) < 200:
+                data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS:current_z-iz+size_IS+1]
+                # if part of the data is missing, calculate size of missing data.
+                padding_size = pattern.shape[2] - data_chunk3d.shape[2]
+                # pad data with zeros
+                data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+            # plt.matshow(np.flipud(np.mean(data_chunk3d, axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
+            data_chunk1d = data_chunk3d.ravel()
+            # check if data_chunk1d contains at least one non-zero value
+            if np.any(data_chunk1d):
                 I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
             else:
-                printv('.. WARNING: Length pattern is too small. Set correlation to 0.', verbose)
-            # I_corr[ind_I] = np.corrcoef(data_chunk2d, pattern2d)[0, 1]
-            # I_corr[ind_I] = mutual_information_2d(data_chunk2d.ravel(), pattern2d.ravel())
+                printv('.. WARNING: Data only contains zero. Set correlation to 0.', verbose)
             ind_I = ind_I + 1
 
         if verbose == 2:
@@ -486,51 +464,6 @@ def get_z_and_disc_values_from_label(fname_label):
     # get label value
     value_label = int(nii.data[x_label, y_label, z_label])
     return [z_label, value_label]
-
-
-# def mutual_information_2d(x, y, sigma=1, normalized=False):
-#     """
-#     Computes (normalized) mutual information between two 1D variate from a
-#     joint histogram.
-#     Parameters
-#     ----------
-#     x : 1D array
-#         first variable
-#     y : 1D array
-#         second variable
-#     sigma: float
-#         sigma for Gaussian smoothing of the joint histogram
-#     Returns
-#     -------
-#     nmi: float
-#         the computed similariy measure
-#     """
-#     from scipy import ndimage
-#     bins = (256, 256)
-#
-#     jh = np.histogram2d(x, y, bins=bins)[0]
-#     # plt.matshow(jh, origin='lower'), plt.draw()
-#     # smooth the jh with a gaussian filter of given sigma
-#     ndimage.gaussian_filter(jh, sigma=sigma, mode='constant', output=jh)
-#
-#     # compute marginal histograms
-#     EPS = np.finfo(float).eps
-#     jh = jh + EPS
-#     sh = np.sum(jh)
-#     jh = jh / sh
-#     s1 = np.sum(jh, axis=0).reshape((-1, jh.shape[0]))
-#     s2 = np.sum(jh, axis=1).reshape((jh.shape[1], -1))
-#
-#     # Normalised Mutual Information of:
-#     # Studholme,  jhill & jhawkes (1998).
-#     # "A normalized entropy measure of 3-D medical image alignment".
-#     # in Proc. Medical Imaging 1998, vol. 3338, San Diego, CA, pp. 132-143.
-#     if normalized:
-#         mi = ((np.sum(s1 * np.log(s1)) + np.sum(s2 * np.log(s2))) / np.sum(jh * np.log(jh))) - 1
-#     else:
-#         mi = ( np.sum(jh * np.log(jh)) - np.sum(s1 * np.log(s1)) - np.sum(s2 * np.log(s2)))
-#
-#     return mi
 
 
 # START PROGRAM
