@@ -36,7 +36,7 @@ class Param:
 
         self.debug = 0
         self.path_model = path_sct+'/data/gm_model' # None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
-        self.todo_model = None  # 'compute'
+        self.todo_model = 'load'  # 'compute'
         self.new_model_dir = './gm_model'
         self.output_name = ''
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
@@ -1193,12 +1193,12 @@ if __name__ == "__main__":
         parser.add_option(name="-model",
                           type_value="folder",
                           description="Path to the dictionary of images",
-                          mandatory=True,
+                          mandatory=False,
                           example='/home/jdoe/data/dictionary')
         parser.add_option(name="-todo-model",
                           type_value="multiple_choice",
                           description="Load or compute the model",
-                          mandatory=True,
+                          mandatory=False,
                           example=['load', 'compute'])
         parser.add_option(name="-l",
                           type_value="str",
@@ -1284,13 +1284,15 @@ if __name__ == "__main__":
 
 
         arguments = parser.parse(sys.argv[1:])
-        param.path_model = arguments["-model"]
-        param.todo_model = arguments["-todo-model"]
 
         if "-i" in arguments:
             input_target_fname = arguments["-i"]
         if "-o" in arguments:
             param.output_name = arguments["-o"]
+        if "-model" in arguments:
+            param.path_model = arguments["-model"]
+        if "-todo-model" in arguments:
+            param.todo_model = arguments["-todo-model"]
         if "-reg" in arguments:
             param.reg = arguments["-reg"]
         if "-l" in arguments:

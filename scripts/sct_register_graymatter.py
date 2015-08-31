@@ -216,16 +216,16 @@ if __name__ == "__main__":
                           description="output name for the results",
                           mandatory=False,
                           example='t2star_res.nii.gz')
-        parser.add_option(name="-dic",
-                          type_value="folder",
-                          description="Path to the model data",
-                          mandatory=True,
-                          example='/home/jdoe/gm_seg_model_data/')
         parser.add_option(name="-label",
                           type_value="folder",
                           description="Path to the label directory from the template registration",
                           mandatory=True,
                           example='./label/')
+        parser.add_option(name="-model",
+                          type_value="folder",
+                          description="Path to the model data",
+                          mandatory=False,
+                          example='/home/jdoe/gm_seg_model_data/')
         '''
         parser.add_option(name="-i",
                           type_value="file",
@@ -289,11 +289,11 @@ if __name__ == "__main__":
 
         input_target_fname = arguments["-i"]
         input_sc_seg_fname = arguments["-s"]
-        gm_seg_param.path_model = arguments["-dic"]
         gm_seg_param.todo_model = 'load'
         path_to_label = arguments["-label"]
         verbose = 1
-
+        if "-model" in arguments:
+            gm_seg_param.path_model = arguments["-model"]
         if "-seg-o" in arguments:
             gm_seg_param.output_name = arguments["-seg-o"]
         '''
