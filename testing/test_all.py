@@ -17,6 +17,7 @@ import commands
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
+sys.path.append(path_sct + '/testing')
 import sct_utils as sct
 from os import listdir
 from os.path import isfile, join
@@ -31,14 +32,15 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+# JULIEN: NOW THAT THE USER WILL HAVE ACCESS TO TEST_ALL, WE SHOULD NOT USE $SCT_TESTING_DATA_DIR ANYMORE.
 # get path of testing data
-status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
+# status, path_sct_testing = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
 
 
 class param:
     def __init__(self):
         self.download = 0
-        self.path_data = sct.slash_at_the_end(path_sct_testing, 1)
+        self.path_data = 'sct_testing_data/data/'
         self.function_to_test = None
         # self.function_to_avoid = None
         self.remove_tmp_file = 0
@@ -50,14 +52,14 @@ class param:
 # START MAIN
 # ==========================================================================================
 def main():
-    path_data = param.path_data
+    # path_data = param.path_data
     function_to_test = param.function_to_test
     # function_to_avoid = param.function_to_avoid
     remove_tmp_file = param.remove_tmp_file
 
     # Check input parameters
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'h:d:p:f:r:a:')
+        opts, args = getopt.getopt(sys.argv[1:], 'h:d:p:f:r:a:')
     except getopt.GetoptError:
         usage()
     for opt, arg in opts:
@@ -70,24 +72,15 @@ def main():
             param.path_data = arg
         if opt == '-f':
             function_to_test = arg
-        # if opt == '-a':
-        #     function_to_avoid = arg
         if opt == '-r':
             remove_tmp_file = int(arg)
 
     start_time = time.time()
 
-    # if function_to_avoid:
-    #     try:
-    #         functions.remove(function_to_avoid)
-    #     except ValueError:
-    #         print 'The function you want to avoid does not figure in the functions to test list'
-
     # download data
     if param.download:
         downloaddata()
 
-    param.path_data = 'sct_testing_data/data'
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
@@ -96,7 +89,7 @@ def main():
         downloaddata()
 
     # display path to data
-    sct.printv('\nPath to testing data:\n.. '+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data:\n'+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -239,79 +232,40 @@ def write_to_log_file(fname_log, string, mode='w'):
 # test function
 # ==========================================================================================
 def test_function(script_name):
-    if script_name == 'test_debug':
-        return test_debug()  # JULIEN
-    else:
-        # build script name
-        fname_log = script_name + ".log"
-        tmp_script_name = script_name
-        result_folder = "results_"+script_name
-        script_name = "test_"+script_name
+    # if script_name == 'test_debug':
+    #     return test_debug()  # JULIEN
+    # else:
+    # build script name
+    fname_log = script_name + ".log"
+    tmp_script_name = script_name
+    result_folder = "results_"+script_name
+    script_name = "test_"+script_name
 
-        sct.create_folder(result_folder)
-        os.chdir(result_folder)
+    sct.create_folder(result_folder)
+    os.chdir(result_folder)
 
-        # display script name
-        print_line('Checking '+script_name)
-        # import function as a module
-        script_tested = importlib.import_module(script_name)
-        # test function
-        status, output = script_tested.test(param.path_data)
-        # write log file
-        write_to_log_file(fname_log, output, 'w')
-        # manage status
-        if status == 0:
-            print_ok()
-        else:
-            if status == 5:
-                print_warning()
-            else:
-                print_fail()
-            print output
-        # go back to parent folder
-        os.chdir('..')
-
-        # return
-        return status
-
-
-# def old_test_function(folder_test):
-#     fname_log = folder_test + ".log"
-#     print_line('Checking '+folder_test)
-#     os.chdir(folder_test)
-#     status, output = commands.getstatusoutput('./test_'+folder_test+'.sh')
-#     if status == 0:
-#         print_ok()
-#     else:
-#         print_fail()
-#     shutil.rmtree('./results')
-#     os.chdir('../')
-#     write_to_log_file(fname_log,output)
-#     return status
-
-
-def test_debug():
-    print_line ('Checking if debug mode is on .......................')
-    path_sct_testing = path_sct + '/testing'
-    path_sct_scripts = path_sct + '/scripts'
-    debug = []
-    files = [f for f in listdir(path_sct_scripts) if isfile(join(path_sct_scripts, f))]
-    #print(files)
-    for file in files:
-        file_fname, ext_fname = os.path.splitext(file)
-        if ext_fname == '.py':
-            cmd = 'python ' + path_sct_testing + '/test_debug_off.py -i ' + file_fname
-            status, output = commands.getstatusoutput(cmd)
-            if status != 0:
-                print cmd
-                debug.append(output)
-    if debug == []:
+    # display script name
+    print_line('Checking '+script_name)
+    # import function as a module
+    script_tested = importlib.import_module(script_name)
+    # test function
+    status, output = script_tested.test(param.path_data)
+    # write log file
+    write_to_log_file(fname_log, output, 'w')
+    # manage status
+    if status == 0:
         print_ok()
-        return 0  # JULIEN
     else:
-        print_fail()
-        for string in debug: print string
-        return 1  # JULIEN
+        if status == 5:
+            print_warning()
+        else:
+            print_fail()
+        print output
+    # go back to parent folder
+    os.chdir('..')
+
+    # return
+    return status
 
 
 # Print usage
