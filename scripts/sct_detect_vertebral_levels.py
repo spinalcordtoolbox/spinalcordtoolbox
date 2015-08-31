@@ -17,10 +17,11 @@
 # from msct_base_classes import BaseScript
 import sys
 from os import chdir
+from time import strftime
 
 import numpy as np
 
-from sct_utils import extract_fname, printv, run, generate_output_file
+from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
 from msct_parser import Parser
 from msct_image import Image
 
