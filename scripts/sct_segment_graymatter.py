@@ -94,7 +94,7 @@ class Preprocessing:
 
 class FullGmSegmentation:
 
-    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, param=None):
+    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, param=None):
 
         before = time.time()
         self.param = param
@@ -124,6 +124,9 @@ class FullGmSegmentation:
         self.hausdorff_name = None
 
         self.segmentation_pipeline()
+
+        if compute_ratio:
+            self.compute_ratio()
 
         after = time.time()
         sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
@@ -191,6 +194,35 @@ class FullGmSegmentation:
         self.res_names['wm_seg'] = tmp_res_names[0]
         self.res_names['gm_seg'] = tmp_res_names[1]
         self.res_names['corrected_wm_seg'] = tmp_res_names[2]
+
+    # ------------------------------------------------------------------------------------------------------------------
+    def compute_ratio(self):
+        sct.run('sct_process_segmentation -i '+self.res_names['gm_seg']+' -p csa -o gm_csa ')
+        sct.run('mv csa.txt gm_csa.txt')
+
+        sct.run('sct_process_segmentation -i '+self.res_names['corrected_wm_seg']+' -p csa -o wm_csa ')
+        sct.run('mv csa.txt wm_csa.txt')
+
+        gm_csa = open('gm_csa.txt', 'r')
+        wm_csa = open('wm_csa.txt', 'r')
+
+        ratio = open('ratio.txt', 'w')
+
+        gm_lines = gm_csa.readlines()
+        wm_lines = wm_csa.readlines()
+
+        gm_csa.close()
+        wm_csa.close()
+
+        for gm_line, wm_line in zip(gm_lines, wm_lines):
+            i, gm_area = gm_line.split(',')
+            j, wm_area = wm_line.split(',')
+            assert i == j
+            ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
+
+        ratio.close()
+
+
 
     # ------------------------------------------------------------------------------------------------------------------
     def validation(self):
@@ -326,6 +358,7 @@ if __name__ == "__main__":
     input_t2_data = None
     input_level_fname = None
     input_ref_gm_seg = None
+    compute_ratio = False
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_input = param.path_model + "/errsm_34.nii.gz"
@@ -346,6 +379,12 @@ if __name__ == "__main__":
                           description="Spinal cord segmentation of the target",
                           mandatory=True,
                           example='sc_seg.nii.gz')
+        parser.add_option(name="-l",
+                          type_value="str",
+                          description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
+                                      "If -l is used, no need to provide t2 data",
+                          mandatory=False,
+                          example='MNI-Poly-AMU_level_IRP.nii.gz')
         parser.add_option(name="-o",
                           type_value="str",
                           description="output name for the results",
@@ -363,12 +402,6 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=None,
                           example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
-        parser.add_option(name="-l",
-                          type_value="str",
-                          description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
-                                      "If -l is used, no need to provide t2 data",
-                          mandatory=False,
-                          example='MNI-Poly-AMU_level_IRP.nii.gz')
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
                           description="Use the level information for the model or not",
@@ -433,6 +466,9 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='prob',
                           example=['binary', 'prob'])
+        parser.add_option(name="-ratio",
+                          description="Compute GM/WM ratio",
+                          mandatory=False)
         parser.add_option(name="-ref",
                           type_value="file",
                           description="Reference segmentation of the gray matter",
@@ -478,6 +514,8 @@ if __name__ == "__main__":
         if "-weighted-similarity" in arguments:
             param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
         '''
+        if "-ratio" in arguments:
+            compute_ratio = True
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
@@ -485,4 +523,4 @@ if __name__ == "__main__":
         if "-v" in arguments:
             param.verbose = arguments["-v"]
 
-    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, param=param)
+    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, param=param)
