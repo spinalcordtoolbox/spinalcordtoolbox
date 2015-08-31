@@ -56,6 +56,12 @@ def get_parser():
                       type_value='int',
                       description='Initialize labeling by providing the disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
                       mandatory=False)
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='Output file',
+                      mandatory=False,
+                      default_value='',
+                      example='t2_seg_labeled.nii.gz')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
