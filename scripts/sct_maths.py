@@ -81,6 +81,9 @@ def get_parser():
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nBasic operations")
+    parser.add_option(name="-bin",
+                      description='Use (input image>0) to binarise.',
+                      mandatory=False)
     parser.add_option(name='-mean',
                       type_value='multiple_choice',
                       description='Average data across dimension.',
@@ -142,6 +145,8 @@ def main(args = None):
     elif '-percent' in arguments:
         param = arguments['-percent']
         data_out = perc(data, param)
+    elif '-bin' in arguments:
+        data_out = binarise(data)
     elif '-mean' in arguments:
         dim = dim_list.index(arguments['-mean'])
         data_out = compute_mean(data, dim)
@@ -188,13 +193,18 @@ def otsu_median(data, size, n_iter):
 
 
 def threshold(data, thr_value):
-    return data > thr_value
+    data[data < thr_value] = 0
+    return data
 
 
 def perc(data, perc_value):
     from numpy import percentile
     perc = percentile(data, perc_value)
     return data > perc
+
+
+def binarise(data):
+    return data > 0
 
 
 def compute_mean(data, dim):
