@@ -109,48 +109,48 @@ def main(args=None):
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
-    # # create temporary folder
-    # printv('\nCreate temporary folder...', param.verbose)
-    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    # run('mkdir '+path_tmp, param.verbose)
-    #
-    # # Copying input data to tmp folder
-    # printv('\nCopying input data to tmp folder...', param.verbose)
-    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # create temporary folder
+    printv('\nCreate temporary folder...', param.verbose)
+    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    run('mkdir '+path_tmp, param.verbose)
+
+    # Copying input data to tmp folder
+    printv('\nCopying input data to tmp folder...', param.verbose)
+    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
     path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831095614/'
     chdir(path_tmp)
 
-    # # create label to identify disc
-    # printv('\nCreate label to identify disc...', param.verbose)
-    # if initz:
-    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    # elif initcenter:
-    #     # find z centered in FOV
-    #     nii = Image(fname_seg)
-    #     nii.change_orientation('RPI')  # reorient to RPI
-    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-    #     z_center = int(round(nz/2))  # get z_center
-    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-    #
-    # # TODO: denoise data
-    #
-    # # Straighten spinal cord
-    # printv('\nStraighten spinal cord...', param.verbose)
-    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-    #
-    # # Apply straightening to segmentation
-    # # N.B. Output is RPI
-    # printv('\nApply straightening to segmentation...', param.verbose)
-    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # # Threshold segmentation to 0.5
-    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-    #
-    # # Apply straightening to z-label
-    # printv('\nDilate z-label and apply straightening...', param.verbose)
-    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # create label to identify disc
+    printv('\nCreate label to identify disc...', param.verbose)
+    if initz:
+        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    elif initcenter:
+        # find z centered in FOV
+        nii = Image(fname_seg)
+        nii.change_orientation('RPI')  # reorient to RPI
+        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+        z_center = int(round(nz/2))  # get z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+
+    # TODO: denoise data
+
+    # Straighten spinal cord
+    printv('\nStraighten spinal cord...', param.verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+
+    # Apply straightening to segmentation
+    # N.B. Output is RPI
+    printv('\nApply straightening to segmentation...', param.verbose)
+    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # Threshold segmentation to 0.5
+    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+
+    # Apply straightening to z-label
+    printv('\nDilate z-label and apply straightening...', param.verbose)
+    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -385,8 +385,10 @@ def vertebral_detection(fname, fname_seg, init_disc):
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value) - 1
     if not upper_disc == 1:
+        printv('Adding top disc based on adjusted template distance: #'+str(upper_disc), verbose)
         approx_distance_to_next_disc = int(round(mean_distance_adjusted[upper_disc-1]))
         next_z = max(list_disc_z) + approx_distance_to_next_disc
+        printv('.. approximate distance: '+str(approx_distance_to_next_disc)+' mm', verbose)
         # make sure next disc does not go beyond FOV in superior direction
         if next_z > nz:
             list_disc_z = np.append(list_disc_z, nz)
