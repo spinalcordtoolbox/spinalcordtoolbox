@@ -121,37 +121,37 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831095614/'
+    path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831111434/'
     chdir(path_tmp)
 
-    # create label to identify disc
-    printv('\nCreate label to identify disc...', param.verbose)
-    if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    elif initcenter:
-        # find z centered in FOV
-        nii = Image(fname_seg)
-        nii.change_orientation('RPI')  # reorient to RPI
-        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(round(nz/2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-
-    # TODO: denoise data
-
-    # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-
-    # Apply straightening to segmentation
-    # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
-    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # Threshold segmentation to 0.5
-    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-
-    # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
-    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # # create label to identify disc
+    # printv('\nCreate label to identify disc...', param.verbose)
+    # if initz:
+    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    # elif initcenter:
+    #     # find z centered in FOV
+    #     nii = Image(fname_seg)
+    #     nii.change_orientation('RPI')  # reorient to RPI
+    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+    #     z_center = int(round(nz/2))  # get z_center
+    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+    #
+    # # TODO: denoise data
+    #
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+    #
+    # # Apply straightening to segmentation
+    # # N.B. Output is RPI
+    # printv('\nApply straightening to segmentation...', param.verbose)
+    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # # Threshold segmentation to 0.5
+    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+    #
+    # # Apply straightening to z-label
+    # printv('\nDilate z-label and apply straightening...', param.verbose)
+    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -201,6 +201,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 3  # mean around the centerline in the anterior-posterior direction in mm
     size_RL = 5  # mean around the centerline in the right-left direction in mm
+    searching_window_for_maximum = 10  # size used for finding local maxima
+    thr_corr = 0.3  # disc correlation threshold. Below this value, use template distance.
     verbose = param.verbose
 
     if verbose == 2:
@@ -284,22 +286,33 @@ def vertebral_detection(fname, fname_seg, init_disc):
         I_corr = np.zeros((length_z_corr, 1))
         ind_I = 0
         for iz in range(length_z_corr):
+            # plt.matshow(np.flipud(np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
+            # if data is shifted towards the edge, calculate size of missing data.
+            data_chunk3d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+            padding_size = pattern.shape[2] - data_chunk3d.shape[2]
             if direction == 'superior':
-                data_chunk1d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1].ravel()
+                data3d = np.pad(data3d, ((0, 0), (0, 0), (0, padding_size)), 'constant', constant_values=0)
             elif direction == 'inferior':
-                data_chunk1d = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-iz-size_IS:current_z-iz+size_IS+1].ravel()
-            # data_chunk2d = np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, iz-size_IS:iz+size_IS+1], axis=0)
-            # in case data_chunk1d is cropped (because beginning/end of  data), crop pattern
-            if len(data_chunk1d) < len(pattern1d):
-                crop_size = len(pattern1d) - len(data_chunk1d)
-                if direction == 'superior':
-                    # if direction is superior, crop end of pattern
-                    pattern1d = pattern1d[:-crop_size]
-                elif direction == 'inferior':
-                    # if direction is inferior, crop beginning of pattern
-                    pattern1d = pattern1d[crop_size:]
-            if not len(pattern1d) == 0:
+                data3d = np.pad(data3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant', constant_values=0)
+            plt.matshow(np.flipud(np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z+iz-size_IS:current_z+iz+size_IS+1], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Data chunk averaged across R-L'), plt.draw(), plt.savefig('datachunk_disc'+str(current_disc)+'iz'+str(iz))
+            data_chunk1d = data3d.ravel()
+            # crop pattern if data_chunk1d is cropped (because beginning/end of data)
+            # if len(data_chunk1d) < len(pattern1d):
+            #     # TODO: DO NOT CROP! INSTEAD, FILL WITH 0
+            #     crop_size = len(pattern1d) - len(data_chunk1d)
+            #     if direction == 'superior':
+            #         # if direction is superior, crop end of pattern
+            #         data_chunk1d = np.append(data_chunk1d, np.zeros(crop_size))
+            #         # pattern1d = pattern1d[:-crop_size]
+            #     elif direction == 'inferior':
+            #         # if direction is inferior, crop beginning of pattern
+            #         # pattern1d = pattern1d[crop_size:]
+            #         data_chunk1d = np.append(np.zeros(crop_size), data_chunk1d)
+            #     printv('.. WARNING: cropping pattern. Length pattern = '+str(len(pattern1d)), verbose)
+            if not len(pattern1d) < 200:
                 I_corr[ind_I] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
+            else:
+                printv('.. WARNING: Length pattern is too small. Set correlation to 0.', verbose)
             # I_corr[ind_I] = np.corrcoef(data_chunk2d, pattern2d)[0, 1]
             # I_corr[ind_I] = mutual_information_2d(data_chunk2d.ravel(), pattern2d.ravel())
             ind_I = ind_I + 1
@@ -307,26 +320,33 @@ def vertebral_detection(fname, fname_seg, init_disc):
         if verbose == 2:
             plt.figure(), plt.plot(I_corr), plt.title('Correlation of pattern with data.'), plt.draw()
 
-        # TODO: crop beginning of signal to remove correlation = 1 from pattern with data
         # Find peak within local neighborhood defined by mean distance template
-        # TODO: adjust probability to be in the middle of I_corr (account for mean dist template)
-        peaks = argrelextrema(I_corr, np.greater, order=10)[0]
-        nb_peaks = len(peaks)
-        printv('.. Peaks found: '+str(peaks)+' with correlations: '+str(I_corr[peaks]), verbose)
-        if len(peaks) > 1:
-            # retain the peak with maximum correlation
-            peaks = peaks[np.argmax(I_corr[peaks])]
-            printv('.. WARNING: More than one peak found. Keeping: '+str(peaks), verbose)
+        ind_peak = argrelextrema(I_corr, np.greater, order=searching_window_for_maximum)[0]
+        if len(ind_peak) == 0:
+            printv('.. WARNING: No peak found. Using adjusted template distance.', verbose)
+            ind_peak = approx_distance_to_next_disc
+        else:
+            # keep peak with maximum correlation
+            ind_peak[np.argmax(I_corr[ind_peak])]
+            if I_corr[ind_peak] < thr_corr:
+                printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
+                ind_peak = approx_distance_to_next_disc
+            else:
+                printv('.. Peak found: '+str(ind_peak[0])+' (correlation = '+str(I_corr[ind_peak][0][0])+')', verbose)
+
+        # display peak
         if verbose == 2:
-            plt.plot(peaks, I_corr[peaks], 'ro'), plt.draw()
+            plt.plot(ind_peak, I_corr[ind_peak], 'ro'), plt.draw()
+
         # assign new z_start and disc value
         if direction == 'superior':
-            current_z = current_z + int(peaks)
+            current_z = current_z + int(ind_peak)
             current_disc = current_disc - 1
         elif direction == 'inferior':
-            current_z = current_z - int(peaks)
+            current_z = current_z - int(ind_peak)
             current_disc = current_disc + 1
-        # display new peak
+
+        # display new disc
         if verbose == 2:
             plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r', s=50), plt.draw()
             plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='red', fontsize=15), plt.draw()
@@ -376,8 +396,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     if verbose == 2:
         # save figure with labels
-        plt.figure(1)
-        plt.savefig('anat_straight_with_labels.png')
+        plt.figure(1), plt.savefig('anat_straight_with_labels.png')
 
     # # sort list_disc_z and list_disc_value
     # list_disc_z = np.array(sorted(list_disc_z, reverse=True))
