@@ -84,12 +84,12 @@ def wm_registration(param):
 
     # cropping in x & y directions
     fixed_name_temp = fixed_name + "_crop"
-    cmd = "sct_crop_image -i " + fixed_name + ext + " -o " + fixed_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 10,10 -dim 0,1"
+    cmd = "sct_crop_image -i " + fixed_name + ext + " -o " + fixed_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 5,5 -dim 0,1"
     sct.run(cmd)
     fixed_name = fixed_name_temp
 
     fixed_seg_name_temp = fixed_name+"_crop"
-    sct.run("sct_crop_image -i " + fixed_seg_name + ext + " -o " + fixed_seg_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 10,10 -dim 0,1")
+    sct.run("sct_crop_image -i " + fixed_seg_name + ext + " -o " + fixed_seg_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 5,5 -dim 0,1")
     fixed_seg_name = fixed_seg_name_temp
 
     # padding the images
