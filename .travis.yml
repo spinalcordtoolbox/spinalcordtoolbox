@@ -42,8 +42,9 @@ install:
 # SCT: create links
   - ./install/create_links.sh -a
 
-# Go to testing folder
-#  - cd testing
+# SCT: compile external packages
+  - ./install/compile_external.py
+  - . ~/.bashrc
 
 script:
 # test dependences
