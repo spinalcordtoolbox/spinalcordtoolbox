@@ -51,7 +51,8 @@ script:
 # test functions & integrity
   - sct_testing -d 1
 # test package creation
-  - python install/create_package.py -s linux
+  - cd install
+  - python create_package.py -s linux
 # test installation of package
   - cd ../spinalcordtoolbox_v*
   - python installer.py -p ~/
