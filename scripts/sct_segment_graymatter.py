@@ -424,7 +424,7 @@ if __name__ == "__main__":
                           type_value='multiple_choice',
                           description="1: Normalization of the target image's intensity using mean intensity values of the WM and the GM",
                           mandatory=False,
-                          default_value=0,
+                          default_value=1,
                           example=['0', '1'])
         parser.add_option(name="-means",
                           type_value=[[','], 'float'],
