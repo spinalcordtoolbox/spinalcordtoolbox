@@ -819,7 +819,14 @@ class Installer:
             print "  No connexion or no patch available for this version of the toolbox."
 
 
-        # check if other dependent software are installed
+        # compile external packages
+        print "\nCompile external packages..."
+        cmd = "./compile_external.py"
+        print ">> " + cmd
+        status, output = runProcess(cmd)
+
+
+        # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
         print ">> " + cmd
@@ -829,6 +836,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
+
 
         # deleting temporary files
         cmd = "rm -rf tmp.*"
