@@ -30,7 +30,7 @@ import commands
 from math import exp
 
 
-class Param:
+class SegmentationParam:
     def __init__(self):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
@@ -96,7 +96,7 @@ class ModelDictionary:
         :param dic_param: dictionary parameters, type: Param
         """
         if dic_param is None:
-            self.param = Param()
+            self.param = SegmentationParam()
         else:
             self.param = dic_param
 
@@ -419,7 +419,7 @@ class Model:
         :param k: Amount of variability to keep in the PCA reduced space, type: float
         """
         if model_param is None:
-            self.param = Param()
+            self.param = SegmentationParam()
         else:
             self.param = model_param
 
@@ -1166,7 +1166,7 @@ sct_Image
 ########################################################################################################################
 
 if __name__ == "__main__":
-    param = Param()
+    param = SegmentationParam()
     input_target_fname = None
     input_level_fname = None
     if param.debug:
@@ -1174,7 +1174,7 @@ if __name__ == "__main__":
         fname_input = param.path_model + "/errsm_34.nii.gz"
         fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
-        param_default = Param()
+        param_default = SegmentationParam()
 
         # Initialize the parser
         parser = Parser(__file__)

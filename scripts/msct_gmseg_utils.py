@@ -914,7 +914,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
 
     """
     import time
-    from msct_multiatlas_seg import Model, Param, GMsegSupervisedMethod
+    from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
@@ -945,7 +945,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
 
                 # Gray matter segmentation using this subject as target
                 os.chdir(tmp_dir)
-                model_param = Param()
+                model_param = SegmentationParam()
                 model_param.path_model = tmp_dic_name
                 model_param.todo_model = 'compute'
                 model_param.weight_gamma = float(weight)
