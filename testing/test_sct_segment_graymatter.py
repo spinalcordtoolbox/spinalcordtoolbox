@@ -11,41 +11,50 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#import sct_utils as sct
 import commands
+import sys
+# append path that contains scripts, to be able to load modules
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+sys.path.append(path_sct + '/scripts')
+from msct_image import Image
+from numpy import any
 
 
-def test(path_data):
+def test(data_path):
+    output = ''
+    status = 0
 
     # parameters
     folder_data = 'mt/'
-    file_data = ['mt1.nii.gz', 'mt1_seg.nii.gz', 'label/template/MNI-Poly-AMU_level.nii.gz']
-    dice_threshold = 0.99
+    file_data = ['mt0.nii.gz', 'mt0_seg.nii.gz', 'label/template/MNI-Poly-AMU_level.nii.gz', 'mt0_gmseg.nii.gz']
 
     # define command
-    cmd = 'sct_segment_graymatter -i ' + path_data + folder_data + file_data[0] \
-        + ' -s ' + path_data + folder_data + file_data[1] \
-        + ' -l ' + path_data + folder_data + file_data[2] \
+    cmd = 'sct_segment_graymatter -i ' + data_path + folder_data + file_data[0] \
+        + ' -s ' + data_path + folder_data + file_data[1] \
+        + ' -l ' + data_path + folder_data + file_data[2] \
         + ' -normalize 1 '\
         + ' -v 1'
 
+    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     # run command
-    status, output = commands.getstatusoutput(cmd)
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
 
     # if command ran without error, test integrity
     if status == 0:
         pass
-        '''
-        # compute dice coefficient between generated image and image from database
-        cmd = 'sct_dice_coefficient ' + path_data + folder_data + file_data[1] + ' ' + file_data[1]
-        status, output = commands.getstatusoutput(cmd)
-        # parse output and compare to acceptable threshold
-        if float(output.split('3D Dice coefficient = ')[1]) < dice_threshold:
+        # compare with gold-standard labeling
+        data_original = Image(data_path + folder_data + file_data[-1]).data
+        data_totest = Image('mt0_gmseg.nii.gz').data
+        # check if non-zero elements are present when computing the difference of the two images
+        if any(data_original - data_totest):
             status = 99
-        '''
+            output += '\nResulting image differs from gold-standard.'
+
     return status, output
 
 
 if __name__ == "__main__":
     # call main function
-    test()
+    test(path_sct+'/data')
