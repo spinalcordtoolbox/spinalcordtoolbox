@@ -16,7 +16,7 @@ import sys
 import getopt
 from msct_parser import *
 from msct_image import Image, get_dimension
-from msct_multiatlas_seg import Model, Param, GMsegSupervisedMethod
+from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 
 
@@ -352,7 +352,7 @@ class FullGmSegmentation:
 ########################################################################################################################
 
 if __name__ == "__main__":
-    param = Param()
+    param = SegmentationParam()
     input_target_fname = None
     input_sc_seg_fname = None
     input_t2_data = None
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         fname_input = param.path_model + "/errsm_34.nii.gz"
         fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
-        param_default = Param()
+        param_default = SegmentationParam()
 
         # Initialize the parser
         parser = Parser(__file__)
