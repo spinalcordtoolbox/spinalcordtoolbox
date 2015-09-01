@@ -406,7 +406,7 @@ class Image(object):
         from ornlm import ornlm
         import numpy as np
         dat = self.data.astype(np.float64)
-        denoised = np.array(ornlm.ornlm(dat, 3, 1, np.max(dat)*0.01))
+        denoised = np.array(ornlm(dat, 3, 1, np.max(dat)*0.01))
         self.file_name += '_denoised'
         self.data = denoised
 
