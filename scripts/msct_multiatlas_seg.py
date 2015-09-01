@@ -42,7 +42,7 @@ class SegmentationParam:
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.reg_metric = 'MI'
         self.target_denoising = True
-        self.target_normalization = False
+        self.target_normalization = True
         self.target_means = None
         self.first_reg = False
         self.use_levels = True
@@ -1233,7 +1233,7 @@ if __name__ == "__main__":
                           type_value='multiple_choice',
                           description="1: Normalization of the target image's intensity using mean intensity values of the WM and the GM",
                           mandatory=False,
-                          default_value=0,
+                          default_value=1,
                           example=['0', '1'])
         parser.add_option(name="-means",
                           type_value=[[','], 'float'],
