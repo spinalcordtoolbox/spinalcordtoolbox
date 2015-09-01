@@ -19,10 +19,3 @@ if which pip >/dev/null; then
 else
     echo "ERROR: Pip is not installed. Cannot install dependences."
 fi
-# Installation using easy_install
-if which easy_install >/dev/null; then
-    echo "* EASY_INSTALL *"
-    easy_install dipy install -r requirementsPip.txt
-else
-    echo "ERROR: easy_install is not installed. Cannot install dependences."
-fi
