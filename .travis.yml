@@ -46,11 +46,10 @@ install:
 #  - cd testing
 
 script:
-#  - python ../scripts/sct_check_dependences.py
+# test dependences
   - sct_check_dependences
-  - python ../scripts/sct_testing.py -d 1
-#  - python test_all.py -d 1
-#  - cd ../install
+# test functions & integrity
+  - sct_testing -d 1
 # test package creation
   - python install/create_package.py -s linux
 # test installation of package
