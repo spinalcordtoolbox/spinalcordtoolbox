@@ -514,7 +514,7 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
-        # sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp)
 
 
 #=======================================================================================================================
