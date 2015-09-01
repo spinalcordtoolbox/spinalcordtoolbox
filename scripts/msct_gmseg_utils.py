@@ -266,12 +266,12 @@ def apply_ants_transfo(fixed_im, moving_im, search_reg=True, transfo_type='Affin
                 apply_transfo_interpolation = 'BSpline'
 
             if 'SyN' in transfo_type and inverse:
-                cmd_apply = 'antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                cmd_apply = 'isct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                             '-n ' + apply_transfo_interpolation + ' -t [' + inverse_mat_name + '] ' \
                             '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
             else:
-                cmd_apply = 'antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
+                cmd_apply = 'isct_antsApplyTransforms -d 2 -i ' + moving_im_name + '.nii.gz -o ' + moving_im_name + '_moved.nii.gz ' \
                             '-n ' + apply_transfo_interpolation + ' -t [' + mat_name + ',' + str(inverse) + '] ' \
                             '-r ' + fixed_im_name + '.nii.gz -v ' + str(verbose)
 
