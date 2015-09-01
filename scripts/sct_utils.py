@@ -65,7 +65,8 @@ def run_old(cmd, verbose=1):
 
 
 def run(cmd, verbose=1, error_exit='error', raise_exception=False):
-    # print sys._getframe().f_back.f_code.co_name
+    if verbose==2:
+        printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
         print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
