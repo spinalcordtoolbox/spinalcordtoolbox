@@ -1,44 +1,78 @@
 #!/usr/bin/env python
 #
-# This program returns the grey matter segmentation given anatomical, landmarks and t2star images
+# This program register the template to the GM/WM contrasted image, segment the gray matter on it,
+#  and correct the template registration using the graymatter automatic segmentation
+# returns the grey matter segmentation given anatomical, landmarks and t2star images
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Augustin Roux
+# Authors: Benjamin De Leener, Augustin Roux, Sara Dupont
 # Created: 2014-10-18
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-import sct_utils as sct
+
 from msct_parser import Parser
 from msct_image import Image
-from msct_multiatlas_seg import Param
+from msct_multiatlas_seg import SegmentationParam
+import sct_utils as sct
 import os
-import time
 import sys
-import getopt
+import time
 
 
-class RegistrationParam:
+class MultimodalRegistrationParam:
+    def __init__(self):
+        self.target = ''
+        self.anat = ''
+        self.target_seg = ''
+        self.anat_seg = ''
+        self.output = 'anat2target'
+        self.warp_template2anat = ''
+        self.p = 'step=1,type=seg,algo=syn,metric=MeanSquares,iter=5:step=2,type=im,algo=slicereg,metric=MeanSquares,iter=5'
+
+
+class WmRegistrationParam:
     def __init__(self):
         self.debug = False
         self.fname_fixed = ''
         self.fname_moving = ''
-        self.template2anat2wm_gm_warp = ''
-        self.wm_gm2template2anat_warp = ''
+        self.fname_seg_fixed = ''
+        self.fname_seg_moving = ''
         self.transformation = 'BSplineSyN'  # 'SyN'
         self.metric = 'CC'  # 'MeanSquares'
         self.gradient_step = '0.5'
         self.radius = '2'  # '4'
         self.interpolation = 'BSpline'
         self.iteration = '10x5' # '20x15'
-        self.fname_seg_fixed = ''
-        self.fname_seg_moving = ''
         self.fname_output = 'wm_registration.nii.gz'
         self.padding = '10'
 
-        self.verbose = 1
-        self.remove_temp = 1
+
+def reg_multimodal_warp(anat, target, anat_seg, target_seg, warp_template2anat):
+    status, output = sct.run('sct_register_multimodal -i '+anat+' -d '+target+' -iseg '+anat_seg+' -dseg '+target_seg)
+    if status != 0:
+        sct.printv('WARNING: an error occurred ...', verbose, 'warning')
+        sct.printv(output, verbose, 'normal')
+        return None
+    else:
+        warp_template2target = 'warp_template2target.nii.gz'
+        warp_anat2target = 'warp_'+sct.extract_fname(anat)[1]+'2'+sct.extract_fname(target)[1]+'.nii.gz'
+        warp_target2anat = 'warp_'+sct.extract_fname(target)[1]+'2'+sct.extract_fname(anat)[1]+'.nii.gz'
+
+        sct.run('sct_concat_transfo -w '+warp_template2anat+','+warp_anat2target+'  -d '+target+' -o  '+warp_template2target)
+        sct.run('sct_warp_template -d '+target+' -w '+warp_template2target)
+        label_folder = 'label_original_reg'
+        sct.run('mv label/ '+label_folder)
+        return warp_anat2target, warp_target2anat, label_folder
+
+
+def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
+    from sct_segment_graymatter import FullGmSegmentation
+    level_fname = path_to_label + '/template/MNI-Poly-AMU_level.nii.gz'
+    gmsegfull = FullGmSegmentation(target_fname, sc_seg_fname, None, level_fname, param=param)
+
+    return gmsegfull.res_names['corrected_wm_seg'], gmsegfull.res_names['gm_seg']
 
 
 def wm_registration(param):
@@ -88,7 +122,7 @@ def wm_registration(param):
     moving_im.save()
 
     # registration of the gray matter
-    sct.printv('\nDeforming the image...', reg_param.verbose, 'normal')
+    sct.printv('\nDeforming the image...', verbose, 'normal')
     moving_name_reg = moving_name+"_deformed"
 
     if param.transformation == 'BSplineSyN':
@@ -131,134 +165,115 @@ def wm_registration(param):
     return warp_output, inverse_warp_output
 
 
-def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
-    from sct_segment_graymatter import FullGmSegmentation
-    level_fname = path_to_label + '/template/MNI-Poly-AMU_level.nii.gz'
-    gmsegfull = FullGmSegmentation(target_fname, sc_seg_fname, None, level_fname, param=param)
-
-    return gmsegfull.res_names['corrected_wm_seg'], gmsegfull.res_names['gm_seg']
-
-
-def main(seg_params, reg_param, target_fname='', sc_seg_fname='', path_to_label=''):
+########################################################################################################################
+# ------------------------------------------------------  MAIN ------------------------------------------------------- #
+########################################################################################################################
+def main():
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose, 'normal')
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")+'/'
     sct.run('mkdir '+path_tmp)
 
     target = 'target.nii.gz'
-    sc_seg = 'sc_seg.nii.gz'
-    label = 'label'
+    target_seg = 'target_seg.nii.gz'
+    anat = 'anat.nii.gz'
+    anat_seg = 'anat_seg.nii.gz'
+    warp_template2anat = 'warp_template2anat.nii.gz'
 
-    sct.run('cp '+target_fname+' '+path_tmp+target)
-    sct.run('cp '+sc_seg_fname+' '+path_tmp+sc_seg)
-    sct.run('cp -r '+path_to_label+' '+path_tmp+label)
-    sct.run('cp '+reg_param.template2anat2wm_gm_warp+' '+path_tmp+''.join(sct.extract_fname(reg_param.template2anat2wm_gm_warp)[1:]))
-    sct.run('cp '+reg_param.wm_gm2template2anat_warp+' '+path_tmp+''.join(sct.extract_fname(reg_param.wm_gm2template2anat_warp)[1:]))
+    sct.run('cp '+multimodal_reg_param.anat+' '+path_tmp+anat)
+    sct.run('cp '+multimodal_reg_param.target+' '+path_tmp+target)
+    sct.run('cp '+multimodal_reg_param.anat_seg+' '+path_tmp+anat_seg)
+    sct.run('cp '+multimodal_reg_param.target_seg+' '+path_tmp+target_seg)
+    sct.run('cp '+multimodal_reg_param.warp_template2anat+' '+path_tmp+warp_template2anat)
 
     os.chdir(path_tmp)
+    # registration of the template to the target
+    warp_anat2target, warp_target2anat, label_original = reg_multimodal_warp(anat, target, anat_seg, target_seg, warp_template2anat)
 
-    wm_fname, gm_fname = segment_gm(target_fname=target, sc_seg_fname=sc_seg, path_to_label=label, param=seg_params)
+    # segmentation of the gray matter
+    wm_fname, gm_fname = segment_gm(target_fname=target, sc_seg_fname=target_seg, path_to_label=label_original, param=gm_seg_param)
 
-    reg_param.fname_fixed = wm_fname
-    reg_param.fname_moving = label + '/template/MNI-Poly-AMU_WM.nii.gz'
-    reg_param.fname_seg_fixed = sc_seg
-    reg_param.fname_seg_moving = label + '/template/MNI-Poly-AMU_cord.nii.gz'
+    # registration of the template WM to the automatic Wm segmentation
+    wm_reg_param.fname_fixed = wm_fname
+    wm_reg_param.fname_moving = label_original + '/template/MNI-Poly-AMU_WM.nii.gz'
+    wm_reg_param.fname_seg_fixed = target_seg
+    wm_reg_param.fname_seg_moving = label_original + '/template/MNI-Poly-AMU_cord.nii.gz'
 
-    warp, inverse_warp = wm_registration(reg_param)
+    warp, inverse_warp = wm_registration(wm_reg_param)
 
-    # warp the T2star = output
-    # sct.run('sct_apply_transfo -i ' + target_fname + ' -d ' + target_fname + ' -w ' + inverse_warp + ' -o ' + sct.extract_fname(target_fname)[1] + '_reg.nii.gz')
-    # sct.run('sct_apply_transfo -i ' + sc_seg_fname + ' -d ' + sc_seg_fname + ' -w ' + inverse_warp + ' -o ' + sct.extract_fname(sc_seg_fname)[1] + '_reg.nii.gz  -x nn ')
+    warp_anat2target_corrected = 'warp_'+sct.extract_fname(multimodal_reg_param.anat)[1]+'2'+sct.extract_fname(multimodal_reg_param.target)[1]+'_corrected_wm.nii.gz'
+    warp_target2anat_corrected = 'warp_'+sct.extract_fname(multimodal_reg_param.target)[1]+'2'+sct.extract_fname(multimodal_reg_param.anat)[1]+'_corrected_wm.nii.gz'
 
-    # concatenate transformations
-    sct.run('sct_concat_transfo -w '+''.join(sct.extract_fname(reg_param.template2anat2wm_gm_warp)[1:])+','+warp+' -d '+target+' -o warp_template2anat2wm_gm')
-    sct.run('sct_concat_transfo -w '+inverse_warp+','+''.join(sct.extract_fname(reg_param.wm_gm2template2anat_warp)[1:])+' -d '+target+' -o warp_wm_gm2template2anat')
+    sct.run('sct_concat_transfo -w '+warp_anat2target+','+warp+' -d '+target+' -o '+warp_anat2target_corrected)
+    sct.run('sct_concat_transfo -w '+inverse_warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
 
-    sct.run('cp warp_template2anat2wm_gm.nii.gz ../warp_'+reg_param.template2anat2wm_gm_warp+'_wm.nii.gz')
-    sct.run('cp warp_wm_gm2template2anat.nii.gz ../warp_'+reg_param.wm_gm2template2anat_warp+'_wm.nii.gz')
+    target_reg = sct.extract_fname(multimodal_reg_param.target)[1]+'_reg_corrected.nii.gz'
+    anat_reg = sct.extract_fname(multimodal_reg_param.anat)[1]+'_reg_corrected.nii.gz'
+    sct.run('sct_apply_transfo -i '+target+' -d '+anat+' -w '+warp_target2anat_corrected+' -o '+target_reg)
+    sct.run('sct_apply_transfo -i '+anat+' -d '+target+' -w '+warp_anat2target_corrected+' -o '+anat_reg)
 
+    sct.run('cp '+target_reg+' ../'+target_reg)
+    sct.run('cp '+anat_reg+' ../'+anat_reg)
+    sct.run('cp '+warp_anat2target_corrected+' ../'+warp_anat2target_corrected)
+    sct.run('cp '+warp_target2anat_corrected+' ../'+warp_target2anat_corrected)
+
+    sct.printv('Done!\n'
+               'You can warp the template to the target using the following command lines:\n'
+               'sct_concat_transfo -w '+multimodal_reg_param.warp_template2anat+','+warp_anat2target_corrected+' -d '+multimodal_reg_param.target+' -o warp_template2'+sct.extract_fname(multimodal_reg_param.target)[1]+'.nii.gz\n'
+               'sct_warp_template -d '+multimodal_reg_param.target+' -w warp_template2'+sct.extract_fname(multimodal_reg_param.target)[1]+'.nii.gz', verbose, 'info')
     os.chdir('..')
 
-    # remove temporary file
-    if reg_param.remove_temp == 1:
+    if remove:
         sct.printv('\nRemove temporary files...', verbose, 'normal')
         sct.run("rm -rf "+path_tmp)
 
 
-if __name__ == "__main__":
-    reg_param = RegistrationParam()
-    gm_seg_param = Param()
-    input_target_fname = ''
-    input_sc_seg_fname = ''
-    path_to_label = ''
 
-    if reg_param.debug:
+if __name__ == "__main__":
+    multimodal_reg_param = MultimodalRegistrationParam()
+    wm_reg_param = WmRegistrationParam()
+    gm_seg_param = SegmentationParam()
+    remove = True
+    verbose = 1
+
+    if wm_reg_param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
-        param_default = RegistrationParam()
+        param_default = WmRegistrationParam()
 
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('Register the template on a gray matter segmentation')  # TODO: change description
-        parser.usage.addSection('Segmentation parameters')
+        parser.usage.set_description('Register the template on an image with a white/gray matter contrast according to the internal structure:\n'
+                                     ' - register multimodal of the template to the target image\n'
+                                     ' - automatic segmentation of the white and gray matter in the target image\n'
+                                     ' - correction of the registration of the template to the target according to the WM/GM segmentation')  # TODO: change description
+        parser.usage.addSection('General parameters')
         parser.add_option(name="-i",
                           type_value="file",
                           description="T2star target image (or image with a white/gray matter contrast)",
                           mandatory=True,
                           example='t2star.nii.gz')
-        parser.add_option(name="-s",
+        parser.add_option(name="-iseg",
                           type_value="file",
                           description="Spinal cord segmentation of the T2star target",
                           mandatory=True,
                           example='sc_seg.nii.gz')
-        parser.add_option(name="-seg-o",
-                          type_value="str",
-                          description="output name for the results",
-                          mandatory=False,
-                          example='t2star_res.nii.gz')
-        parser.add_option(name="-label",
-                          type_value="folder",
-                          description="Path to the label directory from the template registration",
+        parser.add_option(name="-anat",
+                          type_value="file",
+                          description="Anatomic image or template registered on the anatomical space (better)",
                           mandatory=True,
-                          example='./label/')
-        parser.add_option(name="-model",
-                          type_value="folder",
-                          description="Path to the model data",
-                          mandatory=False,
-                          example='/home/jdoe/gm_seg_model_data/')
-        '''
-        parser.add_option(name="-i",
+                          example='../t2/template2anat.nii.gz')
+        parser.add_option(name="-anat-seg",
                           type_value="file",
-                          description="Fixed image : the white matter automatic segmentation (should be probabilistic)",
+                          description="Segmentation of the spinal cord on the anatomic image or on the template registered on the anatomical space (better)",
                           mandatory=True,
-                          example='wm_seg.nii.gz')
-        parser.add_option(name="-d",
-                          type_value="file",
-                          description="Moving image: the white matter probabilistic segmentation from the template",
-                          mandatory=True,
-                          example='MNI-Poly-AMU_WM.nii.gz')
-        parser.add_option(name="-o",
-                          type_value="str",
-                          description="Output image name",
-                          mandatory=False,
-                          example='moving_to_fixed.nii.gz')
-        parser.add_option(name="-iseg",
-                          type_value="file",
-                          description="Spinal cord segmentation of the fixed image",
-                          mandatory=False,
-                          example='sc_seg.nii.gz')
-        parser.add_option(name="-dseg",
-                          type_value="file",
-                          description="Spinal cord segmentation of the moving image (should be the same)",
-                          mandatory=False,
-                          example='sc_seg.nii.gz')
-        '''
-        parser.usage.addSection('Registration parameters')
+                          example='../t2/label/template/MNI-Poly-AMU_cord.nii.gz')
         parser.add_option(name="-warp",
-                          type_value=[[','], 'file'],
-                          description="Warping field from the template2anat to the WM/GM contrasted image and inverse that was used to register the template to the WM/GM contrasted image",
+                          type_value="file",
+                          description="Warping field of the template to the anatomical image",
                           mandatory=True,
-                          example="warp_template2anat2t2star.nii,warp_t2star2template2anat.nii")
+                          example='../t2/warp_template2anat.nii.gz')
+        parser.usage.addSection('Registration parameters')
         parser.add_option(name="-t",
                           type_value='multiple_choice',
                           description="type of transformation",
@@ -271,11 +286,6 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='CC',
                           example=['CC', 'MeanSquares'])
-        parser.add_option(name="-reg-o",
-                          type_value="str",
-                          description="Output image name",
-                          mandatory=False,
-                          example='moving_to_fixed.nii.gz')
         parser.usage.addSection("Misc")
         parser.add_option(name="-r",
                           type_value='multiple_choice',
@@ -291,42 +301,17 @@ if __name__ == "__main__":
                           example=['0', '1', '2'])
 
         arguments = parser.parse(sys.argv[1:])
-
-        input_target_fname = arguments["-i"]
-        input_sc_seg_fname = arguments["-s"]
-        gm_seg_param.todo_model = 'load'
-        path_to_label = arguments["-label"]
-        verbose = 1
-        if "-model" in arguments:
-            gm_seg_param.path_model = arguments["-model"]
-        if "-seg-o" in arguments:
-            gm_seg_param.output_name = arguments["-seg-o"]
-        '''
-        reg_param.fname_ref = arguments["-i"]
-        if "-iseg" in arguments:
-            reg_param.fname_seg_fixed = arguments["-iseg"]
-        reg_param.fname_moving = arguments["-d"]
-        if "-dseg" in arguments:
-            reg_param.fname_seg_moving = arguments["-dseg"]
-
-        if "-o" in arguments:
-            reg_param.fname_output = arguments["-o"]
-        else:
-            reg_param.fname_output = sct.extract_fname(reg_param.fname_moving)[1] + '_to_' + sct.extract_fname(reg_param.fname_ref)[1] +  sct.extract_fname(reg_param.fname_ref)[2]
-        '''
-        reg_param.template2anat2wm_gm_warp, reg_param.wm_gm2template2anat_warp = arguments["-warp"]
+        multimodal_reg_param.target = arguments["-i"]
+        multimodal_reg_param.target_seg = arguments["-iseg"]
+        multimodal_reg_param.anat = arguments["-anat"]
+        multimodal_reg_param.anat_seg = arguments["-anat-seg"]
+        multimodal_reg_param.warp_template2anat = arguments["-warp"]
         if "-t" in arguments:
-            reg_param.transformation = arguments["-t"]
+            wm_reg_param.transformation = arguments["-t"]
         if "-m" in arguments:
-            reg_param.metric = arguments["-m"]
+            wm_reg_param.metric = arguments["-m"]
         if "-r" in arguments:
-            reg_param.remove_temp = int(arguments["-r"])
+            remove = bool(int(arguments["-r"]))
         if "-v" in arguments:
-            verbose = int(arguments["-v"])
-
-        gm_seg_param.verbose = verbose
-        reg_param.verbose = verbose
-
-    main(gm_seg_param, reg_param, target_fname=input_target_fname, sc_seg_fname=input_sc_seg_fname, path_to_label=path_to_label)
-
-
+            verbose = arguments["-v"]
+        main()
