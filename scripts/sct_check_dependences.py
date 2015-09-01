@@ -133,6 +133,8 @@ def main():
     for i in version_requirements:
         if i == 'pillow':
             module = 'PIL'
+        elif i == 'scikit-image':
+            module = 'skimage'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
@@ -156,10 +158,7 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        if i == 'scikit-image':
-            module = 'skimage'
-        else:
-            module = i
+        module = i
         print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
         try:
             module = importlib.import_module(module)

@@ -1,2 +1,1 @@
 nibabel==2.0.1
-scikit-image==0.11.3
