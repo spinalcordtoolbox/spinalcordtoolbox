@@ -11,7 +11,7 @@ notifications:
 
 install:
 
-# Setup anaconda
+# Setup Anaconda
   - ldd --version
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
@@ -43,13 +43,17 @@ install:
   - ./install/create_links.sh -a
 
 # Go to testing folder
-  - cd testing
+#  - cd testing
 
 script:
-  - python ../scripts/sct_check_dependences.py
-  - python test_all.py -d 1
-  - cd ../install
+# test dependences
+  - sct_check_dependences
+# test functions & integrity
+  - sct_testing -d 1
+# test package creation
+  - cd install
   - python create_package.py -s linux
+# test installation of package
   - cd ../spinalcordtoolbox_v*
   - python installer.py -p ~/
   - echo "DONE"
