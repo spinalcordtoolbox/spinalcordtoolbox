@@ -9,8 +9,15 @@ notifications:
     on_success:change
     on_failure:always
 
-install:
+#before_install:
+#  - source install/travis_tools.sh
+#    - virtualenv --python=python venv
+#    - source venv/bin/activate
+#    - python --version # just to check
+#    - retry pip install nose # always
+#  - wheelhouse_pip_install dipy==0.9.2
 
+install:
 # Setup Anaconda
   - ldd --version
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
@@ -21,6 +28,8 @@ install:
   - cd install/requirements/
   - ./requirements.sh
   - cd ../..
+  - source install/travis_tools.sh
+  - wheelhouse_pip_install dipy==0.9.2
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
