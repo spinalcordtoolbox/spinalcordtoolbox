@@ -21,6 +21,7 @@ class Image(object):
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
         from numpy import zeros, ndarray, generic
         from sct_utils import extract_fname
+        from nibabel import AnalyzeHeader
 
         # initialization of all parameters
         self.data = None
@@ -30,6 +31,11 @@ class Image(object):
         self.file_name = ""
         self.ext = ""
         self.dim = None
+
+        if hdr == None:
+            hdr = self.hdr = AnalyzeHeader()  # an empty header
+        else:
+            self.hdr = hdr
 
         self.verbose = verbose
 
