@@ -131,9 +131,7 @@ def main():
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        if i == 'pillow':
-            module = 'PIL'
-        elif i == 'scikit-image':
+        if i == 'scikit-image':
             module = 'skimage'
         else:
             module = i
@@ -141,10 +139,7 @@ def main():
         try:
             module = importlib.import_module(module)
             # get version
-            if i == 'pillow':
-                version = module.PILLOW_VERSION
-            else:
-                version = module.__version__
+            version = module.__version__
             # check if version matches requirements
             if check_package_version(version, version_requirements, i):
                 print_ok()
