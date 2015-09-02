@@ -38,7 +38,7 @@ matrix:
 #        - echo "JULIEN_TEST: 1"
     - python: 2.7
       env:
-        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 scikit-image==0.11.3"
+        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 dipy scikit_image"
 #        - echo "JULIEN_TEST: 2"
 
 before_install:
