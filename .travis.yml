@@ -24,8 +24,8 @@ cache:
 #    - 3.3
 #    - 3.4
 
-matrix:
-  include:
+#matrix:
+#  include:
 #    - python: 2.7
 #      env:
 #        - COVERAGE=1
@@ -36,37 +36,40 @@ matrix:
 #        - COVERAGE=1
 #        - DEPENDS="cython==0.18 numpy==1.6.0 scipy==0.9.0 nibabel==1.2.0"
 #        - echo "JULIEN_TEST: 1"
-    - python: 2.7
-      env:
-        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 dipy scikit_image"
+#    - python: 2.7
+#      env:
+#        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 dipy scikit_image"
 #        - echo "JULIEN_TEST: 2"
 
-before_install:
-    - source install/travis_tools.sh
-    - virtualenv --python=python venv
-    - source venv/bin/activate
-    - python --version  # just to check
-    - retry pip install nose  # always
-    - wheelhouse_pip_install $DEPENDS
+#before_install:
+#    - source install/travis_tools.sh
+#    - virtualenv --python=python venv
+#    - source venv/bin/activate
+#    - python --version  # just to check
+#    - retry pip install nose  # always
+#    - wheelhouse_pip_install $DEPENDS
 #    - if [ "${COVERAGE}" == "1" ]; then
 #      pip install coverage;
 #      pip install coveralls;
 #      fi
 
-install:
+before_install:
 # Setup Anaconda
-#  - ldd --version
-#  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-#  - chmod +x miniconda.sh
-#  - ./miniconda.sh -b
-#  - export PATH=/home/travis/miniconda/bin:$PATH
-#  - conda update --yes conda
-#  - cd install/requirements/
-#  - ./requirements.sh
-#  - cd ../..
+  - ldd --version
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - conda update --yes conda
+  - cd install/requirements/
+  - ./requirements.sh
+  # install pre-built dipy version for Ubuntu
+  - pip install -f https://wheels.scipy.org -U --pre dipy
+  - cd ../..
 #  - source install/travis_tools.sh
 #  - wheelhouse_pip_install dipy==0.9.2
 
+install:
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
   - PATH=${PATH}:${SCT_DIR}/bin
