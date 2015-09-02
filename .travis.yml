@@ -3,33 +3,69 @@ python:
   - 2.7
 
 sudo: false
-  
+language: python
+
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
     on_failure:always
 
-#before_install:
-#  - source install/travis_tools.sh
-#    - virtualenv --python=python venv
-#    - source venv/bin/activate
-#    - python --version # just to check
-#    - retry pip install nose # always
-#  - wheelhouse_pip_install dipy==0.9.2
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+env:
+    global:
+        - DEPENDS="cython numpy scipy matplotlib h5py nibabel cvxopt"
+
+python:
+    - 2.6
+    - 3.2
+    - 3.3
+    - 3.4
+
+matrix:
+  include:
+    - python: 2.7
+      env:
+        - COVERAGE=1
+        - echo "JULIEN_TEST: 0"
+    # To test minimum dependencies
+    - python: 2.7
+      env:
+        - COVERAGE=1
+        - DEPENDS="cython==0.18 numpy==1.6.0 scipy==0.9.0 nibabel==1.2.0"
+        - echo "JULIEN_TEST: 1"
+    - python: 2.7
+      env:
+        - DEPENDS="cython numpy scipy matplotlib h5py nibabel cvxopt scikit_learn"
+        - echo "JULIEN_TEST: 2"
+
+before_install:
+    - source tools/travis_tools.sh
+    - virtualenv --python=python venv
+    - source venv/bin/activate
+    - python --version # just to check
+    - retry pip install nose # always
+    - wheelhouse_pip_install $DEPENDS
+    - if [ "${COVERAGE}" == "1" ]; then
+      pip install coverage;
+      pip install coveralls;
+      fi
 
 install:
 # Setup Anaconda
-  - ldd --version
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
-  - conda update --yes conda
-  - cd install/requirements/
-  - ./requirements.sh
-  - cd ../..
-  - source install/travis_tools.sh
-  - wheelhouse_pip_install dipy==0.9.2
+#  - ldd --version
+#  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+#  - chmod +x miniconda.sh
+#  - ./miniconda.sh -b
+#  - export PATH=/home/travis/miniconda/bin:$PATH
+#  - conda update --yes conda
+#  - cd install/requirements/
+#  - ./requirements.sh
+#  - cd ../..
+#  - source install/travis_tools.sh
+#  - wheelhouse_pip_install dipy==0.9.2
 
 # SCT: set PATH
   - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
