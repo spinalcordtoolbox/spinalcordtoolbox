@@ -18,40 +18,40 @@ env:
     global:
         - DEPENDS="cython numpy scipy matplotlib h5py nibabel cvxopt"
 
-python:
-    - 2.6
-    - 3.2
-    - 3.3
-    - 3.4
+#python:
+#    - 2.6
+#    - 3.2
+#    - 3.3
+#    - 3.4
 
 matrix:
   include:
-    - python: 2.7
-      env:
-        - COVERAGE=1
-        - echo "JULIEN_TEST: 0"
+#    - python: 2.7
+#      env:
+#        - COVERAGE=1
+#        - echo "JULIEN_TEST: 0"
     # To test minimum dependencies
+#    - python: 2.7
+#      env:
+#        - COVERAGE=1
+#        - DEPENDS="cython==0.18 numpy==1.6.0 scipy==0.9.0 nibabel==1.2.0"
+#        - echo "JULIEN_TEST: 1"
     - python: 2.7
       env:
-        - COVERAGE=1
-        - DEPENDS="cython==0.18 numpy==1.6.0 scipy==0.9.0 nibabel==1.2.0"
-        - echo "JULIEN_TEST: 1"
-    - python: 2.7
-      env:
-        - DEPENDS="cython numpy scipy matplotlib h5py nibabel cvxopt scikit_learn"
-        - echo "JULIEN_TEST: 2"
+        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 pillow==2.9.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 scikit-image==0.11.3"
+#        - echo "JULIEN_TEST: 2"
 
 before_install:
     - source install/travis_tools.sh
     - virtualenv --python=python venv
     - source venv/bin/activate
-    - python --version # just to check
-    - retry pip install nose # always
+    - python --version  # just to check
+    - retry pip install nose  # always
     - wheelhouse_pip_install $DEPENDS
-    - if [ "${COVERAGE}" == "1" ]; then
-      pip install coverage;
-      pip install coveralls;
-      fi
+#    - if [ "${COVERAGE}" == "1" ]; then
+#      pip install coverage;
+#      pip install coveralls;
+#      fi
 
 install:
 # Setup Anaconda
