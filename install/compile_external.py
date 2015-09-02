@@ -3,6 +3,7 @@
 # Compile external packages.
 #
 
+# TODO: before adding line for PYTHONPATH, check if already exists
 # TODO: import ornlm does not work at the end of script.
 
 import os
@@ -28,15 +29,14 @@ with open(path_home+"/.bashrc", "a") as bashrc:
     bashrc.write("export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/"+path_denoise)
     bashrc.close()
 
-# put in python environment for subsequent tests during installation
-if 'PYTHONPATH' in os.environ:
-    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH']+":"+path_sct+path_denoise
-else:
-    os.environ['PYTHONPATH'] = path_sct+path_denoise
+# # put in python environment for subsequent tests during installation
+# if 'PYTHONPATH' in os.environ:
+#     os.environ['PYTHONPATH'] = os.environ['PYTHONPATH']+":"+path_sct+path_denoise
+# else:
+#     os.environ['PYTHONPATH'] = path_sct+path_denoise
 
 # source .bashrc
-status, output = commands.getstatusoutput("source "+path_home+"/.bashrc")
+# !! This does not work, as python script launched a new process. Solutions are welcome!
+# status, output = commands.getstatusoutput("source "+path_home+"/.bashrc")
 
-import ornlm
-
-print "done!"
+print "Done! Open a new Terminal window to load environment variables."
