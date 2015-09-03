@@ -143,40 +143,65 @@ class Slice:
 ########################################################################################################################
 
 ########################################################################################################################
-# ---------------------------------------------- ONLY USED BY SCT_ASMAN ---------------------------------------------- #
+# ----------------------------------------- ONLY USED BY MSCT_MULTIATLAS_SEG ----------------------------------------- #
 ########################################################################################################################
 
 # ------------------------------------------------------------------------------------------------------------------
-def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True):
+def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True, verbose=1):
     """
     Inverse a gray matter segmentation array image to get a white matter segmentation image and save it
 
-    :param gm_seg: gray matter segmentation to inverse, type: Image
+    :param gm_seg: gray matter segmentation to inverse, type: Image or np.ndarray
 
-    :param original_im: original image croped around the spinal cord
+    :param original_im: original image croped around the spinal cord, type: Image or np.ndarray
 
     :param name_gm_seg: name of the gray matter segmentation (to save the associated white matter segmentation),
      type: string
 
-    :return inverted_seg: white matter segmentation image
+    :return inverted_seg: white matter segmentation image, if an image is inputted, returns an image, if only np.ndarrays are inputted, return a np.nodarray
     """
-    assert gm_seg.data.shape == original_im.data.shape
+    # getting the inputs correctly
+    type_res = ''
+    if isinstance(gm_seg, Image):
+        original_hdr = gm_seg.hdr
+        gm_seg_dat = gm_seg.data
+        type_res += 'image'
+    elif isinstance(gm_seg, np.ndarray):
+        gm_seg_dat = gm_seg
+        type_res += 'array'
+    else:
+        sct.printv('WARNING: gm_seg is instance of ' + type(gm_seg), verbose, 'warning')
+        gm_seg_dat = None
 
-    original_hdr = gm_seg.hdr
+    if isinstance(original_im, Image):
+        original_dat = original_im.data
+        type_res += 'image'
 
-    binary_gm_seg_dat = (gm_seg.data > 0).astype(int)
-    sc_dat = (original_im.data > 0).astype(int)
+    elif isinstance(original_im, np.ndarray):
+        original_dat = original_im
+        type_res += 'array'
+    else:
+        sct.printv('WARNING: original_im is instance of ' + type(original_im), verbose, 'warning')
+        original_dat = None
 
+    # check that they are of the same shape
+    assert gm_seg_dat.shape == original_dat.shape
+
+    # inverse arrays
+    binary_gm_seg_dat = (gm_seg_dat > 0).astype(int)
+    sc_dat = (gm_seg_dat > 0).astype(int)
     # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
-    res_wm_seg = np.absolute(sc_dat - binary_gm_seg_dat).astype(int)
+    res_wm_seg = np.asarray(np.absolute(sc_dat - binary_gm_seg_dat).astype(int))
 
-    res_wm_seg_im = Image(param=np.asarray(res_wm_seg), absolutepath=name_gm_seg + '_inv_to_wm.nii.gz')
-    res_wm_seg_im.hdr = original_hdr
-    if save:
-        res_wm_seg_im.save()
-    res_wm_seg_im.orientation = gm_seg.orientation
-
-    return res_wm_seg_im
+    if 'image' in type_res:
+        res_wm_seg_im = Image(param=res_wm_seg, absolutepath=name_gm_seg + '_inv_to_wm.nii.gz')
+        res_wm_seg_im.hdr = original_hdr
+        if save:
+            res_wm_seg_im.save()
+        res_wm_seg_im.orientation = gm_seg.orientation
+        return res_wm_seg_im
+    else:
+        return res_wm_seg
 
 
 # ----------------------------------------------------------------------------------------------------------------------
