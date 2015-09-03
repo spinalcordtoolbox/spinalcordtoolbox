@@ -1,6 +1,6 @@
-language: python
-python:
-  - 2.7
+#language: python
+#python:
+#  - 2.7
 
 sudo: false
 language: python
@@ -54,7 +54,7 @@ install:
 
 # SCT: compile external packages
   - python install/compile_external.py
-  - source install/source_bashrc.sh
+  - install/source_bashrc.sh
 #  - . ~/.bashrc
 
 script:
