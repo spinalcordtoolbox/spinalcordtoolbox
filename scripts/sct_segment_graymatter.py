@@ -146,8 +146,15 @@ class FullGmSegmentation:
         self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
 
         os.chdir(self.tmp_dir)
-	#####################################################################
-	Image(self.preprocessed.treated_target, absolutepath='t2star_after_preprocess.nii.gz').save()
+	#######################################################################
+	print '*************************************************************************************************************************'
+	print 'SAVING T2STAR AFTER PREPROCESS' 
+	print 'path: ', os.path.abspath('.')
+	im_tmp = Image(self.preprocessed.treated_target)
+	im_tmp.file_name ='t2star_after_preprocess'
+	im_tmp.ext = '.nii.gz'
+	im_tmp.save()
+
         if self.preprocessed.level_fname is not None:
             self.level_to_use = self.preprocessed.level_fname
         else:
