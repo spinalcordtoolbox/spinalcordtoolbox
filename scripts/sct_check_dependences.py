@@ -128,6 +128,21 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    # check if git is installed
+    print_line('Check if git is installed ')
+    cmd = 'which git'
+    status, output = commands.getstatusoutput(cmd)
+    if output:
+        print_ok()
+    else:
+        print_fail()
+        print '  git is not installed.'
+        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
+        e = 1
+    if complete_test:
+        print '>> '+cmd
+        print (status, output), '\n'
+
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
@@ -169,22 +184,15 @@ def main():
             print_fail()
             install_software = 1
 
-
-    # check if git is installed
-    print_line('Check if git is installed ')
-    cmd = 'which git'
-    status, output = commands.getstatusoutput(cmd)
-    if output:
+    # Check if external modules are installed
+    print_line('Check if ornlm is installed')
+    sys.path.append(path_sct + '/external/denoise/ornlm')  # append to PYTHONPATH
+    try:
+        importlib.import_module('ornlm')
         print_ok()
-    else:
+    except ImportError:
         print_fail()
-        print '  git is not installed.'
-        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
-        e = 1
-
-    if complete_test:
-        print '>> '+cmd
-        print (status, output), '\n'
+        install_software = 1
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS ')
