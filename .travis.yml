@@ -1,8 +1,8 @@
-#language: python
-#python:
-#  - 2.7
+# testing file for Travis
+# https://travis-ci.org/neuropoly/spinalcordtoolbox
 
-sudo: false
+sudo: false  # To use travis container infrastructure
+
 language: python
 
 notifications:
@@ -10,9 +10,9 @@ notifications:
     on_success:change
     on_failure:always
 
-cache:
-  directories:
-    - $HOME/.cache/pip
+#cache:
+#  directories:
+#    - $HOME/.cache/pip
 
 matrix:
   include:
@@ -54,8 +54,7 @@ install:
 
 # SCT: compile external packages
   - python install/compile_external.py
-  - install/source_bashrc.sh
-#  - . ~/.bashrc
+  - export PYTHONPATH="${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
 
 script:
   - sct_check_dependences   # test dependences
