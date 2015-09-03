@@ -54,14 +54,14 @@ class Preprocessing:
         # preprocessing
         os.chdir(tmp_dir)
 	
-	#######################################################################
-	print '*************************************************************************************************************************'
-	print 'SAVING T2STAR BEFORE RESAMPLING' 
-	print 'path: ', os.path.abspath('.')
-	im_tmp = Image(self.t2star)
-	im_tmp.file_name ='t2star_before_resampling'
-	im_tmp.ext = '.nii.gz'
-	im_tmp.save()
+        #######################################################################
+        print '*************************************************************************************************************************'
+        print 'SAVING T2STAR BEFORE RESAMPLING'
+        print 'path: ', os.path.abspath('.')
+        im_tmp = Image(self.t2star)
+        im_tmp.file_name ='t2star_before_resampling'
+        im_tmp.ext = '.nii.gz'
+        im_tmp.save()
 
 
         # resampling of the images
@@ -71,14 +71,14 @@ class Preprocessing:
             self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
-	#######################################################################
-	print '*************************************************************************************************************************'
-	print 'SAVING T2STAR AFTER RESAMPLING' 
-	print 'path: ', os.path.abspath('.')
-	im_tmp = Image(self.t2star)
-	im_tmp.file_name ='t2star_after_resampling'
-	im_tmp.ext = '.nii.gz'
-	im_tmp.save()
+        #######################################################################
+        print '*************************************************************************************************************************'
+        print 'SAVING T2STAR AFTER RESAMPLING'
+        print 'path: ', os.path.abspath('.')
+        im_tmp = Image(self.t2star)
+        im_tmp.file_name ='t2star_after_resampling'
+        im_tmp.ext = '.nii.gz'
+        im_tmp.save()
 
 
         # denoising (optional)
@@ -87,14 +87,14 @@ class Preprocessing:
             t2star_im.denoise_ornlm()
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
-	#######################################################################
-	print '*************************************************************************************************************************'
-	print 'SAVING T2STAR AFTER DENOISING' 
-	print 'path: ', os.path.abspath('.')
-	im_tmp = Image(self.t2star)
-	im_tmp.file_name ='t2star_after_denoising'
-	im_tmp.ext = '.nii.gz'
-	im_tmp.save()
+        #######################################################################
+        print '*************************************************************************************************************************'
+        print 'SAVING T2STAR AFTER DENOISING'
+        print 'path: ', os.path.abspath('.')
+        im_tmp = Image(self.t2star)
+        im_tmp.file_name ='t2star_after_denoising'
+        im_tmp.ext = '.nii.gz'
+        im_tmp.save()
 
         '''
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
