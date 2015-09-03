@@ -819,7 +819,7 @@ class Installer:
         # compile external packages
         print "\nCompile external packages..."
         os.chdir(self.SCT_DIR+"/external")
-        cmd = self.issudo + "compile_external.py"
+        cmd = self.issudo + "python compile_external.py"
         print ">> " + cmd
         status, output = runProcess(cmd)
         if status != 0:
