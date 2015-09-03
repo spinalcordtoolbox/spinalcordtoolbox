@@ -146,6 +146,8 @@ class FullGmSegmentation:
         self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
 
         os.chdir(self.tmp_dir)
+	#####################################################################
+	Image(self.preprocessed.treated_target, absolutepath='t2star_after_preprocess.nii.gz').save()
         if self.preprocessed.level_fname is not None:
             self.level_to_use = self.preprocessed.level_fname
         else:
@@ -153,6 +155,16 @@ class FullGmSegmentation:
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
         self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
+
+	#######################################################################
+	print '*************************************************************************************************************************'
+	print 'SAVING GMSEG BEFORE POSTPROCESS' 
+	print 'path: ', os.path.abspath('.')
+	im_tmp = Image(self.gm_seg.res_gm_seg)
+	im_tmp.file_name ='gmseg_res_before_postprocess'
+	im_tmp.ext = '.nii.gz'
+	im_tmp.save()
+
 
         if self.ref_gm_seg_fname is not None:
             os.chdir('..')
@@ -165,6 +177,7 @@ class FullGmSegmentation:
 
         sct.printv('\nDoing result post-processing ...', verbose=self.param.verbose, type='normal')
         self.post_processing()
+
         os.chdir('..')
 
     # ------------------------------------------------------------------------------------------------------------------
