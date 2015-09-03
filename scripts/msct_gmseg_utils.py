@@ -536,7 +536,7 @@ def crop_t2_star_pipeline(path, box_size=75):
                 os.chdir(subject_path)
                 try:
                     if seg_in == '':
-                        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
+                        sct.run('sct_crop_over_mask -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
                                 '-o ' + t2star_name + '_seg_in')
                         seg_in = t2star_name + '_seg_in.nii.gz'
                         seg_in_name = t2star_name + '_seg_in'
@@ -547,11 +547,11 @@ def crop_t2_star_pipeline(path, box_size=75):
                         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
                     if seg_in_croped == '':
-                        sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 '
+                        sct.run('sct_crop_over_mask -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 '
                                 '-o ' + seg_in_name + '_croped')
 
                     if manual_seg_croped == '':
-                        sct.run('sct_crop_over_mask.py -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1'
+                        sct.run('sct_crop_over_mask -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1'
                                 ' -o ' + manual_seg_name + '_croped')
 
                 except Exception, e:
@@ -576,14 +576,14 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
 
     try:
 
-        sct.run('sct_crop_over_mask.py -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
+        sct.run('sct_crop_over_mask -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
         seg_in = t2star_name + '_seg_in.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
 
         sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
         mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
 
-        status, output = sct.run('sct_crop_over_mask.py -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+        status, output = sct.run('sct_crop_over_mask -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
         if t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz' in os.listdir('.'):
             mask_box = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
 
@@ -812,7 +812,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
                 t2star_im.save()
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
-            sct.run('sct_crop_over_mask.py -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
+            sct.run('sct_crop_over_mask -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
 
             os.chdir(original_path)
     save_by_slice(path_to_dataset)
@@ -1226,7 +1226,7 @@ def compute_error_map_by_level(data_path):
 
                 level_im = Image(level)
 
-                sct.run('sct_crop_over_mask.py -i ' + ref_wm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_wm_seg)[1] + '_croped')
+                sct.run('sct_crop_over_mask -i ' + ref_wm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_wm_seg)[1] + '_croped')
                 ref_wm_seg = sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' + sct.extract_fname(ref_wm_seg)[2]
 
                 ref_wm_seg_im = Image(ref_wm_seg)
@@ -1337,7 +1337,7 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
 
                         level_im = Image(level)
 
-                        sct.run('sct_crop_over_mask.py -i ' + ref_gm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[1] + '_croped')
+                        sct.run('sct_crop_over_mask -i ' + ref_gm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[1] + '_croped')
                         ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2]
 
                         # sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
