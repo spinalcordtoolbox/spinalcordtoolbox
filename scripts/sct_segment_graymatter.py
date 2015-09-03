@@ -68,7 +68,7 @@ class Preprocessing:
         nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = get_dimension(Image(self.t2star))
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
-            self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
+            self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to, save=True)
             self.sc_seg = resample_image(self.sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
         #######################################################################
