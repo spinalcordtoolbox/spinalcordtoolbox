@@ -17,7 +17,7 @@ import sys
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 sys.path.append(path_sct + '/scripts')
 from msct_image import Image
-from numpy import any
+from numpy import sum
 
 
 def test(data_path):
@@ -43,12 +43,15 @@ def test(data_path):
 
     # if command ran without error, test integrity
     if status == 0:
-        pass
+	threshold = 1e-2
         # compare with gold-standard labeling
         data_original = Image(data_path + folder_data + file_data[-1]).data
         data_totest = Image('mt0_gmseg.nii.gz').data
         # check if non-zero elements are present when computing the difference of the two images
-        if any(data_original - data_totest):
+	diff = data_original - data_totest
+	
+        if abs(sum(diff))> threshold:
+	    Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
             status = 99
             output += '\nResulting image differs from gold-standard.'
 
