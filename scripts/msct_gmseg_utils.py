@@ -733,7 +733,7 @@ def save_by_slice(dic_dir):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic', save=False):
     """
     Resampling function: add a padding, resample, crop the padding
     :param fname: name of the image file to be resampled
@@ -753,14 +753,15 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(Image(fname))
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR BEFORE PAD'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(fname)
-        im_tmp.file_name ='t2star_before_pad'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
+	if save:
+		#######################################################################
+		print '*************************************************************************************************************************'
+		print 'SAVING T2STAR BEFORE PAD'
+		print 'path: ', os.path.abspath('.')
+		im_tmp = Image(fname)
+		im_tmp.file_name ='t2star_before_pad'
+		im_tmp.ext = '.nii.gz'
+		im_tmp.save()
 
         name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
         name_resample = sct.extract_fname(name_pad)[1] + suffix
@@ -768,39 +769,39 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'NearestNeighbor'
         sct.run('isct_c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
-
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR AFTER PAD'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(name_pad)
-        im_tmp.file_name ='t2star_after_pad'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
+	if save:
+		#######################################################################
+		print '*************************************************************************************************************************'
+		print 'SAVING T2STAR AFTER PAD'
+		print 'path: ', os.path.abspath('.')
+		im_tmp = Image(name_pad)
+		im_tmp.file_name ='t2star_after_pad'
+		im_tmp.ext = '.nii.gz'
+		im_tmp.save()
 
         fx = px/npx
         fy = py/npy
         sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
-
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR AFTER RESAMPLE'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(name_resample)
-        im_tmp.file_name ='t2star_after_resample'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
+	if save:
+		#######################################################################
+		print '*************************************************************************************************************************'
+		print 'SAVING T2STAR AFTER RESAMPLE'
+		print 'path: ', os.path.abspath('.')
+		im_tmp = Image(name_resample)
+		im_tmp.file_name ='t2star_after_resample'
+		im_tmp.ext = '.nii.gz'
+		im_tmp.save()
 
         sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
-
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR AFTER CROP'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(name_resample)
-        im_tmp.file_name ='t2star_after_crop'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
+	if save:
+		#######################################################################
+		print '*************************************************************************************************************************'
+		print 'SAVING T2STAR AFTER CROP'
+		print 'path: ', os.path.abspath('.')
+		im_tmp = Image(name_resample)
+		im_tmp.file_name ='t2star_after_crop'
+		im_tmp.ext = '.nii.gz'
+		im_tmp.save()
 
         if binary:
             # sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
