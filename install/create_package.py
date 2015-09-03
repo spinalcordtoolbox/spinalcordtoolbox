@@ -80,7 +80,6 @@ sct.run('cp -r ../external '+folder_sct+'spinalcordtoolbox/')
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
 sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
 sct.run('cp -r ../install/requirements ' + folder_sct + 'spinalcordtoolbox/install/')
-sct.run('cp -r ../install/compile_external.py ' + folder_sct + 'spinalcordtoolbox/install/')
 
 # bin
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/bin')
