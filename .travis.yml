@@ -18,10 +18,12 @@ matrix:
   include:
     - python: "2.7"
       os: linux
-      MINICONDA="Linux-x86_64"
+      env:
+        - MINICONDA="Linux-x86_64"
     - python: "2.7"
       os: osx
-      MINICONDA="MacOSX-x86_64"
+      env:
+        - MINICONDA="MacOSX-x86_64"
 
 before_install:
   # Install miniconda
