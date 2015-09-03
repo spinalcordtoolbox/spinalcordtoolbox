@@ -29,15 +29,15 @@ matrix:
 before_install:
   # Install miniconda
   #- ldd --version  # not sure what this is for...
-  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      echo "LINUX INSTALLATION!";
-    elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      echo "OSX INSTALLATION!";
-    fi
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
+  # miniconda installation path differs between OS, so need to distinguish:
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      export PATH=/home/travis/miniconda/bin:$PATH
+    elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      export PATH=/Users/travis/miniconda/bin:$PATH
+    fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
   # Install requirements
   - cd install/requirements/
