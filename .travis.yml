@@ -53,7 +53,7 @@ install:
 #  - cd external/denoise/ornlm
 #  - python setup.py build_ext --inplace
 #  - cd ../../../
-  install/compile_external.py
+  - install/compile_external.py
   #- export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
 
 script:
