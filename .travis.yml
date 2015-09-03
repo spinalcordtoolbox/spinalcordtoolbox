@@ -41,18 +41,15 @@ before_install:
   - cd ../..
 
 install:
-# SCT: set PATH
+# set PATH
   - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
   - PATH=${PATH}:${SCT_DIR}/bin
-  - PATH=${PATH}:${SCT_DIR}/bin/linux
+  - PATH=${PATH}:${SCT_DIR}/bin/${TRAVIS_OS_NAME}
   - export SCT_DIR PATH
   - . ~/.bashrc
-# SCT: create links
+# create links
   - ./install/create_links.sh -a
-# SCT: compile external packages
-#  - cd external/denoise/ornlm
-#  - python setup.py build_ext --inplace
-#  - cd ../../../
+# compile external packages
   - install/compile_external.py
   #- export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
 
@@ -60,7 +57,7 @@ script:
   - sct_check_dependences   # test dependences
   - sct_testing -d 1  # test functions & integrity
   - cd install
-  - python create_package.py -s linux  # test package creation
+  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
   - cd ../spinalcordtoolbox_v*
   - python installer.py -p ~/  # test installation of package
   - echo "DONE"
