@@ -8,10 +8,11 @@
 import os
 import commands
 
-path_denoise = "denoise/ornlm"
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+path_denoise = "external/denoise/ornlm"
 
 # go to folder
-os.chdir(path_denoise)
+os.chdir(path_sct+'/'+path_denoise)
 
 # compile
 status, output = commands.getstatusoutput('python setup.py build_ext --inplace')
