@@ -18,9 +18,12 @@ cache:
 matrix:
   include:
     - os: linux
+      python: 2.7
       env:
         - MINICONDA="Linux-x86_64"
+        - PYTHONPATH="/home/travis/build/neuropoly/spinalcordtoolbox/external/denoise/ornlm"
     - os: osx
+      python: 2.7
       env:
         - MINICONDA="MacOSX-x86_64"
 
@@ -37,8 +40,9 @@ before_install:
   # Install conda requirements
   - conda install --yes --file requirementsConda.txt
   - pip install nibabel==2.0.1
+  - pip install dipy==0.9.2
   # pre-built version of dipy for faster installation
-  - pip install -f https://wheels.scipy.org -U --pre dipy --no-compile
+#  - pip install -f https://wheels.scipy.org -U --pre dipy --no-compile
   - cd ../..
 
 install:
