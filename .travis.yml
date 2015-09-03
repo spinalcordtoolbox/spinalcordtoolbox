@@ -22,7 +22,7 @@ matrix:
       env:
         - MINICONDA="Linux-x86_64"
     - os: osx
-      python: 2.7
+      language: generic
       env:
         - MINICONDA="MacOSX-x86_64"
 
@@ -31,6 +31,8 @@ before_install:
   - ldd --version  # not sure what this is for...
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
       echo "LINUX INSTALLATION!";
+    elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      echo "OSX INSTALLATION!";
     fi
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
   - chmod +x miniconda.sh
