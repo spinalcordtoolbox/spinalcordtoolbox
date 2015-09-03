@@ -132,10 +132,11 @@ class ModelDictionary:
         param_fic = open(self.param.new_model_dir + '/info.txt', 'w')
         param_fic.write(str(self.param))
         param_fic.close()
+
         sct.printv('\nLoading data dictionary ...', self.param.verbose, 'normal')
         # List of T2star images (im) and their label decision (gmseg) (=segmentation of the gray matter), slice by slice
         self.slices = self.load_data_dictionary()  # type: list of slices
-
+        self.mean_image = np.mean([dic_slice.im for dic_slice in self.slices], axis=0)
         # number of slices in the data set
         self.J = len([dic_slice.im for dic_slice in self.slices])  # type: int
         # dimension of the slices (flattened)
@@ -151,7 +152,8 @@ class ModelDictionary:
         sct.printv('\nCo-registering all the data into the common groupwise space ...', self.param.verbose, 'normal')
         self.coregister_data(transfo_to_apply=self.coregistration_transfos)
 
-        self.mean_image = self.compute_mean_dic_image(np.asarray([dic_slice.im_M for dic_slice in self.slices])) # type: numpy array
+        # update the mean image
+        self.mean_image = np.mean([dic_slice.im_M for dic_slice in self.slices], axis=0) # type: numpy array
 
         self.save_model()
 
@@ -171,7 +173,6 @@ class ModelDictionary:
         # initialization
         slices = []
         j = 0
-        # TODO: change the name of files to find to a more general structure
         for subject_dir in os.listdir(self.param.path_model):
             subject_path = self.param.path_model + '/' + subject_dir
             if os.path.isdir(subject_path):
@@ -198,21 +199,8 @@ class ModelDictionary:
         keeps more information, better results
         """
         for dic_slice in self.slices:
-            im_dic = Image(param=dic_slice.im)
-            sc = im_dic.copy()
-            # nz_coord_sc = sc.getNonZeroCoordinates()
-            im_seg = Image(param=dic_slice.gm_seg)
-            '''
-            nz_coord_d = im_seg.getNonZeroCoordinates()
-            for coord in nz_coord_sc:
-                sc.data[coord.x, coord.y] = 1
-            for coord in nz_coord_d:
-                im_seg.data[coord.x, coord.y] = 1
-            # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
-            inverted_slice_decision = np.absolute(sc.data - im_seg.data).astype(int)
-            '''
-            inverted_slice_decision = inverse_gmseg_to_wmseg(im_seg, im_dic, save=False)
-            dic_slice.set(wm_seg=inverted_slice_decision.data)
+            inverted_slice_decision = inverse_gmseg_to_wmseg(dic_slice.gm_seg, dic_slice.im, save=False)
+            dic_slice.set(wm_seg=inverted_slice_decision)
 
     # ------------------------------------------------------------------------------------------------------------------
     def seg_coregistration(self, transfo_to_apply=None):
@@ -252,7 +240,7 @@ class ModelDictionary:
         :return mean seg: updated mean segmentation
         """
 
-        # Coregistraion of the white matter segmentations
+        # Coregistration of the white matter segmentations
         for dic_slice in self.slices:
             name_j_transform = 'transform_slice_' + str(dic_slice.id) + find_ants_transfo_name(transfo_type)[0]
             new_reg_list = dic_slice.reg_to_M.append(name_j_transform)
@@ -270,22 +258,6 @@ class ModelDictionary:
         return mean_seg
 
     # ------------------------------------------------------------------------------------------------------------------
-    def compute_mean_dic_image(self, im_data_set):
-        """
-        Compute the mean image of the dictionary
-
-        Used to co-register the dictionary images into teh common groupwise space
-
-        :param im_data_set:
-        :return mean: mean image of the input data set
-        """
-        mean = np.sum(im_data_set, axis=0)
-
-        mean /= float(len(im_data_set))
-
-        return mean
-
-    # ------------------------------------------------------------------------------------------------------------------
     def coregister_data(self,  transfo_to_apply=None):
         """
         Apply to each image slice of the dictionary the transformations found registering the segmentation slices.
@@ -296,13 +268,13 @@ class ModelDictionary:
         :param transfo_to_apply: list of string
         :return:
         """
-        list_im = [dic_slice.im for dic_slice in self.slices]
         list_gm_seg = [dic_slice.gm_seg for dic_slice in self.slices]
+        mean_gm_seg = compute_majority_vote_mean_seg(list_gm_seg)
 
         for dic_slice in self.slices:
             for n_transfo, transfo in enumerate(transfo_to_apply):
-                im_m = apply_ants_transfo(self.compute_mean_dic_image(list_im), dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
-                gm_seg_m = apply_ants_transfo(compute_majority_vote_mean_seg(list_gm_seg), dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
+                im_m = apply_ants_transfo(self.mean_image, dic_slice.im, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=False, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
+                gm_seg_m = apply_ants_transfo(mean_gm_seg, dic_slice.gm_seg, search_reg=False, transfo_name=dic_slice.reg_to_M[n_transfo], binary=True, path=self.param.new_model_dir+'/', transfo_type=transfo, metric=self.param.reg_metric)
                 # apply_2D_rigid_transformation(self.im[j], self.RM[j]['tx'], self.RM[j]['ty'], self.RM[j]['theta'])
 
             dic_slice.set(im_m=im_m)
@@ -350,7 +322,7 @@ class ModelDictionary:
         for level, seg_data_set in gm_seg_by_level.items():
             seg_averages[level] = compute_majority_vote_mean_seg(seg_data_set=seg_data_set, type=type)
         for level, im_data_set in im_by_level.items():
-            im_averages[level] = self.compute_mean_dic_image(im_data_set)
+            im_averages[level] = np.mean(im_data_set, axis=0)
         if save:
             for level, mean_gm_seg in seg_averages.items():
                 Image(param=mean_gm_seg, absolutepath='./mean_seg_' + level + '.nii.gz').save()
