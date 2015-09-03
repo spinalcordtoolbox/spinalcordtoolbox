@@ -58,7 +58,7 @@ install:
 
 # SCT: compile external packages
   - python install/compile_external.py
-  - export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
+  #- export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
 
 script:
   - sct_check_dependences   # test dependences
