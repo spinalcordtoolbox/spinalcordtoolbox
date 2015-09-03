@@ -30,15 +30,8 @@ before_install:
   - echo "HOME="
   - echo $HOME
   # Install miniconda
-  #- ldd --version  # not sure what this is for...
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
   - export PATH=${HOME}/miniconda/bin:$PATH
-  # miniconda installation path differs between OS, so need to distinguish:
-#  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-#      export PATH=/home/travis/miniconda/bin:$PATH;
-#    elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-#      export PATH=/Users/travis/miniconda/bin:$PATH;
-#    fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - conda update --yes conda
@@ -57,10 +50,10 @@ install:
 # SCT: create links
   - ./install/create_links.sh -a
 # SCT: compile external packages
-  - cd external/denoise/ornlm
-  - python setup.py build_ext --inplace
-  - cd ../../../
-  #install/compile_external.py
+#  - cd external/denoise/ornlm
+#  - python setup.py build_ext --inplace
+#  - cd ../../../
+  install/compile_external.py
   #- export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/external/denoise/ornlm
 
 script:
