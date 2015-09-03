@@ -27,6 +27,8 @@ matrix:
         - MINICONDA="MacOSX-x86_64"
 
 before_install:
+  - echo "HOME="
+  - echo $HOME
   # Install miniconda
   #- ldd --version  # not sure what this is for...
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
