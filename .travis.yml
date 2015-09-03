@@ -14,49 +14,19 @@ cache:
   directories:
     - $HOME/.cache/pip
 
-#env:
-#    global:
-#        - DEPENDS="cython numpy scipy matplotlib h5py nibabel cvxopt"
-
-#python:
-#    - 2.6
-#    - 3.2
-#    - 3.3
-#    - 3.4
-
-#matrix:
-#  include:
-#    - python: 2.7
-#      env:
-#        - COVERAGE=1
-#        - echo "JULIEN_TEST: 0"
-    # To test minimum dependencies
-#    - python: 2.7
-#      env:
-#        - COVERAGE=1
-#        - DEPENDS="cython==0.18 numpy==1.6.0 scipy==0.9.0 nibabel==1.2.0"
-#        - echo "JULIEN_TEST: 1"
-#    - python: 2.7
-#      env:
-#        - DEPENDS="cython numpy==1.9.2 scipy==0.16.0 sympy==0.7.6 matplotlib==1.4.3 nibabel==2.0.1 dipy scikit_image"
-#        - echo "JULIEN_TEST: 2"
-
-#before_install:
-#    - source install/travis_tools.sh
-#    - virtualenv --python=python venv
-#    - source venv/bin/activate
-#    - python --version  # just to check
-#    - retry pip install nose  # always
-#    - wheelhouse_pip_install $DEPENDS
-#    - if [ "${COVERAGE}" == "1" ]; then
-#      pip install coverage;
-#      pip install coveralls;
-#      fi
+matrix:
+  include:
+    - python: "2.7"
+      os: linux
+      MINICONDA="Linux-x86_64"
+    - python: "2.7"
+      os: osx
+      MINICONDA="MacOSX-x86_64"
 
 before_install:
-  # Install Anaconda
+  # Install miniconda
   - ldd --version
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
@@ -81,8 +51,9 @@ install:
   - ./install/create_links.sh -a
 
 # SCT: compile external packages
-  - ./install/compile_external.py
-  - . ~/.bashrc
+  - python install/compile_external.py
+  - source install/source_bashrc.sh
+#  - . ~/.bashrc
 
 script:
   - sct_check_dependences   # test dependences
