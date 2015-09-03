@@ -409,6 +409,12 @@ class Image(object):
         self.data = new_data
 
     def denoise_ornlm(self):
+        from commands import getstatusoutput
+        from sys import path
+        # append python path for importing module
+        # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
+        status, path_sct = getstatusoutput('echo $SCT_DIR')
+        path.append(path_sct + '/external/denoise/ornlm')
         from ornlm import ornlm
         import numpy as np
         dat = self.data.astype(np.float64)
