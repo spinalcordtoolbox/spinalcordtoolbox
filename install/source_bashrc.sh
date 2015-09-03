@@ -2,5 +2,5 @@
 #
 # This script sources .bashrc for testing on Travis
 #
-alias brc="source ~/.bashrc"
+alias brc=". ~/.bashrc"
 brc
