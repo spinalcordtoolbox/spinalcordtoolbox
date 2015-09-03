@@ -28,7 +28,7 @@ matrix:
 
 before_install:
   # Install miniconda
-  - ldd --version  # not sure what this is for...
+  #- ldd --version  # not sure what this is for...
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
       echo "LINUX INSTALLATION!";
     elif [ "${TRAVIS_OS_NAME}" == "osx" ]; then
