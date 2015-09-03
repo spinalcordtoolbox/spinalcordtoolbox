@@ -821,7 +821,7 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        cmd = "./compile_external.py"
+        cmd = "python "+self.SCT_DIR+"/install/compile_external.py"
         print ">> " + cmd
         status, output = runProcess(cmd)
 
