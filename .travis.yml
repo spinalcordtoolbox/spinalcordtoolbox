@@ -30,8 +30,7 @@ before_install:
   # Install miniconda
   - ldd --version  # not sure what this is for...
   - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      echo "LINUX INSTALLATION!"
-      wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh;
+      echo "LINUX INSTALLATION!";
     fi
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
   - chmod +x miniconda.sh
