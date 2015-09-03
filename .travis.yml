@@ -50,7 +50,8 @@ install:
 # create links
   - ./install/create_links.sh -a
 # compile external packages
-  - external/compile_external.py
+  - cd external
+  - python compile_external.py
 
 script:
   - sct_check_dependences   # test dependences
