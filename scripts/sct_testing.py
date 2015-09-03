@@ -258,7 +258,7 @@ def test_function(script_name):
     if status == 0:
         print_ok()
     else:
-        if status == 5:
+        if status == 99:
             print_warning()
         else:
             print_fail()
