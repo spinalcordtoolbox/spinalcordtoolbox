@@ -43,15 +43,16 @@ def test(data_path):
 
     # if command ran without error, test integrity
     if status == 0:
-	threshold = 1e-2
+        threshold = 1e-3
         # compare with gold-standard labeling
         data_original = Image(data_path + folder_data + file_data[-1]).data
         data_totest = Image('mt0_gmseg.nii.gz').data
         # check if non-zero elements are present when computing the difference of the two images
-	diff = data_original - data_totest
+        diff = data_original - data_totest
+
 	
         if abs(sum(diff))> threshold:
-	    Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
+            Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
             status = 99
             output += '\nResulting image differs from gold-standard.'
 

@@ -53,33 +53,13 @@ class Preprocessing:
 
         # preprocessing
         os.chdir(tmp_dir)
-	
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR BEFORE RESAMPLING'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(self.t2star)
-        im_tmp.file_name ='t2star_before_resampling'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
-
 
         # resampling of the images
         nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = get_dimension(Image(self.t2star))
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
-            self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to, save=True)
+            self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
-
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR AFTER RESAMPLING'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(self.t2star)
-        im_tmp.file_name ='t2star_after_resampling'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
-
 
         # denoising (optional)
         t2star_im = Image(self.t2star)
@@ -87,14 +67,6 @@ class Preprocessing:
             t2star_im.denoise_ornlm()
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
-        #######################################################################
-        print '*************************************************************************************************************************'
-        print 'SAVING T2STAR AFTER DENOISING'
-        print 'path: ', os.path.abspath('.')
-        im_tmp = Image(self.t2star)
-        im_tmp.file_name ='t2star_after_denoising'
-        im_tmp.ext = '.nii.gz'
-        im_tmp.save()
 
         '''
         status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
@@ -174,14 +146,6 @@ class FullGmSegmentation:
         self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
 
         os.chdir(self.tmp_dir)
-	#######################################################################
-	print '*************************************************************************************************************************'
-	print 'SAVING T2STAR AFTER PREPROCESS' 
-	print 'path: ', os.path.abspath('.')
-	im_tmp = Image(self.preprocessed.treated_target)
-	im_tmp.file_name ='t2star_after_preprocess'
-	im_tmp.ext = '.nii.gz'
-	im_tmp.save()
 
         if self.preprocessed.level_fname is not None:
             self.level_to_use = self.preprocessed.level_fname
@@ -190,16 +154,6 @@ class FullGmSegmentation:
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
         self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
-
-	#######################################################################
-	print '*************************************************************************************************************************'
-	print 'SAVING GMSEG BEFORE POSTPROCESS' 
-	print 'path: ', os.path.abspath('.')
-	im_tmp = Image(self.gm_seg.res_gm_seg)
-	im_tmp.file_name ='gmseg_res_before_postprocess'
-	im_tmp.ext = '.nii.gz'
-	im_tmp.save()
-
 
         if self.ref_gm_seg_fname is not None:
             os.chdir('..')
