@@ -1,59 +1,62 @@
-language: python
-python:
-  - 2.7
+# testing file for Travis
+# https://travis-ci.org/neuropoly/spinalcordtoolbox
 
-sudo: false
-  
+sudo: false  # To use travis container infrastructure
+
+language: python
+
 notifications:
   slack: neuropoly:YA3mt28aeHN3A0Iu7RvMFigK
     on_success:change
     on_failure:always
 
-install:
+# this enables to avoid recompilation of dipy if it was already compiled previously
+cache:
+  directories:
+    - ${HOME}/.cache/pip
 
-# Setup Anaconda
-  - ldd --version
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+matrix:
+  include:
+    - os: linux
+      python: 2.7  # these are just to make travis's UI a bit prettier
+      env:
+        - MINICONDA="Linux-x86_64"
+    - os: osx
+      language: generic
+      env:
+        - MINICONDA="MacOSX-x86_64"
+
+before_install:
+  - echo "HOME="
+  - echo $HOME
+  # Install miniconda
+  - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
+  - export PATH=${HOME}/miniconda/bin:$PATH
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
+  # Install requirements
   - cd install/requirements/
   - ./requirements.sh
   - cd ../..
 
-# FSL
-#  - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
-#  - travis_retry sudo apt-get install -qq --no-install-recommends fsl
-#  - travis_retry sudo apt-get install -qq fsl-atlases
-#  - source /etc/fsl/fsl.sh
-
-# The next couple lines fix a crash with multiprocessing on Travis
-#  - sudo rm -rf /dev/shm
-#  - sudo ln -s /run/shm /dev/shm
-
-# SCT: set PATH
-  - SCT_DIR="/home/travis/build/neuropoly/spinalcordtoolbox"
+install:
+# set PATH
+  - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
   - PATH=${PATH}:${SCT_DIR}/bin
-  - PATH=${PATH}:${SCT_DIR}/bin/linux
+  - PATH=${PATH}:${SCT_DIR}/bin/${TRAVIS_OS_NAME}
   - export SCT_DIR PATH
   - . ~/.bashrc
-
-# SCT: create links
+# create links
   - ./install/create_links.sh -a
-
-# Go to testing folder
-#  - cd testing
+# compile external packages
+  - python external/compile_external.py
 
 script:
-# test dependences
-  - sct_check_dependences
-# test functions & integrity
-  - sct_testing -d 1
-# test package creation
+  - sct_check_dependences   # test dependences
+  - sct_testing -d 1  # test functions & integrity
   - cd install
-  - python create_package.py -s linux
-# test installation of package
+  - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
   - cd ../spinalcordtoolbox_v*
-  - python installer.py -p ~/
+  - python installer.py -p ~/  # test installation of package
   - echo "DONE"

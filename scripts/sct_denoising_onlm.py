@@ -33,7 +33,7 @@ def main(file_to_denoise, param, output_file_name) :
     hdr_0 = img.get_header()
 
     data = img.get_data()
-    # aff = img.get_affine()
+    aff = img.get_affine()
 
     if min(data.shape) <= 5:
         sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
