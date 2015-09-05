@@ -552,7 +552,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-04-17"
+        print "Modified: 2015-09-03"
         print "============================="
 
         try:
@@ -565,7 +565,7 @@ class Installer:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: The distribution of Python that you are using is not supported by the SCToolbox.\n" \
+            print "WARNING: The distribution of Python that you are using is not supported by SCT.\n" \
                   "You still can use your own distribution of Python but you will have to install our dependencies by yourself.\n" \
                   "Do you still want to continue?"
             install_new = "yes"
@@ -662,17 +662,15 @@ class Installer:
                     print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
             isAble2Connect = False
-            print "WARNING: Failed to connect to SCT github website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
+            print "WARNING: Failed to connect to SCT GitHub website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
         cmd = self.issudo + "cp -r spinalcordtoolbox/* " + self.SCT_DIR
         print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
-
 
         # check if .bashrc was already modified. If so, we delete lines related to SCT
         print "\nEdit .bashrc..."
@@ -818,8 +816,18 @@ class Installer:
         else:
             print "  No connexion or no patch available for this version of the toolbox."
 
+        # compile external packages
+        print "\nCompile external packages..."
+        os.chdir(self.SCT_DIR+"/external")
+        cmd = self.issudo + "python compile_external.py"
+        print ">> " + cmd
+        status, output = runProcess(cmd)
+        if status != 0:
+            print '\nERROR! \n' + output + '\nExit program.\n'
+        else:
+            print output
 
-        # check if other dependent software are installed
+        # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
         print ">> " + cmd
@@ -829,6 +837,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
+
 
         # deleting temporary files
         cmd = "rm -rf tmp.*"

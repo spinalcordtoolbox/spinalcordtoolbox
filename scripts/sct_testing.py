@@ -166,9 +166,11 @@ def fill_functions():
     functions.append('sct_orientation')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
+    functions.append('sct_register_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
+    functions.append('sct_segment_graymatter')
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
@@ -256,7 +258,7 @@ def test_function(script_name):
     if status == 0:
         print_ok()
     else:
-        if status == 5:
+        if status == 99:
             print_warning()
         else:
             print_fail()
