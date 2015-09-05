@@ -20,6 +20,8 @@ import commands
 import subprocess
 import re
 
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
+# TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
@@ -62,7 +64,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1):
+def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     if verbose==2:
         printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
@@ -85,9 +87,11 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
         # from inspect import stack
-        printv("ERROR\n"+output_final[0:-1], 1, 'error')
+        printv(output_final[0:-1], 1, error_exit)
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
+        if raise_exception:
+            raise Exception(output_final[0:-1])
     else:
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]

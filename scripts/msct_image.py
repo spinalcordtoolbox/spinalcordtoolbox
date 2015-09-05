@@ -18,19 +18,24 @@ class Image(object):
     """
 
     """
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1, split=False):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
         from numpy import zeros, ndarray, generic
         from sct_utils import extract_fname
+        from nibabel import AnalyzeHeader
 
         # initialization of all parameters
         self.data = None
-        self.hdr = None
         self.orientation = None
         self.absolutepath = ""
         self.path = ""
         self.file_name = ""
         self.ext = ""
         self.dim = None
+
+        if hdr == None:
+            hdr = self.hdr = AnalyzeHeader()  # an empty header
+        else:
+            self.hdr = hdr
 
         self.verbose = verbose
 
@@ -59,10 +64,6 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-        """
-        if split:
-            self.data = self.split_data()
-        """
 
 
     def __deepcopy__(self, memo):
@@ -256,15 +257,40 @@ class Image(object):
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
         If reverse_coord is True, coordinate are sorted from larger to smaller.
         """
+        from msct_types import Coordinate
+        from sct_utils import printv
+        n_dim = 1
+        if self.dim[3] == 1:
+            n_dim = 3
+        else:
+            n_dim = 4
+        if self.dim[2] == 1:
+            n_dim = 2
 
-        X, Y, Z = (self.data > 0.0).nonzero()
+
+        try:
+            if n_dim == 3:
+                X, Y, Z = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            elif n_dim == 2:
+                X, Y = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+        except Exception, e:
+            print 'ERROR', e
+            printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+
         if coordValue:
             from msct_types import CoordinateValue
-            list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            if n_dim == 3:
+                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            else:
+                list_coordinates = [CoordinateValue([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         else:
             from msct_types import Coordinate
-            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-
+            if n_dim == 3:
+                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+            else:
+                list_coordinates = [Coordinate([X[i], Y[i], self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -282,51 +308,119 @@ class Image(object):
 
         return list_coordinates
 
+
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
+    # orientation must be IRP to be able to go trough slices as first dimension
     # This method is called in sct_crop_over_mask script
-    def crop_from_square_mask(self, mask):
-        from numpy import asarray
+    def crop_from_square_mask(self, mask, save=True):
+        from numpy import asarray, zeros
 
-        array = self.data
+        data_array = self.data
         data_mask = mask.data
-        print 'ORIGINAL SHAPE: ', array.shape, '   ==   ', data_mask.shape
-        array = asarray(array)
+        assert self.orientation == 'IRP'
+        assert mask.orientation == 'IRP'
+
+        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
+        #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
+        if data_array.shape != data_mask.shape:
+            old_data_array = data_array
+            pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
+            pad_2 = int((data_mask.shape[2] - old_data_array.shape[2])/2 + 1)
+
+            data_array = zeros(data_mask.shape)
+            for n_slice, data_slice in enumerate(data_array):
+                data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
+            '''
+            for n_slice, data_slice in enumerate(data_array):
+                n_row_old_data_array = 0
+                for row in data_slice[pad_2:-pad_2-1]:
+                    row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
+                    n_row_old_data_array += 1
+            '''
+            self.data = data_array
+            if save:
+                self.file_name += '_resized'
+                self.save()
+
+        data_array = asarray(data_array)
         data_mask = asarray(data_mask)
         new_data = []
         buffer = []
         buffer_mask = []
-        s = 0
-        r = 0
-        ok = 0
-        for slice in data_mask:
-            # print 'SLICE ', s, slice
-            for row in slice:
-                if sum(row) > 0:
+
+        if len(data_array.shape) == 3:
+            for n_slice, mask_slice in enumerate(data_mask):
+                for n_row, row in enumerate(mask_slice):
+                    if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
+                        buffer_mask.append(row)
+                        buffer.append(data_array[n_slice][n_row])
+
+                new_slice_mask = asarray(buffer_mask).T
+                new_slice = asarray(buffer).T
+                buffer = []
+                for n_row, row in enumerate(new_slice_mask):
+                    if sum(row) != 0:
+                        buffer.append(new_slice[n_row])
+                new_slice = asarray(buffer).T
+                buffer_mask = []
+                buffer = []
+                new_data.append(new_slice)
+
+        elif len(data_array.shape) == 2:
+            for n_row, row in enumerate(data_mask):
+                if sum(row) > 0:  # and n_row<=data_array.shape[1] and n_slice<=data_array.shape[0]:
                     buffer_mask.append(row)
-                    buffer.append(array[s][r])
-                    #print 'OK1', ok
-                    ok += 1
-                r += 1
+                    buffer.append(data_array[n_row])
+
             new_slice_mask = asarray(buffer_mask).T
             new_slice = asarray(buffer).T
-            r = 0
             buffer = []
-            for row in new_slice_mask:
+            for n_row, row in enumerate(new_slice_mask):
                 if sum(row) != 0:
-                    buffer.append(new_slice[r])
-                r += 1
-            #print buffer
-            new_slice = asarray(buffer).T
-            r = 0
+                    buffer.append(new_slice[n_row])
+            new_data = asarray(buffer).T
             buffer_mask = []
             buffer = []
-            new_data.append(new_slice)
-            s += 1
+
         new_data = asarray(new_data)
         # print data_mask
-        print 'SHAPE ', new_data.shape
         self.data = new_data
+        self.dim = self.data.shape
+
+
+    # crop the image in order to keep only voxels in the mask
+    # doesn't change the image dimension
+    # This method is called in sct_crop_over_mask script
+    def crop_from_mask(self, mask):
+        from numpy import asarray, einsum
+        data_array = self.data
+        data_mask = mask.data
+        assert data_array.shape == data_mask.shape
+        array = asarray(data_array)
+        data_mask = asarray(data_mask)
+
+        #Element-wise matrix multiplication:
+        new_data = None
+        if len(data_array.shape) == 3:
+            new_data = einsum('ijk,ijk->ijk', data_mask, array)
+        elif len(data_array.shape) == 2:
+            new_data = einsum('ij,ij->ij', data_mask, array)
+        self.data = new_data
+
+    def denoise_ornlm(self):
+        from commands import getstatusoutput
+        from sys import path
+        # append python path for importing module
+        # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
+        status, path_sct = getstatusoutput('echo $SCT_DIR')
+        path.append(path_sct + '/external/denoise/ornlm')
+        from ornlm import ornlm
+        import numpy as np
+        dat = self.data.astype(np.float64)
+        denoised = np.array(ornlm(dat, 3, 1, np.max(dat)*0.01))
+        self.file_name += '_denoised'
+        self.data = denoised
 
     def invert(self):
         self.data = self.data.max() - self.data
@@ -501,25 +595,32 @@ def find_zmin_zmax(fname):
     return int(zmin), int(zmax)
 
 
-def get_dimension(im_file):
+def get_dimension(im_file, verbose=1):
     """
     Get dimension from nibabel object. Manages 2D, 3D or 4D images.
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-
+    import nibabel.nifti1
+    import sct_utils as sct
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-
-    nb_dims = len(im_file.header.get_data_shape())
+    if type(im_file) is nibabel.nifti1.Nifti1Image:
+        header = im_file.header
+    elif type(im_file) is Image:
+        header = im_file.hdr
+    else:
+        header = None
+        sct.printv('WARNING: the provided image file isn\'t a nibabel.nifti1.Nifti1Image instance nor a msct_image.Image instance', verbose, 'warning')
+    nb_dims = len(header.get_data_shape())
     if nb_dims == 2:
-        nx, ny = im_file.header.get_data_shape()
-        px, py = im_file.header.get_zooms()
+        nx, ny = header.get_data_shape()
+        px, py = header.get_zooms()
     if nb_dims == 3:
-        nx, ny, nz = im_file.header.get_data_shape()
-        px, py, pz = im_file.header.get_zooms()
+        nx, ny, nz = header.get_data_shape()
+        px, py, pz = header.get_zooms()
     if nb_dims == 4:
-        nx, ny, nz, nt = im_file.header.get_data_shape()
-        px, py, pz, pt = im_file.header.get_zooms()
+        nx, ny, nz, nt = header.get_data_shape()
+        px, py, pz, pt = header.get_zooms()
 
     return nx, ny, nz, nt, px, py, pz, pt
 
