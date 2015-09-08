@@ -3,6 +3,7 @@
 - [Step-by-step procedure](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#step-by-step-procedure)
 - [Adding a new subject to the pipeline](https://github.com/neuropoly/spinalcordtoolbox/tree/template/dev/template_preprocessing#adding-a-new-subject-to-the-pipeline)
 - [Data](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#data)
+- [Todo](https://github.com/neuropoly/spinalcordtoolbox/blob/template/dev/template_preprocessing/README.md#todo)
 
 ## Step-by-step procedure
 
@@ -147,3 +148,4 @@ The following data were not selected:
 ## Todo
 
 - add denoising (ornlm with h=10)
+- add DATA FROM MARSEILLE: AM, HB, PA + latest from Montreal
