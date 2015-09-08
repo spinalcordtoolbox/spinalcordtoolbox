@@ -733,7 +733,7 @@ def save_by_slice(dic_dir):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='spline'):
     """
     Resampling function: add a padding, resample, crop the padding
     :param fname: name of the image file to be resampled
@@ -753,20 +753,22 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(Image(fname))
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
-        name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
-        name_resample = sct.extract_fname(name_pad)[1] + suffix
+        # name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
+        # name_resample = sct.extract_fname(name_pad)[1] + suffix
+        name_resample = sct.extract_fname(fname)[1] + suffix
         # name_croped = sct.extract_fname(name_resample)[1] + '_croped.nii.gz'
         if binary:
-            interpolation = 'NearestNeighbor'
+            interpolation = 'nn'
         # sct.run('isct_c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
-        sct.run('isct_c3d ' + fname + ' -pad 1x1x1vox 1x1x1vox 0 -o ' + name_pad)  # -pad <padlower> <padupper> <value>
+        #sct.run('isct_c3d ' + fname + ' -pad 1x1x1vox 1x1x1vox 0 -o ' + name_pad)  # -pad <padlower> <padupper> <value>
 
         fx = px/npx
         fy = py/npy
-        sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
+        # sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
+        sct.run('sct_resample -i ' + fname + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
 
         # sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
-        sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 0,1,2 -start 1,1,1 -end -1,-1,-1')
+        # sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 0,1,2 -start 1,1,1 -end -1,-1,-1')
 
         if binary:
             # sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
