@@ -51,7 +51,7 @@ def get_parser():
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out):
+def convert(fname_in, fname_out, type=''):
     """
     Convert data
     :return True/False
@@ -61,7 +61,7 @@ def convert(fname_in, fname_out):
     im = Image(fname_in)
     # Save file
     im.setFileName(fname_out)
-    im.save()
+    im.save(type=type)
     return True
 
 
