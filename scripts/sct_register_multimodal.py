@@ -271,20 +271,22 @@ def main():
     status, output = sct.run('mkdir '+path_tmp, verbose)
 
     # copy files to temporary folder
-    sct.printv('\nCopy files...', verbose)
-    sct.run('isct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
-    sct.run('isct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
+    from sct_convert import convert
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    convert(fname_src, path_tmp+'/src.nii')
+    convert(fname_dest, path_tmp+'/dest.nii')
+
     if fname_src_seg:
-        sct.run('isct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii', verbose)
-        sct.run('isct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
+        convert(fname_src_seg, path_tmp+'/src_seg.nii')
+        convert(fname_dest_seg, path_tmp+'/dest_seg.nii')
+
     if not fname_mask == '':
-        sct.run('isct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
+        convert(fname_mask, path_tmp+'/mask.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Put source into destination space using header (no estimation -- purely based on header)
-    # TODO: use c3d?
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
     # sct.printv('\nPut source into destination space using header...', verbose)

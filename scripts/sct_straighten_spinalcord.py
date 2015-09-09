@@ -766,8 +766,9 @@ class SpinalCordStraightener(object):
                 # ==========================================================================================
                 # convert landmarks to INT
                 sct.printv('\nConvert landmarks to INT...', verbose)
-                sct.run('isct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
-                sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
+                from sct_convert import convert
+                convert('tmp.landmarks_straight.nii.gz', 'tmp.landmarks_straight.nii.gz', type='int8')
+                convert('tmp.landmarks_curved.nii.gz', 'tmp.landmarks_curved.nii.gz', type='int8')
 
                 # This stands to avoid overlapping between landmarks
                 # TODO: do symmetric removal
