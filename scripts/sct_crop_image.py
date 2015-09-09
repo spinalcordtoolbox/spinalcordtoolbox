@@ -157,7 +157,9 @@ class ImageCropper(object):
         sct.run('mkdir '+path_tmp)
 
         # copy files into tmp folder
-        sct.run('isct_c3d '+fname_data+' -o '+path_tmp+'data.nii')
+        from sct_convert import convert
+        sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+        convert(fname_data, path_tmp+'data.nii')
 
         # go to tmp folder
         os.chdir(path_tmp)
