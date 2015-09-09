@@ -802,7 +802,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
     axial_pix_dim = 0.3
     model_image_size = 75
-    interpolation = 'Cubic'  # 'Sinc'
+    interpolation = 'spline'  # 'Cubic'
     original_path = os.path.abspath('.')
     for subject_dir in os.listdir(path_to_dataset):
         if os.path.isdir(path_to_dataset + '/' + subject_dir):
