@@ -361,7 +361,7 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, weights=None, ty
         average = np.sum(seg_data_set, axis=0) / float(len(seg_data_set))
     else:
         average = np.sum(np.einsum('ijk,i->ijk', seg_data_set, weights), axis=0)
-    average[average > 1] = 1
+    # average[average > 1] = 1
     if type == 'binary':
         return (average >= threshold).astype(int)
     else:
@@ -757,9 +757,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if binary:
             interpolation = 'nn'
 
-        fx = px/npx
-        fy = py/npy
-        sct.run('sct_resample -i ' + fname + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
+        sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
 
         if binary:
             sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
