@@ -130,6 +130,8 @@ class Subject(object):
         self.name_t2star_seg = name_t2star_seg
         self.name_t2star_ref = name_t2star_ref
 
+        self.missing_files = []
+
 
 class Pipeline(object):
     """
@@ -137,7 +139,7 @@ class Pipeline(object):
     """
 
     # The constructor
-    def __init__(self, path_data, t, seg=True, seg_params=None, reg_template=False, reg_template_params=None,
+    def __init__(self, path_data, t, seg=True, scad=False, seg_params=None, reg_template=False, reg_template_params=None,
                  seg_t2star=False,  seg_t2star_params=None, reg_multimodal=False, reg_multimodal_params=None,
                  straightening=False, straightening_params=None, dice=False, dice_on=None, verbose=1):
         self.path_data = path_data  # type: folder
@@ -160,6 +162,7 @@ class Pipeline(object):
         self.straightening_results = []
         self.dice = dice  # type: boolean
         self.dice_on = dice_on  # type: list
+        self.scad = scad
         if self.dice_on is None:
             self.dice_on = []
 
@@ -461,6 +464,29 @@ class Pipeline(object):
         self.straightening_results = [result for result in results if result is not None]
         sorted(self.straightening_results, key=lambda l: l[0])
 
+    def scad_validation(self):
+        try:
+            os.chdir(self.path_data)
+        except Exception, e:
+            raise e
+
+        for subject in self.data:
+            try:
+                os.chdir(subject.dir_name)
+            except Exception, e:
+                raise e
+            if self.t == "t1":
+                path = subject.dir_t1
+                name = subject.name_t1
+                name_seg = subject.name_t1_seg
+            elif self.t == "t2":
+                path = subject.dir_t2
+                name = subject.name_t2
+                name_seg = subject.name_t2_seg
+
+
+
+
     def straighten_spinalcord(self):
         """
         straighten image based on segmentation and/or manual labels
@@ -736,6 +762,9 @@ class Pipeline(object):
                     self.compute_dice(self.t, 'seg')
 
         # registration of anatomical image to template and warping of template to anat
+        if self.scad:
+            # scad_validation
+            pass
         if self.reg_template:
             if self.t == 'both' or self.t == 'b':
                 self.register_warp_to_template('t1')
@@ -847,6 +876,9 @@ if __name__ == "__main__":
                       description='Segmentation of the spinal cord on anatomic data using sct_propseg\n'
                                   'If not used, a segmentation file should be provided in the anatomic data folder'
                                   ' with a name containing "seg"',
+                      mandatory=False)
+    parser.add_option(name="-scad",
+                      description='Extraction of the spinal cord on anatomic data using scad',
                       mandatory=False)
     parser.add_option(name="-seg-params",
                       type_value=[[','], 'str'],
@@ -981,12 +1013,17 @@ if __name__ == "__main__":
 
     input_dice = False
     input_dice_on = []
+
+    input_scad = False
+
     if "-seg" in arguments:
         input_seg = arguments["-seg"]
     if "-seg-params" in arguments:
         for param in arguments["-seg-params"]:
             option, value = param.split(':')
             input_seg_params[option] = value
+    if "-scad" in arguments:
+        input_scad = True
     if "-reg-template" in arguments:
         input_reg_template = arguments["-reg-template"]
     if "-reg-template-params" in arguments:
@@ -1010,7 +1047,7 @@ if __name__ == "__main__":
     if "-dice-on" in arguments:
         input_dice_on = arguments["-dice-on"]
 
-    pipeline_test = Pipeline(input_path_data, input_t, seg=input_seg, seg_params=input_seg_params,
+    pipeline_test = Pipeline(input_path_data, input_t, seg=input_seg, scad=input_scad, seg_params=input_seg_params,
                              reg_template=input_reg_template, reg_template_params=input_reg_template_params,
                              seg_t2star=input_seg_t2star, seg_t2star_params=input_seg_t2star_params,
                              reg_multimodal=input_reg_multimodal, reg_multimodal_params=input_reg_multimodal_params,
