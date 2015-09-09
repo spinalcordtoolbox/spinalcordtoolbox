@@ -32,8 +32,8 @@ class Param:
         self.fname_out = ''
         self.factor = ''
         self.interpolation = 'trilinear'
-        self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 3}  # TODO: change attribution to orders (0 and 1 are OK but see for the others)
-        self.mode = 'nearest'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
+        self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 2}
+        self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
         self.file_suffix = '_resampled'  # output suffix
         self.verbose = 1
@@ -72,7 +72,6 @@ def resample():
         dim = 3
     if nz == 1:
         dim = 2
-        #TODO : adapt for 2D too or change description
         sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
 
     # Calculate new dimensions
@@ -85,8 +84,7 @@ def resample():
     pz_new = pz/fz
     sct.printv('  ' + str(nx_new) + ' x ' + str(ny_new) + ' x ' + str(nz_new)+ ' x ' + str(nt), param.verbose)
 
-
-    zooms = input_im.hdr.get_zooms()[:3]
+    zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
     affine = input_im.hdr.get_base_affine()
     new_zooms = (px_new, py_new, pz_new)
 
@@ -142,7 +140,7 @@ if __name__ == "__main__":
         parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
         parser.add_option(name="-i",
                           type_value="file",
-                          description="Image to segment. Can be 2D, 3D or 4D.",
+                          description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
                           mandatory=True,
                           example='dwi.nii.gz')
         parser.add_option(name="-f",
@@ -158,11 +156,11 @@ if __name__ == "__main__":
                           example='dwi_resampled.nii.gz')
         parser.add_option(name="-x",
                           type_value='multiple_choice',
-                          description="Interpolation. nn (nearest neighbor), trilinear, or spline (order 3)\n"
-                                      "You can also choose the order of the spline using an integer from 0 to 5",
+                          description="Interpolation. nn (nearest neighbor : spline of order 0), trilinear (spline of order 1), or spline (cubic spline: order 2).\n"
+                                      "You can also choose the order of the spline using an integer from 3 to 5.",
                           mandatory=False,
                           default_value='trilinear',
-                          example=['nn', 'trilinear', 'spline', '0', '1', '2', '3', '4', '5'])
+                          example=['nn', 'trilinear', 'spline', '3', '4', '5'])
         parser.add_option(name="-v",
                           type_value='multiple_choice',
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
