@@ -580,9 +580,25 @@ class Image(object):
             return coordi_pix_list
 
 
-def pad_image(fname_in, file_out, padding):
-    import sct_utils as sct
-    sct.run('isct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
+def pad_image(fname_in, file_out, padding_x=0, padding_y=0, padding_z=0):
+    from numpy import zeros
+    im = Image(fname_in)
+    data_type = im.data.dtype.name
+    nx, ny, nz, nt, px, py, pz, pt = im.dim
+    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
+    if padding_x == 0:
+        padding_x = None
+    if padding_y == 0:
+        padding_y = None
+    if padding_z == 0:
+        padding_z = None
+
+    padded_data[padding_x:-padding_x, padding_y:-padding_y, padding_z:-padding_z] = im.data
+
+    im.data = padded_data
+    im.setFileName(file_out)
+    im.changeType(type=data_type)
+    im.save()
     return
 
 
@@ -630,12 +646,41 @@ def get_dimension(im_file, verbose=1):
 #=======================================================================================================================
 if __name__ == "__main__":
     from msct_parser import Parser
+    from sct_utils import add_suffix
     import sys
 
     parser = Parser(__file__)
-    parser.usage.set_description('Image')
-    parser.add_option("-i", "file", "file", True)
+    parser.usage.set_description('Image processing functions')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image input file.",
+                      mandatory=True,
+                      example='im.nii.gz')
+    parser.add_option(name="-pad",
+                      type_value="str",
+                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
+                      mandatory=False,
+                      example='0x0x1')
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Image output name.",
+                      mandatory=False,
+                      example='im_out.nii.gz')
+
+
     arguments = parser.parse(sys.argv[1:])
 
     image = Image(arguments["-i"])
     image.changeType('minimize')
+    name_out = ''
+    if "-o" in arguments:
+        name_out = arguments["-o"]
+    if "-pad" in arguments:
+        padx, pady, padz = arguments["-pad"].split('x')
+        padx, pady, padz = int(padx), int(pady), int(padz)
+        if name_out == '':
+            fname_pad = add_suffix(image.file_name+image.ext, '_pad')
+        else:
+            fname_pad = name_out
+        pad_image(image.absolutepath, fname_pad, padding_x=padx, padding_y=pady, padding_z=padz)
+
