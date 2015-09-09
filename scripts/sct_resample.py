@@ -30,7 +30,8 @@ class Param:
         self.debug = 0
         self.fname_data = ''
         self.fname_out = ''
-        self.factor = ''
+        self.new_size = ''
+        self.new_size_type = ''
         self.interpolation = 'trilinear'
         self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 2}
         self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
@@ -44,13 +45,13 @@ class Param:
 def resample():
     # extract resampling factor
     sct.printv('\nParse resampling factor...', param.verbose)
-    factor_split = param.factor.split('x')
-    factor = [float(factor_split[i]) for i in range(len(factor_split))]
+    new_size_split = param.new_size.split('x')
+    new_size = [float(new_size_split[i]) for i in range(len(new_size_split))]
     # check if it has three values
-    if not len(factor) == 3:
-        sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
+    if not len(new_size) == 3:
+        sct.printv('\nERROR: new size should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
     else:
-        fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
+        ns_x, ns_y, ns_z = new_size
 
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -66,7 +67,7 @@ def resample():
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
     nx, ny, nz, nt, px, py, pz, pt = input_im.dim
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
+    sct.printv('  ' + str(px) + ' x ' + str(py) + ' x ' + str(pz)+ ' x ' + str(pt)+'mm', param.verbose)
     dim = 4  # by default, will be adjusted later
     if nt == 1:
         dim = 3
@@ -76,13 +77,20 @@ def resample():
 
     # Calculate new dimensions
     sct.printv('\nCalculate new dimensions...', param.verbose)
-    nx_new = int(round(nx*fx))
-    ny_new = int(round(ny*fy))
-    nz_new = int(round(nz*fz))
-    px_new = px/fx
-    py_new = py/fy
-    pz_new = pz/fz
-    sct.printv('  ' + str(nx_new) + ' x ' + str(ny_new) + ' x ' + str(nz_new)+ ' x ' + str(nt), param.verbose)
+    if param.new_size_type == 'factor':
+        px_new = px/ns_x
+        py_new = py/ns_y
+        pz_new = pz/ns_z
+    elif param.new_size_type == 'vox':
+        px_new = px*nx/ns_x
+        py_new = py*ny/ns_y
+        pz_new = pz*nz/ns_z
+    else:
+        px_new = ns_x
+        py_new = ns_y
+        pz_new = ns_z
+
+    sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
 
     zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
     affine = input_im.hdr.get_base_affine()
@@ -131,7 +139,7 @@ if __name__ == "__main__":
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
-        param.factor = '2' #'0.5x0.5x1'
+        param.new_size = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
     else:
@@ -143,17 +151,25 @@ if __name__ == "__main__":
                           description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
                           mandatory=True,
                           example='dwi.nii.gz')
+        parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
+                                'Please choose only one of the 3 options.')
         parser.add_option(name="-f",
                           type_value="str",
                           description="Resampling factor in each of the first 3 dimensions (x,y,z). Separate with \"x\"\n"
                                       "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
-                          mandatory=True,
-                          example='0.5x0.5x1')
-        parser.add_option(name="-o",
-                          type_value="file_output",
-                          description="Output file name",
                           mandatory=False,
-                          example='dwi_resampled.nii.gz')
+                          example='0.5x0.5x1')
+        parser.add_option(name="-mm",
+                          type_value="str",
+                          description="Resampling size in mm per voxel in each of the first 3 dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False,
+                          example='0.1x0.1x5')
+        parser.add_option(name="-vox",
+                          type_value="str",
+                          description="Resampling size in number of voxels in each of the first 3 dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False,
+                          example='50x50x20')
+        parser.usage.addSection('MISC')
         parser.add_option(name="-x",
                           type_value='multiple_choice',
                           description="Interpolation. nn (nearest neighbor : spline of order 0), trilinear (spline of order 1), or spline (cubic spline: order 2).\n"
@@ -161,6 +177,12 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value='trilinear',
                           example=['nn', 'trilinear', 'spline', '3', '4', '5'])
+
+        parser.add_option(name="-o",
+                          type_value="file_output",
+                          description="Output file name",
+                          mandatory=False,
+                          example='dwi_resampled.nii.gz')
         parser.add_option(name="-v",
                           type_value='multiple_choice',
                           description="verbose: 0 = nothing, 1 = classic, 2 = expended",
@@ -170,7 +192,20 @@ if __name__ == "__main__":
 
         arguments = parser.parse(sys.argv[1:])
         param.fname_data = arguments["-i"]
-        param.factor = arguments["-f"]
+        if "-f" in arguments:
+            param.new_size = arguments["-f"]
+            param.new_size_type = 'factor'
+        elif "-mm" in arguments:
+            param.new_size = arguments["-mm"]
+            param.new_size_type = 'mm'
+        elif "-vox" in arguments:
+            param.new_size = arguments["-vox"]
+            param.new_size_type = 'vox'
+        else:
+            sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
+
+        if ("-f" in arguments and "-mm" in arguments) or ("-f" in arguments and "-vox" in arguments) or ("-vox" in arguments and "-mm" in arguments) or ("-f" in arguments and "-mm" in arguments and "-vox" in arguments):
+            sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
         if "-o" in arguments:
             param.fname_out = arguments["-o"]
