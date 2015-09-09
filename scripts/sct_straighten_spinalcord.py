@@ -576,9 +576,9 @@ class SpinalCordStraightener(object):
             padding_x, padding_y, padding_z = padding, padding, padding
             if nx + padding <= leftright_width:
                 padding_x = leftright_width - padding - nx
-            sct.run("isct_c3d " + fname_centerline_orient + " -pad " + str(padding_x) + "x" + str(padding_y) + "x" +
-                    str(padding_z) + "vox " + str(padding_x) + "x" + str(padding_y) + "x" + str(padding_z) +
-                    "vox 0 -o tmp.centerline_pad.nii.gz", verbose)
+            from msct_image import pad_image
+            pad_image(fname_centerline_orient, 'tmp.centerline_pad.nii.gz', padding_x=padding_x, padding_y=padding_y, padding_z=padding_z)
+
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
             file_image = load('tmp.centerline_pad.nii.gz')
