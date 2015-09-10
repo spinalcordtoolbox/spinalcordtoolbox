@@ -19,8 +19,7 @@ import sct_utils as sct
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    from msct_image import pad_image
-    pad_image(fname, 'tmp.centerline_pad.nii.gz', padding_x=padding, padding_y=padding, padding_z=padding)
+    sct.run('sct_maths -i '+fname+' -o tmp.centerline_pad.nii.gz -pad '+str(padding)+'x'+str(padding)+'x'+str(padding))
 
 
 #=======================================================================================================================

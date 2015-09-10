@@ -580,62 +580,6 @@ class Image(object):
             return coordi_pix_list
 
 
-def pad_image(fname_in, file_out, padding_x=0, padding_y=0, padding_z=0):
-    from numpy import zeros
-    im = Image(fname_in)
-    nx, ny, nz, nt, px, py, pz, pt = im.dim
-    padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
-    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
-    if padding_x == 0:
-        padxi = None
-        padxf = None
-    else:
-        padxi=padding_x
-        padxf=-padding_x
-
-    if padding_y == 0:
-        padyi = None
-        padyf = None
-    else:
-        padyi = padding_y
-        padyf = -padding_y
-
-    if padding_z == 0:
-        padzi = None
-        padzf = None
-    else:
-        padzi = padding_z
-        padzf = -padding_z
-
-    padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
-
-    im.data = padded_data
-    im.setFileName(file_out)
-
-    # adapt the origin in the sform and qform matrix
-    def get_sign_offsets(im):
-        offset_sign_dic = {'qoffset_x': 0, 'qoffset_y': 0, 'qoffset_z': 0}
-        for o in offset_sign_dic.keys():
-            if im.hdr.structarr[o] > 0:
-                sign = 1
-            else:
-                sign = -1
-            offset_sign_dic[o] = sign
-        return offset_sign_dic.values()
-
-    offset_signs = get_sign_offsets(im)
-    im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x
-    im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y
-    im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z
-    im.hdr.structarr['srow_x'][-1] += offset_signs[0]*padding_x
-    im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y
-    im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z
-
-    # im.changeType(type='float32')  # data_type)
-    im.save()
-    return
-
-
 def find_zmin_zmax(fname):
     import sct_utils as sct
     # crop image
@@ -690,11 +634,6 @@ if __name__ == "__main__":
                       description="Image input file.",
                       mandatory=True,
                       example='im.nii.gz')
-    parser.add_option(name="-pad",
-                      type_value="str",
-                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
-                      mandatory=False,
-                      example='0x0x1')
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Image output name.",
@@ -709,16 +648,3 @@ if __name__ == "__main__":
     name_out = ''
     if "-o" in arguments:
         name_out = arguments["-o"]
-    if "-pad" in arguments:
-        import time
-        before = time.time()
-        padx, pady, padz = arguments["-pad"].split('x')
-        padx, pady, padz = int(padx), int(pady), int(padz)
-        if name_out == '':
-            fname_pad = add_suffix(image.file_name+image.ext, '_pad')
-        else:
-            fname_pad = name_out
-        pad_image(image.absolutepath, fname_pad, padding_x=padx, padding_y=pady, padding_z=padz)
-        after = time.time() - before
-        print '********************************************************************'
-        print 'Done in ', after, ' sec'
