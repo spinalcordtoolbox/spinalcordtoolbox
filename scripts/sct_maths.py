@@ -281,17 +281,18 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     # im.data = padded_data # done after the call of the function
 
     # adapt the origin in the sform and qform matrix
-    def get_sign_offsets(im):
-        offset_sign_dic = {'qoffset_x': 0, 'qoffset_y': 0, 'qoffset_z': 0}
-        for o in offset_sign_dic.keys():
-            if im.hdr.structarr[o] > 0:
-                sign = 1
-            else:
-                sign = -1
-            offset_sign_dic[o] = sign
-        return offset_sign_dic.values()
+    def get_sign_offsets(orientation):
+        default = 'LPI'
+        offset_sign = [0, 0, 0]
 
-    offset_signs = get_sign_offsets(im)
+        for i in range(3):
+            if default[i] in orientation:
+                offset_sign[i] = -1
+            else:
+                offset_sign[i] = 1
+        return offset_sign
+
+    offset_signs = get_sign_offsets(im.orientation)
     im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x
     im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y
     im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z
