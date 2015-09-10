@@ -94,6 +94,11 @@ def get_parser():
                       description='Compute STD across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.add_option(name="-pad",
+                      type_value="str",
+                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
+                      mandatory=False,
+                      example='0x0x1')
     parser.usage.addSection("\nMisc")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -153,6 +158,10 @@ def main(args = None):
     elif '-std' in arguments:
         dim = dim_list.index(arguments['-std'])
         data_out = compute_std(data, dim)
+    elif "-pad" in arguments:
+        padx, pady, padz = arguments["-pad"].split('x')
+        padx, pady, padz = int(padx), int(pady), int(padz)
+        data_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
     elif '-dilate' in arguments:
         data_out = dilate(data, arguments['-dilate'])
     elif '-erode' in arguments:
@@ -239,6 +248,60 @@ def erode(data, radius):
     from skimage.morphology import binary_erosion, ball
     selem = ball(radius)
     return binary_erosion(data, selem=selem, out=None)
+
+
+def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
+    from numpy import zeros
+    nx, ny, nz, nt, px, py, pz, pt = im.dim
+    padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
+    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
+
+    if padding_x == 0:
+        padxi = None
+        padxf = None
+    else:
+        padxi=padding_x
+        padxf=-padding_x
+
+    if padding_y == 0:
+        padyi = None
+        padyf = None
+    else:
+        padyi = padding_y
+        padyf = -padding_y
+
+    if padding_z == 0:
+        padzi = None
+        padzf = None
+    else:
+        padzi = padding_z
+        padzf = -padding_z
+
+    padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
+    # im.data = padded_data # done after the call of the function
+
+    # adapt the origin in the sform and qform matrix
+    def get_sign_offsets(im):
+        offset_sign_dic = {'qoffset_x': 0, 'qoffset_y': 0, 'qoffset_z': 0}
+        for o in offset_sign_dic.keys():
+            if im.hdr.structarr[o] > 0:
+                sign = 1
+            else:
+                sign = -1
+            offset_sign_dic[o] = sign
+        return offset_sign_dic.values()
+
+    offset_signs = get_sign_offsets(im)
+    im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x
+    im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y
+    im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z
+    im.hdr.structarr['srow_x'][-1] += offset_signs[0]*padding_x
+    im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y
+    im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z
+
+    return padded_data
+
+
 
 
     # # random_walker

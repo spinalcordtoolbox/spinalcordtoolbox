@@ -95,17 +95,17 @@ def wm_registration(param):
     # padding the images
     moving_name_pad = moving_name+"_pad"
     fixed_name_pad = fixed_name+"_pad"
-    from msct_image import pad_image
-    pad_image(path_moving+moving_name+ext, moving_name_pad+ext, padding_z=param.padding)
-    pad_image(fixed_name+ext, fixed_name_pad+ext, padding_z=param.padding)
+    sct.run('sct_maths -i '+path_moving+moving_name+ext+' -o '+moving_name_pad+ext+' -pad 0x0x'+str(param.padding))
+    sct.run('sct_maths -i '+fixed_name+ext+' -o '+fixed_name_pad+ext+' -pad 0x0x'+str(param.padding))
     moving_name = moving_name_pad
     fixed_name = fixed_name_pad
 
     moving_seg_name_pad = moving_seg_name+"_pad"
-    pad_image(path_moving_seg+moving_seg_name+ext, moving_seg_name_pad+ext, padding_z=param.padding)
+    sct.run('sct_maths -i '+path_moving_seg+moving_seg_name+ext+' -o '+moving_seg_name_pad+ext+' -pad 0x0x'+str(param.padding))
     moving_seg_name = moving_seg_name_pad
+
     fixed_seg_name_pad = fixed_seg_name+"_pad"
-    pad_image(fixed_seg_name+ext, fixed_seg_name_pad+ext, padding_z=param.padding)
+    sct.run('sct_maths -i '+fixed_seg_name+ext+' -o '+fixed_seg_name_pad+ext+' -pad 0x0x'+str(param.padding))
     fixed_seg_name = fixed_seg_name_pad
 
     # offset
