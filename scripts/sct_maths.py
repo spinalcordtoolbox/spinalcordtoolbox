@@ -35,13 +35,14 @@ def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Perform mathematical operations on images. Only one operation at a time can be done.')
     parser.add_option(name="-i",
-                      type_value="file",
-                      description="Input file.",
+                      type_value=[[','], 'file'],
+                      description="Input file(s). If several inputs: separate them by a coma without white space.\n"
+                                  "If several inputs: the sme operation is applied to all the inputs (except for the operations -add, -sub and -scale)",
                       mandatory=True,
                       example="data.nii.gz")
     parser.add_option(name="-o",
-                      type_value="file_output",
-                      description='Output file.',
+                      type_value=[[','], 'file_output'],
+                      description='Output file(s). If several outputs: separate them by a coma without white space.',
                       mandatory=True,
                       example=['data_mean.nii.gz'])
     parser.usage.addSection("\nMathematical morphology")
@@ -81,9 +82,28 @@ def get_parser():
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nBasic operations")
+    parser.add_option(name="-scale",
+                      type_value=[[','], 'float'],
+                      description='Scaling factors applied to all the inputs intensity.\n'
+                                  'The intensity scaling can be used in combination to another operation and will be applied first.\n'
+                                  'The number of scaling factors must be the same as the number of inputs.',
+                      mandatory=False,
+                      example='0.5')
     parser.add_option(name="-bin",
                       description='Use (input image>0) to binarise.',
                       mandatory=False)
+    parser.add_option(name="-add",
+                      description='Add all the input images (need several inputs).',
+                      mandatory=False)
+    parser.add_option(name="-sub",
+                      description='Substract the input images: output = intput_1 - input_2 (need TWO inputs).',
+                      mandatory=False)
+    parser.add_option(name="-pad",
+                      type_value="str",
+                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
+                      mandatory=False,
+                      example='0x0x1')
+    parser.usage.addSection("\nDimensionality reduction operations")
     parser.add_option(name='-mean',
                       type_value='multiple_choice',
                       description='Average data across dimension.',
@@ -94,11 +114,6 @@ def get_parser():
                       description='Compute STD across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
-    parser.add_option(name="-pad",
-                      type_value="str",
-                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
-                      mandatory=False,
-                      example='0x0x1')
     parser.usage.addSection("\nMisc")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -122,61 +137,86 @@ def main(args = None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     fname_in = arguments["-i"]
+    n_in = len(fname_in)
     fname_out = arguments["-o"]
+    n_out = len(fname_out)
+
     verbose = int(arguments['-v'])
 
-    # Build fname_out
-    if fname_out == '':
-        path_in, file_in, ext_in = extract_fname(fname_in)
-        fname_out = path_in+file_in+'_mean'+ext_in
-
     # Open file.
-    nii = Image(fname_in)
-    data = nii.data
+    nii = [Image(f_in) for f_in in fname_in]
+    data = [im.data for im in nii]
 
     # run command
+    if "-scale" in arguments:
+        factors = arguments["-scale"]
+        if len(factors) != n_in:
+            printv(parser.usage.generate(error='ERROR: -scale must have the same number of factors as the number of inputs'))
+        data_out = scale_intensity(data, factors)
+        for im_in, d_out in zip(nii, data_out):
+            im_in.data = d_out
+
     if '-otsu' in arguments:
         param = arguments['-otsu']
-        data_out = otsu(data, param)
+        data_out = [otsu(d, param) for d in data]
     elif '-otsu_adap' in arguments:
         param = arguments['-otsu_adap']
-        data_out = otsu_adap(data, param[0], param[1])
+        data_out = [otsu_adap(d, param[0], param[1]) for d in data]
     elif '-otsu_median' in arguments:
         param = arguments['-otsu_median']
-        data_out = otsu_median(data, param[0], param[1])
+        data_out = [otsu_median(d, param[0], param[1]) for d in data]
     elif '-thr' in arguments:
         param = arguments['-thr']
-        data_out = threshold(data, param)
+        data_out = [threshold(d, param) for d in data]
     elif '-percent' in arguments:
         param = arguments['-percent']
-        data_out = perc(data, param)
+        data_out = [perc(d, param) for d in data]
     elif '-bin' in arguments:
-        data_out = binarise(data)
+        data_out = [binarise(d) for d in data]
+    elif '-add' in arguments:
+        if n_in == 1:
+            printv(parser.usage.generate(error='ERROR: -add need more than one input'))
+        data_out = add(data)
+        data_out = [data_out]
+    elif '-sub' in arguments:
+        if n_in != 2:
+            printv(parser.usage.generate(error='ERROR: -sub need only 2 inputs'))
+        data_out = substract(data)
+        data_out = [data_out]
     elif '-mean' in arguments:
         dim = dim_list.index(arguments['-mean'])
-        data_out = compute_mean(data, dim)
+        data_out = [compute_mean(d, dim) for d in data]
     elif '-std' in arguments:
         dim = dim_list.index(arguments['-std'])
-        data_out = compute_std(data, dim)
+        data_out = [compute_std(d, dim) for d in data]
     elif "-pad" in arguments:
         padx, pady, padz = arguments["-pad"].split('x')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        data_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
+        data_out = [pad_image(im, padding_x=padx, padding_y=pady, padding_z=padz) for im in nii]
     elif '-dilate' in arguments:
-        data_out = dilate(data, arguments['-dilate'])
+        data_out = [dilate(d, arguments['-dilate']) for d in data]
     elif '-erode' in arguments:
-        data_out = erode(data, arguments['-dilate'])
-    else:
+        data_out = [erode(d, arguments['-erode']) for d in data]
+    elif "-scale" not in arguments:
         printv('No process applied.', 1, 'warning')
         return
 
     # Write output
-    nii.data = data_out
-    nii.setFileName(fname_out)
-    nii.save()
+    assert len(data_out) == n_out
+    if n_in == n_out:
+        for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
+            im_in.data = d_out
+            im_in.setFileName(fn_out)
+            im_in.save()
+    elif n_out == 1:
+        nii[0].data = data_out[0]
+        nii[0].setFileName(fname_out[0])
+        nii[0].save()
+    else:
+        printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('Created file:\n--> '+fname_out+'\n', verbose, 'info')
+    printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
 
 
 def otsu(data, nbins):
@@ -278,7 +318,7 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
         padzf = -padding_z
 
     padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
-    # im.data = padded_data # done after the call of the function
+    im.data = padded_data  # done after the call of the function
 
     # adapt the origin in the sform and qform matrix
     def get_sign_offsets(orientation):
@@ -303,6 +343,27 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     return padded_data
 
 
+def add(data_list):
+    from numpy import zeros
+    data_out = zeros(data_list[0].shape)
+    for dat in data_list:
+        assert data_out.shape == dat.shape
+        data_out += dat
+    return data_out
+
+
+def substract(data_list):
+    assert len(data_list) == 2
+    assert data_list[0].shape == data_list[1].shape
+    return data_list[0]-data_list[1]
+
+
+def scale_intensity(data_list, factors):
+    data_out = []
+    assert len(data_list) == len(factors)
+    for dat, f in zip(data_list, factors):
+        data_out.append(dat*f)
+    return data_out
 
 
     # # random_walker
