@@ -192,19 +192,23 @@ if __name__ == "__main__":
 
         arguments = parser.parse(sys.argv[1:])
         param.fname_data = arguments["-i"]
+        arg = 0
         if "-f" in arguments:
             param.new_size = arguments["-f"]
             param.new_size_type = 'factor'
+            arg += 1
         elif "-mm" in arguments:
             param.new_size = arguments["-mm"]
             param.new_size_type = 'mm'
+            arg += 1
         elif "-vox" in arguments:
             param.new_size = arguments["-vox"]
             param.new_size_type = 'vox'
+            arg += 1
         else:
             sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
-        if ("-f" in arguments and "-mm" in arguments) or ("-f" in arguments and "-vox" in arguments) or ("-vox" in arguments and "-mm" in arguments) or ("-f" in arguments and "-mm" in arguments and "-vox" in arguments):
+        if arg > 1:
             sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
         if "-o" in arguments:
