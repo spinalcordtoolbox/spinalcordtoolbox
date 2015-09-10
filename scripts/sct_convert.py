@@ -56,7 +56,9 @@ def convert(fname_in, fname_out, type=None):
     Convert data
     :return True/False
     """
+    from sct_utils import printv
     from msct_image import Image
+    printv('sct_convert -i '+fname_in+' -o '+fname_out, param.verbose, 'normal')
     # Open file
     im = Image(fname_in)
     # Save file
