@@ -148,7 +148,7 @@ def main(args = None):
 
     # copy file in temp folder
     sct.printv('\nCopy files to tmp folder...', verbose)
-    convert(fname_in, path_tmp+'data.nii')
+    convert(fname_in, path_tmp+'data.nii', verbose=0)
 
     # go to temp folder
     os.chdir(path_tmp)
