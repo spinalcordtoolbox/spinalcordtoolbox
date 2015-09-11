@@ -198,7 +198,7 @@ def main():
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('isct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii', verbose)
+    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,'+str(sigma)+' -o anat_rpi_straight_smooth.nii', verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord...'
