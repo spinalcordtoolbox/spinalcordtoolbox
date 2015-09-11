@@ -89,6 +89,12 @@ def get_parser():
                                   'The number of scaling factors must be the same as the number of inputs.',
                       mandatory=False,
                       example='0.5')
+    parser.add_option(name="-smooth",
+                      type_value=[[','], 'float'],
+                      description='Gaussian smoothing filter standard deviations (sigmas), separated by comas, without white space.\n'
+                                  'The standard deviations of the Gaussian filter are given for each axis as a sequence (same number of sigmas as the number of image dimensions), or as a single number, in which case it is equal for all axes',
+                      mandatory=False,
+                      example='0.5')
     parser.add_option(name="-bin",
                       description='Use (input image>0) to binarise.',
                       mandatory=False)
@@ -193,6 +199,15 @@ def main(args = None):
         padx, pady, padz = arguments["-pad"].split('x')
         padx, pady, padz = int(padx), int(pady), int(padz)
         data_out = [pad_image(im, padding_x=padx, padding_y=pady, padding_z=padz) for im in nii]
+    elif "-smooth" in arguments:
+        sigmas = arguments["-smooth"]
+        data_out = []
+        for d in data:
+            if len(sigmas) == 1:
+                sigmas = [sigmas[0] for i in range(len(d.shape))]
+            elif len(sigmas) != len(d.shape):
+                printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+            data_out.append(smooth(d, sigmas))
     elif '-dilate' in arguments:
         data_out = [dilate(d, arguments['-dilate']) for d in data]
     elif '-erode' in arguments:
@@ -373,6 +388,7 @@ def substract(data_list):
     assert dat0.shape == dat1.shape
     return dat0-dat1
 
+
 def scale_intensity(data_list, factors):
     data_out = []
     assert len(data_list) == len(factors)
@@ -380,6 +396,11 @@ def scale_intensity(data_list, factors):
         data_out.append(dat*f)
     return data_out
 
+
+def smooth(data, sigmas):
+    assert len(data.shape) == len(sigmas)
+    from scipy.ndimage.filters import gaussian_filter
+    return gaussian_filter(data, sigmas)
 
     # # random_walker
     # from skimage.segmentation import random_walker
