@@ -86,6 +86,19 @@ def main():
     sct.check_file_exist(fname_anat, verbose)
     sct.check_file_exist(fname_centerline, verbose)
 
+    # Check that input is 3D:
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_anat).dim
+    dim = 4  # by default, will be adjusted later
+    if nt == 1:
+        dim = 3
+    if nz == 1:
+        dim = 2
+    if dim == 4:
+        sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
+                   'sct_split_data -i '+fname_anat, verbose, 'warning')
+        sct.printv('4D images not supported, aborting ...', verbose, 'error')
+
     # Extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
