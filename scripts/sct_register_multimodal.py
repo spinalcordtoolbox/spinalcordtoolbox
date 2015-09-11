@@ -11,7 +11,7 @@
 # none
 #
 # EXTERNAL SOFTWARE
-# - itksnap/isct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
+# - itksnap <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
 # - ants <http://stnava.github.io/ANTs/>
 #
 #

@@ -228,8 +228,10 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                 sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp + ' -R ' + name_reg + ' ' + name_warp_null + ' ' + name_warp_mat)
                 sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp_inverse + ' -R ' + name_dest + ' ' + name_warp_null_dest + ' -i ' + name_warp_mat)
                 # Split the warping fields into two for displacement along x and y before merge
-                sct.run('isct_c3d -mcs ' + name_output_warp + ' -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
-                sct.run('isct_c3d -mcs ' + name_output_warp_inverse + ' -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
+                sct.run('sct_maths -i ' + name_output_warp + ' -mcs -o transform_'+num+'0Warp_x.nii.gz,transform_'+num+'0Warp_y.nii.gz')
+                sct.run('sct_maths -i ' + name_output_warp_inverse + ' -mcs -o transform_'+num+'0InverseWarp_x.nii.gz,transform_'+num+'0InverseWarp_y.nii.gz')
+                # sct.run('isct_c3d -mcs ' + name_output_warp + ' -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
+                # sct.run('isct_c3d -mcs ' + name_output_warp_inverse + ' -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
                 # List names of warping fields for futur merge
                 list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                 list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
@@ -239,8 +241,10 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
             if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN':
                 # Split the warping fields into two for displacement along x and y before merge
                 # Need to separate the merge for x and y displacement as merge of 3d warping fields does not work properly
-                sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
-                sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
+                sct.run('sct_maths -i transform_'+num+'0Warp.nii.gz -mcs -o transform_'+num+'0Warp_x.nii.gz,transform_'+num+'0Warp_y.nii.gz')
+                sct.run('sct_maths -i transform_'+num+'0InverseWarp.nii.gz -mcs -o transform_'+num+'0InverseWarp_x.nii.gz,transform_'+num+'0InverseWarp_y.nii.gz')
+                # sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
+                # sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
                 # List names of warping fields for futur merge
                 list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                 list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
@@ -259,8 +263,10 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                     sct.run('cp transform_' + numerotation(i-1) + '0Warp.nii.gz transform_' + num + '0Warp.nii.gz')
                     sct.run('cp transform_' + numerotation(i-1) + '0InverseWarp.nii.gz transform_' + num + '0InverseWarp.nii.gz')
                     # Split the warping fields into two for displacement along x and y before merge
-                    sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
-                    sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
+                    sct.run('sct_maths -i transform_'+num+'0Warp.nii.gz -mcs -o transform_'+num+'0Warp_x.nii.gz,transform_'+num+'0Warp_y.nii.gz')
+                    sct.run('sct_maths -i transform_'+num+'0InverseWarp.nii.gz -mcs -o transform_'+num+'0InverseWarp_x.nii.gz,transform_'+num+'0InverseWarp_y.nii.gz')
+                    # sct.run('isct_c3d -mcs transform_'+num+'0Warp.nii.gz -oo transform_'+num+'0Warp_x.nii.gz transform_'+num+'0Warp_y.nii.gz')
+                    # sct.run('isct_c3d -mcs transform_'+num+'0InverseWarp.nii.gz -oo transform_'+num+'0InverseWarp_x.nii.gz transform_'+num+'0InverseWarp_y.nii.gz')
                     # List names of warping fields for futur merge
                     list_warp_x.append('transform_'+num+'0Warp_x.nii.gz')
                     list_warp_x_inv.append('transform_'+num+'0InverseWarp_x.nii.gz')
@@ -289,8 +295,10 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         copy_header(fname_dest, name_warp_final + '_y.nii.gz')
         copy_header(fname_source, name_warp_final + '_y_inverse.nii.gz')
         print'\nMerge translation fields along x and y into one global warping field '
-        sct.run('isct_c3d ' + name_warp_final + '_x.nii.gz ' + name_warp_final + '_y.nii.gz -omc 2 ' + name_warp_final + '.nii.gz')
-        sct.run('isct_c3d ' + name_warp_final + '_x_inverse.nii.gz ' + name_warp_final + '_y_inverse.nii.gz -omc 2 ' + name_warp_final + '_inverse.nii.gz')
+        sct.run('sct_maths -i ' + name_warp_final + '_x.nii.gz,' + name_warp_final + '_y.nii.gz -omc -o ' + name_warp_final + '.nii.gz')
+        sct.run('sct_maths -i ' + name_warp_final + '_x_inverse.nii.gz,' + name_warp_final + '_y_inverse.nii.gz -omc -o ' + name_warp_final + '_inverse.nii.gz')
+        # sct.run('isct_c3d ' + name_warp_final + '_x.nii.gz ' + name_warp_final + '_y.nii.gz -omc 2 ' + name_warp_final + '.nii.gz')
+        # sct.run('isct_c3d ' + name_warp_final + '_x_inverse.nii.gz ' + name_warp_final + '_y_inverse.nii.gz -omc 2 ' + name_warp_final + '_inverse.nii.gz')
         print'\nCopy to parent folder...'
         sct.run('cp ' + name_warp_final + '.nii.gz ../')
         sct.run('cp ' + name_warp_final + '_inverse.nii.gz ../')
