@@ -33,7 +33,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Perform mathematical operations on images. Only one operation at a time can be done.')
+    parser.usage.set_description('Perform mathematical operations on images. Only one operation at a time can be done (except for intensity scaling: flag -scale).')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
                       description="Input file(s). If several inputs: separate them by a coma without white space.\n"
@@ -344,19 +344,34 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
 
 
 def add(data_list):
-    from numpy import zeros
-    data_out = zeros(data_list[0].shape)
+    from numpy import asarray, reshape
+    first = True
     for dat in data_list:
-        assert data_out.shape == dat.shape
-        data_out += dat
+        if first:
+            data_out = asarray(dat)
+            first = False
+            if data_out.shape[-1] == 1:
+                data_out = reshape(data_out, data_out.shape[:-1])
+        else:
+            dat = asarray(dat)
+            if dat.shape[-1] == 1:
+                dat = reshape(dat, dat.shape[:-1])
+            assert data_out.shape == dat.shape
+            data_out += dat
     return data_out
 
 
 def substract(data_list):
+    from numpy import reshape
     assert len(data_list) == 2
-    assert data_list[0].shape == data_list[1].shape
-    return data_list[0]-data_list[1]
-
+    dat0, dat1 = data_list
+    # reshaping
+    if dat0.shape[-1] == 1:
+        dat0 = reshape(dat0, dat0.shape[:-1])
+    if dat1.shape[-1] == 1:
+        dat1 = reshape(dat1, dat1.shape[:-1])
+    assert dat0.shape == dat1.shape
+    return dat0-dat1
 
 def scale_intensity(data_list, factors):
     data_out = []
