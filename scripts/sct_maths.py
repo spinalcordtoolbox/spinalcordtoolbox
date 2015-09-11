@@ -5,7 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
+# Authors: Julien Cohen-Adad, Sara Dupont
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -120,6 +120,16 @@ def get_parser():
                       description='Compute STD across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
+    parser.usage.addSection("\nMulti-component operations")
+    parser.add_option(name='-mcs',
+                      description='Multi-component split. Outputs the components separately.\n'
+                                  '(If less outputs names than components in the image, outputs as many components as the number of outputs name specifed.)\n'
+                                  'Only one input',
+                      mandatory=False)
+    parser.add_option(name='-omc',
+                      description='Multi-component output. Merge inputted images into one multi-component image.\n'
+                                  'Only one output',
+                      mandatory=False)
     parser.usage.addSection("\nMisc")
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -212,6 +222,21 @@ def main(args = None):
         data_out = [dilate(d, arguments['-dilate']) for d in data]
     elif '-erode' in arguments:
         data_out = [erode(d, arguments['-erode']) for d in data]
+    elif '-mcs' in arguments:
+        if n_in != 1:
+            printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
+        if len(data[0].shape) != 5:
+            printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
+        data_out = multicomponent_split(data[0])
+        if len(data_out) > n_out:
+            data_out = data_out[:n_out]
+    elif '-omc' in arguments:
+        if n_out != 1:
+            printv(parser.usage.generate(error='ERROR: -omc need only one output'))
+        for dat in data:
+            if dat.shape != data[0].shape:
+                printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
+        data_out = multicomponent_merge(data)
     elif "-scale" not in arguments:
         printv('No process applied.', 1, 'warning')
         return
@@ -227,6 +252,12 @@ def main(args = None):
         nii[0].data = data_out[0]
         nii[0].setFileName(fname_out[0])
         nii[0].save()
+    elif n_out > n_in:
+        for dat_out, name_out in zip(data_out, fname_out):
+            im_out = nii[0].copy()
+            im_out.data = dat_out
+            im_out.setFileName(name_out)
+            im_out.save()
     else:
         printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
@@ -401,6 +432,40 @@ def smooth(data, sigmas):
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter
     return gaussian_filter(data, sigmas)
+
+
+def multicomponent_split(data):
+    from numpy import reshape
+    assert len(data.shape) == 5
+    data_out = []
+    for i in range(data.shape[-1]):
+        dat_out = data[:, :, :, :, i]
+        if dat_out.shape[-1] == 1:
+            dat_out = reshape(dat_out, dat_out.shape[:-1])
+            if dat_out.shape[-1] == 1:
+                dat_out = reshape(dat_out, dat_out.shape[:-1])
+        data_out.append(dat_out)
+
+    return data_out
+
+
+def multicomponent_merge(data_list):
+    from numpy import zeros, reshape
+    new_shape = list(data_list[0].shape)
+    if len(new_shape) == 3:
+        new_shape.append(1)
+    new_shape.append(len(data_list))
+    new_shape = tuple(new_shape)
+
+    data_out = zeros(new_shape)
+    for i, dat in enumerate(data_list):
+        if len(dat.shape) < 4:
+            new_shape = list(dat.shape)
+            while len(new_shape) < 4:
+                new_shape.append(1)
+            dat = reshape(dat, new_shape)
+        data_out[:, :, :, :, i] = dat
+    return [data_out]
 
     # # random_walker
     # from skimage.segmentation import random_walker
