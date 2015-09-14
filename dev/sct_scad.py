@@ -30,11 +30,11 @@ def smooth_minimal_path(img, nb_pixels=3):
     :return: returns a smoothed image
     """
 
-    pix_dim = img.pixdim
+    nx, ny, nz, nt, px, py, pz, pt = img.dim
     from scipy.ndimage.filters import gaussian_filter
     raw_orientation = img.change_orientation()
 
-    img.data = gaussian_filter(img.data, [nb_pixels/pix_dim[0], nb_pixels/pix_dim[1], 0])
+    img.data = gaussian_filter(img.data, [nb_pixels/px, nb_pixels/py, 0])
 
     img.change_orientation(raw_orientation)
     return img
@@ -95,6 +95,11 @@ def symmetry_detector_right_left(data, cropped_xy=0):
 
 
 def equalize_array_histogram(array):
+    """
+    Equalizes the data in array
+    :param array:
+    :return:
+    """
     array_min = np.amin(array)
     array -= array_min
     array_max = np.amax(array)
@@ -171,13 +176,25 @@ def get_minimum_path_nii(fname):
 
 
 def ind2sub(array_shape, ind):
+    """
+
+    :param array_shape: shape of the array
+    :param ind: index number
+    :return: coordinates equivalent to the index number for a given array shape
+    """
     rows = (ind.astype('int') / array_shape[1])
-    cols = (ind.astype('int') % array_shape[1]) # or numpy.mod(ind.astype('int'), array_shape[1])
-    return (rows, cols)
+    cols = (ind.astype('int') % array_shape[1])  # or numpy.mod(ind.astype('int'), array_shape[1])
+    return rows, cols
 
 
 def get_centerline(data, dim):
-
+    """
+    This function extracts the highest value per slice from a minimal path image
+    and builds the centerline from it
+    :param data:
+    :param dim:
+    :return:
+    """
     centerline = np.zeros(dim)
 
     data[data == np.inf] = 0
@@ -255,6 +272,9 @@ class SCAD(Algorithm):
         self.minimum_path_powered = None
         self.smoothed_min_path = None
         self.spine_detect_data = None
+        self.centerline_with_outliers = None
+
+        self.debug_folder = None
 
 
     @property
@@ -280,7 +300,11 @@ class SCAD(Algorithm):
             raise Exception('ERROR: verbose value must be an integer and equal to 0 or 1')
 
     def produce_output_files(self):
+        """
+        Method used to output all debug files at the same time. To be used after the algorithm is executed
 
+        :return:
+        """
         import time
         from sct_utils import slash_at_the_end
         path_tmp = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -326,11 +350,35 @@ class SCAD(Algorithm):
         img.file_name = "symmetry_weighted_minimal_path"
         img.save()
 
+    def output_debug_file(self, data, file_name):
+        """
+        This method writes a nifti file that corresponds to a step in the algorithm for easy debug
+
+        :param data: data to be written to file
+        :param file_name: filename...
+        :return: None
+        """
+        if self.produce_output:
+            img = self.input_image.copy()
+            img.data = data
+            img.change_orientation(self.raw_orientation)
+            img.file_name = file_name
+            img.save()
+
+    def setup_debug_folder(self):
+        if self.produce_output:
+            import time
+            from sct_utils import slash_at_the_end
+            path_tmp = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
+            sct.run('mkdir '+path_tmp, self.verbose)
+
     def execute(self):
         print 'Execution of the SCAD algorithm'
 
         vesselness_file_name = "imageVesselNessFilter.nii.gz"
         raw_file_name = "raw.nii"
+
+        self.setup_debug_folder()
 
         if self.debug:
             import matplotlib.pyplot as plt # import for debug purposes
@@ -352,6 +400,7 @@ class SCAD(Algorithm):
         # get body symmetry
         sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
         self.raw_symmetry = sym.execute()
+        self.output_debug_file(self.raw_symmetry, "body_symmetry")
 
         # vesselness filter
         if not self.vesselness_provided:
@@ -359,41 +408,45 @@ class SCAD(Algorithm):
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
-        raw_orientation = img.change_orientation()
+        img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1, smooth_factor=1)
+        self.output_debug_file(self.minimum_path_data, "minimal_path")
+        self.output_debug_file(self.J1_min_path, "J1_minimal_path")
+        self.output_debug_file(self.J2_min_path, "J2_minimal_path")
 
         # Apply an exponent to the minimum path
         self.minimum_path_powered = np.power(self.minimum_path_data, self.minimum_path_exponent)
+        self.output_debug_file(self.minimum_path_powered, "minimal_path_power_"+str(self.minimum_path_exponent))
 
         # Saving in Image since smooth_minimal_path needs pixel dimensions
         img.data = self.minimum_path_powered
 
         # smooth resulting minimal path
         self.smoothed_min_path = smooth_minimal_path(img)
+        self.output_debug_file(self.smoothed_min_path.data, "minimal_path_smooth")
 
         # normalise symmetry values between 0 and 1
         normalised_symmetry = equalize_array_histogram(self.raw_symmetry)
+        self.output_debug_file(self.smoothed_min_path.data, "minimal_path_smooth")
 
         # multiply normalised symmetry data with the minimum path result
         self.spine_detect_data = np.multiply(self.smoothed_min_path.data, normalised_symmetry)
+        self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
 
         # extract the centerline from the minimal path image
-        centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
-        img.data = centerline_with_outliers
-        img.change_orientation()
-        img.file_name = "centerline_with_outliers"
-        img.save()
+        self.centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
+        self.output_debug_file(self.centerline_with_outliers, "centerline_with_outliers")
 
         # use a b-spline to smooth out the centerline
         x, y, z, dx, dy, dz = smooth_centerline("centerline_with_outliers.nii.gz")
 
         # save the centerline
-        centerline_dim = img.dim
-        img.data = np.zeros(centerline_dim)
+        nx, ny, nz, nt, px, py, pz, pt = img.dim
+        img.data = np.zeros(nx, ny, nz)
         for i in range(0, np.size(x)-1):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
-        img.change_orientation(raw_orientation)
+        img.change_orientation(self.raw_orientation)
         img.file_name = "centerline"
         img.save()
 
@@ -405,8 +458,6 @@ class SCAD(Algorithm):
             import shutil
             shutil.rmtree(path_tmp)
 
-        if self.produce_output:
-            self.produce_output_files()
 
 class SymmetryDetector(Algorithm):
     def __init__(self, input_image, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
@@ -465,7 +516,6 @@ class SymmetryDetector(Algorithm):
         result_image.change_orientation(raw_orientation)
 
         return result_image.data
-
 
 
 if __name__ == "__main__":
