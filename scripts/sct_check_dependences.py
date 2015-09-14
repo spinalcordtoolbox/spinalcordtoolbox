@@ -207,6 +207,7 @@ def main():
         print '>> '+cmd
         print (status, output), '\n'
 
+    '''
     # check isct_c3d compatibility with OS
     print_line('Check c3d compatibility with OS ')
     (status, output) = commands.getstatusoutput('isct_c3d -h')
@@ -217,6 +218,7 @@ def main():
         install_software = 1
     if complete_test:
         print (status, output), '\n'
+    '''
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
