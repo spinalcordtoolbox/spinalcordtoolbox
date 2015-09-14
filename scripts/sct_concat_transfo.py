@@ -101,6 +101,8 @@ def main():
     sct.printv('\nConcatenate warping fields...', verbose)
     # N.B. Here we take the inverse of the warp list
     fname_warp_list_invert.reverse()
+    print 'DEST : ', fname_dest
+    print 'warp list: ', fname_warp_list_invert
     cmd = 'isct_ComposeMultiTransform 3 warp_final.nii.gz -R '+fname_dest+' '+' '.join(fname_warp_list_invert)
     sct.printv('>> '+cmd, verbose)
     commands.getstatusoutput(cmd)  # here cannot use sct.run() because of wrong output status in isct_ComposeMultiTransform
