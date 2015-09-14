@@ -550,7 +550,7 @@ if __name__ == "__main__":
 #===========
 #if convertDeformation:
 #    print('\nConvert deformation field...')
-#    cmd = 'isct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+#    cmd = 'sct_maths -i tmp.regWarp.nii -mcs  -o tmp.regWarp_x.nii,tmp.regWarp_y.nii,tmp.regWarp_z.nii'
 #    print(">> "+cmd)
 #    os.system(cmd)
 #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
