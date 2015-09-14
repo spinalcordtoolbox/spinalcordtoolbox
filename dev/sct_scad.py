@@ -495,8 +495,6 @@ class SymmetryDetector(Algorithm):
         This method executes the symmetry detection
         :return: returns the symmetry data
         """
-        #def block_symmetry(img, section_nb, crop_xy=0):
-
         raw_orientation = self.input_image.change_orientation()
         dim = self.input_image.data.shape
 
