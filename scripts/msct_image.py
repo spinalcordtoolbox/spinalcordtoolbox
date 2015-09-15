@@ -64,9 +64,12 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
+
+
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -81,6 +84,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
+
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -91,14 +95,11 @@ class Image(object):
         from sct_utils import check_file_exist, printv, extract_fname
         from sct_orientation import get_orientation
 
-        im_file = None
         # check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        except Exception, e:
-            print e
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
@@ -107,6 +108,7 @@ class Image(object):
         self.dim = get_dimension(im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
+
 
     def setFileName(self, filename):
         """
@@ -480,10 +482,16 @@ class Image(object):
             pass
         else:
             print 'Error: wrong orientation'
-        # from numpy import array
-        # self.dim = array(self.dim)[perm]
-        nx, ny, nz, nt, px, py, pz, pt = self.dim
-        self.dim = self.data.shape[0], self.data.shape[1], self.data.shape[2], nt, px, py, pz, pt
+        # update dim
+        dim_temp = list(self.dim)
+        dim_temp[0] = self.dim[perm[0]]  # nx
+        dim_temp[1] = self.dim[perm[1]]  # ny
+        dim_temp[2] = self.dim[perm[2]]  # nz
+        dim_temp[4] = self.dim[perm[0]+4]  # px
+        dim_temp[5] = self.dim[perm[1]+4]  # py
+        dim_temp[6] = self.dim[perm[2]+4]  # pz
+        self.dim = tuple(dim_temp)
+        # update orientation
         self.orientation = orientation
         return raw_orientation
 
