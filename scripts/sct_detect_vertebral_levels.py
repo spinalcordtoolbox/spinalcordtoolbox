@@ -121,7 +121,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831111434/'
+    # path_tmp = '/Users/julien/data/biospective/20150914/test/processing/t2/tmp.150915091711/'
     chdir(path_tmp)
 
     # create label to identify disc
@@ -198,11 +198,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     from scipy.signal import argrelextrema
 
-    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 5  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
-    size_IS = 5  # window size in RL direction (=z) in mm
-    searching_window_for_maximum = 10  # size used for finding local maxima
+    size_IS = 7  # window size in RL direction (=z) in mm
+    searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.3  # disc correlation threshold. Below this value, use template distance.
     verbose = param.verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
@@ -317,7 +317,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
                 ind_peak = approx_distance_to_next_disc
             else:
-                printv('.. Peak found: '+str(ind_peak[0])+' (correlation = '+str(I_corr[ind_peak][0][0])+')', verbose)
+                printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr[ind_peak][0])+')', verbose)
 
         # display peak
         if verbose == 2:
