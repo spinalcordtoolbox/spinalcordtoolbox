@@ -538,6 +538,7 @@ def register(src, dest, paramreg, param, i_step_str):
             os.rename(warp_forward_out, warp_forward)
             os.rename(warp_inverse_out, warp_inverse)
 
+
     return warp_forward, warp_inverse
 
 
