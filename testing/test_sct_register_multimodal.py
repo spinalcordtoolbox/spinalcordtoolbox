@@ -24,7 +24,8 @@ def test(path_data):
 
     output = ''
     status = 0
-    possible_algos =['slicereg2d_pointwise','slicereg2d_translation','slicereg2d_rigid','slicereg2d_affine','slicereg2d_syn','slicereg2d_bsplinesyn','slicereg', 'rigid', 'affine', 'compositeaffine', 'similarity', 'translation', 'bspline', 'gaussiandisplacementfield', 'bsplinedisplacementfield', 'syn', 'bsplinesyn']
+    possible_algos =['slicereg2d_translation','slicereg2d_rigid','slicereg2d_affine','slicereg2d_syn','slicereg2d_bsplinesyn','slicereg', 'rigid', 'affine', 'compositeaffine', 'similarity', 'translation', 'bspline', 'gaussiandisplacementfield', 'bsplinedisplacementfield', 'syn', 'bsplinesyn'] # 'slicereg2d_pointwise': for seg,
+    # possible_algos =['gaussiandisplacementfield', 'bsplinedisplacementfield'] # 'slicereg2d_pointwise': for seg,
     for algo in possible_algos:
         cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
               + ' -d ' + path_data + folder_data + file_data[1] \
