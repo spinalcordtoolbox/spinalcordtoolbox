@@ -64,12 +64,9 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-
-
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
-
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -84,7 +81,6 @@ class Image(object):
         else:
             return deepcopy(self)
 
-
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -95,11 +91,14 @@ class Image(object):
         from sct_utils import check_file_exist, printv, extract_fname
         from sct_orientation import get_orientation
 
+        im_file = None
         # check_file_exist(path, verbose=verbose)
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+        except Exception, e:
+            print e
         self.orientation = get_orientation(path)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
@@ -108,7 +107,6 @@ class Image(object):
         self.dim = get_dimension(im_file)
         # nx, ny, nz, nt, px, py, pz, pt = get_dimension(path)
         # self.dim = [nx, ny, nz]
-
 
     def setFileName(self, filename):
         """
@@ -626,6 +624,55 @@ def get_dimension(im_file, verbose=1):
 
     return nx, ny, nz, nt, px, py, pz, pt
 
+
+def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
+    """
+    This function changes the orientation of a data matrix from a give orientation to another.
+    This function assumes that the user already knows the orientation of the data
+    :param data: data of the image
+    :param old_orientation: Current orientation of the data
+    :param orientation: Desired orientation for the data
+    :return: Data matrix representing the
+    """
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+    # change the orientation of the image
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(old_orientation):
+        try:
+            perm[i] = orientation.index(character)
+        except ValueError:
+            perm[i] = orientation.index(opposite_character[character])
+            inversion[i] = -1
+
+    # axes inversion
+    data = data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+    # axes manipulations
+    from numpy import swapaxes
+
+    if perm == [1, 0, 2]:
+        data = swapaxes(data, 0, 1)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [0, 2, 1]:
+        data = swapaxes(data, 1, 2)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [2, 0, 1]:
+        data = swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+        data = swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+    elif perm == [1, 2, 0]:
+        data = swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+        data = swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+    elif perm == [0, 1, 2]:
+        # do nothing
+        pass
+    else:
+        print 'Error: wrong orientation'
+
+    return data
 
 # =======================================================================================================================
 # Start program
