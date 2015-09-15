@@ -311,7 +311,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
             ind_peak = approx_distance_to_next_disc
         else:
             # keep peak with maximum correlation
-            ind_peak[np.argmax(I_corr[ind_peak])]
+            ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
+            # check if correlation is high enough
             if I_corr[ind_peak] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
                 ind_peak = approx_distance_to_next_disc
