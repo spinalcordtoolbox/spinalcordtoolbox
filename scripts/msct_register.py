@@ -344,6 +344,7 @@ def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
+    from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
