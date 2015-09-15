@@ -130,7 +130,7 @@ def main(args=None):
         create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
-        nii = Image(fname_seg)
+        nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz/2))  # get z_center
@@ -311,7 +311,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
             ind_peak = approx_distance_to_next_disc
         else:
             # keep peak with maximum correlation
-            ind_peak[np.argmax(I_corr[ind_peak])]
+            ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
+            # check if correlation is high enough
             if I_corr[ind_peak] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
                 ind_peak = approx_distance_to_next_disc
