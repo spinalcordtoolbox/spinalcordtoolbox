@@ -130,7 +130,7 @@ def main(args=None):
         create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
     elif initcenter:
         # find z centered in FOV
-        nii = Image(fname_seg)
+        nii = Image('segmentation.nii.gz')
         nii.change_orientation('RPI')  # reorient to RPI
         nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
         z_center = int(round(nz/2))  # get z_center
