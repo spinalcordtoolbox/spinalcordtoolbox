@@ -19,6 +19,7 @@ import os
 import sct_utils as sct
 import numpy as np
 from sct_straighten_spinalcord import smooth_centerline
+import sct_convert as conv
 
 
 def smooth_minimal_path(img, nb_pixels=3):
@@ -153,15 +154,13 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
         result_max = np.amax(result)
         result = np.divide(np.subtract(result, result_min), result_max)
         result_max = np.amax(result)
+
     result = 1-result
-
-
 
     result[result == np.inf] = 0
     result[result == np.nan] = 0
 
     return result, J1, J2
-
 
 
 def get_minimum_path_nii(fname):
@@ -206,6 +205,65 @@ def get_centerline(data, dim):
         centerline[X,Y,iz] = 1
 
     return centerline
+
+
+
+class SymmetryDetector(Algorithm):
+    def __init__(self, input_image, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
+        super(SymmetryDetector, self).__init__(input_image)
+        self._contrast = contrast
+        self._verbose = verbose
+        self.direction = direction
+        self.nb_sections = nb_sections
+        self.crop_xy = crop_xy
+
+    @property
+    def contrast(self):
+        return self._contrast
+
+    @contrast.setter
+    def contrast(self, value):
+        if value in ['t1', 't2']:
+            self._contrast = value
+        else:
+            raise Exception('ERROR: contrast value must be t1 or t2')
+
+    @property
+    def verbose(self):
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, value):
+        if value in [0, 1]:
+            self._verbose = value
+        else:
+            raise Exception('ERROR: verbose value must be an integer and equal to 0 or 1')
+
+    def execute(self):
+        """
+        This method executes the symmetry detection
+        :return: returns the symmetry data
+        """
+        img = Image(self.input_image)
+        raw_orientation = img.change_orientation()
+        dim = img.data.shape
+
+        section_length = dim[1]/self.nb_sections
+
+        result = np.zeros(dim)
+
+        for i in range(0, self.nb_sections):
+            if (i+1)*section_length > dim[1]:
+                y_length = (i+1)*section_length - ((i+1)*section_length - dim[1])
+                result[:, i*section_length:i*section_length + y_length, :] = symmetry_detector_right_left(img.data[:, i*section_length:i*section_length + y_length, :],  cropped_xy=self.crop_xy)
+            sym = symmetry_detector_right_left(img.data[:, i*section_length:(i+1)*section_length, :], cropped_xy=self.crop_xy)
+            result[:, i*section_length:(i+1)*section_length, :] = sym
+
+        result_image = Image(img)
+        result_image.data = result
+        result_image.change_orientation(raw_orientation)
+
+        return result_image.data
 
 
 class ScadScript(BaseScript):
@@ -352,25 +410,44 @@ class SCAD(Algorithm):
 
     def output_debug_file(self, data, file_name):
         """
-        This method writes a nifti file that corresponds to a step in the algorithm for easy debug
-
+        This method writes a nifti file that corresponds to a step in the algorithm for easy debug.
+        The new nifti file uses the header from the
         :param data: data to be written to file
         :param file_name: filename...
         :return: None
         """
         if self.produce_output:
-            img = self.input_image.copy()
-            img.data = data
-            img.change_orientation(self.raw_orientation)
-            img.file_name = file_name
-            img.save()
+            current_folder = os.getcwd()
+            os.chdir(self.debug_folder)
+            try:
+                img = self.input_image.copy()
+                img.data = data
+                img.change_orientation(self.raw_orientation)
+                img.file_name = file_name
+                img.save()
+            except Exception, e:
+                print e
+            os.chdir(current_folder)
 
     def setup_debug_folder(self):
+        """
+        Sets up the folder for the step by step files for this algorithm
+        The folder's absolute path can be found in the self.debug_folder property
+        :return: None
+        """
         if self.produce_output:
             import time
             from sct_utils import slash_at_the_end
-            path_tmp = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
-            sct.run('mkdir '+path_tmp, self.verbose)
+            folder = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
+            sct.run('mkdir '+folder, self.verbose)
+            self.debug_folder = os.path.abspath(folder)
+
+    def create_temporary_path(self):
+        import time
+        from sct_utils import slash_at_the_end
+        path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+        sct.run('mkdir '+path_tmp, self.verbose)
+        return path_tmp
 
     def execute(self):
         print 'Execution of the SCAD algorithm'
@@ -384,8 +461,10 @@ class SCAD(Algorithm):
             import matplotlib.pyplot as plt # import for debug purposes
 
         # create tmp and copy input
-        path_tmp = sct.tmp_create()
-        sct.tmp_copy_nifti(self.input_image.absolutepath, path_tmp, raw_file_name)
+        path_tmp = self.create_temporary_path()
+        # sct.tmp_copy_nifti(self.input_image.absolutepath, path_tmp, raw_file_name)
+        # sct.run("cp "+self.input_image.absolutepath+" "+path_tmp+raw_file_name)
+        conv.convert(self.input_image.absolutepath, path_tmp+raw_file_name)
 
         if self.vesselness_provided:
             sct.run('cp '+vesselness_file_name+' '+path_tmp+vesselness_file_name)
@@ -430,19 +509,26 @@ class SCAD(Algorithm):
         self.output_debug_file(self.smoothed_min_path.data, "minimal_path_smooth")
 
         # multiply normalised symmetry data with the minimum path result
-        self.spine_detect_data = np.multiply(self.smoothed_min_path.data, normalised_symmetry)
+        from msct_image import change_data_orientation
+        self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
         self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
 
         # extract the centerline from the minimal path image
         self.centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
         self.output_debug_file(self.centerline_with_outliers, "centerline_with_outliers")
 
+        # saving centerline with outliers to have
+        img.data = self.centerline_with_outliers
+        img.change_orientation(self.raw_orientation)
+        img.file_name = "centerline_with_outliers"
+        img.save()
+
         # use a b-spline to smooth out the centerline
         x, y, z, dx, dy, dz = smooth_centerline("centerline_with_outliers.nii.gz")
 
         # save the centerline
         nx, ny, nz, nt, px, py, pz, pt = img.dim
-        img.data = np.zeros(nx, ny, nz)
+        img.data = np.zeros((nx, ny, nz))
         for i in range(0, np.size(x)-1):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
@@ -452,68 +538,11 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        sct.tmp_copy_nifti(path_tmp + 'centerline.nii.gz',self.input_image.path,self.input_image.file_name+'_centerline'+self.input_image.ext)
-
+        # sct.tmp_copy_nifti(path_tmp + 'centerline.nii.gz',self.input_image.path,self.input_image.file_name+'_centerline'+self.input_image.ext)
+        sct.run("cp "+self.input_image.absolutepath+" "+path_tmp+"/"+raw_file_name)
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(path_tmp)
-
-
-class SymmetryDetector(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
-        super(SymmetryDetector, self).__init__(input_image)
-        self._contrast = contrast
-        self._verbose = verbose
-        self.direction = direction
-        self.nb_sections = nb_sections
-        self.crop_xy = crop_xy
-
-    @property
-    def contrast(self):
-        return self._contrast
-
-    @contrast.setter
-    def contrast(self, value):
-        if value in ['t1', 't2']:
-            self._contrast = value
-        else:
-            raise Exception('ERROR: contrast value must be t1 or t2')
-
-    @property
-    def verbose(self):
-        return self._verbose
-
-    @verbose.setter
-    def verbose(self, value):
-        if value in [0, 1]:
-            self._verbose = value
-        else:
-            raise Exception('ERROR: verbose value must be an integer and equal to 0 or 1')
-
-    def execute(self):
-        """
-        This method executes the symmetry detection
-        :return: returns the symmetry data
-        """
-        raw_orientation = self.input_image.change_orientation()
-        dim = self.input_image.data.shape
-
-        section_length = dim[1]/self.nb_sections
-
-        result = np.zeros(dim)
-
-        for i in range(0, self.nb_sections):
-            if (i+1)*section_length > dim[1]:
-                y_length = (i+1)*section_length - ((i+1)*section_length - dim[1])
-                result[:, i*section_length:i*section_length + y_length, :] = symmetry_detector_right_left(self.input_image.data[:, i*section_length:i*section_length + y_length, :],  cropped_xy=self.crop_xy)
-            sym = symmetry_detector_right_left(self.input_image.data[:, i*section_length:(i+1)*section_length, :], cropped_xy=self.crop_xy)
-            result[:, i*section_length:(i+1)*section_length, :] = sym
-
-        result_image = self.input_image.copy()
-        result_image.data = result
-        result_image.change_orientation(raw_orientation)
-
-        return result_image.data
 
 
 if __name__ == "__main__":
