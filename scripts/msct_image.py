@@ -476,7 +476,7 @@ class Image(object):
             self.data = swapaxes(self.data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
         elif perm == [1, 2, 0]:
             self.data = swapaxes(self.data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
-            self.data = swapaxes(self.data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+            self.data = swapaxes(self.data, 0, 1)  # transform [0, 2, 1] to [0, 1, 2]
         elif perm == [0, 1, 2]:
             # do nothing
             pass
