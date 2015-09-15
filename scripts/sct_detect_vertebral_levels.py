@@ -110,18 +110,18 @@ def main(args=None):
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
-    # create temporary folder
-    printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, param.verbose)
-
-    # Copying input data to tmp folder
-    printv('\nCopying input data to tmp folder...', param.verbose)
-    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # # create temporary folder
+    # printv('\nCreate temporary folder...', param.verbose)
+    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    # run('mkdir '+path_tmp, param.verbose)
+    #
+    # # Copying input data to tmp folder
+    # printv('\nCopying input data to tmp folder...', param.verbose)
+    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150831111434/'
+    path_tmp = '/Users/julien/data/biospective/20150914/test/processing/t2/tmp.150915091711/'
     chdir(path_tmp)
 
     # create label to identify disc
@@ -138,20 +138,20 @@ def main(args=None):
 
     # TODO: denoise data
 
-    # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-
-    # Apply straightening to segmentation
-    # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
-    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # Threshold segmentation to 0.5
-    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-
-    # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
-    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
+    #
+    # # Apply straightening to segmentation
+    # # N.B. Output is RPI
+    # printv('\nApply straightening to segmentation...', param.verbose)
+    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # # Threshold segmentation to 0.5
+    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+    #
+    # # Apply straightening to z-label
+    # printv('\nDilate z-label and apply straightening...', param.verbose)
+    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -198,11 +198,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     from scipy.signal import argrelextrema
 
-    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 5  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
-    size_IS = 5  # window size in RL direction (=z) in mm
-    searching_window_for_maximum = 10  # size used for finding local maxima
+    size_IS = 7  # window size in RL direction (=z) in mm
+    searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.3  # disc correlation threshold. Below this value, use template distance.
     verbose = param.verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
@@ -317,7 +317,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
                 ind_peak = approx_distance_to_next_disc
             else:
-                printv('.. Peak found: '+str(ind_peak[0])+' (correlation = '+str(I_corr[ind_peak][0][0])+')', verbose)
+                printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr[ind_peak][0])+')', verbose)
 
         # display peak
         if verbose == 2:
