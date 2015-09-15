@@ -482,8 +482,16 @@ class Image(object):
             pass
         else:
             print 'Error: wrong orientation'
-        # from numpy import array
-        # self.dim = array(self.dim)[perm]
+        # update dim
+        dim_temp = list(self.dim)
+        dim_temp[0] = self.dim[perm[0]]  # nx
+        dim_temp[1] = self.dim[perm[1]]  # ny
+        dim_temp[2] = self.dim[perm[2]]  # nz
+        dim_temp[4] = self.dim[perm[0]+4]  # px
+        dim_temp[5] = self.dim[perm[1]+4]  # py
+        dim_temp[6] = self.dim[perm[2]+4]  # pz
+        self.dim = tuple(dim_temp)
+        # update orientation
         self.orientation = orientation
         return raw_orientation
 
