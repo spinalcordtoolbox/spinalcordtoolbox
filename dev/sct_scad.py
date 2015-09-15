@@ -286,6 +286,18 @@ class ScadScript(BaseScript):
                           mandatory=True,
                           example=['t1', 't2'])
         parser.usage.addSection("General options")
+        parser.add_option(name="-p",
+                          type_value="multiple_choice",
+                          description="Produce output debug files",
+                          mandatory=True,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-rmtmp",
+                          type_value="multiple_choice",
+                          description="Removes the temporary folder used for the algorithm at the end of execution",
+                          mandatory=True,
+                          default_value=0,
+                          example=['0', '1'])
         parser.add_option(name="-v",
                           type_value="multiple_choice",
                           description="1: display on, 0: display off (default)",
@@ -420,7 +432,7 @@ class SCAD(Algorithm):
             current_folder = os.getcwd()
             os.chdir(self.debug_folder)
             try:
-                img = self.input_image.copy()
+                img = Image(self.input_image)
                 img.data = data
                 img.change_orientation(self.raw_orientation)
                 img.file_name = file_name
@@ -450,20 +462,19 @@ class SCAD(Algorithm):
         return path_tmp
 
     def execute(self):
-        print 'Execution of the SCAD algorithm'
+        print 'Execution of the SCAD algorithm in '+str(os.getcwd())
 
         vesselness_file_name = "imageVesselNessFilter.nii.gz"
         raw_file_name = "raw.nii"
 
         self.setup_debug_folder()
+        conv.convert(self.input_image.absolutepath, self.debug_folder+"/"+raw_file_name)
 
         if self.debug:
             import matplotlib.pyplot as plt # import for debug purposes
 
         # create tmp and copy input
         path_tmp = self.create_temporary_path()
-        # sct.tmp_copy_nifti(self.input_image.absolutepath, path_tmp, raw_file_name)
-        # sct.run("cp "+self.input_image.absolutepath+" "+path_tmp+raw_file_name)
         conv.convert(self.input_image.absolutepath, path_tmp+raw_file_name)
 
         if self.vesselness_provided:
@@ -532,14 +543,14 @@ class SCAD(Algorithm):
         for i in range(0, np.size(x)-1):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
+        self.output_debug_file(img.data, "centerline")
         img.change_orientation(self.raw_orientation)
         img.file_name = "centerline"
         img.save()
 
         # copy back centerline
         os.chdir('../')
-        # sct.tmp_copy_nifti(path_tmp + 'centerline.nii.gz',self.input_image.path,self.input_image.file_name+'_centerline'+self.input_image.ext)
-        sct.run("cp "+self.input_image.absolutepath+" "+path_tmp+"/"+raw_file_name)
+        conv.convert(path_tmp+img.file_name+img.ext, "centerline.nii.gz")
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(path_tmp)
@@ -553,6 +564,12 @@ if __name__ == "__main__":
     input_image = Image(arguments["-i"])
     contrast_type = arguments["-t"]
 
-    scad = SCAD(input_image)
-    scad.contrast = contrast_type
+    scad = SCAD(input_image, contrast=contrast_type)
+
+    if "-p" in arguments:
+        scad.produce_output = int(arguments["-p"])
+
+    if "-rmtmp" in arguments:
+        scad.rm_tmp_file = int(arguments["-rmtmp"])
+
     scad.execute()
