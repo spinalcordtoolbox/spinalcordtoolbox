@@ -518,7 +518,15 @@ def register(src, dest, paramreg, param, i_step_str):
     # run registration
     status, output = sct.run(cmd, param.verbose)
 
-    if os.path.isfile(warp_forward_out) and os.path.isfile(warp_inverse_out):
+    if not os.path.isfile(warp_forward_out):
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    elif not os.path.isfile(warp_inverse_out):
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    else:
         # rename warping fields
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
             warp_forward = 'warp_forward_'+i_step_str+'.mat'
@@ -529,9 +537,6 @@ def register(src, dest, paramreg, param, i_step_str):
             warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
             os.rename(warp_forward_out, warp_forward)
             os.rename(warp_inverse_out, warp_inverse)
-    else:
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
 
     return warp_forward, warp_inverse
 
