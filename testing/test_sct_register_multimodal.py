@@ -15,7 +15,7 @@
 
 #import sct_utils as sct
 import commands
-
+import time
 
 def test(path_data):
 
@@ -41,7 +41,7 @@ def test(path_data):
                   'OUTPUT FROM TEST '+algo+': '
         output += o
         output += '*****************************************************************************************************\n'
-
+        time.sleep(0.2)
     '''
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
