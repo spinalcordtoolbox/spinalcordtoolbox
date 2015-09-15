@@ -22,7 +22,7 @@ from sct_straighten_spinalcord import smooth_centerline
 import sct_convert as conv
 
 
-def smooth_minimal_path(img, nb_pixels=3):
+def smooth_minimal_path(img, nb_pixels=1):
     """
     Function intended to smooth the minimal path result in the R-L/A-P directions with a gaussian filter
     of a kernel of size nb_pixels
@@ -312,7 +312,7 @@ class ScadScript(BaseScript):
 
 
 class SCAD(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=50):
+    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100):
         """
         Constructor for the automatic spinal cord detection
         :param input_image:
@@ -420,10 +420,10 @@ class SCAD(Algorithm):
         img.file_name = "symmetry_weighted_minimal_path"
         img.save()
 
-    def output_debug_file(self, data, file_name):
+    def output_debug_file(self, img, data, file_name):
         """
         This method writes a nifti file that corresponds to a step in the algorithm for easy debug.
-        The new nifti file uses the header from the
+        The new nifti file uses the header from the the image passed as parameter
         :param data: data to be written to file
         :param file_name: filename...
         :return: None
@@ -432,7 +432,7 @@ class SCAD(Algorithm):
             current_folder = os.getcwd()
             os.chdir(self.debug_folder)
             try:
-                img = Image(self.input_image)
+                img = Image(img)
                 img.data = data
                 img.change_orientation(self.raw_orientation)
                 img.file_name = file_name
@@ -488,9 +488,9 @@ class SCAD(Algorithm):
         self.raw_orientation = img.change_orientation()
 
         # get body symmetry
-        sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
-        self.raw_symmetry = sym.execute()
-        self.output_debug_file(self.raw_symmetry, "body_symmetry")
+        # sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
+        # self.raw_symmetry = sym.execute()
+        # self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
 
         # vesselness filter
         if not self.vesselness_provided:
@@ -500,37 +500,37 @@ class SCAD(Algorithm):
         img = Image(vesselness_file_name)
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1, smooth_factor=1)
-        self.output_debug_file(self.minimum_path_data, "minimal_path")
-        self.output_debug_file(self.J1_min_path, "J1_minimal_path")
-        self.output_debug_file(self.J2_min_path, "J2_minimal_path")
+        self.output_debug_file(img, self.minimum_path_data, "minimal_path")
+        self.output_debug_file(img, self.J1_min_path, "J1_minimal_path")
+        self.output_debug_file(img, self.J2_min_path, "J2_minimal_path")
 
         # Apply an exponent to the minimum path
         self.minimum_path_powered = np.power(self.minimum_path_data, self.minimum_path_exponent)
-        self.output_debug_file(self.minimum_path_powered, "minimal_path_power_"+str(self.minimum_path_exponent))
+        self.output_debug_file(img, self.minimum_path_powered, "minimal_path_power_"+str(self.minimum_path_exponent))
 
         # Saving in Image since smooth_minimal_path needs pixel dimensions
         img.data = self.minimum_path_powered
 
         # smooth resulting minimal path
         self.smoothed_min_path = smooth_minimal_path(img)
-        self.output_debug_file(self.smoothed_min_path.data, "minimal_path_smooth")
+        self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # normalise symmetry values between 0 and 1
-        normalised_symmetry = equalize_array_histogram(self.raw_symmetry)
-        self.output_debug_file(self.smoothed_min_path.data, "minimal_path_smooth")
+        # normalised_symmetry = equalize_array_histogram(self.raw_symmetry)
+        # self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # multiply normalised symmetry data with the minimum path result
         from msct_image import change_data_orientation
-        self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
-        self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
+        # self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
+        # self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
 
         # extract the centerline from the minimal path image
-        self.centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
-        self.output_debug_file(self.centerline_with_outliers, "centerline_with_outliers")
+        self.centerline_with_outliers = get_centerline(self.smoothed_min_path.data, self.smoothed_min_path.data.shape)
+        self.output_debug_file(img, self.centerline_with_outliers, "centerline_with_outliers")
 
         # saving centerline with outliers to have
         img.data = self.centerline_with_outliers
-        img.change_orientation(self.raw_orientation)
+        img.change_orientation()
         img.file_name = "centerline_with_outliers"
         img.save()
 
@@ -543,7 +543,7 @@ class SCAD(Algorithm):
         for i in range(0, np.size(x)-1):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
-        self.output_debug_file(img.data, "centerline")
+        self.output_debug_file(img, img.data, "centerline")
         img.change_orientation(self.raw_orientation)
         img.file_name = "centerline"
         img.save()
