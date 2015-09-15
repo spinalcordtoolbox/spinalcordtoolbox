@@ -312,7 +312,6 @@ def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg
     from msct_smooth import smoothing_window, outliers_detection, outliers_completion
     from msct_register_regularized import register_images
     from numpy import apply_along_axis, zeros
-    from msct_image import Image
     import sct_utils as sct
     name_warp_syn = 'Warp_total'
     # Registrating images
@@ -361,7 +360,7 @@ def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
-    print 'dest:::::::::: ', fname_dest
+    from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
