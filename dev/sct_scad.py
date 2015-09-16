@@ -95,7 +95,7 @@ def symmetry_detector_right_left(data, cropped_xy=0):
     return result
 
 
-def equalize_array_histogram(array):
+def normalize_array_histogram(array):
     """
     Equalizes the data in array
     :param array:
@@ -205,7 +205,6 @@ def get_centerline(data, dim):
         centerline[X,Y,iz] = 1
 
     return centerline
-
 
 
 class SymmetryDetector(Algorithm):
@@ -488,9 +487,9 @@ class SCAD(Algorithm):
         self.raw_orientation = img.change_orientation()
 
         # get body symmetry
-        # sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
-        # self.raw_symmetry = sym.execute()
-        # self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
+        sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
+        self.raw_symmetry = sym.execute()
+        self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
 
         # vesselness filter
         if not self.vesselness_provided:
@@ -516,13 +515,13 @@ class SCAD(Algorithm):
         self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # normalise symmetry values between 0 and 1
-        # normalised_symmetry = equalize_array_histogram(self.raw_symmetry)
-        # self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
+        normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
+        self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # multiply normalised symmetry data with the minimum path result
         from msct_image import change_data_orientation
-        # self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
-        # self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
+        self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
+        self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
 
         # extract the centerline from the minimal path image
         self.centerline_with_outliers = get_centerline(self.smoothed_min_path.data, self.smoothed_min_path.data.shape)
