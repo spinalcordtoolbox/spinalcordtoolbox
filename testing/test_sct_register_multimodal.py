@@ -81,11 +81,10 @@ def test(path_data):
         # check if non-zero elements are present when computing the difference of the two images
         diff = data_gold - data_res
         import numpy as np
-        output += 'DIfference sum : ' + str(np.sum(diff))+'\n'
         if abs(np.sum(diff))>threshold:
             Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
             status = 99
-            output += '\nResulting image differs from gold-standard.'
+            output += '\nResulting image differs from gold-standard (sum of the difference of intensity: '+str(np.sum(diff))+').'
 
 
     return status, output
