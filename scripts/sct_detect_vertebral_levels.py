@@ -109,46 +109,46 @@ def main(args=None):
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
-    # create temporary folder
-    printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, param.verbose)
-
-    # Copying input data to tmp folder
-    printv('\nCopying input data to tmp folder...', param.verbose)
-    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # # create temporary folder
+    # printv('\nCreate temporary folder...', param.verbose)
+    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    # run('mkdir '+path_tmp, param.verbose)
+    #
+    # # Copying input data to tmp folder
+    # printv('\nCopying input data to tmp folder...', param.verbose)
+    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/biospective/20150914/test/processing/t2/tmp.150915091711/'
+    path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150917171852/'
     chdir(path_tmp)
 
-    # create label to identify disc
-    printv('\nCreate label to identify disc...', param.verbose)
-    if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    elif initcenter:
-        # find z centered in FOV
-        nii = Image('segmentation.nii.gz')
-        nii.change_orientation('RPI')  # reorient to RPI
-        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(round(nz/2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-
-    # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
-
-    # Apply straightening to segmentation
-    # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
-    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # Threshold segmentation to 0.5
-    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-
-    # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
-    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # # create label to identify disc
+    # printv('\nCreate label to identify disc...', param.verbose)
+    # if initz:
+    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    # elif initcenter:
+    #     # find z centered in FOV
+    #     nii = Image('segmentation.nii.gz')
+    #     nii.change_orientation('RPI')  # reorient to RPI
+    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+    #     z_center = int(round(nz/2))  # get z_center
+    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+    #
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
+    #
+    # # Apply straightening to segmentation
+    # # N.B. Output is RPI
+    # printv('\nApply straightening to segmentation...', param.verbose)
+    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # # Threshold segmentation to 0.5
+    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+    #
+    # # Apply straightening to z-label
+    # printv('\nDilate z-label and apply straightening...', param.verbose)
+    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -245,11 +245,10 @@ def vertebral_detection(fname, fname_seg, init_disc):
     if verbose == 2:
         plt.matshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
-        # plt.draw()
         # display init disc
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
         plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50)
-        # plt.draw()
+        plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow ', fontsize=15), plt.draw()
 
 
     # FIND DISCS
@@ -422,12 +421,12 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
         if verbose == 2:
             # save and close figures
-            plt.figure(fig_corr), plt.savefig('fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
-            plt.figure(fig_pattern), plt.savefig('fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_corr), plt.savefig('../fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_pattern), plt.savefig('../fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
 
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
-    upper_disc = min(list_disc_value) - 1
-    if not upper_disc == 1:
+    upper_disc = min(list_disc_value) -1
+    if not upper_disc == 0:
         printv('Adding top disc based on adjusted template distance: #'+str(upper_disc), verbose)
         approx_distance_to_next_disc = int(round(mean_distance_adjusted[upper_disc-1]))
         next_z = max(list_disc_z) + approx_distance_to_next_disc
@@ -464,15 +463,15 @@ def vertebral_detection(fname, fname_seg, init_disc):
             plt.figure(fig_anat_straight)
             plt.scatter(int(round(ny/2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
 
-    if verbose == 2:
-        # save figure with labels
-        plt.figure(fig_anat_straight), plt.savefig('fig_anat_straight_with_labels.png')
-        plt.close()
-
-
-    # WRITE LABELED SEGMENTATION
+    # write file
     seg.file_name += '_labeled'
     seg.save()
+
+    # save figure
+    if verbose == 2:
+        plt.figure(fig_anat_straight), plt.savefig('../fig_anat_straight_with_labels.png')
+        plt.close()
+
 
 
 # Create label
@@ -532,7 +531,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
     if verbose == 2:
         import matplotlib.pyplot as plt
 
-    size_AP_mirror = 1
+    size_AP_mirror = 2
     searching_window = range(-14, 15)
     fig_local_adjustment = 4
     thr_corr = 0.2
@@ -589,7 +588,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # display peak
         plt.figure(fig_local_adjustment), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro')
         # save and close figure
-        plt.figure(fig_local_adjustment), plt.savefig('fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
+        plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
     return adjusted_z
 
 # START PROGRAM
