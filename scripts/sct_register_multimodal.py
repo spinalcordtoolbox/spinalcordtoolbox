@@ -533,7 +533,7 @@ def register(src, dest, paramreg, param, i_step_str):
         sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']: # no inverse warping field for rigid and affine  
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']: # no inverse warping field for rigid and affine
         sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
         sct.printv(output, 1, 'error')
         sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
