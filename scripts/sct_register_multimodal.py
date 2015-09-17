@@ -166,7 +166,18 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  global registration: {rigid,  affine,  syn,  bsplinesyn}\n  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window),  slicereg2d_rigid,  slicereg2d_affine,  slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines), slicereg2d_bsplinesyn, slicereg2d_syn}\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step. Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid, slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.. Default="""+paramreg.steps['1'].window_length,
+                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+                                  "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
+                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
+                                    "  global registration: {rigid,  affine,  syn,  bsplinesyn}\n"
+                                    "  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window), slicereg2d_rigid, slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines)}\n" # , slicereg2d_affine, slicereg2d_bsplinesyn, slicereg2d_syn
+                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
+                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
+                                    "shrink: <int> Shrink factor (only for SyN). Default="+paramreg.steps['1'].shrink+"\n"
+                                    "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
+                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
+                                    "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
