@@ -109,46 +109,46 @@ def main(args=None):
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
-    # # create temporary folder
-    # printv('\nCreate temporary folder...', param.verbose)
-    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    # run('mkdir '+path_tmp, param.verbose)
-    #
-    # # Copying input data to tmp folder
-    # printv('\nCopying input data to tmp folder...', param.verbose)
-    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # create temporary folder
+    printv('\nCreate temporary folder...', param.verbose)
+    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    run('mkdir '+path_tmp, param.verbose)
+
+    # Copying input data to tmp folder
+    printv('\nCopying input data to tmp folder...', param.verbose)
+    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150917171852/'
+    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150917171852/'
     chdir(path_tmp)
 
-    # # create label to identify disc
-    # printv('\nCreate label to identify disc...', param.verbose)
-    # if initz:
-    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    # elif initcenter:
-    #     # find z centered in FOV
-    #     nii = Image('segmentation.nii.gz')
-    #     nii.change_orientation('RPI')  # reorient to RPI
-    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-    #     z_center = int(round(nz/2))  # get z_center
-    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-    #
-    # # Straighten spinal cord
-    # printv('\nStraighten spinal cord...', param.verbose)
-    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
-    #
-    # # Apply straightening to segmentation
-    # # N.B. Output is RPI
-    # printv('\nApply straightening to segmentation...', param.verbose)
-    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # # Threshold segmentation to 0.5
-    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-    #
-    # # Apply straightening to z-label
-    # printv('\nDilate z-label and apply straightening...', param.verbose)
-    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # create label to identify disc
+    printv('\nCreate label to identify disc...', param.verbose)
+    if initz:
+        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    elif initcenter:
+        # find z centered in FOV
+        nii = Image('segmentation.nii.gz')
+        nii.change_orientation('RPI')  # reorient to RPI
+        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+        z_center = int(round(nz/2))  # get z_center
+        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+
+    # Straighten spinal cord
+    printv('\nStraighten spinal cord...', param.verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
+
+    # Apply straightening to segmentation
+    # N.B. Output is RPI
+    printv('\nApply straightening to segmentation...', param.verbose)
+    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # Threshold segmentation to 0.5
+    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+
+    # Apply straightening to z-label
+    printv('\nDilate z-label and apply straightening...', param.verbose)
+    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -184,7 +184,7 @@ def main(args=None):
 
     # to view results
     printv('\nDone! To view results, type:', param.verbose)
-    printv('fslview '+fname_in+' '+fname_out+' &\n', param.verbose, 'info')
+    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', param.verbose, 'info')
 
 
 
