@@ -469,8 +469,6 @@ class Image(object):
             self.data = swapaxes(self.data, 0, 2)
         elif perm == [0, 2, 1]:
             self.data = swapaxes(self.data, 1, 2)
-        elif perm == [2, 1, 0]:
-            self.data = swapaxes(self.data, 0, 2)
         elif perm == [2, 0, 1]:
             self.data = swapaxes(self.data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
             self.data = swapaxes(self.data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
@@ -482,8 +480,16 @@ class Image(object):
             pass
         else:
             print 'Error: wrong orientation'
-        # from numpy import array
-        # self.dim = array(self.dim)[perm]
+        # update dim
+        dim_temp = list(self.dim)
+        dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
+        dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
+        dim_temp[2] = self.dim[[i for i, x in enumerate(perm) if x == 2][0]]  # nz
+        dim_temp[4] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]+4]  # px
+        dim_temp[5] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]+4]  # py
+        dim_temp[6] = self.dim[[i for i, x in enumerate(perm) if x == 2][0]+4]  # pz
+        self.dim = tuple(dim_temp)
+        # update orientation
         self.orientation = orientation
         return raw_orientation
 
