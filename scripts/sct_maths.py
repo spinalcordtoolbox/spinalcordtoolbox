@@ -131,6 +131,9 @@ def get_parser():
                                   'Only one output',
                       mandatory=False)
     parser.usage.addSection("\nMisc")
+    parser.add_option(name="-w",
+                      description="Output is a warping field",
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -247,16 +250,22 @@ def main(args = None):
         for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
             im_in.data = d_out
             im_in.setFileName(fn_out)
+            if "-w" in arguments:
+                im_in.hdr.set_intent('vector', (), '')
             im_in.save()
     elif n_out == 1:
         nii[0].data = data_out[0]
         nii[0].setFileName(fname_out[0])
+        if "-w" in arguments:
+                nii[0].hdr.set_intent('vector', (), '')
         nii[0].save()
     elif n_out > n_in:
         for dat_out, name_out in zip(data_out, fname_out):
             im_out = nii[0].copy()
             im_out.data = dat_out
             im_out.setFileName(name_out)
+            if "-w" in arguments:
+                im_out.hdr.set_intent('vector', (), '')
             im_out.save()
     else:
         printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
@@ -444,7 +453,7 @@ def multicomponent_split(data):
             dat_out = reshape(dat_out, dat_out.shape[:-1])
             if dat_out.shape[-1] == 1:
                 dat_out = reshape(dat_out, dat_out.shape[:-1])
-        data_out.append(dat_out)
+        data_out.append(dat_out.astype('float32'))
 
     return data_out
 
@@ -463,9 +472,9 @@ def multicomponent_merge(data_list):
             new_shape = list(dat.shape)
             while len(new_shape) < 4:
                 new_shape.append(1)
-            dat = reshape(dat, new_shape)
-        data_out[:, :, :, :, i] = dat
-    return [data_out]
+            dat = reshape(dat, tuple(new_shape))
+        data_out[:, :, :, :, i] = dat.astype('float32')
+    return [data_out.astype('float32')]
 
     # # random_walker
     # from skimage.segmentation import random_walker
