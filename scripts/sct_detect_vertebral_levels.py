@@ -17,9 +17,8 @@
 import sys
 from os import chdir
 from time import strftime
-
 import numpy as np
-
+from scipy.signal import argrelextrema, gaussian
 from sct_utils import extract_fname, printv, run, generate_output_file, slash_at_the_end
 from msct_parser import Parser
 from msct_image import Image
@@ -110,48 +109,48 @@ def main(args=None):
     param.verbose = int(arguments['-v'])
     param.remove_tmp_files = int(arguments['-r'])
 
-    # create temporary folder
-    printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, param.verbose)
-
-    # Copying input data to tmp folder
-    printv('\nCopying input data to tmp folder...', param.verbose)
-    run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
-    run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
+    # # create temporary folder
+    # printv('\nCreate temporary folder...', param.verbose)
+    # path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    # run('mkdir '+path_tmp, param.verbose)
+    #
+    # # Copying input data to tmp folder
+    # printv('\nCopying input data to tmp folder...', param.verbose)
+    # run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    # run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/biospective/20150914/test/processing/t2/tmp.150915091711/'
+    path_tmp = '/Users/julien/data/biospective/20150914/test/processing/t2/tmp.150915091711/'
     chdir(path_tmp)
 
-    # create label to identify disc
-    printv('\nCreate label to identify disc...', param.verbose)
-    if initz:
-        create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
-    elif initcenter:
-        # find z centered in FOV
-        nii = Image('segmentation.nii.gz')
-        nii.change_orientation('RPI')  # reorient to RPI
-        nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-        z_center = int(round(nz/2))  # get z_center
-        create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
-
-    # TODO: denoise data
-
-    # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz')
-
-    # Apply straightening to segmentation
-    # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
-    run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
-    # Threshold segmentation to 0.5
-    run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
-
-    # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
-    run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
+    # # create label to identify disc
+    # printv('\nCreate label to identify disc...', param.verbose)
+    # if initz:
+    #     create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
+    # elif initcenter:
+    #     # find z centered in FOV
+    #     nii = Image('segmentation.nii.gz')
+    #     nii.change_orientation('RPI')  # reorient to RPI
+    #     nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
+    #     z_center = int(round(nz/2))  # get z_center
+    #     create_label_z('segmentation.nii.gz', z_center, initcenter)  # create label located at z_center
+    #
+    # # TODO: denoise data
+    #
+    # # Straighten spinal cord
+    # printv('\nStraighten spinal cord...', param.verbose)
+    # run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
+    #
+    # # Apply straightening to segmentation
+    # # N.B. Output is RPI
+    # printv('\nApply straightening to segmentation...', param.verbose)
+    # run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
+    # # Threshold segmentation to 0.5
+    # run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
+    #
+    # # Apply straightening to z-label
+    # printv('\nDilate z-label and apply straightening...', param.verbose)
+    # run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
     printv('\nGet z and disc values from straight label...', param.verbose)
@@ -159,7 +158,6 @@ def main(args=None):
     printv('.. '+str(init_disc), param.verbose)
 
     # detect vertebral levels on straight spinal cord
-    printv('\nDetect inter-vertebral discs and label vertebral levels...', param.verbose)
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc)
 
     # un-straighten spinal cord
@@ -196,17 +194,19 @@ def main(args=None):
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, init_disc):
 
-    from scipy.signal import argrelextrema
-
-    shift_AP = 17  # shift the centerline towards the spine (in mm).
-    size_AP = 5  # window size in AP direction (=y) in mm
+    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    size_AP = 3  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
     size_IS = 7  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
-    thr_corr = 0.3  # disc correlation threshold. Below this value, use template distance.
+    thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
+    fig_anat_straight = 1  # handle for figure
+    fig_pattern = 2  # handle for figure
+    fig_corr = 3  # handle for figure
+    fig_anat_straight_labeled = 4
     verbose = param.verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
-    mean_distance = np.array([18, 16, 18.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
+    mean_distance = np.array([18, 16, 17.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
     19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
     33.0000,   31.3330])
 
@@ -217,7 +217,10 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     # open anatomical volume
     img = Image(fname)
+    printv('\nDenoise data...', verbose)
+    img.denoise_ornlm()
     data = img.data
+
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
 
@@ -237,35 +240,45 @@ def vertebral_detection(fname, fname_seg, init_disc):
     xc = round(nx/2)  # direction RL
     yc = round(ny/2)  # direction AP
 
+    # display stuff
     if verbose == 2:
         # plt.figure(1), plt.imshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
-        plt.matshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), fignum=1, cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
+        plt.matshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower'), plt.title('Anatomical image'), plt.draw()
         # plt.matshow(np.flipud(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose()), fignum=1, cmap=plt.cm.gray), plt.title('Anatomical image'), plt.draw()
         # display init disc
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(1), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50), plt.draw()
-        plt.text(yc+shift_AP+4, init_disc[0], str(init_disc[1])+'/'+str(init_disc[1]+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15)
+        plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50), plt.draw()
+        # plt.text(yc+shift_AP+4, init_disc[0], str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15)
         # plt.axis('off')
 
 
     # FIND DISCS
     # ===========================================================================
-    list_disc_z = []
-    list_disc_value = []
+    printv('\nDetect intervertebral discs...', verbose)
+    # assign initial z and disc
+    current_z = init_disc[0]
+    current_disc = init_disc[1]
     # adjust to pix size
     mean_distance = mean_distance * pz
     mean_distance_real = np.zeros(len(mean_distance))
-    # search peaks along z direction
-    current_z = init_disc[0]
-    current_disc = init_disc[1]
-    # append initial position to main list
+    # create list for z and disc
+    list_disc_z = []
+    list_disc_value = []
+    # do local adjustment to be at the center of the disc
+    printv('.. local adjustment to center disc', verbose)
+    pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
+    current_z = local_adjustment(xc, yc, current_z, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose)
+    if verbose == 2:
+        plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='g', s=50)
+        plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='green', fontsize=15), plt.draw()
+    # append value to main list
     list_disc_z = np.append(list_disc_z, current_z).astype(int)
     list_disc_value = np.append(list_disc_value, current_disc).astype(int)
-    direction = 'superior'
     # define mean distance to next disc
     approx_distance_to_next_disc = int(round(mean_distance[current_disc]))
     # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
     # loop until potential new peak is inside of FOV
+    direction = 'superior'
     search_next_disc = True
     while search_next_disc:
         printv('Current disc: '+str(current_disc)+' (z='+str(current_z)+'). Direction: '+direction, verbose)
@@ -274,10 +287,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
         pattern1d = pattern.ravel()
         # pattern2d = np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1], axis=0)
         if verbose == 2:
-            plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), cmap=plt.cm.gray), plt.title('Pattern in sagittal averaged across R-L'), plt.draw()
+            plt.figure(fig_pattern), plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray), plt.title('Pattern in sagittal averaged across R-L'), plt.draw()
         # compute correlation between pattern and data within range of z defined by template distance
+        printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
         length_z_corr = approx_distance_to_next_disc * 2
-        I_corr = np.zeros((length_z_corr, 1))
+        I_corr = np.zeros((length_z_corr))
         ind_I = 0
         for iz in range(length_z_corr):
             if direction == 'superior':
@@ -301,27 +315,32 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 printv('.. WARNING: Data only contains zero. Set correlation to 0.', verbose)
             ind_I = ind_I + 1
 
+        # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
+        gaussian_window = gaussian(length_z_corr, std=length_z_corr/5)
+        I_corr_adj = np.multiply(I_corr, gaussian_window)
         if verbose == 2:
-            plt.figure(), plt.plot(I_corr), plt.title('Correlation of pattern with data.'), plt.draw()
+            plt.figure(fig_corr), plt.plot(I_corr), plt.plot(I_corr_adj, 'k')
+            plt.legend(['I_corr', 'I_corr_adj'])
+            plt.title('Correlation of pattern with data.')
+            plt.draw()
 
         # Find peak within local neighborhood defined by mean distance template
-        ind_peak = argrelextrema(I_corr, np.greater, order=searching_window_for_maximum)[0]
+        ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
         if len(ind_peak) == 0:
             printv('.. WARNING: No peak found. Using adjusted template distance.', verbose)
             ind_peak = approx_distance_to_next_disc
         else:
             # keep peak with maximum correlation
-            ind_peak = ind_peak[np.argmax(I_corr[ind_peak])]
+            ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
+            printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
             # check if correlation is high enough
-            if I_corr[ind_peak] < thr_corr:
+            if I_corr_adj[ind_peak] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
                 ind_peak = approx_distance_to_next_disc
-            else:
-                printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr[ind_peak][0])+')', verbose)
 
         # display peak
         if verbose == 2:
-            plt.plot(ind_peak, I_corr[ind_peak], 'ro'), plt.draw()
+            plt.figure(fig_corr), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro'), plt.draw()
 
         # assign new z_start and disc value
         if direction == 'superior':
@@ -333,8 +352,15 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
         # display new disc
         if verbose == 2:
-            plt.figure(1), plt.scatter(yc+shift_AP, current_z, c='r', s=50), plt.draw()
-            plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='red', fontsize=15), plt.draw()
+            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='r', s=50), plt.draw()
+
+        # do local adjustment to be at the center of the disc
+        printv('.. local adjustment to center disc...', verbose)
+        current_z = local_adjustment(xc, yc, current_z, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose)
+        # display
+        if verbose == 2:
+            plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, current_z, c='g', s=50)
+            plt.text(yc+shift_AP+4, current_z, str(current_disc)+'/'+str(current_disc+1), verticalalignment='center', horizontalalignment='left', color='green', fontsize=15), plt.draw()
 
         # append to main list
         if direction == 'superior':
@@ -364,7 +390,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 approx_distance_to_next_disc = int(round(mean_distance_adjusted[current_disc-2]))
             elif direction == 'inferior':
                 approx_distance_to_next_disc = int(round(mean_distance_adjusted[current_disc-1]))
-            printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
 
         # if current_z is larger than searching zone, switch direction (and start from initial z)
         if current_z + approx_distance_to_next_disc >= nz or current_disc == 1:
@@ -379,13 +404,10 @@ def vertebral_detection(fname, fname_seg, init_disc):
         if current_z - approx_distance_to_next_disc <= 0:
             search_next_disc = False
 
-    if verbose == 2:
-        # save figure with labels
-        plt.figure(1), plt.savefig('anat_straight_with_labels.png')
-
-    # # sort list_disc_z and list_disc_value
-    # list_disc_z = np.array(sorted(list_disc_z, reverse=True))
-    # list_disc_value.sort()
+        if verbose == 2:
+            # save and close figures
+            plt.figure(fig_corr), plt.savefig('fig_correlation_disc'+str(current_disc)+'.png'), plt.close()
+            plt.figure(fig_pattern), plt.savefig('fig_pattern_disc'+str(current_disc)+'.png'), plt.close()
 
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value) - 1
@@ -401,6 +423,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
             list_disc_z = np.append(list_disc_z, next_z)
         # assign disc value
         list_disc_value = np.append(list_disc_value, upper_disc)
+
 
     # LABEL SEGMENTATION
     # open segmentation
@@ -421,6 +444,15 @@ def vertebral_detection(fname, fname_seg, init_disc):
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
+        if verbose == 2:
+            plt.figure(fig_anat_straight)
+            plt.scatter(yc-10, iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='jet', marker='_', s=200)
+
+    if verbose == 2:
+        # save figure with labels
+        plt.figure(fig_anat_straight), plt.savefig('fig_anat_straight_with_labels.png')
+        plt.close()
+
 
     # WRITE LABELED SEGMENTATION
     seg.file_name += '_labeled'
@@ -472,6 +504,49 @@ def get_z_and_disc_values_from_label(fname_label):
     value_label = int(nii.data[x_label, y_label, z_label])
     return [z_label, value_label]
 
+
+# Do local adjustement to be at the center of the current disc
+# ==========================================================================================
+def local_adjustment(xc, yc, current_z, data, size_RL, shift_AP, size_IS, searching_window_for_maximum, verbose):
+    """
+    Do local adjustment to be at the center of the current disc, using cross-correlation of mirrored disc
+    :param current_z: init current_z
+    :return: adjusted_z: adjusted current_z
+    """
+    size_AP_mirror = 1
+    searching_window = range(-14, 15)
+    # Get pattern centered at current_z = init_disc[0]
+    pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z-size_IS:current_z+size_IS+1]
+    pattern1d = pattern.ravel()
+    # compute cross-correlation with mirrored pattern
+    I_corr = np.zeros((len(searching_window)))
+    ind_I = 0
+    for iz in searching_window:
+        # get pattern shifted
+        pattern_shift = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z+iz-size_IS:current_z+iz+size_IS+1]
+        pattern1d_shift = pattern_shift.ravel()
+        # mirror it
+        pattern1d_shift_mirr = pattern1d_shift[::-1]
+        # compute correlation
+        I_corr[ind_I] = np.corrcoef(pattern1d_shift_mirr, pattern1d)[0, 1]
+        ind_I = ind_I + 1
+    # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
+    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/2)
+    I_corr_adj = np.multiply(I_corr, gaussian_window)
+    # if verbose == 2:
+    #     plt.figure(), plt.plot(I_corr), plt.title('Correlation of pattern with data.'), plt.draw()
+    # Find peak within local neighborhood
+    ind_peak = argrelextrema(I_corr_adj, np.greater, order=searching_window_for_maximum)[0]
+    if len(ind_peak) == 0:
+        printv('.... WARNING: No peak found. Using initial current_z provided.', verbose)
+        adjusted_z = current_z
+    else:
+        # keep peak with maximum correlation
+        ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
+        printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
+        adjusted_z = int(current_z + round(searching_window[ind_peak]/2))
+        printv('.... Update init_z position to: '+str(adjusted_z), verbose)
+    return adjusted_z
 
 # START PROGRAM
 # ==========================================================================================
