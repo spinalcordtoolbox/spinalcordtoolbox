@@ -460,6 +460,7 @@ def multicomponent_split(data):
 
 def multicomponent_merge(data_list):
     from numpy import zeros, reshape
+    # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
     new_shape = list(data_list[0].shape)
     if len(new_shape) == 3:
         new_shape.append(1)
