@@ -50,6 +50,19 @@ def test(path_data):
     status += s
     output += o
 
+    # check other method
+    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
+          + ' -d ' + path_data + folder_data + file_data[1] \
+          + ' -o data_reg.nii.gz'  \
+          + ' -p step=1,algo=affine,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
+          + ' -x linear' \
+          + ' -r 0' \
+          + ' -v 1'
+    output += cmd+'\n'  # copy command
+    s, o = commands.getstatusoutput(cmd)
+    status += s
+    output += o
+
     return status, output
 
 if __name__ == "__main__":
