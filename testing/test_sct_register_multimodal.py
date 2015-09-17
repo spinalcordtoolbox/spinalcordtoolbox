@@ -15,7 +15,7 @@
 
 #import sct_utils as sct
 import commands
-import time
+
 
 def test(path_data):
 
@@ -24,25 +24,7 @@ def test(path_data):
 
     output = ''
     status = 0
-    # possible_algos =['slicereg2d_translation','slicereg2d_rigid','slicereg2d_affine','slicereg2d_syn','slicereg2d_bsplinesyn','slicereg', 'rigid', 'affine', 'compositeaffine', 'similarity', 'translation', 'bspline', 'gaussiandisplacementfield', 'bsplinedisplacementfield', 'syn', 'bsplinesyn'] # 'slicereg2d_pointwise': for seg,
-    possible_algos =['slicereg2d_affine']
-    for algo in possible_algos:
-        cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
-              + ' -d ' + path_data + folder_data + file_data[1] \
-              + ' -o data_reg.nii.gz'  \
-              + ' -p step=1,algo='+algo+',iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-        output += cmd+'\n'  # copy command
-        s, o = commands.getstatusoutput(cmd)
-        status += s
-        output += '*****************************************************************************************************\n' \
-                  'OUTPUT FROM TEST '+algo+': '
-        output += o
-        output += '*****************************************************************************************************\n'
-        time.sleep(0.2)
-    '''
+
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
           + ' -o data_reg.nii.gz'  \
@@ -53,10 +35,7 @@ def test(path_data):
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     status += s
-    output += '*****************************************************************************************************\n' \
-              'OUTPUT FROM TEST 1: '
     output += o
-    output += '*****************************************************************************************************\n'
 
     # check other method
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
@@ -70,20 +49,6 @@ def test(path_data):
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-
-    # check other method
-    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
-          + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -o data_reg.nii.gz'  \
-          + ' -p step=1,algo=slicereg2d_affine,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
-          + ' -x linear' \
-          + ' -r 0' \
-          + ' -v 1'
-    output += cmd+'\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    status += s
-    output += o
-    '''
 
     return status, output
 
