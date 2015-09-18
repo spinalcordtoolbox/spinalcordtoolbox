@@ -592,6 +592,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
     return adjusted_z
 
+
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
