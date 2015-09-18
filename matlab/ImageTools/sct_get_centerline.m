@@ -1,6 +1,6 @@
-function m_center_line = sct_get_centerline_manual(fname,interval)
-% m_center_line = sct_get_centerline_manual(fname,interval)
-% example: sct_get_centerline data.nii.gz
+function m_center_line = sct_get_centerline(fname,interval)
+% m_center_line = sct_get_centerline(fname,interval)
+% example: sct_get_centerline 20140725_114817greax03mmp23es013a1001.nii.gz
 param=struct;
 nii=load_nii(fname); m_volume_raw=nii.img; dims=size(nii.img);
 if nargin<2,interval=max(round(size(m_volume_raw,3)/10),1); end

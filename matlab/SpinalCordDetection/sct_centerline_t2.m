@@ -1,5 +1,5 @@
-function sct_get_centerline_auto_t2(fname,verbose)
-% sct_get_centerline_auto_t2(fname)
+function sct_centerline_t2(fname,verbose)
+% sct_centerline_t2(fname)
 dbstop if error
 if nargin<2
     verbose=false;
