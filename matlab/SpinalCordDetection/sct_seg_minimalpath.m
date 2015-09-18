@@ -1,9 +1,9 @@
 function sct_seg_minimalpath(img_fname,centerline_fname,t1)
 % sct_seg_minimalpath(img_fname(,centerline_fname,t1?))
 % If centerline failed.. call sct_get_centerline
-[basename, ~, ext]=sct_tool_remove_extension(img_fname,0);
+[basename, path, ext]=sct_tool_remove_extension(img_fname,0);
 if nargin<2
-    sct_get_centerline_auto_t2(img_fname,0);
+    sct_centerline_t2(img_fname,0);
     centerline_fname = [basename '_centerline' ext];
 end
 t2=load_nii(img_fname);
