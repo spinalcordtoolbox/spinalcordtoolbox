@@ -50,7 +50,8 @@ def symmetry_detector_right_left(data, cropped_xy=0):
     """
     from scipy.ndimage.filters import gaussian_filter
 
-    # Change orientation and define variables for algorithm
+    # Change orientation and define variables for
+    data = np.squeeze(data)
     dim = data.shape
 
     img_data = gaussian_filter(data, [0, 5, 5])
@@ -148,7 +149,7 @@ def get_minimum_path(data, smooth_factor=np.sqrt(2), invert=1, verbose=1, debug=
     result = J1+J2
     if invert:
         percent = np.percentile(result, 50)
-        result[result > 50] = percent
+        result[result > percent] = percent
 
         result_min = np.amin(result)
         result_max = np.amax(result)
@@ -168,7 +169,8 @@ def get_minimum_path_nii(fname):
     data=Image(fname)
     vesselness_data = data.data
     raw_orient=data.change_orientation()
-    data.data=get_minimum_path(data.data, invert=1)
+    result ,J1, J2 = get_minimum_path(data.data, invert=1)
+    data.data = result
     data.change_orientation(raw_orient)
     data.file_name += '_minimalpath'
     data.save()
@@ -245,8 +247,8 @@ class SymmetryDetector(Algorithm):
         """
         img = Image(self.input_image)
         raw_orientation = img.change_orientation()
-        dim = img.data.shape
-
+        data = np.squeeze(img.data)
+        dim = data.shape
         section_length = dim[1]/self.nb_sections
 
         result = np.zeros(dim)
@@ -254,12 +256,16 @@ class SymmetryDetector(Algorithm):
         for i in range(0, self.nb_sections):
             if (i+1)*section_length > dim[1]:
                 y_length = (i+1)*section_length - ((i+1)*section_length - dim[1])
-                result[:, i*section_length:i*section_length + y_length, :] = symmetry_detector_right_left(img.data[:, i*section_length:i*section_length + y_length, :],  cropped_xy=self.crop_xy)
-            sym = symmetry_detector_right_left(img.data[:, i*section_length:(i+1)*section_length, :], cropped_xy=self.crop_xy)
+                result[:, i*section_length:i*section_length + y_length, :] = symmetry_detector_right_left(data[:, i*section_length:i*section_length + y_length, :],  cropped_xy=self.crop_xy)
+            sym = symmetry_detector_right_left(data[:, i*section_length:(i+1)*section_length, :], cropped_xy=self.crop_xy)
             result[:, i*section_length:(i+1)*section_length, :] = sym
 
         result_image = Image(img)
-        result_image.data = result
+        if len(result_image.data) == 4:
+            result_image.data = result[:,:,:,np.newaxis]
+        else:
+            result_image.data = result
+
         result_image.change_orientation(raw_orientation)
 
         return result_image.data
@@ -288,15 +294,34 @@ class ScadScript(BaseScript):
         parser.add_option(name="-p",
                           type_value="multiple_choice",
                           description="Produce output debug files",
-                          mandatory=True,
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-sym",
+                          type_value="multiple_choice",
+                          description="Enables the symmetry guided minimal path",
+                          mandatory=False,
+                          default_value=0,
+                          example=['0', '1'])
+        parser.add_option(name="-sym_exp",
+                          type_value="int",
+                          description="Enhances the value of the symmetry. The value is the exponent at which the values of the symmetry will be subjected to (symmetry values are between 0 and 1)",
+                          mandatory=False,
                           default_value=0,
                           example=['0', '1'])
         parser.add_option(name="-rmtmp",
                           type_value="multiple_choice",
                           description="Removes the temporary folder used for the algorithm at the end of execution",
-                          mandatory=True,
+                          mandatory=False,
                           default_value=0,
                           example=['0', '1'])
+        parser.add_option(name="-sc_rad",
+                          type_value="int",
+                          description="Gives approximate radius of spinal cord to help the algorithm",
+                          mandatory=False,
+                          default_value=4,
+                          example="4")
+
         parser.add_option(name="-v",
                           type_value="multiple_choice",
                           description="1: display on, 0: display off (default)",
@@ -311,7 +336,7 @@ class ScadScript(BaseScript):
 
 
 class SCAD(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100):
+    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 4):
         """
         Constructor for the automatic spinal cord detection
         :param input_image:
@@ -331,6 +356,9 @@ class SCAD(Algorithm):
         self.debug = debug
         self.vesselness_provided = vesselness_provided
         self.minimum_path_exponent = minimum_path_exponent
+        self.enable_symmetry = enable_symmetry
+        self.symmetry_exponent = symmetry_exponent
+        self.spinalcord_radius = spinalcord_radius
 
         # attributes used in the algorithm
         self.raw_orientation = None
@@ -452,6 +480,7 @@ class SCAD(Algorithm):
             folder = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
             sct.run('mkdir '+folder, self.verbose)
             self.debug_folder = os.path.abspath(folder)
+            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder)+"/raw.nii.gz")
 
     def create_temporary_path(self):
         import time
@@ -463,11 +492,13 @@ class SCAD(Algorithm):
     def execute(self):
         print 'Execution of the SCAD algorithm in '+str(os.getcwd())
 
+        original_name = self.input_image.file_name
         vesselness_file_name = "imageVesselNessFilter.nii.gz"
         raw_file_name = "raw.nii"
 
         self.setup_debug_folder()
-        conv.convert(self.input_image.absolutepath, self.debug_folder+"/"+raw_file_name)
+
+        # resample input file
 
         if self.debug:
             import matplotlib.pyplot as plt # import for debug purposes
@@ -487,13 +518,17 @@ class SCAD(Algorithm):
         self.raw_orientation = img.change_orientation()
 
         # get body symmetry
-        sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=1)
-        self.raw_symmetry = sym.execute()
-        self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
+        if self.enable_symmetry:
+            from msct_image import change_data_orientation
+            sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=0)
+            self.raw_symmetry = sym.execute()
+            img.change_orientation(self.raw_orientation)
+            self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
+            img.change_orientation()
 
         # vesselness filter
         if not self.vesselness_provided:
-            sct.run('sct_vesselness -i '+raw_file_name+' -t ' + self._contrast)
+            sct.run('sct_vesselness -i '+raw_file_name+' -t ' + self._contrast+" -radius "+str(self.spinalcord_radius))
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
@@ -515,16 +550,19 @@ class SCAD(Algorithm):
         self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # normalise symmetry values between 0 and 1
-        normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
-        self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
+        if self.enable_symmetry:
+            normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
+            self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
 
         # multiply normalised symmetry data with the minimum path result
-        from msct_image import change_data_orientation
-        self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
-        self.output_debug_file(self.spine_detect_data, "symmetry_x_min_path")
-
-        # extract the centerline from the minimal path image
-        self.centerline_with_outliers = get_centerline(self.smoothed_min_path.data, self.smoothed_min_path.data.shape)
+            from msct_image import change_data_orientation
+            self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(np.power(normalised_symmetry, self.symmetry_exponent), self.raw_orientation, "RPI"))
+            self.output_debug_file(img, self.spine_detect_data, "symmetry_x_min_path")
+            # extract the centerline from the minimal path image
+            self.centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
+        else:
+            # extract the centerline from the minimal path image
+            self.centerline_with_outliers = get_centerline(self.smoothed_min_path.data, self.smoothed_min_path.data.shape)
         self.output_debug_file(img, self.centerline_with_outliers, "centerline_with_outliers")
 
         # saving centerline with outliers to have
@@ -549,7 +587,7 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        conv.convert(path_tmp+img.file_name+img.ext, "centerline.nii.gz")
+        conv.convert(path_tmp+img.file_name+img.ext, original_name+"_centerline.nii.gz")
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(path_tmp)
@@ -567,8 +605,12 @@ if __name__ == "__main__":
 
     if "-p" in arguments:
         scad.produce_output = int(arguments["-p"])
-
     if "-rmtmp" in arguments:
         scad.rm_tmp_file = int(arguments["-rmtmp"])
-
+    if "-sym" in arguments:
+        scad.enable_symmetry = int(arguments["-sym"])
+    if "-sym_exp" in arguments:
+        scad.symmetry_exponent = int(arguments["-sym_exp"])
+    if "-sc_rad" in arguments:
+        scad.spinalcord_radius = int(arguments["-sc_rad"])
     scad.execute()
