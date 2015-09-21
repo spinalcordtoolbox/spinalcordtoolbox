@@ -18,7 +18,7 @@ class Image(object):
     """
 
     """
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
         from numpy import zeros, ndarray, generic
         from sct_utils import extract_fname
         from nibabel import AnalyzeHeader
@@ -56,7 +56,7 @@ class Image(object):
         # create a copy of im_ref
         elif isinstance(param, (ndarray, generic)):
             self.data = param
-            self.dim = self.data.shape
+            self.dim = dim
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
@@ -68,7 +68,7 @@ class Image(object):
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
-        return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
 
     def copy(self, image=None):
