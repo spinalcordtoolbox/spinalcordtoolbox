@@ -563,17 +563,19 @@ class ProcessLabels(object):
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
+class Param:
+    def __init__(self):
+        self.verbose = '1'
+        self.remove_tmp_files = '1'
+
+
+# PARSER
+# ==========================================================================================
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('Utility function for labels. Choose your process.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="labels or image to create labels on. Must be 3D.",
@@ -587,7 +589,18 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\nremove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names.\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
+                      description="""process:
+- add: add label to an existing image (-i).
+- cross: create a cross. Must use flag "-c"
+- create: create labels. Must use flag "-x" to list labels
+- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
+- display-voxel: display all labels in file
+- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
+- label-template: Create 2 labels that are required for template registration. You need to provide:
+    - labeled segmentation (flag '-i')
+    - two vertebral levels where create labels (flag 'level')
+- MSE: compute Mean Square Error between labels input and reference input "-r"
+- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
@@ -612,8 +625,20 @@ if __name__ == "__main__":
                       description="verbose. Default=" + str(param_default.verbose),
                       mandatory=False,
                       example=['0', '1'])
-    arguments = parser.parse(sys.argv[1:])
+    return parser
 
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
     process_type = arguments["-t"]
     input_fname_output = None
@@ -635,3 +660,13 @@ if __name__ == "__main__":
         input_verbose = arguments["-v"]
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
     processor.process(process_type)
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # # initialize parameters
+    param = Param()
+    param_default = Param()
+    # call main function
+    main()
