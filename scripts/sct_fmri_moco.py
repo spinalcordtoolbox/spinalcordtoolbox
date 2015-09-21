@@ -135,7 +135,6 @@ def main():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, path_tmp+'fmri.nii')
     # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
