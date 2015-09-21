@@ -32,7 +32,7 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1):
+                 coordinates=None, verbose=1, vertebral_levels=None):
         self.image_input = Image(fname_label, verbose=verbose)
 
         if fname_ref is not None:
@@ -46,6 +46,7 @@ class ProcessLabels(object):
         else:
             self.fname_output = fname_output
         self.cross_radius = cross_radius
+        self.vertebral_levels = vertebral_levels
         self.dilate = dilate
         self.coordinates = coordinates
         self.verbose = verbose
@@ -85,8 +86,10 @@ class ProcessLabels(object):
             self.fname_output = None
         elif type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
+        elif type_process == 'label-vertebrae':
+            self.output_image = self.label_vertebrae(self.vertebral_levels)
         else:
-            sct.printv('Error: The chosen process is not available.',1,'error')
+            sct.printv('Error: The chosen process is not available.', 1, 'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -98,6 +101,10 @@ class ProcessLabels(object):
 
 
     def cross(self):
+        """
+        create a cross.
+        :return:
+        """
         image_output = Image(self.image_input, self.verbose)
         nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
 
@@ -183,11 +190,12 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
+
     def cubic_to_point(self):
         """
         This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
         It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
-        :return:
+        :return: image_output
         """
         from scipy import ndimage
         from numpy import array,mean
@@ -349,6 +357,27 @@ class ProcessLabels(object):
                     image_output.data[coord.x, coord.y, coord.z] = coordinates_ref[j].value
 
         return image_output
+
+
+    def label_vertebrae(self, levels_user):
+        """
+        Finds the center of mass of vertebral levels specified by the user.
+        :return: image_output: Image with labels.
+        """
+        # get center of mass of each vertebral level
+        image_cubic2point = self.cubic_to_point()
+        # get list of coordinates for each label
+        list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        # loop across labels and remove those that are not listed by the user
+        for i_label in range(len(list_coordinates)):
+            # check if this level is NOT in levels_user
+            if not levels_user.count(int(list_coordinates[i_label].value)):
+                # if not, set value to zero
+                image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
+
+        # list all labels
+        return image_cubic2point
+
 
     def symmetrizer(self, side='left'):
         """
@@ -596,9 +625,9 @@ def get_parser():
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
 - increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-template: Create 2 labels that are required for template registration. You need to provide:
+- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. You need to provide:
     - labeled segmentation (flag '-i')
-    - two vertebral levels where create labels (flag 'level')
+    - vertebral levels where to create labels (flag 'level')
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
@@ -619,6 +648,10 @@ def get_parser():
     parser.add_option(name="-d",
                       type_value=None,
                       description="dilatation bool for cross generation ('-c' option).",
+                      mandatory=False)
+    parser.add_option(name="-level",
+                      type_value=[[','], 'int'],
+                      description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
                       mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
@@ -646,6 +679,7 @@ def main(args=None):
     input_cross_radius = 5
     input_dilate = False
     input_coordinates = None
+    vertebral_levels = None
     input_verbose = '1'
     input_fname_output = arguments["-o"]
     if "-r" in arguments:
@@ -656,9 +690,11 @@ def main(args=None):
         input_cross_radius = arguments["-c"]
     if "-d" in arguments:
         input_dilate = arguments["-d"]
+    if "-level" in arguments:
+        vertebral_levels = arguments["-level"]
     if "-v" in arguments:
         input_verbose = arguments["-v"]
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
     processor.process(process_type)
 
 
