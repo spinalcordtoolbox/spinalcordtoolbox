@@ -148,7 +148,7 @@ def main(args = None):
 
     # copy file in temp folder
     sct.printv('\nCopy files to tmp folder...', verbose)
-    convert(fname_in, path_tmp+'data.nii')
+    convert(fname_in, path_tmp+'data.nii', verbose=0)
 
     # go to temp folder
     os.chdir(path_tmp)
@@ -321,7 +321,6 @@ if __name__ == "__main__":
 #     sct.run('mkdir '+path_tmp, param.verbose)
 #
 #     # Copying input data to tmp folder and convert to nii
-#     # NB: cannot use c3d here because c3d cannot convert 4D data.
 #     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
 #     sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
 #
