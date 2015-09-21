@@ -312,19 +312,17 @@ class FullGmSegmentation:
         try:
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
-            sct.run('isct_c3d ' + res_gm_seg_bin.file_name + ext + ' ' + im_ref_gm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
-            # sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
+            # put the result and the reference in the same space using a registration with ANTs with no iteration:
+            sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+res_gm_seg_bin.file_name+ext+','+im_ref_gm_seg.file_name+ext+',1,16] -o [reg_ref_to_res,'+im_ref_gm_seg.file_name+'_in_res_space'+ext+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext)
-            # sct.run('fslmaths ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             sct.run('sct_maths -i ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' -bin -o ' + im_ref_gm_seg.file_name + '_in_res_space' + ext )
             status_gm, output_gm = sct.run('sct_dice_coefficient ' + im_ref_gm_seg.file_name + '_in_res_space' + ext + ' ' + res_gm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
         try:
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
-            sct.run('isct_c3d ' + res_wm_seg_bin.file_name + ext + ' ' + im_ref_wm_seg.file_name + ext + ' -reslice-identity -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
-            # sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
+            # put the result and the reference in the same space using a registration with ANTs with no iteration:
+            sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+res_wm_seg_bin.file_name+ext+','+im_ref_wm_seg.file_name+ext+',1,16] -o [reg_ref_to_res,'+im_ref_wm_seg.file_name+'_in_res_space'+ext+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -thr 0.1 -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
-            # sct.run('fslmaths ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             sct.run('sct_maths -i ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' -bin -o ' + im_ref_wm_seg.file_name + '_in_res_space' + ext)
             status_wm, output_wm = sct.run('sct_dice_coefficient ' + im_ref_wm_seg.file_name + '_in_res_space' + ext + ' ' + res_wm_seg_bin.file_name + ext + '  -2d-slices 2', error_exit='warning')
 
