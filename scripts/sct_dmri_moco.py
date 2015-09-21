@@ -27,7 +27,7 @@
 # TODO: make sure slicewise not used with ants, eddy not used with ants
 # TODO: make sure images are axial
 # TDOD: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
-# TODO (no priority): for sinc interp, use ANTs or isct_c3d instead of flirt
+# TODO (no priority): for sinc interp, use ANTs instead of flirt
 
 import sys
 import os
@@ -189,7 +189,6 @@ def main():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     sct.run('cp '+param.fname_data+' '+path_tmp+'dmri'+ext_data, param.verbose)
     sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
