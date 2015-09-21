@@ -18,7 +18,7 @@ class Image(object):
     """
 
     """
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", dim=None, verbose=1):
         from numpy import zeros, ndarray, generic
         from sct_utils import extract_fname
         from nibabel import AnalyzeHeader
@@ -56,7 +56,7 @@ class Image(object):
         # create a copy of im_ref
         elif isinstance(param, (ndarray, generic)):
             self.data = param
-            self.dim = self.data.shape
+            self.dim = dim
             self.hdr = hdr
             self.orientation = orientation
             self.absolutepath = absolutepath
@@ -68,7 +68,7 @@ class Image(object):
 
     def __deepcopy__(self, memo):
         from copy import deepcopy
-        return type(self)(deepcopy(self.data,memo),deepcopy(self.hdr,memo),deepcopy(self.orientation,memo),deepcopy(self.absolutepath,memo))
+        return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
 
     def copy(self, image=None):
@@ -586,12 +586,6 @@ class Image(object):
             return coordi_pix_list
 
 
-def pad_image(fname_in, file_out, padding):
-    import sct_utils as sct
-    sct.run('isct_c3d '+fname_in+' -pad 0x0x'+str(padding)+'vox 0x0x'+str(padding)+'vox 0 -o '+file_out, 1)
-    return
-
-
 def find_zmin_zmax(fname):
     import sct_utils as sct
     # crop image
@@ -636,12 +630,27 @@ def get_dimension(im_file, verbose=1):
 #=======================================================================================================================
 if __name__ == "__main__":
     from msct_parser import Parser
+    from sct_utils import add_suffix
     import sys
 
     parser = Parser(__file__)
-    parser.usage.set_description('Image')
-    parser.add_option("-i", "file", "file", True)
+    parser.usage.set_description('Image processing functions')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image input file.",
+                      mandatory=True,
+                      example='im.nii.gz')
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Image output name.",
+                      mandatory=False,
+                      example='im_out.nii.gz')
+
+
     arguments = parser.parse(sys.argv[1:])
 
     image = Image(arguments["-i"])
     image.changeType('minimize')
+    name_out = ''
+    if "-o" in arguments:
+        name_out = arguments["-o"]
