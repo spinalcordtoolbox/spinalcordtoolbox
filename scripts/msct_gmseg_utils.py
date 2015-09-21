@@ -361,7 +361,7 @@ def compute_majority_vote_mean_seg(seg_data_set, threshold=0.5, weights=None, ty
         average = np.sum(seg_data_set, axis=0) / float(len(seg_data_set))
     else:
         average = np.sum(np.einsum('ijk,i->ijk', seg_data_set, weights), axis=0)
-    average[average > 1] = 1
+    # average[average > 1] = 1
     if type == 'binary':
         return (average >= threshold).astype(int)
     else:
@@ -628,9 +628,9 @@ def save_by_slice(dic_dir):
     :param dic_dir: dictionary directory
     """
     if dic_dir[-1] == '/':
-        dic_by_slice_dir = './' + dic_dir[:-1] + '_by_slice/'
+        dic_by_slice_dir = dic_dir[:-1] + '_by_slice/'
     else:
-        dic_by_slice_dir = './' + dic_dir + '_by_slice/'
+        dic_by_slice_dir = dic_dir + '_by_slice/'
 
     sct.run('mkdir ' + dic_by_slice_dir)
 
@@ -700,7 +700,7 @@ def save_by_slice(dic_dir):
                             im_slice.save()
 
                 if 'manual_gmseg' in file_name and 'croped' in file_name:
-                    seg = Image(dic_dir + subject_dir + '/' + file_name)
+                    seg = Image(dic_dir + '/' + subject_dir + '/' + file_name)
                     seg_zooms = seg.hdr.get_zooms()
                     slice_zoom = (seg_zooms[1], seg_zooms[2], seg_zooms[0])
                     if path_file_levels is None:
@@ -733,7 +733,7 @@ def save_by_slice(dic_dir):
 
 
 # ------------------------------------------------------------------------------------------------------------------
-def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='Cubic'):
+def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy=0.3, thr=0.0, interpolation='spline'):
     """
     Resampling function: add a padding, resample, crop the padding
     :param fname: name of the image file to be resampled
@@ -753,25 +753,14 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     nx, ny, nz, nt, px, py, pz, pt = get_dimension(Image(fname))
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
-        name_pad = sct.extract_fname(fname)[1] + '_pad.nii.gz'
-        name_resample = sct.extract_fname(name_pad)[1] + suffix
-        # name_croped = sct.extract_fname(name_resample)[1] + '_croped.nii.gz'
+        name_resample = sct.extract_fname(fname)[1] + suffix
         if binary:
-            interpolation = 'NearestNeighbor'
-        # sct.run('isct_c3d ' + fname + ' -pad 0x0x1vox 0x0x0vox 0 -o ' + name_pad)
-        sct.run('isct_c3d ' + fname + ' -pad 1x1x1vox 1x1x1vox 0 -o ' + name_pad)  # -pad <padlower> <padupper> <value>
+            interpolation = 'nn'
 
-        fx = px/npx
-        fy = py/npy
-        sct.run('sct_resample -i ' + name_pad + ' -f ' + str(fx) + 'x' + str(fy) + 'x1 -o ' + name_resample + ' -x ' + interpolation)
-
-        # sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 2 -start 1 -end ' + str(nz))
-        sct.run('sct_crop_image -i ' + name_resample + ' -o ' + name_resample + ' -dim 0,1,2 -start 1,1,1 -end -1,-1,-1')
+        sct.run('sct_resample -i '+fname+' -mm '+str(npx)+'x'+str(npy)+'x'+str(pz)+' -o '+name_resample+' -x '+interpolation)
 
         if binary:
-            # sct.run('fslmaths ' + name_resample + ' -thr ' + str(thr) + ' ' + name_resample)
             sct.run('sct_maths -i ' + name_resample + ' -thr ' + str(thr) + ' -o ' + name_resample)
-            # sct.run('fslmaths ' + name_resample + ' -bin ' + name_resample)
             sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
 
         if orientation != 'RPI':
@@ -800,7 +789,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
     axial_pix_dim = 0.3
     model_image_size = 75
-    interpolation = 'Cubic'  # 'Sinc'
+    interpolation = 'spline'  # 'Cubic'
     original_path = os.path.abspath('.')
     for subject_dir in os.listdir(path_to_dataset):
         if os.path.isdir(path_to_dataset + '/' + subject_dir):
