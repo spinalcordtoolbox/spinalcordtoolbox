@@ -193,7 +193,7 @@ def main(args=None):
 def vertebral_detection(fname, fname_seg, init_disc):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
-    size_AP = 3  # window size in AP direction (=y) in mm
+    size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
     size_IS = 7  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
@@ -217,7 +217,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(img.data, [3, 2, 0], output=None, mode="reflect")
+    data = gaussian_filter(img.data, [3, 1, 0], output=None, mode="reflect")
 
     # printv('\nDenoise data...', verbose)
     # img.denoise_ornlm()
@@ -243,12 +243,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     # display stuff
     if verbose == 2:
-        plt.matshow(np.mean(data[xc-7:xc+7, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
+        plt.matshow(np.mean(data[xc-size_RL:xc+size_RL, :, :], axis=0).transpose(), fignum=fig_anat_straight, cmap=plt.cm.gray, origin='lower')
         plt.title('Anatomical image')
-        # display init disc
         plt.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50)
-        plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow ', fontsize=15), plt.draw()
+        plt.figure(fig_anat_straight), plt.scatter(yc+shift_AP, init_disc[0], c='y', s=50)  # display init disc
+        plt.text(yc+shift_AP+4, init_disc[0], 'init', verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=15), plt.draw()
 
 
     # FIND DISCS
@@ -285,9 +284,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
         # Get pattern centered at z = current_z
         pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1]
         pattern1d = pattern.ravel()
-        # pattern2d = np.mean(data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP:yc+shift_AP+size_AP+1, current_z-size_IS:current_z+size_IS+1], axis=0)
+        # display pattern
         if verbose == 2:
-            plt.figure(fig_pattern), plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray), plt.title('Pattern in sagittal averaged across R-L'), plt.draw()
+            plt.figure(fig_pattern)
+            plt.matshow(np.flipud(np.mean(pattern[:, :, :], axis=0).transpose()), fignum=fig_pattern, cmap=plt.cm.gray)
+            plt.title('Pattern in sagittal averaged across R-L')
         # compute correlation between pattern and data within
         printv('.. approximate distance to next disc: '+str(approx_distance_to_next_disc)+' mm', verbose)
         length_z_corr = approx_distance_to_next_disc * 2
@@ -317,7 +318,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 if np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
-                    printv('.. WARNING: Data only contains zero. Set correlation to 0.', verbose)
+                    printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
                 ind_I = ind_I + 1
             ind_y = ind_y + 1
 
@@ -348,7 +349,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
             # check if correlation is high enough
             if I_corr_adj[ind_peak[0]][ind_peak[1]] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
-                ind_peak = approx_distance_to_next_disc
+                ind_peak[0] = approx_distance_to_next_disc
+                ind_peak[1] = int(round(len(length_y_corr)/2))
 
         # display peak
         if verbose == 2:
@@ -590,6 +592,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # save and close figure
         plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
     return adjusted_z
+
 
 # START PROGRAM
 # ==========================================================================================

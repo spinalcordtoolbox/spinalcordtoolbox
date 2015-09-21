@@ -1,11 +1,11 @@
-path_model: dictionary_18errsm_15amu_4pilot_resampled_denoised_by_slice/
+path_model: dictionary_18errsm_15amu_4pilot_resampledNEW_denoised_by_slice/
 todo_model: compute
-new_model_dir: ./gm_seg_model*** only used if todo_model=compute ***
+new_model_dir: ./gm_model  *** only used if todo_model=compute ***
 output_name: 
 reg: ['Affine']
 reg_metric: MI
 target_denoising: True ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***
-target_normalization: False
+target_normalization: True
 target_means: None
 first_reg: False
 use_levels: True
