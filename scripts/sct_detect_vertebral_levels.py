@@ -192,7 +192,7 @@ def main(args=None):
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, init_disc):
 
-    shift_AP = 17  # shift the centerline towards the spine (in mm).
+    shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
     size_IS = 7  # window size in RL direction (=z) in mm
@@ -318,7 +318,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 if np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
-                    printv('.. WARNING: Data only contains zero. Set correlation to 0.', verbose)
+                    printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
                 ind_I = ind_I + 1
             ind_y = ind_y + 1
 
@@ -349,7 +349,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
             # check if correlation is high enough
             if I_corr_adj[ind_peak[0]][ind_peak[1]] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
-                ind_peak = approx_distance_to_next_disc
+                ind_peak[0] = approx_distance_to_next_disc
+                ind_peak[1] = int(round(len(length_y_corr)/2))
 
         # display peak
         if verbose == 2:
