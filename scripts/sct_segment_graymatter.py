@@ -368,7 +368,8 @@ if __name__ == "__main__":
 
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.usage.set_description('Segmentation of the white/gray matter on a T2star or MT image\n'
+                                     'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
         parser.add_option(name="-i",
                           type_value="file",
                           description="Target image to segment",
@@ -379,29 +380,22 @@ if __name__ == "__main__":
                           description="Spinal cord segmentation of the target",
                           mandatory=True,
                           example='sc_seg.nii.gz')
+        parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
+                                'Choose one of them')
         parser.add_option(name="-l",
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
                                       "If -l is used, no need to provide t2 data",
                           mandatory=False,
                           example='MNI-Poly-AMU_level_IRP.nii.gz')
-        parser.add_option(name="-o",
-                          type_value="str",
-                          description="output name for the results",
-                          mandatory=False,
-                          example='t2star_res.nii.gz')
-        parser.add_option(name="-model",
-                          type_value="folder",
-                          description="Path to the model data",
-                          mandatory=False,
-                          example='/home/jdoe/gm_seg_model_data/')
         parser.add_option(name="-t2",
                           type_value=[[','], 'file'],
                           description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
-                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks (see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
+                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks\n(see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
                           mandatory=False,
                           default_value=None,
                           example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
+        parser.usage.addSection('SEGMENTATION OPTIONS')
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
                           description="Use the level information for the model or not",
@@ -422,44 +416,24 @@ if __name__ == "__main__":
                           example=['0', '1'])
         parser.add_option(name="-normalize",
                           type_value='multiple_choice',
-                          description="1: Normalization of the target image's intensity using mean intensity values of the WM and the GM",
+                          description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
-        parser.add_option(name="-means",
+        parser.add_option(name="-medians",
                           type_value=[[','], 'float'],
-                          description="Mean intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
+                          description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
                                       "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
                                       "Only if the -normalize flag is used",
                           mandatory=False,
                           default_value=None,
                           example=["450,540"])
-        '''
-        parser.add_option(name="-first-reg",
-                          type_value='multiple_choice',
-                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
+        parser.add_option(name="-model",
+                          type_value="folder",
+                          description="Path to the model data",
                           mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-z",
-                          type_value='multiple_choice',
-                          description="1: Z regularisation, 0: no ",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-label-fusion",
-                          type_value='multiple_choice',
-                          description="Use the similarities as a weights for the label fusion",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-similarity",
-                          type_value='multiple_choice',
-                          description="Use a PCA mode weighted norm for the computation of the similarities instead of the euclidean square norm",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        '''
+                          example='/home/jdoe/gm_seg_model_data/')
+        parser.usage.addSection('OUTPUT OTIONS')
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
@@ -469,9 +443,15 @@ if __name__ == "__main__":
         parser.add_option(name="-ratio",
                           description="Compute GM/WM ratio",
                           mandatory=False)
+        parser.add_option(name="-o",
+                          type_value="str",
+                          description="output name for the results",
+                          mandatory=False,
+                          example='t2star_res.nii.gz')
+        parser.usage.addSection('MISC')
         parser.add_option(name="-ref",
                           type_value="file",
-                          description="Reference segmentation of the gray matter",
+                          description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
                           mandatory=False,
                           example='manual_gm_seg.nii.gz')
         parser.add_option(name="-v",
@@ -504,16 +484,7 @@ if __name__ == "__main__":
             param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
             param.target_means = arguments["-means"]
-        '''
-        if "-first-reg" in arguments:
-            param.first_reg = bool(int(arguments["-first-reg"]))
-        if "-z" in arguments:
-            param.z_regularisation = bool(int(arguments["-z"]))
-        if "-weighted-label-fusion" in arguments:
-            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
-        if "-weighted-similarity" in arguments:
-            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
-        '''
+
         if "-ratio" in arguments:
             compute_ratio = True
         if "-res-type" in arguments:
