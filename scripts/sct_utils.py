@@ -285,6 +285,34 @@ def find_file_within_folder(fname, directory):
                 all_path.append(os.path.join(root, file))
     return all_path
 
+#=======================================================================================================================
+# create temporary folder and return path of tmp dir
+#=======================================================================================================================
+
+def tmp_create(verbose=1):
+    # path_tmp = tmp_create()
+    printv('\nCreate temporary folder...', verbose)
+    import time
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    run('mkdir '+path_tmp, verbose)
+    return path_tmp
+
+
+#=======================================================================================================================
+# copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
+#=======================================================================================================================
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
+    # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
+
+    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    if ext_fname_out == '.nii':
+       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+    elif ext_fname_out == '.nii.gz':
+        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
+
+
 
 #=======================================================================================================================
 # generate_output_file

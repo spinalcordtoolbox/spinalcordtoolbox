@@ -42,15 +42,14 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+
 # MAIN
 # ==========================================================================================
 def main():
 
-
     # initialization
     fsl_is_working = 1
     # ants_is_installed = 1
-    # isct_c3d_is_installed = 1
     install_software = 0
     e = 0
     restart_terminal = 0
@@ -205,17 +204,6 @@ def main():
         e = 1
     if complete_test:
         print '>> '+cmd
-        print (status, output), '\n'
-
-    # check isct_c3d compatibility with OS
-    print_line('Check c3d compatibility with OS ')
-    (status, output) = commands.getstatusoutput('isct_c3d -h')
-    if status in [0, 256]:
-        print_ok()
-    else:
-        print_fail()
-        install_software = 1
-    if complete_test:
         print (status, output), '\n'
 
     # check PropSeg compatibility with OS
