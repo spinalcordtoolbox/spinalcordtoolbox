@@ -321,8 +321,10 @@ class ModelDictionary:
         im_averages = {}
         for level, seg_data_set in gm_seg_by_level.items():
             seg_averages[level] = compute_majority_vote_mean_seg(seg_data_set=seg_data_set, type=type)
+        seg_averages[''] = compute_majority_vote_mean_seg(seg_data_set=[dic_slice.gm_seg_M for dic_slice in self.slices], type=type)
         for level, im_data_set in im_by_level.items():
             im_averages[level] = np.mean(im_data_set, axis=0)
+        im_averages[''] = np.mean([dic_slice.im_M for dic_slice in self.slices], axis=0)
         if save:
             for level, mean_gm_seg in seg_averages.items():
                 Image(param=mean_gm_seg, absolutepath='./mean_seg_' + level + '.nii.gz').save()
@@ -799,6 +801,9 @@ class TargetSegmentationPairwise:
                 if self.model.param.use_levels:
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
                     mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target]
+
+                    print mean_seg_by_level
+                    print 'type : ', type(mean_seg_by_level)
 
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
