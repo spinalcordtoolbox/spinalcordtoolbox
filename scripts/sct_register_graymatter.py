@@ -95,16 +95,17 @@ def wm_registration(param):
     # padding the images
     moving_name_pad = moving_name+"_pad"
     fixed_name_pad = fixed_name+"_pad"
-    sct.run("isct_c3d "+path_moving+moving_name+ext+" -pad 0x0x"+param.padding+"vox 0x0x"+param.padding+"vox 0 -o "+moving_name_pad+ext)
-    sct.run("isct_c3d  "+fixed_name+ext+" -pad 0x0x"+param.padding+"vox 0x0x"+param.padding+"vox 0 -o "+fixed_name_pad+ext)
+    sct.run('sct_maths -i '+path_moving+moving_name+ext+' -o '+moving_name_pad+ext+' -pad 0x0x'+str(param.padding))
+    sct.run('sct_maths -i '+fixed_name+ext+' -o '+fixed_name_pad+ext+' -pad 0x0x'+str(param.padding))
     moving_name = moving_name_pad
     fixed_name = fixed_name_pad
 
     moving_seg_name_pad = moving_seg_name+"_pad"
-    sct.run("isct_c3d  "+path_moving_seg+moving_seg_name+ext+" -pad 0x0x"+param.padding+"vox 0x0x"+param.padding+"vox 0 -o "+moving_seg_name_pad+ext)
+    sct.run('sct_maths -i '+path_moving_seg+moving_seg_name+ext+' -o '+moving_seg_name_pad+ext+' -pad 0x0x'+str(param.padding))
     moving_seg_name = moving_seg_name_pad
+
     fixed_seg_name_pad = fixed_seg_name+"_pad"
-    sct.run("isct_c3d  "+fixed_seg_name+ext+" -pad 0x0x"+param.padding+"vox 0x0x"+param.padding+"vox 0 -o "+fixed_seg_name_pad+ext)
+    sct.run('sct_maths -i '+fixed_seg_name+ext+' -o '+fixed_seg_name_pad+ext+' -pad 0x0x'+str(param.padding))
     fixed_seg_name = fixed_seg_name_pad
 
     # offset
@@ -160,7 +161,8 @@ def wm_registration(param):
     moving_name = moving_name_unpad
 
     moving_name_out = file_output+ext_output
-    sct.run("isct_c3d  "+fixed_name+ext+" "+moving_name+ext+" -reslice-identity -o "+moving_name_out+ext)
+    # put the result and the reference in the same space using a registration with ANTs with no iteration:
+    sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fixed_name+ext+','+moving_name+ext+',1,16] -o [regAffine,'+moving_name_out+'] -n BSpline[3] -c 0 -f 1 -s 0')
 
     return warp_output, inverse_warp_output
 
