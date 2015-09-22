@@ -11,7 +11,7 @@
 # none
 #
 # EXTERNAL SOFTWARE
-# - itksnap/isct_c3d <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
+# - itksnap <http://www.itksnap.org/pmwiki/pmwiki.php?n=Main.HomePage>
 # - ants <http://stnava.github.io/ANTs/>
 #
 #
@@ -166,7 +166,18 @@ def main():
                       example="src_reg.nii.gz")
     parser.add_option(name="-p",
                       type_value=[[':'],'str'],
-                      description="""Parameters for registration. Separate arguments with ",". Separate steps with ":".\nstep: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\nalgo: Default="""+paramreg.steps['1'].algo+"""\n  global registration: {rigid,  affine,  syn,  bsplinesyn}\n  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window),  slicereg2d_rigid,  slicereg2d_affine,  slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines), slicereg2d_bsplinesyn, slicereg2d_syn}\nmetric: {CC,MI,MeanSquares}. Default="""+paramreg.steps['1'].metric+"""\niter: <int> Number of iterations. Default="""+paramreg.steps['1'].iter+"""\nshrink: <int> Shrink factor (only for SyN). Default="""+paramreg.steps['1'].shrink+"""\nsmooth: <int> Smooth factor (only for SyN). Default="""+paramreg.steps['1'].smooth+"""\ngradStep: <float> Gradient step. Default="""+paramreg.steps['1'].gradStep+"""\npoly: <int> Polynomial degree (only for slicereg). Default="""+paramreg.steps['1'].poly+"""\nwindow_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid, slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.. Default="""+paramreg.steps['1'].window_length,
+                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+                                  "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
+                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
+                                    "  global registration: {rigid,  affine,  syn,  bsplinesyn}\n"
+                                    "  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window), slicereg2d_rigid, slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines)}\n" # , slicereg2d_affine, slicereg2d_bsplinesyn, slicereg2d_syn
+                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
+                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
+                                    "shrink: <int> Shrink factor (only for SyN). Default="+paramreg.steps['1'].shrink+"\n"
+                                    "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
+                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
+                                    "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-z",
@@ -271,20 +282,22 @@ def main():
     status, output = sct.run('mkdir '+path_tmp, verbose)
 
     # copy files to temporary folder
-    sct.printv('\nCopy files...', verbose)
-    sct.run('isct_c3d '+fname_src+' -o '+path_tmp+'/src.nii', verbose)
-    sct.run('isct_c3d '+fname_dest+' -o '+path_tmp+'/dest.nii', verbose)
+    from sct_convert import convert
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    convert(fname_src, path_tmp+'/src.nii')
+    convert(fname_dest, path_tmp+'/dest.nii')
+
     if fname_src_seg:
-        sct.run('isct_c3d '+fname_src_seg+' -o '+path_tmp+'/src_seg.nii', verbose)
-        sct.run('isct_c3d '+fname_dest_seg+' -o '+path_tmp+'/dest_seg.nii', verbose)
+        convert(fname_src_seg, path_tmp+'/src_seg.nii')
+        convert(fname_dest_seg, path_tmp+'/dest_seg.nii')
+
     if not fname_mask == '':
-        sct.run('isct_c3d '+fname_mask+' -o '+path_tmp+'/mask.nii.gz', verbose)
+        convert(fname_mask, path_tmp+'/mask.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Put source into destination space using header (no estimation -- purely based on header)
-    # TODO: use c3d?
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
     # sct.printv('\nPut source into destination space using header...', verbose)
@@ -483,12 +496,11 @@ def register(src, dest, paramreg, param, i_step_str):
         cmd = ('')
 
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
-        from msct_image import pad_image
         # Pad the destination image (because ants doesn't deform the extremities)
         # N.B. no need to pad if iter = 0
         if not paramreg.steps[i_step_str].iter == '0':
             dest_pad = sct.add_suffix(dest, '_pad')
-            pad_image(dest, dest_pad, param.padding)
+            sct.run('sct_maths -i '+dest+' -o '+dest_pad+' -pad 0x0x'+str(param.padding))
             dest = dest_pad
 
         cmd = ('isct_antsRegistration '
@@ -517,7 +529,15 @@ def register(src, dest, paramreg, param, i_step_str):
     # run registration
     status, output = sct.run(cmd, param.verbose)
 
-    if os.path.isfile(warp_forward_out):
+    if not os.path.isfile(warp_forward_out):
+        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']: # no inverse warping field for rigid and affine
+        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
+        sct.printv(output, 1, 'error')
+        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    else:
         # rename warping fields
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
             warp_forward = 'warp_forward_'+i_step_str+'.mat'
@@ -528,9 +548,6 @@ def register(src, dest, paramreg, param, i_step_str):
             warp_inverse = 'warp_inverse_'+i_step_str+'.nii.gz'
             os.rename(warp_forward_out, warp_forward)
             os.rename(warp_inverse_out, warp_inverse)
-    else:
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
 
     return warp_forward, warp_inverse
 
@@ -549,7 +566,7 @@ if __name__ == "__main__":
 #===========
 #if convertDeformation:
 #    print('\nConvert deformation field...')
-#    cmd = 'isct_c3d -mcs tmp.regWarp.nii -oo tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'
+#    cmd = 'sct_maths -i tmp.regWarp.nii -mcs  -o tmp.regWarp_x.nii,tmp.regWarp_y.nii,tmp.regWarp_z.nii'
 #    print(">> "+cmd)
 #    os.system(cmd)
 #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'

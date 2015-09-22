@@ -332,25 +332,27 @@ class Pipeline(object):
         """
         for subject in self.data:
             os.chdir(subject.dir_name)
-            if t == 't1':
+            path = ''
+            name = ''
+            t_seg = t
+            if t_seg == 't1':
                 path = subject.dir_t1
                 name = subject.name_t1
-            elif t == 't2':
+            elif t_seg == 't2':
                 path = subject.dir_t2
                 name = subject.name_t2
-            elif t == 't2star':
+            elif t_seg == 't2star':
                 path = subject.dir_t2star
                 name = subject.name_t2star
-                t = 't2'
-                init_mask = ''
+                t_seg = 't2'
                 for file_name in os.listdir(path):
                     if 'mask' in file_name:
                         self.seg_t2star_params['init-mask'] = file_name
                         init_mask = file_name
 
-            if name is not '':
+            if name is not '' and path is not '':
                 os.chdir(path)
-                cmd = 'sct_propseg -i ' + name + ' -o ./ -t ' + t + ' -init ' + str(init)
+                cmd = 'sct_propseg -i ' + name + ' -o ./ -t ' + t_seg + ' -init ' + str(init)
                 if up is not None:
                     cmd = cmd + " -up " + str(up)
                 if down is not None:
@@ -490,6 +492,8 @@ class Pipeline(object):
         for subject in self.data:
             os.chdir(subject.dir_name)
             name_seg = None
+            path = ''
+            name = ''
             if t == 't1':
                 path = subject.dir_t1
                 name = subject.name_t1

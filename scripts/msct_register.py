@@ -228,8 +228,8 @@ def register_slicereg2d_affine(fname_source, fname_dest, window_length=31, param
 
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
+    sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
+    sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
@@ -316,14 +316,20 @@ def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg
     register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
-    data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
-    data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
-    hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
-    data_warp_x_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_data()
-    data_warp_y_inverse = load(name_warp_syn + '_y_inverse.nii.gz').get_data()
-    hdr_warp_inverse = load(name_warp_syn + '_x_inverse.nii.gz').get_header()
+    sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
+    sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
+
+    im_warp_x = Image(name_warp_syn + '_x.nii.gz')
+    data_warp_x = im_warp_x.data
+    im_warp_y = Image(name_warp_syn + '_y.nii.gz')
+    data_warp_y = im_warp_y.data
+    hdr_warp = im_warp_x.hdr
+    im_warp_x_inverse = Image(name_warp_syn + '_x_inverse.nii.gz')
+    data_warp_x_inverse = im_warp_x_inverse.data
+    im_warp_y_inverse = Image(name_warp_syn + '_y_inverse.nii.gz')
+    data_warp_y_inverse = im_warp_y_inverse.data
+    hdr_warp_inverse = im_warp_x_inverse.hdr
+
     #Outliers deletion
     print'\n\tDeleting outliers...'
     mask_x_a = apply_along_axis(lambda m: outliers_detection(m, type='median', factor=factor, return_filtered_signal='no', verbose=0), axis=-1, arr=data_warp_x)
@@ -344,6 +350,7 @@ def register_slicereg2d_syn(fname_source, fname_dest, window_length=31, paramreg
 
     print'\nSaving regularized warping fields...'
     #Get image dimensions of destination image
+    from msct_image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
     data_warp_smooth = zeros(((((nx, ny, nz, 1, 3)))))
     data_warp_smooth[:,:,:,0,0] = data_warp_x_smooth
@@ -406,8 +413,8 @@ def register_slicereg2d_bsplinesyn(fname_source, fname_dest, window_length=31, p
     register_images(fname_source, fname_dest, mask=fname_mask, paramreg=paramreg, remove_tmp_folder=remove_temp_files, ants_registration_params=ants_registration_params)
     print'\nRegularizing warping fields along z axis...'
     print'\n\tSplitting warping fields ...'
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
-    sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
+    sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
+    sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()

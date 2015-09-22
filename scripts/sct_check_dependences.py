@@ -42,15 +42,14 @@ class bcolors:
     FAIL = '\033[91m'
     ENDC = '\033[0m'
 
+
 # MAIN
 # ==========================================================================================
 def main():
 
-
     # initialization
     fsl_is_working = 1
     # ants_is_installed = 1
-    # isct_c3d_is_installed = 1
     install_software = 0
     e = 0
     restart_terminal = 0
@@ -128,21 +127,33 @@ def main():
         version_sct = myfile.read().replace('\n', '')
     print "  version: "+version_sct
 
+    # check if git is installed
+    print_line('Check if git is installed ')
+    cmd = 'which git'
+    status, output = commands.getstatusoutput(cmd)
+    if output:
+        print_ok()
+    else:
+        print_fail()
+        print '  git is not installed.'
+        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
+        e = 1
+    if complete_test:
+        print '>> '+cmd
+        print (status, output), '\n'
+
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
     for i in version_requirements:
-        if i == 'pillow':
-            module = 'PIL'
+        if i == 'scikit-image':
+            module = 'skimage'
         else:
             module = i
         print_line('Check if '+i+' ('+version_requirements.get(i)+') is installed')
         try:
             module = importlib.import_module(module)
             # get version
-            if i == 'pillow':
-                version = module.PILLOW_VERSION
-            else:
-                version = module.__version__
+            version = module.__version__
             # check if version matches requirements
             if check_package_version(version, version_requirements, i):
                 print_ok()
@@ -156,10 +167,7 @@ def main():
     # loop across python packages -- PIP
     version_requirements_pip = get_version_requirements_pip()
     for i in version_requirements_pip:
-        if i == 'scikit-image':
-            module = 'skimage'
-        else:
-            module = i
+        module = i
         print_line('Check if '+i+' ('+version_requirements_pip.get(i)+') is installed')
         try:
             module = importlib.import_module(module)
@@ -175,22 +183,15 @@ def main():
             print_fail()
             install_software = 1
 
-
-    # check if git is installed
-    print_line('Check if git is installed ')
-    cmd = 'which git'
-    status, output = commands.getstatusoutput(cmd)
-    if output:
+    # Check if external modules are installed
+    print_line('Check if ornlm is installed')
+    sys.path.append(path_sct + '/external/denoise/ornlm')  # append to PYTHONPATH
+    try:
+        importlib.import_module('ornlm')
         print_ok()
-    else:
+    except ImportError:
         print_fail()
-        print '  git is not installed.'
-        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
-        e = 1
-
-    if complete_test:
-        print '>> '+cmd
-        print (status, output), '\n'
+        install_software = 1
 
     # check if ANTs is compatible with OS
     print_line('Check ANTs compatibility with OS ')
@@ -203,17 +204,6 @@ def main():
         e = 1
     if complete_test:
         print '>> '+cmd
-        print (status, output), '\n'
-
-    # check isct_c3d compatibility with OS
-    print_line('Check c3d compatibility with OS ')
-    (status, output) = commands.getstatusoutput('isct_c3d -h')
-    if status in [0, 256]:
-        print_ok()
-    else:
-        print_fail()
-        install_software = 1
-    if complete_test:
         print (status, output), '\n'
 
     # check PropSeg compatibility with OS
