@@ -107,6 +107,8 @@ sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
+
+#---------------------OLD>>>>>>>>>>
 # register to template (template registered to t2).
 sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d mt1.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MI,iter=2,gradStep=0.5
 # concatenate transfo
@@ -114,6 +116,15 @@ sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22mt1.n
 sct_concat_transfo -w warp_mt12MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_mt2template.nii.gz
 # warp template and atlas
 sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
+#-------------------OLD^^^^^^^^^
+#---------------------NEW>>>>>>>>>>
+# register template to MT , taking th internal structure into account
+sct_register_graymatter -i mt1.nii.gz -iseg mt1_seg.nii.gz -anat ../t2/template2anat.nii.gz -anat-seg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -warp ../t2/warp_template2anat.nii.gz
+# concatenate transfo
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_corrected_wm.nii.gz -d mt1.nii.gz -o warp_template2mt1.nii.gz
+# warp template
+sct_warp_template -d mt1.nii.gz -w warp_template2mt1.nii.gz
+#-------------------NEW^^^^^^^^^
 # check registration result
 fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # extract MTR within the white matter
@@ -130,8 +141,14 @@ sct_create_mask -i fmri.nii.gz -m center -s 30 -f cylinder
 # moco
 sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz
 # tips: if you have low SNR you can group consecutive images with "-g"
+
+#---------------------OLD>>>>>>>>>>
 # put T2 segmentation into fmri space
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -p step=1,iter=0
+#-------------------OLD^^^^^^^^^
+#---------------------NEW>>>>>>>>>>
+
+#-------------------NEW^^^^^^^^^
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mean fMRI volume
