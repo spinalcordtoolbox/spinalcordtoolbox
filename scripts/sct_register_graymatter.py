@@ -39,12 +39,12 @@ class WmRegistrationParam:
         self.fname_moving = ''
         self.fname_seg_fixed = ''
         self.fname_seg_moving = ''
-        self.transformation = 'BSplineSyN'  # 'SyN'
-        self.metric = 'CC'  # 'MeanSquares'
+        self.transformation = 'BSplineSyN' #'slicereg'  # 'BSplineSyN'  # 'SyN'
+        self.metric = 'MeanSquares'
         self.gradient_step = '0.5'
         self.radius = '2'  # '4'
         self.interpolation = 'BSpline'
-        self.iteration = '10x5' # '20x15'
+        self.iteration = '10x20' # '20x15'
         self.fname_output = 'wm_registration.nii.gz'
         self.padding = '10'
 
@@ -81,7 +81,6 @@ def wm_registration(param):
     path, fixed_seg_name, ext = sct.extract_fname(param.fname_seg_fixed)
     path_moving_seg, moving_seg_name, ext = sct.extract_fname(param.fname_seg_moving)
 
-
     # cropping in x & y directions
     fixed_name_temp = fixed_name + "_crop"
     cmd = "sct_crop_image -i " + fixed_name + ext + " -o " + fixed_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 5,5 -dim 0,1"
@@ -108,63 +107,125 @@ def wm_registration(param):
     sct.run('sct_maths -i '+fixed_seg_name+ext+' -o '+fixed_seg_name_pad+ext+' -pad 0x0x'+str(param.padding))
     fixed_seg_name = fixed_seg_name_pad
 
-    # offset
-    old_min = 0
-    old_max = 1
-    new_min = 100
-    new_max = 200
+    if param.metric == 'MeanSquares':
+        # offset
+        old_min = 0
+        old_max = 1
+        new_min = 100
+        new_max = 200
 
-    fixed_im = Image(fixed_name+ext)
-    fixed_im.data = (fixed_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
-    fixed_im.save()
+        fixed_im = Image(fixed_name+ext)
+        fixed_im.data = (fixed_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
+        fixed_im.save()
 
-    moving_im = Image(moving_name+ext)
-    moving_im.data = (moving_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
-    moving_im.save()
+        moving_im = Image(moving_name+ext)
+        moving_im.data = (moving_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
+        moving_im.save()
 
     # registration of the gray matter
     sct.printv('\nDeforming the image...', verbose, 'normal')
     moving_name_reg = moving_name+"_deformed"
 
+    # param_multimodal_reg = 'step=1,type=seg,algo=syn,metric=CC,iter=5:step=2,type=im,algo='+param.transformation.lower()+',metric=MeanSquares,iter=10'
     if param.transformation == 'BSplineSyN':
         transfo_params = ',3,0'
-    elif param.transforlation == 'SyN':     # SyN gives bad results...
+    elif param.transformation == 'SyN':     # SyN gives bad results...
         transfo_params = ',1,1'
     else:
         transfo_params = ''
 
-    cmd = 'isct_antsRegistration --dimensionality 3 --interpolation '+param.interpolation+' --transform '+param.transformation+'['+param.gradient_step+transfo_params+'] --metric '+param.metric+'['+fixed_name+ext+','+moving_name+ext+',1,4] --output ['+moving_name_reg+','+moving_name_reg+ext+']  --convergence '+param.iteration+' --shrink-factors 2x1 --smoothing-sigmas 0x0 '
+    # cmd = 'sct_register_multimodal -i '+moving_name+ext+' -d '+fixed_name+ext+' -iseg '+moving_seg_name+ext+' -dseg '+fixed_seg_name+ext+' -p '+param_multimodal_reg+' -o '+moving_name_reg
+
+    cmd = 'isct_antsRegistration --dimensionality 3 --interpolation '+param.interpolation+' --transform '+param.transformation+'['+param.gradient_step+transfo_params+'] --metric '+param.metric+'['+fixed_name+ext+','+moving_name+ext+',1,4] --output ['+moving_name_reg+','+moving_name_reg+ext+']  --convergence '+param.iteration+' --shrink-factors 1x1 --smoothing-sigmas 0x1 '
+    # initialize the transformation using the intensity
+    cmd += ' -r ['+fixed_name+ext+','+moving_name+ext+',1] '
 
     cmd += " --masks ["+fixed_seg_name+ext+","+moving_seg_name + ext + "]"
     # cmd += " -m ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
+
     sct.run(cmd)
-    moving_name = moving_name_reg
 
-    # removing offset
-    fixed_im = Image(fixed_name+ext)
-    fixed_im.data = (fixed_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
-    fixed_im.save()
+    # transform the .mat warping field into a nifti file:
+    warp0_mat = moving_name_reg+'0GenericAffine.mat'
+    warp0, warp0_inv = transform_mat_to_warp(warp0_mat, moving_name_reg+ext, fixed_name+ext)
+    warp1 = moving_name_reg+'1Warp.nii.gz'
+    warp1_inv = moving_name_reg+'1InverseWarp.nii.gz'
 
-    moving_im = Image(moving_name+ext)
-    moving_im.data = (moving_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
-    moving_im.save()
+    # Concatenate the warping fields from the 2 steps into a warp total and an inverse
+    warp_tot = moving_name_reg+'_warp_tot'+ext
+    inverse_warp_tot = moving_name_reg+'_inverse_warp_tot'+ext
 
-    # un-padding the images
-    moving_name_unpad = moving_name+"_unpadded"
-    sct.run("sct_crop_image -i "+moving_name+ext+" -dim 2 -start "+str(int(param.padding)-1)+" -end -"+param.padding+" -o "+moving_name_unpad+ext)
+    sct.run('sct_concat_transfo -w '+warp0+','+warp1+' -d '+fixed_name+ext+' -o '+warp_tot)
+    sct.run('sct_concat_transfo -w '+warp1_inv+','+warp0_inv+' -d '+moving_name+ext+' -o '+inverse_warp_tot)
+
+    if param.metric == 'MeanSquares':
+        # removing offset
+        fixed_im = Image(fixed_name+ext)
+        fixed_im.data = (fixed_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
+        fixed_im.save()
+
+        moving_im = Image(moving_name_reg+ext)
+        moving_im.data = (moving_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
+        moving_im.save()
+
+
+    # un-padding the images AND the warping fields
+    moving_name_unpad = moving_name_reg+"_unpadded"
+    sct.run("sct_crop_image -i "+moving_name_reg+ext+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+moving_name_unpad+ext)
+
+    # warp_tot = moving_name_reg+"0Warp.nii.gz"
+    # inverse_warp_tot = moving_name_reg+"0InverseWarp.nii.gz"
+    warp_unpad = sct.add_suffix(warp_tot, '_unpad')  # moving_name_reg+"0Warp_unpad.nii.gz"
+    inverse_warp_unpad =  sct.add_suffix(inverse_warp_tot, '_unpad')  # moving_name_reg+"0InverseWarp_unpad.nii.gz"
+    sct.run("sct_crop_image -i "+warp_tot+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+warp_unpad)
+    sct.run("sct_crop_image -i "+inverse_warp_tot+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+inverse_warp_unpad)
+
+
 
     path_output, file_output, ext_output = sct.extract_fname(param.fname_output)
-    warp_output = file_output+"0Warp"+ext_output
-    inverse_warp_output = file_output+"0InverseWarp"+ext_output
-    sct.run("mv "+moving_name+"0Warp.nii.gz "+warp_output)
-    sct.run("mv "+moving_name+"0InverseWarp.nii.gz "+inverse_warp_output)
-    moving_name = moving_name_unpad
+    warp_output = file_output+"_Warp"+ext_output
+    inverse_warp_output = file_output+"_InverseWarp"+ext_output
 
+    '''
+    # with multimodal_reg
+    sct.run("mv warp_"+moving_name+"2"+fixed_name+".nii.gz "+warp_output)
+    sct.run("mv warp_"+fixed_name+"2"+moving_name+".nii.gz "+inverse_warp_output)
+    '''
+    # with antsReg
+    sct.run("mv "+warp_unpad+" "+warp_output)
+    sct.run("mv "+inverse_warp_unpad+" "+inverse_warp_output)
+
+    moving_name = moving_name_unpad
     moving_name_out = file_output+ext_output
     # put the result and the reference in the same space using a registration with ANTs with no iteration:
     sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fixed_name+ext+','+moving_name+ext+',1,16] -o [regAffine,'+moving_name_out+'] -n BSpline[3] -c 0 -f 1 -s 0')
 
     return warp_output, inverse_warp_output
+
+
+def transform_mat_to_warp(warp_mat_name, src, dest):
+    from msct_register_regularized import generate_warping_field
+    path_warp, name_warp, ext_warp = sct.extract_fname(warp_mat_name)
+    new_ext = '.nii.gz'
+    name_output_warp = name_warp+new_ext
+    name_output_warp_inverse = name_warp+'_inverse'+new_ext
+    name_warp_null = 'warp_null.nii.gz'
+    name_warp_null_inv = 'warp_null_inv.nii.gz'
+
+    # Generating null nifti warping fields
+    nx, ny, nz, nt, px, py, pz, pt = Image(src).dim
+    nx_d, ny_d, nz_d, nt_d, px_d, py_d, pz_d, pt_d = Image(dest).dim
+    x_trans = [0 for i in range(nz)]
+    x_trans_d = [0 for i in range(nz_d)]
+    y_trans= [0 for i in range(nz)]
+    y_trans_d = [0 for i in range(nz_d)]
+    generate_warping_field(src, x_trans=x_trans, y_trans=y_trans, fname=name_warp_null, verbose=0)
+    generate_warping_field(dest, x_trans=x_trans_d, y_trans=y_trans_d, fname=name_warp_null_inv, verbose=0)
+    # Concatenating mat wrp and null nifti warp to obtain equivalent nifti warp to mat warp
+    #if fails, try to inverse src and dest
+    sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp + ' -R ' + src + ' ' + name_warp_null + ' ' + warp_mat_name) # after output :
+    sct.run('isct_ComposeMultiTransform 2 ' + name_output_warp_inverse + ' -R ' + dest + ' ' + name_warp_null_inv + ' -i ' + warp_mat_name) # after output :
+    return name_output_warp, name_output_warp_inverse
 
 
 ########################################################################################################################
@@ -193,6 +254,7 @@ def main():
     warp_anat2target, warp_target2anat, label_original = reg_multimodal_warp(anat, target, anat_seg, target_seg, warp_template2anat)
 
     # segmentation of the gray matter
+    gm_seg_param.res_type = 'binary'
     wm_fname, gm_fname = segment_gm(target_fname=target, sc_seg_fname=target_seg, path_to_label=label_original, param=gm_seg_param)
 
     # registration of the template WM to the automatic Wm segmentation
@@ -200,6 +262,12 @@ def main():
     wm_reg_param.fname_moving = label_original + '/template/MNI-Poly-AMU_WM.nii.gz'
     wm_reg_param.fname_seg_fixed = target_seg
     wm_reg_param.fname_seg_moving = label_original + '/template/MNI-Poly-AMU_cord.nii.gz'
+
+    if gm_seg_param.res_type == 'binary':
+        # binarize template WM
+        template_wm = Image(wm_reg_param.fname_moving)
+        template_wm.data = (template_wm.data > 0.5).astype(int)
+        template_wm.save()
 
     warp, inverse_warp = wm_registration(wm_reg_param)
 
@@ -281,7 +349,7 @@ if __name__ == "__main__":
                           description="type of transformation",
                           mandatory=False,
                           default_value='BSplineSyN',
-                          example=['SyN', 'BSplineSyN'])
+                          example=['BSplineSyN', 'SyN'])  # , 'Affine'])
         parser.add_option(name="-m",
                           type_value='multiple_choice',
                           description="Metric used for the registration",
