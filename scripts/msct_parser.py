@@ -86,7 +86,12 @@ from msct_types import Coordinate # useful for Coordinate
 
 class Option:
     # list of option type that can be casted
-    OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
+    OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
+    # list of options that are path type
+    # input file/folder
+    OPTION_PATH_INPUT = ["file", "folder", "image_nifti"]
+    # output file/folder
+    OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
     ## Constructor
     def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
@@ -344,6 +349,25 @@ class Parser:
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
+
+    def add_path_to_file(self, dictionary, path_to_add, input_file=True, output_file=False):
+        """
+        This function add a path in front of each value in a dictionary (provided by the parser) for option that are files or folders.
+        This function can affect option files that represent input and/or output with "input_file" and output_file" parameters.
+        The parameter path_to_add must contain the character "/" at its end.
+        Output is the same dictionary as provided but modified with added path.
+        """
+        for key, option in dictionary:
+            # check if option is present in this parser
+            if key in self.options:
+                # if input file
+                if (input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT):
+                    dictionary[key] = path_to_add + option
+            else:
+                sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
+
+        return dictionary
+
 
 ########################################################################################################################
 ####### USAGE
