@@ -291,6 +291,11 @@ class ScadScript(BaseScript):
                           mandatory=True,
                           example=['t1', 't2'])
         parser.usage.addSection("General options")
+        parser.add_option(name="-o",
+                          type_value="string",
+                          description="Centerline file name (result file name)",
+                          mandatory=False,
+                          example="out.nii.gz")
         parser.add_option(name="-p",
                           type_value="multiple_choice",
                           description="Produce output debug files",
@@ -319,7 +324,6 @@ class ScadScript(BaseScript):
                           type_value="int",
                           description="Gives approximate radius of spinal cord to help the algorithm",
                           mandatory=False,
-                          default_value=4,
                           example="4")
 
         parser.add_option(name="-v",
@@ -336,9 +340,10 @@ class ScadScript(BaseScript):
 
 
 class SCAD(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 4):
+    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0,output_filename=None, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 3):
         """
         Constructor for the automatic spinal cord detection
+        :param output_filename: Name of the result file of the centerline detection. Must contain the extension (.nii / .nii.gz)
         :param input_image:
         :param contrast:
         :param verbose:
@@ -352,6 +357,9 @@ class SCAD(Algorithm):
         super(SCAD, self).__init__(input_image, produce_output=produce_output)
         self._contrast = contrast
         self._verbose = verbose
+        self.output_filename = input_image.file_name + "_centerline.nii.gz"
+        if output_filename is not None:
+            self.output_filename = output_filename
         self.rm_tmp_file = rm_tmp_file
         self.debug = debug
         self.vesselness_provided = vesselness_provided
@@ -498,8 +506,6 @@ class SCAD(Algorithm):
 
         self.setup_debug_folder()
 
-        # resample input file
-
         if self.debug:
             import matplotlib.pyplot as plt # import for debug purposes
 
@@ -533,7 +539,7 @@ class SCAD(Algorithm):
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
         img.change_orientation()
-        self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1, smooth_factor=1)
+        self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
         self.output_debug_file(img, self.minimum_path_data, "minimal_path")
         self.output_debug_file(img, self.J1_min_path, "J1_minimal_path")
         self.output_debug_file(img, self.J2_min_path, "J2_minimal_path")
@@ -587,7 +593,7 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        conv.convert(path_tmp+img.file_name+img.ext, original_name+"_centerline.nii.gz")
+        conv.convert(path_tmp+img.file_name+img.ext, self.output_filename)
         if self.rm_tmp_file == 1:
             import shutil
             shutil.rmtree(path_tmp)
@@ -603,6 +609,8 @@ if __name__ == "__main__":
 
     scad = SCAD(input_image, contrast=contrast_type)
 
+    if "-o" in arguments:
+        scad.output_filename = arguments["-o"]
     if "-p" in arguments:
         scad.produce_output = int(arguments["-p"])
     if "-rmtmp" in arguments:
