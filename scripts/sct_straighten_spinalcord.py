@@ -1050,7 +1050,7 @@ class SpinalCordStraightener(object):
         sct.printv("fslview " + fname_straight + " &\n", verbose, "info")
 
 
-if __name__ == "__main__":
+def get_parser():
     # Initialize parser
     parser = Parser(__file__)
 
@@ -1136,6 +1136,11 @@ if __name__ == "__main__":
                       mandatory=False,
                       example="8")
 
+    return parser
+
+
+if __name__ == "__main__":
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     # assigning variables to arguments
