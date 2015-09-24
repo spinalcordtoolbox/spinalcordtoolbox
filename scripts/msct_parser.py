@@ -125,7 +125,7 @@ class Option:
             type_option = type
 
         if type_option in self.OPTION_TYPES:
-            return self.checkStandardType(param,type)
+            return self.checkStandardType(param, type)
 
         elif type_option == "image_nifti":
             return self.checkIfNifti(param)
@@ -133,7 +133,7 @@ class Option:
         elif type_option == "file":
             return self.checkFile(param)
 
-        elif type_option == "file_output": # check if permission are required
+        elif type_option == "file_output":  # check if permission are required
             if not sct.check_write_permission(param):
                 self.parser.usage.error("Error of writing permissions on file: "+param)
             return param
@@ -357,17 +357,35 @@ class Parser:
         The parameter path_to_add must contain the character "/" at its end.
         Output is the same dictionary as provided but modified with added path.
         """
-        for key, option in dictionary:
+        for key, option in dictionary.iteritems():
             # check if option is present in this parser
             if key in self.options:
                 # if input file
-                if (input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT):
-                    dictionary[key] = path_to_add + option
+                if isinstance(self.options[key].type_option, list) and ((input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT)):
+                    for i, value in enumerate(option):
+                        option[i] = path_to_add + value
+                    dictionary[key] = option
+                else:
+                    if (input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT):
+                        dictionary[key] = path_to_add + option
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
         return dictionary
 
+    @staticmethod
+    def dictionary_to_string(dictionary):
+        """
+        This function transform a dictionary (key="-i", value="t2.nii.gz") into a string "-i t2.nii.gz".
+        """
+        result = ""
+        for key, option in dictionary.iteritems():
+            if isinstance(option, list):
+                result = result + ' ' + key + ' ' + ','.join(str(option))
+            else:
+                result = result + ' ' + key + ' ' + str(option)
+
+        return result
 
 ########################################################################################################################
 ####### USAGE
