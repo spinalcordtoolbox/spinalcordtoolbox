@@ -464,29 +464,6 @@ class Pipeline(object):
         self.straightening_results = [result for result in results if result is not None]
         sorted(self.straightening_results, key=lambda l: l[0])
 
-    def scad_validation(self):
-        try:
-            os.chdir(self.path_data)
-        except Exception, e:
-            raise e
-
-        for subject in self.data:
-            try:
-                os.chdir(subject.dir_name)
-            except Exception, e:
-                raise e
-            if self.t == "t1":
-                path = subject.dir_t1
-                name = subject.name_t1
-                name_seg = subject.name_t1_seg
-            elif self.t == "t2":
-                path = subject.dir_t2
-                name = subject.name_t2
-                name_seg = subject.name_t2_seg
-
-
-
-
     def straighten_spinalcord(self):
         """
         straighten image based on segmentation and/or manual labels
