@@ -251,7 +251,7 @@ def test_function(script_name):
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
-    status, output = script_tested.test(param.path_data)
+    status, output, results =  script_tested.test(param.path_data)
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status
