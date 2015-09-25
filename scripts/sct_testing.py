@@ -210,14 +210,13 @@ def print_fail():
 # write to log file
 # ==========================================================================================
 def write_to_log_file(fname_log, string, mode='w'):
-
-    '''
+    """
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = output + '/testing/logs'
 
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
-    '''
+    """
 
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
@@ -251,7 +250,10 @@ def test_function(script_name):
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
-    status, output, results =  script_tested.test(param.path_data)
+    result_test = script_tested.test(param.path_data)
+    # test functions can return 2 or 3 variables, depending if there is results.
+    # In this script, we look only at the first two variables.
+    status, output = result_test[0], result_test[1]
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status
