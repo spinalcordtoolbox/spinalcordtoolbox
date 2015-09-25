@@ -51,7 +51,7 @@ def test(path_data='', parameters=''):
     # transform results into Pandas structure
     results = DataFrame(data={'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
 
-    return status, output, results
+    return (status, output, results)
 
 if __name__ == "__main__":
     # call main function
