@@ -388,12 +388,12 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
         return offset_sign
 
     offset_signs = get_sign_offsets(im.orientation)
-    im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x
-    im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y
-    im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z
-    im.hdr.structarr['srow_x'][-1] += offset_signs[0]*padding_x
-    im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y
-    im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z
+    im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x*px
+    im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y*py
+    im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z*pz
+    im.hdr.structarr['srow_x'][-1] += offset_signs[0]*padding_x*px
+    im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y*py
+    im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z*pz
 
     return padded_data
 
