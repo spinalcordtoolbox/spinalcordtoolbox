@@ -28,7 +28,7 @@ def test(data_path):
     file_data = ['t2.nii.gz', 't2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
     # define command
-    cmd = 'sct_detect_vertebral_levels -i ' + data_path + folder_data[0] + file_data[0] \
+    cmd = 'sct_label_vertebrae -i ' + data_path + folder_data[0] + file_data[0] \
         + ' -seg ' + data_path + folder_data[0] + file_data[1] \
         + ' -initz 34,3 ' \
         + ' -o t2_seg_labeled_totest.nii.gz'
