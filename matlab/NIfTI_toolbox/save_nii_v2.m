@@ -71,7 +71,7 @@ function save_nii_v2(nii, fileprefix, old_nii_fname,datatype)
            oldnii.img=nii;
            nii=oldnii;
        else
-           error('Usage: save_nii(nii, filename, old_nii_fname)')
+           error('error:usage','Usage: save_nii_v2(Matrix, filename, old_nii_fname)\n old_nii_fname is missing: You need to specify a nifti filename from which the header will be copied.')       
        end
    end
    
