@@ -373,13 +373,13 @@ class Parser:
         for key, option in dictionary.iteritems():
             # check if option is present in this parser
             if key in self.options:
-                # if input file
-                if isinstance(self.options[key].type_value, list) and ((input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT)):
+                # if input file is a list, we need to check what type of list it is. If it contians files, it must be updated.
+                if isinstance(self.options[key].type_value, list) and ((input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT)):
                     for i, value in enumerate(option):
                         option[i] = path_to_add + value
                     dictionary[key] = option
                 else:
-                    if (input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT):
+                    if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
                         dictionary[key] = path_to_add + option
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
