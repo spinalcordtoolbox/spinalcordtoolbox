@@ -193,134 +193,39 @@ class ProcessLabels(object):
 
     def cubic_to_point(self):
         """
-        This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
+        This function calculates the center of mass of each group of labels and returns a file of same size with only a
+         label by group at the center of mass of this group.
         It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
+        Be careful: this algorithm computes the center of mass of voxels with same value, if two groups of voxels with
+         the same value are present but separated in space, this algorithm will compute the center of mass of the two
+         groups together.
         :return: image_output
         """
         from scipy import ndimage
-        from numpy import array,mean
-        data = self.image_input.data
+        from numpy import array, mean
 
+        # 0. Initialization of output image
+        output_image = self.image_input.copy()
+        output_image.data *= 0
 
-        # pb: doesn't work if several groups have same value
-        image_output = self.image_input.copy()
-        data_output = image_output.data
-        data_output *= 0
+        # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
         coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
-        #list of present values
-        list_values = []
-        for i,coord in enumerate(coordinates):
-            if i == 0 or coord.value != coordinates[i-1].value:
-                list_values.append(coord.value)
 
-        # make list of group of labels coordinates per value
-        list_group_labels = []
-        list_barycenter = []
-        for i in range(0, len(list_values)):
-            #mean_coord = mean(array([[coord.x, coord.y, coord.z] for coord in coordinates if coord.value==i]))
-            list_group_labels.append([])
-            list_group_labels[i] = [coordinates[j] for j in range(len(coordinates)) if coordinates[j].value == list_values[i]]
-            # find barycenter: first define each case as a coordinate instance then calculate the value
-            list_barycenter.append([0,0,0,0])
-            sum_x = 0
-            sum_y = 0
-            sum_z = 0
-            for j in range(len(list_group_labels[i])):
-                sum_x += list_group_labels[i][j].x
-                sum_y += list_group_labels[i][j].y
-                sum_z += list_group_labels[i][j].z
-            list_barycenter[i][0] = int(round(sum_x/len(list_group_labels[i])))
-            list_barycenter[i][1] = int(round(sum_y/len(list_group_labels[i])))
-            list_barycenter[i][2] = int(round(sum_z/len(list_group_labels[i])))
-            list_barycenter[i][3] = list_group_labels[i][0].value
+        # 2. Separate all coordinates into groups by value
+        groups = dict()
+        for coord in coordinates:
+            if coord.value in groups:
+                groups[coord.value].append(coord)
+            else:
+                groups[coord.value] = [coord]
 
-        # put value of group at each center of mass
-        for i in range(len(list_values)):
-            data_output[list_barycenter[i][0],list_barycenter[i][1], list_barycenter[i][2]] = list_barycenter[i][3]
+        # 3. Compute the center of mass of each group of voxels and write them into the output image
+        for value, list_coord in groups.iteritems():
+            center_of_mass = sum(list_coord)/float(len(list_coord))
+            sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( "+ str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
+            output_image.data[round(center_of_mass.x), round(center_of_mass.y), round(center_of_mass.z)] = center_of_mass.value
 
-        return image_output
-
-        # Process to use if one wants to calculate the center of mass of a group of labels ordered by volume (and not by value)
-        # image_output = self.image_input.copy()
-        # data_output = image_output.data
-        # data_output *= 0
-        # nx = image_output.data.shape[0]
-        # ny = image_output.data.shape[1]
-        # nz = image_output.data.shape[2]
-        # print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-        #
-        # z_centerline = [iz for iz in range(0, nz, 1) if data[:,:,iz].any() ]
-        # nz_nonz = len(z_centerline)
-        # if nz_nonz==0 :
-        #     print '\nERROR: Label file is empty'
-        #     sys.exit()
-        # x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        # y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        # print '\nGet center of mass for each slice of the label file ...'
-        # for iz in xrange(len(z_centerline)):
-        #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:,:,z_centerline[iz]]))
-        #
-        # ## Calculate mean coordinate according to z for each cube of labels:
-        # list_cube_labels_x = [[]]
-        # list_cube_labels_y = [[]]
-        # list_cube_labels_z = [[]]
-        # count = 0
-        # for i in range(nz_nonz-1):
-        #     # Make a list of group of slices that contains a non zero value
-        #     # check if the group is only one slice of height (at first slice)
-        #     if i==0 and z_centerline[i] - z_centerline[i+1] != -1:
-        #         list_cube_labels_z[count].append(z_centerline[i])
-        #         list_cube_labels_x[count].append(x_centerline[i])
-        #         list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z.append([])
-        #         list_cube_labels_x.append([])
-        #         list_cube_labels_y.append([])
-        #         count += 1
-        #     # check if the group is only one slice of height (in the middle)
-        #     if i>0 and z_centerline[i-1] - z_centerline[i] != -1 and z_centerline[i] - z_centerline[i+1] != -1:
-        #         list_cube_labels_z[count].append(z_centerline[i])
-        #         list_cube_labels_x[count].append(x_centerline[i])
-        #         list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z.append([])
-        #         list_cube_labels_x.append([])
-        #         list_cube_labels_y.append([])
-        #         count += 1
-        #     if z_centerline[i] - z_centerline[i+1] == -1:
-        #         # Verify if the value has already been recovered and add if not
-        #         #If the group is empty add first value do not if it is not empty as it will copy it for a second time
-        #         if len(list_cube_labels_z[count]) == 0 :#or list_cube_labels[count][-1] != z_centerline[i]:
-        #             list_cube_labels_z[count].append(z_centerline[i])
-        #             list_cube_labels_x[count].append(x_centerline[i])
-        #             list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z[count].append(z_centerline[i+1])
-        #         list_cube_labels_x[count].append(x_centerline[i+1])
-        #         list_cube_labels_y[count].append(y_centerline[i+1])
-        #         if i+2 < nz_nonz-1 and z_centerline[i+1] - z_centerline[i+2] != -1:
-        #             list_cube_labels_z.append([])
-        #             list_cube_labels_x.append([])
-        #             list_cube_labels_y.append([])
-        #             count += 1
-        #
-        # z_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # x_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # y_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # v_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # for i in range(len(list_cube_labels_z)):
-        #     for j in range(len(list_cube_labels_z[i])):
-        #         z_label_mean[i] += list_cube_labels_z[i][j]
-        #         x_label_mean[i] += list_cube_labels_x[i][j]
-        #         y_label_mean[i] += list_cube_labels_y[i][j]
-        #     z_label_mean[i] = int(round(z_label_mean[i]/len(list_cube_labels_z[i])))
-        #     x_label_mean[i] = int(round(x_label_mean[i]/len(list_cube_labels_x[i])))
-        #     y_label_mean[i] = int(round(y_label_mean[i]/len(list_cube_labels_y[i])))
-        #     # We suppose that the labels' value of the group is the value of the barycentre
-        #     v_label_mean[i] = data[x_label_mean[i],y_label_mean[i], z_label_mean[i]]
-        #
-        # ## Put labels of value one into mean coordinates
-        # for i in range(len(z_label_mean)):
-        #     data_output[x_label_mean[i],y_label_mean[i], z_label_mean[i]] = v_label_mean[i]
-        #
-        # return image_output
+        return output_image
 
     def increment_z_inverse(self):
         """
