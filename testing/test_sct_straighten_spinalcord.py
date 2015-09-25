@@ -21,7 +21,6 @@ from pandas import DataFrame
 
 def test(path_data='', param=''):
 
-    # Integrity test - this test is performed every time as a first crash test. If it pass, we look at results.
     if not param:
         param = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz'
 
@@ -40,6 +39,12 @@ def test(path_data='', param=''):
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
         result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
+
+        # integrity testing - straightening has been tested with v2.0.6 on several images.
+        # mse is less than 1.5 and dist_max is less than 4
+        if result_dist_max > 4.0 or result_mse > 1.5:
+            status = 99
+
 
     # transform results into Pandas structure
     results = DataFrame(data={'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
