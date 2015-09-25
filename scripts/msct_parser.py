@@ -186,7 +186,8 @@ class Option:
     def checkFile(self, param):
         # check if the file exist
         sct.printv("Check file existence...", 0)
-        sct.check_file_exist(param, 0)
+        if self.parser.check_file_exist:
+            sct.check_file_exist(param, 0)
         return param
 
     def checkIfNifti(self, param):
@@ -196,36 +197,44 @@ class Option:
         niigz = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            nii = os.path.isfile(param)
-            niigz = os.path.isfile(param+'.gz')
+            if self.parser.check_file_exist:
+                nii = os.path.isfile(param)
+                niigz = os.path.isfile(param+'.gz')
+            else:
+                nii, niigz = True, False
             param_tmp = param[:-4]
             pass
         elif param.lower().endswith('.nii.gz'):
-            niigz = os.path.isfile(param)
-            nii = os.path.isfile(param[:-3])
+            if self.parser.check_file_exist:
+                niigz = os.path.isfile(param)
+                nii = os.path.isfile(param[:-3])
+            else:
+                nii, niigz = False, True
             param_tmp = param[:-7]
             pass
         else:
             sct.printv("ERROR : File is not a NIFTI image file. Exiting", type='error')
-
         if nii:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
-        if nii and niigz:
-            return param_tmp+'.nii.gz'
-
+        else:
+            sct.printv("ERROR : File does not exist. Exiting", type='error')
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
-        sct.check_folder_exist(param, 0)
+        if self.parser.check_file_exist:
+            sct.check_folder_exist(param, 0)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
-        result_creation = sct.create_folder(param)
+        if self.parser.check_file_exist:
+            result_creation = sct.create_folder(param)
+        else:
+            result_creation = 0  # no need for checking
         if result_creation == 2:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
@@ -245,12 +254,16 @@ class Parser:
         self.spelling = SpellingChecker()
         self.errors = ''
         self.usage = Usage(self, file_name)
+        self.check_file_exist = True
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
         order = len(self.options)+1
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
-    def parse(self, arguments):
+    def parse(self, arguments, check_file_exist=True):
+        # if you only want to parse a string and not checking for file existence, change flag check_file_exist
+        self.check_file_exist = check_file_exist
+
         # if no arguments, print usage and quit
         if len(arguments) == 0:
             self.usage.error()
@@ -314,7 +327,7 @@ class Parser:
                     except KeyError as e:
                         sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
                 if self.options[arg].type_value:
-                    if len(arguments) > index+1: # Check if option is not the last item
+                    if len(arguments) > index+1:  # Check if option is not the last item
                         param = arguments[index+1]
                     else:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
@@ -361,7 +374,7 @@ class Parser:
             # check if option is present in this parser
             if key in self.options:
                 # if input file
-                if isinstance(self.options[key].type_option, list) and ((input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT)):
+                if isinstance(self.options[key].type_value, list) and ((input_file and key in Option.OPTION_PATH_INPUT) or (output_file and key in Option.OPTION_PATH_OUTPUT)):
                     for i, value in enumerate(option):
                         option[i] = path_to_add + value
                     dictionary[key] = option
