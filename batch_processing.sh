@@ -164,7 +164,7 @@ sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 
 #-------------------OLD^^^^^^^^^
 #---------------------NEW>>>>>>>>>>
 # register to template (template registered to mt1 with correction regarding the internal structure). Only uses segmentation (more accurate)
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=seg,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=0.5
+sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=seg,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=1.5
 # concatenate transfo
 sct_concat_transfo -w ../mt/warp_template2anat2mt1_corrected_wm.nii.gz,warp_MNI-Poly-AMU_T22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
 sct_concat_transfo -w warp_fmri_moco_mean2MNI-Poly-AMU_T2.nii.gz,../mt/warp_mt12template2anat_corrected_wm.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
