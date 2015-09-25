@@ -534,7 +534,7 @@ class SCAD(Algorithm):
 
         # vesselness filter
         if not self.vesselness_provided:
-            sct.run('sct_vesselness -i '+raw_file_name+' -t ' + self._contrast+" -radius "+str(self.spinalcord_radius))
+            sct.run('isct_vesselness -i '+raw_file_name+' -t ' + self._contrast+" -radius "+str(self.spinalcord_radius))
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
