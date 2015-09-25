@@ -328,9 +328,9 @@ def dilate(data, radius):
     :param radius: radius of structuring element
     :return: data dilated
     """
-    from skimage.morphology import binary_dilation, ball
+    from skimage.morphology import dilation, ball
     selem = ball(radius)
-    return binary_dilation(data, selem=selem, out=None)
+    return dilation(data, selem=selem, out=None)
 
 
 def erode(data, radius):
@@ -340,9 +340,9 @@ def erode(data, radius):
     :param radius: radius of structuring element
     :return: data eroded
     """
-    from skimage.morphology import binary_erosion, ball
+    from skimage.morphology import erosion, ball
     selem = ball(radius)
-    return binary_erosion(data, selem=selem, out=None)
+    return erosion(data, selem=selem, out=None)
 
 
 def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
