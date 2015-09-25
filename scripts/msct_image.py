@@ -32,7 +32,7 @@ class Image(object):
         self.ext = ""
         self.dim = None
 
-        if hdr == None:
+        if hdr is None:
             hdr = self.hdr = AnalyzeHeader()  # an empty header
         else:
             self.hdr = hdr
@@ -64,12 +64,9 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-
-
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
-
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -84,7 +81,6 @@ class Image(object):
         else:
             return deepcopy(self)
 
-
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -96,6 +92,7 @@ class Image(object):
         from sct_orientation import get_orientation
 
         # check_file_exist(path, verbose=verbose)
+        im_file = None
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
@@ -227,7 +224,6 @@ class Image(object):
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
 
         from os import path, remove
         fname_out = self.path + self.file_name + self.ext
@@ -236,7 +232,6 @@ class Image(object):
             remove(fname_out)
         # save file
         save(img, fname_out)
-
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -266,7 +261,6 @@ class Image(object):
             n_dim = 4
         if self.dim[2] == 1:
             n_dim = 2
-
 
         try:
             if n_dim == 3:
@@ -308,7 +302,6 @@ class Image(object):
 
         return list_coordinates
 
-
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
     # rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
@@ -322,7 +315,7 @@ class Image(object):
         assert mask.orientation == 'IRP'
 
         print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
-        #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
+        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
             pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
@@ -481,6 +474,7 @@ class Image(object):
         else:
             print 'Error: wrong orientation'
         # update dim
+        # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
         dim_temp = list(self.dim)
         dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
         dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
@@ -624,6 +618,55 @@ def get_dimension(im_file, verbose=1):
 
     return nx, ny, nz, nt, px, py, pz, pt
 
+
+def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
+    """
+    This function changes the orientation of a data matrix from a give orientation to another.
+    This function assumes that the user already knows the orientation of the data
+    :param data: data of the image
+    :param old_orientation: Current orientation of the data
+    :param orientation: Desired orientation for the data
+    :return: Data matrix representing the
+    """
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+    # change the orientation of the image
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(old_orientation):
+        try:
+            perm[i] = orientation.index(character)
+        except ValueError:
+            perm[i] = orientation.index(opposite_character[character])
+            inversion[i] = -1
+
+    # axes inversion
+    data = data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+    # axes manipulations
+    from numpy import swapaxes
+
+    if perm == [1, 0, 2]:
+        data = swapaxes(data, 0, 1)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [0, 2, 1]:
+        data = swapaxes(data, 1, 2)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [2, 0, 1]:
+        data = swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+        data = swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+    elif perm == [1, 2, 0]:
+        data = swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+        data = swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+    elif perm == [0, 1, 2]:
+        # do nothing
+        pass
+    else:
+        print 'Error: wrong orientation'
+
+    return data
 
 # =======================================================================================================================
 # Start program

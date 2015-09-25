@@ -359,12 +359,19 @@ int main(int argc, char *argv[])
             // minimalPath_alpha,minimalPath_beta,minimalPath_gamma,minimalPath_sigmaMinimum,minimalPath_sigmaMaximum,minimalPath_numberOfSigmaSteps,minimalPath_sigmaDistance
             vector<string> param_init = split(argv[i], ',');
             minimalPath_alpha = atof(param_init[0].c_str());
+            sprintf("%f\n", minimalPath_alpha);
             minimalPath_beta = atof(param_init[1].c_str());
+            sprintf("%f\n", minimalPath_beta);
             minimalPath_gamma = atof(param_init[2].c_str());
+            sprintf("%f\n", minimalPath_gamma);
             minimalPath_sigmaMinimum = atof(param_init[3].c_str());
+            sprintf("%f\n", minimalPath_sigmaMinimum);
             minimalPath_sigmaMaximum = atof(param_init[4].c_str());
+            sprintf("%f\n", minimalPath_sigmaMaximum);
             minimalPath_numberOfSigmaSteps = atoi(param_init[5].c_str());
+            sprintf("%i\n", minimalPath_numberOfSigmaSteps);
             minimalPath_sigmaDistance = atof(param_init[6].c_str());
+            sprintf("%f\n", minimalPath_sigmaDistance);
         }
 		else if (strcmp(argv[i],"-verbose")==0) {
             verbose = true;
