@@ -164,7 +164,7 @@ def main(args = None):
 
     verbose = int(arguments['-v'])
 
-    # Open file.
+    # Open file(s)
     nii = [Image(f_in) for f_in in fname_in]
     data = [im.data for im in nii]
 
@@ -176,7 +176,6 @@ def main(args = None):
         data_out = scale_intensity(data, factors)
         for im_in, d_out in zip(nii, data_out):
             im_in.data = d_out
-
     if '-otsu' in arguments:
         param = arguments['-otsu']
         data_out = [otsu(d, param) for d in data]
@@ -197,16 +196,25 @@ def main(args = None):
     elif '-add' in arguments:
         if n_in == 1:
             printv(parser.usage.generate(error='ERROR: -add needs more than one input'))
+        check_shape(data)
         data_out = add(data)
         data_out = [data_out]
     elif '-sub' in arguments:
         if n_in != 2:
             printv(parser.usage.generate(error='ERROR: -sub needs only 2 inputs'))
+        check_shape(data)
         data_out = substract(data)
         data_out = [data_out]
     elif '-mul' in arguments:
         if n_in == 1:
             printv(parser.usage.generate(error='ERROR: -mul needs more than one input'))
+        check_shape(data)
+        data_out = mul(data)
+        data_out = [data_out]
+    elif '-div' in arguments:
+        if n_in == 1:
+            printv(parser.usage.generate(error='ERROR: -mul needs more than one input'))
+        check_shape(data)
         data_out = mul(data)
         data_out = [data_out]
     elif '-mean' in arguments:
@@ -414,21 +422,20 @@ def add(data_list):
 def substract(data_list):
     """ Substract two numpy arrays """
     from numpy import reshape
-    assert len(data_list) == 2
-    dat0, dat1 = data_list
-    # reshaping
-    if dat0.shape[-1] == 1:
-        dat0 = reshape(dat0, dat0.shape[:-1])
-    if dat1.shape[-1] == 1:
-        dat1 = reshape(dat1, dat1.shape[:-1])
-    assert dat0.shape == dat1.shape
-    return dat0-dat1
+    data0, data1 = data_list
+    return data0 - data1
 
 
 def mul(data_list):
     """ Multiply a bunch of numpy arrays """
     from numpy import prod
     return prod(data_list, axis=0)
+
+
+def div(data_list):
+    """ Divide two numpy arrays """
+    from numpy import divide
+    return divide(data_list, axis=0)
 
 
 def scale_intensity(data_list, factors):
@@ -479,6 +486,14 @@ def multicomponent_merge(data_list):
         data_out[:, :, :, :, i] = dat.astype('float32')
     return [data_out.astype('float32')]
 
+def check_shape(data_list):
+    """
+    Make sure all elements of the list (given by first axis) have same shape
+    """
+    from numpy import shape, array_equal
+    for i in range(1, shape(data_list)[0]):
+        if not array_equal(data_list[0], data_list[i]):
+            printv('ERROR: all input images must have same dimensions.', 1, 'error')
     # # random_walker
     # from skimage.segmentation import random_walker
     # import numpy as np
