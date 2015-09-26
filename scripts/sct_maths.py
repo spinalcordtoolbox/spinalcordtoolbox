@@ -24,16 +24,10 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Perform mathematical operations on images. Only one operation at a time can be done (except for intensity scaling: flag -scale).')
+    parser.usage.set_description('Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
                       description="Input file(s). If several inputs: separate them by a coma without white space.\n"
@@ -46,19 +40,22 @@ def get_parser():
                       mandatory=True,
                       example=['data_mean.nii.gz'])
 
-    parser.usage.addSection("\nBasic operations:")
+    parser.usage.addSection('\nBasic operations:')
     parser.add_option(name="-add",
-                      type_value=[[','], 'file'],
-                      description='Add image(s) (can be 4d, or 3d separated with ",").',
+                      type_value='str',
+                      description='Add following input (can be number or image(s))',
                       mandatory=False)
     parser.add_option(name="-sub",
-                      description='Substract two input images: output = input1 - input2',
+                      type_value='str',
+                      description='Substract following input (can be number or image)',
                       mandatory=False)
     parser.add_option(name="-mul",
-                      description='Multiply input images (need more than one input).',
+                      type_value='str',
+                      description='Multiply following input (can be number or image(s))',
                       mandatory=False)
     parser.add_option(name="-div",
-                      description='Divide two input images: output = input1 / input2.',
+                      type_value='str',
+                      description='Divide following input (can be number or image)',
                       mandatory=False)
     parser.add_option(name='-mean',
                       type_value='multiple_choice',
@@ -70,13 +67,6 @@ def get_parser():
                       description='Compute STD across dimension.',
                       mandatory=False,
                       example=['x', 'y', 'z', 't'])
-    parser.add_option(name="-scale",
-                      type_value=[[','], 'float'],
-                      description='Scaling factors applied to all the inputs intensity.\n'
-                                  'The intensity scaling can be used in combination to another operation and will be applied first.\n'
-                                  'The number of scaling factors must be the same as the number of inputs.',
-                      mandatory=False,
-                      example='0.5')
     parser.add_option(name="-bin",
                       description='Use (input image>0) to binarise.',
                       mandatory=False)
@@ -175,13 +165,6 @@ def main(args = None):
     data = get_data(fname_in)  # 3d or 4d numpy array
 
     # run command
-    if "-scale" in arguments:
-        factors = arguments["-scale"]
-        if len(factors) != n_in:
-            printv(parser.usage.generate(error='ERROR: -scale must have the same number of factors as the number of inputs'))
-        data_out = scale_intensity(data, factors)
-        for im_in, d_out in zip(nii, data_out):
-            im_in.data = d_out
     if '-otsu' in arguments:
         param = arguments['-otsu']
         data_out = [otsu(d, param) for d in data]
@@ -201,20 +184,20 @@ def main(args = None):
         data_out = [binarise(d) for d in data]
     elif '-add' in arguments:
         from numpy import sum
-        data2 = get_data(arguments["-add"])
+        data2 = get_data_or_scalar(arguments["-add"], data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = sum(data_concat, axis=3)
     elif '-sub' in arguments:
-        data2 = get_data(arguments["-sub"])
+        data2 = get_data_or_scalar(arguments["-sub"], data)
         data_out = data - data2
     elif '-mul' in arguments:
         from numpy import prod
-        data2 = get_data(arguments["-mul"])
+        data2 = get_data_or_scalar(arguments["-mul"], data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = prod(data_concat, axis=3)
     elif '-div' in arguments:
         from numpy import divide
-        data2 = get_data(arguments["-div"])
+        data2 = get_data_or_scalar(arguments["-div"], data)
         data_out = divide(data, data2)
     elif '-mean' in arguments:
         from numpy import mean
@@ -409,18 +392,6 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     return padded_data
 
 
-def scale_intensity(data_list, factors):
-    """
-    Scale intensity of numpy arrays
-    :param data_list:
-    :param factors:
-    :return:
-    """
-    for data, f in zip(data_list, factors):
-        data_out.append(dat*f)
-    return data_out
-
-
 def smooth(data, sigmas):
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter
@@ -477,6 +448,25 @@ def get_data(list_fname):
         else:
             concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
+
+def get_data_or_scalar(argument, data_in):
+    """
+    Get data from list of file names (scenario 1) or scalar (scenario 2)
+    :param argument: list of file names of scalar
+    :param data_in: if argument is scalar, use data to get shape
+    :return: 3d or 4d numpy array
+    """
+    if argument.isdigit():
+        # build data2 with same shape as data
+        data_out = data_in[:, :, :] * 0 + float(argument)
+    else:
+        # parse file name and check integrity
+        parser2 = Parser(__file__)
+        parser2.add_option(name='-i', type_value=[[','], 'file'])
+        list_fname = parser2.parse(['-i', argument]).get('-i')
+        data_out = get_data(list_fname)
+    return data_out
 
 
 def concatenate_along_4th_dimension(data1, data2):
