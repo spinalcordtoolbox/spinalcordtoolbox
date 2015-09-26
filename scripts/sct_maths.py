@@ -502,9 +502,9 @@ def check_shape(data_list):
     """
     Make sure all elements of the list (given by first axis) have same shape
     """
-    from numpy import shape, array_equal
+    from numpy import shape
     for i in range(1, shape(data_list)[0]):
-        if not array_equal(data_list[0], data_list[i]):
+        if not shape(data_list[0]) == shape(data_list[i]):
             printv('ERROR: all input images must have same dimensions.', 1, 'error')
     # # random_walker
     # from skimage.segmentation import random_walker
