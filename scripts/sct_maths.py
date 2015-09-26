@@ -72,9 +72,9 @@ def get_parser():
                       mandatory=False)
     parser.add_option(name="-pad",
                       type_value="str",
-                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
+                      description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
-                      example='0x0x1')
+                      example='0,0,1')
 
     parser.usage.addSection("\nThresholding methods:")
     parser.add_option(name='-otsu',
@@ -224,9 +224,12 @@ def main(args = None):
         data_out = std(data, dim)
 
     elif "-pad" in arguments:
-        padx, pady, padz = arguments["-pad"].split('x')
+        # TODO: check input is 3d
+        padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        data_out = [pad_image(im, padding_x=padx, padding_y=pady, padding_z=padz) for im in nii]
+        nii = Image(fname_in[0])
+        nii_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
+        # data_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
 
     elif "-smooth" in arguments:
         sigmas = arguments["-smooth"]
@@ -261,8 +264,9 @@ def main(args = None):
         return
 
     # Write output
-    nii_out = Image(fname_in[0])  # use header of first file (if multiple input files)
-    nii_out.data = data_out
+    if not "-pad" in arguments:
+        nii_out = Image(fname_in[0])  # use header of first file (if multiple input files)
+        nii_out.data = data_out
     nii_out.setFileName(fname_out)
     nii_out.save()
     # TODO: case of multiple outputs
@@ -406,7 +410,7 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y*py
     im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z*pz
 
-    return padded_data
+    return im
 
 
 def smooth(data, sigmas):
