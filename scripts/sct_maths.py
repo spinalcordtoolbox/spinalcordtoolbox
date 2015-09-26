@@ -83,13 +83,16 @@ def get_parser():
                       example="")
     parser.usage.addSection("\nBasic operations")
     parser.add_option(name="-add",
-                      description='Add all input images (need more than one input).',
+                      description='Add input images (need more than one input).',
                       mandatory=False)
     parser.add_option(name="-sub",
-                      description='Substract two input images: output = intput_1 - input_2 (need only two inputs)',
+                      description='Substract two input images: output = input1 - input2',
                       mandatory=False)
     parser.add_option(name="-mul",
                       description='Multiply input images (need more than one input).',
+                      mandatory=False)
+    parser.add_option(name="-div",
+                      description='Divide two input images: output = input1 / input2.',
                       mandatory=False)
     parser.add_option(name="-scale",
                       type_value=[[','], 'float'],
@@ -414,28 +417,37 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
 
 
 def add(data_list):
-    """ Sum a bunch of numpy arrays """
+    """
+    Sum a bunch of numpy arrays
+    """
     from numpy import sum
     return sum(data_list, axis=0)
 
 
 def substract(data_list):
-    """ Substract two numpy arrays """
+    """
+    Substract two numpy arrays
+    """
     from numpy import reshape
     data0, data1 = data_list
     return data0 - data1
 
 
 def mul(data_list):
-    """ Multiply a bunch of numpy arrays """
+    """
+    Multiply a bunch of numpy arrays
+    """
     from numpy import prod
     return prod(data_list, axis=0)
 
 
 def div(data_list):
-    """ Divide two numpy arrays """
+    """
+    Divide two numpy arrays
+    """
     from numpy import divide
-    return divide(data_list, axis=0)
+    data0, data1 = data_list
+    return divide(data0, data1)
 
 
 def scale_intensity(data_list, factors):
