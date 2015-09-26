@@ -82,6 +82,15 @@ def get_parser():
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nBasic operations")
+    parser.add_option(name="-add",
+                      description='Add all input images (need more than one input).',
+                      mandatory=False)
+    parser.add_option(name="-sub",
+                      description='Substract two input images: output = intput_1 - input_2 (need only two inputs)',
+                      mandatory=False)
+    parser.add_option(name="-mul",
+                      description='Multiply input images (need more than one input).',
+                      mandatory=False)
     parser.add_option(name="-scale",
                       type_value=[[','], 'float'],
                       description='Scaling factors applied to all the inputs intensity.\n'
@@ -91,18 +100,11 @@ def get_parser():
                       example='0.5')
     parser.add_option(name="-smooth",
                       type_value=[[','], 'float'],
-                      description='Gaussian smoothing filter standard deviations (sigmas), separated by comas, without white space.\n'
-                                  'The standard deviations of the Gaussian filter are given for each axis as a sequence (same number of sigmas as the number of image dimensions), or as a single number, in which case it is equal for all axes',
+                      description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
                       mandatory=False,
                       example='0.5')
     parser.add_option(name="-bin",
                       description='Use (input image>0) to binarise.',
-                      mandatory=False)
-    parser.add_option(name="-add",
-                      description='Add all the input images (need several inputs).',
-                      mandatory=False)
-    parser.add_option(name="-sub",
-                      description='Substract the input images: output = intput_1 - input_2 (need TWO inputs).',
                       mandatory=False)
     parser.add_option(name="-pad",
                       type_value="str",
@@ -194,13 +196,18 @@ def main(args = None):
         data_out = [binarise(d) for d in data]
     elif '-add' in arguments:
         if n_in == 1:
-            printv(parser.usage.generate(error='ERROR: -add need more than one input'))
+            printv(parser.usage.generate(error='ERROR: -add needs more than one input'))
         data_out = add(data)
         data_out = [data_out]
     elif '-sub' in arguments:
         if n_in != 2:
-            printv(parser.usage.generate(error='ERROR: -sub need only 2 inputs'))
+            printv(parser.usage.generate(error='ERROR: -sub needs only 2 inputs'))
         data_out = substract(data)
+        data_out = [data_out]
+    elif '-mul' in arguments:
+        if n_in == 1:
+            printv(parser.usage.generate(error='ERROR: -mul needs more than one input'))
+        data_out = mul(data)
         data_out = [data_out]
     elif '-mean' in arguments:
         dim = dim_list.index(arguments['-mean'])
@@ -399,6 +406,49 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
 
 
 def add(data_list):
+    """
+    Sum a bunch of numpy arrays
+    :param data_list:
+    :return:
+    """
+    from numpy import sum
+    return sum(data_list, axis=0)
+    # from numpy import asarray, reshape
+    # first = True
+    # for dat in data_list:
+    #     if first:
+    #         data_out = asarray(dat)
+    #         first = False
+    #         if data_out.shape[-1] == 1:
+    #             data_out = reshape(data_out, data_out.shape[:-1])
+    #     else:
+    #         dat = asarray(dat)
+    #         if dat.shape[-1] == 1:
+    #             dat = reshape(dat, dat.shape[:-1])
+    #         assert data_out.shape == dat.shape
+    #         data_out += dat
+    # return data_out
+
+
+def substract(data_list):
+    from numpy import reshape
+    assert len(data_list) == 2
+    dat0, dat1 = data_list
+    # reshaping
+    if dat0.shape[-1] == 1:
+        dat0 = reshape(dat0, dat0.shape[:-1])
+    if dat1.shape[-1] == 1:
+        dat1 = reshape(dat1, dat1.shape[:-1])
+    assert dat0.shape == dat1.shape
+    return dat0-dat1
+
+
+def mul(data_list):
+    """
+    Multiplies a bunch of arrays
+    :param data_list:
+    :return:
+    """
     from numpy import asarray, reshape
     first = True
     for dat in data_list:
@@ -414,19 +464,6 @@ def add(data_list):
             assert data_out.shape == dat.shape
             data_out += dat
     return data_out
-
-
-def substract(data_list):
-    from numpy import reshape
-    assert len(data_list) == 2
-    dat0, dat1 = data_list
-    # reshaping
-    if dat0.shape[-1] == 1:
-        dat0 = reshape(dat0, dat0.shape[:-1])
-    if dat1.shape[-1] == 1:
-        dat1 = reshape(dat1, dat1.shape[:-1])
-    assert dat0.shape == dat1.shape
-    return dat0-dat1
 
 
 def scale_intensity(data_list, factors):
