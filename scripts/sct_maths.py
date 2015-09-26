@@ -11,7 +11,7 @@
 #########################################################################################
 
 import sys
-
+from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import extract_fname, printv
@@ -41,22 +41,52 @@ def get_parser():
                       mandatory=True,
                       example="data.nii.gz")
     parser.add_option(name="-o",
-                      type_value=[[','], 'file_output'],
-                      description='Output file(s). If several outputs: separate them by a coma without white space.',
+                      type_value='file_output',
+                      description='Output file.',
                       mandatory=True,
                       example=['data_mean.nii.gz'])
-    parser.usage.addSection("\nMathematical morphology")
-    parser.add_option(name='-dilate',
-                      type_value='int',
-                      description='Dilate binary image using specified ball radius.',
+
+    parser.usage.addSection("\nBasic operations:")
+    parser.add_option(name="-add",
+                      type_value=[[','], 'file'],
+                      description='Add image(s) (can be 4d, or 3d separated with ",").',
+                      mandatory=False)
+    parser.add_option(name="-sub",
+                      description='Substract two input images: output = input1 - input2',
+                      mandatory=False)
+    parser.add_option(name="-mul",
+                      description='Multiply input images (need more than one input).',
+                      mandatory=False)
+    parser.add_option(name="-div",
+                      description='Divide two input images: output = input1 / input2.',
+                      mandatory=False)
+    parser.add_option(name='-mean',
+                      type_value='multiple_choice',
+                      description='Average data across dimension.',
                       mandatory=False,
-                      example="")
-    parser.add_option(name='-erode',
-                      type_value='int',
-                      description='Erode binary image using specified ball radius.',
+                      example=['x', 'y', 'z', 't'])
+    parser.add_option(name='-std',
+                      type_value='multiple_choice',
+                      description='Compute STD across dimension.',
                       mandatory=False,
-                      example="")
-    parser.usage.addSection("\nThresholding methods")
+                      example=['x', 'y', 'z', 't'])
+    parser.add_option(name="-scale",
+                      type_value=[[','], 'float'],
+                      description='Scaling factors applied to all the inputs intensity.\n'
+                                  'The intensity scaling can be used in combination to another operation and will be applied first.\n'
+                                  'The number of scaling factors must be the same as the number of inputs.',
+                      mandatory=False,
+                      example='0.5')
+    parser.add_option(name="-bin",
+                      description='Use (input image>0) to binarise.',
+                      mandatory=False)
+    parser.add_option(name="-pad",
+                      type_value="str",
+                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
+                      mandatory=False,
+                      example='0x0x1')
+
+    parser.usage.addSection("\nThresholding methods:")
     parser.add_option(name='-otsu',
                       type_value='int',
                       description='Threshold image using Otsu algorithm.\nnbins: number of bins. Example: 256',
@@ -81,51 +111,27 @@ def get_parser():
                       description='Use following number to threshold image (zero below number).',
                       mandatory=False,
                       example="")
-    parser.usage.addSection("\nBasic operations")
-    parser.add_option(name="-add",
-                      description='Add input images (need more than one input).',
-                      mandatory=False)
-    parser.add_option(name="-sub",
-                      description='Substract two input images: output = input1 - input2',
-                      mandatory=False)
-    parser.add_option(name="-mul",
-                      description='Multiply input images (need more than one input).',
-                      mandatory=False)
-    parser.add_option(name="-div",
-                      description='Divide two input images: output = input1 / input2.',
-                      mandatory=False)
-    parser.add_option(name="-scale",
-                      type_value=[[','], 'float'],
-                      description='Scaling factors applied to all the inputs intensity.\n'
-                                  'The intensity scaling can be used in combination to another operation and will be applied first.\n'
-                                  'The number of scaling factors must be the same as the number of inputs.',
+
+    parser.usage.addSection("\nMathematical morphology")
+    parser.add_option(name='-dilate',
+                      type_value='int',
+                      description='Dilate binary image using specified ball radius.',
                       mandatory=False,
-                      example='0.5')
+                      example="")
+    parser.add_option(name='-erode',
+                      type_value='int',
+                      description='Erode binary image using specified ball radius.',
+                      mandatory=False,
+                      example="")
+
+    parser.usage.addSection("\nFiltering methods:")
     parser.add_option(name="-smooth",
                       type_value=[[','], 'float'],
                       description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
                       mandatory=False,
                       example='0.5')
-    parser.add_option(name="-bin",
-                      description='Use (input image>0) to binarise.',
-                      mandatory=False)
-    parser.add_option(name="-pad",
-                      type_value="str",
-                      description="Padding dimensions in voxels for the x, y, and z dimensions, separated with \"x\".",
-                      mandatory=False,
-                      example='0x0x1')
-    parser.usage.addSection("\nDimensionality reduction operations")
-    parser.add_option(name='-mean',
-                      type_value='multiple_choice',
-                      description='Average data across dimension.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.add_option(name='-std',
-                      type_value='multiple_choice',
-                      description='Compute STD across dimension.',
-                      mandatory=False,
-                      example=['x', 'y', 'z', 't'])
-    parser.usage.addSection("\nMulti-component operations")
+
+    parser.usage.addSection("\nMulti-component operations:")
     parser.add_option(name='-mcs',
                       description='Multi-component split. Outputs the components separately.\n'
                                   '(If less outputs names than components in the image, outputs as many components as the number of outputs name specifed.)\n'
@@ -163,13 +169,10 @@ def main(args = None):
     fname_in = arguments["-i"]
     n_in = len(fname_in)
     fname_out = arguments["-o"]
-    n_out = len(fname_out)
-
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    nii = [Image(f_in) for f_in in fname_in]
-    data = [im.data for im in nii]
+    data = get_data(fname_in)  # 3d or 4d numpy array
 
     # run command
     if "-scale" in arguments:
@@ -197,35 +200,30 @@ def main(args = None):
     elif '-bin' in arguments:
         data_out = [binarise(d) for d in data]
     elif '-add' in arguments:
-        if n_in == 1:
-            printv(parser.usage.generate(error='ERROR: -add needs more than one input'))
-        check_shape(data)
-        data_out = add(data)
-        data_out = [data_out]
+        from numpy import sum
+        data2 = get_data(arguments["-add"])
+        data_concat = concatenate_along_4th_dimension(data, data2)
+        data_out = sum(data_concat, axis=3)
     elif '-sub' in arguments:
-        if n_in != 2:
-            printv(parser.usage.generate(error='ERROR: -sub needs only 2 inputs'))
-        check_shape(data)
-        data_out = substract(data)
-        data_out = [data_out]
+        data2 = get_data(arguments["-sub"])
+        data_out = data - data2
     elif '-mul' in arguments:
-        if n_in == 1:
-            printv(parser.usage.generate(error='ERROR: -mul needs more than one input'))
-        check_shape(data)
-        data_out = mul(data)
-        data_out = [data_out]
+        from numpy import prod
+        data2 = get_data(arguments["-mul"])
+        data_concat = concatenate_along_4th_dimension(data, data2)
+        data_out = prod(data_concat, axis=3)
     elif '-div' in arguments:
-        if n_in == 1:
-            printv(parser.usage.generate(error='ERROR: -mul needs more than one input'))
-        check_shape(data)
-        data_out = mul(data)
-        data_out = [data_out]
+        from numpy import divide
+        data2 = get_data(arguments["-div"])
+        data_out = divide(data, data2)
     elif '-mean' in arguments:
+        from numpy import mean
         dim = dim_list.index(arguments['-mean'])
-        data_out = [compute_mean(d, dim) for d in data]
+        data_out = mean(data, dim)
     elif '-std' in arguments:
+        from numpy import std
         dim = dim_list.index(arguments['-std'])
-        data_out = [compute_std(d, dim) for d in data]
+        data_out = std(data, dim)
     elif "-pad" in arguments:
         padx, pady, padz = arguments["-pad"].split('x')
         padx, pady, padz = int(padx), int(pady), int(padz)
@@ -263,30 +261,35 @@ def main(args = None):
         return
 
     # Write output
-    assert len(data_out) == n_out
-    if n_in == n_out:
-        for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
-            im_in.data = d_out
-            im_in.setFileName(fn_out)
-            if "-w" in arguments:
-                im_in.hdr.set_intent('vector', (), '')
-            im_in.save()
-    elif n_out == 1:
-        nii[0].data = data_out[0]
-        nii[0].setFileName(fname_out[0])
-        if "-w" in arguments:
-                nii[0].hdr.set_intent('vector', (), '')
-        nii[0].save()
-    elif n_out > n_in:
-        for dat_out, name_out in zip(data_out, fname_out):
-            im_out = nii[0].copy()
-            im_out.data = dat_out
-            im_out.setFileName(name_out)
-            if "-w" in arguments:
-                im_out.hdr.set_intent('vector', (), '')
-            im_out.save()
-    else:
-        printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
+    nii_out = Image(fname_in[0])  # use header of first file (if multiple input files)
+    nii_out.data = data_out
+    nii_out.setFileName(fname_out)
+    nii_out.save()
+    # TODO: case of multiple outputs
+    # assert len(data_out) == n_out
+    # if n_in == n_out:
+    #     for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
+    #         im_in.data = d_out
+    #         im_in.setFileName(fn_out)
+    #         if "-w" in arguments:
+    #             im_in.hdr.set_intent('vector', (), '')
+    #         im_in.save()
+    # elif n_out == 1:
+    #     nii[0].data = data_out[0]
+    #     nii[0].setFileName(fname_out[0])
+    #     if "-w" in arguments:
+    #             nii[0].hdr.set_intent('vector', (), '')
+    #     nii[0].save()
+    # elif n_out > n_in:
+    #     for dat_out, name_out in zip(data_out, fname_out):
+    #         im_out = nii[0].copy()
+    #         im_out.data = dat_out
+    #         im_out.setFileName(name_out)
+    #         if "-w" in arguments:
+    #             im_out.hdr.set_intent('vector', (), '')
+    #         im_out.save()
+    # else:
+    #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
     printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
@@ -327,16 +330,6 @@ def perc(data, perc_value):
 
 def binarise(data):
     return data > 0
-
-
-def compute_mean(data, dim):
-    from numpy import mean
-    return mean(data, dim)
-
-
-def compute_std(data, dim):
-    from numpy import std
-    return std(data, dim)
 
 
 def dilate(data, radius):
@@ -416,40 +409,6 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     return padded_data
 
 
-def add(data_list):
-    """
-    Sum a bunch of numpy arrays
-    """
-    from numpy import sum
-    return sum(data_list, axis=0)
-
-
-def substract(data_list):
-    """
-    Substract two numpy arrays
-    """
-    from numpy import reshape
-    data0, data1 = data_list
-    return data0 - data1
-
-
-def mul(data_list):
-    """
-    Multiply a bunch of numpy arrays
-    """
-    from numpy import prod
-    return prod(data_list, axis=0)
-
-
-def div(data_list):
-    """
-    Divide two numpy arrays
-    """
-    from numpy import divide
-    data0, data1 = data_list
-    return divide(data0, data1)
-
-
 def scale_intensity(data_list, factors):
     """
     Scale intensity of numpy arrays
@@ -502,14 +461,55 @@ def multicomponent_merge(data_list):
         data_out[:, :, :, :, i] = dat.astype('float32')
     return [data_out.astype('float32')]
 
-def check_shape(data_list):
+
+def get_data(list_fname):
     """
-    Make sure all elements of the list (given by first axis) have same shape
+    Get data from file names separated by ","
+    :param list_fname:
+    :return: 3D or 4D numpy array.
     """
-    from numpy import shape
-    for i in range(1, shape(data_list)[0]):
-        if not shape(data_list[0]) == shape(data_list[i]):
+    nii = [Image(f_in) for f_in in list_fname]
+    data = nii[0].data
+    # check that every images have same shape
+    for i in range(1, len(nii)):
+        if not shape(nii[i].data) == shape(data):
             printv('ERROR: all input images must have same dimensions.', 1, 'error')
+        else:
+            concatenate_along_4th_dimension(data, nii[i].data)
+    return data
+
+
+def concatenate_along_4th_dimension(data1, data2):
+    """
+    Concatenate two data along 4th dimension.
+    :param data1: 3d or 4d array
+    :param data2: 3d or 4d array
+    :return data_concat: concate(data1, data2)
+    """
+    if len(shape(data1)) == 3:
+        data1 = data1[..., newaxis]
+    if len(shape(data2)) == 3:
+        data2 = data2[..., newaxis]
+    return concatenate((data1, data2), axis=3)
+
+
+# def check_shape(data):
+#     """
+#     Make sure all elements of the list (given by first axis) have same shape. If data is 4d, convert to list and switch first and last axis.
+#     :param data_list:
+#     :return: data_list_out
+#     """
+#     from numpy import shape
+#     # check that element of the list have same shape
+#     for i in range(1, shape(data)[0]):
+#         if not shape(data[0]) == shape(data[i]):
+#             printv('ERROR: all input images must have same dimensions.', 1, 'error')
+#     # if data are 4d (hence giving 5d list), rearrange to list of 3d data
+#     if len(shape(data)) == 5:
+#         from numpy import squeeze
+#         from scipy import swapaxes
+#         data = squeeze(swapaxes(data, 0, 4)).tolist()
+#     return data
 
     # # random_walker
     # from skimage.segmentation import random_walker
