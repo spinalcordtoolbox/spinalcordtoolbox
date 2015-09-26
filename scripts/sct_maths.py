@@ -240,10 +240,13 @@ def main(args = None):
             elif len(sigmas) != len(d.shape):
                 printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
             data_out.append(smooth(d, sigmas))
+
     elif '-dilate' in arguments:
         data_out = [dilate(d, arguments['-dilate']) for d in data]
+
     elif '-erode' in arguments:
         data_out = [erode(d, arguments['-erode']) for d in data]
+
     elif '-mcs' in arguments:
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
@@ -252,6 +255,7 @@ def main(args = None):
         data_out = multicomponent_split(data[0])
         if len(data_out) > n_out:
             data_out = data_out[:n_out]
+
     elif '-omc' in arguments:
         if n_out != 1:
             printv(parser.usage.generate(error='ERROR: -omc need only one output'))
@@ -259,9 +263,6 @@ def main(args = None):
             if dat.shape != data[0].shape:
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
         data_out = multicomponent_merge(data)
-    elif "-scale" not in arguments:
-        printv('No process applied.', 1, 'warning')
-        return
 
     # Write output
     if not "-pad" in arguments:
