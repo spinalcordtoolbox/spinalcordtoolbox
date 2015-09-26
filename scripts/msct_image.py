@@ -219,13 +219,16 @@ class Image(object):
         """
         from nibabel import Nifti1Image, save
         from sct_utils import printv
+        from numpy import squeeze
+        from os import path, remove
+        # remove singleton
+        self.data = squeeze(self.data)
         if type != '':
             self.changeType(type)
+        # update header
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-
-        from os import path, remove
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
             printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
