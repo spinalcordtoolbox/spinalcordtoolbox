@@ -406,31 +406,13 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
 
 
 def add(data_list):
-    """
-    Sum a bunch of numpy arrays
-    :param data_list:
-    :return:
-    """
+    """ Sum a bunch of numpy arrays """
     from numpy import sum
     return sum(data_list, axis=0)
-    # from numpy import asarray, reshape
-    # first = True
-    # for dat in data_list:
-    #     if first:
-    #         data_out = asarray(dat)
-    #         first = False
-    #         if data_out.shape[-1] == 1:
-    #             data_out = reshape(data_out, data_out.shape[:-1])
-    #     else:
-    #         dat = asarray(dat)
-    #         if dat.shape[-1] == 1:
-    #             dat = reshape(dat, dat.shape[:-1])
-    #         assert data_out.shape == dat.shape
-    #         data_out += dat
-    # return data_out
 
 
 def substract(data_list):
+    """ Substract two numpy arrays """
     from numpy import reshape
     assert len(data_list) == 2
     dat0, dat1 = data_list
@@ -444,26 +426,9 @@ def substract(data_list):
 
 
 def mul(data_list):
-    """
-    Multiplies a bunch of arrays
-    :param data_list:
-    :return:
-    """
-    from numpy import asarray, reshape
-    first = True
-    for dat in data_list:
-        if first:
-            data_out = asarray(dat)
-            first = False
-            if data_out.shape[-1] == 1:
-                data_out = reshape(data_out, data_out.shape[:-1])
-        else:
-            dat = asarray(dat)
-            if dat.shape[-1] == 1:
-                dat = reshape(dat, dat.shape[:-1])
-            assert data_out.shape == dat.shape
-            data_out += dat
-    return data_out
+    """ Multiply a bunch of numpy arrays """
+    from numpy import prod
+    return prod(data_list, axis=0)
 
 
 def scale_intensity(data_list, factors):
