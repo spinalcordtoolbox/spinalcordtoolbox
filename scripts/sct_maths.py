@@ -168,49 +168,66 @@ def main(args = None):
     if '-otsu' in arguments:
         param = arguments['-otsu']
         data_out = [otsu(d, param) for d in data]
+
     elif '-otsu_adap' in arguments:
         param = arguments['-otsu_adap']
         data_out = [otsu_adap(d, param[0], param[1]) for d in data]
+
     elif '-otsu_median' in arguments:
         param = arguments['-otsu_median']
         data_out = [otsu_median(d, param[0], param[1]) for d in data]
+
     elif '-thr' in arguments:
         param = arguments['-thr']
         data_out = [threshold(d, param) for d in data]
+
     elif '-percent' in arguments:
         param = arguments['-percent']
         data_out = [perc(d, param) for d in data]
+
     elif '-bin' in arguments:
         data_out = [binarise(d) for d in data]
+
     elif '-add' in arguments:
         from numpy import sum
         data2 = get_data_or_scalar(arguments["-add"], data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = sum(data_concat, axis=3)
+
     elif '-sub' in arguments:
         data2 = get_data_or_scalar(arguments["-sub"], data)
         data_out = data - data2
+
     elif '-mul' in arguments:
         from numpy import prod
         data2 = get_data_or_scalar(arguments["-mul"], data)
         data_concat = concatenate_along_4th_dimension(data, data2)
         data_out = prod(data_concat, axis=3)
+
     elif '-div' in arguments:
         from numpy import divide
         data2 = get_data_or_scalar(arguments["-div"], data)
         data_out = divide(data, data2)
+
     elif '-mean' in arguments:
         from numpy import mean
         dim = dim_list.index(arguments['-mean'])
+        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., newaxis]
         data_out = mean(data, dim)
+
     elif '-std' in arguments:
         from numpy import std
         dim = dim_list.index(arguments['-std'])
+        if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., newaxis]
         data_out = std(data, dim)
+
     elif "-pad" in arguments:
         padx, pady, padz = arguments["-pad"].split('x')
         padx, pady, padz = int(padx), int(pady), int(padz)
         data_out = [pad_image(im, padding_x=padx, padding_y=pady, padding_z=padz) for im in nii]
+
     elif "-smooth" in arguments:
         sigmas = arguments["-smooth"]
         data_out = []
