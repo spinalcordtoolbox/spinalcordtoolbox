@@ -451,9 +451,13 @@ def div(data_list):
 
 
 def scale_intensity(data_list, factors):
-    data_out = []
-    assert len(data_list) == len(factors)
-    for dat, f in zip(data_list, factors):
+    """
+    Scale intensity of numpy arrays
+    :param data_list:
+    :param factors:
+    :return:
+    """
+    for data, f in zip(data_list, factors):
         data_out.append(dat*f)
     return data_out
 
