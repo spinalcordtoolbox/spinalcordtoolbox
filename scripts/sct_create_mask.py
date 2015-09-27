@@ -255,7 +255,7 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('sct_maths -i line.nii -scale 0 -o line.nii', param.verbose)
+    sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
 
     cmd = 'sct_label_utils -i line.nii -o line.nii -t add -x '
     for iz in range(nz):
