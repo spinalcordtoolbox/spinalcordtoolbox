@@ -162,8 +162,9 @@ def main(args=None):
     printv('\nUn-straighten labeling...', param.verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
-    # clean labeled segmentation
-    # TODO: (i) find missing voxels wrt. original segmentation, and attribute value closest to neighboring label and (ii) remove additional voxels.
+    # Clean labeled segmentation
+    printv('\nClean labeled segmentation (correct interpolation errors)...', param.verbose)
+    clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
     # Build fname_out
     if fname_out == '':
@@ -475,7 +476,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
         plt.close()
 
 
-
 # Create label
 # ==========================================================================================
 def create_label_z(fname_seg, z, value):
@@ -497,7 +497,7 @@ def create_label_z(fname_seg, z, value):
     nii.data[x, y, z] = value
     # dilate label to prevent it from disappearing due to nearestneighbor interpolation
     from sct_maths import dilate
-    nii.data = dilate(nii.data, 3) * value  # multiplies by value because output of dilation is binary
+    nii.data = dilate(nii.data, 3)
     nii.setFileName(fname_label)
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save()
@@ -592,6 +592,39 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # save and close figure
         plt.figure(fig_local_adjustment), plt.savefig('../fig_local_adjustment_disc'+str(current_disc)+'.png'), plt.close()
     return adjusted_z
+
+
+# Clean labeled segmentation
+# ==========================================================================================
+def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
+    """
+    Clean labeled segmentation by:
+      (i)  removing voxels in segmentation_labeled that are not in segmentation and
+      (ii) adding voxels in segmentation that are not in segmentation_labeled
+    :param fname_labeled_seg:
+    :param fname_seg:
+    :param fname_labeled_seg_new: output
+    :return: none
+    """
+    # remove voxels in segmentation_labeled that are not in segmentation
+    #run('sct_maths -i segmentation_labeled.nii.gz -bin -o segmentation_labeled_bin.nii.gz')
+    run('sct_maths -i '+fname_labeled_seg+','+fname_seg+' -mul -o segmentation_labeled_mul.nii.gz')
+    # add voxels in segmentation that are not in segmentation_labeled
+    run('sct_maths -i '+fname_labeled_seg+' -dilate 2 -o segmentation_labeled_dilate.nii.gz')  # dilate labeled segmentation
+    data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
+    run('sct_maths -i segmentation_labeled_mul.nii.gz -bin -o segmentation_labeled_mul_bin.nii.gz')
+    data_label_bin = Image('segmentation_labeled_mul_bin.nii.gz').data
+    data_seg = Image(fname_seg).data
+    data_diff = data_seg - data_label_bin
+    ind_nonzero = np.where(data_diff)
+    im_label = Image('segmentation_labeled_mul.nii.gz')
+    for i_vox in range(len(ind_nonzero[0])):
+        # assign closest label value for this voxel
+        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
+        im_label.data[ix, iy, iz] = data_label_dilate[ix, iy, iz]
+    # save new label file (overwrite)
+    im_label.setFileName(fname_labeled_seg_new)
+    im_label.save()
 
 
 # START PROGRAM
