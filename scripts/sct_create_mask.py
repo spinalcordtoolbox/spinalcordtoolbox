@@ -149,13 +149,11 @@ def create_mask():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, path_tmp+'data.nii')
     # sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
         convert(method_val, path_tmp+'centerline.nii.gz')
-        # sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -257,7 +255,7 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('isct_c3d line.nii -scale 0 -o line.nii', param.verbose)
+    sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
 
     cmd = 'sct_label_utils -i line.nii -o line.nii -t add -x '
     for iz in range(nz):

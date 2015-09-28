@@ -72,9 +72,7 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
-    from sct_split_data import split_data
-    split_data(file_data+ext, 3, '_T')
-    # status, output = sct.run('sct_split_data -i ' + file_data + ext + ' -dim t -suffix _T', param.verbose)
+    sct.run('sct_split_data -i '+file_data+ext+' -dim t -suffix _T', param.verbose)
     file_data_splitT = file_data + '_T'
 
     # Motion correction: initialization
@@ -100,7 +98,9 @@ def moco(param):
         # average registered volume with target image
         # N.B. use weighted averaging: (target * nb_it + moco) / (nb_it + 1)
         if param.iterative_averaging and indice_index < 10 and failed_transfo[it] == 0:
-            sct.run('isct_c3d '+file_target+ext+' -scale '+str(indice_index+1)+' '+file_data_splitT_moco_num[it]+ext+' -add -scale '+str(float(1)/(indice_index+2))+' -o '+file_target+ext)
+            sct.run('sct_maths -i '+file_target+ext+' -mul '+str(indice_index+1)+' -o '+file_target+ext)
+            sct.run('sct_maths -i '+file_target+ext+' -add '+file_data_splitT_moco_num[it]+ext+' -o '+file_target+ext)
+            sct.run('sct_maths -i '+file_target+ext+' -div '+str(indice_index+2)+' -o '+file_target+ext)
 
     # Replace failed transformation with the closest good one
     sct.printv(('\nReplace failed transformations...'), verbose)
