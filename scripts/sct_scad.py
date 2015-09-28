@@ -296,34 +296,29 @@ class ScadScript(BaseScript):
                           description="Centerline file name (result file name)",
                           mandatory=False,
                           example="out.nii.gz")
-        parser.add_option(name="-p",
-                          type_value="multiple_choice",
-                          description="Produce output debug files",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
         parser.add_option(name="-sym",
                           type_value="multiple_choice",
                           description="Enables the symmetry guided minimal path",
                           mandatory=False,
-                          default_value=0,
+                          default_value="0",
                           example=['0', '1'])
         parser.add_option(name="-sym_exp",
                           type_value="int",
                           description="Enhances the value of the symmetry. The value is the exponent at which the values of the symmetry will be subjected to (symmetry values are between 0 and 1)",
                           mandatory=False,
-                          default_value=0,
+                          default_value="0",
                           example=['0', '1'])
-        parser.add_option(name="-rmtmp",
+        parser.add_option(name="-r",
                           type_value="multiple_choice",
-                          description="Removes the temporary folder used for the algorithm at the end of execution",
+                          description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
                           mandatory=False,
-                          default_value=0,
+                          default_value="0",
                           example=['0', '1'])
         parser.add_option(name="-sc_rad",
                           type_value="int",
                           description="Gives approximate radius of spinal cord to help the algorithm",
                           mandatory=False,
+                          default_value="4",
                           example="4")
 
         parser.add_option(name="-v",
@@ -340,7 +335,7 @@ class ScadScript(BaseScript):
 
 
 class SCAD(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file = 0,output_filename=None, debug=0, produce_output=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 3):
+    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file=0,output_filename=None, debug=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 3):
         """
         Constructor for the automatic spinal cord detection
         :param output_filename: Name of the result file of the centerline detection. Must contain the extension (.nii / .nii.gz)
@@ -354,7 +349,7 @@ class SCAD(Algorithm):
                the image is expected to be in the same folder as the input image
         :return:
         """
-        super(SCAD, self).__init__(input_image, produce_output=produce_output)
+        super(SCAD, self).__init__(input_image, produce_output=1-rm_tmp_file)
         self._contrast = contrast
         self._verbose = verbose
         self.output_filename = input_image.file_name + "_centerline.nii.gz"
@@ -538,6 +533,7 @@ class SCAD(Algorithm):
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
+        self.output_debug_file(img, img.data, "Vesselness_Filter")
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
         self.output_debug_file(img, self.minimum_path_data, "minimal_path")
@@ -598,6 +594,9 @@ class SCAD(Algorithm):
             import shutil
             shutil.rmtree(path_tmp)
 
+        print "To view the output with FSL :"
+        print "fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red"
+
 
 if __name__ == "__main__":
     parser = ScadScript.get_parser()
@@ -611,9 +610,9 @@ if __name__ == "__main__":
 
     if "-o" in arguments:
         scad.output_filename = arguments["-o"]
-    if "-p" in arguments:
-        scad.produce_output = int(arguments["-p"])
-    if "-rmtmp" in arguments:
+    # if "-p" in arguments:
+    #     scad.produce_output = int(arguments["-p"])
+    if "-r" in arguments:
         scad.rm_tmp_file = int(arguments["-rmtmp"])
     if "-sym" in arguments:
         scad.enable_symmetry = int(arguments["-sym"])
