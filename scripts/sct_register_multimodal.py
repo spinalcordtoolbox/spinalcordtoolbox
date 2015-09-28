@@ -500,7 +500,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # N.B. no need to pad if iter = 0
         if not paramreg.steps[i_step_str].iter == '0':
             dest_pad = sct.add_suffix(dest, '_pad')
-            sct.run('sct_maths -i '+dest+' -o '+dest_pad+' -pad 0x0x'+str(param.padding))
+            sct.run('sct_maths -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
             dest = dest_pad
 
         cmd = ('isct_antsRegistration '
