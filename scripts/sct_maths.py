@@ -234,12 +234,11 @@ def main(args = None):
     elif "-smooth" in arguments:
         sigmas = arguments["-smooth"]
         data_out = []
-        for d in data:
-            if len(sigmas) == 1:
-                sigmas = [sigmas[0] for i in range(len(d.shape))]
-            elif len(sigmas) != len(d.shape):
-                printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
-            data_out.append(smooth(d, sigmas))
+        if len(sigmas) == 1:
+            sigmas = [sigmas[0] for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+        data_out.append(smooth(data, sigmas))
 
     elif '-dilate' in arguments:
         data_out = [dilate(d, arguments['-dilate']) for d in data]
