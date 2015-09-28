@@ -13,6 +13,7 @@
 import sys
 from msct_parser import Parser
 from sct_utils import extract_fname
+from dipy.data.fetcher import read_bvals_bvecs
 
 # PARSER
 # ==========================================================================================
@@ -51,14 +52,18 @@ def main():
 
     # Open bval files and concatenate
     bvals_concat = ''
-    for i_file in range(0,len(fname_bval_list)):
-        f = open(fname_bval_list[i_file],'r')
-        for line in f:
-            bvals_concat += line
-        f.close()
+    # for file_i in fname_bval_list:
+    #     f = open(file_i, 'r')
+    #     for line in f:
+    #         bvals_concat += line
+    #     f.close()
+    for i_fname in fname_bval_list:
+        bval_i, bvec_i = read_bvals_bvecs(i_fname, None)
+        bvals_concat += ' '.join(str(v) for v in bval_i)
+        bvals_concat += ' '
 
     # Write new bval
-    new_f = open(fname_out,'w')
+    new_f = open(fname_out, 'w')
     new_f.write(bvals_concat)
     new_f.close()
 
