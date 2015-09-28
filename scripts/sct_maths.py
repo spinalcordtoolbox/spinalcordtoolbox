@@ -362,7 +362,7 @@ def erode(data, radius):
 
 
 def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
-    from numpy import zeros
+    from numpy import zeros, dot
     nx, ny, nz, nt, px, py, pz, pt = im.dim
     padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
     padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
@@ -392,24 +392,14 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     im.data = padded_data  # done after the call of the function
 
     # adapt the origin in the sform and qform matrix
-    def get_sign_offsets(orientation):
-        default = 'LPI'
-        offset_sign = [0, 0, 0]
+    new_origin = dot(im.hdr.get_best_affine(), [-padding_x, -padding_y, -padding_z, 1])
 
-        for i in range(3):
-            if default[i] in orientation:
-                offset_sign[i] = -1
-            else:
-                offset_sign[i] = 1
-        return offset_sign
-
-    offset_signs = get_sign_offsets(im.orientation)
-    im.hdr.structarr['qoffset_x'] += offset_signs[0]*padding_x*px
-    im.hdr.structarr['qoffset_y'] += offset_signs[1]*padding_y*py
-    im.hdr.structarr['qoffset_z'] += offset_signs[2]*padding_z*pz
-    im.hdr.structarr['srow_x'][-1] += offset_signs[0]*padding_x*px
-    im.hdr.structarr['srow_y'][-1] += offset_signs[1]*padding_y*py
-    im.hdr.structarr['srow_z'][-1] += offset_signs[2]*padding_z*pz
+    im.hdr.structarr['qoffset_x'] = new_origin[0]
+    im.hdr.structarr['qoffset_y'] = new_origin[1]
+    im.hdr.structarr['qoffset_z'] = new_origin[2]
+    im.hdr.structarr['srow_x'][-1] = new_origin[0]
+    im.hdr.structarr['srow_y'][-1] = new_origin[1]
+    im.hdr.structarr['srow_z'][-1] = new_origin[2]
 
     return im
 
