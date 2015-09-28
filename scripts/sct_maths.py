@@ -435,12 +435,19 @@ def multicomponent_merge(data_list):
 
     data_out = zeros(new_shape)
     for i, dat in enumerate(data_list):
+        '''
         if len(dat.shape) < 4:
             new_shape = list(dat.shape)
             while len(new_shape) < 4:
                 new_shape.append(1)
             dat = reshape(dat, tuple(new_shape))
-        data_out[:, :, :, :, i] = dat.astype('float32')
+        '''
+        if len(dat.shape) == 2:
+            data_out[:, :, 0, 0, i] = dat.astype('float32')
+        elif len(dat.shape) == 3:
+            data_out[:, :, :, 0, i] = dat.astype('float32')
+        elif len(dat.shape) == 4:
+            data_out[:, :, :, :, i] = dat.astype('float32')
     return [data_out.astype('float32')]
 
 
