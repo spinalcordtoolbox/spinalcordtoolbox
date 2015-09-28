@@ -342,9 +342,14 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Generate output file
-    from sct_convert import convert
-    convert(fname_in, fname_out)
+    if ext_in != ext_out:
+        # Generate output file
+        from sct_convert import convert
+        convert(fname_in, fname_out)
+    else:
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
     # # Move file to output folder (keep the same extension as input)
     # shutil.move(fname_in, path_out+file_out+ext_in)
     # # convert to nii (only if necessary)
