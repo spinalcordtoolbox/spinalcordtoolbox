@@ -15,75 +15,62 @@
 
 #import sct_utils as sct
 import commands
-import time
+
 
 def test(path_data):
 
     folder_data = 'mt/'
-    file_data = ['mt0.nii.gz', 'mt1.nii.gz']
+    file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt0_syn_reg_on_mt1.nii.gz']
 
     output = ''
     status = 0
-    possible_algos =['slicereg2d_translation','slicereg2d_rigid','slicereg2d_affine','slicereg2d_syn','slicereg2d_bsplinesyn']  # ,'slicereg']  # , 'rigid', 'affine', 'compositeaffine', 'similarity', 'translation', 'bspline', 'gaussiandisplacementfield', 'bsplinedisplacementfield', 'syn', 'bsplinesyn'] # 'slicereg2d_pointwise': for seg,
-    # possible_algos =['compositeaffine', 'translation']
-    for algo in possible_algos:
-        cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
-              + ' -d ' + path_data + folder_data + file_data[1] \
-              + ' -o data_reg.nii.gz'  \
-              + ' -p step=1,algo='+algo+',iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
-              + ' -x linear' \
-              + ' -r 0' \
-              + ' -v 1'
-        output += cmd+'\n'  # copy command
-        s, o = commands.getstatusoutput(cmd)
-        status += s
-        output += '*****************************************************************************************************\n' \
-                  'OUTPUT FROM TEST '+algo+': '
-        output += o
-        output += '*****************************************************************************************************\n'
-        time.sleep(0.2)
-    '''
-    cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
-          + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -o data_reg.nii.gz'  \
-          + ' -p step=1,algo=syn,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
-          + ' -x linear' \
-          + ' -r 0' \
-          + ' -v 1'
-    output += cmd+'\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    status += s
-    output += '*****************************************************************************************************\n' \
-              'OUTPUT FROM TEST 1: '
-    output += o
-    output += '*****************************************************************************************************\n'
 
-    # check other method
+    algo_default = 'syn'
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -o data_reg.nii.gz'  \
-          + ' -p step=1,algo=slicereg,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
+          + ' -o data_'+algo_default+'_reg.nii.gz'  \
+          + ' -p step=1,algo='+algo_default+',iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
           + ' -x linear' \
           + ' -r 0' \
           + ' -v 1'
-    output += cmd+'\n'  # copy command
+    output += '\n====================================================================================================\n'\
+              +cmd+\
+              '\n====================================================================================================\n\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
 
     # check other method
+    algo = 'slicereg'
     cmd = 'sct_register_multimodal -i ' + path_data + folder_data + file_data[0] \
           + ' -d ' + path_data + folder_data + file_data[1] \
-          + ' -o data_reg.nii.gz'  \
-          + ' -p step=1,algo=slicereg2d_affine,iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
+          + ' -o data_'+algo+'_reg.nii.gz'  \
+          + ' -p step=1,algo='+algo+',iter=1,smooth=0,shrink=4,metric=MeanSquares'  \
           + ' -x linear' \
           + ' -r 0' \
           + ' -v 1'
-    output += cmd+'\n'  # copy command
+    output += '\n====================================================================================================\n'\
+              +cmd+\
+              '\n====================================================================================================\n\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     status += s
     output += o
-    '''
+
+    # if command ran without error, test integrity
+    if status == 0:
+        from msct_image import Image
+        threshold = 1e-3
+        # compare with gold-standard registration
+        data_gold = Image(path_data + folder_data + file_data[-1]).data
+        data_res = Image('data_'+algo_default+'_reg.nii.gz').data
+        # check if non-zero elements are present when computing the difference of the two images
+        diff = data_gold - data_res
+        import numpy as np
+        if abs(np.sum(diff))>threshold:
+            Image(param=diff, absolutepath='res_differences_from_gold_standard.nii.gz').save()
+            status = 99
+            output += '\nResulting image differs from gold-standard (sum of the difference of intensity: '+str(np.sum(diff))+').'
+
 
     return status, output
 
