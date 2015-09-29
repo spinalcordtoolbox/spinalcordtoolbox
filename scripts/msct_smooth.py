@@ -19,8 +19,7 @@ import sct_utils as sct
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('isct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
-
+    sct.run('sct_maths -i '+fname+' -o tmp.centerline_pad.nii.gz -pad '+str(padding)+','+str(padding)+','+str(padding))
 
 
 #=======================================================================================================================
