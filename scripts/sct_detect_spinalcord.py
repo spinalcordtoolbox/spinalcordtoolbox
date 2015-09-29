@@ -613,7 +613,7 @@ if __name__ == "__main__":
     # if "-p" in arguments:
     #     scad.produce_output = int(arguments["-p"])
     if "-r" in arguments:
-        scad.rm_tmp_file = int(arguments["-rmtmp"])
+        scad.rm_tmp_file = int(arguments["-r"])
     if "-sym" in arguments:
         scad.enable_symmetry = int(arguments["-sym"])
     if "-sym_exp" in arguments:
