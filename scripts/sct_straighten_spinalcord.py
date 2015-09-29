@@ -576,9 +576,8 @@ class SpinalCordStraightener(object):
             padding_x, padding_y, padding_z = padding, padding, padding
             if nx + padding <= leftright_width:
                 padding_x = leftright_width - padding - nx
-            sct.run("isct_c3d " + fname_centerline_orient + " -pad " + str(padding_x) + "x" + str(padding_y) + "x" +
-                    str(padding_z) + "vox " + str(padding_x) + "x" + str(padding_y) + "x" + str(padding_z) +
-                    "vox 0 -o tmp.centerline_pad.nii.gz", verbose)
+            sct.run('sct_maths -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
+
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
             file_image = load('tmp.centerline_pad.nii.gz')
@@ -766,8 +765,9 @@ class SpinalCordStraightener(object):
                 # ==========================================================================================
                 # convert landmarks to INT
                 sct.printv('\nConvert landmarks to INT...', verbose)
-                sct.run('isct_c3d tmp.landmarks_straight.nii.gz -type int -o tmp.landmarks_straight.nii.gz', verbose)
-                sct.run('isct_c3d tmp.landmarks_curved.nii.gz -type int -o tmp.landmarks_curved.nii.gz', verbose)
+                from sct_convert import convert
+                convert('tmp.landmarks_straight.nii.gz', 'tmp.landmarks_straight.nii.gz', type='int32')
+                convert('tmp.landmarks_curved.nii.gz', 'tmp.landmarks_curved.nii.gz', type='int32')
 
                 # This stands to avoid overlapping between landmarks
                 # TODO: do symmetric removal
