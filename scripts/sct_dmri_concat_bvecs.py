@@ -21,7 +21,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Concatenate bvec files in time.')
+    parser.usage.set_description('Concatenate bvec files in time. You can either use bvecs in lines or columns.\nN.B.: Return bvecs in lines. If you need it in columns, please use sct_dmri_transpose_bvecs afterwards.')
     parser.add_option(name="-i",
                       type_value=[[','], 'file'],
                       description="List of the bvec files to concatenate.",
