@@ -298,16 +298,15 @@ class ScadScript(BaseScript):
                           example="out.nii.gz")
         parser.add_option(name="-sym",
                           type_value="multiple_choice",
-                          description="Enables the symmetry guided minimal path",
+                          description="Uses right-left symmetry of the image to improve accuracy.",
                           mandatory=False,
                           default_value="0",
                           example=['0', '1'])
         parser.add_option(name="-sym_exp",
                           type_value="int",
-                          description="Enhances the value of the symmetry. The value is the exponent at which the values of the symmetry will be subjected to (symmetry values are between 0 and 1)",
+                          description="Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.",
                           mandatory=False,
-                          default_value="0",
-                          example=['0', '1'])
+                          default_value="10")
         parser.add_option(name="-r",
                           type_value="multiple_choice",
                           description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
@@ -595,7 +594,7 @@ class SCAD(Algorithm):
             shutil.rmtree(path_tmp)
 
         print "To view the output with FSL :"
-        print "fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red"
+        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red", self.verbose, "info")
 
 
 if __name__ == "__main__":
