@@ -18,7 +18,7 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 #### Segmentation (Propseg)
 - [De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014;98:528-536.](https://dl.dropboxusercontent.com/u/20592661/publications/DeLeener_NIMG14_PropSeg.pdf)
 - [Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014;Article ID 719520.](http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf)
-- [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015; (in press)](https://www.dropbox.com/s/2tsp1juxcvuq4bl/PID3727605.pdf)
+- [De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015;34(8):1705-1718](https://www.dropbox.com/s/2tsp1juxcvuq4bl/PID3727605.pdf)
 
 #### Template and Atlas
 - [Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014;102P2:817-827.](https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf)
