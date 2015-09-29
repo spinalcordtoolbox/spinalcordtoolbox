@@ -241,10 +241,10 @@ def main(args = None):
         data_out.append(smooth(data, sigmas))
 
     elif '-dilate' in arguments:
-        data_out = [dilate(d, arguments['-dilate']) for d in data]
+        data_out = dilate(data, arguments['-dilate'])
 
     elif '-erode' in arguments:
-        data_out = [erode(d, arguments['-erode']) for d in data]
+        data_out = erode(data, arguments['-erode'])
 
     elif '-mcs' in arguments:
         if n_in != 1:
