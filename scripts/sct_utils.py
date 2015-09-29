@@ -20,6 +20,8 @@ import commands
 import subprocess
 import re
 
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
+# TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
@@ -62,7 +64,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1):
+def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     if verbose==2:
         printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
@@ -85,9 +87,11 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
         # from inspect import stack
-        printv("ERROR\n"+output_final[0:-1], 1, 'error')
+        printv(output_final[0:-1], 1, error_exit)
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
+        if raise_exception:
+            raise Exception(output_final[0:-1])
     else:
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]
@@ -281,6 +285,34 @@ def find_file_within_folder(fname, directory):
                 all_path.append(os.path.join(root, file))
     return all_path
 
+#=======================================================================================================================
+# create temporary folder and return path of tmp dir
+#=======================================================================================================================
+
+def tmp_create(verbose=1):
+    # path_tmp = tmp_create()
+    printv('\nCreate temporary folder...', verbose)
+    import time
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    run('mkdir '+path_tmp, verbose)
+    return path_tmp
+
+
+#=======================================================================================================================
+# copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
+#=======================================================================================================================
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
+    # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
+
+    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    if ext_fname_out == '.nii':
+       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+    elif ext_fname_out == '.nii.gz':
+        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
+
+
 
 #=======================================================================================================================
 # generate_output_file
@@ -310,9 +342,14 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Generate output file
-    from sct_convert import convert
-    convert(fname_in, fname_out)
+    if ext_in != ext_out:
+        # Generate output file
+        from sct_convert import convert
+        convert(fname_in, fname_out)
+    else:
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
     # # Move file to output folder (keep the same extension as input)
     # shutil.move(fname_in, path_out+file_out+ext_in)
     # # convert to nii (only if necessary)

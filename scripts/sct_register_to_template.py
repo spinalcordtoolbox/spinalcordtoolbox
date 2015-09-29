@@ -208,21 +208,22 @@ def main():
     status, output = sct.run('mkdir '+path_tmp)
 
     # copy files to temporary folder
-    sct.printv('\nCopy files...', verbose)
-    sct.run('isct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
-    sct.run('isct_c3d '+fname_landmarks+' -o '+path_tmp+'/landmarks.nii.gz')
-    sct.run('isct_c3d '+fname_seg+' -o '+path_tmp+'/segmentation.nii.gz')
-    sct.run('isct_c3d '+fname_template+' -o '+path_tmp+'/template.nii')
-    sct.run('isct_c3d '+fname_template_label+' -o '+path_tmp+'/template_labels.nii.gz')
-    sct.run('isct_c3d '+fname_template_seg+' -o '+path_tmp+'/template_seg.nii.gz')
+    from sct_convert import convert
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    convert(fname_data, path_tmp+'/data.nii')
+    convert(fname_landmarks, path_tmp+'/landmarks.nii.gz')
+    convert(fname_seg, path_tmp+'/segmentation.nii.gz')
+    convert(fname_template, path_tmp+'/template.nii')
+    convert(fname_template_label, path_tmp+'/template_labels.nii.gz')
+    convert(fname_template_seg, path_tmp+'/template_seg.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # resample data to 1mm isotropic
     sct.printv('\nResample data to 1mm isotropic...', verbose)
-    sct.run('isct_c3d data.nii -resample-mm 1.0x1.0x1.0mm -interpolation Linear -o datar.nii')
-    sct.run('isct_c3d segmentation.nii.gz -resample-mm 1.0x1.0x1.0mm -interpolation NearestNeighbor -o segmentationr.nii.gz')
+    sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x trilinear -o datar.nii')
+    sct.run('sct_resample -i segmentation.nii.gz -mm 1.0x1.0x1.0 -x nn -o segmentationr.nii.gz')
     # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
     resample_labels('landmarks.nii.gz', 'datar.nii', 'landmarksr.nii.gz')
     # # TODO
@@ -259,7 +260,7 @@ def main():
 
     # Make sure landmarks are INT
     sct.printv('\nConvert landmarks to INT...', verbose)
-    sct.run('isct_c3d template_label.nii.gz -type int -o template_label.nii.gz', verbose)
+    convert('template_label.nii.gz', 'template_label.nii.gz', type='int32')
 
     # Create a cross for the template labels - 5 mm
     sct.printv('\nCreate a 5 mm cross for the template labels...', verbose)
@@ -275,7 +276,7 @@ def main():
 
     # Convert landmarks from FLOAT32 to INT
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
-    sct.run('isct_c3d landmarks_rpi_cross3x3_straight.nii.gz -type int -o landmarks_rpi_cross3x3_straight.nii.gz')
+    convert('landmarks_rpi_cross3x3_straight.nii.gz', 'landmarks_rpi_cross3x3_straight.nii.gz', type='int32')
 
     # Remove labels that do not correspond with each others.
     sct.printv('\nRemove labels that do not correspond with each others.', verbose)
