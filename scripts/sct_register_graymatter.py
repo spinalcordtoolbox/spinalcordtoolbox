@@ -289,11 +289,11 @@ def main():
     warp_target2anat_corrected = 'warp_'+sct.extract_fname(multimodal_reg_param.target)[1]+'2'+sct.extract_fname(multimodal_reg_param.anat)[1]+'_corrected_wm.nii.gz'
 
     # OPTION USED UNTIL NOW:
-    sct.run('sct_concat_transfo -w '+warp_anat2target+','+warp+' -d '+target+' -o '+warp_anat2target_corrected)
-    sct.run('sct_concat_transfo -w '+inverse_warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
-    # NEW OPTION IN TESTING
-    # sct.run('sct_concat_transfo -w '+warp_anat2target+','+inverse_warp+' -d '+target+' -o '+warp_anat2target_corrected)
-    # sct.run('sct_concat_transfo -w '+warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
+    # sct.run('sct_concat_transfo -w '+warp_anat2target+','+warp+' -d '+target+' -o '+warp_anat2target_corrected)
+    # sct.run('sct_concat_transfo -w '+inverse_warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
+    # NEW OPTION IN TESTING --> SEEMS BETTER (transformation going in a better direction)
+    sct.run('sct_concat_transfo -w '+warp_anat2target+','+inverse_warp+' -d '+target+' -o '+warp_anat2target_corrected)
+    sct.run('sct_concat_transfo -w '+warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
 
     target_reg = sct.extract_fname(multimodal_reg_param.target)[1]+'_reg_corrected.nii.gz'
     anat_reg = sct.extract_fname(multimodal_reg_param.anat)[1]+'_reg_corrected.nii.gz'
