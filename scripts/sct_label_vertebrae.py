@@ -608,7 +608,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     """
     # remove voxels in segmentation_labeled that are not in segmentation
     #run('sct_maths -i segmentation_labeled.nii.gz -bin -o segmentation_labeled_bin.nii.gz')
-    run('sct_maths -i '+fname_labeled_seg+','+fname_seg+' -mul -o segmentation_labeled_mul.nii.gz')
+    run('sct_maths -i '+fname_labeled_seg+' -mul '+fname_seg+' -o segmentation_labeled_mul.nii.gz')
     # add voxels in segmentation that are not in segmentation_labeled
     run('sct_maths -i '+fname_labeled_seg+' -dilate 2 -o segmentation_labeled_dilate.nii.gz')  # dilate labeled segmentation
     data_label_dilate = Image('segmentation_labeled_dilate.nii.gz').data
