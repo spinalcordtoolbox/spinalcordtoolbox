@@ -107,24 +107,12 @@ sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
-
-#---------------------OLD>>>>>>>>>>
-# register to template (template registered to t2).
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d mt1.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg mt1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MI,iter=2,gradStep=0.5
-# concatenate transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
-sct_concat_transfo -w warp_mt12MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_mt2template.nii.gz
-# warp template and atlas
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
-#-------------------OLD^^^^^^^^^
-#---------------------NEW>>>>>>>>>>
 # register template to MT , taking th internal structure into account
 sct_register_graymatter -i mt1.nii.gz -iseg mt1_seg.nii.gz -anat ../t2/template2anat.nii.gz -anat-seg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -warp ../t2/warp_template2anat.nii.gz
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_corrected_wm.nii.gz -d mt1.nii.gz -o warp_template2mt1.nii.gz
 # warp template
 sct_warp_template -d mt1.nii.gz -w warp_template2mt1.nii.gz
-#-------------------NEW^^^^^^^^^
 # check registration result
 fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # extract MTR within the white matter
@@ -153,24 +141,13 @@ sct_propseg -i fmri_moco_mean.nii.gz -t t2 -init-centerline t2_seg_reg_centerlin
 # check segmentation
 fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
-#---------------------OLD>>>>>>>>>>
-# register to template (template registered to t2). Only uses segmentation (more accurate)
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=seg,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=0.5
+# register to template (template registered to mt1 with correction regarding the internal structure). 
+sct_register_multimodal -i ../mt/mt1.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=0.5
 # concatenate transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
-sct_concat_transfo -w warp_fmri_moco_mean2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
+sct_concat_transfo -w ../mt/warp_template2anat2mt1_corrected_wm.nii.gz,warp_mt12fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+sct_concat_transfo -w warp_fmri_moco_mean2mt1.nii.gz,../mt/warp_mt12template2anat_corrected_wm.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
-#-------------------OLD^^^^^^^^^
-#---------------------NEW>>>>>>>>>>
-# register to template (template registered to mt1 with correction regarding the internal structure). Only uses segmentation (more accurate)
-sct_register_multimodal -i ../mt/label/template/MNI-Poly-AMU_T2.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/label/template/MNI-Poly-AMU_cord.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=seg,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=1.5
-# concatenate transfo
-sct_concat_transfo -w ../mt/warp_template2anat2mt1_corrected_wm.nii.gz,warp_MNI-Poly-AMU_T22fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
-sct_concat_transfo -w warp_fmri_moco_mean2MNI-Poly-AMU_T2.nii.gz,../mt/warp_mt12template2anat_corrected_wm.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
-# warp template, atlas and spinal levels
-sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
-#-------------------NEW^^^^^^^^^
 
 # check results
 fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
