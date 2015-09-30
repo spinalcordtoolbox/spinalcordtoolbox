@@ -189,7 +189,7 @@ def inverse_gmseg_to_wmseg(gm_seg, original_im, name_gm_seg='gmseg', save=True, 
 
     # inverse arrays
     binary_gm_seg_dat = (gm_seg_dat > 0).astype(int)
-    sc_dat = (gm_seg_dat > 0).astype(int)
+    sc_dat = (original_dat > 0).astype(int)
     # cast of the -1 values (-> GM pixel at the exterior of the SC pixels) to +1 --> WM pixel
     res_wm_seg = np.asarray(np.absolute(sc_dat - binary_gm_seg_dat).astype(int))
 
