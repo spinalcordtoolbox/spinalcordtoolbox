@@ -76,7 +76,7 @@ def segment_gm(target_fname='', sc_seg_fname='', path_to_label='', param=None):
     return gmsegfull.res_names['corrected_wm_seg'], gmsegfull.res_names['gm_seg']
 
 
-def wm_registration(param):
+def wm_registration(param, smooth=False, init=False):
     path, fixed_name, ext = sct.extract_fname(param.fname_fixed)
     path_moving, moving_name, ext = sct.extract_fname(param.fname_moving)
     path, fixed_seg_name, ext = sct.extract_fname(param.fname_seg_fixed)
@@ -88,7 +88,7 @@ def wm_registration(param):
     sct.run(cmd)
     fixed_name = fixed_name_temp
 
-    fixed_seg_name_temp = fixed_name+"_crop"
+    fixed_seg_name_temp = fixed_seg_name+"_crop"
     sct.run("sct_crop_image -i " + fixed_seg_name + ext + " -o " + fixed_seg_name_temp + ext + " -m " + fixed_seg_name + ext + " -shift 5,5 -dim 0,1")
     fixed_seg_name = fixed_seg_name_temp
 
@@ -123,14 +123,15 @@ def wm_registration(param):
         moving_im.data = (moving_im.data - old_min)*(new_max - new_min)/(old_max - old_min) + new_min
         moving_im.save()
 
-    # smoothing the images to register
-    sct.printv('\nSmoothing the images...', verbose, 'normal')
-    fixed_smooth = fixed_name+'_smooth'
-    moving_smooth = moving_name+'_smooth'
-    sct.run('sct_maths -i '+fixed_name+ext+' -smooth 1 -o '+fixed_smooth+ext)
-    sct.run('sct_maths -i '+moving_name+ext+' -smooth 1 -o '+moving_smooth+ext)
-    fixed_name = fixed_smooth
-    moving_name = moving_smooth
+    if smooth:
+        # smoothing the images to register
+        sct.printv('\nSmoothing the images...', verbose, 'normal')
+        fixed_smooth = fixed_name+'_smooth'
+        moving_smooth = moving_name+'_smooth'
+        sct.run('sct_maths -i '+fixed_name+ext+' -smooth 1 -o '+fixed_smooth+ext)
+        sct.run('sct_maths -i '+moving_name+ext+' -smooth 1 -o '+moving_smooth+ext)
+        fixed_name = fixed_smooth
+        moving_name = moving_smooth
 
     # registration of the gray matter
     sct.printv('\nDeforming the image...', verbose, 'normal')
@@ -147,30 +148,36 @@ def wm_registration(param):
     # cmd = 'sct_register_multimodal -i '+moving_name+ext+' -d '+fixed_name+ext+' -iseg '+moving_seg_name+ext+' -dseg '+fixed_seg_name+ext+' -p '+param_multimodal_reg+' -o '+moving_name_reg
 
     cmd = 'isct_antsRegistration --dimensionality 3 --interpolation '+param.interpolation+' --transform '+param.transformation+'['+param.gradient_step+transfo_params+'] --metric '+param.metric+'['+fixed_name+ext+','+moving_name+ext+',1,4] --output ['+moving_name_reg+','+moving_name_reg+ext+']  --convergence '+param.iteration+' --shrink-factors 1x1 --smoothing-sigmas 0x0 '
-    # initialize the transformation using the intensity
-    cmd += ' -r ['+fixed_name+ext+','+moving_name+ext+',1] '
+    if init:
+        # initialize the transformation using the intensity
+        cmd += ' -r ['+fixed_name+ext+','+moving_name+ext+',1] '
 
     cmd += " --masks ["+fixed_seg_name+ext+","+moving_seg_name + ext + "]"
     # cmd += " -m ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
 
     sct.run(cmd)
 
-    # transform the .mat warping field into a nifti file:
-    warp0_mat = moving_name_reg+'0GenericAffine.mat'
-    warp0, warp0_inv = transform_mat_to_warp(warp0_mat, moving_name_reg+ext, fixed_name+ext)
-    if param.transformation == 'Affine':
-        warp_tot = warp0
-        inverse_warp_tot = warp0_inv
+    if init:
+        # transform the .mat warping field into a nifti file:
+        warp0_mat = moving_name_reg+'0GenericAffine.mat'
+        warp0, warp0_inv = transform_mat_to_warp(warp0_mat, moving_name_reg+ext, fixed_name+ext)
+        if param.transformation == 'Affine':
+            warp_tot = warp0
+            inverse_warp_tot = warp0_inv
+        else:
+            warp1 = moving_name_reg+'1Warp.nii.gz'
+            warp1_inv = moving_name_reg+'1InverseWarp.nii.gz'
+
+            # Concatenate the warping fields from the 2 steps into a warp total and an inverse
+            warp_tot = moving_name_reg+'_warp_tot'+ext
+            inverse_warp_tot = moving_name_reg+'_inverse_warp_tot'+ext
+
+            sct.run('sct_concat_transfo -w '+warp0+','+warp1+' -d '+fixed_name+ext+' -o '+warp_tot)
+            sct.run('sct_concat_transfo -w '+warp1_inv+','+warp0_inv+' -d '+moving_name+ext+' -o '+inverse_warp_tot)
     else:
-        warp1 = moving_name_reg+'1Warp.nii.gz'
-        warp1_inv = moving_name_reg+'1InverseWarp.nii.gz'
+        warp_tot = moving_name_reg+'0Warp.nii.gz'
+        inverse_warp_tot = moving_name_reg+'0InverseWarp.nii.gz'
 
-        # Concatenate the warping fields from the 2 steps into a warp total and an inverse
-        warp_tot = moving_name_reg+'_warp_tot'+ext
-        inverse_warp_tot = moving_name_reg+'_inverse_warp_tot'+ext
-
-        sct.run('sct_concat_transfo -w '+warp0+','+warp1+' -d '+fixed_name+ext+' -o '+warp_tot)
-        sct.run('sct_concat_transfo -w '+warp1_inv+','+warp0_inv+' -d '+moving_name+ext+' -o '+inverse_warp_tot)
 
     if param.metric == 'MeanSquares':
         # removing offset
@@ -185,7 +192,9 @@ def wm_registration(param):
 
     # un-padding the images AND the warping fields
     moving_name_unpad = moving_name_reg+"_unpadded"
+    fixed_name_unpad = fixed_name+"_unpadded"
     sct.run("sct_crop_image -i "+moving_name_reg+ext+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+moving_name_unpad+ext)
+    sct.run("sct_crop_image -i "+fixed_name+ext+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+fixed_name_unpad+ext)
 
     # warp_tot = moving_name_reg+"0Warp.nii.gz"
     # inverse_warp_tot = moving_name_reg+"0InverseWarp.nii.gz"
@@ -209,10 +218,9 @@ def wm_registration(param):
     sct.run("mv "+warp_unpad+" "+warp_output)
     sct.run("mv "+inverse_warp_unpad+" "+inverse_warp_output)
 
-    moving_name = moving_name_unpad
     moving_name_out = file_output+ext_output
     # put the result and the reference in the same space using a registration with ANTs with no iteration:
-    sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fixed_name+ext+','+moving_name+ext+',1,16] -o [regAffine,'+moving_name_out+'] -n BSpline[3] -c 0 -f 1 -s 0')
+    sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fixed_name_unpad+ext+','+moving_name_unpad+ext+',1,16] -o [regAffine,'+moving_name_out+'] -n BSpline[3] -c 0 -f 1 -s 0')
 
     return warp_output, inverse_warp_output
 
@@ -288,12 +296,8 @@ def main():
     warp_anat2target_corrected = 'warp_'+sct.extract_fname(multimodal_reg_param.anat)[1]+'2'+sct.extract_fname(multimodal_reg_param.target)[1]+'_corrected_wm.nii.gz'
     warp_target2anat_corrected = 'warp_'+sct.extract_fname(multimodal_reg_param.target)[1]+'2'+sct.extract_fname(multimodal_reg_param.anat)[1]+'_corrected_wm.nii.gz'
 
-    # OPTION USED UNTIL NOW:
-    # sct.run('sct_concat_transfo -w '+warp_anat2target+','+warp+' -d '+target+' -o '+warp_anat2target_corrected)
-    # sct.run('sct_concat_transfo -w '+inverse_warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
-    # NEW OPTION IN TESTING --> SEEMS BETTER (transformation going in a better direction)
-    sct.run('sct_concat_transfo -w '+warp_anat2target+','+inverse_warp+' -d '+target+' -o '+warp_anat2target_corrected)
-    sct.run('sct_concat_transfo -w '+warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
+    sct.run('sct_concat_transfo -w '+warp_anat2target+','+warp+' -d '+target+' -o '+warp_anat2target_corrected)
+    sct.run('sct_concat_transfo -w '+inverse_warp+','+warp_target2anat+' -d '+anat+' -o '+warp_target2anat_corrected)
 
     target_reg = sct.extract_fname(multimodal_reg_param.target)[1]+'_reg_corrected.nii.gz'
     anat_reg = sct.extract_fname(multimodal_reg_param.anat)[1]+'_reg_corrected.nii.gz'
