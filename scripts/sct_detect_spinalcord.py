@@ -593,8 +593,8 @@ class SCAD(Algorithm):
             import shutil
             shutil.rmtree(path_tmp)
 
-        sct.printv("To view results, type:", self.verbose)
-        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red &", self.verbose, "info")
+        sct.printv("\nTo view results, type:", self.verbose)
+        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red &\n", self.verbose, "info")
 
 
 if __name__ == "__main__":
