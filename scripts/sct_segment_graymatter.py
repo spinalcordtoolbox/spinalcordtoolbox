@@ -68,10 +68,6 @@ class Preprocessing:
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
 
-        '''
-        status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
-        self.original_orientation = t2_star_orientation[4:7]
-        '''
         self.original_orientation = t2star_im.orientation
 
         self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
