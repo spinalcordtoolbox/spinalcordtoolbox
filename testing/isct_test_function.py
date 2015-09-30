@@ -84,7 +84,6 @@ def generate_data_list(folder_dataset, verbose=1):
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
-        print folder_dataset + subject_dir, not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir)
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
             data_subjects.append(folder_dataset + subject_dir)
 
