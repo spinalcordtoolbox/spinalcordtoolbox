@@ -1155,7 +1155,8 @@ if __name__ == "__main__":
 
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.usage.set_description('Classes for the segmentation of the white/gray matter on a T2star or MT image\n'
+                                     'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
         parser.add_option(name="-i",
                           type_value="file",
                           description="target image to segment"
@@ -1232,33 +1233,6 @@ if __name__ == "__main__":
                           mandatory=False,
                           default_value=0,
                           example=['0', '1', '2'])
-        '''
-        parser.add_option(name="-first-reg",
-                          type_value='multiple_choice',
-                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-z",
-                          type_value='multiple_choice',
-                          description="1: Z regularisation, 0: no ",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-label-fusion",
-                          type_value='multiple_choice',
-                          description="Use the similarities as a weights for the label fusion",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-similarity",
-                          type_value='multiple_choice',
-                          description="Use a PCA mode weighted norm for the computation of the similarities instead of the euclidean square norm",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        '''
-
 
         arguments = parser.parse(sys.argv[1:])
 
@@ -1288,16 +1262,6 @@ if __name__ == "__main__":
             param.res_type = arguments["-res-type"]
         if "-v" in arguments:
             param.verbose = int(arguments["-v"])
-        '''
-        if "-first-reg" in arguments:
-            param.first_reg = bool(int(arguments["-first-reg"]))
-        if "-z" in arguments:
-            param.z_regularisation = bool(int(arguments["-z"]))
-        if "-weighted-label-fusion" in arguments:
-            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
-        if "-weighted-similarity" in arguments:
-            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
-        '''
 
     model = Model(model_param=param, k=0.8)
     if input_target_fname is not None:
