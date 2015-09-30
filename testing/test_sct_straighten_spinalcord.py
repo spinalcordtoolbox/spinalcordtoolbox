@@ -17,19 +17,22 @@ import sct_utils as sct
 from msct_parser import Parser
 import sct_straighten_spinalcord
 from pandas import DataFrame
+import os.path
 
 
 def test(path_data='', parameters=''):
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz'
-    # add mandatory verbose to parameters list
-    parameters = parameters + ' -v 1'
 
     parser = sct_straighten_spinalcord.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
     param_with_path = Parser.dictionary_to_string(dict_param_with_path)
+
+    # Check if input files exist
+    if not os.path.isfile(dict_param_with_path['-i']):
+        return 5, 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data, None
 
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     status, output = sct.run(cmd, 0)
@@ -47,11 +50,10 @@ def test(path_data='', parameters=''):
         if result_dist_max > 4.0 or result_mse > 1.5:
             status = 99
 
-
     # transform results into Pandas structure
     results = DataFrame(data={'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
 
-    return (status, output, results)
+    return status, output, results
 
 if __name__ == "__main__":
     # call main function
