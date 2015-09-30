@@ -279,7 +279,7 @@ class ScadScript(BaseScript):
     def get_parser():
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('''This program automatically detect the spinal cord in a MR image and output a centerline of the spinal cord.''')
+        parser.usage.set_description('''This function automatically detects the spinal cord centerline in a MRI image. It uses a combination of (i) vesselness filter with prior information on approximate spinal cord radius, (ii) minimal path algorithm and (iii) the right-left symmetry of the body.''')
         parser.add_option(name="-i",
                           type_value="file",
                           description="input image.",
@@ -593,8 +593,8 @@ class SCAD(Algorithm):
             import shutil
             shutil.rmtree(path_tmp)
 
-        print "To view the output with FSL :"
-        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red", self.verbose, "info")
+        sct.printv("To view results, type:", self.verbose)
+        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red &", self.verbose, "info")
 
 
 if __name__ == "__main__":
