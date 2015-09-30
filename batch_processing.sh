@@ -21,9 +21,12 @@ sct_propseg -i t2.nii.gz -t t2 -mesh -max-deformation 4 -init 130
 # tips: we use "-mesh" to get the mesh of the segmentation, which can be viewed using MITKWORKBENCH
 # check your results:
 fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
-# At this point you should make labels. Here we can use the file labels.nii.gz, which contains labels at C3 (value=3) and T4 (value=11).
+# vertebral labeling. Here we use the fact that the FOV is centered at C7.
+sct_label_vertebrae -i t2.nii.gz -seg t2_seg.nii.gz -initcenter 7
+# create labels at C2 and T2 vertebral levels
+sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -level 2,9
 # register to template
-sct_register_to_template -i t2.nii.gz -l labels.nii.gz -s t2_seg.nii.gz -p step=1,type=seg,algo=slicereg:step=2,type=seg,algo=bsplinesyn,iter=5,shrink=2:step=3,type=im,algo=syn,iter=3,shrink=1
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,shrink=2,metric=MeanSquares:step=3,type=im,algo=syn,iter=3,shrink=1,metric=CC
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
@@ -37,16 +40,16 @@ cd ..
 #  t1
 # ----------
 cd t1
-# crop data using graphical user interface (put two points)
-# >> sct_crop -i t1.nii.gz
-# segmentation (used for registration to template)
-sct_propseg -i t1.nii.gz -t t1 -max-deformation 3
+# detect approximate spinal cord centerline
+sct_detect_spinalcord -i t1.nii.gz -t t1 -sym 1
+# spinal cord segmentation
+sct_propseg -i t1.nii.gz -t t1 -init-centerline t1_centerline.nii.gz
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
 # --> t1_seg_modif.nii.gz
 # register to template (which was previously registered to the t2).
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1.nii.gz -dseg t1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1.nii.gz -dseg t1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
 # concatenate transformations
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22t1.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
 sct_concat_transfo -w warp_t12MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
@@ -69,9 +72,10 @@ cd dmri
 sct_create_mask -i dmri.nii.gz -m coord,110x20 -s 60 -f cylinder
 # motion correction
 sct_dmri_moco -i dmri.nii.gz -b bvecs.txt -g 3 -m mask_dmri.nii.gz -p 2,2,1,MeanSquares -t 0
-# segment mean_dwi
-# tips: use flag "-init" to start propagation from another slice, otherwise results are not good.
-sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init 3
+# detect approximate spinal cord centerline
+sct_detect_spinalcord -i dwi_moco_mean.nii.gz -t t1 -sym 1
+# fine segmentation with propseg
+sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init-centerline dwi_moco_mean_centerline.nii.gz
 # check segmentation
 fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 & 
 # register to template (template registered to t2).
@@ -101,6 +105,9 @@ sct_label_utils -i mt1.nii.gz -t create -x 100,90,4,1:102,93,2,1:101,91,0,1 -o m
 sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -radius 4
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
+
+# TODO: segment gray matter
+
 # use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
 sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # register mt0 on mt1
