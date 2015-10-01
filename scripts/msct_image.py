@@ -404,20 +404,6 @@ class Image(object):
             new_data = einsum('ij,ij->ij', data_mask, array)
         self.data = new_data
 
-    def denoise_ornlm(self, v=3, f=1, h=0.01):
-        from commands import getstatusoutput
-        from sys import path
-        # append python path for importing module
-        # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-        status, path_sct = getstatusoutput('echo $SCT_DIR')
-        path.append(path_sct + '/external/denoise/ornlm')
-        from ornlm import ornlm
-        import numpy as np
-        dat = self.data.astype(np.float64)
-        denoised = np.array(ornlm(dat, v, f, np.max(dat)*h))
-        self.file_name += '_denoised'
-        self.data = denoised
-
     def invert(self):
         self.data = self.data.max() - self.data
         return self
