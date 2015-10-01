@@ -120,7 +120,11 @@ def get_parser():
                       description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
                       mandatory=False,
                       example='0.5')
-
+    parser.add_option(name='-denoise',
+                      type_value='int',
+                      description='Non-local means adaptative denoising from P. Coupe et al algorithm.',
+                      mandatory=False,
+                      example="")
     parser.usage.addSection("\nMulti-component operations:")
     parser.add_option(name='-mcs',
                       description='Multi-component split. Outputs the components separately.\n'
@@ -245,6 +249,9 @@ def main(args = None):
 
     elif '-erode' in arguments:
         data_out = erode(data, arguments['-erode'])
+
+    elif '-denoise' in arguments:
+        data_out = denoise_ornlm(data)
 
     elif '-mcs' in arguments:
         if n_in != 1:
@@ -500,6 +507,19 @@ def concatenate_along_4th_dimension(data1, data2):
         data2 = data2[..., newaxis]
     return concatenate((data1, data2), axis=3)
 
+
+def denoise_ornlm(data_in, v=3, f=1, h=0.01):
+    from commands import getstatusoutput
+    from sys import path
+    # append python path for importing module
+    # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
+    status, path_sct = getstatusoutput('echo $SCT_DIR')
+    path.append(path_sct + '/external/denoise/ornlm')
+    from ornlm import ornlm
+    from numpy import array, max, float64
+    dat = data_in.astype(float64)
+    denoised = array(ornlm(dat, v, f, max(dat)*h))
+    return denoised
 
 # def check_shape(data):
 #     """
