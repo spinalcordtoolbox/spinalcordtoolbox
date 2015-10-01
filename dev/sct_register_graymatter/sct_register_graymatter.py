@@ -137,7 +137,7 @@ def wm_registration(param, smooth=False, init=False):
     sct.printv('\nDeforming the image...', verbose, 'normal')
     moving_name_reg = moving_name+"_deformed"
 
-    # param_multimodal_reg = 'step=1,type=seg,algo=syn,metric=CC,iter=5:step=2,type=im,algo='+param.transformation.lower()+',metric=MeanSquares,iter=10'
+    param_multimodal_reg = 'step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2'
     if param.transformation == 'BSplineSyN':
         transfo_params = ',3,0'
     elif param.transformation == 'SyN':     # SyN gives bad results...
@@ -145,8 +145,9 @@ def wm_registration(param, smooth=False, init=False):
     else:
         transfo_params = ''
 
-    # cmd = 'sct_register_multimodal -i '+moving_name+ext+' -d '+fixed_name+ext+' -iseg '+moving_seg_name+ext+' -dseg '+fixed_seg_name+ext+' -p '+param_multimodal_reg+' -o '+moving_name_reg
-
+    cmd = 'sct_register_multimodal -i '+moving_name+ext+' -d '+fixed_name+ext+' -iseg '+moving_seg_name+ext+' -dseg '+fixed_seg_name+ext+' -p '+param_multimodal_reg+' -o '+moving_name_reg
+    ext_multimodal = '.nii'
+    '''
     cmd = 'isct_antsRegistration --dimensionality 3 --interpolation '+param.interpolation+' --transform '+param.transformation+'['+param.gradient_step+transfo_params+'] --metric '+param.metric+'['+fixed_name+ext+','+moving_name+ext+',1,4] --output ['+moving_name_reg+','+moving_name_reg+ext+']  --convergence '+param.iteration+' --shrink-factors 1x1 --smoothing-sigmas 0x0 '
     if init:
         # initialize the transformation using the intensity
@@ -154,7 +155,7 @@ def wm_registration(param, smooth=False, init=False):
 
     cmd += " --masks ["+fixed_seg_name+ext+","+moving_seg_name + ext + "]"
     # cmd += " -m ["+fixed_seg_name+".nii,"+moving_seg_name+".nii]"
-
+    '''
     sct.run(cmd)
 
     if init:
@@ -185,31 +186,32 @@ def wm_registration(param, smooth=False, init=False):
         fixed_im.data = (fixed_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
         fixed_im.save()
 
-        moving_im = Image(moving_name_reg+ext)
+        moving_im = Image(moving_name_reg+ext_multimodal)
         moving_im.data = (moving_im.data - new_min)*(old_max - old_min)/(new_max - new_min) + old_min
         moving_im.save()
 
 
-    # un-padding the images AND the warping fields
+    # un-padding the images
     moving_name_unpad = moving_name_reg+"_unpadded"
     fixed_name_unpad = fixed_name+"_unpadded"
     sct.run("sct_crop_image -i "+moving_name_reg+ext+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+moving_name_unpad+ext)
     sct.run("sct_crop_image -i "+fixed_name+ext+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+fixed_name_unpad+ext)
 
+    '''
     # warp_tot = moving_name_reg+"0Warp.nii.gz"
     # inverse_warp_tot = moving_name_reg+"0InverseWarp.nii.gz"
     warp_unpad = sct.add_suffix(warp_tot, '_unpad')  # moving_name_reg+"0Warp_unpad.nii.gz"
     inverse_warp_unpad =  sct.add_suffix(inverse_warp_tot, '_unpad')  # moving_name_reg+"0InverseWarp_unpad.nii.gz"
     sct.run("sct_crop_image -i "+warp_tot+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+warp_unpad)
     sct.run("sct_crop_image -i "+inverse_warp_tot+" -dim 2 -start "+str(int(param.padding))+" -end -"+param.padding+" -o "+inverse_warp_unpad)
-
+    '''
 
 
     path_output, file_output, ext_output = sct.extract_fname(param.fname_output)
     warp_output = file_output+"_Warp"+ext_output
     inverse_warp_output = file_output+"_InverseWarp"+ext_output
 
-    '''
+
     # with multimodal_reg
     sct.run("mv warp_"+moving_name+"2"+fixed_name+".nii.gz "+warp_output)
     sct.run("mv warp_"+fixed_name+"2"+moving_name+".nii.gz "+inverse_warp_output)
@@ -217,6 +219,7 @@ def wm_registration(param, smooth=False, init=False):
     # with antsReg
     sct.run("mv "+warp_unpad+" "+warp_output)
     sct.run("mv "+inverse_warp_unpad+" "+inverse_warp_output)
+    '''
 
     moving_name_out = file_output+ext_output
     # put the result and the reference in the same space using a registration with ANTs with no iteration:
