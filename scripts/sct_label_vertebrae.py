@@ -223,8 +223,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
     data = gaussian_filter(img.data, [3, 1, 0], output=None, mode="reflect")
 
     # printv('\nDenoise data...', verbose)
-    # img.denoise_ornlm()
-    # data = img.data
+    # from sct_maths import denoise_ornlm
+    # data = denoise_ornlm(img.data)
 
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
