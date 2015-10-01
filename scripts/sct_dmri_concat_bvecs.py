@@ -76,6 +76,7 @@ def main():
         bval_i, bvec_i = read_bvals_bvecs(None, i_fname)
         for i in range(0, 3):
             bvecs_all[i] += ' '.join(str(v) for v in map(lambda n: '%.16f'%n, bvec_i[:, i]))
+            bvecs_all[i] += ' '
 
     # Concatenate
     bvecs_concat = '\n'.join(str(v) for v in bvecs_all)
