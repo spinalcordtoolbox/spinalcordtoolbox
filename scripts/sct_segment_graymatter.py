@@ -64,7 +64,8 @@ class Preprocessing:
         # denoising (optional)
         t2star_im = Image(self.t2star)
         if denoising:
-            t2star_im.denoise_ornlm()
+            from sct_maths import denoise_ornlm
+            t2star_im.data = denoise_ornlm(t2star_im.data)
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
 
