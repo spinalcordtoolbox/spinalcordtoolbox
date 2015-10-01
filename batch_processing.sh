@@ -126,9 +126,9 @@ sct_segment_graymatter -i mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Pol
 # register WM template to WMseg
 sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt1_wmseg.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5
 # concat transfo
-sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt1_wmseg.nii.gz -d mt1.nii.gz -o warp_template2mt_corrected_wm.nii.gz
+sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt1_wmseg.nii.gz -d mt1.nii.gz -o warp_template2mt1_corrected_wm.nii.gz
 # warp template (final warp template for mt1)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt_corrected_wm.nii.gz
+sct_warp_template -d mt1.nii.gz -w warp_template2mt1_corrected_wm.nii.gz
 # check registration result
 fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # extract MTR within the white matter
@@ -160,8 +160,8 @@ fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # register to template (template registered to mt1 with correction regarding the internal structure). 
 sct_register_multimodal -i ../mt/mt1.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MI,iter=5,smooth=3,gradStep=0.5
 # concatenate transfo
-sct_concat_transfo -w ../mt/warp_template2anat2mt1_corrected_wm.nii.gz,warp_mt12fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
-sct_concat_transfo -w warp_fmri_moco_mean2mt1.nii.gz,../mt/warp_mt12template2anat_corrected_wm.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
+sct_concat_transfo -w ../mt/warp_template2mt1_corrected_wm.nii.gz,warp_mt12fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+sct_concat_transfo -w warp_fmri_moco_mean2mt1.nii.gz,../mt/warp_template2mt1_corrected_wm.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_fmri2template.nii.gz
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 
