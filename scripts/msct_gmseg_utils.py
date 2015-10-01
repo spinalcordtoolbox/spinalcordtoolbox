@@ -825,8 +825,9 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             gmseg = resample_image(gmseg, npx=axial_pix_dim, npy=axial_pix_dim, binary=True)
 
             if denoise:
+                from sct_maths import denoise_ornlm
                 t2star_im = Image(t2star)
-                t2star_im.denoise_ornlm()
+                t2star_im.data = denoise_ornlm(t2star_im.data)
                 t2star_im.save()
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
