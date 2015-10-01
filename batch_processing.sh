@@ -99,22 +99,19 @@ cd ..
 # mt
 # ----------
 cd mt
-# create points along the spinal cord mt1 to help segmentation.
-sct_label_utils -i mt1.nii.gz -t create -x 100,90,4,1:102,93,2,1:101,91,0,1 -o mt1_init.nii.gz
+# bring T2 segmentation in the MT space to help segmentation
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -p step=1,iter=0 -x nn
 # segment mt1
-sct_propseg -i mt1.nii.gz -t t2 -init-mask mt1_init.nii.gz -radius 4
+sct_propseg -i mt1.nii.gz -t t2 -init-centerline t2_seg_reg.nii.gz
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
-
-# TODO: segment gray matter
-
 # use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
 sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # register mt0 on mt1
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
-# register template to MT , taking th internal structure into account
+# register template to MT using information from gray matter
 sct_register_graymatter -i mt1.nii.gz -iseg mt1_seg.nii.gz -anat ../t2/template2anat.nii.gz -anat-seg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -warp ../t2/warp_template2anat.nii.gz
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_corrected_wm.nii.gz -d mt1.nii.gz -o warp_template2mt1.nii.gz
