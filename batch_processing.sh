@@ -111,12 +111,27 @@ sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=3,gradStep=0.2
 # compute mtr
 sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
+
+# JULIEN <<<
+# register template (in T2 space) to mt1
+# TODO
+# concat transfo
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
+# warp template (to get vertebral levels)
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
+# segment GM
+sct_segment_graymatter -i mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz 
+# register WM template to WMseg
+sct_register_multimodal -i mt1_wmseg.nii.gz -d label/template/MNI-Poly-AMU_WM.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5
+# concat
+# warp again
+# >>>
 # register template to MT using information from gray matter
 sct_register_graymatter -i mt1.nii.gz -iseg mt1_seg.nii.gz -anat ../t2/template2anat.nii.gz -anat-seg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -warp ../t2/warp_template2anat.nii.gz
 # concatenate transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_corrected_wm.nii.gz -d mt1.nii.gz -o warp_template2mt1.nii.gz
 # warp template
-sct_warp_template -d mt1.nii.gz -w warp_template2mt1.nii.gz
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
 # check registration result
 fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # extract MTR within the white matter

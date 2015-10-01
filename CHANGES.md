@@ -9,6 +9,7 @@
 - NEW: **sct_register_graymatter**: improve registration to the template using gray matter segmentation
 - NEW: no more dependence with FSL
 - NEW: no more dependence with c3d
+- NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
 - BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
 - OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
 
