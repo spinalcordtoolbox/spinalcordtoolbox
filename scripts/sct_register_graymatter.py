@@ -278,6 +278,10 @@ def main():
     # segmentation of the gray matter
     gm_seg_param.res_type = 'binary'
     wm_fname, gm_fname = segment_gm(target_fname=target, sc_seg_fname=target_seg, path_to_label=label_original, param=gm_seg_param)
+    wm_seg_out = sct.extract_fname(multimodal_reg_param.target)[1]+'_wm_seg.nii.gz'
+    gm_seg_out = sct.extract_fname(multimodal_reg_param.target)[1]+'_gm_seg.nii.gz'
+    sct.run('cp '+wm_fname+' ../'+wm_seg_out)
+    sct.run('cp '+gm_fname+' ../'+gm_seg_out)
 
     # registration of the template WM to the automatic Wm segmentation
     wm_reg_param.fname_fixed = wm_fname
