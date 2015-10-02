@@ -293,7 +293,8 @@ def tmp_create(verbose=1):
     # path_tmp = tmp_create()
     printv('\nCreate temporary folder...', verbose)
     import time
-    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    import random
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S")+'_'+str(random.randint(1, 1000000)), 1)
     run('mkdir '+path_tmp, verbose)
     return path_tmp
 
