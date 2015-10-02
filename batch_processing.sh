@@ -41,7 +41,7 @@ cd ..
 # ----------
 cd t1
 # detect approximate spinal cord centerline
-sct_detect_spinalcord -i t1.nii.gz -t t1 -sym 1
+sct_get_centerline -method auto -i t1.nii.gz -t t1 -sym 1
 # spinal cord segmentation
 sct_propseg -i t1.nii.gz -t t1 -init-centerline t1_centerline.nii.gz
 # check results
