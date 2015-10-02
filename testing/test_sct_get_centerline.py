@@ -34,16 +34,16 @@ def test(path_data):
     status += s
     output += o
 
-    # define command
-    cmd = 'sct_get_centerline -i ' + path_data + folder_data + file_data[0] \
-        + ' -method point' \
-        + ' -p ' + path_data + folder_data + file_data[1] \
-        + ' -g 1'\
-        + ' -k 4'
-    output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
-    s, o = commands.getstatusoutput(cmd)
-    status += s
-    output += o
+    # define command: DOES NOT RUN IT BECAUSE REQUIRES FSL FLIRT
+    # cmd = 'sct_get_centerline -i ' + path_data + folder_data + file_data[0] \
+    #     + ' -method point' \
+    #     + ' -p ' + path_data + folder_data + file_data[1] \
+    #     + ' -g 1'\
+    #     + ' -k 4'
+    # output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    # s, o = commands.getstatusoutput(cmd)
+    # status += s
+    # output += o
 
     # define command
     cmd = 'sct_get_centerline -i ' + path_data + folder_data + file_data[0] \
