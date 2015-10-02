@@ -1066,9 +1066,8 @@ if __name__ == "__main__":
     rm_tmp_files = param_default.remove_temp_files
 
     if method == "labels":
-        input_image = ','.join(arguments["-i"])
-        print "Input image : "+input_image
-        print "OK"
+        input_image = arguments["-i"]
+        print '[%s]' % ', '.join(map(str, input_image))
         if "-o" in arguments:
             output_file_name = arguments["-o"]
         if "-v" in arguments:
