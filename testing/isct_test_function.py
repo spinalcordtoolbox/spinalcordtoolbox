@@ -109,6 +109,9 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
     # generate data list from folder containing
     data_subjects = generate_data_list(folder_dataset)
 
+    # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
+    os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
+
     from multiprocessing import Pool
     import importlib
     script_to_be_run = importlib.import_module('test_' + function)  # import function as a module
