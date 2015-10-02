@@ -291,6 +291,7 @@ ImageType::Pointer vesselnessFilter(ImageType::Pointer im, float typeImageFactor
 
 int main(int argc, char *argv[])
 {
+    printf("STARTING\n");
     srand (time(NULL));
     
 	if (argc == 1)
@@ -323,6 +324,7 @@ int main(int argc, char *argv[])
     double minimalPath_sigmaDistance=30.0;
     
     // Reading option parameters from user input
+    cout << argc;
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i],"-i")==0) {
             i++;
@@ -355,23 +357,24 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i],"-param-init")==0)
         {
+            printf("\nPARAM INIT\n");
             // param structure delimited by commas:
             // minimalPath_alpha,minimalPath_beta,minimalPath_gamma,minimalPath_sigmaMinimum,minimalPath_sigmaMaximum,minimalPath_numberOfSigmaSteps,minimalPath_sigmaDistance
             vector<string> param_init = split(argv[i], ',');
             minimalPath_alpha = atof(param_init[0].c_str());
-            sprintf("%f\n", minimalPath_alpha);
+            printf("%f\n", minimalPath_alpha);
             minimalPath_beta = atof(param_init[1].c_str());
-            sprintf("%f\n", minimalPath_beta);
+            printf("%f\n", minimalPath_beta);
             minimalPath_gamma = atof(param_init[2].c_str());
-            sprintf("%f\n", minimalPath_gamma);
+            printf("%f\n", minimalPath_gamma);
             minimalPath_sigmaMinimum = atof(param_init[3].c_str());
-            sprintf("%f\n", minimalPath_sigmaMinimum);
+            printf("%f\n", minimalPath_sigmaMinimum);
             minimalPath_sigmaMaximum = atof(param_init[4].c_str());
-            sprintf("%f\n", minimalPath_sigmaMaximum);
+            printf("%f\n", minimalPath_sigmaMaximum);
             minimalPath_numberOfSigmaSteps = atoi(param_init[5].c_str());
-            sprintf("%i\n", minimalPath_numberOfSigmaSteps);
+            printf("%i\n", minimalPath_numberOfSigmaSteps);
             minimalPath_sigmaDistance = atof(param_init[6].c_str());
-            sprintf("%f\n", minimalPath_sigmaDistance);
+            printf("%f\n", minimalPath_sigmaDistance);
         }
 		else if (strcmp(argv[i],"-verbose")==0) {
             verbose = true;
