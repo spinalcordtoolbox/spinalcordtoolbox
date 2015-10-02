@@ -85,7 +85,7 @@ def main():
             mask.data = mask.data.reshape(mask.data.shape[:-1])
 
     if square:
-        input_img.crop_from_square_mask(mask)
+        input_img.crop_and_straighten(mask)
     else:
         input_img.crop_from_mask(mask)
 
