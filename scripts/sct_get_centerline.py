@@ -1079,11 +1079,11 @@ if __name__ == "__main__":
     else:
         contrast = None
         try:
-            contrast = arguments["-contrast"]
+            contrast = arguments["-t"]
         except Exception, e:
             sct.printv("The method automatic requires a contrast type to be defined", type="error")
-
-        scad = SCAD(input_image, contrast=contrast)
+        im = Image(input_image)
+        scad = SCAD(im, contrast=contrast)
 
         if "-o" in arguments:
             scad.output_filename = arguments["-o"]
