@@ -39,6 +39,7 @@ import sct_utils as sct
 import os
 import copy_reg
 import types
+from pandas import Series, concat
 
 
 def _pickle_method(method):
@@ -80,53 +81,63 @@ def generate_data_list(folder_dataset, verbose=1):
     This function return a list of directory (in folder_dataset) in which the contrast is present.
     :return data:
     """
-    data_subjects = []
+    data_subjects, subjects_dir = [], []
 
     # each directory in folder_dataset should be a directory of a subject
     for subject_dir in os.listdir(folder_dataset):
         if not subject_dir.startswith('.') and os.path.isdir(folder_dataset + subject_dir):
-            data_subjects.append(folder_dataset + subject_dir)
+            data_subjects.append(folder_dataset + subject_dir + '/')
+            subjects_dir.append(subject_dir)
 
     if not data_subjects:
         sct.printv('ERROR: No subject data were found in ' + folder_dataset + '. '
                    'Please organize your data correctly or provide a correct dataset.',
                    verbose=verbose, type='error')
 
-    return data_subjects
+    return data_subjects, subjects_dir
 
 
-def worker_results(results):
-    results_sorted = [result for result in results if result is not None and result[0] != 5]
-    sorted(results_sorted, key=lambda l: l[2][0])  # sort results by subject name / path
-    return results_sorted
+def process_results(results, subjects_name, function, folder_dataset, parameters):
+    results_dataframe = concat([result[2] for result in results])
+    results_dataframe.loc[:, 'subject'] = Series(subjects_name, index=results_dataframe.index)
+    results_dataframe.loc[:, 'script'] = Series([function]*len(subjects_name), index=results_dataframe.index)
+    results_dataframe.loc[:, 'dataset'] = Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
+    results_dataframe.loc[:, 'parameters'] = Series([parameters] * len(subjects_name), index=results_dataframe.index)
+    return results_dataframe
+
+
+def function_launcher(args):
+    import importlib
+    script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
+    return script_to_be_run.test(*args[1:])
 
 
 def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=1):
     """
     Run a test function on the dataset using multiprocessing and save the results
     :return: results
+    # results are organized as the following: tuple of (status, output, DataFrame with results)
     """
+
     # generate data list from folder containing
-    data_subjects = generate_data_list(folder_dataset)
+    data_subjects, subjects_name = generate_data_list(folder_dataset)
 
     # All scripts that are using multithreading with ITK must not use it when using multiprocessing on several subjects
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
 
     from multiprocessing import Pool
-    import importlib
-    script_to_be_run = importlib.import_module('test_' + function)  # import function as a module
 
     # create datasets with parameters
     import itertools
-    data_and_params = itertools.izip(data_subjects, itertools.repeat(parameters))
+    data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     pool = Pool(processes=nb_cpu)
-    async_results = pool.map_async(lambda x: script_to_be_run.test(*x), data_and_params, callback=worker_results)
+    async_results = pool.map_async(function_launcher, data_and_params)
 
     pool.close()
     try:
         pool.join()  # waiting for all the jobs to be done
-        results = async_results.get()  # get the sorted results once all jobs are finished
+        results = process_results(async_results.get(), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -201,4 +212,5 @@ if __name__ == "__main__":
     verbose = arguments["-v"]
 
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
-    print results
+    print 'subjects :\n', results['subject']
+    print 'results :\n', results

@@ -31,8 +31,10 @@ def test(path_data='', parameters=''):
     param_with_path = Parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not os.path.isfile(dict_param_with_path['-i']):
-        return 5, 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data, None
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
+        status = 200
+        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': -1.0, 'dist_max': -1.0}, index=[path_data])
 
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     status, output = sct.run(cmd, 0)
@@ -51,7 +53,7 @@ def test(path_data='', parameters=''):
             status = 99
 
     # transform results into Pandas structure
-    results = DataFrame(data={'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
 
     return status, output, results
 
