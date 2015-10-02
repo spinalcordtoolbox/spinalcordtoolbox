@@ -391,8 +391,7 @@ class SpinalCordStraightener(object):
         path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
 
         # create temporary folder
-        path_tmp = "tmp." + time.strftime("%y%m%d%H%M%S")
-        sct.run("mkdir " + path_tmp, verbose)
+        path_tmp = sct.tmp_create(verbose=verbose)
 
         # copy files into tmp folder
         sct.run("cp " + fname_anat + " " + path_tmp, verbose)
