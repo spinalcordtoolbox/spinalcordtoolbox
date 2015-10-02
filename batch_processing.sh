@@ -41,7 +41,7 @@ cd ..
 # ----------
 cd t1
 # spinal cord segmentation
-sct_propseg -i t1.nii.gz -t t1 -init-centerline t1_centerline.nii.gz
+sct_propseg -i t1.nii.gz -t t1
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # adjust segmentation (it was not perfect)
