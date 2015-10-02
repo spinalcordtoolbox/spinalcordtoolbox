@@ -39,7 +39,6 @@ class Param:
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'nurbs'
-        # self.parameter = "binary_centerline"
         self.list_file = []
         self.output_file_name = ''
         self.schedule_file = 'flirtsch/schedule_TxTy.sch'
