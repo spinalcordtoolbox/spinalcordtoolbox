@@ -26,7 +26,7 @@ def test(path_data):
     status = 0
 
     # define command
-    cmd = 'sct_get_centerline_automatic -i ' + path_data + folder_data + file_data[0] \
+    cmd = 'sct_get_centerline -method point -i ' + path_data + folder_data + file_data[0] \
           + ' -p ' + path_data + folder_data + file_data[1] \
           + ' -g 1'\
           + ' -k 4'\
