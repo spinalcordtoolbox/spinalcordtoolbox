@@ -3,10 +3,11 @@
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
-project(isct_vesselnessfilter)
+project(isct_vesselness)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
+set(CMAKE_INCLUDE_PATH ${VTK_DIR}/include/vtk-6.3)
 set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.8)
 
 option(BUILD_SHARED_LIBS OFF)
@@ -27,7 +28,7 @@ if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   endif()
 endif()
 
-set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk")
+# set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk")
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
@@ -44,10 +45,16 @@ set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
 
+FIND_PACKAGE(VTK REQUIRED)
+INCLUDE(${VTK_USE_FILE})
+
+include_directories ("${PROJECT_SOURCE_DIR}/util")
+
 aux_source_directory(. SRC_LIST)
+aux_source_directory(./util SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(isct_vesselnessfilter
+TARGET_LINK_LIBRARIES(isct_vesselness
 ITKIONIFTI
 ITKIOImageBase
 ITKCommon
@@ -62,6 +69,7 @@ ITKIOMesh
 ITKIOTIFF
 ITKIOSiemens
 ITKIOSpatialObjects
+ITKIOVTK
 ITKIOXML
 ITKIOStimulate
 ITKIOBioRad
@@ -72,5 +80,13 @@ ITKIOGE
 ITKIOGIPL
 ITKIOHDF5
 ITKOptimizers
+vtkalglib
+vtkCommonCore
+vtkCommonDataModel
+vtkIOLegacy
+vtkCommonExecutionModel
+vtkFiltersCore
+vtkFiltersModeling
+vtkIOGeometry
+vtkFiltersGeneral
 )
-

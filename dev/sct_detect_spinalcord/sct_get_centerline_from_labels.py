@@ -21,15 +21,15 @@ from sct_orientation import get_orientation
 class Param:
    ## The constructor
    def __init__(self):
-       self.debug = 0
-       self.verbose = 1  # verbose
-       self.remove_temp_files = 1
-       self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
-       self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
-       self.algo_fitting = 'nurbs'
-       # self.parameter = "binary_centerline"
-       self.list_file = []
-       self.output_file_name = ''
+        self.debug = 0
+        self.verbose = 1  # verbose
+        self.remove_temp_files = 1
+        self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
+        self.window_length = 80  # for smooth_centerline @sct_straighten_spinalcord
+        self.algo_fitting = 'nurbs'
+        # self.parameter = "binary_centerline"
+        self.list_file = []
+        self.output_file_name = ''
 
 
 def main(list_file, param, output_file_name=None, remove_temp_files = 1, verbose = 0):
