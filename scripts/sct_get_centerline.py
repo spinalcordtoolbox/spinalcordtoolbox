@@ -709,7 +709,10 @@ class SCAD(Algorithm):
                the image is expected to be in the same folder as the input image
         :return:
         """
-        super(SCAD, self).__init__(input_image, produce_output=1-rm_tmp_file)
+        produce_output = 0
+        if verbose == 2:
+            produce_output = 1
+        super(SCAD, self).__init__(input_image, produce_output=produce_output)
         self._contrast = contrast
         self._verbose = verbose
         self.output_filename = input_image.file_name + "_centerline.nii.gz"
@@ -735,6 +738,7 @@ class SCAD(Algorithm):
         self.centerline_with_outliers = None
 
         self.debug_folder = None
+        self.path_tmp = None
 
 
     @property
@@ -754,7 +758,7 @@ class SCAD(Algorithm):
 
     @verbose.setter
     def verbose(self, value):
-        if value in [0, 1]:
+        if value in [0, 1, 2]:
             self._verbose = value
         else:
             raise Exception('ERROR: verbose value must be an integer and equal to 0 or 1')
@@ -818,9 +822,9 @@ class SCAD(Algorithm):
         :param file_name: filename...
         :return: None
         """
-        if self.produce_output:
+        if self.verbose == 2:
             current_folder = os.getcwd()
-            os.chdir(self.debug_folder)
+            #os.chdir(self.path_tmp)
             try:
                 img = Image(img)
                 img.data = data
@@ -829,7 +833,7 @@ class SCAD(Algorithm):
                 img.save()
             except Exception, e:
                 print e
-            os.chdir(current_folder)
+            #os.chdir(current_folder)
 
     def setup_debug_folder(self):
         """
@@ -859,18 +863,18 @@ class SCAD(Algorithm):
         vesselness_file_name = "imageVesselNessFilter.nii.gz"
         raw_file_name = "raw.nii"
 
-        self.setup_debug_folder()
+        # self.setup_debug_folder()
 
         if self.debug:
             import matplotlib.pyplot as plt # import for debug purposes
 
         # create tmp and copy input
-        path_tmp = self.create_temporary_path()
-        conv.convert(self.input_image.absolutepath, path_tmp+raw_file_name)
+        self.path_tmp = self.create_temporary_path()
+        conv.convert(self.input_image.absolutepath, self.path_tmp+raw_file_name)
 
         if self.vesselness_provided:
-            sct.run('cp '+vesselness_file_name+' '+path_tmp+vesselness_file_name)
-        os.chdir(path_tmp)
+            sct.run('cp '+vesselness_file_name+' '+self.path_tmp+vesselness_file_name)
+        os.chdir(self.path_tmp)
 
         # get input image information
         img = Image(raw_file_name)
@@ -893,7 +897,6 @@ class SCAD(Algorithm):
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
-        self.output_debug_file(img, img.data, "Vesselness_Filter")
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
         self.output_debug_file(img, self.minimum_path_data, "minimal_path")
@@ -949,10 +952,10 @@ class SCAD(Algorithm):
 
         # copy back centerline
         os.chdir('../')
-        conv.convert(path_tmp+img.file_name+img.ext, self.output_filename)
+        conv.convert(self.path_tmp+img.file_name+img.ext, self.output_filename)
         if self.rm_tmp_file == 1:
             import shutil
-            shutil.rmtree(path_tmp)
+            shutil.rmtree(self.path_tmp)
 
         print "To view the output with FSL :"
         sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red", self.verbose, "info")
@@ -1002,7 +1005,7 @@ class GetCenterlineScript(BaseScript):
                           type_value="multiple_choice",
                           description="1: display on, 0: display off (default)",
                           mandatory=False,
-                          example=["0", "1"],
+                          example=["0", "1", "2"],
                           default_value="1")
         parser.add_option(name="-h",
                           type_value=None,
@@ -1079,6 +1082,8 @@ if __name__ == "__main__":
 
     elif method == "point":
         input_image = arguments["-i"][0]
+        if "-v" in arguments:
+            verbose = int(arguments["-v"])
     else:
         input_image = arguments["-i"][0]
         contrast = None
@@ -1100,6 +1105,8 @@ if __name__ == "__main__":
             scad.symmetry_exponent = int(arguments["-sym_exp"])
         if "-sc_rad" in arguments:
             scad.spinalcord_radius = int(arguments["-sc_rad"])
+        if "-v" in arguments:
+            scad.verbose = int(arguments["-v"])
         scad.execute()
 
 
