@@ -979,13 +979,13 @@ class GetCenterlineScript(BaseScript):
         parser.add_option(name="-method",
                           type_value="multiple_choice",
                           description="Method to be used to acquire the centerline.\n "
-                                      "-automatic : Gets the centerline from an input image only.\n"
-                                      "-point : Finds the centerline of the input image with the help of a single "
+                                      "auto : Gets the centerline from an input image only.\n"
+                                      "point : Finds the centerline of the input image with the help of a single "
                                       "point placed manually on the center of the spinalcord on any given slice.\n"
-                                      "-labels : Finds the centerline of the input image with the help of manually "
+                                      "labels : Finds the centerline of the input image with the help of manually "
                                       "placed labels all passing through the centerline of the spinal cord",
                           mandatory=True,
-                          example=['automatic', 'point', 'labels'])
+                          example=['auto', 'point', 'labels'])
         parser.usage.addSection("General options")
         parser.add_option(name="-o",
                           type_value="string",
