@@ -202,8 +202,8 @@ class FullGmSegmentation:
         im_ref_gm_seg.change_orientation('IRP')
         im_ref_wm_seg.change_orientation('IRP')
 
-        im_ref_gm_seg.crop_from_square_mask(mask, save=False)
-        im_ref_wm_seg.crop_from_square_mask(mask, save=False)
+        im_ref_gm_seg.crop_and_straighten(mask, save=False)
+        im_ref_wm_seg.crop_and_straighten(mask, save=False)
 
         im_ref_gm_seg.change_orientation('RPI')
         im_ref_wm_seg.change_orientation('RPI')

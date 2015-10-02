@@ -559,25 +559,30 @@ def crop_t2_star_pipeline(path, box_size=75):
             if t2star != '' and sc_seg != '':
                 subject_path = path + '/' + subject_dir + '/'
                 os.chdir(subject_path)
+                ext = '.nii.gz'
                 try:
                     if seg_in == '':
-                        sct.run('sct_crop_over_mask -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 '
-                                '-o ' + t2star_name + '_seg_in')
-                        seg_in = t2star_name + '_seg_in.nii.gz'
                         seg_in_name = t2star_name + '_seg_in'
+                        seg_in = seg_in_name + ext
+                        sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
 
                     if mask_box == '':
-
-                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
-                        mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+                        mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
+                        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
 
                     if seg_in_croped == '':
-                        sct.run('sct_crop_over_mask -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 '
-                                '-o ' + seg_in_name + '_croped')
+                        seg_in_im = Image(seg_in)
+                        mask_im = Image(mask_box)
+                        seg_in_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        seg_in_name += '_croped'
+                        sct.run('sct_orientation -i ' + seg_in_name + '_croped'+ext + ' -s IRP')
 
                     if manual_seg_croped == '':
-                        sct.run('sct_crop_over_mask -i ' + manual_seg + ' -mask ' + mask_box + ' -square 1'
-                                ' -o ' + manual_seg_name + '_croped')
+                        manual_seg_im = Image(manual_seg)
+                        mask_im = Image(mask_box)
+                        manual_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        manual_seg_name += '_croped'
+                        sct.run('sct_orientation -i ' + manual_seg_name + '_croped'+ext + ' -s IRP')
 
                 except Exception, e:
                     sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
@@ -600,21 +605,29 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
     mask_box = None
 
     try:
-
-        sct.run('sct_crop_over_mask -i ' + t2star + ' -mask ' + sc_seg + ' -square 0 -o ' + t2star_name + '_seg_in')
-        seg_in = t2star_name + '_seg_in.nii.gz'
+        ext = '.nii.gz'
         seg_in_name = t2star_name + '_seg_in'
+        seg_in = seg_in_name + ext
+        sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
 
-        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + t2star_name + '_square_mask_from_sc_seg.nii.gz -f box')
-        mask_box = t2star_name + '_square_mask_from_sc_seg.nii.gz'
+        mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
+        name_centerline = sct.add_suffix(sc_seg, '_centerline')
+        sct.run('sct_process_segmentation -i '+sc_seg+' -p centerline -o '+name_centerline)
+        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + name_centerline + ' -s ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
 
-        status, output = sct.run('sct_crop_over_mask -i ' + seg_in + ' -mask ' + mask_box + ' -square 1 -o ' + seg_in_name + '_croped')
+        seg_in_im = Image(seg_in)
+        mask_im = Image(mask_box)
+        seg_in_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+        seg_in_name += '_croped'
+        sct.run('sct_orientation -i ' + seg_in_name + '_croped'+ext + ' -s IRP')
+        fname_seg_in_IRP = seg_in_name + '_croped_IRP'+ext
+
         if t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz' in os.listdir('.'):
             mask_box = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
 
     except Exception, e:
         sct.printv('WARNING: an error occured when croping ' + t2star_name + '... \n ' + str(e), 1, 'warning')
-    return mask_box
+    return mask_box, fname_seg_in_IRP
 
 
 # ------------------------------------------------------------------------------------------------------------------
@@ -831,7 +844,11 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
                 t2star_im.save()
 
             mask_box = crop_t2_star(t2star, scseg, box_size=model_image_size)
-            sct.run('sct_crop_over_mask -i ' + gmseg + ' -mask ' + mask_box + ' -square 1 -o ' + sct.extract_fname(gmseg)[1] + '_croped')
+
+            gmseg_im = Image(gmseg)
+            mask_im = Image(mask_box)
+            gmseg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+            sct.run('sct_orientation -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -s IRP')
 
             os.chdir(original_path)
     save_by_slice(path_to_dataset)
@@ -1245,10 +1262,11 @@ def compute_error_map_by_level(data_path):
 
                 level_im = Image(level)
 
-                sct.run('sct_crop_over_mask -i ' + ref_wm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_wm_seg)[1] + '_croped')
-                ref_wm_seg = sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_croped' + sct.extract_fname(ref_wm_seg)[2]
-
                 ref_wm_seg_im = Image(ref_wm_seg)
+                mask_im = Image(sq_mask)
+                ref_wm_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                ref_wm_seg = ref_wm_seg_im.absolutepath
+
                 res_wm_seg_im = Image(res_wm_seg)
 
                 label_by_slice = {}
@@ -1356,8 +1374,10 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
 
                         level_im = Image(level)
 
-                        sct.run('sct_crop_over_mask -i ' + ref_gm_seg + ' -mask ' + sq_mask + ' -square 1 -o ' + sct.extract_fname(ref_gm_seg)[1] + '_croped')
-                        ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_croped' + sct.extract_fname(ref_gm_seg)[2]
+                        ref_gm_seg_im = Image(ref_gm_seg)
+                        mask_im = Image(sq_mask)
+                        ref_gm_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        ref_gm_seg = ref_gm_seg_im.absolutepath
 
                         # sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
                         sct.run('sct_maths -i ' + res_gm_seg + ' -thr 0.5 -o ' + res_gm_seg)
