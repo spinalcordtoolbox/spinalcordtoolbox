@@ -378,6 +378,7 @@ def get_centerline_from_labels(list_file, param, output_file_name=None, remove_t
 
     path, file, ext = sct.extract_fname(list_file[0])
 
+    print file
     # create temporary folder
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir '+path_tmp)
@@ -1058,13 +1059,16 @@ if __name__ == "__main__":
 
     method = arguments["-method"]
 
-    input_image = arguments["-i"][0]
+    input_image = None
+
     output_file_name = None
     verbose = param_default.verbose
     rm_tmp_files = param_default.remove_temp_files
 
     if method == "labels":
         input_image = ','.join(arguments["-i"])
+        print "Input image : "+input_image
+        print "OK"
         if "-o" in arguments:
             output_file_name = arguments["-o"]
         if "-v" in arguments:
@@ -1075,13 +1079,15 @@ if __name__ == "__main__":
         get_centerline_from_labels(input_image, param, output_file_name, rm_tmp_files)
 
     elif method == "point":
-        pass
+        input_image = arguments["-i"][0]
     else:
+        input_image = arguments["-i"][0]
         contrast = None
         try:
             contrast = arguments["-t"]
         except Exception, e:
             sct.printv("The method automatic requires a contrast type to be defined", type="error")
+        print input_image
         im = Image(input_image)
         scad = SCAD(im, contrast=contrast)
 
