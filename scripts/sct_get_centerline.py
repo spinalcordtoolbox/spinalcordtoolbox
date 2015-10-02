@@ -633,7 +633,7 @@ def get_centerline(data, dim):
 
 
 class SymmetryDetector(Algorithm):
-    def __init__(self, fname_in, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
+    def __init__(self, input_image, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
         super(SymmetryDetector, self).__init__(input_image)
         self._contrast = contrast
         self._verbose = verbose
