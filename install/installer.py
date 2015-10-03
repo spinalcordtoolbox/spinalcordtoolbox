@@ -567,7 +567,8 @@ class Installer:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: The Python distribution that you are using is not supported by SCT.\n" \
+            print "WARNING: The Python distribution that you are using is not supported by SCT. More info here:\n" \
+                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/\n" \
                   "You can still use your own Python distribution, but you will have to install dependencies by yourself.\n" \
                   "Do you still want to continue?"
             install_new = ""
