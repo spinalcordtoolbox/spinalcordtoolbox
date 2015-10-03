@@ -419,7 +419,7 @@ class Python(object):
         import sys
         self.python_version = sys.version
         if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
-            raise Exception("Unsupported Python")
+            raise Exception("WARNING: Unsupported Python")
 
 
 def open_url(url, start=0, timeout=20):
@@ -567,7 +567,7 @@ class Installer:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: The Python distribution that you are using is not supported by SCT. More info here:\n" \
+            print "The Python distribution that you are using is not supported by SCT:\n" \
                   "http://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/\n" \
                   "You can still use your own Python distribution, but you will have to install dependencies by yourself.\n" \
                   "Do you still want to continue?"
