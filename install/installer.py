@@ -552,21 +552,23 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-09-03"
+        print "Modified: 2015-10-03"
         print "============================="
 
+        # Check OS
         try:
             this_computer = Os()
         except UnsupportedOs, e:
             MsgUser.debug(str(e))
             raise InstallFailed(str(e))
 
+        # Check Python
         try:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: The distribution of Python that you are using is not supported by SCT.\n" \
-                  "You still can use your own distribution of Python but you will have to install our dependencies by yourself.\n" \
+            print "WARNING: The Python distribution that you are using is not supported by SCT.\n" \
+                  "You can still use your own Python distribution, but you will have to install dependencies by yourself.\n" \
                   "Do you still want to continue?"
             install_new = "yes"
             signal.alarm(120)
@@ -576,6 +578,7 @@ class Installer:
             if install_new == "no":
                 sys.exit(2)
 
+        # Check path
         if not os.path.isdir(self.path_install):
             print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
             sys.exit(2)
