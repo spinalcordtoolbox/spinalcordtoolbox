@@ -58,5 +58,5 @@ script:
   - cd install
   - python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
   - cd ../spinalcordtoolbox_v*
-  - python installer.py -p ~/  # test installation of package
+  - python installer.py -p ~/sct  # test installation of package
   - echo "DONE"
