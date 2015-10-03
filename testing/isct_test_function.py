@@ -212,5 +212,4 @@ if __name__ == "__main__":
     verbose = arguments["-v"]
 
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
-    print 'subjects :\n', results['subject']
-    print 'results :\n', results
+    print 'Results :\n', results
