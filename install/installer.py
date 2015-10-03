@@ -534,7 +534,7 @@ class Installer:
 
         # check if user is sudoer
         if os.geteuid() == 0:
-            print "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later." \
+            print "Sorry, you are root. Please type: ./installer.py without sudo. Your password will be required later." \
                   "Exit program\n"
             sys.exit(2)
 
@@ -579,14 +579,9 @@ class Installer:
             if install_new == "no":
                 sys.exit(2)
 
-        # Check path
-        if not os.path.isdir(self.path_install):
-            print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
-            sys.exit(2)
-
         # check if sudo is needed to write in installation folder
         MsgUser.message("Checking if administrator rights are needed for installation...")
-        if os.access(self.path_install, os.W_OK):
+        if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
             MsgUser.message("  No sudo needed for adding elements.")
             self.issudo = ""
         else:
@@ -597,7 +592,7 @@ class Installer:
         if self.path_install[-1:] == '/':
             self.path_install = self.path_install[:-1]
 
-        self.SCT_DIR = self.path_install + "/spinalcordtoolbox"
+        self.SCT_DIR = self.path_install
 
         # Retrieving home folder because in python, paths with ~ do not seem to work.
         self.home = os.path.expanduser('~')
@@ -607,7 +602,7 @@ class Installer:
         print "Check if spinalcordtoolbox is already installed (if so, delete it)..."
         if os.path.isdir(self.SCT_DIR):
             # check if sudo is required for removing SCT
-            if os.access(self.path_install+"/spinalcordtoolbox", os.W_OK):
+            if os.access(self.path_install, os.W_OK):
                 MsgUser.message("  No sudo needed for removing SCT.")
                 self.issudo_remove = ""
             else:
@@ -879,12 +874,12 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
 Install the Spinal Cord Toolbox
 
-USAGE
+USAGE:
 """ + os.path.basename(__file__) + """ -p <path>
 
-MANDATORY ARGUMENTS
--p <path>                   installation path. Do not add "/" at the end!
--h                          display this help
+OPTIONS:
+-p <path>         installation path. Default is: usr/local/spinalcordtoolbox
+-h                display this help
   """
 
     # exit program
