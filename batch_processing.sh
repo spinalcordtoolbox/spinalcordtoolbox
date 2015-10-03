@@ -33,6 +33,7 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area between C2 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 2:4
+# --> mean CSA: 77.1679472754 +/- 1.08332424568
 # go back to root folder
 cd ..
 
@@ -98,7 +99,7 @@ sct_warp_template -d mt1.nii.gz -w warp_template2mt1_corrected.nii.gz
 fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR=34.46
+# --> MTR = 34.4617644116
 # go back to root folder
 cd ..
 
