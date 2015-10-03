@@ -4,4 +4,4 @@ sympy==0.7.6
 matplotlib==1.4.3
 scikit-image==0.11.3
 cython==0.23
-pip
+pip==7.1.2
