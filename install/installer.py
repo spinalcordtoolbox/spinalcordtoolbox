@@ -570,7 +570,7 @@ class Installer:
             print "WARNING: The Python distribution that you are using is not supported by SCT.\n" \
                   "You can still use your own Python distribution, but you will have to install dependencies by yourself.\n" \
                   "Do you still want to continue?"
-            install_new = "yes"
+            install_new = ""
             signal.alarm(120)
             while install_new not in ["yes", "no"]:
                 install_new = input_timeout("[yes|no]: ")
