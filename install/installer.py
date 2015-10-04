@@ -579,6 +579,20 @@ class Installer:
             if install_new == "no":
                 sys.exit(2)
 
+        # Check if pip is install
+        print ('\nCheck if pip is installed...')
+        status, output = commands.getstatusoutput('pip')
+        if not status == 0:
+            print ('.. WARNING: pip is not installed. Installing it...')
+            status, output = commands.getstatusoutput('easy_install pip')
+            if not status == 0:
+                print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                sys.exit(2)
+            else:
+                print ('.. Installed!')
+        else:
+            print('.. OK!')
+
         # check if sudo is needed to write in installation folder
         MsgUser.message("Check if administrator permission is needed for installation...")
         print ".. Installation path: "+self.path_install
