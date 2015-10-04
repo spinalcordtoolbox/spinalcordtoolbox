@@ -644,7 +644,7 @@ class Installer:
         # Checking if a new version of the toolbox is available. If so, change it.
         # Check the version on GitHub Master branch. If a new release is available, ask the user if he want to install it.
         # fetch version of the toolbox
-        print 'Fetch version of the Spinal Cord Toolbox...'
+        print '\nFetch version of the Spinal Cord Toolbox...'
         with open ("spinalcordtoolbox/version.txt", "r") as myfile:
             version_sct_str = myfile.read().replace('\n','')
             version_sct = Version(version_sct_str)
@@ -761,10 +761,11 @@ class Installer:
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
         print ">> " + cmd
-        status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        #status, output = runProcess(cmd)
+        status, output = commands.getstatusoutput(cmd)
         if status != 0:
-            print '\nERROR! \n' + output + '\nExit program.\n'
+            print '\nERROR: Installation failed while installing requirements.\n'+output
+            sys.exit(2)
         else:
             print output
         os.chdir(current_dir)
