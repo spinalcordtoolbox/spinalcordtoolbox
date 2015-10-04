@@ -39,6 +39,7 @@ import sct_utils as sct
 import os
 import copy_reg
 import types
+import signal
 from pandas import Series, concat
 
 
@@ -98,18 +99,25 @@ def generate_data_list(folder_dataset, verbose=1):
 
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
-    results_dataframe = concat([result[2] for result in results])
-    results_dataframe.loc[:, 'subject'] = Series(subjects_name, index=results_dataframe.index)
-    results_dataframe.loc[:, 'script'] = Series([function]*len(subjects_name), index=results_dataframe.index)
-    results_dataframe.loc[:, 'dataset'] = Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
-    results_dataframe.loc[:, 'parameters'] = Series([parameters] * len(subjects_name), index=results_dataframe.index)
-    return results_dataframe
+    try:
+        results_dataframe = concat([result[2] for result in results])
+        results_dataframe.loc[:, 'subject'] = Series(subjects_name, index=results_dataframe.index)
+        results_dataframe.loc[:, 'script'] = Series([function]*len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'dataset'] = Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'parameters'] = Series([parameters] * len(subjects_name), index=results_dataframe.index)
+        return results_dataframe
+    except KeyboardInterrupt:
+        return 'KeyboardException'
 
 
 def function_launcher(args):
     import importlib
     script_to_be_run = importlib.import_module('test_' + args[0])  # import function as a module
     return script_to_be_run.test(*args[1:])
+
+
+def init_worker():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
 def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=1):
@@ -131,16 +139,17 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
     import itertools
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
-    pool = Pool(processes=nb_cpu)
+    pool = Pool(processes=nb_cpu, initializer=init_worker)
     async_results = pool.map_async(function_launcher, data_and_params)
-
     pool.close()
+
     try:
         pool.join()  # waiting for all the jobs to be done
-        results = process_results(async_results.get(), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
+        pool.join()
         sys.exit(2)
     except Exception as e:
         print e
@@ -169,7 +178,7 @@ def get_parser():
 
     parser.add_option(name="-p",
                       type_value="str",
-                      description="Arguments to pass to the function that is tested.\n"
+                      description="Arguments to pass to the function that is tested. Please put double-quotes if there are spaces in the list of parameters.\n"
                                   "Image paths must be contains in the arguments list.",
                       mandatory=False)
 
