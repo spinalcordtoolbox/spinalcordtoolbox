@@ -287,6 +287,7 @@ class Parser:
         # checking if some file names or folder names contains spaces.
         # We suppose here that the user provides correct structure of arguments (i.e., one "-something", one "argument value", one "-somethingelse", one "another argument value", etc.)
         # We also suppose that multiple spaces can be present
+        # we also check if double-quotes are present. If so, we need to concatenate the fields.
         arguments_temp = []
         index_next = 0
         for index in range(0,len(arguments)):
@@ -298,11 +299,20 @@ class Parser:
                     temp_str = arguments[index]
                     index_temp = index
                     if index_temp < len(arguments)-1:
-                        while arguments[index_temp+1][0] != '-': # check if a space is present. If so, concatenation of strings.
-                            temp_str += ' '+arguments[index_temp+1]
-                            index_temp += 1
-                            if index_temp >= len(arguments)-1:
-                                break
+                        if arguments[index] == '"':
+                            while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
+                                temp_str += ' ' + arguments[index_temp + 1]
+                                index_temp += 1
+                                if index_temp >= len(arguments) - 1:
+                                    break
+                            temp_str += ' ' + arguments[index_temp + 1]
+                            temp_str = temp_str[1:-1]
+                        else:
+                            while arguments[index_temp+1][0] != '-':  # check if a space is present. If so, concatenation of strings.
+                                temp_str += ' '+arguments[index_temp+1]
+                                index_temp += 1
+                                if index_temp >= len(arguments)-1:
+                                    break
                     index_next = index_temp+1
                     arguments_temp.append(temp_str)
         arguments = arguments_temp
