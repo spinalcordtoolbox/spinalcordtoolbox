@@ -420,6 +420,8 @@ class Python(object):
         self.python_version = sys.version
         if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
             raise Exception("WARNING: Unsupported Python")
+        else:
+            print '.. conda (OK)'
 
 
 def open_url(url, start=0, timeout=20):
@@ -563,6 +565,7 @@ class Installer:
             raise InstallFailed(str(e))
 
         # Check Python
+        print ('\nCheck which Python distribution is running...')
         try:
             this_python = Python()
         except Exception, e:
@@ -594,7 +597,7 @@ class Installer:
             print('.. OK!')
 
         # check if sudo is needed to write in installation folder
-        MsgUser.message("Check if administrator permission is needed for installation...")
+        MsgUser.message("\nCheck if administrator permission is needed for installation...")
         print ".. Installation path: "+self.path_install
         if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
             MsgUser.message(".. no sudo needed for adding elements.")
@@ -614,7 +617,7 @@ class Installer:
 
         # check if SCT folder already exists - if so, delete it
         print ""
-        print "Check if spinalcordtoolbox is already installed (if so, delete it)..."
+        print "\nCheck if spinalcordtoolbox is already installed (if so, delete it)..."
         if os.path.isdir(self.SCT_DIR):
             # check if sudo is required for removing SCT
             if os.access(self.path_install, os.W_OK):
@@ -633,9 +636,8 @@ class Installer:
                 sys.exit(2)
 
         # create SCT folder
-        print "Create folder: " + self.SCT_DIR + " ..."
+        print "\nCreate folder: " + self.SCT_DIR + " ..."
         cmd = self.issudo+"mkdir "+self.SCT_DIR
-        print ">> " + cmd
         status, output = runProcess(cmd)
         #status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -651,7 +653,7 @@ class Installer:
         print "  Version: "+str(version_sct)
 
         # fetch version of the toolbox online
-        MsgUser.message("Checking for connection and SCT version online...")
+        MsgUser.message("\nCheck online if you have the latest version of SCT...")
         url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
         file_name = "tmp.version_online.txt"
         version_result = download_file(url_version, file_name)
@@ -664,9 +666,8 @@ class Installer:
                 except ValueError:
                     MsgUser.warning("The extraction of online SCT version seemed to have failed. Please contact SCT administrator with this error: "+version_sct_online_str)
                     version_sct_online = version_sct
-
             if version_sct.isLessThan_MajorMinor(version_sct_online):
-                print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
+                print "WARNING: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
                 install_new = ""
                 signal.alarm(30)
                 while install_new not in ["yes","no"]:
@@ -681,7 +682,6 @@ class Installer:
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
         cmd = self.issudo + "cp -r spinalcordtoolbox/* " + self.SCT_DIR
-        print ">> " + cmd
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
@@ -695,18 +695,16 @@ class Installer:
             open(self.home+'/.bashrc', 'w+').close()
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
-                print "  Deleting previous SCT entries in .bashrc"
+                print ".. Deleting previous SCT entries in .bashrc"
                 cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
-                print ">> " + cmd
                 status, output = runProcess(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
                 # test if .bash_profile exists
                 if os.path.isfile(self.home+"/.bash_profile"):
                     # delete previous entries in .bash_profile
-                    print "  Deleting previous SCT entries in .bash_profile"
+                    print ".. Deleting previous SCT entries in .bash_profile"
                     cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
                     #status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -735,12 +733,13 @@ class Installer:
             os.environ['PYTHONPATH'] = self.SCT_DIR+"/scripts"
 
         # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
+        print "\nCheck if .bash_profile exists..."
         if os.path.isfile(self.home+"/.bash_profile"):
             if "source ~/.bashrc" in open(self.home+'/.bash_profile').read():
-                print "\n.bashrc seems to be called in .bash_profile"
+                print ".. .bashrc seems to be called in .bash_profile"
             # TODO: check for the case if the user did comment source ~/.bashrc in his .bash_profile
             else:
-                print "edit .bash_profile..."
+                print ".. edit .bash_profile..."
                 with open(self.home+"/.bash_profile", "a") as bashprofile:
                     bashprofile.write("\nif [ -f ~/.bashrc ]; then")
                     bashprofile.write("\n  source ~/.bashrc")
@@ -756,7 +755,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # install required software
-        print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
+        print "\nInstall dependences... Depending on your internet connection, this may take several minutes."
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
@@ -782,7 +781,7 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1 (need to be changed to 1.2)
-        print "\nChecking for available patches..."
+        print "\nCheck for latest patches online..."
         if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
             # check if a new patch is available
             if version_sct_online > version_sct:
@@ -852,7 +851,6 @@ class Installer:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
-
 
         # deleting temporary files
         cmd = "rm -rf tmp.*"
