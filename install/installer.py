@@ -580,12 +580,13 @@ class Installer:
                 sys.exit(2)
 
         # check if sudo is needed to write in installation folder
-        MsgUser.message("Checking if administrator rights are needed for installation...")
+        MsgUser.message("Check if administrator permission is needed for installation...")
+        print ".. Installation path: "+self.path_install
         if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
-            MsgUser.message("  No sudo needed for adding elements.")
+            MsgUser.message(".. no sudo needed for adding elements.")
             self.issudo = ""
         else:
-            MsgUser.message("  sudo needed for adding elements.")
+            MsgUser.message(".. sudo needed for adding elements.")
             self.issudo = "sudo "
 
         # check if last character is "/". If so, remove it.
@@ -603,10 +604,10 @@ class Installer:
         if os.path.isdir(self.SCT_DIR):
             # check if sudo is required for removing SCT
             if os.access(self.path_install, os.W_OK):
-                MsgUser.message("  No sudo needed for removing SCT.")
+                MsgUser.message(".. No sudo needed for removing SCT.")
                 self.issudo_remove = ""
             else:
-                MsgUser.message("  sudo needed for removing SCT.")
+                MsgUser.message(".. sudo needed for removing SCT.")
                 self.issudo_remove = "sudo "
 
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
