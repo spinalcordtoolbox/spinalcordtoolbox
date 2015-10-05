@@ -1,7 +1,7 @@
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
-project(sct_crop_image)
+project(isct_crop_image)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
@@ -47,7 +47,7 @@ INCLUDE(${VTK_USE_FILE})
 aux_source_directory(. SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(sct_crop_image
+TARGET_LINK_LIBRARIES(isct_crop_image
 ITKIONIFTI
 ITKIOImageBase
 ITKCommon
