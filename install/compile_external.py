@@ -39,30 +39,11 @@ def compile_denoise(issudo=''):
 
     # go to folder
     os.chdir(path_denoise)
-
-    # compile
-    status, output = commands.getstatusoutput('python setup.py build_ext --inplace')
-    if not status:
-        print output
-
-    # Retrieving home folder because in python, paths with ~ do not seem to work.
-    path_home = os.path.expanduser('~')
-
-    # REMOVED THE LINE BELOW: BETTER TO APPEND PYTHONPATH IN SCRIPT RATHER THAN POLLUTING BASHRC
-    # # add to .bashrc
-    # with open(path_home+"/.bashrc", "a") as bashrc:
-    #     bashrc.write("export PYTHONPATH=${PYTHONPATH}:${SCT_DIR}/"+path_denoise+"\n")
-    #     bashrc.close()
-
-    # # put in python environment for subsequent tests during installation
-    # if 'PYTHONPATH' in os.environ:
-    #     os.environ['PYTHONPATH'] = os.environ['PYTHONPATH']+":"+path_sct+path_denoise
-    # else:
-    #     os.environ['PYTHONPATH'] = path_sct+path_denoise
-
-    # source .bashrc
-    # !! This does not work, as python script launched a new process. Solutions are welcome!
-    # status, output = commands.getstatusoutput("source "+path_home+"/.bashrc")
+    sct.run('python setup.py bdist_wheel')
+    sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
+    sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
+    sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
+    sct.run(issudo + 'cp ' + path_denoise + '/dist/*.whl ' + path_sct + '/external/')
 
 
 def get_parser():
