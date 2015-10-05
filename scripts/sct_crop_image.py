@@ -339,7 +339,8 @@ if __name__ == "__main__":
                       example="10,10,5")
     parser.add_option(name="-b",
                       type_value="float",
-                      description="replace voxels outside cropping region with background value",
+                      description="replace voxels outside cropping region with background value. \n"
+                                  "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
                       mandatory=False)
     parser.add_option(name="-bmax",
                       type_value=None,
