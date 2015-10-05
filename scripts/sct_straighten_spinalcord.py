@@ -576,7 +576,7 @@ class SpinalCordStraightener(object):
             padding_x, padding_y, padding_z = padding, padding, padding
             if nx + padding <= leftright_width:
                 padding_x = leftright_width - padding - nx
-            sct.run('sct_maths -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
+            sct.run('sct_image -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
 
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
