@@ -259,8 +259,8 @@ class FullGmSegmentation:
         im_ref_wm_seg = Image(ref_wm_seg_new_name)
         sct.run('rm ' + ref_wm_seg_new_name)
 
-        im_ref_wm_seg.crop_and_straighten(mask, save=False)
-        im_ref_gm_seg.crop_and_straighten(mask, save=False)
+        im_ref_wm_seg.crop_and_stack(mask, save=False)
+        im_ref_gm_seg.crop_and_stack(mask, save=False)
 
         # saving the images to call the validation functions
         res_gm_seg_bin.path = './'

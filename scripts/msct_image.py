@@ -307,7 +307,15 @@ class Image(object):
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
-    def crop_and_straighten(self, mask, suffix='_resized', save=True):
+    def crop_and_stack(self, mask, suffix='_resized', save=True):
+        """
+        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
+        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
+        :param mask: mask image
+        :param suffix: suffix to add to the file name (usefull only with the save option)
+        :param save: save the image if True
+        :return: no return, the image data is set to the new (crop) data
+        """
         from numpy import asarray, zeros
 
         original_orientation = self.orientation
