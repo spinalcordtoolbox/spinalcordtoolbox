@@ -371,13 +371,30 @@ class Usage:
 """+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(creation[2]).zfill(2)
+Modified on """ + str(self.get_modif_date_time())
 
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
         self.section[len(self.arguments)+1] = section
+
+    def get_modif_date_time(self):
+        from commands import getstatusoutput
+        from os.path import basename
+        status, path_sct = getstatusoutput('echo $SCT_DIR')
+        fname = str(path_sct)+'/bin/modif.txt'
+        content = ""
+        with open(fname, mode = 'r+') as f:
+            content = f.readlines()
+        f.close()
+
+        for line in content:
+            if line.find(basename(self.file)) != -1:
+                result = line.split('=')
+                return result[1]
+
+        return ''
 
     def set_usage(self):
         from os.path import basename
