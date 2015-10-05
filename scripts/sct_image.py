@@ -82,7 +82,7 @@ def main(args = None):
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    im_in = [Image(fn) for fn in fname_in]  # 3d or 4d numpy array
+    im_in = [Image(fn) for fn in fname_in]
 
     # run command
     if "-pad" in arguments:
