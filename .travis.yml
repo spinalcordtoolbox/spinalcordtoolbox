@@ -46,6 +46,7 @@ install:
   - PATH=${PATH}:${SCT_DIR}/bin
   - PATH=${PATH}:${SCT_DIR}/bin/${TRAVIS_OS_NAME}
   - export SCT_DIR PATH
+  - export PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts
   - . ~/.bashrc
 # create links
   - ./install/create_links.sh -a
