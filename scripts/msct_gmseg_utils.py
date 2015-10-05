@@ -611,9 +611,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
         sct.run('sct_crop_image -i ' + t2star + ' -m ' + sc_seg + ' -b 0 -o ' + seg_in)
 
         mask_box = t2star_name + '_square_mask_from_sc_seg'+ext
-        name_centerline = sct.add_suffix(sc_seg, '_centerline')
-        sct.run('sct_process_segmentation -i '+sc_seg+' -p centerline -o '+name_centerline)
-        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + name_centerline + ' -s ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
+        sct.run('sct_create_mask -i ' + seg_in + ' -m centerline,' + sc_seg + ' -s ' + str(box_size - 2) + ' -o ' + mask_box + ' -f box')
 
         seg_in_im = Image(seg_in)
         mask_im = Image(mask_box)
