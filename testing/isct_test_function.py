@@ -40,7 +40,7 @@ import os
 import copy_reg
 import types
 import signal
-from pandas import Series, concat
+import pandas as pd
 
 
 def _pickle_method(method):
@@ -100,11 +100,11 @@ def generate_data_list(folder_dataset, verbose=1):
 
 def process_results(results, subjects_name, function, folder_dataset, parameters):
     try:
-        results_dataframe = concat([result[2] for result in results])
-        results_dataframe.loc[:, 'subject'] = Series(subjects_name, index=results_dataframe.index)
-        results_dataframe.loc[:, 'script'] = Series([function]*len(subjects_name), index=results_dataframe.index)
-        results_dataframe.loc[:, 'dataset'] = Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
-        results_dataframe.loc[:, 'parameters'] = Series([parameters] * len(subjects_name), index=results_dataframe.index)
+        results_dataframe = pd.concat([result[2] for result in results])
+        results_dataframe.loc[:, 'subject'] = pd.Series(subjects_name, index=results_dataframe.index)
+        results_dataframe.loc[:, 'script'] = pd.Series([function]*len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'dataset'] = pd.Series([folder_dataset]*len(subjects_name), index=results_dataframe.index)
+        results_dataframe.loc[:, 'parameters'] = pd.Series([parameters] * len(subjects_name), index=results_dataframe.index)
         return results_dataframe
     except KeyboardInterrupt:
         return 'KeyboardException'
@@ -221,4 +221,30 @@ if __name__ == "__main__":
     verbose = arguments["-v"]
 
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
-    print 'Results :\n', results
+    pd.set_option('display.max_rows', 500)
+    pd.set_option('display.max_columns', 500)
+    pd.set_option('display.width', 1000)
+    results_subset = results.drop('script', 1).drop('dataset', 1).drop('parameters', 1).drop('output', 1)
+    results_display = results_subset
+
+    # mean
+    results_mean = results_subset[results_subset.status != 200].mean(numeric_only=True)
+    results_mean['subject'] = 'Mean'
+    results_display = results_display.append(results_mean, ignore_index=True)
+
+    # std
+    results_std = results_subset[results_subset.status != 200].std(numeric_only=True)
+    results_std['subject'] = 'STD'
+    results_display = results_display.append(results_std, ignore_index=True)
+
+    # count tests that passed
+    count_passed = results_subset.status[results_subset.status == 0].count()
+
+    results_display = results_display.set_index('subject')
+
+    # printing results
+    print '\nResults for "' + function_to_test + ' ' + parameters + '":'
+    print 'Dataset: ' + dataset
+    print results_display.to_string()
+    print '\nPassed: ' + str(count_passed) + '/' + str(len(results_subset))
+

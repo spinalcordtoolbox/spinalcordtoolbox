@@ -34,7 +34,7 @@ def test(path_data='', parameters=''):
     if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': -1.0, 'dist_max': -1.0}, index=[path_data])
+        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     status, output = sct.run(cmd, 0)
