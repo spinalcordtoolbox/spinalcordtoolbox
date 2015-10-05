@@ -921,7 +921,7 @@ USAGE:
 """ + os.path.basename(__file__) + """ -p <path>
 
 OPTIONS:
--p <path>         installation path. Default is: usr/local/spinalcordtoolbox
+-p <path>         installation path. Default is: /usr/local/spinalcordtoolbox
 -h                display this help
   """
 
