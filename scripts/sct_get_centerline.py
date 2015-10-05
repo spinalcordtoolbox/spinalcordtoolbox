@@ -17,7 +17,7 @@ from sct_process_segmentation import extract_centerline
 import os
 import commands
 import sys
-import time
+from time import strftime, time
 import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
@@ -56,7 +56,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     slice_gap = gap
     remove_tmp_files = remove_tmp_files
     gaussian_kernel = gaussian_kernel
-    start_time = time.time()
+    start_time = time()
     verbose = 1
 
     # get path of the toolbox
@@ -98,7 +98,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # create temporary folder
     print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    path_tmp = 'tmp.'+strftime("%y%m%d%H%M%S")
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
     sct.run('cp '+fname_anat+ ' '+path_tmp+'/tmp.anat'+ext_anat)
@@ -205,7 +205,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
             # check if transformation is bigger than 1.5x slice_gap
             tx = float(output.split()[3])
             ty = float(output.split()[7])
-            norm_txy = linalg.norm([tx, ty], ord=str(2))
+            norm_txy = linalg.norm([tx, ty], ord=2)
             if norm_txy > 1.5*slice_gap:
                 print 'WARNING: Transformation is too large --> using previous one.'
                 warning_count = warning_count + 1
@@ -370,24 +370,25 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     print '\nNumber of warnings: '+str(warning_count)+' (if >10, you should probably reduce the gap and/or increase the kernel size'
 
     # display elapsed time
-    elapsed_time = time.time() - start_time
+    elapsed_time = time() - start_time
     print '\nFinished! \n\tGenerated file: '+fname_output_centerline+'\n\tElapsed time: '+str(int(round(elapsed_time)))+'s\n'
 
 
-def get_centerline_from_labels(list_file, param, output_file_name=None, remove_temp_files=1, verbose=0):
+def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_name=None, remove_temp_files=1, verbose=0):
 
-    path, file, ext = sct.extract_fname(list_file[0])
+    path, file, ext = sct.extract_fname(fname_in)
 
-    print file
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
+    path_tmp = sct.slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp)
 
-    # copy files into tmp folder
-    sct.printv('\nCopy files into tmp folder...', verbose)
-    for i in range(len(list_file)):
-       file_temp = os.path.abspath(list_file[i])
-       sct.run('cp '+file_temp+' '+path_tmp)
+    # Copying input data to tmp folder
+    sct.printv('\nCopying input data to tmp folder...', verbose)
+    sct.run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
+    file_labels = []
+    for i in range(len(list_fname_labels)):
+        file_labels.append('labels_'+str(i)+'.nii.gz')
+        sct.run('sct_convert -i '+list_fname_labels[i]+' -o '+path_tmp+file_labels[i])
 
     # go to tmp folder
     os.chdir(path_tmp)
@@ -395,25 +396,24 @@ def get_centerline_from_labels(list_file, param, output_file_name=None, remove_t
     ## Concatenation of the files
 
     # Concatenation : sum of matrices
-    file_0 = load(file+ext)
+    file_0 = load('data.nii')
     data_concatenation = file_0.get_data()
     hdr_0 = file_0.get_header()
-    orientation_file_0 = get_orientation(list_file[0])
-    if len(list_file)>0:
-       for i in range(1, len(list_file)):
-           orientation_file_temp = get_orientation(list_file[i])
-           if orientation_file_0 != orientation_file_temp :
-               print "ERROR: The files ", list_file[0], " and ", list_file[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file."
-               sys.exit(2)
-           file_temp = load(list_file[i])
-           data_temp = file_temp.get_data()
-           data_concatenation = data_concatenation + data_temp
+    orientation_file_0 = get_orientation('data.nii')
+    if len(list_fname_labels) > 0:
+       for i in range(0, len(list_fname_labels)):
+            orientation_file_temp = get_orientation(file_labels[i])
+            if orientation_file_0 != orientation_file_temp :
+                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file."
+                sys.exit(2)
+            file_temp = load(file_labels[i])
+            data_temp = file_temp.get_data()
+            data_concatenation = data_concatenation + data_temp
 
     # Save concatenation as a file
     print '\nWrite NIFTI volumes...'
     img = Nifti1Image(data_concatenation, None, hdr_0)
-    save(img,'concatenation_file.nii.gz')
-
+    save(img, 'concatenation_file.nii.gz')
 
     # Applying nurbs to the concatenation and save file as binary file
     fname_output = extract_centerline('concatenation_file.nii.gz', remove_temp_files = remove_temp_files, verbose = verbose, algo_fitting=param.algo_fitting, type_window=param.type_window, window_length=param.window_length)
@@ -974,19 +974,17 @@ class GetCenterlineScript(BaseScript):
         parser = Parser(__file__)
         parser.usage.set_description('''This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .''')
         parser.add_option(name="-i",
-                          type_value=[[','], 'file'],
-                          description="input image or images (if you are using a list of label images).",
+                          type_value='file',
+                          description="Image to get centerline from.",
                           mandatory=True,
                           example="t2.nii.gz")
         parser.usage.addSection("Execution Option")
         parser.add_option(name="-method",
                           type_value="multiple_choice",
-                          description="Method to be used to acquire the centerline.\n "
-                                      "auto : Gets the centerline from an input image only.\n"
-                                      "point : Finds the centerline of the input image with the help of a single "
-                                      "point placed manually on the center of the spinalcord on any given slice.\n"
-                                      "labels : Finds the centerline of the input image with the help of manually "
-                                      "placed labels all passing through the centerline of the spinal cord",
+                          description="Method to get the centerline:\n"
+"auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n"
+"point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n"
+"labels: Fit spline function across labels. Requires a couple of points along the cord.",
                           mandatory=True,
                           example=['auto', 'point', 'labels'])
         parser.usage.addSection("General options")
@@ -1011,6 +1009,7 @@ class GetCenterlineScript(BaseScript):
                           type_value=None,
                           description="display this help",
                           mandatory=False)
+
         parser.usage.addSection("Automatic method options")
         parser.add_option(name="-t",
                           type_value="multiple_choice",
@@ -1018,9 +1017,9 @@ class GetCenterlineScript(BaseScript):
                                       "For dMRI use t1, for T2* or MT use t2",
                           mandatory=False,
                           example=['t1', 't2'])
-        parser.add_option(name="-sc_rad",
+        parser.add_option(name="-radius",
                           type_value="int",
-                          description="Gives approximate radius of spinal cord to help the algorithm",
+                          description="Approximate radius of spinal cord to help the algorithm",
                           mandatory=False,
                           default_value="4",
                           example="4")
@@ -1035,19 +1034,32 @@ class GetCenterlineScript(BaseScript):
                           mandatory=False,
                           default_value="0",
                           example=['0', '1'])
+
         parser.usage.addSection("Point method options")
+        parser.add_option(name="-p",
+                          type_value='file',
+                          description="Binary image with a point inside the spinal cord.",
+                          mandatory=False,
+                          example="t2_point.nii.gz")
         parser.add_option(name="-g",
                           type_value="int",
                           description="Gap between slices for registration. Higher is faster but less robust.",
                           mandatory=False,
-                          default_value="4",
+                          default_value=4,
                           example="4")
         parser.add_option(name="-k",
                           type_value="int",
                           description="Kernel size for gaussian mask. Higher is more robust but less accurate.",
                           mandatory=False,
-                          default_value="4",
+                          default_value=4,
                           example="4")
+
+        parser.usage.addSection("Label method options")
+        parser.add_option(name="-l",
+                          type_value=[[','], 'file'],
+                          description="Binary image with several points (5 to 10) along the spinal cord.",
+                          mandatory=False,
+                          example="t2_labels.nii.gz")
 
         return parser
 
@@ -1056,45 +1068,48 @@ if __name__ == "__main__":
     param = Param()
     param_default = Param()
 
-    parser = GetCenterlineScript.get_parser()
-
-    arguments = parser.parse(sys.argv[1:])
-
-    method = arguments["-method"]
-
-    input_image = None
-
+    # init default params
     output_file_name = None
     verbose = param_default.verbose
     rm_tmp_files = param_default.remove_temp_files
 
-    if method == "labels":
-        input_image = arguments["-i"]
-        print '[%s]' % ', '.join(map(str, input_image))
-        if "-o" in arguments:
-            output_file_name = arguments["-o"]
-        if "-v" in arguments:
-            verbose = int(arguments["-v"])
-        if "-r" in arguments:
-            rm_tmp_files = int(arguments["-r"])
+    # get parser info
+    parser = GetCenterlineScript.get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    method = arguments["-method"]
+    fname_in = arguments["-i"]
+    if "-o" in arguments:
+        output_file_name = arguments["-o"]
+    if "-v" in arguments:
+        verbose = int(arguments["-v"])
+    if "-r" in arguments:
+        rm_tmp_files = int(arguments["-r"])
 
-        get_centerline_from_labels(input_image, param, output_file_name, rm_tmp_files)
+    if method == "labels":
+        if "-l" in arguments:
+            list_fname_labels = arguments["-l"]
+        else:
+            sct.printv('ERROR: Needs input label (option -l).', 1, 'error')
+        get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_name, rm_tmp_files)
 
     elif method == "point":
-        input_image = arguments["-i"][0]
-        if "-v" in arguments:
-            verbose = int(arguments["-v"])
-    else:
-        input_image = arguments["-i"][0]
-        contrast = None
+        if "-p" in arguments:
+            fname_point = arguments["-p"]
+        else:
+            sct.printv('ERROR: Needs input point (option -p).', 1, 'error')
+        if "-g" in arguments:
+            gap = arguments["-g"]
+        if "-k" in arguments:
+            gaussian_kernel = arguments["-k"]
+        get_centerline_from_point(fname_in, fname_point, gap, gaussian_kernel, rm_tmp_files)
+
+    elif method == "auto":
         try:
             contrast = arguments["-t"]
         except Exception, e:
             sct.printv("The method automatic requires a contrast type to be defined", type="error")
-        print input_image
-        im = Image(input_image)
+        im = Image(fname_in)
         scad = SCAD(im, contrast=contrast)
-
         if "-o" in arguments:
             scad.output_filename = arguments["-o"]
         if "-r" in arguments:
@@ -1103,8 +1118,8 @@ if __name__ == "__main__":
             scad.enable_symmetry = int(arguments["-sym"])
         if "-sym_exp" in arguments:
             scad.symmetry_exponent = int(arguments["-sym_exp"])
-        if "-sc_rad" in arguments:
-            scad.spinalcord_radius = int(arguments["-sc_rad"])
+        if "-radius" in arguments:
+            scad.spinalcord_radius = int(arguments["-radius"])
         if "-v" in arguments:
             scad.verbose = int(arguments["-v"])
         scad.execute()
