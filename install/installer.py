@@ -539,7 +539,7 @@ def runProcess(cmd, verbose=1):
 
 class Installer:
     def __init__(self):
-        self.path_install = "/usr/local"
+        self.path_install = "/usr/local/spinalcordtoolbox"
         self.issudo = "sudo "
 
         # check if user is sudoer
@@ -602,7 +602,13 @@ class Installer:
                 print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
                 sys.exit(2)
             else:
-                print ('.. Installed!')
+                print ('.. Testing it:')
+                status, output = commands.getstatusoutput('pip')
+                if not status == 0:
+                    print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                    sys.exit(2)
+                else:
+                    print ('.. Installed!')
         else:
             print('.. OK!')
 
