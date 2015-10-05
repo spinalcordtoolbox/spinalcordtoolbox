@@ -37,7 +37,7 @@ def get_parser():
                       type_value='file_output',
                       description='Output file.',
                       mandatory=True,
-                      example='data_mean.nii.gz')
+                      example='data_pad.nii.gz')
 
     parser.usage.addSection('\nBasic operations:')
     parser.add_option(name="-pad",
@@ -45,20 +45,17 @@ def get_parser():
                       description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
                       example='0,0,1')
+
     parser.usage.addSection("\nMulti-component operations:")
     parser.add_option(name='-mcs',
-                      description='Multi-component split. Outputs the components separately.\n'
-                                  '(If less outputs names than components in the image, outputs as many components as the number of outputs name specifed.)\n'
+                      description='Multi-component split. Outputs the components separately. (The sufix _x, _y and _z are added to the specified output) \n'
                                   'Only one input',
                       mandatory=False)
     parser.add_option(name='-omc',
-                      description='Multi-component output. Merge inputted images into one multi-component image.\n'
-                                  'Only one output',
+                      description='Multi-component output. Merge inputted images into one multi-component image. (need several inputs.)',
                       mandatory=False)
+
     parser.usage.addSection("\nMisc")
-    parser.add_option(name="-w",
-                      description="Output is a warping field",
-                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -71,7 +68,6 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(args = None):
-
     dim_list = ['x', 'y', 'z', 't']
 
     if not args:
@@ -86,36 +82,40 @@ def main(args = None):
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    data = get_data(fname_in)  # 3d or 4d numpy array
+    im_in = [Image(fn) for fn in fname_in]  # 3d or 4d numpy array
 
     # run command
     if "-pad" in arguments:
         # TODO: check input is 3d
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        nii = Image(fname_in[0])
-        nii_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
-        # data_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
+        im_out = [pad_image(im_in[0], padding_x=padx, padding_y=pady, padding_z=padz)]
 
     elif '-mcs' in arguments:
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
-        if len(data[0].shape) != 5:
+        if len(im_in[0].data.shape) != 5:
             printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
-        data_out = multicomponent_split(data[0])
+        im_out = multicomponent_split(im_in[0])
 
     elif '-omc' in arguments:
-        for dat in data:
-            if dat.shape != data[0].shape:
+        for im in im_in:
+            if im.data.shape != im_in[0].data.shape:
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
-        data_out = multicomponent_merge(data)
+        im_out = [multicomponent_merge(im_in)]
+    else:
+        im_out = None
+        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # Write output
-    if not "-pad" in arguments:
-        nii_out = Image(fname_in[0])  # use header of first file (if multiple input files)
-        nii_out.data = data_out
-    nii_out.setFileName(fname_out)
-    nii_out.save()
+    if len(im_out) == 1:
+        im_out[0].setFileName(fname_out)
+        im_out[0].save()
+    else:
+        for i, im in enumerate(im_out):
+            from sct_utils import add_suffix
+            im.setFileName(add_suffix(fname_out, '_'+dim_list[i]))
+            im.save()
     # TODO: case of multiple outputs
     # assert len(data_out) == n_out
     # if n_in == n_out:
@@ -143,7 +143,8 @@ def main(args = None):
     #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
+
+    printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
 
 
 def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
@@ -189,22 +190,26 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     return im
 
 
-def multicomponent_split(data):
+def multicomponent_split(im):
     from numpy import reshape
+    data = im.data
     assert len(data.shape) == 5
     data_out = []
     for i in range(data.shape[-1]):
         dat_out = data[:, :, :, :, i]
+        '''
         while dat_out.shape[-1] == 1:
             dat_out = reshape(dat_out, dat_out.shape[:-1])
-        data_out.append(dat_out.astype('float32'))
+        '''
+        data_out.append(dat_out)  # .astype('float32'))
+    im_out = [Image(dat) for dat in data_out]
+    return im_out
 
-    return data_out
 
-
-def multicomponent_merge(data_list):
+def multicomponent_merge(im_list):
     from numpy import zeros, reshape
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
+    data_list = [im.data for im in im_list]
     new_shape = list(data_list[0].shape)
     if len(new_shape) == 3:
         new_shape.append(1)
@@ -213,20 +218,13 @@ def multicomponent_merge(data_list):
 
     data_out = zeros(new_shape)
     for i, dat in enumerate(data_list):
-        '''
-        if len(dat.shape) < 4:
-            new_shape = list(dat.shape)
-            while len(new_shape) < 4:
-                new_shape.append(1)
-            dat = reshape(dat, tuple(new_shape))
-        '''
         if len(dat.shape) == 2:
             data_out[:, :, 0, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 3:
             data_out[:, :, :, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 4:
             data_out[:, :, :, :, i] = dat.astype('float32')
-    return [data_out.astype('float32')]
+    return Image(data_out.astype('float32'))
 
 
 def get_data(list_fname):
