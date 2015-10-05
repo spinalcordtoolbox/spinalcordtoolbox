@@ -419,6 +419,7 @@ class Python(object):
         # check out Python
         import sys
         self.python_version = sys.version
+        print self.python_version
         if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
             raise Exception("WARNING: Unsupported Python")
         else:
@@ -596,19 +597,25 @@ class Installer:
         print ('\nCheck if pip is installed...')
         status, output = commands.getstatusoutput('pip')
         if not status == 0:
-            print ('.. WARNING: pip is not installed. Installing it...')
-            status, output = commands.getstatusoutput('easy_install pip')
+            print ('.. WARNING: pip is not installed. Installing it with conda...')
+            # first make sure conda is installed
+            status, output = commands.getstatusoutput('conda')
             if not status == 0:
-                print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                print ('.. ERROR: conda is not installed either. Please install pip and rerun the installer.\n'+output)
                 sys.exit(2)
             else:
-                print ('.. Testing it:')
-                status, output = commands.getstatusoutput('pip')
+                status, output = commands.getstatusoutput('conda install pip')
                 if not status == 0:
-                    print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                    print ('.. ERROR: pip installation failed. Please install it and rerun the installer.\n'+output)
                     sys.exit(2)
                 else:
-                    print ('.. Installed!')
+                    print ('.. Testing pip:')
+                    status, output = commands.getstatusoutput('pip')
+                    if not status == 0:
+                        print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                        sys.exit(2)
+                    else:
+                        print ('.. OK!')
         else:
             print('.. OK!')
 
