@@ -539,7 +539,7 @@ def runProcess(cmd, verbose=1):
 
 class Installer:
     def __init__(self):
-        self.path_install = "/usr/local/spinalcordtoolbox"
+        self.path_install = "/usr/local"
         self.issudo = "sudo "
 
         # check if user is sudoer
@@ -915,7 +915,7 @@ USAGE:
 """ + os.path.basename(__file__) + """ -p <path>
 
 OPTIONS:
--p <path>         installation path. Default is: /usr/local/spinalcordtoolbox
+-p <path>         installation path. Default is: usr/local/spinalcordtoolbox
 -h                display this help
   """
 
