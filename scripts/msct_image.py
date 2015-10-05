@@ -305,19 +305,26 @@ class Image(object):
 
         return list_coordinates
 
-    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
-    # rectangles of the same size
+    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
-    # This method is called in sct_crop_over_mask script
-    def crop_from_square_mask(self, mask, save=True):
+    def crop_and_stack(self, mask, suffix='_resized', save=True):
+        """
+        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
+        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
+        :param mask: mask image
+        :param suffix: suffix to add to the file name (usefull only with the save option)
+        :param save: save the image if True
+        :return: no return, the image data is set to the new (crop) data
+        """
         from numpy import asarray, zeros
 
+        original_orientation = self.orientation
+        mask_original_orientation = mask.orientation
+        self.change_orientation('IRP')
+        mask.change_orientation('IRP')
         data_array = self.data
         data_mask = mask.data
-        assert self.orientation == 'IRP'
-        assert mask.orientation == 'IRP'
 
-        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
         # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
@@ -327,16 +334,16 @@ class Image(object):
             data_array = zeros(data_mask.shape)
             for n_slice, data_slice in enumerate(data_array):
                 data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
-            '''
+
             for n_slice, data_slice in enumerate(data_array):
                 n_row_old_data_array = 0
                 for row in data_slice[pad_2:-pad_2-1]:
                     row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
                     n_row_old_data_array += 1
-            '''
+
             self.data = data_array
             if save:
-                self.file_name += '_resized'
+                self.file_name += suffix
                 self.save()
 
         data_array = asarray(data_array)
@@ -382,27 +389,15 @@ class Image(object):
         new_data = asarray(new_data)
         # print data_mask
         self.data = new_data
-        self.dim = self.data.shape
+        #self.dim = self.data.shape
 
-
-    # crop the image in order to keep only voxels in the mask
-    # doesn't change the image dimension
-    # This method is called in sct_crop_over_mask script
-    def crop_from_mask(self, mask):
-        from numpy import asarray, einsum
-        data_array = self.data
-        data_mask = mask.data
-        assert data_array.shape == data_mask.shape
-        array = asarray(data_array)
-        data_mask = asarray(data_mask)
-
-        #Element-wise matrix multiplication:
-        new_data = None
-        if len(data_array.shape) == 3:
-            new_data = einsum('ijk,ijk->ijk', data_mask, array)
-        elif len(data_array.shape) == 2:
-            new_data = einsum('ij,ij->ij', data_mask, array)
-        self.data = new_data
+        self.change_orientation(original_orientation)
+        mask.change_orientation(mask_original_orientation)
+        if save:
+            from sct_utils import add_suffix
+            self.file_name += suffix
+            add_suffix(self.absolutepath, suffix)
+            self.save()
 
     def invert(self):
         self.data = self.data.max() - self.data
