@@ -74,8 +74,6 @@ class Preprocessing:
 
         self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
 
-        # self.processed_target = sct.extract_fname(self.t2star)[1] + '_seg_in_croped.nii.gz'
-
         self.level_fname = None
         if t2_data is not None:
             self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
@@ -185,7 +183,6 @@ class FullGmSegmentation:
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
-                # WARNING: until sct_maths -thr option is changed, this will output a binary segmentation
                 sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
