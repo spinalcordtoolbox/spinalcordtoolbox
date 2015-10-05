@@ -399,13 +399,14 @@ class Os(object):
             else:
                 (self.vendor, version, _) = platform.dist()
             self.vendor = self.vendor.lower()
-            self.version = Version("1.0.0") #Version(version) not supported yet
+            self.version = Version("1.0.0")  # Version(version) not supported yet
             self.glibc = platform.libc_ver()
             if self.arch == 'x86_64':
                 self.bits = '64'
             else:
                 self.bits = '32'
-                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
+                # raise UnsupportedOs("We no longer support 32 bit Linux. "
+                #                     "If you must use 32 bit Linux then try building from our sources.")
         else:
             raise UnsupportedOs("We do not support this OS.")
 
@@ -428,16 +429,17 @@ def open_url(url, start=0, timeout=20):
     import urllib2
     import socket
     socket.setdefaulttimeout(timeout)
-    MsgUser.debug("Attempting to download %s." % (url))
+    MsgUser.debug("Attempting to download %s." % url)
     
     try:
         req = urllib2.Request(url)
         if start != 0:
-            req.headers['Range'] = 'bytes=%s-' % (start)
+            req.headers['Range'] = 'bytes=%s-' % start
         rf = urllib2.urlopen(req)
     except urllib2.HTTPError, e:
         MsgUser.debug("%s %s" % (url, e.msg))
-        return InstallationResult(False, InstallationResult.ERROR, "Cannot find file %s on server (%s). Try again later." % (url, e.msg))
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Cannot find file %s on server (%s). Try again later." % (url, e.msg))
     except urllib2.URLError, e:
         errno = e.reason.args[0]
         message = e.reason.args[1]
@@ -447,17 +449,19 @@ def open_url(url, start=0, timeout=20):
         else:
             # Other error
             MsgUser.debug("%s %s" % (url, message))
-        return InstallationResult(False, InstallationResult.ERROR, "Cannot find %s (%s). Try again later." % (url, message))
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Cannot find %s (%s). Try again later." % (url, message))
     except socket.timeout, e:
         MsgUser.debug(e.value)
-        return InstallationResult(False, InstallationResult.ERROR, "Failed to contact FSL web site. Try again later.")    
-    return InstallationResult(rf, InstallationResult.SUCCESS,'')
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Failed to contact FSL web site. Try again later.")
+    return InstallationResult(rf, InstallationResult.SUCCESS, '')
 
 
 def download_file(url, localf, timeout=20):
-    '''
+    """
     Get a file from the url given storing it in the local file specified
-    '''
+    """
     import socket, time
     
     result = open_url(url, 0, timeout)
@@ -474,7 +478,7 @@ def download_file(url, localf, timeout=20):
     block = 16384
     x = 0
     y = 0
-    pb = Progress_bar( x, y, rf_size, numeric=True)
+    pb = Progress_bar(x, y, rf_size, numeric=True)
 
     for attempt in range(1,6):
         # Attempt download 5 times before giving up
@@ -636,7 +640,7 @@ class Installer:
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
             print ">> " + cmd
             status, output = runProcess(cmd)
-            #status, output = commands.getstatusoutput(cmd)
+            # status, output = commands.getstatusoutput(cmd)
             if status != 0:
                 print 'ERROR! \n' + output + '\nExit program.\n'
                 sys.exit(2)
@@ -645,12 +649,13 @@ class Installer:
         print "\nCreate folder: " + self.SCT_DIR + " ..."
         cmd = self.issudo+"mkdir "+self.SCT_DIR
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print output + '\n'
 
         # Checking if a new version of the toolbox is available. If so, change it.
-        # Check the version on GitHub Master branch. If a new release is available, ask the user if he want to install it.
+        # Check the version on GitHub Master branch. If a new release is available,
+        # ask the user if he want to install it.
         # fetch version of the toolbox
         print '\nFetch version of the Spinal Cord Toolbox...'
         with open ("spinalcordtoolbox/version.txt", "r") as myfile:
@@ -665,25 +670,30 @@ class Installer:
         version_result = download_file(url_version, file_name)
         if version_result.status == InstallationResult.SUCCESS:
             isAble2Connect = True
-            with open (file_name, "r") as myfile:
+            with open(file_name, "r") as myfile:
                 try:
                     version_sct_online_str = myfile.read().replace('\n','')
                     version_sct_online = Version(version_sct_online_str)
                 except ValueError:
-                    MsgUser.warning("The extraction of online SCT version seemed to have failed. Please contact SCT administrator with this error: "+version_sct_online_str)
+                    MsgUser.warning("The extraction of online SCT version seemed to have failed. "
+                                    "Please contact SCT administrator with this error: " + version_sct_online_str)
                     version_sct_online = version_sct
             if version_sct.isLessThan_MajorMinor(version_sct_online):
-                print "WARNING: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
+                print "WARNING: A new version of the Spinal Cord Toolbox is available online. " \
+                      "Do you want to install it?"
                 install_new = ""
                 signal.alarm(30)
                 while install_new not in ["yes","no"]:
                     install_new = input_timeout("[yes|no]: ")
                 signal.alarm(0)
                 if install_new == "yes":
-                    print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
+                    print "The automatic installation of a new release or version of the toolbox is not " \
+                          "supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
             isAble2Connect = False
-            print "WARNING: Failed to connect to SCT GitHub website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
+            print "WARNING: Failed to connect to SCT GitHub website. Please check your connexion. " \
+                  "An internet connection is recommended in order to install all the SCT dependences. %s." \
+                  % version_result.message
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
@@ -712,7 +722,7 @@ class Installer:
                     print ".. Deleting previous SCT entries in .bash_profile"
                     cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -758,7 +768,7 @@ class Installer:
         cmd = ". ~/.bashrc"
         print ">> " + cmd
         status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -781,7 +791,7 @@ class Installer:
         print "\nCreate links to python scripts..."
         cmd = self.SCT_DIR+"/install/create_links.sh"
         if self.issudo is "":
-            cmd = cmd+" -a"
+            cmd += " -a"
         print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
@@ -796,17 +806,17 @@ class Installer:
                 isAble2Connect and version_sct != version_sct_online:
             # check if a new patch is available
             if version_sct_online > version_sct:
-                print "\nInstalling patch_"+str(version_sct_online)+"..."
+                print "\nInstalling patch_"+str(version_sct_online) + "..."
 
                 url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_" + \
-                            str(version_sct_online)+".zip"
-                file_name_patch = "patch_"+str(version_sct_online)+".zip"
+                            str(version_sct_online) + ".zip"
+                file_name_patch = "patch_"+str(version_sct_online) + ".zip"
                 name_folder_patch = str(version_sct_online)
                 patch_download_result = download_file(url_patch, file_name_patch)
 
                 if patch_download_result.status == InstallationResult.SUCCESS:
                     # unzip patch
-                    cmd = "unzip -d temp_patch "+file_name_patch
+                    cmd = "unzip -d temp_patch " + file_name_patch
                     print ">> " + cmd
                     status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -816,10 +826,10 @@ class Installer:
                     # launch patch installation
                     cmd = "python install_patch.py"
                     if self.issudo == "":
-                        cmd = cmd + " -a"
+                        cmd += " -a"
                     print ">> " + cmd
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
                     else:
@@ -830,7 +840,7 @@ class Installer:
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
                     print ">> " + cmd
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR while removing patch-related files \n' + output + '\nExit program.\n'
                     else:
@@ -845,13 +855,14 @@ class Installer:
         # compile external packages
         print "\nCompile external packages..."
         os.chdir(self.SCT_DIR+"/external")
-        cmd = self.issudo + "python compile_external.py"
+        cmd = self.issudo + "pip install *.whl"
         print ">> " + cmd
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
+        os.chdir('..')
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
