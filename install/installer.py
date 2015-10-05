@@ -604,12 +604,12 @@ class Installer:
                 print ('.. ERROR: conda is not installed either. Please install pip and rerun the installer.\n'+output)
                 sys.exit(2)
             else:
-                status, output = commands.getstatusoutput('conda install pip')
+                status, output = commands.getstatusoutput('conda install pip -y')
                 if not status == 0:
                     print ('.. ERROR: pip installation failed. Please install it and rerun the installer.\n'+output)
                     sys.exit(2)
                 else:
-                    print ('.. Testing pip:')
+                    print ('.. Testing pip...')
                     status, output = commands.getstatusoutput('pip')
                     if not status == 0:
                         print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
@@ -651,7 +651,6 @@ class Installer:
                 self.issudo_remove = "sudo "
 
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
-            print ">> " + cmd
             status, output = runProcess(cmd)
             # status, output = commands.getstatusoutput(cmd)
             if status != 0:
