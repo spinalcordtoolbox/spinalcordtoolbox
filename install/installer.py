@@ -452,9 +452,12 @@ def open_url(url, start=0, timeout=20):
         MsgUser.debug(e.value)
         return InstallationResult(False, InstallationResult.ERROR, "Failed to contact FSL web site. Try again later.")    
     return InstallationResult(rf, InstallationResult.SUCCESS,'')
-    
+
+
 def download_file(url, localf, timeout=20):
-    '''Get a file from the url given storing it in the local file specified'''
+    '''
+    Get a file from the url given storing it in the local file specified
+    '''
     import socket, time
     
     result = open_url(url, 0, timeout)
@@ -488,7 +491,7 @@ def download_file(url, localf, timeout=20):
                     break
                 dl_size += len(buf)
                 lf.write(buf)
-                pb.update( dl_size )
+                pb.update(dl_size)
             lf.close()
         except (IOError, socket.timeout), e:
             MsgUser.debug(e.strerror)
@@ -507,6 +510,7 @@ def download_file(url, localf, timeout=20):
     if dl_size != rf_size:
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
+
 
 def runProcess(cmd, verbose=1):
     if verbose:
@@ -545,6 +549,7 @@ class Installer:
             opts, args = getopt.getopt(sys.argv[1:], 'hp:')
         except getopt.GetoptError:
             usage()
+
         for opt, arg in opts:
             if opt == '-h':
                 usage()
@@ -572,7 +577,8 @@ class Installer:
             print e
             print "The Python distribution that you are using is not supported by SCT:\n" \
                   "http://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/\n" \
-                  "You can still use your own Python distribution, but you will have to install dependencies by yourself.\n" \
+                  "You can still use your own Python distribution, but you will have to install " \
+                  "dependencies by yourself.\n" \
                   "Do you still want to continue?"
             install_new = ""
             signal.alarm(120)
@@ -724,7 +730,8 @@ class Installer:
             bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
             bashrc.close()
 
-        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
+        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the
+        # current instance of bash
         os.environ['SCT_DIR'] = self.SCT_DIR
         os.environ['PATH'] = os.environ['PATH']+":"+self.SCT_DIR+"/bin"
         if 'PYTHONPATH' in os.environ:
@@ -732,7 +739,8 @@ class Installer:
         else:
             os.environ['PYTHONPATH'] = self.SCT_DIR+"/scripts"
 
-        # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
+        # check if .bash_profile exists. If so, we check if link to .bashrc is present in it.
+        # If not, we add it at the end.
         print "\nCheck if .bash_profile exists..."
         if os.path.isfile(self.home+"/.bash_profile"):
             if "source ~/.bashrc" in open(self.home+'/.bash_profile').read():
@@ -749,7 +757,7 @@ class Installer:
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
         print ">> " + cmd
-        status, output = runProcess(cmd) # runProcess does not seems to work on Travis when sourcing .bashrc
+        status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
         #status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
@@ -760,7 +768,7 @@ class Installer:
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
         print ">> " + cmd
-        #status, output = runProcess(cmd)
+        # status, output = runProcess(cmd)
         status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR: Installation failed while installing requirements.\n'+output
@@ -776,18 +784,22 @@ class Installer:
             cmd = cmd+" -a"
         print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
-        # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1 (need to be changed to 1.2)
+        # Checking if patches are available for the latest release. If so, install them. Patches installation is
+        # available from release 1.1 (need to be changed to 1.2)
         print "\nCheck for latest patches online..."
-        if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
+        if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and \
+                version_sct.isEqualTo_MajorMinor(version_sct_online) and \
+                isAble2Connect and version_sct != version_sct_online:
             # check if a new patch is available
             if version_sct_online > version_sct:
                 print "\nInstalling patch_"+str(version_sct_online)+"..."
 
-                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+str(version_sct_online)+".zip"
+                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_" + \
+                            str(version_sct_online)+".zip"
                 file_name_patch = "patch_"+str(version_sct_online)+".zip"
                 name_folder_patch = str(version_sct_online)
                 patch_download_result = download_file(url_patch, file_name_patch)
@@ -846,7 +858,7 @@ class Installer:
         cmd = "sct_check_dependences"
         print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
@@ -856,7 +868,7 @@ class Installer:
         cmd = "rm -rf tmp.*"
         print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR while removing temporary files \n' + output + '\nExit program.\n'
         else:
