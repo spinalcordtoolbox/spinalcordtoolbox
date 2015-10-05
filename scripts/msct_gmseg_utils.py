@@ -573,14 +573,14 @@ def crop_t2_star_pipeline(path, box_size=75):
                     if seg_in_croped == '':
                         seg_in_im = Image(seg_in)
                         mask_im = Image(mask_box)
-                        seg_in_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        seg_in_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                         seg_in_name += '_croped'
                         sct.run('sct_orientation -i ' + seg_in_name + '_croped'+ext + ' -s IRP')
 
                     if manual_seg_croped == '':
                         manual_seg_im = Image(manual_seg)
                         mask_im = Image(mask_box)
-                        manual_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        manual_seg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                         manual_seg_name += '_croped'
                         sct.run('sct_orientation -i ' + manual_seg_name + '_croped'+ext + ' -s IRP')
 
@@ -615,7 +615,7 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
 
         seg_in_im = Image(seg_in)
         mask_im = Image(mask_box)
-        seg_in_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+        seg_in_im.crop_and_stack(mask_im, suffix='_croped', save=True)
         seg_in_name += '_croped'
         sct.run('sct_orientation -i ' + seg_in_name +ext + ' -s IRP')
         fname_seg_in_IRP = seg_in_name+'_IRP'+ext
@@ -845,7 +845,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
             gmseg_im = Image(gmseg)
             mask_im = Image(mask_box)
-            gmseg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+            gmseg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
             sct.run('sct_orientation -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -s IRP')
 
             os.chdir(original_path)
@@ -1262,7 +1262,7 @@ def compute_error_map_by_level(data_path):
 
                 ref_wm_seg_im = Image(ref_wm_seg)
                 mask_im = Image(sq_mask)
-                ref_wm_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                ref_wm_seg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                 ref_wm_seg = ref_wm_seg_im.absolutepath
 
                 res_wm_seg_im = Image(res_wm_seg)
@@ -1374,7 +1374,7 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
 
                         ref_gm_seg_im = Image(ref_gm_seg)
                         mask_im = Image(sq_mask)
-                        ref_gm_seg_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
+                        ref_gm_seg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                         ref_gm_seg = ref_gm_seg_im.absolutepath
 
                         # sct.run('fslmaths ' + res_gm_seg + ' -thr 0.5 ' + res_gm_seg)
