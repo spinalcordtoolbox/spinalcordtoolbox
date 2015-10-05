@@ -116,33 +116,6 @@ def main(args = None):
             from sct_utils import add_suffix
             im.setFileName(add_suffix(fname_out, '_'+dim_list[i]))
             im.save()
-    # TODO: case of multiple outputs
-    # assert len(data_out) == n_out
-    # if n_in == n_out:
-    #     for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
-    #         im_in.data = d_out
-    #         im_in.setFileName(fn_out)
-    #         if "-w" in arguments:
-    #             im_in.hdr.set_intent('vector', (), '')
-    #         im_in.save()
-    # elif n_out == 1:
-    #     nii[0].data = data_out[0]
-    #     nii[0].setFileName(fname_out[0])
-    #     if "-w" in arguments:
-    #             nii[0].hdr.set_intent('vector', (), '')
-    #     nii[0].save()
-    # elif n_out > n_in:
-    #     for dat_out, name_out in zip(data_out, fname_out):
-    #         im_out = nii[0].copy()
-    #         im_out.data = dat_out
-    #         im_out.setFileName(name_out)
-    #         if "-w" in arguments:
-    #             im_out.hdr.set_intent('vector', (), '')
-    #         im_out.save()
-    # else:
-    #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
-
-    # display message
 
     printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
 
@@ -202,7 +175,10 @@ def multicomponent_split(im):
             dat_out = reshape(dat_out, dat_out.shape[:-1])
         '''
         data_out.append(dat_out)  # .astype('float32'))
-    im_out = [Image(dat) for dat in data_out]
+    im_out = [im for dat in data_out]
+    for i, im in enumerate(im_out):
+        im.data = data_out[i]
+        im.hdr.set_intent('vector', (), '')
     return im_out
 
 
@@ -224,57 +200,11 @@ def multicomponent_merge(im_list):
             data_out[:, :, :, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 4:
             data_out[:, :, :, :, i] = dat.astype('float32')
-    return Image(data_out.astype('float32'))
+    im_out = im_list[0]
+    im_out.data = data_out.astype('float32')
+    im_out.hdr.set_intent('vector', (), '')
+    return im_out
 
-
-def get_data(list_fname):
-    """
-    Get data from file names separated by ","
-    :param list_fname:
-    :return: 3D or 4D numpy array.
-    """
-    nii = [Image(f_in) for f_in in list_fname]
-    data = nii[0].data
-    # check that every images have same shape
-    for i in range(1, len(nii)):
-        if not shape(nii[i].data) == shape(data):
-            printv('ERROR: all input images must have same dimensions.', 1, 'error')
-        else:
-            concatenate_along_4th_dimension(data, nii[i].data)
-    return data
-
-
-def get_data_or_scalar(argument, data_in):
-    """
-    Get data from list of file names (scenario 1) or scalar (scenario 2)
-    :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get shape
-    :return: 3d or 4d numpy array
-    """
-    if argument.replace('.', '').isdigit():  # so that it recognize float as digits too
-        # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument)
-    else:
-        # parse file name and check integrity
-        parser2 = Parser(__file__)
-        parser2.add_option(name='-i', type_value=[[','], 'file'])
-        list_fname = parser2.parse(['-i', argument]).get('-i')
-        data_out = get_data(list_fname)
-    return data_out
-
-
-def concatenate_along_4th_dimension(data1, data2):
-    """
-    Concatenate two data along 4th dimension.
-    :param data1: 3d or 4d array
-    :param data2: 3d or 4d array
-    :return data_concat: concate(data1, data2)
-    """
-    if len(shape(data1)) == 3:
-        data1 = data1[..., newaxis]
-    if len(shape(data2)) == 3:
-        data2 = data2[..., newaxis]
-    return concatenate((data1, data2), axis=3)
 
 
 # START PROGRAM
