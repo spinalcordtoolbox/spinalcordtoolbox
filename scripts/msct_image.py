@@ -310,14 +310,13 @@ class Image(object):
     def crop_and_straighten(self, mask, suffix='_resized', save=True):
         from numpy import asarray, zeros
 
-        data_array = self.data
-        data_mask = mask.data
         original_orientation = self.orientation
         mask_original_orientation = mask.orientation
         self.change_orientation('IRP')
         mask.change_orientation('IRP')
+        data_array = self.data
+        data_mask = mask.data
 
-        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
         # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
@@ -382,7 +381,8 @@ class Image(object):
         new_data = asarray(new_data)
         # print data_mask
         self.data = new_data
-        self.dim = self.data.shape
+        #self.dim = self.data.shape
+
         self.change_orientation(original_orientation)
         mask.change_orientation(mask_original_orientation)
         if save:
@@ -390,28 +390,6 @@ class Image(object):
             self.file_name += suffix
             add_suffix(self.absolutepath, suffix)
             self.save()
-
-
-        '''
-        # crop the image in order to keep only voxels in the mask
-        # doesn't change the image dimension
-        # This method is called in sct_crop_over_mask script
-        def crop_from_mask(self, mask):
-            from numpy import asarray, einsum
-            data_array = self.data
-            data_mask = mask.data
-            assert data_array.shape == data_mask.shape
-            array = asarray(data_array)
-            data_mask = asarray(data_mask)
-
-            # Element-wise matrix multiplication:
-            new_data = None
-            if len(data_array.shape) == 3:
-                new_data = einsum('ijk,ijk->ijk', data_mask, array)
-            elif len(data_array.shape) == 2:
-                new_data = einsum('ij,ij->ij', data_mask, array)
-            self.data = new_data
-        '''
 
     def invert(self):
         self.data = self.data.max() - self.data

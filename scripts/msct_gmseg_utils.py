@@ -619,8 +619,8 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
         mask_im = Image(mask_box)
         seg_in_im.crop_and_straighten(mask_im, suffix='_croped', save=True)
         seg_in_name += '_croped'
-        sct.run('sct_orientation -i ' + seg_in_name + '_croped'+ext + ' -s IRP')
-        fname_seg_in_IRP = seg_in_name + '_croped_IRP'+ext
+        sct.run('sct_orientation -i ' + seg_in_name +ext + ' -s IRP')
+        fname_seg_in_IRP = seg_in_name+'_IRP'+ext
 
         if t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz' in os.listdir('.'):
             mask_box = t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz'
