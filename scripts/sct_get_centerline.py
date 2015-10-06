@@ -25,9 +25,8 @@ from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
-from sct_split_data import split_data
 from sct_concat_data import concat_data
-from sct_image import copy_header
+from sct_image import copy_header, split_data
 
 
 class Param:
@@ -127,10 +126,19 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Split input volume
     print '\nSplit input volume...'
-    split_data('tmp.anat_orient.nii', 2, '_z')
-    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    split_data('tmp.point_orient.nii', 2, '_z')
-    file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    im_anat = Image('tmp.anat_orient.nii')
+    im_anat_split_list = split_data(im_anat, 2)
+    file_anat_split = []
+    for im in im_anat_split_list:
+        file_anat_split.append(im.absolutepath)
+        im.save()
+
+    im_point = Image('tmp.point_orient.nii')
+    im_point_split_list = split_data(im_point, 2)
+    file_point_split = []
+    for im in im_point_split_list:
+        file_point_split.append(im.absolutepath)
+        im.save()
 
     # Extract coordinates of input point
     data_point = Image('tmp.point_orient.nii').data
@@ -146,16 +154,16 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     mask2d = exp(-(((xx-x_init)**2)/(2*(sigma**2)) + ((yy-y_init)**2)/(2*(sigma**2))))
 
     # Save mask to 2d file
-    file_mask_split = ['tmp.mask_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    nii_mask2d = Image('tmp.anat_orient_z0000.nii')
+    file_mask_split = ['tmp.mask_orient_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    nii_mask2d = Image('tmp.anat_orient_Z0000.nii')
     nii_mask2d.data = mask2d
     nii_mask2d.setFileName(file_mask_split[z_init]+'.nii')
     nii_mask2d.save()
 
     # initialize variables
-    file_mat = ['tmp.mat_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv = ['tmp.mat_inv_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat = ['tmp.mat_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv = ['tmp.mat_inv_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0,nz,1)]
 
     # create identity matrix for initial transformation matrix
     fid = open(file_mat_inv_cumul[z_init], 'w')
@@ -347,13 +355,13 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Copy header geometry from input data
     print '\nCopy header geometry from input data...'
-    im_anat_orient = Image('tmp.anat_orient.nii')
+    im_anat = Image('tmp.anat_orient.nii')
     im_anat_orient_fit = Image('tmp.anat_orient_fit.nii')
     im_mask_orient_fit = Image('tmp.mask_orient_fit.nii')
     im_point_orient_fit = Image('tmp.point_orient_fit.nii')
-    im_anat_orient_fit = copy_header(im_anat_orient, im_anat_orient_fit)
-    im_mask_orient_fit = copy_header(im_anat_orient, im_mask_orient_fit)
-    im_point_orient_fit = copy_header(im_anat_orient, im_point_orient_fit)
+    im_anat_orient_fit = copy_header(im_anat, im_anat_orient_fit)
+    im_mask_orient_fit = copy_header(im_anat, im_mask_orient_fit)
+    im_point_orient_fit = copy_header(im_anat, im_point_orient_fit)
     for im in [im_anat_orient_fit, im_mask_orient_fit, im_point_orient_fit]:
         im.save()
 

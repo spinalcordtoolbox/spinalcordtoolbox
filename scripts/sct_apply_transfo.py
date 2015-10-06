@@ -126,9 +126,12 @@ class Transform:
             convert(fname_src, path_tmp+'data.nii')
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_split_data import split_data
-            if not split_data(path_tmp+'data.nii', 3, '_T'):
-                sct.printv('ERROR in split_data.', 1, 'error')
+            from sct_image import split_data
+            im_dat = Image(path_tmp+'data.nii')
+            data_split_list = split_data(im_dat, 3)
+            for im in data_split_list:
+                im.save()
+
             # apply transfo
             sct.printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):
