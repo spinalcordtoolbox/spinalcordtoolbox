@@ -6,7 +6,7 @@
 
 
 # download example data (errsm_30)
-git clone https://github.com/neuropoly/sct_example_data.git
+sct_download_data -d sct_example_data
 
 # go in folder
 cd sct_example_data
