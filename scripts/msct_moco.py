@@ -131,11 +131,13 @@ def moco(param):
         # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
         # for indice_index in range(len(index)):
         #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
-        cmd = 'sct_concat_data -dim t -o ' + file_data_moco + ext + ' -i '
+        from sct_image import concat_data
+        im_list = []
         for indice_index in range(len(index)):
-            cmd = cmd + file_data_splitT_moco_num[indice_index] + ext + ','
-        cmd = cmd[:-1]  # remove ',' at the end of the string
-        sct.run(cmd, verbose)
+            im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+        im_out = concat_data(im_list, 3)
+        im_out.setFileName(file_data_moco + ext)
+        im_out.save()
 
 
 #=======================================================================================================================

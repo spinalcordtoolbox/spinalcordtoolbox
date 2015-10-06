@@ -22,6 +22,8 @@ import time
 from sct_convert import convert
 from msct_image import Image
 from msct_parser import Parser
+from sct_image import split_data, concat_data
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -174,7 +176,6 @@ def main(args = None):
     else:
         # split along T dimension
         sct.printv('\nSplit along T dimension...', verbose)
-        from sct_image import split_data
         im = Image('data.nii')
         im_split_list = split_data(im, 3)
         for im_s in im_split_list:
@@ -188,9 +189,11 @@ def main(args = None):
                 set_orientation(file_data_split, orientation, file_data_split_orient)
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_concat_data import concat_data
             from glob import glob
-            concat_data(glob('data_orient_T*.nii'), 'data_orient.nii', dim=3)
+            im_data_list = [Image(fname) for fname in glob('data_orient_T*.nii')]
+            im_concat = concat_data(im_data_list, 3)
+            im_concat.setFileName('data_orient.nii')
+            im_concat.save()
 
         else:
             sct.printv('\nGet orientation...', verbose)
@@ -370,9 +373,12 @@ if __name__ == "__main__":
 #                 set_orientation(file_data_split, param.orientation, file_data_split_orient)
 #             # Merge files back
 #             sct.printv('\nMerge file back...', param.verbose)
-#             from sct_concat_data import concat_data
+#             from sct_image import concat_data
 #             from glob import glob
-#             concat_data(glob('data_orient_T*.nii'), 'data_orient.nii', dim=3)
+#             im_data_list = [Image(fname) for fname in glob('data_orient_T*.nii')]
+#             im_data_concat = concat_data(im_data_list, 3)
+#             im_data_concat.setFileName('data_orient.nii')
+#             im_data_concat.save()
 #
 #         elif todo == 'get_orientation':
 #             sct.printv('\nGet orientation...', param.verbose)
