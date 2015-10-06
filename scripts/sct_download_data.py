@@ -68,7 +68,7 @@ def main(args=None):
     urlretrieve(url, tmp_file)
 
     # Check if folder already exists
-    printv('Check if folder already exists...')
+    printv('Check if folder already exists...', verbose)
     if path.isdir(data_name):
         printv('.. WARNING: Folder '+data_name+' already exists. Removing it...', 1, 'warning')
         run('rm -rf '+data_name, 0)
