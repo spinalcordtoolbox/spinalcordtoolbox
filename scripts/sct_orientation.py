@@ -174,8 +174,11 @@ def main(args = None):
     else:
         # split along T dimension
         sct.printv('\nSplit along T dimension...', verbose)
-        from sct_split_data import split_data
-        split_data('data.nii', 3, '_T')
+        from sct_image import split_data
+        im = Image('data.nii')
+        im_split_list = split_data(im, 3)
+        for im_s in im_split_list:
+            im_s.save()
         if orientation != '':
             # set orientation
             sct.printv('\nChange orientation...', verbose)
@@ -352,8 +355,11 @@ if __name__ == "__main__":
 #     else:
 #         # split along T dimension
 #         sct.printv('\nSplit along T dimension...', param.verbose)
-#         from sct_split_data import split_data
-#         split_data('data.nii', 3, '_T')
+#         from sct_image import split_data
+#         im = Image('data.nii')
+#         im_split_list = split_data(im, 3, '_T')
+#         for im_s in im_split_list:
+#             im_s.save()
 #
 #         if todo == 'set_orientation':
 #             # set orientation

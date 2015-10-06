@@ -96,7 +96,7 @@ def main():
         dim = 2
     if dim == 4:
         sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
-                   'sct_split_data -i '+fname_anat, verbose, 'warning')
+                   'sct_image -i '+fname_anat+' -split t -o '+fname_anat, verbose, 'warning')
         sct.printv('4D images not supported, aborting ...', verbose, 'error')
 
     # Extract path/file/extension
