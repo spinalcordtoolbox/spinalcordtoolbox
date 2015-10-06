@@ -778,7 +778,6 @@ class Installer:
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
-        print ">> " + cmd
         status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -789,9 +788,8 @@ class Installer:
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
-        print ">> " + cmd
-        # status, output = runProcess(cmd)
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR: Installation failed while installing requirements.\n'+output
             sys.exit(2)
@@ -804,7 +802,6 @@ class Installer:
         cmd = self.SCT_DIR+"/install/create_links.sh"
         if self.issudo is "":
             cmd += " -a"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -830,7 +827,7 @@ class Installer:
                     # unzip patch
                     cmd = "unzip -d temp_patch " + file_name_patch
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -839,7 +836,6 @@ class Installer:
                     cmd = "python install_patch.py"
                     if self.issudo == "":
                         cmd += " -a"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
                     # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -850,7 +846,6 @@ class Installer:
 
                     MsgUser.message("Removing patch-related files...")
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
                     # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -868,7 +863,6 @@ class Installer:
         print "\nCompile external packages..."
         os.chdir(self.SCT_DIR+"/external")
         cmd = self.issudo + "pip install *.whl"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
@@ -879,7 +873,6 @@ class Installer:
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -889,7 +882,6 @@ class Installer:
 
         # deleting temporary files
         cmd = "rm -rf tmp.*"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
