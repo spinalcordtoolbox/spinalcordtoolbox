@@ -22,7 +22,7 @@ import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
 from msct_image import Image
-from sct_copy_header import copy_header
+from sct_image import copy_header
 # from sct_average_data_across_dimension import average_data_across_dimension
 
 
@@ -291,7 +291,10 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    copy_header('fmri.nii', 'fmri_moco.nii')
+    im_fmri = Image('fmri.nii')
+    im_fmri_moco = Image('fmri_moco.nii')
+    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
+    im_fmri_moco.save()
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
