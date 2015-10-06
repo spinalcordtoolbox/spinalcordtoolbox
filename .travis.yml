@@ -29,18 +29,18 @@ matrix:
 before_install:
   - echo "HOME="
   - echo $HOME
-  # Install miniconda
+# Install miniconda
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-${MINICONDA}.sh -O miniconda.sh
   - export PATH=${HOME}/miniconda/bin:$PATH
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - conda update --yes conda
-  # Install requirements
-  - cd install/requirements/
-  - ./requirements.sh
-  - cd ../..
 
 install:
+# Install requirements
+  - install/requirements/requirements.sh
+# Install external wheels
+  - pip install external/*.whl
 # set PATH
   - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
   - PATH=${PATH}:${SCT_DIR}/bin
