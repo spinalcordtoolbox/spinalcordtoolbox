@@ -146,22 +146,29 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
     # Split input volume along z
     print '\nSplit input volume...'
-    from sct_split_data import split_data
-    split_data(fname_source, 2, '_z')
+    from sct_image import split_data
+    im_source = Image(fname_source)
+    split_source_list = split_data(im_source, 2)
+    for im_src in split_source_list:
+        im_src.save()
 
     # Split destination volume along z
     print '\nSplit destination volume...'
-    split_data(fname_dest, 2, '_z')
+    im_dest = Image(fname_dest)
+    split_dest_list = split_data(im_dest, 2)
+    for im_d in split_dest_list:
+        im_d.save()
 
     # Split mask volume along z
     if mask:
         print '\nSplit mask volume...'
-        split_data('mask.nii.gz', 2, '_z')
+        im_mask = Image('mask.nii.gz')
+        split_mask_list = split_data(im_mask, 2)
+        for im_m in split_mask_list:
+            im_m.save()
 
-    im_dest_img = Image(fname_dest)
-    im_input_img = Image(fname_source)
-    coord_origin_dest = im_dest_img.transfo_pix2phys([[0,0,0]])
-    coord_origin_input = im_input_img.transfo_pix2phys([[0,0,0]])
+    coord_origin_dest = im_dest.transfo_pix2phys([[0,0,0]])
+    coord_origin_input = im_source.transfo_pix2phys([[0,0,0]])
     coord_diff_origin = (asarray(coord_origin_dest[0]) - asarray(coord_origin_input[0])).tolist()
     [x_o, y_o, z_o] = [coord_diff_origin[0] * 1.0/px, coord_diff_origin[1] * 1.0/py, coord_diff_origin[2] * 1.0/pz]
 
@@ -178,7 +185,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         num = numerotation(i)
         num_2 = numerotation(int(num) + int(z_o))
         if mask:
-            masking = '-x mask_z' +num+ '.nii'
+            masking = '-x mask_Z' +num+ '.nii'
         else:
             masking = ''
 
@@ -186,12 +193,12 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
                '--dimensionality 2 '
                '--transform '+paramreg.algo+'['+str(paramreg.gradStep) +
                ants_registration_params[paramreg.algo.lower()]+'] '
-               '--metric '+paramreg.metric+'['+root_d+'_z'+ num +'.nii' +','+root_i+'_z'+ num_2 +'.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+               '--metric '+paramreg.metric+'['+root_d+'_Z'+ num +'.nii' +','+root_i+'_Z'+ num_2 +'.nii' +',1,'+metricSize+'] '  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
                '--convergence '+str(paramreg.iter)+' '
                '--shrink-factors '+str(paramreg.shrink)+' '
                '--smoothing-sigmas '+str(paramreg.smooth)+'mm '
                #'--restrict-deformation 1x1x0 '    # how to restrict? should not restrict here, if transform is precised...?
-               '--output [transform_' + num + ','+root_i+'_z'+ num_2 +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
+               '--output [transform_' + num + ','+root_i+'_Z'+ num_2 +'reg.nii] '    #--> file.mat (contains Tx,Ty, theta)
                '--interpolation BSpline[3] '
                +masking)
 
@@ -208,8 +215,8 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
             if paramreg.algo == 'Affine':
                 # New process added for generating total nifti warping field from mat warp
-                name_dest = root_d+'_z'+ num +'.nii'
-                name_reg = root_i+'_z'+ num +'reg.nii'
+                name_dest = root_d+'_Z'+ num +'.nii'
+                name_reg = root_i+'_Z'+ num +'reg.nii'
                 name_output_warp = 'warp_from_mat_' + num_2 + '.nii.gz'
                 name_output_warp_inverse = 'warp_from_mat_' + num + '_inverse.nii.gz'
                 name_warp_null = 'warp_null_' + num + '.nii.gz'
