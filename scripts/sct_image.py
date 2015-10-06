@@ -39,13 +39,17 @@ def get_parser():
                       mandatory=True,
                       example='data_pad.nii.gz')
 
-    parser.usage.addSection('\nBasic operations:')
+    parser.usage.addSection('\nBasic image operations:')
     parser.add_option(name="-pad",
                       type_value="str",
                       description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
                       example='0,0,1')
-
+    parser.add_option(name="-copy-header",
+                      type_value="file",
+                      description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
+                      mandatory=False,
+                      example='data_dest.nii.gz')
     parser.usage.addSection("\nMulti-component operations:")
     parser.add_option(name='-mcs',
                       description='Multi-component split. Outputs the components separately. (The sufix _x, _y and _z are added to the specified output) \n'
@@ -91,6 +95,9 @@ def main(args = None):
         padx, pady, padz = int(padx), int(pady), int(padz)
         im_out = [pad_image(im_in[0], padding_x=padx, padding_y=pady, padding_z=padz)]
 
+    elif "-copy-header" in arguments:
+        im_dest = Image(arguments["-copy-header"])
+        im_out = [copy_header(im_in[0], im_dest)]
     elif '-mcs' in arguments:
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
@@ -161,6 +168,18 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     im.hdr.structarr['srow_z'][-1] = new_origin[2]
 
     return im
+
+
+def copy_header(im_src, im_dest):
+    """
+    Copy header from the source image to the destination image
+    :param im_src: source image
+    :param im_dest: destination image
+    :return im_src: destination data with the source header
+    """
+    im_src.data = im_dest.data
+    im_src.setFileName(im_dest.absolutepath)
+    return im_src
 
 
 def multicomponent_split(im):
