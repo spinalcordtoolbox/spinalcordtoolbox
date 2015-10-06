@@ -228,7 +228,7 @@ def main(args = None):
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # Write output
-    nii_out = Image(fname_in)  # use header of first file (if multiple input files)
+    nii_out = Image(fname_in)  # use header of input file
     nii_out.data = data_out
     nii_out.setFileName(fname_out)
     nii_out.save()
