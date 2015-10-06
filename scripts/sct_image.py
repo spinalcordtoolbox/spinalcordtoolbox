@@ -228,7 +228,7 @@ def split_data(im_in, dim):
     for i, dat in enumerate(data_split):
         im_out = im_in.copy()
         im_out.data = dat
-        im_out.setFileName(add_suffix(im_out.absolutepath, '_'+dim_list[dim].upper()+str(i).zfill(4)))
+        im_out.setFileName(im_out.path+add_suffix(im_out.file_name+im_out.ext, '_'+dim_list[dim].upper()+str(i).zfill(4)))
         im_out_list.append(im_out)
 
     return im_out_list
