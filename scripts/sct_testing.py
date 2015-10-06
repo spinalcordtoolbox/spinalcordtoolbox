@@ -159,6 +159,7 @@ def fill_functions():
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline')
+    functions.append('sct_image')
     functions.append('sct_label_utils')
     functions.append('sct_label_vertebrae')
     functions.append('sct_maths')
