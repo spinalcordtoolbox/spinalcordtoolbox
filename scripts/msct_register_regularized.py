@@ -283,11 +283,22 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
         sct.run('sct_concat_data -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -dim z')
 
         print'\nChange resolution of warping fields to match the resolution of the destination image...'
-        from sct_copy_header import copy_header
-        copy_header(fname_dest, warp_x)
-        copy_header(fname_source, inv_warp_x)
-        copy_header(fname_dest, warp_y)
-        copy_header(fname_source, inv_warp_y)
+        from sct_image import copy_header
+        im_dest = Image(fname_dest)
+        im_src = Image(fname_source)
+        im_warp_x = Image(warp_x)
+        im_warp_y = Image(warp_y)
+        im_inv_warp_x = Image(inv_warp_x)
+        im_inv_warp_y = Image(inv_warp_y)
+
+        im_warp_x = copy_header(im_dest, im_warp_x)
+        im_inv_warp_x = copy_header(im_src, im_inv_warp_x)
+        im_warp_y = copy_header(im_dest, im_warp_y)
+        im_inv_warp_y = copy_header(im_src, im_inv_warp_y)
+
+        for im_warp in [im_warp_x, im_inv_warp_x, im_warp_y, im_inv_warp_y]:
+            im_warp.save()
+
         if paramreg.algo != 'Affine':
             for warp in [warp_x, inv_warp_x, warp_y, inv_warp_y]:
                 sct.run('sct_resample -i '+warp+' -f '+str(paramreg.shrink)+'x'+str(paramreg.shrink)+'x1 -o '+warp)

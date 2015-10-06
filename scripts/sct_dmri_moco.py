@@ -44,7 +44,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 from sct_convert import convert
 from msct_image import Image
-from sct_copy_header import copy_header
+from sct_image import copy_header
 
 
 class Param:
@@ -446,7 +446,11 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    copy_header('dmri.nii', 'dmri_moco.nii')
+    im_dmri = Image('dmri.nii')
+    im_dmri_moco = Image('dmri_moco.nii')
+    im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
+    im_dmri_moco.save()
+
 
     # generate b0_moco_mean and dwi_moco_mean
     cmd = 'sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1'

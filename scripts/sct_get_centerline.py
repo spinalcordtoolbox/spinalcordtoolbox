@@ -27,7 +27,7 @@ from sct_convert import convert
 from msct_image import Image
 from sct_split_data import split_data
 from sct_concat_data import concat_data
-from sct_copy_header import copy_header
+from sct_image import copy_header
 
 
 class Param:
@@ -347,9 +347,15 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Copy header geometry from input data
     print '\nCopy header geometry from input data...'
-    copy_header('tmp.anat_orient.nii', 'tmp.anat_orient_fit.nii')
-    copy_header('tmp.anat_orient.nii', 'tmp.mask_orient_fit.nii')
-    copy_header('tmp.anat_orient.nii', 'tmp.point_orient_fit.nii')
+    im_anat_orient = Image('tmp.anat_orient.nii')
+    im_anat_orient_fit = Image('tmp.anat_orient_fit.nii')
+    im_mask_orient_fit = Image('tmp.mask_orient_fit.nii')
+    im_point_orient_fit = Image('tmp.point_orient_fit.nii')
+    im_anat_orient_fit = copy_header(im_anat_orient, im_anat_orient_fit)
+    im_mask_orient_fit = copy_header(im_anat_orient, im_mask_orient_fit)
+    im_point_orient_fit = copy_header(im_anat_orient, im_point_orient_fit)
+    for im in [im_anat_orient_fit, im_mask_orient_fit, im_point_orient_fit]:
+        im.save()
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
