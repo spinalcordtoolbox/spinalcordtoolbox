@@ -246,7 +246,7 @@ def concat_data(im_in_list, dim):
     data_list = [im.data for im in im_in_list]
     # expand dimension of all elements in the list if necessary
     if dim > im_in_list[0].data.ndim-1:
-        list_data = [expand_dims(dat, dim) for dat in data_list]
+        data_list = [expand_dims(dat, dim) for dat in data_list]
     # concatenate
     try:
         data_concat = concatenate(data_list, axis=dim)

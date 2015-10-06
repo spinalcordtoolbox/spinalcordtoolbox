@@ -22,7 +22,7 @@ import commands
 import numpy
 import sct_utils as sct
 from msct_image import Image
-# from sct_concat_data import concat_data
+from sct_image import split_data, concat_data
 # import glob
 # from sct_average_data_across_dimension import average_data_across_dimension
 
@@ -137,7 +137,6 @@ def main():
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    from sct_image import split_data
     im_dmri = Image('dmri.nii')
     im_dmri_split_list = split_data(im_dmri, 3)
     for im_d in im_dmri_split_list:
@@ -145,11 +144,13 @@ def main():
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    cmd = 'sct_concat_data -dim t -o b0.nii -i '
+    im_b0_list = []
     for it in range(nb_b0):
-        cmd = cmd + 'dmri_T' + str(index_b0[it]).zfill(4) + '.nii,'
-    cmd = cmd[:-1]  # remove ',' at the end of the string
-    status, output = sct.run(cmd, param.verbose)
+        im_b0_list.append(im_dmri_split_list[index_b0[it]])
+    im_b0_out = concat_data(im_b0_list, 3)
+    im_b0_out.setFileName('b0.nii')
+    im_b0_out.save()
+
 
     # Average b=0 images
     if average:
@@ -157,12 +158,12 @@ def main():
         sct.run('sct_maths -i b0.nii -o b0_mean.nii -mean t', verbose)
 
     # Merge DWI
-    sct.printv('\nMerge DWI...', verbose)
-    cmd = 'sct_concat_data -dim t -o dwi.nii -i '
+    im_dwi_list = []
     for it in range(nb_dwi):
-        cmd = cmd + 'dmri_T' + str(index_dwi[it]).zfill(4) + '.nii,'
-    cmd = cmd[:-1]  # remove ',' at the end of the string
-    status, output = sct.run(cmd, param.verbose)
+        im_dwi_list.append(im_dmri_split_list[index_dwi[it]])
+    im_dwi_out = concat_data(im_dwi_list, 3)
+    im_dwi_out.setFileName('dwi.nii')
+    im_dwi_out.save()
 
 
     # Average DWI images

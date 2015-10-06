@@ -141,10 +141,12 @@ class Transform:
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_concat_data import concat_data
+            from sct_image import concat_data
             import glob
-            concat_data(glob.glob(path_tmp+'data_reg_T*.nii'), fname_out, dim=3)
-
+            im_list = [Image(file_name) for file_name in glob.glob(path_tmp+'data_reg_T*.nii')]
+            im_out = concat_data(im_list, 3)
+            im_out.setFileName(fname_out)
+            im_out.save()
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)

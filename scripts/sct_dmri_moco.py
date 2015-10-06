@@ -266,7 +266,7 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    from sct_image import split_data
+    from sct_image import split_data, concat_data
     im_data = Image(file_data + ext_data)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
@@ -277,11 +277,12 @@ def dmri_moco(param):
     # cmd = fsloutput + 'fslmerge -t ' + file_b0
     # for it in range(nb_b0):
     #     cmd = cmd + ' ' + file_data + '_T' + str(index_b0[it]).zfill(4)
-    cmd = 'sct_concat_data -dim t -o ' + file_b0 + ext_data + ' -i '
+    im_b0_list = []
     for it in range(nb_b0):
-        cmd = cmd + file_data + '_T' + str(index_b0[it]).zfill(4) + ext_data + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
-    status, output = sct.run(cmd, param.verbose)
+        im_b0_list.append(im_data_split_list[index_b0[it]])
+    im_b0_out = concat_data(im_b0_list, 3)
+    im_b0_out.setFileName(file_b0 + ext_data)
+    im_b0_out.save()
     sct.printv(('  File created: ' + file_b0), param.verbose)
 
     # Average b=0 images
@@ -318,11 +319,13 @@ def dmri_moco(param):
         # Merge DW Images
         sct.printv('Merge DW images...', param.verbose)
         file_dwi_merge_i = file_dwi + '_' + str(iGroup)
-        cmd = 'sct_concat_data -dim t -o ' + file_dwi_merge_i + ext_data + ' -i '
+
+        im_dwi_list = []
         for it in range(nb_dwi_i):
-            cmd = cmd + file_data + '_T' + str(index_dwi_i[it]).zfill(4) + ext_data + ','
-        cmd = cmd[:-1]  # remove ',' at the end of the string
-        sct.run(cmd, param.verbose)
+            im_dwi_list.append(im_data_split_list[index_dwi_i[it]])
+        im_dwi_out = concat_data(im_dwi_list, 3)
+        im_dwi_out.setFileName(file_dwi_merge_i + ext_data)
+        im_dwi_out.save()
         # cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
         # for it in range(nb_dwi_i):
         #     cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
@@ -339,11 +342,12 @@ def dmri_moco(param):
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
-    cmd = 'sct_concat_data -dim t -o ' + file_dwi_group + ext_data + ' -i '
+    im_dw_list = []
     for iGroup in range(nb_groups):
-        cmd = cmd + file_dwi + '_mean_' + str(iGroup) + ext_data + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
-    sct.run(cmd, param.verbose)
+        im_dw_list.append(Image(file_dwi + '_mean_' + str(iGroup) + ext_data))
+    im_dw_out = concat_data(im_dw_list, 3)
+    im_dw_out.setFileName(file_dwi_group + ext_data)
+    im_dw_out.save()
     # cmd = fsloutput + 'fslmerge -t ' + file_dwi_group
     # for iGroup in range(nb_groups):
     #     cmd = cmd + ' ' + file_dwi + '_mean_' + str(iGroup)

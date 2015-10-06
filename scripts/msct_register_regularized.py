@@ -279,15 +279,14 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
 
     if paramreg.algo == 'BSplineSyN' or paramreg.algo == 'SyN' or paramreg.algo == 'Affine':
         print'\nMerge along z of the warping fields...'
-        # from sct_concat_data import concat_data
         warp_x = name_warp_final + '_x.nii.gz'
         inv_warp_x = name_warp_final + '_x_inverse.nii.gz'
         warp_y = name_warp_final + '_y.nii.gz'
         inv_warp_y = name_warp_final + '_y_inverse.nii.gz'
-        sct.run('sct_concat_data -i '+','.join(list_warp_x)+' -o '+warp_x+' -dim z')
-        sct.run('sct_concat_data -i '+','.join(list_warp_x_inv)+' -o '+inv_warp_x+' -dim z')
-        sct.run('sct_concat_data -i '+','.join(list_warp_y)+' -o '+warp_y+' -dim z')
-        sct.run('sct_concat_data -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -dim z')
+        sct.run('sct_image -i '+','.join(list_warp_x)+' -o '+warp_x+' -concat z')
+        sct.run('sct_image -i '+','.join(list_warp_x_inv)+' -o '+inv_warp_x+' -concat z')
+        sct.run('sct_image -i '+','.join(list_warp_y)+' -o '+warp_y+' -concat z')
+        sct.run('sct_image -i '+','.join(list_warp_y_inv)+' -o '+inv_warp_y+' -concat z')
 
         print'\nChange resolution of warping fields to match the resolution of the destination image...'
         from sct_image import copy_header
