@@ -125,8 +125,8 @@ sct_concat_transfo -w ../mt/warp_template2mt1_corrected.nii.gz,warp_template2ana
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # visualize white matter template and lateral CST on DWI
 fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
-# compute tensors (using FSL)
-dtifit -k dmri_moco -o dti -m dwi_moco_mean -r bvecs.txt -b bvals.txt
+# compute DTI metrics
+sct_dmri_compute_dti -i dmri_moco.nii.gz -bvals bvals.txt -bvecs bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
 # --> 17, right lateral corticospinal tract:    0.771558633821 +/- 0
