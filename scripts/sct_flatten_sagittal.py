@@ -24,6 +24,7 @@ from msct_nurbs import NURBS
 from sct_utils import fsloutput
 from sct_orientation import get_orientation, set_orientation
 from msct_image import Image
+from sct_image import split_data, concat_data
 
 
 ## Default parameters
@@ -164,7 +165,6 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    from sct_image import split_data
     im_anat_orient = Image('tmp.anat_orient.nii')
     im_anat_orient_split_list = split_data(im_anat_orient, 2)
     file_anat_split = []
@@ -173,13 +173,13 @@ def main():
         im.save()
 
     # initialize variables
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     z_init = min_z_index
     displacement_max_z_index = x_centerline_fit[z_init-min_z_index]-x_centerline_fit[max_z_index-min_z_index]
 
     # write centerline as text file
     print '\nGenerate fitted transformation matrices...'
-    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(min_z_index, max_z_index+1, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
@@ -211,16 +211,18 @@ def main():
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'
-    file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_anat_split_fit = ['tmp.anat_orient_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
         sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    from sct_concat_data import concat_data
     from glob import glob
-    concat_data(glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
+    im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
+    im_concat_out = concat_data(im_to_concat_list, 2)
+    im_concat_out.setFileName('tmp.anat_orient_fit.nii')
+    im_concat_out.save()
     # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before

@@ -26,7 +26,7 @@ from scipy import ndimage
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
-from sct_image import copy_header
+from sct_image import copy_header, concat_data
 
 
 # DEFAULT PARAMETERS
@@ -219,12 +219,12 @@ def create_mask():
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
-    cmd = 'sct_concat_data -dim z -o mask.nii.gz -i '
+    im_list = []
     for iz in range(nz):
-        cmd = cmd + file_mask+str(iz)+'.nii,'
-    # remove ',' at the end of the string
-    cmd = cmd[:-1]
-    status, output = sct.run(cmd, param.verbose)
+        im_list.append(Image(file_mask+str(iz)+'.nii'))
+    im_out = concat_data(im_list, 2)
+    im_out.setFileName('mask.nii.gz')
+    im_out.save()
 
     # copy geometry
     im_dat = Image('data.nii')
