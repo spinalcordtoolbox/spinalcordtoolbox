@@ -38,7 +38,9 @@ before_install:
 
 install:
 # Install requirements
-  - install/requirements/requirements.sh
+  - cd install/requirements
+  - ./requirements.sh
+  - cd ../../
 # Install external wheels
   - pip install external/*.whl
 # set PATH
