@@ -26,7 +26,7 @@ from scipy import ndimage
 from sct_orientation import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
-from sct_copy_header import copy_header
+from sct_image import copy_header
 
 
 # DEFAULT PARAMETERS
@@ -227,7 +227,10 @@ def create_mask():
     status, output = sct.run(cmd, param.verbose)
 
     # copy geometry
-    copy_header('data.nii', 'mask.nii.gz')
+    im_dat = Image('data.nii')
+    im_mask = Image('mask.nii.gz')
+    im_mask = copy_header(im_dat, im_mask)
+    im_mask.save()
 
     # come back to parent folder
     os.chdir('..')
