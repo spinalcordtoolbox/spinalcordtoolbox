@@ -137,9 +137,11 @@ def main():
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    from sct_split_data import split_data
-    if not split_data('dmri.nii', 3, '_T'):
-        sct.printv('ERROR in split_data.', 1, 'error')
+    from sct_image import split_data
+    im_dmri = Image('dmri.nii')
+    im_dmri_split_list = split_data(im_dmri, 3)
+    for im_d in im_dmri_split_list:
+        im_d.save()
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)

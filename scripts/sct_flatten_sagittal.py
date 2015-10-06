@@ -164,10 +164,13 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    from sct_split_data import split_data
-    if not split_data('tmp.anat_orient.nii', 2, '_z'):
-        sct.printv('ERROR in split_data.', 1, 'error')
-    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    from sct_image import split_data
+    im_anat_orient = Image('tmp.anat_orient.nii')
+    im_anat_orient_split_list = split_data(im_anat_orient, 2)
+    file_anat_split = []
+    for im in im_anat_orient_split_list:
+        file_anat_split.append(im.absolutepath)
+        im.save()
 
     # initialize variables
     file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]

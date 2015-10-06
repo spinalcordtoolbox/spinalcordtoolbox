@@ -193,7 +193,11 @@ def fmri_moco(param):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
+    from sct_image import split_data
+    im_data = Image(file_data + ext_data)
+    im_data_split_list = split_data(im_data, 3)
+    for im in im_data_split_list:
+        im.save()
 
     # assign an index to each volume
     index_fmri = range(0, nt)
