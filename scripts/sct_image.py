@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image
-from sct_utils import extract_fname, printv
+from sct_utils import extract_fname, printv, add_suffix
 
 
 class Param:
@@ -50,6 +50,17 @@ def get_parser():
                       description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
                       mandatory=False,
                       example='data_dest.nii.gz')
+    parser.add_option(name="-split",
+                      type_value="multiple_choice",
+                      description='Split data along the specified dimension',
+                      mandatory=False,
+                      example=['x', 'y', 'z', 't'])
+    parser.add_option(name="-concat",
+                      type_value="multiple_choice",
+                      description='Concatenate data along the specified dimension',
+                      mandatory=False,
+                      example=['x', 'y', 'z', 't'])
+
     parser.usage.addSection("\nMulti-component operations:")
     parser.add_option(name='-mcs',
                       description='Multi-component split. Outputs the components separately. (The sufix _x, _y and _z are added to the specified output) \n'
@@ -98,6 +109,13 @@ def main(args = None):
     elif "-copy-header" in arguments:
         im_dest = Image(arguments["-copy-header"])
         im_out = [copy_header(im_in[0], im_dest)]
+
+    elif "-split" in arguments:
+        dim = arguments["-split"]
+        assert dim in dim_list
+        dim = dim_list.index(dim)
+        im_out = split_data(im_in[0], dim)
+
     elif '-mcs' in arguments:
         if n_in != 1:
             printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
@@ -120,8 +138,13 @@ def main(args = None):
         im_out[0].save()
     else:
         for i, im in enumerate(im_out):
-            from sct_utils import add_suffix
-            im.setFileName(add_suffix(fname_out, '_'+dim_list[i]))
+            if len(im_out)<= len(dim_list):
+                suffix = '_'+dim_list[i].upper()
+            else:
+                suffix = '_'+str(i)
+            if "-split" in arguments:
+                suffix = '_'+dim_list[dim].upper()+str(i).zfill(4)
+            im.setFileName(add_suffix(fname_out, suffix))
             im.save()
 
     printv('Created file(s):\n--> '+str([im.file_name+im.ext for im in im_out])+'\n', verbose, 'info')
@@ -155,19 +178,20 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
         padzf = -padding_z
 
     padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
-    im.data = padded_data  # done after the call of the function
+    im_out = im.copy()
+    im_out.data = padded_data  # done after the call of the function
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im.hdr.get_best_affine(), [-padding_x, -padding_y, -padding_z, 1])
+    new_origin = dot(im_out.hdr.get_best_affine(), [-padding_x, -padding_y, -padding_z, 1])
 
-    im.hdr.structarr['qoffset_x'] = new_origin[0]
-    im.hdr.structarr['qoffset_y'] = new_origin[1]
-    im.hdr.structarr['qoffset_z'] = new_origin[2]
-    im.hdr.structarr['srow_x'][-1] = new_origin[0]
-    im.hdr.structarr['srow_y'][-1] = new_origin[1]
-    im.hdr.structarr['srow_z'][-1] = new_origin[2]
+    im_out.hdr.structarr['qoffset_x'] = new_origin[0]
+    im_out.hdr.structarr['qoffset_y'] = new_origin[1]
+    im_out.hdr.structarr['qoffset_z'] = new_origin[2]
+    im_out.hdr.structarr['srow_x'][-1] = new_origin[0]
+    im_out.hdr.structarr['srow_y'][-1] = new_origin[1]
+    im_out.hdr.structarr['srow_z'][-1] = new_origin[2]
 
-    return im
+    return im_out
 
 
 def copy_header(im_src, im_dest):
@@ -177,9 +201,64 @@ def copy_header(im_src, im_dest):
     :param im_dest: destination image
     :return im_src: destination data with the source header
     """
-    im_src.data = im_dest.data
-    im_src.setFileName(im_dest.absolutepath)
-    return im_src
+    im_out = im_src.copy()
+    im_out.data = im_dest.data
+    im_out.setFileName(im_dest.absolutepath)
+    return im_out
+
+
+def split_data(im_in, dim):
+    """
+    Split data
+    :param im_in: input image.
+    :param dim: dimension: 0, 1, 2, 3.
+    :return: list of split images
+    """
+    from numpy import array_split
+    dim_list = ['x', 'y', 'z', 't']
+    # Parse file name
+    # Open first file.
+    data = im_in.data
+    if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
+        data = data[..., newaxis]
+    # Split data into list
+    data_split = array_split(data, data.shape[dim], dim)
+    # Write each file
+    im_out_list = []
+    for i, dat in enumerate(data_split):
+        im_out = im_in.copy()
+        im_out.data = dat
+        im_out.setFileName(add_suffix(im_out.absolutepath, '_'+dim_list[dim].upper()+str(i).zfill(4)))
+        im_out_list.append(im_out)
+
+    return im_out_list
+
+
+def concat_data(im_in_list, dim):
+    """
+    Concatenate data
+    :param im_in_list: list of images.
+    :param dim: dimension: 0, 1, 2, 3.
+    :return im_out: concatenated image
+    """
+    from numpy import concatenate, expand_dims
+
+    data_list = [im.data for im in im_in_list]
+    # expand dimension of all elements in the list if necessary
+    if dim > im_in_list[0].data.ndim-1:
+        list_data = [expand_dims(dat, dim) for dat in data_list]
+    # concatenate
+    try:
+        data_concat = concatenate(data_list, axis=dim)
+    except Exception as e:
+        printv('\nERROR: Concatenation on line {}'.format(sys.exc_info()[-1].tb_lineno)+'\n'+str(e)+'\n', 1, 'error')
+        data_concat = None
+
+    # write file
+    im_out = im_in_list[0].copy()
+    im_out.data = data_concat
+
+    return im_out
 
 
 def multicomponent_split(im):
@@ -194,7 +273,7 @@ def multicomponent_split(im):
             dat_out = reshape(dat_out, dat_out.shape[:-1])
         '''
         data_out.append(dat_out)  # .astype('float32'))
-    im_out = [im for dat in data_out]
+    im_out = [im.copy() for dat in data_out]
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
@@ -219,7 +298,7 @@ def multicomponent_merge(im_list):
             data_out[:, :, :, 0, i] = dat.astype('float32')
         elif len(dat.shape) == 4:
             data_out[:, :, :, :, i] = dat.astype('float32')
-    im_out = im_list[0]
+    im_out = im_list[0].copy()
     im_out.data = data_out.astype('float32')
     im_out.hdr.set_intent('vector', (), '')
     return im_out
