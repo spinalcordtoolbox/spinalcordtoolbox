@@ -111,7 +111,7 @@ def main():
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('sct_resample -i data.nii -x trilinear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
+    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
@@ -119,7 +119,7 @@ def main():
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('sct_resample -i data_up_smooth.nii -x trilinear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
+    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')
