@@ -222,7 +222,7 @@ def main():
 
     # resample data to 1mm isotropic
     sct.printv('\nResample data to 1mm isotropic...', verbose)
-    sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x trilinear -o datar.nii')
+    sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o datar.nii')
     sct.run('sct_resample -i segmentation.nii.gz -mm 1.0x1.0x1.0 -x nn -o segmentationr.nii.gz')
     # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
     resample_labels('landmarks.nii.gz', 'datar.nii', 'landmarksr.nii.gz')
