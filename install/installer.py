@@ -864,7 +864,9 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        cmd = self.SCT_DIR + 'install/install_external.py -a ' + self.issudo
+        cmd = self.SCT_DIR + '/install/install_external.py'
+        if self.issudo:
+            cmd += ' -a'
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
