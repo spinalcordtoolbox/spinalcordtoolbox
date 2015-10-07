@@ -864,8 +864,8 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        import install.install_external_packages
-        status = install.install_external_packages(this_computer.os, self.SCT_DIR, self.issudo)
+        import install.install_external
+        status = install.install_external.install_external_packages(this_computer.os, self.SCT_DIR, self.issudo)
         if status != 0:
             sys.exit(2)
 
