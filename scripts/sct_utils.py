@@ -397,7 +397,7 @@ def printv(string, verbose=1, type='normal'):
     elif type == 'bold':
         color = bcolors.bold
     elif type == 'process':
-        color = bcolors.purple
+        color = bcolors.magenta
 
     # print message
     if verbose:
