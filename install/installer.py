@@ -222,15 +222,16 @@ class Version(object):
         return result
 
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
+    cyan = '\033[96m'
     bold = '\033[1m'
+    underline = '\033[4m'
 
 
 class InstallationResult(object):
@@ -298,23 +299,23 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg))
+        print "".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg))
+        print "".join((bcolors.green, "[OK] ", bcolors.normal, msg))
     
     @classmethod
     def failed(cls, msg):
-        print "".join((shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg))
+        print "".join((bcolors.red, "[FAILED] ", bcolors.normal, msg))
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg))
+        print "".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg))
 
 
 class Progress_bar(object):
@@ -519,7 +520,8 @@ def download_file(url, localf, timeout=20):
 
 def runProcess(cmd, verbose=1):
     if verbose:
-        print cmd
+        # print cmd
+        print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -564,7 +566,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-10-03"
+        print "Modified: 2015-10-06"
         print "============================="
 
         # Check OS
@@ -620,8 +622,6 @@ class Installer:
         else:
             print('.. OK!')
 
-        print "hola"
-        sys.exit()
         # check if sudo is needed to write in installation folder
         MsgUser.message("\nCheck if administrator permission is needed for installation...")
         print ".. Installation path: "+self.path_install
