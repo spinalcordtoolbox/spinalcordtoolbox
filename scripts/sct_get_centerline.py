@@ -22,7 +22,7 @@ import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
 from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, split_data, concat_data
@@ -83,7 +83,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    input_image_orientation = get_orientation(fname_anat)
+    input_image_orientation = get_orientation(fname_anat, filename=True)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -106,16 +106,18 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     os.chdir(path_tmp)
 
     # convert to nii
-    convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
-    convert('tmp.point'+ext_point, 'tmp.point.nii')
+    im_anat = convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
+    im_point = convert('tmp.point'+ext_point, 'tmp.point.nii')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
-    set_orientation('tmp.anat.nii', 'RPI', 'tmp.anat_orient.nii')
+    set_orientation(im_anat, 'RPI')
+    im_anat.setFileName('tmp.anat_orient.nii')
     # Reorient binary point into RL PA IS orientation
     print '\nReorient binary point into RL PA IS orientation...'
     # sct.run(sct.fsloutput + 'fslswapdim tmp.point RL PA IS tmp.point_orient')
-    set_orientation('tmp.point.nii', 'RPI', 'tmp.point_orient.nii')
+    set_orientation(im_point, 'RPI')
+    im_point.setFileName('tmp.point_orient.nii')
 
     # Get image dimensions
     print '\nGet image dimensions...'
@@ -125,14 +127,12 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Split input volume
     print '\nSplit input volume...'
-    im_anat = Image('tmp.anat_orient.nii')
     im_anat_split_list = split_data(im_anat, 2)
     file_anat_split = []
     for im in im_anat_split_list:
         file_anat_split.append(im.absolutepath)
         im.save()
 
-    im_point = Image('tmp.point_orient.nii')
     im_point_split_list = split_data(im_point, 2)
     file_point_split = []
     for im in im_point_split_list:
@@ -420,15 +420,15 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     ## Concatenation of the files
 
     # Concatenation : sum of matrices
-    file_0 = load('data.nii')
-    data_concatenation = file_0.get_data()
-    hdr_0 = file_0.get_header()
-    orientation_file_0 = get_orientation('data.nii')
+    file_0 = Image('data.nii')
+    data_concatenation = file_0.data
+    hdr_0 = file_0.hdr
+    orientation_file_0 = get_orientation(file_0)
     if len(list_fname_labels) > 0:
        for i in range(0, len(list_fname_labels)):
-            orientation_file_temp = get_orientation(file_labels[i])
+            orientation_file_temp = get_orientation(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp :
-                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file."
+                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_image -setorient to change the orientation of a file."
                 sys.exit(2)
             file_temp = load(file_labels[i])
             data_temp = file_temp.get_data()

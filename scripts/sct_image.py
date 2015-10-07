@@ -14,7 +14,7 @@ import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image
-from sct_utils import printv, add_suffix
+from sct_utils import printv, add_suffix, extract_fname
 
 
 class Param:
@@ -345,7 +345,7 @@ def multicomponent_merge(im_list):
 
 
 def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
-    # Get dimensions of data
+    verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im.dim
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
@@ -398,7 +398,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
 
 # get_orientation
 # ==========================================================================================
-def get_orientation(im):
+def get_orientation(im, filename=False):
     """
     Get orientation from 3D data
     :param im:
@@ -407,7 +407,10 @@ def get_orientation(im):
     from sct_utils import run
     string_out = 'Input image orientation : '
     # get orientation
-    status, output = run('isct_orientation3d -i '+im.absolutepath+' -get ', 0)
+    if filename:
+        status, output = run('isct_orientation3d -i '+im+' -get ', 0)
+    else:
+        status, output = run('isct_orientation3d -i '+im.absolutepath+' -get ', 0)
     # check status
     if status != 0:
         printv('ERROR in get_orientation.', 1, 'error')
@@ -418,12 +421,19 @@ def get_orientation(im):
 
 # set_orientation
 # ==========================================================================================
-def set_orientation(im, orientation, data_inversion=False):
-    fname_out = im.file_name+'_'+orientation+im.ext
+def set_orientation(im, orientation, data_inversion=False, filename=False):
+    if filename:
+        fname_out = add_suffix(im, '_'+orientation)
+    else:
+        fname_out = im.file_name+'_'+orientation+im.ext
     if not data_inversion:
         from sct_utils import run
-        run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
-        im_out = Image(fname_out)
+        if filename:
+            run('isct_orientation3d -i '+im+' -orientation '+orientation+' -o '+fname_out, 0)
+            im_out = fname_out
+        else:
+            run('isct_orientation3d -i '+im.absolutepath+' -orientation '+orientation+' -o '+fname_out, 0)
+            im_out = Image(fname_out)
     else:
         im_out = im.copy()
         im_out.change_orientation(orientation, True)

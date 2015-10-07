@@ -1107,7 +1107,7 @@ sct_Image
             name_res_gmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_gmseg'
             ext = sct.extract_fname(gm_seg_param.output_name)[2]
 
-        if len(self.target_seg_methods.target) == 1:
+        if len(self.target_seg_methods.target) == 1: # if target is 2D (1 SLICE)
             self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg), absolutepath=name_res_wmseg + ext)
             self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg), absolutepath=name_res_gmseg + ext)
         else:

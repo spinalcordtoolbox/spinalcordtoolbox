@@ -19,10 +19,11 @@ import sys
 import commands
 import nibabel
 import numpy
+from shutil import move
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
 
@@ -103,22 +104,25 @@ def main():
     print ''
     
     # Get input image orientation
-    input_image_orientation = get_orientation(fname_anat)
+    im_anat = Image(fname_anat)
+    input_image_orientation = get_orientation(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    set_orientation(fname_anat, 'RPI', 'tmp.anat_orient.nii')
-    set_orientation(fname_centerline, 'RPI', 'tmp.centerline_orient.nii')
+    im_centerline = Image(fname_centerline)
+    im_anat_orient = set_orientation(im_anat, 'RPI')
+    im_anat_orient.setFileName('tmp.anat_orient.nii')
+    im_centerline_orient = set_orientation(im_centerline, 'RPI')
+    im_centerline_orient.setFileName('tmp.centerline_orient.nii')
 
     # Open centerline
     #==========================================================================================
     print '\nGet dimensions of input centerline...'
-    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.centerline_orient.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
     print '\nOpen centerline volume...'
-    file = nibabel.load('tmp.centerline_orient.nii')
-    data = file.get_data()
+    data = im_centerline_orient.data
 
     X, Y, Z = (data>0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
@@ -165,7 +169,6 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    im_anat_orient = Image('tmp.anat_orient.nii')
     im_anat_orient_split_list = split_data(im_anat_orient, 2)
     file_anat_split = []
     for im in im_anat_orient_split_list:
@@ -227,7 +230,8 @@ def main():
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    set_orientation('tmp.anat_orient_fit.nii', input_image_orientation, 'tmp.anat_orient_fit_reorient.nii')
+    fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
+    move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
