@@ -246,8 +246,8 @@ class Parser:
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
     def parse(self, arguments):
-        # if no arguments, print usage and quit
-        if len(arguments) == 0:
+        # if no arguments, print usage and quit, but only if there are mandatory options
+        if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
 
         # check if help is asked by the user
