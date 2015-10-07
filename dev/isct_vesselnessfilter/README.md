@@ -3,6 +3,14 @@
 Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they are not compiled, the compilation will fail to find itkMultiScaleHessianBasedMeasureImageFilter.h
 
 1. Compile ITK with "review modules" ON (Only have to do it once)
+
+1. terterter
+2. rterter
+3. df
+  1. ggdfg
+  2. gdfgdf
+
+
 2. test
 3. test
   1. test
