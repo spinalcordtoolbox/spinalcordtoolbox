@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python ../../dev/githook/pre_commit_hook.py
+python $SCT_DIR/dev/githook/pre_commit_hook.py
