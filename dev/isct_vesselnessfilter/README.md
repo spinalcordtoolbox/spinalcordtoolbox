@@ -6,6 +6,8 @@ Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they ar
   2. Create build folder inside the ITK folder
   3. while inside the build folder do : ccmake ..
   4. press c to start cmake configuration
+2. Compile VTK on your computer (if it is not already compiled)
+
 	e. press t to show advanced compilation options
 	f. check for Module_ITKReview and set it to ON
 	g. press c to configure
@@ -14,7 +16,7 @@ Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they ar
 	j. enter the command : make (It's really long to compile everything)
 	k. sudo make install
 
-2. Compile VTK on your computer (if it is not already compiled)
+
 	a. clone/extract VTK 6.3.0 in a directory (find it here: http://www.vtk.org/download/)
 	b. create a build folder: ``mkdir build && cd build``
 	c. while inside the build folder, type: ``ccmake ..``
