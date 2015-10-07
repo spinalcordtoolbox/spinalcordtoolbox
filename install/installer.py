@@ -867,10 +867,10 @@ class Installer:
         cmd = 'python install/install_external.py -a ' + self.issudo
         status, output = runProcess(cmd)
         if status != 0:
-            print output
+            print '\nERROR! \n' + output + '\nExit program.\n'
             sys.exit(2)
         else:
-            print '  Done.'
+            print output
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
