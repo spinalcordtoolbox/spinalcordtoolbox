@@ -50,6 +50,8 @@ install:
   - . ~/.bashrc
 # create links
   - ./install/create_links.sh -a
+# install external libraries
+  - ./install/install_external.py
 
 script:
   - sct_check_dependences   # test dependences
