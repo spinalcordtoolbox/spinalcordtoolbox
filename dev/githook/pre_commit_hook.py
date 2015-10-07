@@ -8,6 +8,7 @@ from commands import getstatusoutput
 def find_change_dates():
     status, path_sct = getstatusoutput('echo $SCT_DIR')
     path = str(path_sct)+'/scripts'
+    print path
     from os import listdir
     from os.path import isfile, join
     onlyfiles = [ f for f in listdir(path) if isfile(join(path,f)) ]
