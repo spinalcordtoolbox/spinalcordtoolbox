@@ -864,10 +864,15 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        import install.install_external_packages
-        status = install.install_external_packages(this_computer.os, self.SCT_DIR, self.issudo)
+        cmd = self.SCT_DIR + '/install/install_external.py'
+        if self.issudo:
+            cmd += ' -a'
+        status, output = runProcess(cmd)
         if status != 0:
+            print '\nERROR! \n' + output + '\nExit program.\n'
             sys.exit(2)
+        else:
+            print output
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
@@ -897,6 +902,8 @@ sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
 To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
+
+To test your installation of SCT, run: sct_testing
 
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
@@ -935,6 +942,7 @@ if __name__ == "__main__":
         exit(1)
     except UnsupportedOs, e:
         MsgUser.failed(e.value)
+
         exit(1)
     except KeyboardInterrupt, e:
         MsgUser.failed("Install aborted by the user.")
