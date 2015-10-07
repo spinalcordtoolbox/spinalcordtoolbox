@@ -41,8 +41,6 @@ install:
   - cd install/requirements
   - ./requirements.sh
   - cd ../../
-# Install external wheels
-  - pip install external/*.whl
 # set PATH
   - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"
   - PATH=${PATH}:${SCT_DIR}/bin
