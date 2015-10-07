@@ -865,9 +865,12 @@ class Installer:
         # compile external packages
         print "\nCompile external packages..."
         cmd = 'python install/install_external.py -a ' + self.issudo
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
         if status != 0:
+            print output
             sys.exit(2)
+        else:
+            print '  Done.'
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
