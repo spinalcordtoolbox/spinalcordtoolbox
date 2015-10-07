@@ -62,7 +62,7 @@ def save_changed_files(staged_files):
         date_without_time_zone = date_split
         f.write(script_name + " = " + date_without_time_zone+"\n")
     f.close()
-    status, path_sct = getstatusoutput('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
+    # status, path_sct = getstatusoutput('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
 
     # add
     status, output = getstatusoutput("git add "+modif_fname)
