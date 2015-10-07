@@ -23,7 +23,7 @@ import time
 import numpy
 import nibabel
 from scipy import ndimage
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, concat_data
@@ -126,9 +126,9 @@ def create_mask():
 
     # check if orientation is RPI
     sct.printv('\nCheck if orientation is RPI...', param.verbose)
-    status, output = sct.run('sct_orientation -i '+param.fname_data)
-    if not output == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
+    ori = get_orientation(param.fname_data, filename=True)
+    if not ori == 'RPI':
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
