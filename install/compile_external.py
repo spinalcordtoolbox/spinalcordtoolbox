@@ -28,9 +28,9 @@ def compile_dipy(target_os, issudo=''):
     sct.run(issudo + 'pip install nibabel')
     os.chdir('dipy-wheels/dipy')
     sct.run('python setup.py bdist_wheel')
-    sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
-    sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
-    if target_os == 'darwin':
+    if target_os == 'darwin':  # delocating is only for osx
+        sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
+        sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
         sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
     sct.run(issudo + 'cp ' + path_dipy + '/dipy/dist/*.whl ' + path_sct + '/external/')
 
@@ -41,9 +41,9 @@ def compile_denoise(target_os, issudo=''):
     # go to folder
     os.chdir(path_denoise)
     sct.run('python setup.py bdist_wheel')
-    sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
-    sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
-    if target_os == 'darwin':
+    if target_os == 'darwin':  # delocating is only for osx
+        sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
+        sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
         sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
     sct.run(issudo + 'cp ' + path_denoise + '/dist/*.whl ' + path_sct + '/external/')
 
