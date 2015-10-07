@@ -19,7 +19,6 @@ import scipy
 
 import nibabel
 import time
-from sct_orientation import set_orientation
 import sct_utils as sct
 from msct_image import Image
 
@@ -201,7 +200,7 @@ class ImageCropper(object):
 
         # change orientation
         sct.printv('\nChange orientation to RPI...', verbose)
-        set_orientation('data.nii', 'RPI', 'data_rpi.nii')
+        sct.run('sct_image -i data.nii -setorient RPI -o data_rpi.nii')
 
         # get image of medial slab
         sct.printv('\nGet image of medial slab...', verbose)

@@ -378,11 +378,11 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
     """
     from nibabel import load
     from math import cos, sin
-    from sct_orientation import get_orientation
+    from sct_image import get_orientation
 
     #Make sure image is in rpi format
     sct.printv('\nChecking if the image of destination is in RPI orientation for the warping field generation ...', verbose)
-    orientation = get_orientation(fname_dest)
+    orientation = get_orientation(fname_dest, filename=True)
     if orientation != 'RPI':
         sct.printv('\nWARNING: The image of destination is not in RPI format. Dimensions of the warping field might be inverted.', verbose)
     else: sct.printv('\tOK', verbose)

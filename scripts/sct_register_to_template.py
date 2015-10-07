@@ -18,10 +18,11 @@ import os
 import commands
 import time
 import sct_utils as sct
-from sct_orientation import set_orientation
+from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
+from shutil import move
 
 
 # get path of the toolbox
@@ -231,9 +232,13 @@ def main():
 
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
-    set_orientation('datar.nii', 'RPI', 'data_rpi.nii')
-    set_orientation('landmarksr.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
-    set_orientation('segmentationr.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
+    fname_data_rpi = set_orientation('datar.nii', 'RPI', filename=True)
+    move(fname_data_rpi, 'data_rpi.nii')
+    fname_landmarks_rpi = set_orientation('landmarksr.nii.gz', 'RPI', filename=True)
+    move(fname_landmarks_rpi, 'landmarks_rpi.nii.gz')
+    fname_seg_rpi = set_orientation('segmentationr.nii.gz', 'RPI', filename=True)
+    move(fname_seg_rpi, 'segmentation_rpi.nii.gz')
+
 
     # # Change orientation of input images to RPI
     # sct.printv('\nChange orientation of input images to RPI...', verbose)

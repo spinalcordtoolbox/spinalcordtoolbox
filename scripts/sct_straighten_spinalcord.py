@@ -27,7 +27,7 @@ from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D
-from sct_orientation import set_orientation
+from sct_image import set_orientation
 from msct_types import Coordinate
 
 import copy_reg
@@ -405,7 +405,7 @@ class SpinalCordStraightener(object):
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
             fname_centerline_orient = file_centerline + "_rpi.nii.gz"
-            set_orientation(file_centerline+ext_centerline, "RPI", fname_centerline_orient)
+            fname_centerline_orient = set_orientation(file_centerline+ext_centerline, "RPI", filename=True)
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
