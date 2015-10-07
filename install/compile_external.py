@@ -14,7 +14,7 @@ import sct_utils as sct
 status_sct, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
 
-def compile_dipy(issudo=''):
+def compile_dipy(target_os, issudo=''):
     path_dipy = path_sct + '/dev/dipy-wheels'
     numpy_version = '1.9.2'
 
@@ -30,11 +30,12 @@ def compile_dipy(issudo=''):
     sct.run('python setup.py bdist_wheel')
     sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
     sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
-    sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
+    if target_os == 'darwin':
+        sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
     sct.run(issudo + 'cp ' + path_dipy + '/dipy/dist/*.whl ' + path_sct + '/external/')
 
 
-def compile_denoise(issudo=''):
+def compile_denoise(target_os, issudo=''):
     path_denoise = path_sct + '/dev/denoise/ornlm'
 
     # go to folder
@@ -42,7 +43,8 @@ def compile_denoise(issudo=''):
     sct.run('python setup.py bdist_wheel')
     sct.run('delocate-listdeps dist/*.whl # lists library dependencies')
     sct.run('delocate-wheel dist/*.whl # copies library dependencies into wheel')
-    sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
+    if target_os == 'darwin':
+        sct.run('delocate-addplat --rm-orig -x 10_9 -x 10_10 dist/*.whl')
     sct.run(issudo + 'cp ' + path_denoise + '/dist/*.whl ' + path_sct + '/external/')
 
 
@@ -69,6 +71,9 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
+    import platform
+    target_os = platform.system().lower()
+
     issudo = ''
     if "-a" in arguments:
         issudo = 'sudo '
@@ -78,9 +83,9 @@ if __name__ == "__main__":
         libraries = [arguments['-f']]
 
     if 'dipy' in libraries:
-        compile_dipy(issudo)
+        compile_dipy(target_os, issudo)
 
     if 'denoise' in libraries:
-        compile_denoise(issudo)
+        compile_denoise(target_os, issudo)
 
     print "Done! Open a new Terminal window to load environment variables."
