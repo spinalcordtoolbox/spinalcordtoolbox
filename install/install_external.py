@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+#
+# Install external packages.
+#
+
 import os
 import commands
 from msct_parser import Parser
