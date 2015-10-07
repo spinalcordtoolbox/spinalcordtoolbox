@@ -531,11 +531,11 @@ def runProcess(cmd, verbose=1):
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    if process.returncode:
-        # from inspect import stack
-        print output_final[0:-1]
-    else:
-        return process.returncode, output_final[0:-1]
+    # if process.returncode:
+    #     # from inspect import stack
+    #     print output_final[0:-1]
+    # else:
+    return process.returncode, output_final[0:-1]
 
 
 class Installer:
@@ -595,22 +595,23 @@ class Installer:
 
         # Check if pip is install
         print ('\nCheck if pip is installed...')
-        status, output = commands.getstatusoutput('pip')
+        # status, output = commands.getstatusoutput('pip')
+        status, output = runProcess('pip')
         if not status == 0:
             print ('.. WARNING: pip is not installed. Installing it with conda...')
             # first make sure conda is installed
-            status, output = commands.getstatusoutput('conda')
+            status, output = runProcess('conda')
             if not status == 0:
                 print ('.. ERROR: conda is not installed either. Please install pip and rerun the installer.\n'+output)
                 sys.exit(2)
             else:
-                status, output = commands.getstatusoutput('conda install pip -y')
+                status, output = runProcess('conda install pip -y')
                 if not status == 0:
                     print ('.. ERROR: pip installation failed. Please install it and rerun the installer.\n'+output)
                     sys.exit(2)
                 else:
                     print ('.. Testing pip...')
-                    status, output = commands.getstatusoutput('pip')
+                    status, output = runProcess('pip')
                     if not status == 0:
                         print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
                         sys.exit(2)
@@ -619,6 +620,8 @@ class Installer:
         else:
             print('.. OK!')
 
+        print "hola"
+        sys.exit()
         # check if sudo is needed to write in installation folder
         MsgUser.message("\nCheck if administrator permission is needed for installation...")
         print ".. Installation path: "+self.path_install
