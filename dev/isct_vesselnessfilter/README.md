@@ -1,6 +1,7 @@
 ### COMPILING THE VESSELNESS FILTER
 
 Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they are not compiled, the compilation will fail to find itkMultiScaleHessianBasedMeasureImageFilter.h
+
 1. Compile ITK with "review modules" ON (Only have to do it once)
 2. test
 3. test
