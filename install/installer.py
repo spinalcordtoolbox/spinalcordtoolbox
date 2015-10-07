@@ -872,7 +872,7 @@ class Installer:
                 package_list.append(filename)
         for package in package_list:
             print "Trying to install: " + package
-            cmd = self.issudo + "pip install *.whl"
+            cmd = self.issudo + "pip install " + package
             status, output = runProcess(cmd)
             if status != 0:
                 print '\nERROR! \n' + output + '\nExit program.\n'
