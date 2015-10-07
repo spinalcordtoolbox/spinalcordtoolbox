@@ -74,5 +74,14 @@ def save_changed_files_and_date(staged_files):
 
 if __name__ == "__main__":
     # call main function
-    changed_files = find_change_dates()
-    save_changed_files(changed_files)
+    import os
+    current_dir = os.getcwd()
+    status, path_sct = getstatusoutput('echo $SCT_DIR')
+    path = str(path_sct)+'/scripts'
+    os.chdir(path)
+    try:
+        changed_files = find_change_dates()
+        save_changed_files(changed_files)
+    except Exception, e:
+        print e.message
+    os.chdir(current_dir)
