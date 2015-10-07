@@ -18,6 +18,7 @@ from msct_parser import *
 from msct_image import Image, get_dimension
 from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
+import shutil
 
 
 class Preprocessing:
@@ -71,9 +72,7 @@ class Preprocessing:
 
         self.original_orientation = t2star_im.orientation
 
-        self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
-
-        self.treated_target = sct.extract_fname(self.t2star)[1] + '_seg_in_croped.nii.gz'
+        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
 
         self.level_fname = None
         if t2_data is not None:
@@ -150,7 +149,7 @@ class FullGmSegmentation:
             self.level_to_use = None
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
-        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
+        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.param)
 
         if self.ref_gm_seg_fname is not None:
             os.chdir('..')
@@ -174,7 +173,7 @@ class FullGmSegmentation:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
             sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s ' + self.preprocessed.original_orientation)
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.treated_target)[1]):] + '.nii.gz'
+            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
@@ -184,7 +183,6 @@ class FullGmSegmentation:
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
-                # WARNING: until sct_maths -thr option is changed, this will output a binary segmentation
                 sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
@@ -261,15 +259,8 @@ class FullGmSegmentation:
         im_ref_wm_seg = Image(ref_wm_seg_new_name)
         sct.run('rm ' + ref_wm_seg_new_name)
 
-        ref_orientation = im_ref_gm_seg.orientation
-        im_ref_gm_seg.change_orientation('IRP')
-        im_ref_wm_seg.change_orientation('IRP')
-
-        im_ref_gm_seg.crop_from_square_mask(mask, save=False)
-        im_ref_wm_seg.crop_from_square_mask(mask, save=False)
-
-        im_ref_gm_seg.change_orientation('RPI')
-        im_ref_wm_seg.change_orientation('RPI')
+        im_ref_wm_seg.crop_and_stack(mask, save=False)
+        im_ref_gm_seg.crop_and_stack(mask, save=False)
 
         # saving the images to call the validation functions
         res_gm_seg_bin.path = './'
@@ -291,6 +282,7 @@ class FullGmSegmentation:
         im_ref_wm_seg.file_name = 'ref_wm_seg'
         im_ref_wm_seg.ext = ext
         im_ref_wm_seg.save()
+
 
         sct.run('sct_orientation -i ' + res_gm_seg_bin.file_name + ext + ' -s RPI')
         res_gm_seg_bin.file_name += '_RPI'
