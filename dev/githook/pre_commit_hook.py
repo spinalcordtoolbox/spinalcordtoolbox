@@ -54,9 +54,9 @@ def find_staged_files():
     return staged_files
 
 
-def save_changed_files(staged_files):
+def save_changed_files(staged_files, sct_dir):
     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    modif_fname = str(path_sct)+'/bin/modif.txt'
+    modif_fname = str(sct_dir)+'/bin/modif.txt'
     f = open(modif_fname, "w+")
     for script_name, date in staged_files.iteritems():
         date_split = date.split("-")[0]
@@ -74,15 +74,16 @@ def save_changed_files_and_date(staged_files):
     pass
 
 if __name__ == "__main__":
+
     # call main function
     import os
     current_dir = os.getcwd()
     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path = str(path_sct)+'/scripts'
+    path = str(current_dir)+'/scripts'
     os.chdir(path)
     try:
         changed_files = find_change_dates()
-        save_changed_files(changed_files)
+        save_changed_files(changed_files, current_dir)
     except Exception, e:
         print e.message
     os.chdir(current_dir)
