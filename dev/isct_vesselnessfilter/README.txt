@@ -15,12 +15,12 @@ Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they ar
 	k. sudo make install
 
 2. Compile VTK on your computer (if it is not already compiled)
-	a. clone/extract VTK in a directory
-	b. create a build folder
-	c. while inside the build folder, do : ccmake ..
+	a. clone/extract VTK 6.3.0 in a directory (find it here: http://www.vtk.org/download/)
+	b. create a build folder: ``mkdir build && cd build``
+	c. while inside the build folder, type: ``ccmake ..``
 	d. press c, then c, then g, then q
-	e. execute : make
-	f. execute : make install
+	e. type: ``make``
+	f. type: ``make install``
 
 3. Compile isct_vesselnessFilter
 	a. use make_binaries.sh in sct/install
@@ -28,7 +28,7 @@ Note : ITK "Review modules" should be compiled on neuropoly@ferguson. If they ar
 	OR
 
 	b.- make a build folder under dev/isct_vesselnessfilter
-	  - while inside the build folder, do : ccmake ..
+	  - while inside the build folder, type: ``ccmake ..``
 	  - press c, then c, then g, then q
-	  - make
+	  - type: ``make``
 	  - copy the binary produced to bin/linux or bin/osx
