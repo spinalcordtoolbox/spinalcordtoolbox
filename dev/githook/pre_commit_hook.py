@@ -8,27 +8,20 @@ from commands import getstatusoutput
 def find_change_dates(current_dir):
     status, path_sct = getstatusoutput('echo $SCT_DIR')
     path = str(current_dir)+'/scripts'
-    print path
     from os import listdir
     from os.path import isfile, join
     onlyfiles = [ f for f in listdir(path) if isfile(join(path,f)) ]
     modif_list = {}
-
     for file in onlyfiles:
-        print file
-        print os.getcwd()
         if file.startswith("sct") and ".pyc" not in file:
             change_found = False
             tatus, output = getstatusoutput("git --git-dir ../.git --work-tree .. log "+path+"/"+file)
-            print output
             output_list = output.split("\n")
-
             for line in output_list:
                 if "Date:" in line and change_found is False:
                     date = line.split(":   ")
                     change_found = True
                     modif_list[file] = date[-1]
-                    print modif_list[file]
 
     return modif_list
 
@@ -62,7 +55,6 @@ def find_staged_files():
 def save_changed_files(staged_files, sct_dir):
     status, path_sct = getstatusoutput('echo $SCT_DIR')
     modif_fname = str(sct_dir)+'/bin/modif.txt'
-    print modif_fname
     f = open(modif_fname, "w+")
     for script_name, date in staged_files.iteritems():
         date_split = date.split("-")[0]
