@@ -903,6 +903,8 @@ Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
 To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
 
+To test your installation of SCT, run: sct_testing
+
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
 
@@ -940,6 +942,7 @@ if __name__ == "__main__":
         exit(1)
     except UnsupportedOs, e:
         MsgUser.failed(e.value)
+
         exit(1)
     except KeyboardInterrupt, e:
         MsgUser.failed("Install aborted by the user.")
