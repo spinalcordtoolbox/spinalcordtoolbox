@@ -864,14 +864,10 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        os.chdir(self.SCT_DIR+"/external")
-        cmd = self.issudo + "pip install *.whl"
-        status, output = runProcess(cmd)
+        import install.install_external_packages
+        status = install.install_external_packages(this_computer.os, self.SCT_DIR, self.issudo)
         if status != 0:
-            print '\nERROR! \n' + output + '\nExit program.\n'
-        else:
-            print output
-        os.chdir('..')
+            sys.exit(2)
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
