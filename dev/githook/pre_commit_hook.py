@@ -5,9 +5,9 @@
 from commands import getstatusoutput
 
 
-def find_change_dates():
+def find_change_dates(current_dir):
     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    path = str(path_sct)+'/scripts'
+    path = str(current_dir)+'/scripts'
     print path
     from os import listdir
     from os.path import isfile, join
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     path = str(current_dir)+'/scripts'
     os.chdir(path)
     try:
-        changed_files = find_change_dates()
+        changed_files = find_change_dates(current_dir)
         save_changed_files(changed_files, current_dir)
     except Exception, e:
         print e.message
