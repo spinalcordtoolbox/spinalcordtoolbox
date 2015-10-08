@@ -197,7 +197,7 @@ class Image(object):
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-    def save(self, type=''):
+    def save(self, type='', verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -231,7 +231,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
