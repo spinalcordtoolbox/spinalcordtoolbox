@@ -16,7 +16,6 @@ import sys
 import os
 import math
 import scipy
-
 import nibabel
 import time
 import sct_utils as sct
