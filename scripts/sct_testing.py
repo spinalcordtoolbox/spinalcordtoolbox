@@ -163,7 +163,6 @@ def fill_functions():
     functions.append('sct_label_utils')
     functions.append('sct_label_vertebrae')
     functions.append('sct_maths')
-    functions.append('sct_orientation')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
