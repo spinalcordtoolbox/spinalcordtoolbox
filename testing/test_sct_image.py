@@ -68,11 +68,15 @@ def test(data_path):
     if s1 == 0:
         if o1 != "AIL":
             status = 99
-            output += '\nResulting orientation differs from expected:\n'
+            output += '\nResulting orientation differs from expected:\n' \
+                      'orientation: '+o1+'\n' \
+                      'expected: RPI'
     if s2 == 0:
         if o2 != "RPI":
             status = 99
-            output += '\nResulting orientation differs from expected:\n'
+            output += '\nResulting orientation differs from expected:\n' \
+                      'orientation: '+o2+'\n' \
+                      'expected: RPI'
 
     return status, output
 

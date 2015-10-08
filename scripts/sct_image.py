@@ -371,7 +371,7 @@ def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
         printv('\nSplit along T dimension...', verbose)
         im_split_list = split_data(im, 3)
         for im_s in im_split_list:
-            im_s.save()
+            im_s.save(verbose=verbose)
 
         if get:
             # get orientation
