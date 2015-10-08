@@ -16,7 +16,6 @@ import sys
 import os
 import math
 import scipy
-
 import nibabel
 import time
 from sct_orientation import set_orientation
