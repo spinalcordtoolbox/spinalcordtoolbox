@@ -27,13 +27,13 @@ fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs 
 
 
 # define class color
-class bcolors:
-    blue = '\033[94m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
     green = '\033[92m'
     yellow = '\033[93m'
-    red = '\033[91m'
-    normal = '\033[0m'
-    purple = '\033[95m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
@@ -397,7 +397,7 @@ def printv(string, verbose=1, type='normal'):
     elif type == 'bold':
         color = bcolors.bold
     elif type == 'process':
-        color = bcolors.purple
+        color = bcolors.magenta
 
     # print message
     if verbose:
@@ -698,16 +698,6 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
-    bold = '\033[1m'
-
 class MsgUser(object): 
     __debug = False
     __quiet = False
@@ -756,20 +746,20 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.magenta, "[Skipped] ", bcolors.normal, msg ) )
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
     
     @classmethod
     def failed(cls, msg):
-        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
+        print "".join( (bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg ) )
