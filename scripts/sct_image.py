@@ -423,7 +423,8 @@ def get_orientation(im, filename=False):
 # ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False):
     if filename:
-        fname_out = add_suffix(im, '_'+orientation)
+        path, fname, ext = extract_fname(im)
+        fname_out = fname+'_'+orientation+ext
     else:
         fname_out = im.file_name+'_'+orientation+im.ext
     if not data_inversion:
