@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-if [ -f ../../.git/hooks/pre-commit ];
+if [ -f $SCT_DIR/.git/hooks/pre-commit ];
 then
-    rm ../../.git/hooks/pre-commit
+    rm $SCT_DIR/.git/hooks/pre-commit
 fi
-cp pre-commit.sh ../../.git/hooks/pre-commit.sh
-mv ../../.git/hooks/pre-commit.sh ../../.git/hooks/pre-commit
-chmod +x ../../.git/hooks/pre-commit
+cp $SCT_DIR/dev/githook/pre-commit.sh $SCT_DIR/.git/hooks/pre-commit.sh
+mv $SCT_DIR/.git/hooks/pre-commit.sh $SCT_DIR/.git/hooks/pre-commit
+chmod +x $SCT_DIR/.git/hooks/pre-commit
