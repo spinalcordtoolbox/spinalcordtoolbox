@@ -222,15 +222,16 @@ class Version(object):
         return result
 
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
+    cyan = '\033[96m'
     bold = '\033[1m'
+    underline = '\033[4m'
 
 
 class InstallationResult(object):
@@ -298,23 +299,23 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg))
+        print "".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg))
+        print "".join((bcolors.green, "[OK] ", bcolors.normal, msg))
     
     @classmethod
     def failed(cls, msg):
-        print "".join((shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg))
+        print "".join((bcolors.red, "[FAILED] ", bcolors.normal, msg))
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg))
+        print "".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg))
 
 
 class Progress_bar(object):
@@ -519,7 +520,8 @@ def download_file(url, localf, timeout=20):
 
 def runProcess(cmd, verbose=1):
     if verbose:
-        print cmd
+        # print cmd
+        print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -531,11 +533,11 @@ def runProcess(cmd, verbose=1):
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    if process.returncode:
-        # from inspect import stack
-        print output_final[0:-1]
-    else:
-        return process.returncode, output_final[0:-1]
+    # if process.returncode:
+    #     # from inspect import stack
+    #     print output_final[0:-1]
+    # else:
+    return process.returncode, output_final[0:-1]
 
 
 class Installer:
@@ -564,7 +566,7 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-10-03"
+        print "Modified: 2015-10-06"
         print "============================="
 
         # Check OS
@@ -595,22 +597,23 @@ class Installer:
 
         # Check if pip is install
         print ('\nCheck if pip is installed...')
-        status, output = commands.getstatusoutput('pip')
+        # status, output = commands.getstatusoutput('pip')
+        status, output = runProcess('pip')
         if not status == 0:
             print ('.. WARNING: pip is not installed. Installing it with conda...')
             # first make sure conda is installed
-            status, output = commands.getstatusoutput('conda')
+            status, output = runProcess('conda')
             if not status == 0:
                 print ('.. ERROR: conda is not installed either. Please install pip and rerun the installer.\n'+output)
                 sys.exit(2)
             else:
-                status, output = commands.getstatusoutput('conda install pip -y')
+                status, output = runProcess('conda install pip -y')
                 if not status == 0:
                     print ('.. ERROR: pip installation failed. Please install it and rerun the installer.\n'+output)
                     sys.exit(2)
                 else:
                     print ('.. Testing pip...')
-                    status, output = commands.getstatusoutput('pip')
+                    status, output = runProcess('pip')
                     if not status == 0:
                         print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
                         sys.exit(2)
@@ -778,7 +781,6 @@ class Installer:
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
-        print ">> " + cmd
         status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -789,9 +791,8 @@ class Installer:
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
-        print ">> " + cmd
-        # status, output = runProcess(cmd)
-        status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR: Installation failed while installing requirements.\n'+output
             sys.exit(2)
@@ -804,7 +805,6 @@ class Installer:
         cmd = self.SCT_DIR+"/install/create_links.sh"
         if self.issudo is "":
             cmd += " -a"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -830,7 +830,7 @@ class Installer:
                     # unzip patch
                     cmd = "unzip -d temp_patch " + file_name_patch
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -839,7 +839,6 @@ class Installer:
                     cmd = "python install_patch.py"
                     if self.issudo == "":
                         cmd += " -a"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
                     # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -850,7 +849,6 @@ class Installer:
 
                     MsgUser.message("Removing patch-related files...")
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
                     # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
@@ -866,20 +864,19 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        os.chdir(self.SCT_DIR+"/external")
-        cmd = self.issudo + "pip install *.whl"
-        print ">> " + cmd
+        cmd = self.SCT_DIR + '/install/install_external.py'
+        if self.issudo:
+            cmd += ' -a'
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
+            sys.exit(2)
         else:
             print output
-        os.chdir('..')
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -889,7 +886,6 @@ class Installer:
 
         # deleting temporary files
         cmd = "rm -rf tmp.*"
-        print ">> " + cmd
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:
@@ -906,6 +902,8 @@ sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
 To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
+
+To test your installation of SCT, run: sct_testing
 
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
@@ -944,6 +942,7 @@ if __name__ == "__main__":
         exit(1)
     except UnsupportedOs, e:
         MsgUser.failed(e.value)
+
         exit(1)
     except KeyboardInterrupt, e:
         MsgUser.failed("Install aborted by the user.")
