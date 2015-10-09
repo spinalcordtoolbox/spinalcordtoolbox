@@ -81,7 +81,7 @@ def main():
             elif opt in ("-o"):
                 path_out = arg
             elif opt in ("-r"):
-                remove_temp_file = int(arg)
+                remove_tmp_files = int(arg)
             elif opt in ('-v'):
                 verbose = int(arg)
 
@@ -119,8 +119,15 @@ def main():
 
     # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)
+    ext = '.nii'
+    dmri_name = 'dmri'
+    b0_name = 'b0'
+    b0_mean_name = b0_name+'_mean'+ext
+    dwi_name = 'dwi'
+    dwi_mean_name = dwi_name+'_mean'+ext
+
     from sct_convert import convert
-    if not convert(fname_data, path_tmp+'dmri.nii'):
+    if not convert(fname_data, path_tmp+dmri_name+ext):
         sct.printv('ERROR in convert.', 1, 'error')
     sct.run('cp '+fname_bvecs+' '+path_tmp+'bvecs', verbose)
 
@@ -128,8 +135,9 @@ def main():
     os.chdir(path_tmp)
 
     # Get size of data
+    im_dmri = Image(dmri_name+ext)
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image('dmri.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = im_dmri.dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt), verbose)
 
     # Identify b=0 and DWI images
@@ -137,7 +145,6 @@ def main():
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', verbose)
-    im_dmri = Image('dmri.nii')
     im_dmri_split_list = split_data(im_dmri, 3)
     for im_d in im_dmri_split_list:
         im_d.save()
@@ -148,28 +155,28 @@ def main():
     for it in range(nb_b0):
         im_b0_list.append(im_dmri_split_list[index_b0[it]])
     im_b0_out = concat_data(im_b0_list, 3)
-    im_b0_out.setFileName('b0.nii')
+    im_b0_out.setFileName(b0_name+ext)
     im_b0_out.save()
 
 
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run('sct_maths -i b0.nii -o b0_mean.nii -mean t', verbose)
+        sct.run('sct_maths -i '+b0_name+ext+' -o '+b0_mean_name+ext+' -mean t', verbose)
 
     # Merge DWI
     im_dwi_list = []
     for it in range(nb_dwi):
         im_dwi_list.append(im_dmri_split_list[index_dwi[it]])
     im_dwi_out = concat_data(im_dwi_list, 3)
-    im_dwi_out.setFileName('dwi.nii')
+    im_dwi_out.setFileName(dwi_name+ext)
     im_dwi_out.save()
 
 
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run('sct_maths -i dwi.nii -o dwi_mean.nii -mean t', verbose)
+        sct.run('sct_maths -i '+dwi_name+ext+' -o '+dwi_mean_name+ext+' -mean t', verbose)
         # if not average_data_across_dimension('dwi.nii', 'dwi_mean.nii', 3):
         #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
         # sct.run(fsloutput + 'fslmaths dwi -Tmean dwi_mean', verbose)
@@ -179,11 +186,11 @@ def main():
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'b0.nii', path_out+'b0'+ext_data, verbose)
-    sct.generate_output_file(path_tmp+'dwi.nii', path_out+'dwi'+ext_data, verbose)
+    sct.generate_output_file(path_tmp+b0_name+ext, path_out+b0_name+ext_data, verbose)
+    sct.generate_output_file(path_tmp+dwi_name+ext, path_out+dwi_name+ext_data, verbose)
     if average:
-        sct.generate_output_file(path_tmp+'b0_mean.nii', path_out+'b0_mean'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out+'dwi_mean'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+b0_mean_name+ext, path_out+b0_mean_name+ext_data, verbose)
+        sct.generate_output_file(path_tmp+dwi_mean_name+ext, path_out+dwi_mean_name+ext_data, verbose)
 
     # Remove temporary files
     if remove_tmp_files == 1:
