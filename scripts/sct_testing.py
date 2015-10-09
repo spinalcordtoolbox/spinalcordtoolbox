@@ -210,7 +210,7 @@ def write_to_log_file(fname_log, string, mode='w'):
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
     '''
-
+    # testing log
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
              + string
