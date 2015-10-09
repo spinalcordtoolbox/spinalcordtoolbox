@@ -44,7 +44,7 @@ from sct_dmri_separate_b0_and_dwi import identify_b0
 import importlib
 from sct_convert import convert
 from msct_image import Image
-from sct_image import copy_header
+from sct_image import copy_header, split_data, concat_data
 
 
 class Param:
@@ -266,7 +266,6 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    from sct_image import split_data, concat_data
     im_data = Image(file_data + ext_data)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
@@ -309,6 +308,7 @@ def dmri_moco(param):
         group_indexes.append(index_dwi[len(index_dwi)-nb_remaining:len(index_dwi)])
 
     # DWI groups
+    file_dwi_mean = []
     for iGroup in range(nb_groups):
         sct.printv('\nDWI group: ' +str((iGroup+1))+'/'+str(nb_groups), param.verbose)
 
@@ -326,25 +326,18 @@ def dmri_moco(param):
         im_dwi_out = concat_data(im_dwi_list, 3)
         im_dwi_out.setFileName(file_dwi_merge_i + ext_data)
         im_dwi_out.save()
-        # cmd = fsloutput + 'fslmerge -t ' + file_dwi_merge_i
-        # for it in range(nb_dwi_i):
-        #     cmd = cmd +' ' + file_data + '_T' + str(index_dwi_i[it]).zfill(4)
 
         # Average DW Images
         sct.printv('Average DW images...', param.verbose)
-        file_dwi_mean = file_dwi + '_mean_' + str(iGroup)
-        sct.run('sct_maths -i '+file_dwi_merge_i+'.nii'+' -o '+file_dwi_mean+'.nii'+' -mean t', param.verbose)
-        # if not average_data_across_dimension(file_dwi_merge_i+'.nii', file_dwi_mean+'.nii', 3):
-        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-        # cmd = fsloutput + 'fslmaths ' + file_dwi_merge_i + ' -Tmean ' + file_dwi_mean
-        # sct.run(cmd, param.verbose)
+        file_dwi_mean.append(file_dwi + '_mean_' + str(iGroup))
+        sct.run('sct_maths -i '+file_dwi_merge_i+ext_data+' -o '+file_dwi_mean[iGroup]+ext_data+' -mean t', param.verbose)
 
     # Merge DWI groups means
     sct.printv('\nMerging DW files...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
     for iGroup in range(nb_groups):
-        im_dw_list.append(Image(file_dwi + '_mean_' + str(iGroup) + ext_data))
+        im_dw_list.append(Image(file_dwi_mean[iGroup] + ext_data))
     im_dw_out = concat_data(im_dw_list, 3)
     im_dw_out.setFileName(file_dwi_group + ext_data)
     im_dw_out.save()
@@ -355,11 +348,8 @@ def dmri_moco(param):
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
-    fname_dwi_mean = 'dwi_mean'
-    sct.run('sct_maths -i '+file_dwi_group+'.nii'+' -o '+file_dwi_group+'_mean.nii'+' -mean t', param.verbose)
-    # if not average_data_across_dimension(file_dwi_group+'.nii', file_dwi_group+'_mean.nii', 3):
-    #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
-    # sct.run(fsloutput + 'fslmaths ' + file_dwi_group + ' -Tmean ' + file_dwi_group+'_mean', param.verbose)
+    fname_dwi_mean = 'dwi_mea       n'
+    sct.run('sct_maths -i '+file_dwi_group+ext_data+' -o '+file_dwi_group+'_mean.nii'+' -mean t', param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -368,7 +358,7 @@ def dmri_moco(param):
         otsu = importlib.import_module('sct_otsu')
         # get class from module
         param_otsu = otsu.param()  #getattr(otsu, param)
-        param_otsu.fname_data = file_dwi_group+'.nii'
+        param_otsu.fname_data = file_dwi_group+ext_data
         param_otsu.threshold = param.otsu
         param_otsu.file_suffix = '_seg'
         # run otsu
@@ -376,7 +366,7 @@ def dmri_moco(param):
         file_dwi_group = file_dwi_group+'_seg'
 
     # extract first DWI volume as target for registration
-    nii = Image(file_dwi_group+'.nii')
+    nii = Image(file_dwi_group+ext_data)
     data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
     nii.data = data_crop
     nii.setFileName('target_dwi.nii')
