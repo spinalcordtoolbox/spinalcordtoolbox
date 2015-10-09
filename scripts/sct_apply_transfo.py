@@ -24,6 +24,67 @@ import sct_utils as sct
 from sct_crop_image import ImageCropper
 
 
+class Param:
+    def __init__(self):
+        self.verbose = '1'
+        self.remove_tmp_files = '1'
+
+
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="input image",
+                      mandatory=True,
+                      example="t2.nii.gz")
+    parser.add_option(name="-d",
+                      type_value="file",
+                      description="destination image",
+                      mandatory=True,
+                      example="out.nii.gz")
+    parser.add_option(name="-w",
+                      type_value=[[','], "file"],
+                      description="warping field",
+                      mandatory=True,
+                      example="warp1.nii.gz,warp2.nii.gz")
+    parser.add_option(name="-c",
+                      type_value="int",
+                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0','1','2'])
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="registered source.",
+                      mandatory=False,
+                      default_value='',
+                      example="dest.nii.gz")
+    parser.add_option(name="-x",
+                      type_value="multiple_choice",
+                      description="interpolation method",
+                      mandatory=False,
+                      default_value='spline',
+                      example=['nn','linear','spline'])
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1', '2'])
+
+    return parser
+
+
 class Transform:
     def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
@@ -164,61 +225,17 @@ class Transform:
         sct.printv('fslview '+fname_dest+' '+fname_out+' &\n', verbose, 'info')
 
 
-if __name__ == "__main__":
+# MAIN
+# ==========================================================================================
+def main(args=None):
 
-    # Initialize parser
-    parser = Parser(__file__)
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
-    # Mandatory arguments
-    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="destination image",
-                      mandatory=True,
-                      example="out.nii.gz")
-    parser.add_option(name="-w",
-                      type_value=[[','], "file"],
-                      description="warping field",
-                      mandatory=True,
-                      example="warp1.nii.gz,warp2.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="int",
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0','1','2'])
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="registered source.",
-                      mandatory=False,
-                      default_value='',
-                      example="dest.nii.gz")
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="interpolation method",
-                      mandatory=False,
-                      default_value='spline',
-                      example=['nn','linear','spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1', '2'])
-
+    # Get parser info
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-
     input_filename = arguments["-i"]
     fname_dest = arguments["-d"]
     warp_filename = arguments["-w"]
@@ -237,3 +254,12 @@ if __name__ == "__main__":
         transform.verbose = arguments["-v"]
 
     transform.apply()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # # initialize parameters
+    param = Param()
+    # call main function
+    main()
