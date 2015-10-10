@@ -223,8 +223,8 @@ class Option:
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        sct.printv("Check folder existence...")
         if self.parser.check_file_exist:
+            sct.printv("Check folder existence...")
             sct.check_folder_exist(param, 0)
         return param
 
@@ -381,39 +381,39 @@ class Parser:
         Output is the same dictionary as provided but modified with added path.
         """
         for key, option in dictionary.iteritems():
-            # check if option is present in this parser
+            # Check if option is present in this parser
             if key in self.options:
-                # if input file is a list, we need to check what type of list it is. If it contians files, it must be updated.
-                if isinstance(self.options[key].type_value, list) and ((input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT)):
-                    for i, value in enumerate(option):
-                        option[i] = path_to_add + value
-                    dictionary[key] = option
-                else:
-                    if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
+                # If input file is a list, we need to check what type of list it is.
+                # If it contains files, it must be updated.
+                if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
+                    if isinstance(self.options[key].type_value, list):
+                        for i, value in enumerate(option):
+                            option[i] = path_to_add + value
+                        dictionary[key] = option
+                    else:
                         dictionary[key] = path_to_add + option
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
         return dictionary
 
-    @staticmethod
-    def dictionary_to_string(dictionary):
+    def dictionary_to_string(self, dictionary):
         """
         This function transform a dictionary (key="-i", value="t2.nii.gz") into a string "-i t2.nii.gz".
         """
         result = ""
         for key, option in dictionary.iteritems():
             if isinstance(option, list):
-                result = result + ' ' + key + ' ' + ','.join(str(option))
+                result = result + ' ' + key + ' ' + self.options[key].type_value[0][0].join([str(op) for op in option])
             else:
                 result = result + ' ' + key + ' ' + str(option)
 
         return result
 
+
 ########################################################################################################################
 ####### USAGE
 ########################################################################################################################
-
 class Usage:
     # Constructor
     def __init__(self, parser, file):
