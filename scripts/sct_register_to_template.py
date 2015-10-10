@@ -50,22 +50,15 @@ class Param:
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
+# get default parameters
+step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
+step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
+# step1 = Paramreg()
+paramreg = ParamregMultiStep([step1, step2])
 
-# MAIN
-# ==========================================================================================
-def main():
 
-    # get default parameters
-    step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
-    step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
-    # step1 = Paramreg()
-    paramreg = ParamregMultiStep([step1, step2])
-
-    # step1 = Paramreg_step(step='1', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5')
-    # step2 = Paramreg_step(step='2', type='im', algo='syn', metric='MI', iter='10', shrink='1', smooth='0', gradStep='0.5')
-    # paramreg = ParamregMultiStep([step1, step2])
-
-    # Initialize the parser
+def get_parser():
+    param = Param()
     parser = Parser(__file__)
     parser.usage.set_description('Register anatomical image to the template.')
     parser.add_option(name="-i",
@@ -91,7 +84,15 @@ def main():
                       default_value=param.path_template)
     parser.add_option(name="-p",
                       type_value=[[':'], 'str'],
-                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype="""+paramreg.steps['1'].type+"""\nalgo="""+paramreg.steps['1'].algo+"""\nmetric="""+paramreg.steps['1'].metric+"""\npoly="""+paramreg.steps['1'].poly+"""\n--\nstep=2\ntype="""+paramreg.steps['2'].type+"""\nalgo="""+paramreg.steps['2'].algo+"""\nmetric="""+paramreg.steps['2'].metric+"""\niter="""+paramreg.steps['2'].iter+"""\nshrink="""+paramreg.steps['2'].shrink+"""\nsmooth="""+paramreg.steps['2'].smooth+"""\ngradStep="""+paramreg.steps['2'].gradStep+"""\n--""",
+                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype=""" +
+                                  paramreg.steps['1'].type + """\nalgo=""" + paramreg.steps[
+                                      '1'].algo + """\nmetric=""" + paramreg.steps['1'].metric + """\npoly=""" +
+                                  paramreg.steps['1'].poly + """\n--\nstep=2\ntype=""" + paramreg.steps[
+                                      '2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" +
+                                  paramreg.steps['2'].metric + """\niter=""" + paramreg.steps[
+                                      '2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" +
+                                  paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps[
+                                      '2'].gradStep + """\n--""",
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
     parser.add_option(name="-r",
@@ -106,6 +107,16 @@ def main():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
+
+    return parser
+
+
+# MAIN
+# ==========================================================================================
+def main():
+    parser = get_parser()
+    param = Param()
+
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
@@ -114,8 +125,6 @@ def main():
         path_template = param.path_template
         remove_temp_files = 0
         verbose = 2
-        # speed = 'superfast'
-        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
     else:
         arguments = parser.parse(sys.argv[1:])
 
@@ -201,11 +210,8 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
-
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    status, output = sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(verbose=verbose)
 
     # copy files to temporary folder
     from sct_convert import convert
@@ -457,7 +463,5 @@ def resample_labels(fname_labels, fname_dest, fname_output):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
