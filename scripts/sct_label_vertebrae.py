@@ -120,7 +120,7 @@ def main(args=None):
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150917171852/'
+    # path_tmp = '/Users/julien/data/biospective/20151013_demo_spinalcordv2.1.b9/200_006_s2_T2/tmp.151013175622/'
     chdir(path_tmp)
 
     # create label to identify disc
@@ -201,6 +201,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
     size_IS = 7  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
+    gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     fig_corr = 3  # handle for figure
@@ -276,6 +277,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
     # append value to main list
     list_disc_z = np.append(list_disc_z, current_z).astype(int)
     list_disc_value = np.append(list_disc_value, current_disc).astype(int)
+    # update initial value (used when switching disc search to inferior direction)
+    init_disc[0] = current_z
     # define mean distance to next disc
     approx_distance_to_next_disc = int(round(mean_distance[current_disc]))
     # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
@@ -326,7 +329,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
             ind_y = ind_y + 1
 
         # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-        gaussian_window = gaussian(length_z_corr, std=length_z_corr/5)
+        gaussian_window = gaussian(length_z_corr, std=length_z_corr/gaussian_std_factor)
         I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
 
         # display correlation curves
@@ -348,7 +351,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
             # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
             ind_peak[0] = np.where(I_corr_adj == I_corr_adj.max())[0]  # index of max along z
             ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-            printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak[0]][ind_peak[1]])+')', verbose)
+            printv('.. Peak found: z='+str(ind_peak[0])+', y='+str(ind_peak[1])+' (correlation = '+str(I_corr_adj[ind_peak[0]][ind_peak[1]])+')', verbose)
             # check if correlation is high enough
             if I_corr_adj[ind_peak[0]][ind_peak[1]] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
@@ -538,7 +541,9 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
     size_AP_mirror = 2
     searching_window = range(-14, 15)
     fig_local_adjustment = 4
-    thr_corr = 0.2
+    thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
+    gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
+
     # Get pattern centered at current_z = init_disc[0]
     pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z-size_IS:current_z+size_IS+1]
     # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
@@ -564,7 +569,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         I_corr[ind_I] = np.corrcoef(pattern1d_shift_mirr, pattern1d)[0, 1]
         ind_I = ind_I + 1
     # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/3)
+    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/gaussian_std_factor)
     I_corr_adj = np.multiply(I_corr, gaussian_window)
     # display
     if verbose == 2:
@@ -587,7 +592,6 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         else:
             adjusted_z = int(current_z + round(searching_window[ind_peak]/2))
             printv('.... Update init_z position to: '+str(adjusted_z), verbose)
-
     if verbose == 2:
         # display peak
         plt.figure(fig_local_adjustment), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro')
