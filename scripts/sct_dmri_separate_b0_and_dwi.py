@@ -122,9 +122,9 @@ def main():
     ext = '.nii'
     dmri_name = 'dmri'
     b0_name = 'b0'
-    b0_mean_name = b0_name+'_mean'+ext
+    b0_mean_name = b0_name+'_mean'
     dwi_name = 'dwi'
-    dwi_mean_name = dwi_name+'_mean'+ext
+    dwi_mean_name = dwi_name+'_mean'
 
     from sct_convert import convert
     if not convert(fname_data, path_tmp+dmri_name+ext):
