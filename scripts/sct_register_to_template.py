@@ -77,6 +77,11 @@ def get_parser():
                       mandatory=True,
                       default_value='',
                       example="anat_labels.nii.gz")
+    parser.add_option(name="-o",
+                      type_value="folder_creation",
+                      description="Output folder.",
+                      mandatory=False,
+                      default_value='./')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to MNI-Poly-AMU template.",
@@ -122,6 +127,7 @@ def main():
         fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
         fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
         fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
+        path_output = './'
         path_template = param.path_template
         remove_temp_files = 0
         verbose = 2
@@ -132,6 +138,7 @@ def main():
         fname_data = arguments['-i']
         fname_seg = arguments['-s']
         fname_landmarks = arguments['-l']
+        path_output = arguments['-o']
         path_template = arguments['-t']
         remove_temp_files = int(arguments['-r'])
         verbose = int(arguments['-v'])
@@ -172,6 +179,7 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
+    sct.printv('.. Path output:          '+path_output, verbose)
     sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
@@ -412,11 +420,11 @@ def main():
 
    # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
 
     # Delete temporary files
     if remove_temp_files:
@@ -429,8 +437,8 @@ def main():
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview '+fname_data+' template2anat -b 0,4000 &', verbose, 'info')
-    sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
+    sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
+    sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
 
 
 # Resample labels
