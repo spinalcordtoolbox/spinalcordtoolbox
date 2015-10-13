@@ -166,6 +166,7 @@ def fill_functions():
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
+    functions.append('sct_documentation')
     return functions
 
 
