@@ -135,6 +135,12 @@ def main(args = None):
         dim = dim_list.index(dim)
         im_out = split_data(im_in[0], dim)
 
+    elif "-concat" in arguments:
+        dim = arguments["-concat"]
+        assert dim in dim_list
+        dim = dim_list.index(dim)
+        im_out = [concat_data(im_in, dim)]
+
     elif "-getorient" in arguments:
         orient = orientation(im_in[0], get=True, verbose=verbose)
         im_out = None
@@ -265,7 +271,7 @@ def split_data(im_in, dim):
     for i, dat in enumerate(data_split):
         im_out = im_in.copy()
         im_out.data = dat
-        im_out.setFileName(im_out.path+im_out.file_name+'_'+dim_list[dim].upper()+str(i).zfill(4)+im_out.ext)
+        im_out.setFileName(im_out.file_name+'_'+dim_list[dim].upper()+str(i).zfill(4)+im_out.ext)
         im_out_list.append(im_out)
 
     return im_out_list
