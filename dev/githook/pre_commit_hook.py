@@ -64,7 +64,9 @@ def save_changed_files(staged_files, sct_dir):
     # status, path_sct = getstatusoutput('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
 
     # add
-    status, output = getstatusoutput("git add "+modif_fname)
+    os.chdir("scripts")
+    status, output = getstatusoutput("git add modif.txt")
+    os.chdir("..")
 
 
 def save_changed_files_and_date(staged_files):
