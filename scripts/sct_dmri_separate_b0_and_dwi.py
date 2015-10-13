@@ -151,13 +151,12 @@ def main():
 
     # Merge b=0 images
     sct.printv('\nMerge b=0...', verbose)
-    im_b0_list = []
+    cmd = 'sct_image -concat t -o '+b0_name+ext+' -i '
     for it in range(nb_b0):
-        im_b0_list.append(im_dmri_split_list[index_b0[it]])
-    im_b0_out = concat_data(im_b0_list, 3)
-    im_b0_out.setFileName(b0_name+ext)
-    im_b0_out.save()
-
+        cmd = cmd+dmri_name+'_T' + str(index_b0[it]).zfill(4)+ext+','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
+    status, output = sct.run(cmd, param.verbose)
 
     # Average b=0 images
     if average:
@@ -165,12 +164,14 @@ def main():
         sct.run('sct_maths -i '+b0_name+ext+' -o '+b0_mean_name+ext+' -mean t', verbose)
 
     # Merge DWI
-    im_dwi_list = []
+    cmd = 'sct_image -concat t -o '+dwi_name+ext+' -i '
     for it in range(nb_dwi):
-        im_dwi_list.append(im_dmri_split_list[index_dwi[it]])
-    im_dwi_out = concat_data(im_dwi_list, 3)
-    im_dwi_out.setFileName(dwi_name+ext)
-    im_dwi_out.save()
+        cmd = cmd+dmri_name+'_T' + str(index_dwi[it]).zfill(4) + ext+ ','
+    cmd = cmd[:-1]  # remove ',' at the end of the string
+    # WARNING: calling concat_data in python instead of in command line causes a non understood issue
+    status, output = sct.run(cmd, param.verbose)
+
+
 
 
     # Average DWI images
