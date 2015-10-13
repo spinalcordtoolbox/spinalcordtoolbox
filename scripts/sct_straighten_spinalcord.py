@@ -1012,7 +1012,7 @@ class SpinalCordStraightener(object):
             x0 = file_centerline_straight.data.shape[0]/2.0
             y0 = file_centerline_straight.data.shape[1]/2.0
             count_mean = 0
-            for coord_z in mean_coord:
+            for coord_z in mean_coord[2:-2]:  # we don't include the four extrema because there are usually messy.
                 if not isnan(sum(coord_z)):
                     dist = ((x0-coord_z[0])*px)**2 + ((y0-coord_z[1])*py)**2
                     self.mse_straightening += dist
