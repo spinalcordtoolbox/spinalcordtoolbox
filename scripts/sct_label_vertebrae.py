@@ -201,7 +201,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
     size_IS = 7  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
-    gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
+    gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     fig_corr = 3  # handle for figure
