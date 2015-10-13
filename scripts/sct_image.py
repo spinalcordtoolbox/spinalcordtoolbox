@@ -284,6 +284,7 @@ def concat_data(im_in_list, dim):
     :param dim: dimension: 0, 1, 2, 3.
     :return im_out: concatenated image
     """
+    # WARNING: calling concat_data in python instead of in command line causes a non understood issue (results are different with both options)
     from numpy import concatenate, expand_dims
 
     data_list = [im.data for im in im_in_list]
