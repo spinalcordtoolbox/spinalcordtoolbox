@@ -222,15 +222,16 @@ class Version(object):
         return result
 
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
+    cyan = '\033[96m'
     bold = '\033[1m'
+    underline = '\033[4m'
 
 
 class InstallationResult(object):
@@ -298,23 +299,23 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg))
+        print "".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg))
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg))
+        print "".join((bcolors.green, "[OK] ", bcolors.normal, msg))
     
     @classmethod
     def failed(cls, msg):
-        print "".join((shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg))
+        print "".join((bcolors.red, "[FAILED] ", bcolors.normal, msg))
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join((shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg))
+        print "".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg))
 
 
 class Progress_bar(object):
@@ -399,13 +400,14 @@ class Os(object):
             else:
                 (self.vendor, version, _) = platform.dist()
             self.vendor = self.vendor.lower()
-            self.version = Version("1.0.0") #Version(version) not supported yet
+            self.version = Version("1.0.0")  # Version(version) not supported yet
             self.glibc = platform.libc_ver()
             if self.arch == 'x86_64':
                 self.bits = '64'
             else:
                 self.bits = '32'
-                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
+                # raise UnsupportedOs("We no longer support 32 bit Linux. "
+                #                     "If you must use 32 bit Linux then try building from our sources.")
         else:
             raise UnsupportedOs("We do not support this OS.")
 
@@ -418,24 +420,28 @@ class Python(object):
         # check out Python
         import sys
         self.python_version = sys.version
+        print self.python_version
         if 'Continuum Analytics, Inc.' not in self.python_version and 'conda' not in self.python_version.lower():
-            raise Exception("Unsupported Python")
+            raise Exception("WARNING: Unsupported Python")
+        else:
+            print '.. conda (OK)'
 
 
 def open_url(url, start=0, timeout=20):
     import urllib2
     import socket
     socket.setdefaulttimeout(timeout)
-    MsgUser.debug("Attempting to download %s." % (url))
+    MsgUser.debug("Attempting to download %s." % url)
     
     try:
         req = urllib2.Request(url)
         if start != 0:
-            req.headers['Range'] = 'bytes=%s-' % (start)
+            req.headers['Range'] = 'bytes=%s-' % start
         rf = urllib2.urlopen(req)
     except urllib2.HTTPError, e:
         MsgUser.debug("%s %s" % (url, e.msg))
-        return InstallationResult(False, InstallationResult.ERROR, "Cannot find file %s on server (%s). Try again later." % (url, e.msg))
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Cannot find file %s on server (%s). Try again later." % (url, e.msg))
     except urllib2.URLError, e:
         errno = e.reason.args[0]
         message = e.reason.args[1]
@@ -445,14 +451,19 @@ def open_url(url, start=0, timeout=20):
         else:
             # Other error
             MsgUser.debug("%s %s" % (url, message))
-        return InstallationResult(False, InstallationResult.ERROR, "Cannot find %s (%s). Try again later." % (url, message))
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Cannot find %s (%s). Try again later." % (url, message))
     except socket.timeout, e:
         MsgUser.debug(e.value)
-        return InstallationResult(False, InstallationResult.ERROR, "Failed to contact FSL web site. Try again later.")    
-    return InstallationResult(rf, InstallationResult.SUCCESS,'')
-    
+        return InstallationResult(False, InstallationResult.ERROR,
+                                  "Failed to contact FSL web site. Try again later.")
+    return InstallationResult(rf, InstallationResult.SUCCESS, '')
+
+
 def download_file(url, localf, timeout=20):
-    '''Get a file from the url given storing it in the local file specified'''
+    """
+    Get a file from the url given storing it in the local file specified
+    """
     import socket, time
     
     result = open_url(url, 0, timeout)
@@ -469,7 +480,7 @@ def download_file(url, localf, timeout=20):
     block = 16384
     x = 0
     y = 0
-    pb = Progress_bar( x, y, rf_size, numeric=True)
+    pb = Progress_bar(x, y, rf_size, numeric=True)
 
     for attempt in range(1,6):
         # Attempt download 5 times before giving up
@@ -486,7 +497,7 @@ def download_file(url, localf, timeout=20):
                     break
                 dl_size += len(buf)
                 lf.write(buf)
-                pb.update( dl_size )
+                pb.update(dl_size)
             lf.close()
         except (IOError, socket.timeout), e:
             MsgUser.debug(e.strerror)
@@ -506,9 +517,11 @@ def download_file(url, localf, timeout=20):
         return InstallationResult(False, InstallationResult.ERROR, "Failed to download file.")
     return InstallationResult(True, InstallationResult.SUCCESS, '') 
 
+
 def runProcess(cmd, verbose=1):
     if verbose:
-        print cmd
+        # print cmd
+        print(bcolors.blue+cmd+bcolors.normal)
     process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output_final = ''
     while True:
@@ -520,21 +533,21 @@ def runProcess(cmd, verbose=1):
                 print output.strip()
             output_final += output.strip()+'\n'
     # need to remove the last \n character in the output -> return output_final[0:-1]
-    if process.returncode:
-        # from inspect import stack
-        print output_final[0:-1]
-    else:
-        return process.returncode, output_final[0:-1]
+    # if process.returncode:
+    #     # from inspect import stack
+    #     print output_final[0:-1]
+    # else:
+    return process.returncode, output_final[0:-1]
 
 
 class Installer:
     def __init__(self):
-        self.path_install = "/usr/local"
+        self.path_install = "/usr/local/spinalcordtoolbox"
         self.issudo = "sudo "
 
         # check if user is sudoer
         if os.geteuid() == 0:
-            print "Sorry, you are root. Please type: ./installer without sudo. Your password will be required later." \
+            print "Sorry, you are root. Please type: ./installer.py without sudo. Your password will be required later." \
                   "Exit program\n"
             sys.exit(2)
 
@@ -543,6 +556,7 @@ class Installer:
             opts, args = getopt.getopt(sys.argv[1:], 'hp:')
         except getopt.GetoptError:
             usage()
+
         for opt, arg in opts:
             if opt == '-h':
                 usage()
@@ -552,23 +566,28 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-09-03"
+        print "Modified: 2015-10-06"
         print "============================="
 
+        # Check OS
         try:
             this_computer = Os()
         except UnsupportedOs, e:
             MsgUser.debug(str(e))
             raise InstallFailed(str(e))
 
+        # Check Python
+        print ('\nCheck which Python distribution is running...')
         try:
             this_python = Python()
         except Exception, e:
             print e
-            print "WARNING: The distribution of Python that you are using is not supported by SCT.\n" \
-                  "You still can use your own distribution of Python but you will have to install our dependencies by yourself.\n" \
+            print "The Python distribution that you are using is not supported by SCT:\n" \
+                  "http://sourceforge.net/p/spinalcordtoolbox/wiki/install_python/\n" \
+                  "You can still use your own Python distribution, but you will have to install " \
+                  "dependencies by yourself.\n" \
                   "Do you still want to continue?"
-            install_new = "yes"
+            install_new = ""
             signal.alarm(120)
             while install_new not in ["yes", "no"]:
                 install_new = input_timeout("[yes|no]: ")
@@ -576,98 +595,124 @@ class Installer:
             if install_new == "no":
                 sys.exit(2)
 
-        if not os.path.isdir(self.path_install):
-            print "ERROR: The path you entered does not exist: ${PATH_INSTALL}. Create it first. Exit program\n"
-            sys.exit(2)
+        # Check if pip is install
+        print ('\nCheck if pip is installed...')
+        # status, output = commands.getstatusoutput('pip')
+        status, output = runProcess('pip')
+        if not status == 0:
+            print ('.. WARNING: pip is not installed. Installing it with conda...')
+            # first make sure conda is installed
+            status, output = runProcess('conda')
+            if not status == 0:
+                print ('.. ERROR: conda is not installed either. Please install pip and rerun the installer.\n'+output)
+                sys.exit(2)
+            else:
+                status, output = runProcess('conda install pip -y')
+                if not status == 0:
+                    print ('.. ERROR: pip installation failed. Please install it and rerun the installer.\n'+output)
+                    sys.exit(2)
+                else:
+                    print ('.. Testing pip...')
+                    status, output = runProcess('pip')
+                    if not status == 0:
+                        print ('.. ERROR: pip cannot be installed. Please install it and rerun the installer.\n'+output)
+                        sys.exit(2)
+                    else:
+                        print ('.. OK!')
+        else:
+            print('.. OK!')
 
         # check if sudo is needed to write in installation folder
-        MsgUser.message("Checking if administrator rights are needed for installation...")
-        if os.access(self.path_install, os.W_OK):
-            MsgUser.message("  No sudo needed for adding elements.")
+        MsgUser.message("\nCheck if administrator permission is needed for installation...")
+        print ".. Installation path: "+self.path_install
+        if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
+            MsgUser.message(".. no sudo needed for adding elements.")
             self.issudo = ""
         else:
-            MsgUser.message("  sudo needed for adding elements.")
+            MsgUser.message(".. sudo needed for adding elements.")
             self.issudo = "sudo "
 
         # check if last character is "/". If so, remove it.
         if self.path_install[-1:] == '/':
             self.path_install = self.path_install[:-1]
 
-        self.SCT_DIR = self.path_install + "/spinalcordtoolbox"
+        self.SCT_DIR = self.path_install
 
         # Retrieving home folder because in python, paths with ~ do not seem to work.
         self.home = os.path.expanduser('~')
 
         # check if SCT folder already exists - if so, delete it
         print ""
-        print "Check if spinalcordtoolbox is already installed (if so, delete it)..."
+        print "\nCheck if spinalcordtoolbox is already installed (if so, delete it)..."
         if os.path.isdir(self.SCT_DIR):
             # check if sudo is required for removing SCT
-            if os.access(self.path_install+"/spinalcordtoolbox", os.W_OK):
-                MsgUser.message("  No sudo needed for removing SCT.")
+            if os.access(self.path_install, os.W_OK):
+                MsgUser.message(".. No sudo needed for removing SCT.")
                 self.issudo_remove = ""
             else:
-                MsgUser.message("  sudo needed for removing SCT.")
+                MsgUser.message(".. sudo needed for removing SCT.")
                 self.issudo_remove = "sudo "
 
             cmd = self.issudo_remove+"rm -rf "+self.SCT_DIR
-            print ">> " + cmd
             status, output = runProcess(cmd)
-            #status, output = commands.getstatusoutput(cmd)
+            # status, output = commands.getstatusoutput(cmd)
             if status != 0:
                 print 'ERROR! \n' + output + '\nExit program.\n'
                 sys.exit(2)
 
         # create SCT folder
-        print "Create folder: " + self.SCT_DIR + " ..."
+        print "\nCreate folder: " + self.SCT_DIR + " ..."
         cmd = self.issudo+"mkdir "+self.SCT_DIR
-        print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print output + '\n'
 
         # Checking if a new version of the toolbox is available. If so, change it.
-        # Check the version on GitHub Master branch. If a new release is available, ask the user if he want to install it.
+        # Check the version on GitHub Master branch. If a new release is available,
+        # ask the user if he want to install it.
         # fetch version of the toolbox
-        print 'Fetch version of the Spinal Cord Toolbox...'
+        print '\nFetch version of the Spinal Cord Toolbox...'
         with open ("spinalcordtoolbox/version.txt", "r") as myfile:
             version_sct_str = myfile.read().replace('\n','')
             version_sct = Version(version_sct_str)
         print "  Version: "+str(version_sct)
 
         # fetch version of the toolbox online
-        MsgUser.message("Checking for connection and SCT version online...")
+        MsgUser.message("\nCheck online if you have the latest version of SCT...")
         url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
         file_name = "tmp.version_online.txt"
         version_result = download_file(url_version, file_name)
         if version_result.status == InstallationResult.SUCCESS:
             isAble2Connect = True
-            with open (file_name, "r") as myfile:
+            with open(file_name, "r") as myfile:
                 try:
                     version_sct_online_str = myfile.read().replace('\n','')
                     version_sct_online = Version(version_sct_online_str)
                 except ValueError:
-                    MsgUser.warning("The extraction of online SCT version seemed to have failed. Please contact SCT administrator with this error: "+version_sct_online_str)
+                    MsgUser.warning("The extraction of online SCT version seemed to have failed. "
+                                    "Please contact SCT administrator with this error: " + version_sct_online_str)
                     version_sct_online = version_sct
-
             if version_sct.isLessThan_MajorMinor(version_sct_online):
-                print "Warning: A new version of the Spinal Cord Toolbox is available online. Do you want to install it?"
+                print "WARNING: A new version of the Spinal Cord Toolbox is available online. " \
+                      "Do you want to install it?"
                 install_new = ""
                 signal.alarm(30)
                 while install_new not in ["yes","no"]:
                     install_new = input_timeout("[yes|no]: ")
                 signal.alarm(0)
                 if install_new == "yes":
-                    print "The automatic installation of a new release or version of the toolbox is not supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
+                    print "The automatic installation of a new release or version of the toolbox is not " \
+                          "supported yet. Please download it on https://sourceforge.net/projects/spinalcordtoolbox/"
         else:
             isAble2Connect = False
-            print "WARNING: Failed to connect to SCT GitHub website. Please check your connexion. An internet connection is recommended in order to install all the SCT dependences. %s." % (version_result.message)
+            print "WARNING: Failed to connect to SCT GitHub website. Please check your connexion. " \
+                  "An internet connection is recommended in order to install all the SCT dependences. %s." \
+                  % version_result.message
 
         # copy SCT files
         print "\nCopy Spinal Cord Toolbox on your computer..."
         cmd = self.issudo + "cp -r spinalcordtoolbox/* " + self.SCT_DIR
-        print ">> " + cmd
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
@@ -681,20 +726,18 @@ class Installer:
             open(self.home+'/.bashrc', 'w+').close()
         else:
             if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
-                print "  Deleting previous SCT entries in .bashrc"
+                print ".. Deleting previous SCT entries in .bashrc"
                 cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
-                print ">> " + cmd
                 status, output = runProcess(cmd)
                 if status != 0:
                     print '\nERROR! \n' + output + '\nExit program.\n'
                 # test if .bash_profile exists
                 if os.path.isfile(self.home+"/.bash_profile"):
                     # delete previous entries in .bash_profile
-                    print "  Deleting previous SCT entries in .bash_profile"
+                    print ".. Deleting previous SCT entries in .bash_profile"
                     cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -712,7 +755,8 @@ class Installer:
             bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
             bashrc.close()
 
-        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the current instance of bash
+        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the
+        # current instance of bash
         os.environ['SCT_DIR'] = self.SCT_DIR
         os.environ['PATH'] = os.environ['PATH']+":"+self.SCT_DIR+"/bin"
         if 'PYTHONPATH' in os.environ:
@@ -720,13 +764,15 @@ class Installer:
         else:
             os.environ['PYTHONPATH'] = self.SCT_DIR+"/scripts"
 
-        # check if .bash_profile exists. If so, we check if link to .bashrc is present in it. If not, we add it at the end.
+        # check if .bash_profile exists. If so, we check if link to .bashrc is present in it.
+        # If not, we add it at the end.
+        print "\nCheck if .bash_profile exists..."
         if os.path.isfile(self.home+"/.bash_profile"):
             if "source ~/.bashrc" in open(self.home+'/.bash_profile').read():
-                print "\n.bashrc seems to be called in .bash_profile"
+                print ".. .bashrc seems to be called in .bash_profile"
             # TODO: check for the case if the user did comment source ~/.bashrc in his .bash_profile
             else:
-                print "edit .bash_profile..."
+                print ".. edit .bash_profile..."
                 with open(self.home+"/.bash_profile", "a") as bashprofile:
                     bashprofile.write("\nif [ -f ~/.bashrc ]; then")
                     bashprofile.write("\n  source ~/.bashrc")
@@ -735,22 +781,21 @@ class Installer:
 
         # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
         cmd = ". ~/.bashrc"
-        print ">> " + cmd
-        status, output = runProcess(cmd) # runProcess does not seems to work on Travis when sourcing .bashrc
-        #status, output = commands.getstatusoutput(cmd)
+        status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
         # install required software
-        print "\nInstalling dependences... Depending on your internet connection, this step may take several minutes."
+        print "\nInstall dependences... Depending on your internet connection, this may take several minutes."
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
         cmd = self.issudo + "bash requirements.sh"
-        print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
-            print '\nERROR! \n' + output + '\nExit program.\n'
+            print '\nERROR: Installation failed while installing requirements.\n'+output
+            sys.exit(2)
         else:
             print output
         os.chdir(current_dir)
@@ -759,30 +804,33 @@ class Installer:
         print "\nCreate links to python scripts..."
         cmd = self.SCT_DIR+"/install/create_links.sh"
         if self.issudo is "":
-            cmd = cmd+" -a"
-        print ">> " + cmd
+            cmd += " -a"
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
-        # Checking if patches are available for the latest release. If so, install them. Patches installation is available from release 1.1 (need to be changed to 1.2)
-        print "\nChecking for available patches..."
-        if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and version_sct.isEqualTo_MajorMinor(version_sct_online) and isAble2Connect and version_sct != version_sct_online:
+        # Checking if patches are available for the latest release. If so, install them. Patches installation is
+        # available from release 1.1 (need to be changed to 1.2)
+        print "\nCheck for latest patches online..."
+        if version_sct.isGreaterOrEqualThan_MajorMinor(Version("1.2")) and \
+                version_sct.isEqualTo_MajorMinor(version_sct_online) and \
+                isAble2Connect and version_sct != version_sct_online:
             # check if a new patch is available
             if version_sct_online > version_sct:
-                print "\nInstalling patch_"+str(version_sct_online)+"..."
+                print "\nInstalling patch_"+str(version_sct_online) + "..."
 
-                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_"+str(version_sct_online)+".zip"
-                file_name_patch = "patch_"+str(version_sct_online)+".zip"
+                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_" + \
+                            str(version_sct_online) + ".zip"
+                file_name_patch = "patch_"+str(version_sct_online) + ".zip"
                 name_folder_patch = str(version_sct_online)
                 patch_download_result = download_file(url_patch, file_name_patch)
 
                 if patch_download_result.status == InstallationResult.SUCCESS:
                     # unzip patch
-                    cmd = "unzip -d temp_patch "+file_name_patch
+                    cmd = "unzip -d temp_patch " + file_name_patch
                     print ">> " + cmd
-                    status, output = commands.getstatusoutput(cmd)
+                    status, output = runProcess(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
 
@@ -790,10 +838,9 @@ class Installer:
                     # launch patch installation
                     cmd = "python install_patch.py"
                     if self.issudo == "":
-                        cmd = cmd + " -a"
-                    print ">> " + cmd
+                        cmd += " -a"
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR! \n' + output + '\nExit program.\n'
                     else:
@@ -802,9 +849,8 @@ class Installer:
 
                     MsgUser.message("Removing patch-related files...")
                     cmd = "rm -rf "+file_name_patch+" temp_patch"
-                    print ">> " + cmd
                     status, output = runProcess(cmd)
-                    #status, output = commands.getstatusoutput(cmd)
+                    # status, output = commands.getstatusoutput(cmd)
                     if status != 0:
                         print '\nERROR while removing patch-related files \n' + output + '\nExit program.\n'
                     else:
@@ -818,32 +864,30 @@ class Installer:
 
         # compile external packages
         print "\nCompile external packages..."
-        os.chdir(self.SCT_DIR+"/external")
-        cmd = self.issudo + "python compile_external.py"
-        print ">> " + cmd
+        cmd = self.SCT_DIR + '/install/install_external.py'
+        if self.issudo:
+            cmd += ' -a'
         status, output = runProcess(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
+            sys.exit(2)
         else:
             print output
 
         # Check if other dependent software are installed
         print "\nCheck if other dependent software are installed..."
         cmd = "sct_check_dependences"
-        print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
         else:
             print output
 
-
         # deleting temporary files
         cmd = "rm -rf tmp.*"
-        print ">> " + cmd
         status, output = runProcess(cmd)
-        #status, output = commands.getstatusoutput(cmd)
+        # status, output = commands.getstatusoutput(cmd)
         if status != 0:
             print '\nERROR while removing temporary files \n' + output + '\nExit program.\n'
         else:
@@ -858,6 +902,8 @@ sct_check_dependences -c -l
 Then send the generated file "sct_check_dependences.log" to <jcohen@polymtl.ca>
 
 To get started, open a new Terminal, go back to the downloaded folder and run: ./batch_processing.sh
+
+To test your installation of SCT, run: sct_testing
 
 If you have any problem, please post your issue here:
 http://sourceforge.net/p/spinalcordtoolbox/discussion/help/
@@ -875,12 +921,12 @@ Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtool
 DESCRIPTION
 Install the Spinal Cord Toolbox
 
-USAGE
+USAGE:
 """ + os.path.basename(__file__) + """ -p <path>
 
-MANDATORY ARGUMENTS
--p <path>                   installation path. Do not add "/" at the end!
--h                          display this help
+OPTIONS:
+-p <path>         installation path. Default is: /usr/local/spinalcordtoolbox
+-h                display this help
   """
 
     # exit program
@@ -896,6 +942,7 @@ if __name__ == "__main__":
         exit(1)
     except UnsupportedOs, e:
         MsgUser.failed(e.value)
+
         exit(1)
     except KeyboardInterrupt, e:
         MsgUser.failed("Install aborted by the user.")

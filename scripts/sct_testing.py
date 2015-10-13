@@ -77,19 +77,19 @@ def main():
 
     start_time = time.time()
 
-    # download data
-    if param.download:
-        downloaddata()
-
+    # # download data
+    # if param.download:
+    #     downloaddata()
+    #
     # get absolute path and add slash at the end
     param.path_data = sct.slash_at_the_end(os.path.abspath(param.path_data), 1)
 
     # check existence of testing data folder
-    if not sct.check_folder_exist(param.path_data, 0):
+    if not os.path.isdir(param.path_data) or param.download:
         downloaddata()
 
     # display path to data
-    sct.printv('\nPath to testing data:\n'+param.path_data, param.verbose)
+    sct.printv('\nPath to testing data: '+param.path_data, param.verbose)
 
     # create temp folder that will have all results and go in it
     param.path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
@@ -126,13 +126,7 @@ def main():
 
 def downloaddata():
     sct.printv('\nDownloading testing data...', param.verbose)
-    # remove data folder if exist
-    if os.path.exists('sct_testing_data'):
-        sct.printv('WARNING: sct_testing_data already exists. Removing it...', param.verbose, 'warning')
-        sct.run('rm -rf sct_testing_data')
-    # clone git repos
-    sct.run('git clone '+param.url_git)
-    # update path_data field
+    sct.run('sct_download_data -d sct_testing_data')
 
 
 # list of all functions to test
@@ -149,7 +143,6 @@ def fill_functions():
     #functions.append('sct_convert_binary_to_trilinear')  # not useful
     functions.append('sct_create_mask')
     functions.append('sct_crop_image')
-    functions.append('sct_detect_vertebral_levels')
     functions.append('sct_dmri_compute_dti')
     functions.append('sct_dmri_get_bvalue')
     functions.append('sct_dmri_transpose_bvecs')
@@ -159,14 +152,13 @@ def fill_functions():
     # functions.append('sct_flatten_sagittal')
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
-    # functions.append('sct_get_centerline_automatic')
-    functions.append('sct_get_centerline_from_labels')
+    functions.append('sct_get_centerline')
     functions.append('sct_label_utils')
+    functions.append('sct_label_vertebrae')
     functions.append('sct_maths')
     functions.append('sct_orientation')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
-    functions.append('sct_register_graymatter')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
