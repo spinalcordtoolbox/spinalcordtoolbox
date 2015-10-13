@@ -88,6 +88,8 @@ class ProcessLabels(object):
             self.output_image = self.cubic_to_point()
         elif type_process == 'label-vertebrae':
             self.output_image = self.label_vertebrae(self.vertebral_levels)
+        elif type_process == 'label-vertebrae-from-disks':
+            self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
         else:
             sct.printv('Error: The chosen process is not available.', 1, 'error')
 
@@ -281,6 +283,28 @@ class ProcessLabels(object):
                 image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
 
         # list all labels
+        return image_cubic2point
+
+    def label_vertebrae_from_disks(self, levels_user):
+        """
+        Finds the center of mass of vertebral levels specified by the user.
+        :param levels_user:
+        :return:
+        """
+        image_cubic2point = self.cubic_to_point()
+        # get list of coordinates for each label
+        list_coordinates_disks = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        image_cubic2point.data *= 0
+        # compute vertebral labels from disk labels
+        list_coordinates_vertebrae = []
+        for i_label in range(len(list_coordinates_disks)-1):
+            list_coordinates_vertebrae.append((list_coordinates_disks[i_label] + list_coordinates_disks[i_label+1]) / 2.0)
+        # loop across labels and remove those that are not listed by the user
+        for i_label in range(len(list_coordinates_vertebrae)):
+            # check if this level is NOT in levels_user
+            if levels_user.count(int(list_coordinates_vertebrae[i_label].value)):
+                image_cubic2point.data[int(list_coordinates_vertebrae[i_label].x), int(list_coordinates_vertebrae[i_label].y), int(list_coordinates_vertebrae[i_label].z)] = list_coordinates_vertebrae[i_label].value
+
         return image_cubic2point
 
 
