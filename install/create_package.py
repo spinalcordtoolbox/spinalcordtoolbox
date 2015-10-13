@@ -89,9 +89,6 @@ if OSname == 'osx':
 elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
 
-# added modif.txt into bin/ folder for documentation
-# sct.run('cp ../scri/modif.txt '+folder_sct+'spinalcordtoolbox/bin/')
-
 # data
 sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
 
