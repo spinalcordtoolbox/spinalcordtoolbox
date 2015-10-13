@@ -3,3 +3,4 @@ scipy==0.16.0
 sympy==0.7.6
 matplotlib==1.4.3
 scikit-image==0.11.3
+pandas==0.16.2
