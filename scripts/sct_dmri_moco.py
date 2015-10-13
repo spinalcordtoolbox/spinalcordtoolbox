@@ -188,23 +188,29 @@ def main():
     path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
     sct.run('mkdir '+path_tmp, param.verbose)
 
+    # names of files in temporary folder
+    ext = '.nii'
+    dmri_name = 'dmri'
+    mask_name = 'mask'
+    bvecs_fname = 'bvecs.txt'
+
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'dmri'+ext_data, param.verbose)
-    sct.run('cp '+param.fname_bvecs+' '+path_tmp+'bvecs.txt', param.verbose)
+    sct.run('cp '+param.fname_data+' '+path_tmp+dmri_name+ext_data, param.verbose)
+    sct.run('cp '+param.fname_bvecs+' '+path_tmp+bvecs_fname, param.verbose)
     if param.fname_mask != '':
-        sct.run('cp '+param.fname_mask+' '+path_tmp+'mask'+ext_mask, param.verbose)
+        sct.run('cp '+param.fname_mask+' '+path_tmp+mask_name+ext_mask, param.verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # convert dmri to nii format
-    convert('dmri'+ext_data, 'dmri.nii')
+    convert(dmri_name+ext_data, dmri_name+ext)
 
     # update field in param (because used later).
     # TODO: make this cleaner...
     if param.fname_mask != '':
-        param.fname_mask = 'mask'+ext_mask
+        param.fname_mask = mask_name+ext_mask
 
     # run moco
     dmri_moco(param)
@@ -216,7 +222,7 @@ def main():
     path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
-    sct.generate_output_file(path_tmp+'dmri'+param.suffix+'.nii', path_out+file_data+param.suffix+ext_data, param.verbose)
+    sct.generate_output_file(path_tmp+dmri_name+param.suffix+ext, path_out+file_data+param.suffix+ext_data, param.verbose)
     sct.generate_output_file(path_tmp+'b0_mean.nii', path_out+'b0'+param.suffix+'_mean'+ext_data, param.verbose)
     sct.generate_output_file(path_tmp+'dwi_mean.nii', path_out+'dwi'+param.suffix+'_mean'+ext_data, param.verbose)
 
@@ -250,7 +256,8 @@ def dmri_moco(param):
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
+    im_data = Image(file_data + ext_data)
+    nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Identify b=0 and DWI images
@@ -266,7 +273,6 @@ def dmri_moco(param):
     #===================================================================================================================
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    im_data = Image(file_data + ext_data)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
         im.save()
@@ -287,7 +293,7 @@ def dmri_moco(param):
     # Average b=0 images
     sct.printv('\nAverage b=0...', param.verbose)
     file_b0_mean = file_b0+'_mean'
-    sct.run('sct_maths -i '+file_b0+'.nii'+' -o '+file_b0_mean+'.nii'+' -mean t', param.verbose)
+    sct.run('sct_maths -i '+file_b0+ext_data+' -o '+file_b0_mean+ext_data+' -mean t', param.verbose)
     # if not average_data_across_dimension(file_b0+'.nii', file_b0_mean+'.nii', 3):
     #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
     # cmd = fsloutput + 'fslmaths ' + file_b0 + ' -Tmean ' + file_b0_mean
@@ -348,8 +354,8 @@ def dmri_moco(param):
     # Average DW Images
     # TODO: USEFULL ???
     sct.printv('\nAveraging all DW images...', param.verbose)
-    fname_dwi_mean = 'dwi_mea       n'
-    sct.run('sct_maths -i '+file_dwi_group+ext_data+' -o '+file_dwi_group+'_mean.nii'+' -mean t', param.verbose)
+    fname_dwi_mean = file_dwi+'_mean'
+    sct.run('sct_maths -i '+file_dwi_group+ext_data+' -o '+file_dwi_group+'_mean'+ext_data+' -mean t', param.verbose)
 
     # segment dwi images using otsu algorithm
     if param.otsu:
@@ -369,7 +375,8 @@ def dmri_moco(param):
     nii = Image(file_dwi_group+ext_data)
     data_crop = nii.data[:, :, :, index_dwi[0]:index_dwi[0]+1]
     nii.data = data_crop
-    nii.setFileName('target_dwi.nii')
+    target_dwi_name = 'target_dwi'
+    nii.setFileName(target_dwi_name+ext_data)
     nii.save()
 
 
@@ -399,9 +406,9 @@ def dmri_moco(param):
     sct.printv('  Estimating motion on DW images...', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_dwi_group
-    param_moco.file_target = 'target_dwi'  # target is the first DW image (closest to the first b=0)
+    param_moco.file_target = target_dwi_name  # target is the first DW image (closest to the first b=0)
     param_moco.path_out = ''
-    #param_moco.todo = 'estimate'
+    # param_moco.todo = 'estimate'
     param_moco.todo = 'estimate_and_apply'
     param_moco.mat_moco = 'mat_dwigroups'
     moco.moco(param_moco)
@@ -435,7 +442,7 @@ def dmri_moco(param):
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
     sct.printv('  Apply moco', param.verbose)
     sct.printv('-------------------------------------------------------------------------------', param.verbose)
-    param_moco.file_data = 'dmri'
+    param_moco.file_data = file_data
     param_moco.file_target = file_dwi+'_mean_'+str(0)  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''
     param_moco.mat_moco = mat_final
@@ -444,14 +451,14 @@ def dmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    im_dmri = Image('dmri.nii')
-    im_dmri_moco = Image('dmri_moco.nii')
+    im_dmri = Image(file_data+ext_data)
+    im_dmri_moco = Image(file_data+param.suffix+ext_data)
     im_dmri_moco = copy_header(im_dmri, im_dmri_moco)
     im_dmri_moco.save()
 
 
     # generate b0_moco_mean and dwi_moco_mean
-    cmd = 'sct_dmri_separate_b0_and_dwi -i dmri'+param.suffix+'.nii -b bvecs.txt -a 1'
+    cmd = 'sct_dmri_separate_b0_and_dwi -i '+file_data+param.suffix+ext_data+' -b bvecs.txt -a 1'
     if not param.fname_bvals == '':
         cmd = cmd+' -m '+param.fname_bvals
     sct.run(cmd, param.verbose)
