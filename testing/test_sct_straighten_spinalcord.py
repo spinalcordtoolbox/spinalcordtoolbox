@@ -13,51 +13,49 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-
 import sct_utils as sct
+from msct_parser import Parser
+import sct_straighten_spinalcord
+from pandas import DataFrame
+import os.path
 
 
-def test(path_data):
+def test(path_data='', parameters=''):
 
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz', 't2_straight.nii.gz', 't2_seg_straight.nii.gz']
-    dice_threshold = 0.99
+    if not parameters:
+        parameters = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz'
 
-    cmd = 'sct_straighten_spinalcord -i ' + path_data + folder_data + file_data[0] \
-          + ' -c ' + path_data + folder_data + file_data[1] \
-          + ' -r 0' \
-          + ' -v 1'
+    parser = sct_straighten_spinalcord.get_parser()
+    dict_param = parser.parse(parameters.split(), check_file_exist=False)
+    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+    param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
+        status = 200
+        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+
+    cmd = 'sct_straighten_spinalcord ' + param_with_path
     status, output = sct.run(cmd, 0)
 
+    # initialization of results: must be NaN if test fails
+    result_mse, result_dist_max = float('nan'), float('nan')
     if status == 0:
-        cmd_c2s = 'sct_apply_transfo -i ' + path_data + folder_data + file_data[1] + \
-                  ' -d ' + file_data[2] + \
-                  ' -w warp_curve2straight.nii.gz' + \
-                  ' -o ' + file_data[3] + \
-                  '  -x nn'
-        status_c2s, output_c2s = sct.run(cmd_c2s, 0)
-        if status_c2s != 0:
-            return status_c2s, output_c2s
+        # extraction of results
+        output_split = output.split('Maximum x-y error = ')[1].split(' mm')
+        result_dist_max = float(output_split[0])
+        result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
 
-        cmd_s2c = 'sct_apply_transfo -i ' + file_data[3] + \
-                  ' -d ' + path_data + folder_data + file_data[0] + \
-                  ' -w warp_straight2curve.nii.gz' + \
-                  ' -o image_test.nii.gz ' \
-                  '-x nn'
-        status_s2c, output_s2c = sct.run(cmd_s2c, 0)
-        if status_s2c != 0:
-            return status_s2c, output_s2c
+        # integrity testing - straightening has been tested with v2.0.6 on several images.
+        # mse is less than 1.5 and dist_max is less than 4
+        if result_dist_max > 4.0 or result_mse > 1.5:
+            status = 99
 
-        cmd_dice = 'sct_dice_coefficient ' + path_data + folder_data + file_data[1] + \
-                   ' image_test.nii.gz -bzmax'
-        status_dice, output_dice = sct.run(cmd_dice, 0)
-        if float(output_dice.split('3D Dice coefficient = ')[1]) < dice_threshold:
-            output += output_c2s + output_s2c + output_dice
-            status = 5
+    # transform results into Pandas structure
+    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
 
-    return status, output
+    return status, output, results
 
 if __name__ == "__main__":
     # call main function
