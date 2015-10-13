@@ -1123,7 +1123,8 @@ def get_parser():
     parser.add_option(name="-params",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nuse_continuous_labels : 0,1. Default = False"
+                                  "\nuse_continuous_labels : 0,1. Default = 1"
+                                  "\nall_labels : 0,1. Default = 1"
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
                                   "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
                                   "Default=5x5x10"
