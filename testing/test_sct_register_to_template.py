@@ -22,6 +22,7 @@ import os.path
 
 
 def test(path_data='', parameters=''):
+    verbose = 0
     filename_template = 'MNI-Poly-AMU_cord.nii.gz'
     dice_threshold = 0.85
 
@@ -54,19 +55,28 @@ def test(path_data='', parameters=''):
     # get contrast folder from -i option.
     # We suppose we can extract it as the first object when spliting with '/' delimiter.
     contrast_folder = ''
-    input_split = dict_param_with_path['-i'].split('/')
+    input_split = dict_param['-i'].split('/')
     if input_split[0]:
         contrast_folder = input_split[0] + '/'
     else:
         contrast_folder = input_split[1] + '/'
     if not contrast_folder:  # if no contrast folder, send error.
         status = 201
-        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param_with_path['-i'] + ' for ' + path_data
+        output = 'ERROR: when extracting the contrast folder from input file in command line: ' + dict_param['-i'] + ' for ' + path_data
         return status, output, DataFrame(
             data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
+    import time, random
+    subject_folder = path_data.split('/')
+    if subject_folder[-1] == '' and len(subject_folder) > 1:
+        subject_folder = subject_folder[-2]
+    else:
+        subject_folder = subject_folder[-1]
+    path_output = sct.slash_at_the_end('sct_register_to_template_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
+    param_with_path += ' -o ' + path_output
+
     cmd = 'sct_register_to_template ' + param_with_path
-    status, output = sct.run(cmd, 0)
+    status, output = sct.run(cmd, verbose)
 
     # if command ran without error, test integrity
     if status == 0:
@@ -74,23 +84,25 @@ def test(path_data='', parameters=''):
         sct.run(
             'sct_apply_transfo -i ' + dict_param_with_path['-t'] + filename_template +
             ' -d ' + dict_param_with_path['-s'] +
-            ' -w warp_template2anat.nii.gz -o test_template2anat.nii.gz -x nn', 0)
+            ' -w ' + path_output + 'warp_template2anat.nii.gz' +
+            ' -o ' + path_output + 'test_template2anat.nii.gz -x nn', verbose)
         # apply transformation to binary mask: anat --> template
         sct.run(
             'sct_apply_transfo -i ' + dict_param_with_path['-s'] +
             ' -d ' + dict_param_with_path['-t'] + filename_template +
-            ' -w warp_anat2template.nii.gz -o test_anat2template.nii.gz -x nn', 0)
+            ' -w ' + path_output + 'warp_anat2template.nii.gz' +
+            ' -o ' + path_output + 'test_anat2template.nii.gz -x nn', verbose)
         # compute dice coefficient between template segmentation warped into anat and segmentation from anat
-        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-s'] + ' test_template2anat.nii.gz'
-        status1, output1 = sct.run(cmd, 0)
+        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-s'] + ' ' + path_output + 'test_template2anat.nii.gz'
+        status1, output1 = sct.run(cmd, verbose)
         # parse output and compare to acceptable threshold
         dice_template2anat = float(output1.split('3D Dice coefficient = ')[1])
         if dice_template2anat < dice_threshold:
             status1 = 99
         # compute dice coefficient between segmentation from anat warped into template and template segmentation
         # N.B. here we use -bmax because the FOV of the anat is smaller than the template
-        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-t'] + filename_template + ' test_anat2template.nii.gz -bmax'
-        status2, output2 = sct.run(cmd, 0)
+        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-t'] + filename_template + ' ' + path_output + 'test_anat2template.nii.gz -bmax'
+        status2, output2 = sct.run(cmd, verbose)
         # parse output and compare to acceptable threshold
         dice_anat2template = float(output2.split('3D Dice coefficient = ')[1])
         if dice_anat2template < dice_threshold:
