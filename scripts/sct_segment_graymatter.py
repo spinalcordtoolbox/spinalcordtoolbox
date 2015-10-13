@@ -18,6 +18,7 @@ from msct_parser import *
 from msct_image import Image, get_dimension
 from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
+import shutil
 
 
 class Preprocessing:
@@ -64,19 +65,14 @@ class Preprocessing:
         # denoising (optional)
         t2star_im = Image(self.t2star)
         if denoising:
-            t2star_im.denoise_ornlm()
+            from sct_maths import denoise_ornlm
+            t2star_im.data = denoise_ornlm(t2star_im.data)
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
 
-        '''
-        status, t2_star_orientation = sct.run('sct_orientation -i ' + self.t2star)
-        self.original_orientation = t2_star_orientation[4:7]
-        '''
         self.original_orientation = t2star_im.orientation
 
-        self.square_mask = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
-
-        self.treated_target = sct.extract_fname(self.t2star)[1] + '_seg_in_croped.nii.gz'
+        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
 
         self.level_fname = None
         if t2_data is not None:
@@ -153,7 +149,7 @@ class FullGmSegmentation:
             self.level_to_use = None
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
-        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.treated_target, self.level_to_use, self.model, gm_seg_param=self.param)
+        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.param)
 
         if self.ref_gm_seg_fname is not None:
             os.chdir('..')
@@ -177,7 +173,7 @@ class FullGmSegmentation:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
             sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s ' + self.preprocessed.original_orientation)
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.treated_target)[1]):] + '.nii.gz'
+            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
@@ -187,7 +183,6 @@ class FullGmSegmentation:
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
-                # WARNING: until sct_maths -thr option is changed, this will output a binary segmentation
                 sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
             sct.run('cp ' + old_res_name + ' ../' + res_name)
@@ -264,15 +259,8 @@ class FullGmSegmentation:
         im_ref_wm_seg = Image(ref_wm_seg_new_name)
         sct.run('rm ' + ref_wm_seg_new_name)
 
-        ref_orientation = im_ref_gm_seg.orientation
-        im_ref_gm_seg.change_orientation('IRP')
-        im_ref_wm_seg.change_orientation('IRP')
-
-        im_ref_gm_seg.crop_from_square_mask(mask, save=False)
-        im_ref_wm_seg.crop_from_square_mask(mask, save=False)
-
-        im_ref_gm_seg.change_orientation('RPI')
-        im_ref_wm_seg.change_orientation('RPI')
+        im_ref_wm_seg.crop_and_stack(mask, save=False)
+        im_ref_gm_seg.crop_and_stack(mask, save=False)
 
         # saving the images to call the validation functions
         res_gm_seg_bin.path = './'
@@ -294,6 +282,7 @@ class FullGmSegmentation:
         im_ref_wm_seg.file_name = 'ref_wm_seg'
         im_ref_wm_seg.ext = ext
         im_ref_wm_seg.save()
+
 
         sct.run('sct_orientation -i ' + res_gm_seg_bin.file_name + ext + ' -s RPI')
         res_gm_seg_bin.file_name += '_RPI'
@@ -368,7 +357,8 @@ if __name__ == "__main__":
 
         # Initialize the parser
         parser = Parser(__file__)
-        parser.usage.set_description('Project all the input image slices on a PCA generated from set of t2star images')
+        parser.usage.set_description('Segmentation of the white/gray matter on a T2star or MT image\n'
+                                     'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
         parser.add_option(name="-i",
                           type_value="file",
                           description="Target image to segment",
@@ -379,29 +369,22 @@ if __name__ == "__main__":
                           description="Spinal cord segmentation of the target",
                           mandatory=True,
                           example='sc_seg.nii.gz')
+        parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
+                                'Choose one of them')
         parser.add_option(name="-l",
                           type_value="str",
                           description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
                                       "If -l is used, no need to provide t2 data",
                           mandatory=False,
                           example='MNI-Poly-AMU_level_IRP.nii.gz')
-        parser.add_option(name="-o",
-                          type_value="str",
-                          description="output name for the results",
-                          mandatory=False,
-                          example='t2star_res.nii.gz')
-        parser.add_option(name="-model",
-                          type_value="folder",
-                          description="Path to the model data",
-                          mandatory=False,
-                          example='/home/jdoe/gm_seg_model_data/')
         parser.add_option(name="-t2",
                           type_value=[[','], 'file'],
                           description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
-                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks (see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
+                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks\n(see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
                           mandatory=False,
                           default_value=None,
                           example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
+        parser.usage.addSection('SEGMENTATION OPTIONS')
         parser.add_option(name="-use-levels",
                           type_value='multiple_choice',
                           description="Use the level information for the model or not",
@@ -422,44 +405,24 @@ if __name__ == "__main__":
                           example=['0', '1'])
         parser.add_option(name="-normalize",
                           type_value='multiple_choice',
-                          description="1: Normalization of the target image's intensity using mean intensity values of the WM and the GM",
+                          description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
                           mandatory=False,
                           default_value=1,
                           example=['0', '1'])
-        parser.add_option(name="-means",
+        parser.add_option(name="-medians",
                           type_value=[[','], 'float'],
-                          description="Mean intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
+                          description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
                                       "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
                                       "Only if the -normalize flag is used",
                           mandatory=False,
                           default_value=None,
                           example=["450,540"])
-        '''
-        parser.add_option(name="-first-reg",
-                          type_value='multiple_choice',
-                          description="Apply a Bspline registration using the spinal cord edges target --> model first",
+        parser.add_option(name="-model",
+                          type_value="folder",
+                          description="Path to the model data",
                           mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-z",
-                          type_value='multiple_choice',
-                          description="1: Z regularisation, 0: no ",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-label-fusion",
-                          type_value='multiple_choice',
-                          description="Use the similarities as a weights for the label fusion",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        parser.add_option(name="-weighted-similarity",
-                          type_value='multiple_choice',
-                          description="Use a PCA mode weighted norm for the computation of the similarities instead of the euclidean square norm",
-                          mandatory=False,
-                          default_value=0,
-                          example=['0', '1'])
-        '''
+                          example='/home/jdoe/gm_seg_model_data/')
+        parser.usage.addSection('OUTPUT OTIONS')
         parser.add_option(name="-res-type",
                           type_value='multiple_choice',
                           description="Type of result segmentation : binary or probabilistic",
@@ -469,9 +432,15 @@ if __name__ == "__main__":
         parser.add_option(name="-ratio",
                           description="Compute GM/WM ratio",
                           mandatory=False)
+        parser.add_option(name="-o",
+                          type_value="str",
+                          description="output name for the results",
+                          mandatory=False,
+                          example='t2star_res.nii.gz')
+        parser.usage.addSection('MISC')
         parser.add_option(name="-ref",
                           type_value="file",
-                          description="Reference segmentation of the gray matter",
+                          description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
                           mandatory=False,
                           example='manual_gm_seg.nii.gz')
         parser.add_option(name="-v",
@@ -504,16 +473,7 @@ if __name__ == "__main__":
             param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
             param.target_means = arguments["-means"]
-        '''
-        if "-first-reg" in arguments:
-            param.first_reg = bool(int(arguments["-first-reg"]))
-        if "-z" in arguments:
-            param.z_regularisation = bool(int(arguments["-z"]))
-        if "-weighted-label-fusion" in arguments:
-            param.weight_label_fusion = bool(int(arguments["-weighted-label-fusion"]))
-        if "-weighted-similarity" in arguments:
-            param.mode_weight_similarity = bool(int(arguments["-weighted-similarity"]))
-        '''
+
         if "-ratio" in arguments:
             compute_ratio = True
         if "-res-type" in arguments:

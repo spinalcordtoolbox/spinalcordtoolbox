@@ -79,6 +79,7 @@ sct.run('cp -r ../external '+folder_sct+'spinalcordtoolbox/')
 # install
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
 sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
+sct.run('cp -r ../install/install_external.py '+folder_sct + 'spinalcordtoolbox/install/')
 sct.run('cp -r ../install/requirements ' + folder_sct + 'spinalcordtoolbox/install/')
 
 # bin
@@ -87,6 +88,9 @@ if OSname == 'osx':
     sct.run('cp -r ../bin/osx/* '+folder_sct+'spinalcordtoolbox/bin/')
 elif OSname == 'linux':
     sct.run('cp -r ../bin/linux/* '+folder_sct+'spinalcordtoolbox/bin/')
+
+# added modif.txt into bin/ folder for documentation
+sct.run('cp ../bin/modif.txt '+folder_sct+'spinalcordtoolbox/bin/')
 
 # data
 sct.run('cp -rf ../data '+folder_sct+'spinalcordtoolbox/')
