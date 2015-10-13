@@ -738,65 +738,66 @@ class SpinalCordStraightener(object):
                 save(img, 'tmp.landmarks_straight.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
             else:
-                # Create volumes containing curved and straight landmarks
-                data_curved_landmarks = data * 0
-                data_straight_landmarks = data * 0
-
-                # Loop across cross index
-                for index in range(0, len(landmark_curved)):
-                    x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
-                              int(round(landmark_curved[index].z))
-
-                    # attribute landmark_value to the voxel and its neighbours
-                    data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                                          z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
-
-                    # get x, y and z coordinates of straight landmark (rounded to closest integer)
-                    x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
-                              int(round(landmark_straight[index].z))
-
-                    # attribute landmark_value to the voxel and its neighbours
-                    data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                                            z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
-
-                # Write NIFTI volumes
-                sct.printv('\nWrite NIFTI volumes...', verbose)
-                hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
-                img = Nifti1Image(data_curved_landmarks, None, hdr)
-                save(img, 'tmp.landmarks_curved.nii.gz')
-                sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-                img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
-                save(img, 'tmp.landmarks_straight.nii.gz')
-                sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
-
-                # Estimate deformation field by pairing landmarks
-                # ==========================================================================================
-                # convert landmarks to INT
-                sct.printv('\nConvert landmarks to INT...', verbose)
-                from sct_convert import convert
-                convert('tmp.landmarks_straight.nii.gz', 'tmp.landmarks_straight.nii.gz', type='int32')
-                convert('tmp.landmarks_curved.nii.gz', 'tmp.landmarks_curved.nii.gz', type='int32')
-
-                # This stands to avoid overlapping between landmarks
-                # TODO: do symmetric removal
-                sct.printv('\nMake sure all labels between landmark_straight and landmark_curved match 1...', verbose)
-                label_process_straight = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
-                                                       fname_output=["tmp.landmarks_straight.nii.gz",
-                                                                     "tmp.landmarks_curved.nii.gz"],
-                                                       fname_ref="tmp.landmarks_curved.nii.gz",
-                                                       verbose=verbose)
-                label_process_straight.process('remove-symm')
-
-                # Estimate rigid transformation
-                sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
-                sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz '
-                        'tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
-
-                # Apply rigid transformation
-                sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
-                Transform(input_filename="tmp.landmarks_curved.nii.gz", fname_dest="tmp.landmarks_curved_rigid.nii.gz",
-                          output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt",
-                          interp="nn", verbose=verbose).apply()
+                sct.printv('ERROR: you should never reach this point. This feature is deprecated.', 1, 'error')
+                # # Create volumes containing curved and straight landmarks
+                # data_curved_landmarks = data * 0
+                # data_straight_landmarks = data * 0
+                #
+                # # Loop across cross index
+                # for index in range(0, len(landmark_curved)):
+                #     x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
+                #               int(round(landmark_curved[index].z))
+                #
+                #     # attribute landmark_value to the voxel and its neighbours
+                #     data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                #                           z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
+                #
+                #     # get x, y and z coordinates of straight landmark (rounded to closest integer)
+                #     x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
+                #               int(round(landmark_straight[index].z))
+                #
+                #     # attribute landmark_value to the voxel and its neighbours
+                #     data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                #                             z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
+                #
+                # # Write NIFTI volumes
+                # sct.printv('\nWrite NIFTI volumes...', verbose)
+                # hdr.set_data_dtype('uint32')  # set imagetype to uint8 #TODO: maybe use int32
+                # img = Nifti1Image(data_curved_landmarks, None, hdr)
+                # save(img, 'tmp.landmarks_curved.nii.gz')
+                # sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
+                # img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
+                # save(img, 'tmp.landmarks_straight.nii.gz')
+                # sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
+                #
+                # # Estimate deformation field by pairing landmarks
+                # # ==========================================================================================
+                # # convert landmarks to INT
+                # sct.printv('\nConvert landmarks to INT...', verbose)
+                # from sct_convert import convert
+                # convert('tmp.landmarks_straight.nii.gz', 'tmp.landmarks_straight.nii.gz', type='int32')
+                # convert('tmp.landmarks_curved.nii.gz', 'tmp.landmarks_curved.nii.gz', type='int32')
+                #
+                # # This stands to avoid overlapping between landmarks
+                # # TODO: do symmetric removal
+                # sct.printv('\nMake sure all labels between landmark_straight and landmark_curved match 1...', verbose)
+                # label_process_straight = ProcessLabels(fname_label="tmp.landmarks_straight.nii.gz",
+                #                                        fname_output=["tmp.landmarks_straight.nii.gz",
+                #                                                      "tmp.landmarks_curved.nii.gz"],
+                #                                        fname_ref="tmp.landmarks_curved.nii.gz",
+                #                                        verbose=verbose)
+                # label_process_straight.process('remove-symm')
+                #
+                # # Estimate rigid transformation
+                # sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
+                # sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform tmp.landmarks_straight.nii.gz '
+                #         'tmp.landmarks_curved.nii.gz rigid tmp.curve2straight_rigid.txt', verbose)
+                #
+                # # Apply rigid transformation
+                # sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
+                # Transform(input_filename="tmp.landmarks_curved.nii.gz", fname_dest="tmp.landmarks_curved_rigid.nii.gz",
+                #           output_filename="tmp.landmarks_straight.nii.gz", warp="tmp.curve2straight_rigid.txt",
+                #           interp="nn", verbose=verbose).apply()
 
             if verbose == 2:
                 from mpl_toolkits.mplot3d import Axes3D
@@ -900,19 +901,20 @@ class SpinalCordStraightener(object):
                                              ' 0',
                                              verbose=verbose)
             else:
-                # This stands to avoid overlapping between landmarks
-                sct.printv("\nMake sure all labels between landmark_straight and landmark_curved match 2...", verbose)
-                label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
-                                              fname_output=["tmp.landmarks_curved_rigid.nii.gz",
-                                                            "tmp.landmarks_straight.nii.gz"],
-                                              fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
-                label_process.process("remove-symm")
-
-                # Estimate b-spline transformation curve --> straight
-                sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
-                sct.run("isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz "
-                        "tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz " + self.bspline_meshsize
-                        + " " + self.bspline_numberOfLevels + " " + self.bspline_order + " 0", verbose)
+                sct.printv('ERROR: you should never reach this point. This feature is deprecated.', 1, 'error')
+                # # This stands to avoid overlapping between landmarks
+                # sct.printv("\nMake sure all labels between landmark_straight and landmark_curved match 2...", verbose)
+                # label_process = ProcessLabels(fname_label="tmp.landmarks_curved_rigid.nii.gz",
+                #                               fname_output=["tmp.landmarks_curved_rigid.nii.gz",
+                #                                             "tmp.landmarks_straight.nii.gz"],
+                #                               fname_ref="tmp.landmarks_straight.nii.gz", verbose=verbose)
+                # label_process.process("remove-symm")
+                #
+                # # Estimate b-spline transformation curve --> straight
+                # sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
+                # sct.run("isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField tmp.landmarks_straight.nii.gz "
+                #         "tmp.landmarks_curved_rigid.nii.gz tmp.warp_curve2straight.nii.gz " + self.bspline_meshsize
+                #         + " " + self.bspline_numberOfLevels + " " + self.bspline_order + " 0", verbose)
 
             # remove padding for straight labels
             if crop == 1:
@@ -1123,7 +1125,6 @@ def get_parser():
     parser.add_option(name="-params",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
-                                  "\nuse_continuous_labels : 0,1. Default = 1"
                                   "\nall_labels : 0,1. Default = 1"
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
                                   "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
@@ -1194,7 +1195,8 @@ if __name__ == "__main__":
             elif param_split[0] == 'all_labels':
                 sc_straight.all_labels = int(param_split[1])
             elif param_split[0] == 'use_continuous_labels':
-                sc_straight.use_continuous_labels = int(param_split[1])
+                sct.printv('ERROR: This feature (use_continuous_labels) is deprecated.', 1, 'error')
+                # sc_straight.use_continuous_labels = int(param_split[1])
             elif param_split[0] == 'gapz':
                 sc_straight.gapz = int(param_split[1])
             elif param_split[0] == 'leftright_width':
