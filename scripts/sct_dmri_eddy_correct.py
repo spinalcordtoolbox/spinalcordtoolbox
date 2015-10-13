@@ -23,6 +23,8 @@ import time
 import numpy as np
 from msct_image import Image
 import sct_utils as sct
+# get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI

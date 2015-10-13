@@ -13,7 +13,7 @@
 # TODO: add check output in split_data
 
 import sys
-from numpy import concatenate, array_split
+from numpy import array_split, shape, newaxis
 from msct_parser import Parser
 from msct_image import Image
 from sct_utils import extract_fname
@@ -73,6 +73,8 @@ def split_data(fname_in, dim, suffix):
     # Open first file.
     im = Image(fname_in)
     data = im.data
+    if dim+1 > len(shape(data)):  # in case input volume is 3d and dim=t
+        data = data[..., newaxis]
     # Split data into list
     data_split = array_split(data, data.shape[dim], dim)
     # Write each file

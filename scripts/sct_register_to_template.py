@@ -298,52 +298,57 @@ def main():
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
-    # converting landmarks straight and curved to physical coordinates
-    image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
-    landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
-    image_template = Image('template_label_cross.nii.gz')
-    landmark_template = image_template.getNonZeroCoordinates(sorting='value')
-    # Reorganize landmarks
-    points_fixed, points_moving = [], []
-    landmark_straight_mean = []
-    for coord in landmark_straight:
-        if coord.value not in [c.value for c in landmark_straight_mean]:
-            temp_landmark = coord
-            temp_number = 1
-            for other_coord in landmark_straight:
-                if coord.hasEqualValue(other_coord) and coord != other_coord:
-                    temp_landmark += other_coord
-                    temp_number += 1
-            landmark_straight_mean.append(temp_landmark / temp_number)
+    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
+    # JULIEN issue #569
+    # <<<
+    # # converting landmarks straight and curved to physical coordinates
+    # image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
+    # landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
+    # image_template = Image('template_label_cross.nii.gz')
+    # landmark_template = image_template.getNonZeroCoordinates(sorting='value')
+    # # Reorganize landmarks
+    # points_fixed, points_moving = [], []
+    # landmark_straight_mean = []
+    # for coord in landmark_straight:
+    #     if coord.value not in [c.value for c in landmark_straight_mean]:
+    #         temp_landmark = coord
+    #         temp_number = 1
+    #         for other_coord in landmark_straight:
+    #             if coord.hasEqualValue(other_coord) and coord != other_coord:
+    #                 temp_landmark += other_coord
+    #                 temp_number += 1
+    #         landmark_straight_mean.append(temp_landmark / temp_number)
+    #
+    # for coord in landmark_straight_mean:
+    #     point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+    # for coord in landmark_template:
+    #     point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+    #
+    # # Register curved landmarks on straight landmarks based on python implementation
+    # sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    # import msct_register_landmarks
+    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
+    #     msct_register_landmarks.getRigidTransformFromLandmarks(
+    #         points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+    #
+    # # writing rigid transformation file
+    # text_file = open("straight2templateAffine.txt", "w")
+    # text_file.write("#Insight Transform File V1.0\n")
+    # text_file.write("#Transform 0\n")
+    # text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
+    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+    #     1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
+    #     rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
+    #     rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
+    #     translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
+    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+    #                                                        points_moving_barycenter[1],
+    #                                                        points_moving_barycenter[2]))
+    # text_file.close()
+    # >>> JULIEN
 
-    for coord in landmark_straight_mean:
-        point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
-    for coord in landmark_template:
-        point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
-
-    # Register curved landmarks on straight landmarks based on python implementation
-    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
-    import msct_register_landmarks
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-        msct_register_landmarks.getRigidTransformFromLandmarks(
-            points_fixed, points_moving, constraints='translation-scaling-z', show=False)
-
-    # writing rigid transformation file
-    text_file = open("straight2templateAffine.txt", "w")
-    text_file.write("#Insight Transform File V1.0\n")
-    text_file.write("#Transform 0\n")
-    text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
-    text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-        1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
-        rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
-        rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
-        translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
-                                                           points_moving_barycenter[1],
-                                                           points_moving_barycenter[2]))
-    text_file.close()
 
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)

@@ -16,7 +16,6 @@ import sys
 import os
 import math
 import scipy
-
 import nibabel
 import time
 from sct_orientation import set_orientation
@@ -98,8 +97,11 @@ class ImageCropper(object):
         verb = 0
         if self.verbose == 1:
             verb = 2
-        # Run command line
-        sct.run(self.cmd, verb)
+        if self.mask is not None and self.background is not None:
+            self.crop_from_mask_with_background()
+        else:
+            # Run command line
+            sct.run(self.cmd, verb)
 
         self.result = Image(self.output_filename, verbose=self.verbose)
 
@@ -116,6 +118,38 @@ class ImageCropper(object):
             sct.printv("fslview "+self.output_filename+" &\n", self.verbose, 'info')
 
         return self.result
+
+    # crop the image in order to keep only voxels in the mask
+    # doesn't change the image dimension
+    def crop_from_mask_with_background(self):
+        from numpy import asarray, einsum
+        image_in = Image(self.input_filename)
+        data_array = asarray(image_in.data)
+        data_mask = asarray(Image(self.mask).data)
+        assert data_array.shape == data_mask.shape
+
+        # Element-wise matrix multiplication:
+        new_data = None
+        dim = len(data_array.shape)
+        if dim == 3:
+            new_data = einsum('ijk,ijk->ijk', data_mask, data_array)
+        elif dim == 2:
+            new_data = einsum('ij,ij->ij', data_mask, data_array)
+
+        if self.background != 0:
+            from sct_maths import get_data_or_scalar
+            data_background = get_data_or_scalar(str(self.background), data_array)
+            data_mask_inv = data_mask.max() - data_mask
+            if dim == 3:
+                data_background = einsum('ijk,ijk->ijk', data_mask_inv, data_background)
+            elif dim == 2:
+                data_background = einsum('ij,ij->ij', data_mask_inv, data_background)
+            new_data += data_background
+
+        # set image out
+        image_in.setFileName(self.output_filename)
+        image_in.data = new_data
+        image_in.save()
 
     # shows the gui to crop the image
     def crop_with_gui(self):
@@ -304,7 +338,8 @@ if __name__ == "__main__":
                       example="10,10,5")
     parser.add_option(name="-b",
                       type_value="float",
-                      description="replace voxels outside cropping region with background value",
+                      description="replace voxels outside cropping region with background value. \n"
+                                  "If both the -m and the -b flags are used : the image is croped \"exactly\" around the mask with a background (and not around a rectangle area including the mask). the shape of the image isn't change.",
                       mandatory=False)
     parser.add_option(name="-bmax",
                       type_value=None,
