@@ -582,6 +582,15 @@ class SpinalCordStraightener(object):
             file_image = load('tmp.centerline_pad.nii.gz')
             data = file_image.get_data()
             hdr = file_image.get_header()
+            hdr_straight_landmarks = hdr.copy()
+            hdr_straight_landmarks.structarr['quatern_b'] = -0.0
+            hdr_straight_landmarks.structarr['quatern_c'] = 1.0
+            hdr_straight_landmarks.structarr['quatern_d'] = 0.0
+            hdr_straight_landmarks.structarr['srow_x'][1] = hdr_straight_landmarks.structarr['srow_x'][2] = 0.0
+            hdr_straight_landmarks.structarr['srow_y'][0] = hdr_straight_landmarks.structarr['srow_y'][2] = 0.0
+            hdr_straight_landmarks.structarr['srow_z'][0] = hdr_straight_landmarks.structarr['srow_z'][1] = 0.0
+            hdr_straight_landmarks.structarr['srow_x'][0] = -1.0
+            hdr_straight_landmarks.structarr['srow_y'][1] = hdr_straight_landmarks.structarr['srow_z'][2] = 1.0
             landmark_curved_rigid = []
 
             if self.algo_landmark_rigid is not None and self.algo_landmark_rigid != 'None' and self.algo_landmark_rigid != 'euler':
@@ -655,7 +664,7 @@ class SpinalCordStraightener(object):
                 img = Nifti1Image(data_curved_rigid_landmarks, None, hdr)
                 save(img, 'tmp.landmarks_curved_rigid.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_curved_rigid.nii.gz', verbose)
-                img = Nifti1Image(data_straight_landmarks, None, hdr)
+                img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
                 save(img, 'tmp.landmarks_straight.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
@@ -725,7 +734,7 @@ class SpinalCordStraightener(object):
                 img = Nifti1Image(data_curved_landmarks, None, hdr)
                 save(img, 'tmp.landmarks_curved.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-                img = Nifti1Image(data_straight_landmarks, None, hdr)
+                img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
                 save(img, 'tmp.landmarks_straight.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
             else:
@@ -756,7 +765,7 @@ class SpinalCordStraightener(object):
                 img = Nifti1Image(data_curved_landmarks, None, hdr)
                 save(img, 'tmp.landmarks_curved.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-                img = Nifti1Image(data_straight_landmarks, None, hdr)
+                img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
                 save(img, 'tmp.landmarks_straight.nii.gz')
                 sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
