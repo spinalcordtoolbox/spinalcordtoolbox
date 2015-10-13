@@ -28,7 +28,7 @@ def test(path_data='', parameters=''):
     parser = sct_straighten_spinalcord.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
-    param_with_path = Parser.dictionary_to_string(dict_param_with_path)
+    param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
     if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
