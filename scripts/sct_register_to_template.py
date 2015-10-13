@@ -50,22 +50,15 @@ class Param:
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
+# get default parameters
+step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
+step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
+# step1 = Paramreg()
+paramreg = ParamregMultiStep([step1, step2])
 
-# MAIN
-# ==========================================================================================
-def main():
 
-    # get default parameters
-    step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
-    step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
-    # step1 = Paramreg()
-    paramreg = ParamregMultiStep([step1, step2])
-
-    # step1 = Paramreg_step(step='1', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5')
-    # step2 = Paramreg_step(step='2', type='im', algo='syn', metric='MI', iter='10', shrink='1', smooth='0', gradStep='0.5')
-    # paramreg = ParamregMultiStep([step1, step2])
-
-    # Initialize the parser
+def get_parser():
+    param = Param()
     parser = Parser(__file__)
     parser.usage.set_description('Register anatomical image to the template.')
     parser.add_option(name="-i",
@@ -84,6 +77,11 @@ def main():
                       mandatory=True,
                       default_value='',
                       example="anat_labels.nii.gz")
+    parser.add_option(name="-o",
+                      type_value="folder_creation",
+                      description="Output folder.",
+                      mandatory=False,
+                      default_value='./')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to MNI-Poly-AMU template.",
@@ -91,7 +89,15 @@ def main():
                       default_value=param.path_template)
     parser.add_option(name="-p",
                       type_value=[[':'], 'str'],
-                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype="""+paramreg.steps['1'].type+"""\nalgo="""+paramreg.steps['1'].algo+"""\nmetric="""+paramreg.steps['1'].metric+"""\npoly="""+paramreg.steps['1'].poly+"""\n--\nstep=2\ntype="""+paramreg.steps['2'].type+"""\nalgo="""+paramreg.steps['2'].algo+"""\nmetric="""+paramreg.steps['2'].metric+"""\niter="""+paramreg.steps['2'].iter+"""\nshrink="""+paramreg.steps['2'].shrink+"""\nsmooth="""+paramreg.steps['2'].smooth+"""\ngradStep="""+paramreg.steps['2'].gradStep+"""\n--""",
+                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype=""" +
+                                  paramreg.steps['1'].type + """\nalgo=""" + paramreg.steps[
+                                      '1'].algo + """\nmetric=""" + paramreg.steps['1'].metric + """\npoly=""" +
+                                  paramreg.steps['1'].poly + """\n--\nstep=2\ntype=""" + paramreg.steps[
+                                      '2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" +
+                                  paramreg.steps['2'].metric + """\niter=""" + paramreg.steps[
+                                      '2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" +
+                                  paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps[
+                                      '2'].gradStep + """\n--""",
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
     parser.add_option(name="-r",
@@ -106,16 +112,25 @@ def main():
                       mandatory=False,
                       default_value=param.verbose,
                       example=['0', '1', '2'])
+
+    return parser
+
+
+# MAIN
+# ==========================================================================================
+def main():
+    parser = get_parser()
+    param = Param()
+
     if param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
         fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
         fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
         fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
+        path_output = './'
         path_template = param.path_template
         remove_temp_files = 0
         verbose = 2
-        # speed = 'superfast'
-        #param_reg = '2,BSplineSyN,0.6,MeanSquares'
     else:
         arguments = parser.parse(sys.argv[1:])
 
@@ -123,6 +138,7 @@ def main():
         fname_data = arguments['-i']
         fname_seg = arguments['-s']
         fname_landmarks = arguments['-l']
+        path_output = arguments['-o']
         path_template = arguments['-t']
         remove_temp_files = int(arguments['-r'])
         verbose = int(arguments['-v'])
@@ -163,6 +179,7 @@ def main():
     sct.printv('.. Landmarks:            '+fname_landmarks, verbose)
     sct.printv('.. Segmentation:         '+fname_seg, verbose)
     sct.printv('.. Path template:        '+path_template, verbose)
+    sct.printv('.. Path output:          '+path_output, verbose)
     sct.printv('.. Output type:          '+str(output_type), verbose)
     sct.printv('.. Remove temp files:    '+str(remove_temp_files), verbose)
 
@@ -201,11 +218,8 @@ def main():
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
-
     # create temporary folder
-    sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    status, output = sct.run('mkdir '+path_tmp)
+    path_tmp = sct.tmp_create(verbose=verbose)
 
     # copy files to temporary folder
     from sct_convert import convert
@@ -244,7 +258,8 @@ def main():
     # get landmarks in native space
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
-    sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax')
+    status_crop, output_crop = sct.run('sct_crop_image -i segmentation_rpi.nii.gz -o segmentation_rpi_crop.nii.gz -dim 2 -bzmax', verbose)
+    cropping_slices = output_crop.split('Dimension 2: ')[1].split('\n')[0].split(' ')
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
@@ -270,9 +285,12 @@ def main():
     sct.printv('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...', verbose)
     sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
 
+    # Cropping also the labels before applying straightening
+    sct.run('sct_crop_image -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_crop.nii.gz -dim 2 -start ' + cropping_slices[0] + ' -end ' + cropping_slices[1])
+
     # Apply straightening to labels
     sct.printv('\nApply straightening to labels...', verbose)
-    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3_crop.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
     # Convert landmarks from FLOAT32 to INT
     sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
@@ -284,57 +302,53 @@ def main():
 
     # Estimate affine transfo: straight --> template (landmark-based)'
     sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
-    sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform template_label_cross.nii.gz landmarks_rpi_cross3x3_straight.nii.gz affine straight2templateAffine.txt')
-    # JULIEN issue #569
-    # <<<
-    # # converting landmarks straight and curved to physical coordinates
-    # image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
-    # landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
-    # image_template = Image('template_label_cross.nii.gz')
-    # landmark_template = image_template.getNonZeroCoordinates(sorting='value')
-    # # Reorganize landmarks
-    # points_fixed, points_moving = [], []
-    # landmark_straight_mean = []
-    # for coord in landmark_straight:
-    #     if coord.value not in [c.value for c in landmark_straight_mean]:
-    #         temp_landmark = coord
-    #         temp_number = 1
-    #         for other_coord in landmark_straight:
-    #             if coord.hasEqualValue(other_coord) and coord != other_coord:
-    #                 temp_landmark += other_coord
-    #                 temp_number += 1
-    #         landmark_straight_mean.append(temp_landmark / temp_number)
-    #
-    # for coord in landmark_straight_mean:
-    #     point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-    #     points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
-    # for coord in landmark_template:
-    #     point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-    #     points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
-    #
-    # # Register curved landmarks on straight landmarks based on python implementation
-    # sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
-    # import msct_register_landmarks
-    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-    #     msct_register_landmarks.getRigidTransformFromLandmarks(
-    #         points_fixed, points_moving, constraints='translation-scaling-z', show=False)
-    #
-    # # writing rigid transformation file
-    # text_file = open("straight2templateAffine.txt", "w")
-    # text_file.write("#Insight Transform File V1.0\n")
-    # text_file.write("#Transform 0\n")
-    # text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
-    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-    #     1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
-    #     rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
-    #     rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
-    #     translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
-    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
-    #                                                        points_moving_barycenter[1],
-    #                                                        points_moving_barycenter[2]))
-    # text_file.close()
-    # >>> JULIEN
 
+    # converting landmarks straight and curved to physical coordinates
+    image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
+    landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
+    image_template = Image('template_label_cross.nii.gz')
+    landmark_template = image_template.getNonZeroCoordinates(sorting='value')
+    # Reorganize landmarks
+    points_fixed, points_moving = [], []
+    landmark_straight_mean = []
+    for coord in landmark_straight:
+        if coord.value not in [c.value for c in landmark_straight_mean]:
+            temp_landmark = coord
+            temp_number = 1
+            for other_coord in landmark_straight:
+                if coord.hasEqualValue(other_coord) and coord != other_coord:
+                    temp_landmark += other_coord
+                    temp_number += 1
+            landmark_straight_mean.append(temp_landmark / temp_number)
+
+    for coord in landmark_straight_mean:
+        point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+    for coord in landmark_template:
+        point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+
+    # Register curved landmarks on straight landmarks based on python implementation
+    sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    import msct_register_landmarks
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
+        msct_register_landmarks.getRigidTransformFromLandmarks(
+            points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+
+    # writing rigid transformation file
+    text_file = open("straight2templateAffine.txt", "w")
+    text_file.write("#Insight Transform File V1.0\n")
+    text_file.write("#Transform 0\n")
+    text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
+    text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+        1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
+        rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
+        rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
+        translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+                                                           points_moving_barycenter[1],
+                                                           points_moving_barycenter[2]))
+    text_file.close()
 
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
@@ -411,11 +425,11 @@ def main():
 
    # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', 'warp_template2anat.nii.gz', verbose)
-    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', 'warp_anat2template.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_template2anat.nii.gz', path_output+'warp_template2anat.nii.gz', verbose)
+    sct.generate_output_file(path_tmp+'/warp_anat2template.nii.gz', path_output+'warp_anat2template.nii.gz', verbose)
     if output_type == 1:
-        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', 'template2anat'+ext_data, verbose)
-        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', 'anat2template'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/template2anat.nii.gz', path_output+'template2anat'+ext_data, verbose)
+        sct.generate_output_file(path_tmp+'/anat2template.nii.gz', path_output+'anat2template'+ext_data, verbose)
 
     # Delete temporary files
     if remove_temp_files:
@@ -428,8 +442,8 @@ def main():
 
     # to view results
     sct.printv('\nTo view results, type:', verbose)
-    sct.printv('fslview '+fname_data+' template2anat -b 0,4000 &', verbose, 'info')
-    sct.printv('fslview '+fname_template+' -b 0,5000 anat2template &\n', verbose, 'info')
+    sct.printv('fslview '+fname_data+' '+path_output+'template2anat -b 0,4000 &', verbose, 'info')
+    sct.printv('fslview '+fname_template+' -b 0,5000 '+path_output+'anat2template &\n', verbose, 'info')
 
 
 # Resample labels
@@ -462,7 +476,5 @@ def resample_labels(fname_labels, fname_dest, fname_output):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
     # call main function
     main()
