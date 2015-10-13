@@ -32,7 +32,7 @@ class Image(object):
         self.ext = ""
         self.dim = None
 
-        if hdr == None:
+        if hdr is None:
             hdr = self.hdr = AnalyzeHeader()  # an empty header
         else:
             self.hdr = hdr
@@ -64,12 +64,9 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-
-
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
-
 
     def copy(self, image=None):
         from copy import deepcopy
@@ -84,7 +81,6 @@ class Image(object):
         else:
             return deepcopy(self)
 
-
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -96,6 +92,7 @@ class Image(object):
         from sct_orientation import get_orientation
 
         # check_file_exist(path, verbose=verbose)
+        im_file = None
         try:
             im_file = load(path)
         except spatialimages.ImageFileError:
@@ -222,21 +219,22 @@ class Image(object):
         """
         from nibabel import Nifti1Image, save
         from sct_utils import printv
+        from numpy import squeeze
+        from os import path, remove
+        # remove singleton
+        self.data = squeeze(self.data)
         if type != '':
             self.changeType(type)
+        # update header
         if self.hdr:
             self.hdr.set_data_shape(self.data.shape)
         img = Nifti1Image(self.data, None, self.hdr)
-        #printv('saving ' + self.path + self.file_name + self.ext + '\n', self.verbose)
-
-        from os import path, remove
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
             printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
-
 
     # flatten the array in a single dimension vector, its shape will be (d, 1) compared to the flatten built in method
     # which would have returned (d,)
@@ -266,7 +264,6 @@ class Image(object):
             n_dim = 4
         if self.dim[2] == 1:
             n_dim = 2
-
 
         try:
             if n_dim == 3:
@@ -308,21 +305,27 @@ class Image(object):
 
         return list_coordinates
 
-
-    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or
-    # rectangles of the same size
+    # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
-    # This method is called in sct_crop_over_mask script
-    def crop_from_square_mask(self, mask, save=True):
+    def crop_and_stack(self, mask, suffix='_resized', save=True):
+        """
+        Cropping function to be used with a mask centered on the spinal cord. The crop slices are stack in the z direction.
+        The result will be a kind of straighten image centered on the center of the mask (aka the center of the spinal cord)
+        :param mask: mask image
+        :param suffix: suffix to add to the file name (usefull only with the save option)
+        :param save: save the image if True
+        :return: no return, the image data is set to the new (crop) data
+        """
         from numpy import asarray, zeros
 
+        original_orientation = self.orientation
+        mask_original_orientation = mask.orientation
+        self.change_orientation('IRP')
+        mask.change_orientation('IRP')
         data_array = self.data
         data_mask = mask.data
-        assert self.orientation == 'IRP'
-        assert mask.orientation == 'IRP'
 
-        print 'ORIGINAL SHAPE: ', data_array.shape, '   ==   ', data_mask.shape
-        #if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
+        # if the image to crop is smaller than the mask in total, we assume the image was centered and add a padding to fit the mask's shape
         if data_array.shape != data_mask.shape:
             old_data_array = data_array
             pad_1 = int((data_mask.shape[1] - old_data_array.shape[1])/2 + 1)
@@ -331,16 +334,16 @@ class Image(object):
             data_array = zeros(data_mask.shape)
             for n_slice, data_slice in enumerate(data_array):
                 data_slice[pad_1:pad_1+old_data_array.shape[1], pad_2:pad_2+old_data_array.shape[2]] = old_data_array[n_slice]
-            '''
+
             for n_slice, data_slice in enumerate(data_array):
                 n_row_old_data_array = 0
                 for row in data_slice[pad_2:-pad_2-1]:
                     row[pad_1:pad_1 + old_data_array.shape[1]] = old_data_array[n_slice, n_row_old_data_array]
                     n_row_old_data_array += 1
-            '''
+
             self.data = data_array
             if save:
-                self.file_name += '_resized'
+                self.file_name += suffix
                 self.save()
 
         data_array = asarray(data_array)
@@ -386,41 +389,15 @@ class Image(object):
         new_data = asarray(new_data)
         # print data_mask
         self.data = new_data
-        self.dim = self.data.shape
+        #self.dim = self.data.shape
 
-
-    # crop the image in order to keep only voxels in the mask
-    # doesn't change the image dimension
-    # This method is called in sct_crop_over_mask script
-    def crop_from_mask(self, mask):
-        from numpy import asarray, einsum
-        data_array = self.data
-        data_mask = mask.data
-        assert data_array.shape == data_mask.shape
-        array = asarray(data_array)
-        data_mask = asarray(data_mask)
-
-        #Element-wise matrix multiplication:
-        new_data = None
-        if len(data_array.shape) == 3:
-            new_data = einsum('ijk,ijk->ijk', data_mask, array)
-        elif len(data_array.shape) == 2:
-            new_data = einsum('ij,ij->ij', data_mask, array)
-        self.data = new_data
-
-    def denoise_ornlm(self):
-        from commands import getstatusoutput
-        from sys import path
-        # append python path for importing module
-        # N.B. PYTHONPATH variable should take care of it, but this is only used for Travis.
-        status, path_sct = getstatusoutput('echo $SCT_DIR')
-        path.append(path_sct + '/external/denoise/ornlm')
-        from ornlm import ornlm
-        import numpy as np
-        dat = self.data.astype(np.float64)
-        denoised = np.array(ornlm(dat, 3, 1, np.max(dat)*0.01))
-        self.file_name += '_denoised'
-        self.data = denoised
+        self.change_orientation(original_orientation)
+        mask.change_orientation(mask_original_orientation)
+        if save:
+            from sct_utils import add_suffix
+            self.file_name += suffix
+            add_suffix(self.absolutepath, suffix)
+            self.save()
 
     def invert(self):
         self.data = self.data.max() - self.data
@@ -481,6 +458,7 @@ class Image(object):
         else:
             print 'Error: wrong orientation'
         # update dim
+        # http://math.stackexchange.com/questions/122916/what-is-the-inverse-cycle-of-permutation
         dim_temp = list(self.dim)
         dim_temp[0] = self.dim[[i for i, x in enumerate(perm) if x == 0][0]]  # nx
         dim_temp[1] = self.dim[[i for i, x in enumerate(perm) if x == 1][0]]  # ny
@@ -624,6 +602,55 @@ def get_dimension(im_file, verbose=1):
 
     return nx, ny, nz, nt, px, py, pz, pt
 
+
+def change_data_orientation(data, old_orientation='RPI', orientation="RPI"):
+    """
+    This function changes the orientation of a data matrix from a give orientation to another.
+    This function assumes that the user already knows the orientation of the data
+    :param data: data of the image
+    :param old_orientation: Current orientation of the data
+    :param orientation: Desired orientation for the data
+    :return: Data matrix representing the
+    """
+    opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+
+    # change the orientation of the image
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(old_orientation):
+        try:
+            perm[i] = orientation.index(character)
+        except ValueError:
+            perm[i] = orientation.index(opposite_character[character])
+            inversion[i] = -1
+
+    # axes inversion
+    data = data[::inversion[0], ::inversion[1], ::inversion[2]]
+
+    # axes manipulations
+    from numpy import swapaxes
+
+    if perm == [1, 0, 2]:
+        data = swapaxes(data, 0, 1)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [0, 2, 1]:
+        data = swapaxes(data, 1, 2)
+    elif perm == [2, 1, 0]:
+        data = swapaxes(data, 0, 2)
+    elif perm == [2, 0, 1]:
+        data = swapaxes(data, 0, 2)  # transform [2, 0, 1] to [1, 0, 2]
+        data = swapaxes(data, 0, 1)  # transform [1, 0, 2] to [0, 1, 2]
+    elif perm == [1, 2, 0]:
+        data = swapaxes(data, 0, 2)  # transform [1, 2, 0] to [0, 2, 1]
+        data = swapaxes(data, 1, 2)  # transform [0, 2, 1] to [0, 1, 2]
+    elif perm == [0, 1, 2]:
+        # do nothing
+        pass
+    else:
+        print 'Error: wrong orientation'
+
+    return data
 
 # =======================================================================================================================
 # Start program
