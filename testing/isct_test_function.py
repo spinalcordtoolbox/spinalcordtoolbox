@@ -209,6 +209,7 @@ if __name__ == "__main__":
 
     function_to_test = arguments["-f"]
     dataset = arguments["-d"]
+    dataset = sct.slash_at_the_end(dataset, slash=1)
 
     parameters = ''
     if "-p" in arguments:
