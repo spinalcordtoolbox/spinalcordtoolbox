@@ -152,7 +152,7 @@ def main(args=None):
     printv('.. '+str(init_disc), verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc)
+    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
     # un-straighten spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -187,7 +187,7 @@ def main(args=None):
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, init_disc):
+def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
@@ -199,7 +199,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     fig_corr = 3  # handle for figure
-    verbose = verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
     mean_distance = np.array([18, 16, 17.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
     19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
