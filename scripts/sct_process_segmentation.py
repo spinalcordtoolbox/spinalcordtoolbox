@@ -47,7 +47,7 @@ class Param:
         self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
-        self.path_to_template = ''
+        self.path_to_template = './label/template'
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
@@ -684,7 +684,7 @@ OPTIONAL ARGUMENTS
                           You can also select specific slices using commas. Example: 0,2,3,5,12
   -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
-  -t <path_template>    Path to warped template. Typically: ./label/template. Only use with flag -l
+  -t <path_template>    Path to warped template. Default: ./label/template. Only use with flag -l
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
   -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
