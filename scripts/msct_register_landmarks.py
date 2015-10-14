@@ -236,6 +236,7 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
         points_moving_barycenter = mean(points_moving, axis=0)
         points_moving_reg = ((rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T +
                              points_moving_barycenter) + translation_array
+        points_moving_barycenter = mean(points_fixed, axis=0)  # unknown reason...
 
     elif constraints == 'translation-xy':
         initial_parameters = [0.0, 0.0]
