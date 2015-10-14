@@ -54,7 +54,7 @@ def find_staged_files():
 
 def save_changed_files(staged_files, sct_dir):
     status, path_sct = getstatusoutput('echo $SCT_DIR')
-    modif_fname = str(sct_dir)+'/bin/modif.txt'
+    modif_fname = str(sct_dir)+'/scripts/modif.txt'
     f = open(modif_fname, "w+")
     for script_name, date in staged_files.iteritems():
         date_split = date.split("-")[0]
@@ -64,7 +64,9 @@ def save_changed_files(staged_files, sct_dir):
     # status, path_sct = getstatusoutput('cp '+modif_fname+" "+path_sct+"/dev/modif_backup.txt")
 
     # add
-    status, output = getstatusoutput("git add "+modif_fname)
+    os.chdir("scripts")
+    status, output = getstatusoutput("git add modif.txt")
+    os.chdir("..")
 
 
 def save_changed_files_and_date(staged_files):
