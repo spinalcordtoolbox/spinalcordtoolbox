@@ -24,12 +24,6 @@ from msct_parser import Parser
 from msct_image import Image
 
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-        self.remove_tmp_files = '1'
-
-
 # PARSER
 # ==========================================================================================
 def get_parser():
@@ -65,13 +59,13 @@ def get_parser():
                       type_value="multiple_choice",
                       description="Remove temporary files.",
                       mandatory=False,
-                      default_value=param.remove_tmp_files,
+                      default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
                       mandatory=False,
-                      default_value=param.verbose,
+                      default_value='1',
                       example=['0', '1', '2'])
     parser.add_option(name="-h",
                       type_value=None,
@@ -106,16 +100,16 @@ def main(args=None):
         initz = arguments['-initz']
     if '-initcenter' in arguments:
         initcenter = arguments['-initcenter']
-    param.verbose = int(arguments['-v'])
-    param.remove_tmp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
+    remove_tmp_files = int(arguments['-r'])
 
     # create temporary folder
-    printv('\nCreate temporary folder...', param.verbose)
+    printv('\nCreate temporary folder...', verbose)
     path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, param.verbose)
+    run('mkdir '+path_tmp, verbose)
 
     # Copying input data to tmp folder
-    printv('\nCopying input data to tmp folder...', param.verbose)
+    printv('\nCopying input data to tmp folder...', verbose)
     run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
@@ -124,7 +118,7 @@ def main(args=None):
     chdir(path_tmp)
 
     # create label to identify disc
-    printv('\nCreate label to identify disc...', param.verbose)
+    printv('\nCreate label to identify disc...', verbose)
     if initz:
         create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
     elif initcenter:
@@ -138,34 +132,34 @@ def main(args=None):
         printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
+    printv('\nStraighten spinal cord...', verbose)
     run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
+    printv('\nApply straightening to segmentation...', verbose)
     run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
     # Threshold segmentation to 0.5
     run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
 
     # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
+    printv('\nDilate z-label and apply straightening...', verbose)
     run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
-    printv('\nGet z and disc values from straight label...', param.verbose)
+    printv('\nGet z and disc values from straight label...', verbose)
     init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-    printv('.. '+str(init_disc), param.verbose)
+    printv('.. '+str(init_disc), verbose)
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc)
+    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
     # un-straighten spinal cord
-    printv('\nUn-straighten labeling...', param.verbose)
+    printv('\nUn-straighten labeling...', verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
     # Clean labeled segmentation
-    printv('\nClean labeled segmentation (correct interpolation errors)...', param.verbose)
+    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
     # Build fname_out
@@ -177,23 +171,23 @@ def main(args=None):
     chdir('..')
 
     # Generate output files
-    printv('\nGenerate output files...', param.verbose)
+    printv('\nGenerate output files...', verbose)
     generate_output_file(path_tmp+'segmentation_labeled.nii.gz', fname_out)
 
     # Remove temporary files
-    if param.remove_tmp_files == 1:
-        printv('\nRemove temporary files...', param.verbose)
+    if remove_tmp_files == 1:
+        printv('\nRemove temporary files...', verbose)
         run('rm -rf '+path_tmp)
 
     # to view results
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', param.verbose, 'info')
+    printv('\nDone! To view results, type:', verbose)
+    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, init_disc):
+def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
@@ -205,7 +199,6 @@ def vertebral_detection(fname, fname_seg, init_disc):
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     fig_corr = 3  # handle for figure
-    verbose = param.verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
     mean_distance = np.array([18, 16, 17.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
     19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
@@ -636,7 +629,5 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()
