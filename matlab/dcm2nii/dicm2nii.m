@@ -1801,7 +1801,7 @@ end
 %% Subfuction: create GUI or bring it to front if exists
 function create_gui
 set(0,'DefaultFigureWindowStyle','normal')
-fh = figure(typecast(uint8('dicm'), 'uint32')); % arbitury integer
+fh = figure; % arbitury integer
 if strcmp('dicm2nii_fig', get(fh, 'Tag')), return; end
 scrSz = get(0, 'ScreenSize');
 set(fh, 'Toolbar', 'none', 'Menubar', 'none', 'Resize', 'off', ...
