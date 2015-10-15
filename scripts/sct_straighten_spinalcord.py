@@ -75,6 +75,7 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
     # window_length = param.window_length
     # type_window = param.type_window
     # algo_fitting = param.algo_fitting
+    remove_edge_points = 2  # remove points at the edge (issue #513)
 
     sct.printv('\nSmooth centerline/segmentation...', verbose)
 
@@ -122,9 +123,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
         # Smooth the curve
         x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose, robust=0)
+                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
         y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose, robust=0)
+                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
 
         # convert to list final result
         x_centerline_smooth = x_centerline_smooth.tolist()
