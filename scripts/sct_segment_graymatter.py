@@ -215,10 +215,10 @@ class FullGmSegmentation:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_ratio(self):
-        sct.run('sct_process_segmentation -i '+self.res_names['gm_seg']+' -p csa -o gm_csa ')
+        sct.run('sct_process_segmentation -i '+self.res_names['gm_seg']+' -p csa -o gm_csa ', error_exit='warning')
         sct.run('mv csa.txt gm_csa.txt')
 
-        sct.run('sct_process_segmentation -i '+self.res_names['corrected_wm_seg']+' -p csa -o wm_csa ')
+        sct.run('sct_process_segmentation -i '+self.res_names['corrected_wm_seg']+' -p csa -o wm_csa ', error_exit='warning')
         sct.run('mv csa.txt wm_csa.txt')
 
         gm_csa = open('gm_csa.txt', 'r')
