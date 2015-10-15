@@ -295,17 +295,14 @@ def main():
         point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
 
-    from numpy import mean
-    # for an unknown reason, the "FixedParameters" numbers in txt transform file correspond quite well to the
-    # center of mass of the fixed points...
-    points_fixed_barycenter = mean(points_fixed, axis=0)
-
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
 
     import msct_register_landmarks
+    # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
+    # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-            msct_register_landmarks.getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
 
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
@@ -313,15 +310,15 @@ def main():
     text_file.write("#Transform 0\n")
     text_file.write("Transform: AffineTransform_double_3_3\n")
     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-        1.0 / rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
-        rotation_matrix[1, 0], 1.0 / rotation_matrix[1, 1], rotation_matrix[1, 2],
-        rotation_matrix[2, 0], rotation_matrix[2, 1], 1.0 / rotation_matrix[2, 2],
-        translation_array[0, 0], translation_array[0, 1], -translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_fixed_barycenter[0],
-                                                           points_fixed_barycenter[1],
-                                                           points_fixed_barycenter[2]))
+        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
+        rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
+        rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
+        -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+                                                           -points_moving_barycenter[1],
+                                                           points_moving_barycenter[2]))
     text_file.close()
-
+    
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
