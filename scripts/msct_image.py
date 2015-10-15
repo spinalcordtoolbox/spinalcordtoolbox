@@ -305,6 +305,29 @@ class Image(object):
 
         return list_coordinates
 
+    def getCoordinatesAveragedByValue(self):
+        """
+        This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
+        :return: list of coordinates that represent the center of mass of each group of value.
+        """
+        # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
+        coordinates = self.getNonZeroCoordinates(sorting='value')
+
+        # 2. Separate all coordinates into groups by value
+        groups = dict()
+        for coord in coordinates:
+            if coord.value in groups:
+                groups[coord.value].append(coord)
+            else:
+                groups[coord.value] = [coord]
+
+        # 3. Compute the center of mass of each group of voxels and write them into the output image
+        averaged_coordinates = []
+        for value, list_coord in groups.iteritems():
+            averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
+
+        return averaged_coordinates
+
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
     def crop_and_stack(self, mask, suffix='_resized', save=True):
