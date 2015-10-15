@@ -41,6 +41,12 @@ import copy_reg
 import types
 import signal
 import pandas as pd
+import commands
+# get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+sys.path.append(path_sct + '/testing')
 
 
 def _pickle_method(method):
