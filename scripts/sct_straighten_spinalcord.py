@@ -122,9 +122,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
         # Smooth the curve
         x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose, robust=1)
+                                               verbose=verbose, robust=0)
         y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose, robust=1)
+                                               verbose=verbose, robust=0)
 
         # convert to list final result
         x_centerline_smooth = x_centerline_smooth.tolist()
@@ -464,7 +464,7 @@ class SpinalCordStraightener(object):
             fname_anat_resampled = file_anat + "_resampled.nii.gz"
             sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_anat_resampled)
             fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x nn -o ' + fname_centerline_resampled)
+            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_centerline_resampled)
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
@@ -780,7 +780,7 @@ class SpinalCordStraightener(object):
                     mean_coord.append(mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
                                             for coord in coordinates_centerline if coord.z == z], axis=0))
 
-            # compute error between the input data and the nurbs
+            # compute error between the straightened centerline and the straight line.
             from math import sqrt
             x0 = file_centerline_straight.data.shape[0]/2.0
             y0 = file_centerline_straight.data.shape[1]/2.0
