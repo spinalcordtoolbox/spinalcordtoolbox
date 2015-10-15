@@ -23,6 +23,7 @@ from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
 from shutil import move
+from sct_label_utils import ProcessLabels
 
 
 # get path of the toolbox
@@ -254,12 +255,6 @@ def main():
     move(fname_seg_rpi, 'segmentation_rpi.nii.gz')
 
 
-    # # Change orientation of input images to RPI
-    # sct.printv('\nChange orientation of input images to RPI...', verbose)
-    # set_orientation('data.nii', 'RPI', 'data_rpi.nii')
-    # set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
-    # set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
-
     # get landmarks in native space
     # crop segmentation
     # output: segmentation_rpi_crop.nii.gz
@@ -278,83 +273,66 @@ def main():
     sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
     sct.run('sct_label_utils -t remove -i template_labels.nii.gz -o template_label.nii.gz -r landmarks_rpi.nii.gz')
 
-    # Make sure landmarks are INT
-    sct.printv('\nConvert landmarks to INT...', verbose)
-    convert('template_label.nii.gz', 'template_label.nii.gz', type='int32')
-
-    # Create a cross for the template labels - 5 mm
-    sct.printv('\nCreate a 5 mm cross for the template labels...', verbose)
-    sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
-
-    # Create a cross for the input labels and dilate for straightening preparation - 5 mm
-    sct.printv('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...', verbose)
-    sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
-
-    # Cropping also the labels before applying straightening
-    sct.run('sct_crop_image -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_crop.nii.gz -dim 2 -start ' + cropping_slices[0] + ' -end ' + cropping_slices[1])
+    # Dilating the input label so they can be straighten without losing them
+    sct.printv('\nDilating input labels using 3vox ball radius')
+    sct.run('sct_maths -i landmarks_rpi.nii.gz -o landmarks_rpi_dilated.nii.gz -dilate 3')
 
     # Apply straightening to labels
     sct.printv('\nApply straightening to labels...', verbose)
-    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3_crop.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
+    sct.run('sct_apply_transfo -i landmarks_rpi_dilated.nii.gz -o landmarks_rpi_dilated_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
-    # Convert landmarks from FLOAT32 to INT
-    sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
-    convert('landmarks_rpi_cross3x3_straight.nii.gz', 'landmarks_rpi_cross3x3_straight.nii.gz', type='int32')
+    # Create crosses for the template labels and get coordinates
+    sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
+    template_image = Image('template_label.nii.gz')
+    coordinates_input = template_image.getNonZeroCoordinates()
+    landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    if verbose == 2:
+        template_image.setFileName('template_label_cross.nii.gz')
+        template_image.save(type='minimize_int')
 
-    # Remove labels that do not correspond with each others.
-    sct.printv('\nRemove labels that do not correspond with each others.', verbose)
-    sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
+    # Create crosses for the input labels into straight space and get coordinates
+    sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
+    label_straight_image = Image('landmarks_rpi_dilated_straight.nii.gz')
+    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
+    landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    if verbose == 2:
+        label_straight_image.setFileName('landmarks_rpi_dilated_straight_cross.nii.gz')
+        label_straight_image.save(type='minimize_int')
 
-    # Estimate affine transfo: straight --> template (landmark-based)'
-    sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
-
-    # converting landmarks straight and curved to physical coordinates
-    image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
-    landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
-    image_template = Image('template_label_cross.nii.gz')
-    landmark_template = image_template.getNonZeroCoordinates(sorting='value')
     # Reorganize landmarks
     points_fixed, points_moving = [], []
-    landmark_straight_mean = []
     for coord in landmark_straight:
-        if coord.value not in [c.value for c in landmark_straight_mean]:
-            temp_landmark = coord
-            temp_number = 1
-            for other_coord in landmark_straight:
-                if coord.hasEqualValue(other_coord) and coord != other_coord:
-                    temp_landmark += other_coord
-                    temp_number += 1
-            landmark_straight_mean.append(temp_landmark / temp_number)
-
-    for coord in landmark_straight_mean:
-        point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+
     for coord in landmark_template:
-        point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
 
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+
     import msct_register_landmarks
+    # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
+    # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-        msct_register_landmarks.getRigidTransformFromLandmarks(
-            points_fixed, points_moving, constraints='translation-scaling-z', show=False)
+            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
 
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
     text_file.write("#Transform 0\n")
-    text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
+    text_file.write("Transform: AffineTransform_double_3_3\n")
     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-        1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
-        rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
-        rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
-        translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
-                                                           points_moving_barycenter[1],
+        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
+        rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
+        rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
+        -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+                                                           -points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
-
+    
     # Apply affine transformation: straight --> template
     sct.printv('\nApply affine transformation: straight --> template...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')

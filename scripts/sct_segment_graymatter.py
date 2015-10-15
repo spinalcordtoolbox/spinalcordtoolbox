@@ -72,11 +72,23 @@ class Preprocessing:
 
         self.original_orientation = t2star_im.orientation
 
-        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
+        box_size = int(22.5/self.resample_to)
+
+        # Pad in case the spinal cord is too close to the edges
+        pad_size = box_size/2
+        self.pad = [str(pad_size)]*3
+        index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
+        self.pad[index_z] = str(0)
+        self.t2star_pad = sct.add_suffix(self.t2star, '_pad')
+        self.sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
+        # TODO: replace sct_maths by sct_image here after merging pull request #580
+        sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
+        sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
+        self.square_mask, self.processed_target = crop_t2_star(self.t2star_pad, self.sc_seg_pad, box_size=box_size)
 
         self.level_fname = None
         if t2_data is not None:
-            self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
+            self.level_fname = compute_level_file(self.t2star_pad, self.sc_seg_pad, self.t2, self.t2_seg, self.t2_landmarks)
         elif level_fname is not None:
             self.level_fname = level_file_name + level_ext
             level_orientation = get_orientation(self.level_fname, filename=True)
@@ -172,16 +184,22 @@ class FullGmSegmentation:
             res_im_original_space.save()
             res_im_original_space = set_orientation(res_im_original_space, self.preprocessed.original_orientation)
             res_im_original_space.save()
+            res_fname_original_space = res_im_original_space.file_name
+            ext = res_im_original_space.ext
+
+            # crop from the same pad size
+            output_crop = res_fname_original_space+'_crop'
+            sct.run('sct_crop_image -i '+res_fname_original_space+ext+' -dim 0,1,2 -start '+self.preprocessed.pad[0]+','+self.preprocessed.pad[1]+','+self.preprocessed.pad[2]+' -end -'+self.preprocessed.pad[0]+',-'+self.preprocessed.pad[1]+',-'+self.preprocessed.pad[2]+' -o '+output_crop+ext)
+            res_fname_original_space = output_crop
 
             target_path, target_name, target_ext = sct.extract_fname(self.target_fname)
-
             res_name = target_name + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
             else:
                 bin = False
-            old_res_name = resample_image(res_im_original_space.file_name+target_ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
+            old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
@@ -196,10 +214,10 @@ class FullGmSegmentation:
 
     # ------------------------------------------------------------------------------------------------------------------
     def compute_ratio(self):
-        sct.run('sct_process_segmentation -i '+self.res_names['gm_seg']+' -p csa -o gm_csa ')
+        sct.run('sct_process_segmentation -i '+self.res_names['gm_seg']+' -p csa -o gm_csa ', error_exit='warning')
         sct.run('mv csa.txt gm_csa.txt')
 
-        sct.run('sct_process_segmentation -i '+self.res_names['corrected_wm_seg']+' -p csa -o wm_csa ')
+        sct.run('sct_process_segmentation -i '+self.res_names['corrected_wm_seg']+' -p csa -o wm_csa ', error_exit='warning')
         sct.run('mv csa.txt wm_csa.txt')
 
         gm_csa = open('gm_csa.txt', 'r')
