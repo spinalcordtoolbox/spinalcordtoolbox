@@ -480,10 +480,7 @@ class SpinalCordStraightener(object):
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
             
             # smooth centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
-                z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting,
-                                                       type_window=type_window, window_length=window_length,
-                                                       verbose=verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
 
             # Get coordinates of landmarks along curved centerline
             # ==========================================================================================
