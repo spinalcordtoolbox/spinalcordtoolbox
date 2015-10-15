@@ -72,11 +72,23 @@ class Preprocessing:
 
         self.original_orientation = t2star_im.orientation
 
-        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=int(22.5/self.resample_to))
+        box_size = int(22.5/self.resample_to)
+
+        # Pad in case the spinal cord is too close to the edges
+        pad_size = box_size/2
+        self.pad = [str(pad_size)]*3
+        index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
+        self.pad[index_z] = str(0)
+        self.t2star_pad = sct.add_suffix(self.t2star, '_pad')
+        self.sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
+        # TODO: replace sct_maths by sct_image here after merging pull request #580
+        sct.run('sct_maths -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
+        sct.run('sct_maths -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
+        self.square_mask, self.processed_target = crop_t2_star(self.t2star_pad, self.sc_seg_pad, box_size=box_size)
 
         self.level_fname = None
         if t2_data is not None:
-            self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
+            self.level_fname = compute_level_file(self.t2star_pad, self.sc_seg_pad, self.t2, self.t2_seg, self.t2_landmarks)
         elif level_fname is not None:
             status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext)
             # level_orientation = level_orientation[4:7]
@@ -172,14 +184,23 @@ class FullGmSegmentation:
         for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg, self.gm_seg.corrected_wm_seg]:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
-            sct.run('sct_orientation -i ' + res_im_original_space.file_name + '.nii.gz -s ' + self.preprocessed.original_orientation)
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
+            ext = res_im_original_space.ext
+            sct.run('sct_orientation -i '+res_im_original_space.file_name+ext+' -s ' + self.preprocessed.original_orientation)
+            res_fname_original_space = res_im_original_space.file_name+'_'+self.preprocessed.original_orientation
+
+            # crop from the same pad size
+            output_crop = res_fname_original_space+'_crop'
+            sct.run('sct_crop_image -i '+res_fname_original_space+ext+' -dim 0,1,2 -start '+self.preprocessed.pad[0]+','+self.preprocessed.pad[1]+','+self.preprocessed.pad[2]+' -end -'+self.preprocessed.pad[0]+',-'+self.preprocessed.pad[1]+',-'+self.preprocessed.pad[2]+' -o '+output_crop+ext)
+            res_fname_original_space = output_crop
+
+
+            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + ext
 
             if self.param.res_type == 'binary':
                 bin = True
             else:
                 bin = False
-            old_res_name = resample_image(res_im_original_space.file_name + '_RPI.nii.gz', npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
+            old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
