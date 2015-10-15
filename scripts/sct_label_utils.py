@@ -102,26 +102,12 @@ class ProcessLabels(object):
             else:
                 self.output_image.save()
 
-    def cross(self):
-        """
-        create a cross.
-        :return:
-        """
+    @staticmethod
+    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
         from msct_types import Coordinate
 
-        output_image = Image(self.image_input, self.verbose)
-        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
-
-        coordinates_input = self.image_input.getNonZeroCoordinates()
-        d = self.cross_radius  # cross radius in pixel
-        dx = d / px  # cross radius in mm
-        dy = d / py
-
-        # clean output_image
-        output_image.data *= 0
-
         # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
-        if self.image_ref is not None:
+        if image_ref is not None:
             # smooth centerline
             from sct_straighten_spinalcord import smooth_centerline
             x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
@@ -129,21 +115,21 @@ class ProcessLabels(object):
         # compute crosses
         cross_coordinates = []
         for coord in coordinates_input:
-            if self.image_ref is None:
+            if image_ref is None:
                 from sct_straighten_spinalcord import compute_cross
-                cross_coordinates_temp = compute_cross(coord, dx)
+                cross_coordinates_temp = compute_cross(coord, gapxy)
             else:
                 from sct_straighten_spinalcord import compute_cross_centerline
                 from numpy import where
                 index_z = where(z_centerline == coord.z)
                 deriv = Coordinate([x_centerline_deriv[index_z][0], y_centerline_deriv[index_z][0], z_centerline_deriv[index_z][0], 0.0])
-                cross_coordinates_temp = compute_cross_centerline(coord, deriv, dx)
+                cross_coordinates_temp = compute_cross_centerline(coord, deriv, gapxy)
 
             for i, coord_cross in enumerate(cross_coordinates_temp):
                 coord_cross.value = coord.value * 10 + i + 1
 
             # dilate cross to 3x3x3
-            if self.dilate:
+            if dilate:
                 additional_coordinates = []
                 for coord_temp in cross_coordinates_temp:
                     additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
@@ -178,6 +164,26 @@ class ProcessLabels(object):
                 cross_coordinates_temp.extend(additional_coordinates)
 
             cross_coordinates.extend(cross_coordinates_temp)
+
+        return cross_coordinates
+
+    def cross(self):
+        """
+        create a cross.
+        :return:
+        """
+        output_image = Image(self.image_input, self.verbose)
+        nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
+
+        coordinates_input = self.image_input.getNonZeroCoordinates()
+        d = self.cross_radius  # cross radius in pixel
+        dx = d / px  # cross radius in mm
+        dy = d / py
+
+        # clean output_image
+        output_image.data *= 0
+
+        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
 
         for coord in cross_coordinates:
             output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
