@@ -227,22 +227,6 @@ def main():
     if complete_test:
         print (status, output), '\n'
 
-    # Check ANTs integrity
-    print_line('Check integrity of ANTs output ')
-    cmd_ants_test = 'isct_test_ants'
-    # if not complete_test:
-    #     cmd_ants_test += ' -v 0'
-    (status, output) = commands.getstatusoutput(cmd_ants_test)
-    if status in [0]:
-        print_ok()
-    else:
-        print_fail()
-        print output
-        e = 1
-    if complete_test:
-        print (status, output), '\n'
-    print
-    
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
