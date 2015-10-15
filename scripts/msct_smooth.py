@@ -504,8 +504,8 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
 
     # outlier detection
     if robust:
-        mask = outliers_detection(x)
-        x = outliers_completion(mask)
+        mask = outliers_detection(x, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+        x = outliers_completion(mask, verbose=0)
 
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
