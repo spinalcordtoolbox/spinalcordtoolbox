@@ -70,11 +70,12 @@ copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0):
     """
     :param fname_centerline: centerline in RPI orientation, or an Image
-    :return: a bunch of useful stuff
+    :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
     """
     # window_length = param.window_length
     # type_window = param.type_window
     # algo_fitting = param.algo_fitting
+    remove_edge_points = 2  # remove points at the edge (issue #513)
 
     sct.printv('\nSmooth centerline/segmentation...', verbose)
 
@@ -122,9 +123,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
         # Smooth the curve
         x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose)
+                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
         y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose)
+                                               verbose=verbose, robust=0, remove_edge_points=remove_edge_points)
 
         # convert to list final result
         x_centerline_smooth = x_centerline_smooth.tolist()
@@ -464,7 +465,7 @@ class SpinalCordStraightener(object):
             fname_anat_resampled = file_anat + "_resampled.nii.gz"
             sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_anat_resampled)
             fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x nn -o ' + fname_centerline_resampled)
+            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_centerline_resampled)
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
@@ -480,10 +481,7 @@ class SpinalCordStraightener(object):
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
             
             # smooth centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, \
-                z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting,
-                                                       type_window=type_window, window_length=window_length,
-                                                       verbose=verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
 
             # Get coordinates of landmarks along curved centerline
             # ==========================================================================================
@@ -780,7 +778,7 @@ class SpinalCordStraightener(object):
                     mean_coord.append(mean([[coord.x * coord.value / mean_value, coord.y * coord.value / mean_value]
                                             for coord in coordinates_centerline if coord.z == z], axis=0))
 
-            # compute error between the input data and the nurbs
+            # compute error between the straightened centerline and the straight line.
             from math import sqrt
             x0 = file_centerline_straight.data.shape[0]/2.0
             y0 = file_centerline_straight.data.shape[1]/2.0
