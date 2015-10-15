@@ -70,7 +70,7 @@ copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0):
     """
     :param fname_centerline: centerline in RPI orientation, or an Image
-    :return: a bunch of useful stuff
+    :return: x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
     """
     # window_length = param.window_length
     # type_window = param.type_window
@@ -122,9 +122,9 @@ def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='han
 
         # Smooth the curve
         x_centerline_smooth = smoothing_window(x_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose)
+                                               verbose=verbose, robust=1)
         y_centerline_smooth = smoothing_window(y_centerline, window_len=window_length/pz, window=type_window,
-                                               verbose=verbose)
+                                               verbose=verbose, robust=1)
 
         # convert to list final result
         x_centerline_smooth = x_centerline_smooth.tolist()
