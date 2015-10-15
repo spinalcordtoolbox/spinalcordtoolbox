@@ -449,7 +449,7 @@ Modified on """ + str(self.get_modif_date_time())
         from commands import getstatusoutput
         from os.path import basename
         status, path_sct = getstatusoutput('echo $SCT_DIR')
-        fname = str(path_sct)+'/bin/modif.txt'
+        fname = str(path_sct)+'/scripts/modif.txt'
         content = ""
         with open(fname, mode = 'r+') as f:
             content = f.readlines()
