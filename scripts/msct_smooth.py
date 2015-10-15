@@ -467,7 +467,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
+def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, remove_edge_points=2):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -482,7 +482,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
             flat window will produce a moving average smoothing.
 
     output:
-        y: the smoothed signal (type: array)
+        y: the smoothed signal (type: array). Same size as x.
 
     example:
 
@@ -501,11 +501,10 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
     from math import ceil, floor
     import sct_utils as sct
 
-
     # outlier detection
     if robust:
-        mask = outliers_detection(x)
-        x = outliers_completion(mask)
+        mask = outliers_detection(x, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+        x = outliers_completion(mask, verbose=0)
 
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
@@ -529,21 +528,21 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
 
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
 
+    # Extend the curve before smoothing using mirroring technique, to avoid edge effect during smoothing
+    x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
+    x_extended_tmp = x_extended
+    size_curve = x.size
+    size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
+
+    for i in range(size_padding):
+        x_extended = append(x_extended, 2*x_extended_tmp[-1] - x_extended_tmp[-2-i])
+        x_extended = insert(x_extended, 0, 2*x_extended_tmp[0] - x_extended_tmp[i+1])
+
     # Creation of the window
     if window == 'flat': #moving average
         w = ones(window_len, 'd')
     else:
         w = eval(window+'(window_len_int)')
-
-    ##Implementation of an extended curve to apply the smoothing on in order to avoid edge effects
-    # Extend the curve before smoothing
-    x_extended = x
-    size_curve = x.shape[0]
-    size_padding = int(round((window_len_int-1)/2.0))
-
-    for i in range(size_padding):
-        x_extended = append(x_extended, 2*x[-1] - x[-2-i])
-        x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
     # Convolution of the window with the extended signal
     y = convolve(x_extended, w/w.sum(), mode='valid')
