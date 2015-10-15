@@ -165,6 +165,7 @@ class ProcessLabels(object):
 
             cross_coordinates.extend(cross_coordinates_temp)
 
+        cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
     def cross(self):
