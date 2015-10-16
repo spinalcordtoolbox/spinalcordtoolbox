@@ -242,7 +242,7 @@ def create_mask():
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        sct.run('rm -rf '+path_tmp, param.verbose, error_exit='warning')
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
