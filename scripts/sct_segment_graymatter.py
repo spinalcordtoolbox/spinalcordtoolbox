@@ -76,7 +76,7 @@ class Preprocessing:
         box_size = int(22.5/self.resample_to)
 
         # Pad in case the spinal cord is too close to the edges
-        pad_size = box_size/2
+        pad_size = box_size/2 + 2
         self.pad = [str(pad_size)]*3
         index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
         self.pad[index_z] = str(0)
