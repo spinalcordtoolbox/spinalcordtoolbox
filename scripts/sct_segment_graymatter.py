@@ -143,7 +143,7 @@ class FullGmSegmentation:
         else:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
-            b = '0.5,1'
+            b = '0.3,1'
         sct.printv('fslview ' + self.target_fname + ' ' + self.res_names['wm_seg'] + ' -l ' + wm_col + ' -t 0.4 -b ' + b + ' ' + self.res_names['gm_seg'] + ' -l ' + gm_col + ' -t 0.4  -b ' + b + ' &', param.verbose, 'info')
 
     # ------------------------------------------------------------------------------------------------------------------
