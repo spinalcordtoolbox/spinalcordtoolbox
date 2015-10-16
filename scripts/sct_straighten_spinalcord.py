@@ -463,9 +463,9 @@ class SpinalCordStraightener(object):
             # resample data to 1mm isotropic
             sct.printv('\nResample data to 1mm isotropic...', verbose)
             fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_anat_resampled)
+            sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_anat_resampled)
             fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_centerline_resampled)
+            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_centerline_resampled)
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
