@@ -22,12 +22,10 @@ import sct_utils as sct
 from numpy import mgrid, zeros, exp, unravel_index, argmax, poly1d, polyval, linalg, max, polyfit, sqrt, abs, savetxt
 import glob
 from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
-from sct_split_data import split_data
-from sct_concat_data import concat_data
-from sct_copy_header import copy_header
+from sct_image import copy_header, split_data, concat_data
 
 
 class Param:
@@ -85,7 +83,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     file_schedule = path_sct + param.schedule_file
 
     # Get input image orientation
-    input_image_orientation = get_orientation(fname_anat)
+    input_image_orientation = get_orientation(fname_anat, filename=True)
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -108,16 +106,18 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     os.chdir(path_tmp)
 
     # convert to nii
-    convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
-    convert('tmp.point'+ext_point, 'tmp.point.nii')
+    im_anat = convert('tmp.anat'+ext_anat, 'tmp.anat.nii')
+    im_point = convert('tmp.point'+ext_point, 'tmp.point.nii')
 
     # Reorient input anatomical volume into RL PA IS orientation
     print '\nReorient input volume to RL PA IS orientation...'
-    set_orientation('tmp.anat.nii', 'RPI', 'tmp.anat_orient.nii')
+    set_orientation(im_anat, 'RPI')
+    im_anat.setFileName('tmp.anat_orient.nii')
     # Reorient binary point into RL PA IS orientation
     print '\nReorient binary point into RL PA IS orientation...'
     # sct.run(sct.fsloutput + 'fslswapdim tmp.point RL PA IS tmp.point_orient')
-    set_orientation('tmp.point.nii', 'RPI', 'tmp.point_orient.nii')
+    set_orientation(im_point, 'RPI')
+    im_point.setFileName('tmp.point_orient.nii')
 
     # Get image dimensions
     print '\nGet image dimensions...'
@@ -127,10 +127,17 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Split input volume
     print '\nSplit input volume...'
-    split_data('tmp.anat_orient.nii', 2, '_z')
-    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
-    split_data('tmp.point_orient.nii', 2, '_z')
-    file_point_split = ['tmp.point_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    im_anat_split_list = split_data(im_anat, 2)
+    file_anat_split = []
+    for im in im_anat_split_list:
+        file_anat_split.append(im.absolutepath)
+        im.save()
+
+    im_point_split_list = split_data(im_point, 2)
+    file_point_split = []
+    for im in im_point_split_list:
+        file_point_split.append(im.absolutepath)
+        im.save()
 
     # Extract coordinates of input point
     data_point = Image('tmp.point_orient.nii').data
@@ -146,16 +153,16 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     mask2d = exp(-(((xx-x_init)**2)/(2*(sigma**2)) + ((yy-y_init)**2)/(2*(sigma**2))))
 
     # Save mask to 2d file
-    file_mask_split = ['tmp.mask_orient_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    nii_mask2d = Image('tmp.anat_orient_z0000.nii')
+    file_mask_split = ['tmp.mask_orient_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    nii_mask2d = Image('tmp.anat_orient_Z0000.nii')
     nii_mask2d.data = mask2d
     nii_mask2d.setFileName(file_mask_split[z_init]+'.nii')
     nii_mask2d.save()
 
     # initialize variables
-    file_mat = ['tmp.mat_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv = ['tmp.mat_inv_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat = ['tmp.mat_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv = ['tmp.mat_inv_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0,nz,1)]
 
     # create identity matrix for initial transformation matrix
     fid = open(file_mat_inv_cumul[z_init], 'w')
@@ -341,15 +348,32 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    concat_data(glob.glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
-    concat_data(glob.glob('tmp.mask_orient_fit_z*.nii'), 'tmp.mask_orient_fit.nii', dim=2)
-    concat_data(glob.glob('tmp.point_orient_fit_z*.nii'), 'tmp.point_orient_fit.nii', dim=2)
+    im_anat_list = [Image(fname) for fname in glob.glob('tmp.anat_orient_fit_z*.nii')]
+    im_anat_concat = concat_data(im_anat_list, 2)
+    im_anat_concat.setFileName('tmp.anat_orient_fit.nii')
+    im_anat_concat.save()
+
+    im_mask_list = [Image(fname) for fname in glob.glob('tmp.mask_orient_fit_z*.nii')]
+    im_mask_concat = concat_data(im_mask_list, 2)
+    im_mask_concat.setFileName('tmp.mask_orient_fit.nii')
+    im_mask_concat.save()
+
+    im_point_list = [Image(fname) for fname in 	glob.glob('tmp.point_orient_fit_z*.nii')]
+    im_point_concat = concat_data(im_point_list, 2)
+    im_point_concat.setFileName('tmp.point_orient_fit.nii')
+    im_point_concat.save()
 
     # Copy header geometry from input data
     print '\nCopy header geometry from input data...'
-    copy_header('tmp.anat_orient.nii', 'tmp.anat_orient_fit.nii')
-    copy_header('tmp.anat_orient.nii', 'tmp.mask_orient_fit.nii')
-    copy_header('tmp.anat_orient.nii', 'tmp.point_orient_fit.nii')
+    im_anat = Image('tmp.anat_orient.nii')
+    im_anat_orient_fit = Image('tmp.anat_orient_fit.nii')
+    im_mask_orient_fit = Image('tmp.mask_orient_fit.nii')
+    im_point_orient_fit = Image('tmp.point_orient_fit.nii')
+    im_anat_orient_fit = copy_header(im_anat, im_anat_orient_fit)
+    im_mask_orient_fit = copy_header(im_anat, im_mask_orient_fit)
+    im_point_orient_fit = copy_header(im_anat, im_point_orient_fit)
+    for im in [im_anat_orient_fit, im_mask_orient_fit, im_point_orient_fit]:
+        im.save()
 
     # Reorient outputs into the initial orientation of the input image
     print '\nReorient the centerline into the initial orientation of the input image...'
@@ -396,15 +420,15 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     ## Concatenation of the files
 
     # Concatenation : sum of matrices
-    file_0 = load('data.nii')
-    data_concatenation = file_0.get_data()
-    hdr_0 = file_0.get_header()
-    orientation_file_0 = get_orientation('data.nii')
+    file_0 = Image('data.nii')
+    data_concatenation = file_0.data
+    hdr_0 = file_0.hdr
+    orientation_file_0 = get_orientation(file_0)
     if len(list_fname_labels) > 0:
        for i in range(0, len(list_fname_labels)):
-            orientation_file_temp = get_orientation(file_labels[i])
+            orientation_file_temp = get_orientation(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp :
-                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_orientation to change the orientation of a file."
+                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_image -setorient to change the orientation of a file."
                 sys.exit(2)
             file_temp = load(file_labels[i])
             data_temp = file_temp.get_data()
