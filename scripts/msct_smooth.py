@@ -526,12 +526,19 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, 
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
 
+    # make sure there are enough points before removing those at the edge
+    size_curve = x.size
+    if size_curve < 10:
+        remove_edge_points = 0
+
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
 
     # Extend the curve before smoothing using mirroring technique, to avoid edge effect during smoothing
-    x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
+    if not remove_edge_points == 0:
+        x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
+    else:
+        x_extended = x
     x_extended_tmp = x_extended
-    size_curve = x.size
     size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
 
     for i in range(size_padding):
