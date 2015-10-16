@@ -437,7 +437,7 @@ class Usage:
 """+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-Modified on """ + str(self.get_modif_date_time())
+Version: """ + str(self.get_sct_version())
 
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
@@ -445,22 +445,16 @@ Modified on """ + str(self.get_modif_date_time())
     def addSection(self, section):
         self.section[len(self.arguments)+1] = section
 
-    def get_modif_date_time(self):
+    def get_sct_version(self):
         from commands import getstatusoutput
         from os.path import basename
         status, path_sct = getstatusoutput('echo $SCT_DIR')
-        fname = str(path_sct)+'/scripts/modif.txt'
+        fname = str(path_sct)+'/version.txt'
         content = ""
         with open(fname, mode = 'r+') as f:
             content = f.readlines()
         f.close()
-
-        for line in content:
-            if line.find(basename(self.file)) != -1:
-                result = line.split('=')
-                return result[1]
-
-        return ''
+        return content[0]
 
     def set_usage(self):
         from os.path import basename
