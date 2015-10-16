@@ -8,6 +8,9 @@
 # download example data (errsm_30)
 sct_download_data -d sct_example_data
 
+# display starting time:
+echo "Started at: $(date +%x_%r)"
+
 # go in folder
 cd sct_example_data
 
@@ -164,3 +167,6 @@ sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 
 # check results
 fslview fmri_moco_mean -b 0,1300 label/spinal_levels/spinal_level_C3.nii.gz -l Red -b 0,0.05 label/spinal_levels/spinal_level_C4.nii.gz -l Blue -b 0,0.05 label/spinal_levels/spinal_level_C5.nii.gz -l Green -b 0,0.05 label/spinal_levels/spinal_level_C6.nii.gz -l Yellow -b 0,0.05 label/spinal_levels/spinal_level_C7.nii.gz -l Pink -b 0,0.05 &
 # also see: https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/result_batch_processing_fmri.png
+
+# display ending time:
+echo "Ended at: $(date +%x_%r)"
