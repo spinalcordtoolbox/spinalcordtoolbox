@@ -18,6 +18,7 @@ from msct_parser import *
 from msct_image import Image, get_dimension
 from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
+from sct_image import set_orientation, get_orientation, pad_image
 import shutil
 
 
@@ -55,9 +56,19 @@ class Preprocessing:
         # preprocessing
         os.chdir(tmp_dir)
         t2star_im = Image(self.t2star)
+        sc_seg_im = Image(self.sc_seg)
         self.original_header = t2star_im.hdr
+        self.original_orientation = t2star_im.orientation
+        index_x = self.original_orientation.find('R') if 'R' in self.original_orientation else self.original_orientation.find('L')
+        index_y = self.original_orientation.find('P') if 'P' in self.original_orientation else self.original_orientation.find('A')
+        index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
+
         # resampling of the images
-        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = t2star_im.dim
+        nx, ny, nz, nt, px, py, pz, pt = t2star_im.dim
+
+        pix_dim = [px, py, pz]
+        self.original_px = pix_dim[index_x]
+        self.original_py = pix_dim[index_y]
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
             self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
@@ -71,24 +82,34 @@ class Preprocessing:
             t2star_im.save()
             self.t2star = t2star_im.file_name + t2star_im.ext
 
-        self.original_orientation = t2star_im.orientation
-
         box_size = int(22.5/self.resample_to)
 
         # Pad in case the spinal cord is too close to the edges
         pad_size = box_size/2 + 2
         self.pad = [str(pad_size)]*3
-        index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
+
         self.pad[index_z] = str(0)
-        self.t2star_pad = sct.add_suffix(self.t2star, '_pad')
-        self.sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
-        sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
-        sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
-        self.square_mask, self.processed_target = crop_t2_star(self.t2star_pad, self.sc_seg_pad, box_size=box_size)
+
+        t2star_pad = sct.add_suffix(self.t2star, '_pad')
+        sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
+        sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+t2star_pad)
+        sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+sc_seg_pad)
+        self.t2star = t2star_pad
+        self.sc_seg = sc_seg_pad
+
+        # put data in RPI
+        t2star_rpi = sct.add_suffix(self.t2star, '_RPI')
+        sc_seg_rpi = sct.add_suffix(self.sc_seg, '_RPI')
+        sct.run('sct_image -i '+self.t2star+' -setorient RPI -o '+t2star_rpi)
+        sct.run('sct_image -i '+self.sc_seg+' -setorient RPI -o '+sc_seg_rpi)
+        self.t2star = t2star_rpi
+        self.sc_seg = sc_seg_rpi
+
+        self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=box_size)
 
         self.level_fname = None
         if t2_data is not None:
-            self.level_fname = compute_level_file(self.t2star_pad, self.sc_seg_pad, self.t2, self.t2_seg, self.t2_landmarks)
+            self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
         elif level_fname is not None:
             self.level_fname = level_file_name + level_ext
             level_orientation = get_orientation(self.level_fname, filename=True)
