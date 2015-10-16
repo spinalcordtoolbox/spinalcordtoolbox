@@ -108,9 +108,3 @@ if __name__ == "__main__":
             printv('\nFinished iterations.')
             break
 
-    # run("fslmerge -t " + output_file + " " + " ".join(filenames_output))
-    #from sct_concat_data import concat_data
-    #concat_data(','.join(filenames_output), output_file, dim=3)
-    # run("rm -rf tmp.*")
-
-    #printv('fslview ' + output_file + " &", 1, 'info')

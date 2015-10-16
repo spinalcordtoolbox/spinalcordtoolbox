@@ -20,7 +20,8 @@ import os
 import sys
 import time
 import sct_utils as sct
-from sct_orientation import set_orientation
+from sct_image import set_orientation
+from shutil import move
 from numpy import append, insert, nonzero, transpose, array
 from nibabel import load, Nifti1Image, save
 from scipy import ndimage
@@ -96,7 +97,7 @@ def main():
         dim = 2
     if dim == 4:
         sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
-                   'sct_split_data -i '+fname_anat, verbose, 'warning')
+                   'sct_image -i '+fname_anat+' -split t -o '+fname_anat, verbose, 'warning')
         sct.printv('4D images not supported, aborting ...', verbose, 'error')
 
     # Extract path/file/extension
@@ -122,10 +123,12 @@ def main():
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
-    set_orientation('anat.nii', 'RPI', 'anat_rpi.nii')
+    fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
+    move(fname_anat_rpi, 'anat_rpi.nii')
     # Change orientation of the input image into RPI
     print '\nOrient centerline to RPI orientation...'
-    set_orientation('centerline.nii', 'RPI', 'centerline_rpi.nii')
+    fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
+    move(fname_centerline_rpi, 'centerline_rpi.nii')
 
     # ## new
     #

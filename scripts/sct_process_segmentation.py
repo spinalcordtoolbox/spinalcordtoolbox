@@ -25,9 +25,10 @@ import scipy
 import nibabel
 import sct_utils as sct
 from msct_nurbs import NURBS
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
+from shutil import move, copyfile
 
 
 # DEFAULT PARAMETERS
@@ -198,12 +199,15 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', param.verbose)
+    im_seg = Image(file_data+ext_data)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
+    im_seg_orient = set_orientation(im_seg, 'RPI')
+    im_seg_orient.setFileName(fname_segmentation_orient)
+    im_seg_orient.save()
 
     # Get dimension
     sct.printv('\nGet dimensions...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Iamge(fname_segmentation_orient).dim
+    nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), param.verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', param.verbose)
 
@@ -240,22 +244,24 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
     fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    set_orientation(file_data+ext_data, 'RPI', fname_segmentation_orient)
+    im_seg = Image(file_data+ext_data)
+    set_orientation(im_seg, 'RPI')
+    im_seg.setFileName(fname_segmentation_orient)
+    im_seg.save()
 
     # Get dimension
     sct.printv('\nGet dimensions...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_segmentation_orient).dim
+    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # Extract orientation of the input segmentation
-    orientation = get_orientation(file_data+ext_data)
+    orientation = get_orientation(im_seg)
     sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
 
     sct.printv('\nOpen segmentation volume...', verbose)
-    file = nibabel.load(fname_segmentation_orient)
-    data = file.get_data()
-    hdr = file.get_header()
+    data = im_seg.data
+    hdr = im_seg.hdr
 
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
@@ -308,8 +314,10 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
     # Write the centerline image in RPI orientation
     hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
-    img = nibabel.Nifti1Image(data, None, hdr)
-    nibabel.save(img, 'centerline.nii.gz')
+    im_seg.data = data
+    im_seg.setFileName('centerline.nii.gz')
+    im_seg.save()
+
     # Define name if output name is not specified
     if name_output=='csa_volume.nii.gz' or name_output=='':
         # sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, verbose)
@@ -336,7 +344,8 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
     # Change orientation of the output centerline into input orientation
     sct.printv('\nOrient centerline image to input orientation: ' + orientation, verbose)
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    set_orientation(path_tmp+'/'+name_output, orientation, name_output)
+    fname_output_orient = set_orientation(path_tmp+'/'+name_output, orientation, filename=True)
+    move(fname_output_orient, name_output)
 
    # Remove temporary files
     if remove_temp_files:
@@ -362,25 +371,28 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
     from sct_convert import convert
-    convert(fname_segmentation, path_tmp+'segmentation.nii')
-
+    im_seg = convert(fname_segmentation, path_tmp+'segmentation.nii')
     # go to tmp folder
     os.chdir(path_tmp)
-
+    im_seg.setFileName(im_seg.file_name+im_seg.ext)
     # Change orientation of the input segmentation into RPI
     sct.printv('\nChange orientation of the input segmentation into RPI...', verbose)
-    fname_segmentation_orient = set_orientation('segmentation.nii', 'RPI', 'segmentation_orient.nii')
+    im_seg_orient = set_orientation(im_seg, 'RPI')
+    print 'path after orient', im_seg_orient.absolutepath
+    fname_segmentation_orient = 'segmentation_orient.nii'
+    # sct.run('sct_image -i '+im_seg.absolutepath+' -setorient RPI -o '+fname_segmentation_orient)
+    im_seg_orient.setFileName(fname_segmentation_orient)
+    im_seg_orient.save()
 
     # Get size of data
     sct.printv('\nGet data dimensions...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_segmentation_orient).dim
+    nx, ny, nz, nt, px, py, pz, pt = im_seg_orient.dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
-    file_seg = nibabel.load(fname_segmentation_orient)
-    data_seg = file_seg.get_data()
-    hdr_seg = file_seg.get_header()
+    data_seg = im_seg_orient.data
+    hdr_seg = im_seg_orient.hdr
 
     # # Extract min and max index in Z direction
     X, Y, Z = (data_seg > 0).nonzero()
@@ -444,35 +456,38 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
     if volume_output:
         sct.printv('\nCreate volume of CSA values...', verbose)
         # get orientation of the input data
-        orientation = get_orientation('segmentation.nii')
-        data_seg = data_seg.astype(np.float32, copy=False)
+        orientation = im_seg.orientation
+        data_csa = data_seg.astype(np.float32, copy=False)
         # loop across slices
         for iz in range(min_z_index, max_z_index+1):
             # retrieve seg pixels
-            x_seg, y_seg = (data_seg[:, :, iz] > 0).nonzero()
+            x_seg, y_seg = (data_csa[:, :, iz] > 0).nonzero()
             seg = [[x_seg[i],y_seg[i]] for i in range(0, len(x_seg))]
             # loop across pixels in segmentation
             for i in seg:
                 # replace value with csa value
-                data_seg[i[0], i[1], iz] = csa[iz-min_z_index]
+                data_csa[i[0], i[1], iz] = csa[iz-min_z_index]
         # create header
         hdr_seg.set_data_dtype('float32')  # set imagetype to uint8
         # save volume
-        img = nibabel.Nifti1Image(data_seg, None, hdr_seg)
-        nibabel.save(img, 'csa_RPI.nii')
+        im_seg.data = data_csa
+        im_seg.setFileName('csa_RPI.nii')
+        im_seg.save()
         # Change orientation of the output centerline into input orientation
-        fname_csa_volume = set_orientation('csa_RPI.nii', orientation, 'csa_RPI_orient.nii')
+        im_csa_orient = set_orientation(im_seg, orientation)
+        fname_csa_volume = 'csa_RPI_orient.nii'
+        im_csa_orient.setFileName(fname_csa_volume)
+        im_csa_orient.save()
 
     # come back to parent folder
     os.chdir('..')
 
     # Generate output files
     sct.printv('\nGenerate output files...', verbose)
-    from shutil import copyfile
     copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
     # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
     if volume_output:
-        sct.generate_output_file(fname_csa_volume, path_data+name_output)  # extension already included in name_output
+        sct.generate_output_file(path_tmp+fname_csa_volume, path_data+name_output)  # extension already included in name_output
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
