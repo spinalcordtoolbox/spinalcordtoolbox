@@ -54,9 +54,10 @@ class Preprocessing:
 
         # preprocessing
         os.chdir(tmp_dir)
-
+        t2star_im = Image(self.t2star)
+        self.original_header = t2star_im.hdr
         # resampling of the images
-        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = get_dimension(Image(self.t2star))
+        nx, ny, nz, nt, self.original_px, self.original_py, pz, pt = t2star_im.dim
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
             self.t2star = resample_image(self.t2star, npx=self.resample_to, npy=self.resample_to)
@@ -81,7 +82,6 @@ class Preprocessing:
         self.pad[index_z] = str(0)
         self.t2star_pad = sct.add_suffix(self.t2star, '_pad')
         self.sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
-        # TODO: replace sct_maths by sct_image here after merging pull request #580
         sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
         sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
         self.square_mask, self.processed_target = crop_t2_star(self.t2star_pad, self.sc_seg_pad, box_size=box_size)
@@ -200,6 +200,9 @@ class FullGmSegmentation:
             else:
                 bin = False
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
+            res_im_original_size = Image(old_res_name)
+            res_im_original_size.hdr = self.preprocessed.original_header
+            res_im_original_size.save()
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
