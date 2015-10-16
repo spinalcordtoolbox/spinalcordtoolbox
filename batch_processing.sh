@@ -78,37 +78,42 @@ sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline -o t2_seg_reg_center
 sct_propseg -i mt1.nii.gz -t t2 -init-centerline t2_seg_reg_centerline.nii.gz
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
-# use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
-sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
+# create mask around spinal cord for faster registration
+sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 51 -f box -o mask_mt1.nii.gz
+## use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
+#sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
+# crop data
+sct_crop_image -i mt1.nii.gz -m mask_mt1.nii.gz -o mt1_crop.nii.gz
+sct_crop_image -i mt1_seg.nii.gz -m mask_mt1.nii.gz -o mt1_seg_crop.nii.gz
 # register mt0 on mt1
-sct_register_multimodal -i mt0.nii.gz -d mt1.nii.gz -z 3 -m mask_mt1.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=CC,iter=3,gradStep=0.2
+sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -p step=1,type=im,algo=slicereg,metric=MI:step=2,type=im,algo=bsplinesyn,metric=CC,iter=3,gradStep=0.2
 # compute mtr
-sct_compute_mtr -i mt0_reg.nii.gz -j mt1.nii.gz
+sct_compute_mtr -i mt0_reg.nii.gz -j mt1_crop.nii.gz
 # register template (in T2 space) to mt1
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3:step=3,type=im,algo=syn,metric=CC,iter=1,shrink=1
+# tips: here we only rely on the segmentation (not the image), because the close proximity of the cord with the spine can induce inaccuracies in the registration on some slices.
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 0
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
 # OPTIONAL PART: SEGMENT GRAY MATTER:
-# -----------------------------------
+# <<<<<<<<<<
 # add mt1 and mt0 to increase GM/WM contrast
-sct_maths -i mt0_reg.nii.gz -add mt1.nii.gz -o mt0mt1.nii.gz
+sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
-sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
-# create mask around spinal cord for faster registration
-sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 51 -f box
+sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
 # register WM template to WMseg
 sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt0mt1_wmseg.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=3
 # concat transfo
-sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt1_wmseg.nii.gz -d mt1.nii.gz -o warp_template2mt1_corrected.nii.gz
+sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt0mt1_wmseg.nii.gz -d mt0mt1.nii.gz -o warp_template2mt_corrected.nii.gz
 # warp template (final warp template for mt1)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt1_corrected.nii.gz
+sct_warp_template -d mt0mt1.nii.gz -w warp_template2mt_corrected.nii.gz
 # check registration result
-fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
+# >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.4617644116
+# --> MTR = 34.6794726545
 # go back to root folder
 cd ..
 
