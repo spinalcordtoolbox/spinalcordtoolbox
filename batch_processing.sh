@@ -90,10 +90,16 @@ sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1.nii.gz -iseg ../t2/
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
 sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 0
+# OPTIONAL PART: SEGMENT GRAY MATTER:
+# -----------------------------------
+# add mt1 and mt0 to increase GM/WM contrast
+sct_maths -i mt0_reg.nii.gz -add mt1.nii.gz -o mt0mt1.nii.gz
 # segment GM
-sct_segment_graymatter -i mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
+sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
+# create mask around spinal cord for faster registration
+sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 51 -f box
 # register WM template to WMseg
-sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt1_wmseg.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5
+sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt0mt1_wmseg.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=3
 # concat transfo
 sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt1_wmseg.nii.gz -d mt1.nii.gz -o warp_template2mt1_corrected.nii.gz
 # warp template (final warp template for mt1)
