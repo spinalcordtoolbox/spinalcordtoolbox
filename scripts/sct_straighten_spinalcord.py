@@ -27,7 +27,7 @@ from scipy import ndimage
 from sct_apply_transfo import Transform
 import sct_utils as sct
 from msct_smooth import smoothing_window, evaluate_derivative_3D
-from sct_orientation import set_orientation
+from sct_image import set_orientation
 from msct_types import Coordinate
 
 import copy_reg
@@ -463,14 +463,14 @@ class SpinalCordStraightener(object):
             # resample data to 1mm isotropic
             sct.printv('\nResample data to 1mm isotropic...', verbose)
             fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_anat_resampled)
+            sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_anat_resampled)
             fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x trilinear -o ' + fname_centerline_resampled)
+            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_centerline_resampled)
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
-            fname_centerline_orient = fname_centerline_resampled + "_rpi.nii.gz"
-            set_orientation(fname_centerline_resampled, "RPI", fname_centerline_orient)
+            fname_centerline_orient = file_centerline + "_rpi.nii.gz"
+            fname_centerline_orient = set_orientation(file_centerline+ext_centerline, "RPI", filename=True)
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
@@ -604,7 +604,7 @@ class SpinalCordStraightener(object):
             padding_x, padding_y, padding_z = padding, padding, padding
             if nx + padding <= leftright_width:
                 padding_x = leftright_width - padding - nx
-            sct.run('sct_maths -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
+            sct.run('sct_image -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
 
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)

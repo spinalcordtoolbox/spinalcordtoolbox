@@ -88,8 +88,8 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
-        from sct_orientation import get_orientation
+        from sct_utils import check_file_exist, printv, extract_fname, run
+        from sct_image import get_orientation
 
         # check_file_exist(path, verbose=verbose)
         im_file = None
@@ -97,7 +97,7 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(path)
+        self.orientation = get_orientation(path, filename=True)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
         self.absolutepath = path
@@ -197,7 +197,7 @@ class Image(object):
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-    def save(self, type=''):
+    def save(self, type='', verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -231,7 +231,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
@@ -437,8 +437,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_orientation import get_orientation
-            self.orientation = get_orientation(self.file_name)
+            from sct_image import get_orientation
+            self.orientation = get_orientation(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
