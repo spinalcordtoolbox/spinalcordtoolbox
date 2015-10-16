@@ -18,10 +18,11 @@ import os
 import commands
 import time
 import sct_utils as sct
-from sct_orientation import set_orientation
+from sct_image import set_orientation
 from sct_register_multimodal import Paramreg, ParamregMultiStep, register
 from msct_parser import Parser
 from msct_image import Image, find_zmin_zmax
+from shutil import move
 from sct_label_utils import ProcessLabels
 
 
@@ -235,11 +236,24 @@ def main():
     # go to tmp folder
     os.chdir(path_tmp)
 
+    # resample data to 1mm isotropic
+    sct.printv('\nResample data to 1mm isotropic...', verbose)
+    sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o datar.nii')
+    sct.run('sct_resample -i segmentation.nii.gz -mm 1.0x1.0x1.0 -x nn -o segmentationr.nii.gz')
+    # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
+    resample_labels('landmarks.nii.gz', 'datar.nii', 'landmarksr.nii.gz')
+    # # TODO
+    # sct.run('sct_label_utils -i datar.nii -t create -x 124,186,19,2:129,98,23,8 -o landmarksr.nii.gz')
+
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
-    set_orientation('data.nii', 'RPI', 'data_rpi.nii')
-    set_orientation('landmarks.nii.gz', 'RPI', 'landmarks_rpi.nii.gz')
-    set_orientation('segmentation.nii.gz', 'RPI', 'segmentation_rpi.nii.gz')
+    fname_data_rpi = set_orientation('datar.nii', 'RPI', filename=True)
+    move(fname_data_rpi, 'data_rpi.nii')
+    fname_landmarks_rpi = set_orientation('landmarksr.nii.gz', 'RPI', filename=True)
+    move(fname_landmarks_rpi, 'landmarks_rpi.nii.gz')
+    fname_seg_rpi = set_orientation('segmentationr.nii.gz', 'RPI', filename=True)
+    move(fname_seg_rpi, 'segmentation_rpi.nii.gz')
+
 
     # get landmarks in native space
     # crop segmentation

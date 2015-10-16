@@ -82,20 +82,18 @@ class Preprocessing:
         self.t2star_pad = sct.add_suffix(self.t2star, '_pad')
         self.sc_seg_pad = sct.add_suffix(self.sc_seg, '_pad')
         # TODO: replace sct_maths by sct_image here after merging pull request #580
-        sct.run('sct_maths -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
-        sct.run('sct_maths -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
+        sct.run('sct_image -i '+self.t2star+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.t2star_pad)
+        sct.run('sct_image -i '+self.sc_seg+' -pad '+self.pad[0]+','+self.pad[1]+','+self.pad[2]+' -o '+self.sc_seg_pad)
         self.square_mask, self.processed_target = crop_t2_star(self.t2star_pad, self.sc_seg_pad, box_size=box_size)
 
         self.level_fname = None
         if t2_data is not None:
             self.level_fname = compute_level_file(self.t2star_pad, self.sc_seg_pad, self.t2, self.t2_seg, self.t2_landmarks)
         elif level_fname is not None:
-            status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext)
-            # level_orientation = level_orientation[4:7]
-            if level_orientation != 'IRP':
-                status, level_orientation = sct.run('sct_orientation -i ' + level_file_name + level_ext + ' -s IRP')
-                level_file_name += '_IRP'
             self.level_fname = level_file_name + level_ext
+            level_orientation = get_orientation(self.level_fname, filename=True)
+            if level_orientation != 'IRP':
+                self.level_fname = set_orientation(self.level_fname, 'IRP', filename=True)
 
         os.chdir('..')
 
@@ -184,17 +182,18 @@ class FullGmSegmentation:
         for res_im in [self.gm_seg.res_wm_seg, self.gm_seg.res_gm_seg, self.gm_seg.corrected_wm_seg]:
             res_im_original_space = inverse_square_crop(res_im, square_mask)
             res_im_original_space.save()
+            res_im_original_space = set_orientation(res_im_original_space, self.preprocessed.original_orientation)
+            res_im_original_space.save()
+            res_fname_original_space = res_im_original_space.file_name
             ext = res_im_original_space.ext
-            sct.run('sct_orientation -i '+res_im_original_space.file_name+ext+' -s ' + self.preprocessed.original_orientation)
-            res_fname_original_space = res_im_original_space.file_name+'_'+self.preprocessed.original_orientation
 
             # crop from the same pad size
             output_crop = res_fname_original_space+'_crop'
             sct.run('sct_crop_image -i '+res_fname_original_space+ext+' -dim 0,1,2 -start '+self.preprocessed.pad[0]+','+self.preprocessed.pad[1]+','+self.preprocessed.pad[2]+' -end -'+self.preprocessed.pad[0]+',-'+self.preprocessed.pad[1]+',-'+self.preprocessed.pad[2]+' -o '+output_crop+ext)
             res_fname_original_space = output_crop
 
-
-            res_name = sct.extract_fname(self.target_fname)[1] + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + ext
+            target_path, target_name, target_ext = sct.extract_fname(self.target_fname)
+            res_name = target_name + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
 
             if self.param.res_type == 'binary':
                 bin = True
@@ -304,17 +303,12 @@ class FullGmSegmentation:
         im_ref_wm_seg.ext = ext
         im_ref_wm_seg.save()
 
+        res_gm_seg_bin = set_orientation(res_gm_seg_bin, 'RPI')
+        res_wm_seg_bin = set_orientation(res_wm_seg_bin, 'RPI')
 
-        sct.run('sct_orientation -i ' + res_gm_seg_bin.file_name + ext + ' -s RPI')
-        res_gm_seg_bin.file_name += '_RPI'
-        sct.run('sct_orientation -i ' + res_wm_seg_bin.file_name + ext + ' -s RPI')
-        res_wm_seg_bin.file_name += '_RPI'
-
-        res_gm_seg_bin = Image(res_gm_seg_bin.file_name + ext)
         im_ref_gm_seg.hdr.set_zooms(res_gm_seg_bin.hdr.get_zooms())  # correcting the pix dimension
         im_ref_gm_seg.save()
 
-        res_wm_seg_bin = Image(res_wm_seg_bin.file_name + ext)
         im_ref_wm_seg.hdr.set_zooms(res_wm_seg_bin.hdr.get_zooms())  # correcting the pix dimension
         im_ref_wm_seg.save()
 

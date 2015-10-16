@@ -29,9 +29,8 @@ def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description('Perform mathematical operations on images. Some inputs can be either a number or a 4d image or several 3d images separated with ","')
     parser.add_option(name="-i",
-                      type_value=[[','], 'file'],
-                      description="Input file(s). If several inputs: separate them by a coma without white space.\n"
-                                  "If several inputs: the sme operation is applied to all the inputs (except for the operations -add, -sub and -scale)",
+                      type_value='file',
+                      description="Input file. ",
                       mandatory=True,
                       example="data.nii.gz")
     parser.add_option(name="-o",
@@ -70,11 +69,6 @@ def get_parser():
     parser.add_option(name="-bin",
                       description='Use (input image>0) to binarise.',
                       mandatory=False)
-    parser.add_option(name="-pad",
-                      type_value="str",
-                      description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
-                      mandatory=False,
-                      example='0,0,1')
 
     parser.usage.addSection("\nThresholding methods:")
     parser.add_option(name='-otsu',
@@ -125,20 +119,7 @@ def get_parser():
                       description='Non-local means adaptative denoising from P. Coupe et al algorithm.',
                       mandatory=False,
                       example="")
-    parser.usage.addSection("\nMulti-component operations:")
-    parser.add_option(name='-mcs',
-                      description='Multi-component split. Outputs the components separately.\n'
-                                  '(If less outputs names than components in the image, outputs as many components as the number of outputs name specifed.)\n'
-                                  'Only one input',
-                      mandatory=False)
-    parser.add_option(name='-omc',
-                      description='Multi-component output. Merge inputted images into one multi-component image.\n'
-                                  'Only one output',
-                      mandatory=False)
     parser.usage.addSection("\nMisc")
-    parser.add_option(name="-w",
-                      description="Output is a warping field",
-                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
@@ -161,36 +142,35 @@ def main(args = None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     fname_in = arguments["-i"]
-    n_in = len(fname_in)
     fname_out = arguments["-o"]
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    data = get_data(fname_in)  # 3d or 4d numpy array
+    data = Image(fname_in).data  # 3d or 4d numpy array
 
     # run command
     if '-otsu' in arguments:
         param = arguments['-otsu']
-        data_out = [otsu(d, param) for d in data]
+        data_out = otsu(data, param)
 
     elif '-otsu_adap' in arguments:
         param = arguments['-otsu_adap']
-        data_out = [otsu_adap(d, param[0], param[1]) for d in data]
+        data_out = otsu_adap(data, param[0], param[1])
 
     elif '-otsu_median' in arguments:
         param = arguments['-otsu_median']
-        data_out = [otsu_median(d, param[0], param[1]) for d in data]
+        data_out = otsu_median(data, param[0], param[1])
 
     elif '-thr' in arguments:
         param = arguments['-thr']
-        data_out = [threshold(d, param) for d in data]
+        data_out = threshold(data, param)
 
     elif '-percent' in arguments:
         param = arguments['-percent']
-        data_out = [perc(d, param) for d in data]
+        data_out = perc(data, param)
 
     elif '-bin' in arguments:
-        data_out = [binarise(d) for d in data]
+        data_out = binarise(data)
 
     elif '-add' in arguments:
         from numpy import sum
@@ -227,22 +207,13 @@ def main(args = None):
             data = data[..., newaxis]
         data_out = std(data, dim)
 
-    elif "-pad" in arguments:
-        # TODO: check input is 3d
-        padx, pady, padz = arguments["-pad"].split(',')
-        padx, pady, padz = int(padx), int(pady), int(padz)
-        nii = Image(fname_in[0])
-        nii_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
-        # data_out = pad_image(nii, padding_x=padx, padding_y=pady, padding_z=padz)
-
     elif "-smooth" in arguments:
         sigmas = arguments["-smooth"]
-        data_out = []
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
-        data_out.append(smooth(data, sigmas))
+        data_out = smooth(data, sigmas)
 
     elif '-dilate' in arguments:
         data_out = dilate(data, arguments['-dilate'])
@@ -252,28 +223,13 @@ def main(args = None):
 
     elif '-denoise' in arguments:
         data_out = denoise_ornlm(data)
-
-    elif '-mcs' in arguments:
-        if n_in != 1:
-            printv(parser.usage.generate(error='ERROR: -mcs need only one input'))
-        if len(data[0].shape) != 5:
-            printv(parser.usage.generate(error='ERROR: -mcs input need to be a multi-component image'))
-        data_out = multicomponent_split(data[0])
-        if len(data_out) > n_out:
-            data_out = data_out[:n_out]
-
-    elif '-omc' in arguments:
-        if n_out != 1:
-            printv(parser.usage.generate(error='ERROR: -omc need only one output'))
-        for dat in data:
-            if dat.shape != data[0].shape:
-                printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
-        data_out = multicomponent_merge(data)
+    else:
+        data_out = None
+        printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
 
     # Write output
-    if not "-pad" in arguments:
-        nii_out = Image(fname_in[0])  # use header of first file (if multiple input files)
-        nii_out.data = data_out
+    nii_out = Image(fname_in)  # use header of input file
+    nii_out.data = data_out
     nii_out.setFileName(fname_out)
     nii_out.save()
     # TODO: case of multiple outputs
@@ -303,7 +259,7 @@ def main(args = None):
     #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('Created file(s):\n--> '+str(fname_out)+'\n', verbose, 'info')
+    printv('Created file:\n--> '+str(fname_out)+'\n', verbose, 'info')
 
 
 def otsu(data, nbins):
@@ -367,95 +323,10 @@ def erode(data, radius):
     return erosion(data, selem=selem, out=None)
 
 
-def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
-    from numpy import zeros, dot
-    nx, ny, nz, nt, px, py, pz, pt = im.dim
-    padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
-    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
-
-    if padding_x == 0:
-        padxi = None
-        padxf = None
-    else:
-        padxi=padding_x
-        padxf=-padding_x
-
-    if padding_y == 0:
-        padyi = None
-        padyf = None
-    else:
-        padyi = padding_y
-        padyf = -padding_y
-
-    if padding_z == 0:
-        padzi = None
-        padzf = None
-    else:
-        padzi = padding_z
-        padzf = -padding_z
-
-    padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
-    im.data = padded_data  # done after the call of the function
-
-    # adapt the origin in the sform and qform matrix
-    new_origin = dot(im.hdr.get_best_affine(), [-padding_x, -padding_y, -padding_z, 1])
-
-    im.hdr.structarr['qoffset_x'] = new_origin[0]
-    im.hdr.structarr['qoffset_y'] = new_origin[1]
-    im.hdr.structarr['qoffset_z'] = new_origin[2]
-    im.hdr.structarr['srow_x'][-1] = new_origin[0]
-    im.hdr.structarr['srow_y'][-1] = new_origin[1]
-    im.hdr.structarr['srow_z'][-1] = new_origin[2]
-
-    return im
-
-
 def smooth(data, sigmas):
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter
     return gaussian_filter(data, sigmas)
-
-
-def multicomponent_split(data):
-    from numpy import reshape
-    assert len(data.shape) == 5
-    data_out = []
-    for i in range(data.shape[-1]):
-        dat_out = data[:, :, :, :, i]
-        if dat_out.shape[-1] == 1:
-            dat_out = reshape(dat_out, dat_out.shape[:-1])
-            if dat_out.shape[-1] == 1:
-                dat_out = reshape(dat_out, dat_out.shape[:-1])
-        data_out.append(dat_out.astype('float32'))
-
-    return data_out
-
-
-def multicomponent_merge(data_list):
-    from numpy import zeros, reshape
-    # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
-    new_shape = list(data_list[0].shape)
-    if len(new_shape) == 3:
-        new_shape.append(1)
-    new_shape.append(len(data_list))
-    new_shape = tuple(new_shape)
-
-    data_out = zeros(new_shape)
-    for i, dat in enumerate(data_list):
-        '''
-        if len(dat.shape) < 4:
-            new_shape = list(dat.shape)
-            while len(new_shape) < 4:
-                new_shape.append(1)
-            dat = reshape(dat, tuple(new_shape))
-        '''
-        if len(dat.shape) == 2:
-            data_out[:, :, 0, 0, i] = dat.astype('float32')
-        elif len(dat.shape) == 3:
-            data_out[:, :, :, 0, i] = dat.astype('float32')
-        elif len(dat.shape) == 4:
-            data_out[:, :, :, :, i] = dat.astype('float32')
-    return [data_out.astype('float32')]
 
 
 def get_data(list_fname):
@@ -473,7 +344,6 @@ def get_data(list_fname):
         else:
             concatenate_along_4th_dimension(data, nii[i].data)
     return data
-
 
 def get_data_or_scalar(argument, data_in):
     """
