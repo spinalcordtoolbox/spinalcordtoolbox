@@ -95,24 +95,25 @@ sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg .
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 0
+sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
 # OPTIONAL PART: SEGMENT GRAY MATTER:
-# -----------------------------------
+# <<<<<<<<<<
 # add mt1 and mt0 to increase GM/WM contrast
-sct_maths -i mt0_reg.nii.gz -add mt1.nii.gz -o mt0mt1.nii.gz
+sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
-sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
+sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
 # register WM template to WMseg
 sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt0mt1_wmseg.nii.gz -p step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=3
 # concat transfo
-sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt1_wmseg.nii.gz -d mt1.nii.gz -o warp_template2mt1_corrected.nii.gz
+sct_concat_transfo -w warp_template2mt.nii.gz,warp_MNI-Poly-AMU_WM2mt0mt1_wmseg.nii.gz -d mt0mt1.nii.gz -o warp_template2mt_corrected.nii.gz
 # warp template (final warp template for mt1)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt1_corrected.nii.gz
+sct_warp_template -d mt0mt1.nii.gz -w warp_template2mt_corrected.nii.gz
 # check registration result
-fslview mt1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.3,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.3,1 &
+# >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.4617644116
+# --> MTR = 34.6794726545
 # go back to root folder
 cd ..
 
