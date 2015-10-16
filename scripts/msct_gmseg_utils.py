@@ -916,21 +916,6 @@ def inverse_square_crop(croped_image, square_mask):
     if dim == 3:
         done_slices = []
         for coord in nz_coord:
-            '''
-            x_y_z = [coord.x, coord.y, coord.z]
-            if 'I' in square_mask.orientation:
-                IS_dim_coord = x_y_z[square_mask.orientation.find('I')]
-            else:
-                IS_dim_coord = x_y_z[square_mask.orientation.find('S')]
-            if 'R' in square_mask.orientation:
-                RL_dim_coord = x_y_z[square_mask.orientation.find('R')]
-            else:
-                RL_dim_coord = x_y_z[square_mask.orientation.find('L')]
-            if 'P' in square_mask.orientation:
-                PA_dim_coord = x_y_z[square_mask.orientation.find('P')]
-            else:
-                PA_dim_coord = x_y_z[square_mask.orientation.find('A')]
-            '''
             if coord.x not in done_slices:
                 inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
                 done_slices.append(coord.x)
