@@ -42,7 +42,8 @@ class Param:
         self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
-        self.name_output = 'csa_volume.nii.gz'  # output name for slice CSA
+        self.file_csa_volume = 'csa_volume.nii.gz'
+        # self.fname_output = 'csa_volume.nii.gz'  # output name for slice CSA
         self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
@@ -74,7 +75,6 @@ def main():
     step = param.step
     smoothing_param = param.smoothing_param
     figure_fit = param.figure_fit
-    name_output = param.name_output
     slices = param.slices
     vert_lev = param.vertebral_levels
     path_to_template = param.path_to_template
@@ -110,8 +110,6 @@ def main():
                 smoothing_param = int(arg)
             elif opt in ('-f'):
                 figure_fit = int(arg)
-            elif opt in ('-o'):
-                name_output = arg
             elif opt in ('-t'):
                 path_to_template = arg
             elif opt in ('-v'):
@@ -148,16 +146,16 @@ def main():
     print '.. segmentation file:             '+fname_segmentation
 
     if name_process == 'centerline':
-        fname_output = extract_centerline(fname_segmentation, remove_temp_files, name_output=name_output, verbose=param.verbose, algo_fitting=param.algo_fitting)
+        fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
         sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, name_output, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
-        sct.printv('Output CSA volume: '+name_output, param.verbose, 'info')
+        sct.printv('Output CSA volume: '+param.file_csa_volume, param.verbose, 'info')
         if slices or vert_lev:
             sct.printv('Output CSA file (averaged): csa_mean.txt', param.verbose, 'info')
         sct.printv('Output CSA file (all slices): '+param.fname_csa+'\n', param.verbose, 'info')
@@ -217,7 +215,7 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
 
 # extract_centerline
 # ==========================================================================================
-def extract_centerline(fname_segmentation, remove_temp_files, name_output='', verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -311,13 +309,11 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
     im_seg.save()
 
     # Define name if output name is not specified
-    if name_output=='csa_volume.nii.gz' or name_output=='':
-        # sct.generate_output_file('centerline.nii.gz', file_data+'_centerline'+ext_data, verbose)
-        name_output = file_data+'_centerline'+ext_data
-    sct.generate_output_file('centerline.nii.gz', name_output, verbose)
+    fname_output = file_data+'_centerline'+ext_data
+    sct.generate_output_file('centerline.nii.gz', fname_output, verbose)
 
     # create a txt file with the centerline
-    path, rad_output, ext = sct.extract_fname(name_output)
+    path, rad_output, ext = sct.extract_fname(fname_output)
     name_output_txt = rad_output + '.txt'
     sct.printv('\nWrite text file...', verbose)
     file_results = open(name_output_txt, 'w')
@@ -336,20 +332,20 @@ def extract_centerline(fname_segmentation, remove_temp_files, name_output='', ve
     # Change orientation of the output centerline into input orientation
     sct.printv('\nOrient centerline image to input orientation: ' + orientation, verbose)
     fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    fname_output_orient = set_orientation(path_tmp+'/'+name_output, orientation, filename=True)
-    move(fname_output_orient, name_output)
+    fname_output_orient = set_orientation(path_tmp+'/'+fname_output, orientation, filename=True)
+    move(fname_output_orient, fname_output)
 
    # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf '+path_tmp, verbose)
 
-    return name_output
+    return fname_output
 
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, name_output, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -452,16 +448,19 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
             data_csa[i[0], i[1], iz] = csa[iz-min_z_index]
     # replace data
     im_seg.data = data_csa
-    # get orientation of the input data
-    im_seg_original = Image('segmentation.nii.gz')
-    orientation = im_seg_original.orientation
     # set original orientation
-    set_orientation(im_seg, orientation)
+    # TODO: FIND ANOTHER WAY!!
+    # im_seg.change_orientation(orientation) --> DOES NOT WORK!
     # set file name -- use .gz because faster to write
-    im_seg.setFileName('csa.nii.gz')
+    im_seg.setFileName('csa_volume_RPI.nii.gz')
     im_seg.changeType('float32')
     # save volume
     im_seg.save()
+
+    # get orientation of the input data
+    im_seg_original = Image('segmentation.nii.gz')
+    orientation = im_seg_original.orientation
+    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+param.file_csa_volume)
 
     # come back to parent folder
     os.chdir('..')
@@ -470,7 +469,7 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     sct.printv('\nGenerate output files...', verbose)
     copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
     # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
-    sct.generate_output_file(path_tmp+'csa.nii.gz', path_data+name_output)  # extension already included in name_output
+    sct.generate_output_file(path_tmp+param.file_csa_volume, path_data+param.file_csa_volume)  # extension already included in name_output
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
@@ -491,18 +490,20 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
 
         # Copying output CSA volume in the temporary folder
         sct.printv('\nCopy data to tmp folder...', verbose)
-        sct.run('cp ../'+name_output+' '+path_tmp_extract_metric)
+        sct.run('cp ../'+param.file_csa_volume+' '+path_tmp_extract_metric)
 
         # create file info_label
-        path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(name_output)
-        create_info_label('info_label.txt', path_tmp_extract_metric, file_fname_seg+ext_fname_seg)
+        # path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(param.file_csa_volume)
+        create_info_label('info_label.txt', path_tmp_extract_metric, param.file_csa_volume)
 
         # average CSA
         if slices:
-            os.system("sct_extract_metric -i .."+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
+            # here we use os.system to display result
+            os.system("sct_extract_metric -i "+path_data+param.file_csa_volume+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
         if vert_levels:
             sct.run('cp -R '+abs_path_to_template+' .')
-            os.system("sct_extract_metric -i "+path_data+name_output+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -v "+vert_levels)
+            # here we use os.system to display result
+            os.system('sct_extract_metric -i '+path_data+param.file_csa_volume+' -f '+path_tmp_extract_metric+' -m wa -o ../csa_mean.txt -v '+vert_levels)
 
         os.chdir('..')
 
@@ -650,16 +651,15 @@ USAGE
 MANDATORY ARGUMENTS
   -i <segmentation>     spinal cord segmentation (e.g., use sct_segmentation_propagation)
   -p <process>          type of process to be performed:
-                        - centerline: extract centerline as binary file
+                        - centerline: extract centerline as binary file.
                         - length: compute length of the segmentation
                         - csa: computes cross-sectional area by counting pixels in each
-                          slice and then geometrically adjusting using centerline orientation.
-                          Output is a text file with z (1st column) and CSA in mm^2 (2nd column) and
-                          a volume in which each slice\'s value is equal to the CSA (mm^2).
+                          slice and then geometrically adjusting using centerline orientation. Outputs:
+                          - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),
+                          - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).
 
 OPTIONAL ARGUMENTS
   -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
-  -o <output_name>      Name of the output volume. Default="""+str(param_default.name_output)+"""
   -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p csa\").
                           Example: 5:23. First slice is 0.
                           You can also select specific slices using commas. Example: 0,2,3,5,12
