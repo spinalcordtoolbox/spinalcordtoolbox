@@ -149,7 +149,7 @@ def main():
         fname_output = extract_centerline(fname_segmentation, remove_temp_files, verbose=param.verbose, algo_fitting=param.algo_fitting)
         # to view results
         sct.printv('\nDone! To view results, type:', param.verbose)
-        sct.printv('fslview '+fname_output+' &\n', param.verbose, 'info')
+        sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
         compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
@@ -221,37 +221,51 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
-    # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
 
-    # copy files into tmp folder
-    sct.run('cp '+fname_segmentation+' '+path_tmp)
+    # create temporary folder
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    sct.run('mkdir '+path_tmp, verbose)
+
+    # Copying input data to tmp folder
+    sct.printv('\nCopying data to tmp folder...', verbose)
+    sct.run('sct_convert -i '+fname_segmentation+' -o '+path_tmp+'segmentation.nii.gz', verbose)
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Change orientation of the input centerline into RPI
     sct.printv('\nOrient centerline to RPI orientation...', verbose)
-    fname_segmentation_orient = 'segmentation_rpi' + ext_data
-    im_seg = Image(file_data+ext_data)
-    set_orientation(im_seg, 'RPI')
-    im_seg.setFileName(fname_segmentation_orient)
-    im_seg.save()
+    # fname_segmentation_orient = 'segmentation_RPI.nii.gz'
+    # BELOW DOES NOT WORK (JULIEN, 2015-10-17)
+    # im_seg = Image(file_data+ext_data)
+    # set_orientation(im_seg, 'RPI')
+    # im_seg.setFileName(fname_segmentation_orient)
+    # im_seg.save()
+    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz')
 
-    # Get dimension
-    sct.printv('\nGet dimensions...', verbose)
+    # Open segmentation volume
+    sct.printv('\nOpen segmentation volume...', verbose)
+    im_seg = Image('segmentation_RPI.nii.gz')
+    data = im_seg.data
+
+    # Get size of data
+    sct.printv('\nGet data dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
     sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
-    # Extract orientation of the input segmentation
-    orientation = get_orientation(im_seg)
-    sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
-
-    sct.printv('\nOpen segmentation volume...', verbose)
-    data = im_seg.data
-    hdr = im_seg.hdr
+    # # Get dimension
+    # sct.printv('\nGet dimensions...', verbose)
+    # nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
+    #
+    # # Extract orientation of the input segmentation
+    # orientation = get_orientation(im_seg)
+    # sct.printv('\nOrientation of segmentation image: ' + orientation, verbose)
+    #
+    # sct.printv('\nOpen segmentation volume...', verbose)
+    # data = im_seg.data
+    # hdr = im_seg.hdr
 
     # Extract min and max index in Z direction
     X, Y, Z = (data>0).nonzero()
@@ -268,7 +282,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline(fname_segmentation_orient, type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
 
     if verbose == 2:
             import matplotlib.pyplot as plt
@@ -302,45 +316,41 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     for iz in range(min_z_index, max_z_index+1):
         data[round(x_centerline_fit[iz-min_z_index]), round(y_centerline_fit[iz-min_z_index]), iz] = 1 # if index is out of bounds here for hanning: either the segmentation has holes or labels have been added to the file
     # Write the centerline image in RPI orientation
-    hdr.set_data_dtype('uint8') # set imagetype to uint8
+    # hdr.set_data_dtype('uint8') # set imagetype to uint8
     sct.printv('\nWrite NIFTI volumes...', verbose)
     im_seg.data = data
-    im_seg.setFileName('centerline.nii.gz')
+    im_seg.setFileName('centerline_RPI.nii.gz')
+    im_seg.changeType('uint8')
     im_seg.save()
 
-    # Define name if output name is not specified
-    fname_output = file_data+'_centerline'+ext_data
-    sct.generate_output_file('centerline.nii.gz', fname_output, verbose)
+    sct.printv('\nSet to original orientation...', verbose)
+    # get orientation of the input data
+    im_seg_original = Image('segmentation.nii.gz')
+    orientation = im_seg_original.orientation
+    sct.run('sct_image -i centerline_RPI.nii.gz -setorient '+orientation+' -o centerline.nii.gz')
 
     # create a txt file with the centerline
-    path, rad_output, ext = sct.extract_fname(fname_output)
-    name_output_txt = rad_output + '.txt'
+    name_output_txt = 'centerline.txt'
     sct.printv('\nWrite text file...', verbose)
     file_results = open(name_output_txt, 'w')
     for i in range(min_z_index, max_z_index+1):
         file_results.write(str(int(i)) + ' ' + str(x_centerline_fit[i-min_z_index]) + ' ' + str(y_centerline_fit[i-min_z_index]) + '\n')
     file_results.close()
 
-    # Copy result into parent folder
-    sct.run('cp '+name_output_txt+' ../')
-
-    del data
-
     # come back to parent folder
     os.chdir('..')
 
-    # Change orientation of the output centerline into input orientation
-    sct.printv('\nOrient centerline image to input orientation: ' + orientation, verbose)
-    fname_segmentation_orient = 'tmp.segmentation_rpi' + ext_data
-    fname_output_orient = set_orientation(path_tmp+'/'+fname_output, orientation, filename=True)
-    move(fname_output_orient, fname_output)
+    # Generate output files
+    sct.printv('\nGenerate output files...', verbose)
+    sct.generate_output_file(path_tmp+'centerline.nii.gz', file_data+'_centerline.nii.gz')
+    sct.generate_output_file(path_tmp+'centerline.txt', file_data+'_centerline.txt')
 
-   # Remove temporary files
+    # Remove temporary files
     if remove_temp_files:
         sct.printv('\nRemove temporary files...', verbose)
         sct.run('rm -rf '+path_tmp, verbose)
 
-    return fname_output
+    return file_data+'_centerline.nii.gz'
 
 
 # compute_csa
