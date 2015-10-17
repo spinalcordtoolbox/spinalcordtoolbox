@@ -1,5 +1,6 @@
 function smooth2D_nii(fname,sigma,mask)
 % smooth2D_nii(fname,sigma,mask)
+% ('epi_half_ratio.nii.gz',2,mask)
 nii=load_nii(fname);
 if exist('mask','var'),
     mask=load_nii(mask);
