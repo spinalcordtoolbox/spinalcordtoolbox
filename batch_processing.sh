@@ -29,7 +29,7 @@ sct_label_vertebrae -i t2.nii.gz -seg t2_seg.nii.gz -initcenter 7
 # create labels at C2 and T2 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -level 2,9
 # register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,shrink=2,metric=MeanSquares:step=3,type=im,algo=syn,iter=3,shrink=1,metric=CC
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=2,metric=MeanSquares
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
@@ -63,7 +63,6 @@ fslview t1.nii.gz label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template
 sct_apply_transfo -i t1.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -w warp_t12template.nii.gz
 # check registration of T1 to template
 fslview $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 t1_reg.nii.gz -b 0,800 &
-# go back to root folder
 cd ..
 
 
@@ -93,7 +92,7 @@ sct_compute_mtr -i mt0_reg.nii.gz -j mt1_crop.nii.gz
 # tips: here we only rely on the segmentation (not the image), because the close proximity of the cord with the spine can induce inaccuracies in the registration on some slices.
 sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
 # concat transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
 sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
 # OPTIONAL PART: SEGMENT GRAY MATTER:
@@ -113,8 +112,7 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.6794726545
-# go back to root folder
+# --> MTR = 34.4882486318
 cd ..
 
 
@@ -134,18 +132,17 @@ fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 &
 # register template to dwi: here we use the template register to the MT to get the correction of the internal structure
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure 
-sct_concat_transfo -w ../mt/warp_template2mt1_corrected.nii.gz,warp_template2anat_reg2dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
+sct_concat_transfo -w ../mt/warp_template2mt_corrected.nii.gz,warp_template2anat_reg2dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
 sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # visualize white matter template and lateral CST on DWI
-fslview dwi_moco_mean label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
+fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 # compute DTI metrics
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bvals bvals.txt -bvecs bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
-# --> 17, right lateral corticospinal tract:    0.771558633821 +/- 0
-# --> 2, left lateral corticospinal tract:    0.794731973648 +/- 0
-# go back to root folder
+# --> 17, right lateral corticospinal tract:    0.783331953736
+# --> 2, left lateral corticospinal tract:    0.755975896959
 cd ..
 
 
@@ -172,7 +169,7 @@ fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
 # register template to fmri: here we use the template register to the MT to get the correction of the internal structure
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure
-sct_concat_transfo -w ../mt/warp_template2mt1_corrected.nii.gz,warp_template2anat_reg2fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
+sct_concat_transfo -w ../mt/warp_template2mt_corrected.nii.gz,warp_template2anat_reg2fmri_moco_mean.nii.gz -d fmri_moco_mean.nii.gz -o warp_template2fmri.nii.gz
 # warp template, atlas and spinal levels
 sct_warp_template -d fmri_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 # check results
