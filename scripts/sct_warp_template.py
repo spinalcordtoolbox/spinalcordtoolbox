@@ -110,7 +110,7 @@ class WarpTemplate:
 
         # create output folder
         if os.path.exists(self.folder_out):
-            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose)
+            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
             sct.run('rm -rf '+self.folder_out)
         sct.run('mkdir '+self.folder_out)
 
