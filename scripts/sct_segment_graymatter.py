@@ -378,6 +378,103 @@ class FullGmSegmentation:
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Segmentation of the white/gray matter on a T2star or MT image\n'
+                                 'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Target image to segment",
+                      mandatory=True,
+                      example='t2star.nii.gz')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord segmentation of the target",
+                      mandatory=True,
+                      example='sc_seg.nii.gz')
+    parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
+                            'Choose one of them')
+    parser.add_option(name="-l",
+                      type_value="str",
+                      description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
+                                  "If -l is used, no need to provide t2 data",
+                      mandatory=False,
+                      example='MNI-Poly-AMU_level_IRP.nii.gz')
+    parser.add_option(name="-t2",
+                      type_value=[[','], 'file'],
+                      description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
+                                  "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks\n(see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
+                      mandatory=False,
+                      default_value=None,
+                      example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
+    parser.usage.addSection('SEGMENTATION OPTIONS')
+    parser.add_option(name="-use-levels",
+                      type_value='multiple_choice',
+                      description="Use the level information for the model or not",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1'])
+    parser.add_option(name="-weight",
+                      type_value='float',
+                      description="weight parameter on the level differences to compute the similarities (beta)",
+                      mandatory=False,
+                      default_value=2.5,
+                      example=2.0)
+    parser.add_option(name="-denoising",
+                      type_value='multiple_choice',
+                      description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1'])
+    parser.add_option(name="-normalize",
+                      type_value='multiple_choice',
+                      description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1'])
+    parser.add_option(name="-medians",
+                      type_value=[[','], 'float'],
+                      description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
+                                  "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
+                                  "Only if the -normalize flag is used",
+                      mandatory=False,
+                      default_value=None,
+                      example=["450,540"])
+    parser.add_option(name="-model",
+                      type_value="folder",
+                      description="Path to the model data",
+                      mandatory=False,
+                      example='/home/jdoe/gm_seg_model_data/')
+    parser.usage.addSection('OUTPUT OTIONS')
+    parser.add_option(name="-res-type",
+                      type_value='multiple_choice',
+                      description="Type of result segmentation : binary or probabilistic",
+                      mandatory=False,
+                      default_value='prob',
+                      example=['binary', 'prob'])
+    parser.add_option(name="-ratio",
+                      description="Compute GM/WM ratio",
+                      mandatory=False)
+    parser.add_option(name="-o",
+                      type_value="str",
+                      description="output name for the results",
+                      mandatory=False,
+                      example='t2star_res.nii.gz')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-ref",
+                      type_value="file",
+                      description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
+                      mandatory=False,
+                      example='manual_gm_seg.nii.gz')
+    parser.add_option(name="-v",
+                      type_value="int",
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      default_value=0,
+                      example='1')
+
+    return parser
 
 if __name__ == "__main__":
     param = SegmentationParam()
@@ -394,100 +491,7 @@ if __name__ == "__main__":
     else:
         param_default = SegmentationParam()
 
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Segmentation of the white/gray matter on a T2star or MT image\n'
-                                     'Multi-Atlas based method: the model containing a template of the white/gray matter segmentation along the cervical spinal cord, and a PCA space to describe the variability of intensity in that template is provided in the toolbox. ')
-        parser.add_option(name="-i",
-                          type_value="file",
-                          description="Target image to segment",
-                          mandatory=True,
-                          example='t2star.nii.gz')
-        parser.add_option(name="-s",
-                          type_value="file",
-                          description="Spinal cord segmentation of the target",
-                          mandatory=True,
-                          example='sc_seg.nii.gz')
-        parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
-                                'Choose one of them')
-        parser.add_option(name="-l",
-                          type_value="str",
-                          description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
-                                      "If -l is used, no need to provide t2 data",
-                          mandatory=False,
-                          example='MNI-Poly-AMU_level_IRP.nii.gz')
-        parser.add_option(name="-t2",
-                          type_value=[[','], 'file'],
-                          description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
-                                      "In this order, without whitespace : t2_image,t2_sc_segmentation,t2_landmarks\n(see: http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/)",
-                          mandatory=False,
-                          default_value=None,
-                          example='t2.nii.gz,t2_seg.nii.gz,landmarks.nii.gz')
-        parser.usage.addSection('SEGMENTATION OPTIONS')
-        parser.add_option(name="-use-levels",
-                          type_value='multiple_choice',
-                          description="Use the level information for the model or not",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1'])
-        parser.add_option(name="-weight",
-                          type_value='float',
-                          description="weight parameter on the level differences to compute the similarities (beta)",
-                          mandatory=False,
-                          default_value=2.5,
-                          example=2.0)
-        parser.add_option(name="-denoising",
-                          type_value='multiple_choice',
-                          description="1: Adaptative denoising from F. Coupe algorithm, 0: no  WARNING: It affects the model you should use (if denoising is applied to the target, the model should have been coputed with denoising too",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1'])
-        parser.add_option(name="-normalize",
-                          type_value='multiple_choice',
-                          description="Normalization of the target image's intensity using median intensity values of the WM and the GM, recomended with MT images or other types of contrast than T2*",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1'])
-        parser.add_option(name="-medians",
-                          type_value=[[','], 'float'],
-                          description="Median intensity values in the target white matter and gray matter (separated by a comma without white space)\n"
-                                      "If not specified, the mean intensity values of the target WM and GM  are estimated automatically using the dictionary average segmentation by level.\n"
-                                      "Only if the -normalize flag is used",
-                          mandatory=False,
-                          default_value=None,
-                          example=["450,540"])
-        parser.add_option(name="-model",
-                          type_value="folder",
-                          description="Path to the model data",
-                          mandatory=False,
-                          example='/home/jdoe/gm_seg_model_data/')
-        parser.usage.addSection('OUTPUT OTIONS')
-        parser.add_option(name="-res-type",
-                          type_value='multiple_choice',
-                          description="Type of result segmentation : binary or probabilistic",
-                          mandatory=False,
-                          default_value='prob',
-                          example=['binary', 'prob'])
-        parser.add_option(name="-ratio",
-                          description="Compute GM/WM ratio",
-                          mandatory=False)
-        parser.add_option(name="-o",
-                          type_value="str",
-                          description="output name for the results",
-                          mandatory=False,
-                          example='t2star_res.nii.gz')
-        parser.usage.addSection('MISC')
-        parser.add_option(name="-ref",
-                          type_value="file",
-                          description="Reference segmentation of the gray matter for segmentation validation (outputs Dice coefficient and Hausdoorff's distance)",
-                          mandatory=False,
-                          example='manual_gm_seg.nii.gz')
-        parser.add_option(name="-v",
-                          type_value="int",
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                          mandatory=False,
-                          default_value=0,
-                          example='1')
+        parser = get_parser()
 
         arguments = parser.parse(sys.argv[1:])
         input_target_fname = arguments["-i"]
