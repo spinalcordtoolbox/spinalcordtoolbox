@@ -14,6 +14,7 @@
 #########################################################################################
 
 import sct_utils as sct
+from time import sleep
 
 
 def test(path_data):

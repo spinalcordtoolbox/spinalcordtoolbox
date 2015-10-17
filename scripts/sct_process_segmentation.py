@@ -19,6 +19,7 @@ import sys
 import getopt
 import os
 import commands
+from random import randint
 import time
 import numpy as np
 import scipy
@@ -178,8 +179,9 @@ def compute_length(fname_segmentation, remove_temp_files, verbose = 0):
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
     # create temporary folder
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    sct.run('mkdir '+path_tmp)
+    sct.printv('\nCreate temporary folder...', verbose)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
+    sct.run('mkdir '+path_tmp, verbose)
 
     # copy files into tmp folder
     sct.run('cp '+fname_segmentation+' '+path_tmp)
@@ -221,10 +223,9 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     fname_segmentation = os.path.abspath(fname_segmentation)
     path_data, file_data, ext_data = sct.extract_fname(fname_segmentation)
 
-
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
     # Copying input data to tmp folder
@@ -363,7 +364,7 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S") + '_'+str(randint(1, 1000000)), 1)
     sct.run('mkdir '+path_tmp, verbose)
 
     # Copying input data to tmp folder
