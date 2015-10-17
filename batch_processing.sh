@@ -29,7 +29,7 @@ sct_label_vertebrae -i t2.nii.gz -seg t2_seg.nii.gz -initcenter 7
 # create labels at C2 and T2 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -level 2,9
 # register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,shrink=2,metric=MeanSquares:step=3,type=im,algo=syn,iter=3,shrink=1,metric=CC
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=2,metric=MeanSquares
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
