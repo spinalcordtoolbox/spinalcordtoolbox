@@ -16,6 +16,7 @@ import sys
 import getopt
 from msct_parser import *
 from msct_image import Image, get_dimension
+import random
 from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 from sct_image import set_orientation, get_orientation, orientation,pad_image
@@ -142,7 +143,7 @@ class FullGmSegmentation:
 
         self.ref_gm_seg_fname = ref_gm_seg
 
-        self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")+'/'
+        self.tmp_dir = 'tmp_' + sct.extract_fname(self.target_fname)[1] + '_' + time.strftime("%y%m%d%H%M%S")+ '_'+str(random.randint(1, 1000000))+'/'
         sct.run('mkdir ' + self.tmp_dir)
 
         self.gm_seg = None
