@@ -24,7 +24,7 @@ function sct_dmri_moco(varargin)
 dbstop if error
 p = inputParser;
 crops = {'manual', 'box', 'none', 'centerline', 'autobox'};
-addOptional(p,'crop','none',@(x) any(validatestring(x,crops)));
+addOptional(p,'crop','autobox',@(x) any(validatestring(x,crops)));
 addOptional(p,'eddy',1,@isnumeric);
 moco_methods={'b0','dwi','dwi_lowbvalue','none'};
 addOptional(p,'method','dwi_lowbvalue',@(x) any(validatestring(x,moco_methods)));

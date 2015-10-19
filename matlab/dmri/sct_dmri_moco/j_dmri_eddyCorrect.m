@@ -218,7 +218,7 @@ if isempty(fname_schedule)
 	error('Schedule file was not found. Thanks for playing with us.')
 end
 j_disp(fname_log,['.. Schedule file: ',fname_schedule])
-copyfile(fname_schedule,schedule_file);
+unix(['cp ' fname_schedule ' ' schedule_file]);
 j_disp(fname_log,['.. File created (locally): ',schedule_file])
 
 

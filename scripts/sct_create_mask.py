@@ -23,7 +23,10 @@ import time
 import numpy
 import nibabel
 from scipy import ndimage
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation
+from sct_convert import convert
+from msct_image import Image
+from sct_image import copy_header, concat_data
 
 
 # DEFAULT PARAMETERS
@@ -122,8 +125,10 @@ def create_mask():
         sct.check_file_exist(method_val, param.verbose)
 
     # check if orientation is RPI
-    if not get_orientation(param.fname_data) == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
+    sct.printv('\nCheck if orientation is RPI...', param.verbose)
+    ori = get_orientation(param.fname_data, filename=True)
+    if not ori == 'RPI':
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -144,27 +149,27 @@ def create_mask():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
+    convert(param.fname_data, path_tmp+'data.nii')
+    # sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
     if method_type == 'centerline':
-        sct.run('isct_c3d '+method_val+' -o '+path_tmp+'/centerline.nii.gz')
+        convert(method_val, path_tmp+'centerline.nii.gz')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
-    # convert to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
-
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
     # in case user input 4d data
     if nt != 1:
         sct.printv('WARNING in '+os.path.basename(__file__)+': Input image is 4d but output mask will 3D.', param.verbose, 'warning')
         # extract first volume to have 3d reference
-        sct.run(fsloutput+'fslroi data data -0 1', param.verbose)
+        nii = Image('data.nii')
+        data3d = nii.data[:,:,:,0]
+        nii.data = data3d
+        nii.save()
 
     if method_type == 'coord':
         # parse to get coordinate
@@ -213,13 +218,19 @@ def create_mask():
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
-    cmd = 'fslmerge -z mask '
+    # cmd = 'fslmerge -z mask '
+    im_list = []
     for iz in range(nz):
-        cmd = cmd + file_mask+str(iz)+' '
-    status, output = sct.run(cmd, param.verbose)
+        im_list.append(Image(file_mask+str(iz)+'.nii'))
+    im_out = concat_data(im_list, 2)
+    im_out.setFileName('mask.nii.gz')
+    im_out.save()
+
     # copy geometry
-    sct.run(fsloutput+'fslcpgeom data mask', param.verbose)
-    # sct.run('fslchfiletype NIFTI mask', param.verbose)
+    im_dat = Image('data.nii')
+    im_mask = Image('mask.nii.gz')
+    im_mask = copy_header(im_dat, im_mask)
+    im_mask.save()
 
     # come back to parent folder
     os.chdir('..')
@@ -231,7 +242,7 @@ def create_mask():
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        sct.run('rm -rf '+path_tmp, param.verbose, error_exit='warning')
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
@@ -247,7 +258,7 @@ def create_line(fname, coord, nz):
     sct.run('cp '+fname+' line.nii', param.verbose)
 
     # set all voxels to zero
-    sct.run('isct_c3d line.nii -scale 0 -o line.nii', param.verbose)
+    sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
 
     cmd = 'sct_label_utils -i line.nii -o line.nii -t add -x '
     for iz in range(nz):

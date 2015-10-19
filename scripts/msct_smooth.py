@@ -19,8 +19,7 @@ import sct_utils as sct
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('isct_c3d '+fname+' -pad '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox '+str(padding)+'x'+str(padding)+'x'+str(padding)+'vox 0 -o tmp.centerline_pad.nii.gz')
-
+    sct.run('sct_image -i '+fname+' -o tmp.centerline_pad.nii.gz -pad '+str(padding)+','+str(padding)+','+str(padding))
 
 
 #=======================================================================================================================
@@ -468,7 +467,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
+def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, remove_edge_points=2):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -483,7 +482,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
             flat window will produce a moving average smoothing.
 
     output:
-        y: the smoothed signal (type: array)
+        y: the smoothed signal (type: array). Same size as x.
 
     example:
 
@@ -502,12 +501,17 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     from math import ceil, floor
     import sct_utils as sct
 
+    # outlier detection
+    if robust:
+        mask = outliers_detection(x, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+        x = outliers_completion(mask, verbose=0)
+
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
     # if x.size < window_len:
     #     raise ValueError, "Input vector needs to be bigger than window size."
     if window_len < 3:
-        sct.printv('Window size is too small. No smoothing was applied.', 1, 'warning')
+        sct.printv('Window size is too small. No smoothing was applied.', verbose=verbose, type='warning')
         return x
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window can only be the following: 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
@@ -517,28 +521,35 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0):
     #The number of points of the curve must be superior to int(window_length/(2.0*pz))
     if window_len > int(nb_points):
         window_len = int(nb_points)
-        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), 'warning')
+        sct.printv("WARNING: The smoothing window is larger than the number of points. New value: "+str(window_len), verbose=verbose, type='warning')
 
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
 
+    # make sure there are enough points before removing those at the edge
+    size_curve = x.size
+    if size_curve < 10:
+        remove_edge_points = 0
+
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
+
+    # Extend the curve before smoothing using mirroring technique, to avoid edge effect during smoothing
+    if not remove_edge_points == 0:
+        x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
+    else:
+        x_extended = x
+    x_extended_tmp = x_extended
+    size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
+
+    for i in range(size_padding):
+        x_extended = append(x_extended, 2*x_extended_tmp[-1] - x_extended_tmp[-2-i])
+        x_extended = insert(x_extended, 0, 2*x_extended_tmp[0] - x_extended_tmp[i+1])
 
     # Creation of the window
     if window == 'flat': #moving average
         w = ones(window_len, 'd')
     else:
         w = eval(window+'(window_len_int)')
-
-    ##Implementation of an extended curve to apply the smoothing on in order to avoid edge effects
-    # Extend the curve before smoothing
-    x_extended = x
-    size_curve = x.shape[0]
-    size_padding = int(round((window_len_int-1)/2.0))
-
-    for i in range(size_padding):
-        x_extended = append(x_extended, 2*x[-1] - x[-2-i])
-        x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
     # Convolution of the window with the extended signal
     y = convolve(x_extended, w/w.sum(), mode='valid')
@@ -582,12 +593,12 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
         the accuracy of the algorithm. (http://eurekastatistics.com/using-the-median-absolute-deviation-to-find-outliers)
 
     input:
-        data: the input signal (must be an array)
-        type: the type of algorithm process ('median' or 'std')
-        factor: the sensibility of outlier detection (if infinite no outlier will be find)
+        data: the input signal (type: array)
+        type: the type of algorithm process ('median' or 'std') (type: string)
+        factor: the sensibility of outlier detection (if infinite no outlier will be find) (type: int or float)
         return_filtered_signal: option to ask for the 'filtered signal' (i.e. the signal of smaller shape that present
             no outliers) ('yes' or 'no')
-        verbose: display parameter; specify 'verbose = 2' if display is desired
+        verbose: display parameter; specify 'verbose = 2' if display is desired (type: int)
 
     output:
         mask: a mask of same shape as the input signal that takes same values for non outlier points and 'nan' values for
@@ -600,9 +611,6 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
 
     from numpy import mean, median, std, isnan, asarray
     from copy import copy
-    # data: numpy array
-    # filtered: list
-    # mask: numpy array
     if type == 'std':
         u = mean(data)
         s = std(data)
@@ -662,8 +670,8 @@ def outliers_completion(mask, verbose=0):
     To be used after outlier_detection.
 
     input:
-        mask: the input signal (must be an array) that takes 'nan' values at the position of the outlier to be retrieved
-        verbose: display parameters; specify 'verbose = 2' if display is desired
+        mask: the input signal (type: array) that takes 'nan' values at the position of the outlier to be retrieved
+        verbose: display parameters; specify 'verbose = 2' if display is desired (type: int)
 
     output:
         signal_completed: the signal of input that has been completed (type: array)
