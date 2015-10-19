@@ -19,9 +19,8 @@ import os
 import commands
 import getopt
 import time
-
 import sct_utils as sct
-
+from msct_image import Image
 
 class Param:
     def __init__(self):
@@ -98,21 +97,21 @@ def main():
     path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
     sct.run('mkdir '+path_tmp)
 
-    # copy files to temporary folder
-    print('\nCopy files...')
-    sct.run('isct_c3d '+fname_data+' -o '+path_tmp+'/data.nii')
+    from sct_convert import convert
+    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    convert(fname_data, path_tmp+'/data.nii')
 
     # go to tmp folder
     os.chdir(path_tmp)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image('data.nii').dim
     sct.printv('.. '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run('isct_c3d data.nii -interpolation Linear -resample '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+'vox -o data_up.nii', verbose)
+    sct.run('sct_resample -i data.nii -x linear -vox '+str(nx*interp_factor)+'x'+str(ny*interp_factor)+'x'+str(nz*interp_factor)+' -o data_up.nii', verbose)
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
@@ -120,7 +119,7 @@ def main():
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run('isct_c3d data_up_smooth.nii -interpolation Linear -resample '+str(nx)+'x'+str(ny)+'x'+str(nz)+'vox -o data_up_smooth_down.nii', verbose)
+    sct.run('sct_resample -i data_up_smooth.nii -x linear -vox '+str(nx)+'x'+str(ny)+'x'+str(nz)+' -o data_up_smooth_down.nii', verbose)
 
     # come back to parent folder
     os.chdir('..')

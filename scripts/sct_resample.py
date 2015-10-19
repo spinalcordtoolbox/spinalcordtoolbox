@@ -5,15 +5,11 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-10-10
+# Authors: Julien Cohen-Adad, Sara Dupont
+# Modified: 2015-09-08
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
-
-#TODO: pad for c3d!!!!!!
-
 
 import sys
 import os
@@ -21,6 +17,10 @@ import getopt
 import commands
 import sct_utils as sct
 import time
+from sct_convert import convert
+from msct_image import Image
+from msct_parser import Parser
+import dipy.align.aniso2iso as dp_iso
 
 
 # DEFAULT PARAMETERS
@@ -30,16 +30,108 @@ class Param:
         self.debug = 0
         self.fname_data = ''
         self.fname_out = ''
-        self.factor = ''
-        self.interpolation = 'Linear'
-        self.file_suffix = 'r'  # output suffix
+        self.new_size = ''
+        self.new_size_type = ''
+        self.interpolation = 'trilinear'
+        self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 2}
+        self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
+        # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
+        self.file_suffix = '_resampled'  # output suffix
         self.verbose = 1
-        self.remove_tmp_files = 1
 
 
-# main
-#=======================================================================================================================
-def main():
+# resample
+# ======================================================================================================================
+def resample():
+    # extract resampling factor
+    sct.printv('\nParse resampling factor...', param.verbose)
+    new_size_split = param.new_size.split('x')
+    new_size = [float(new_size_split[i]) for i in range(len(new_size_split))]
+    # check if it has three values
+    if not len(new_size) == 3:
+        sct.printv('\nERROR: new size should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
+    else:
+        ns_x, ns_y, ns_z = new_size
+
+    # Extract path/file/extension
+    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
+    path_out, file_out, ext_out = '', file_data, ext_data
+    if param.fname_out != '':
+        file_out = sct.extract_fname(param.fname_out)[1]
+    else:
+        file_out += param.file_suffix
+    param.fname_out = path_out+file_out+ext_out
+
+    input_im = Image(param.fname_data)
+
+    # Get dimensions of data
+    sct.printv('\nGet dimensions of data...', param.verbose)
+    nx, ny, nz, nt, px, py, pz, pt = input_im.dim
+    sct.printv('  ' + str(px) + ' x ' + str(py) + ' x ' + str(pz)+ ' x ' + str(pt)+'mm', param.verbose)
+    dim = 4  # by default, will be adjusted later
+    if nt == 1:
+        dim = 3
+    if nz == 1:
+        dim = 2
+        sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
+
+    # Calculate new dimensions
+    sct.printv('\nCalculate new dimensions...', param.verbose)
+    if param.new_size_type == 'factor':
+        px_new = px/ns_x
+        py_new = py/ns_y
+        pz_new = pz/ns_z
+    elif param.new_size_type == 'vox':
+        px_new = px*nx/ns_x
+        py_new = py*ny/ns_y
+        pz_new = pz*nz/ns_z
+    else:
+        px_new = ns_x
+        py_new = ns_y
+        pz_new = ns_z
+
+    sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
+
+    zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
+    affine = input_im.hdr.get_base_affine()
+    new_zooms = (px_new, py_new, pz_new)
+
+    if type(param.interpolation) == int:
+        order = param.interpolation
+    elif type(param.interpolation) == str and param.interpolation in param.x_to_order.keys():
+        order = param.x_to_order[param.interpolation]
+    else:
+        order = 1
+        sct.printv('WARNING: wrong input for the interpolation. Using default value = trilinear', param.verbose, 'warning')
+
+    new_data, new_affine = dp_iso.reslice(input_im.data, affine, zooms, new_zooms, mode=param.mode, order=order)
+
+    new_im = Image(param=new_data)
+    new_im.absolutepath = param.fname_out
+    new_im.path = path_out
+    new_im.file_name = file_out
+    new_im.ext = ext_out
+
+    zooms_to_set = list(new_zooms)
+    if dim == 4:
+        zooms_to_set.append(nt)
+
+    new_im.hdr = input_im.hdr
+    new_im.hdr.set_zooms(zooms_to_set)
+    new_im.save()
+
+    # to view results
+    sct.printv('\nDone! To view results, type:', param.verbose)
+    sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
+
+
+# ======================================================================================================================
+# Start program
+# ======================================================================================================================
+if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_debug = Param()
 
     # Parameters for debug mode
     if param.debug:
@@ -47,199 +139,87 @@ def main():
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/fmri/fmri.nii.gz'
-        param.factor = '2' #'0.5x0.5x1'
+        param.new_size = '2' #'0.5x0.5x1'
         param.remove_tmp_files = 0
         param.verbose = 1
     else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:o:r:v:x:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in '-f':
-                param.factor = arg
-            elif opt in '-i':
-                param.fname_data = arg
-            elif opt in '-o':
-                param.fname_out = arg
-            elif opt in '-r':
-                param.remove_tmp_files = int(arg)
-            elif opt in '-v':
-                param.verbose = int(arg)
-            elif opt in '-x':
-                param.interpolation = arg
+        # Initialize the parser
+        parser = Parser(__file__)
+        parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
+        parser.add_option(name="-i",
+                          type_value="file",
+                          description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
+                          mandatory=True,
+                          example='dwi.nii.gz')
+        parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
+                                'Please choose only one of the 3 options.')
+        parser.add_option(name="-f",
+                          type_value="str",
+                          description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
+                                      "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
+                          mandatory=False,
+                          example='0.5x0.5x1')
+        parser.add_option(name="-mm",
+                          type_value="str",
+                          description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False)
+                          # example='0.1x0.1x5')
+        parser.add_option(name="-vox",
+                          type_value="str",
+                          description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False)
+                          # example='50x50x20')
+        parser.usage.addSection('MISC')
+        parser.add_option(name="-x",
+                          type_value='multiple_choice',
+                          description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
+                                      "You can also choose the order of the spline using an integer from 3 to 5.",
+                          mandatory=False,
+                          default_value='linear',
+                          example=['nn', 'linear', 'spline', '3', '4', '5'])
 
-    # run main program
-    resample()
+        parser.add_option(name="-o",
+                          type_value="file_output",
+                          description="Output file name",
+                          mandatory=False,
+                          example='dwi_resampled.nii.gz')
+        parser.add_option(name="-v",
+                          type_value='multiple_choice',
+                          description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
+                          mandatory=False,
+                          default_value=1,
+                          example=['0', '1', '2'])
 
+        arguments = parser.parse(sys.argv[1:])
+        param.fname_data = arguments["-i"]
+        arg = 0
+        if "-f" in arguments:
+            param.new_size = arguments["-f"]
+            param.new_size_type = 'factor'
+            arg += 1
+        elif "-mm" in arguments:
+            param.new_size = arguments["-mm"]
+            param.new_size_type = 'mm'
+            arg += 1
+        elif "-vox" in arguments:
+            param.new_size = arguments["-vox"]
+            param.new_size_type = 'vox'
+            arg += 1
+        else:
+            sct.printv(parser.usage.generate(error='ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
-# resample
-#=======================================================================================================================
-def resample():
+        if arg > 1:
+            sct.printv(parser.usage.generate(error='ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
-    dim = 4  # by default, will be adjusted later
-    fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
-    ext = '.nii'
+        if "-o" in arguments:
+            param.fname_out = arguments["-o"]
+        if "-x" in arguments:
+            if len(arguments["-x"]) == 1:
+                param.interpolation = int(arguments["-x"])
+            else:
+                param.interpolation = arguments["-x"]
+        if "-v" in arguments:
+            param.verbose = int(arguments["-v"])
 
-    # display usage if a mandatory argument is not provided
-    if param.fname_data == '' or param.factor == '':
-        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
-
-    # check existence of input files
-    sct.printv('\nCheck existence of input files...', param.verbose)
-    sct.check_file_exist(param.fname_data, param.verbose)
-
-    # extract resampling factor
-    sct.printv('\nParse resampling factor...', param.verbose)
-    factor_split = param.factor.split('x')
-    factor = [float(factor_split[i]) for i in range(len(factor_split))]
-    # check if it has three values
-    if not len(factor) == 3:
-        sct.printv('\nERROR: factor should have three dimensions. E.g., 2x2x1.\n', 1, 'error')
-    else:
-        fx, fy, fz = [float(factor_split[i]) for i in range(len(factor_split))]
-
-    # check interpolation
-    if param.interpolation not in ['NearestNeighbor','Linear','Cubic','Sinc','Gaussian']:
-        sct.printv('\nERROR: interpolation should be one of those:NearestNeighbor|Linear|Cubic|Sinc|Gaussian.\n', 1, 'error')
-
-    # display input parameters
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  data ..................'+param.fname_data, param.verbose)
-    sct.printv('  resampling factor .....'+param.factor, param.verbose)
-
-    # Extract path/file/extension
-    path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
-    path_out, file_out, ext_out = '', file_data, ext_data
-
-    # create temporary folder
-    sct.printv('\nCreate temporary folder...', param.verbose)
-    path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-    sct.run('mkdir '+path_tmp, param.verbose)
-
-    # Copying input data to tmp folder and convert to nii
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'data'+ext_data, param.verbose)
-
-    # go to tmp folder
-    os.chdir(path_tmp)
-
-    # convert fmri to nii format
-    sct.run('fslchfiletype NIFTI data', param.verbose)
-
-    # Get dimensions of data
-    sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data.nii')
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), param.verbose)
-    if nt == 1:
-        dim == 3
-    if nz == 1:
-        dim == 2
-        sct.run('ERROR (sct_resample): Dimension of input data is different from 3 or 4. Exit program', param.verbose, 'error')
-
-    # Calculate new dimensions
-    sct.printv('\nCalculate new dimensions...', param.verbose)
-    nx_new = int(round(nx*fx))
-    ny_new = int(round(ny*fy))
-    nz_new = int(round(nz*fz))
-    sct.printv('  ' + str(nx_new) + ' x ' + str(ny_new) + ' x ' + str(nz_new)+ ' x ' + str(nt), param.verbose)
-
-    # if dim=4, split data
-    if dim == 4:
-        # Split into T dimension
-        sct.printv('\nSplit along T dimension...', param.verbose)
-        status, output = sct.run(fsloutput+'fslsplit data data_T', param.verbose)
-    elif dim == 3:
-        # rename file to have compatible code with 4d
-        status, output = sct.run('cp data.nii data_T0000.nii', param.verbose)
-
-    for it in range(nt):
-        # identify current volume
-        file_data_splitT = 'data_T'+str(it).zfill(4)
-        file_data_splitT_resample = file_data_splitT+'r'
-
-        # resample volume
-        sct.printv(('\nResample volume '+str((it+1))+'/'+str(nt)+':'), param.verbose)
-        sct.run('isct_c3d '+file_data_splitT+ext+' -interpolation '+param.interpolation+' -resample '+str(nx_new)+'x'+str(ny_new)+'x'+str(nz_new)+'vox -o '+file_data_splitT_resample+ext)
-
-        # pad data (for ANTs)
-        # # TODO: check if need to pad also for the estimate_and_apply
-        # if program == 'ants' and todo == 'estimate' and slicewise == 0:
-        #     sct.run('isct_c3d '+file_data_splitT_num[it]+' -pad 0x0x3vox 0x0x3vox 0 -o '+file_data_splitT_num[it]+'_pad.nii')
-        #     file_data_splitT_num[it] = file_data_splitT_num[it]+'_pad'
-
-    # merge data back along T
-    file_data_resample = file_data+param.file_suffix
-    sct.printv('\nMerge data back along T...', param.verbose)
-    cmd = fsloutput + 'fslmerge -t ' + file_data_resample
-    for it in range(nt):
-        cmd = cmd + ' ' + 'data_T'+str(it).zfill(4)+'r'
-    sct.run(cmd, param.verbose)
-
-    # come back to parent folder
-    os.chdir('..')
-
-    # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
-    if not param.fname_out:
-        param.fname_out = path_out+file_out+param.file_suffix+ext_out
-    sct.generate_output_file(path_tmp+file_data_resample+ext, param.fname_out)
-
-    # Remove temporary files
-    if param.remove_tmp_files == 1:
-        print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp, param.verbose)
-
-    # to view results
-    sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
-    print
-
-
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Anisotropic resampling of 3D or 4D data.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <data> -f <factor>
-
-MANDATORY ARGUMENTS
-  -i <data>        image to segment. Can be 2D, 3D or 4D.
-  -f <fxxfyxfz>    resampling factor in each of the first 3 dimensions (x,y,z). Separate with "x"
-                   For 2x upsampling, set to 2. For 2x downsampling set to 0.5
-
-OPTIONAL ARGUMENTS
-  -o <file>        output file name.
-  -r {0,1}         remove temporary files. Default="""+str(param_debug.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param_debug.verbose)+"""
-  -h               help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i dwi.nii.gz -f 0.5x0.5x1\n"""
-
-    # exit program
-    sys.exit(2)
-
-
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_debug = Param()
     # call main function
-    main()
+    resample()

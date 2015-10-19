@@ -20,6 +20,10 @@ import time
 import math
 import sct_utils as sct
 import msct_moco as moco
+from sct_convert import convert
+from msct_image import Image
+from sct_image import copy_header, split_data, concat_data
+# from sct_average_data_across_dimension import average_data_across_dimension
 
 
 class Param:
@@ -131,15 +135,15 @@ def main():
     sct.run('mkdir '+path_tmp, param.verbose)
 
     # Copying input data to tmp folder and convert to nii
-    # NB: cannot use c3d here because c3d cannot convert 4D data.
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
-
+    convert(param.fname_data, path_tmp+'fmri.nii')
+    # sct.run('cp '+param.fname_data+' '+path_tmp+'fmri'+ext_data, param.verbose)
+    #
     # go to tmp folder
     os.chdir(path_tmp)
-
-    # convert fmri to nii format
-    sct.run('fslchfiletype NIFTI fmri', param.verbose)
+    #
+    # # convert fmri to nii format
+    # convert('fmri'+ext_data, 'fmri.nii')
 
     # run moco
     fmri_moco(param)
@@ -151,6 +155,9 @@ def main():
     path_out = sct.slash_at_the_end(path_out, 1)
     sct.create_folder(path_out)
     sct.printv('\nGenerate output files...', param.verbose)
+    if os.path.isfile(path_tmp+'fmri'+param.suffix+'.nii'):
+        print path_tmp+'fmri'+param.suffix+'.nii'
+        print path_out+file_data+param.suffix+ext_data
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'.nii', path_out+file_data+param.suffix+ext_data, param.verbose)
     sct.generate_output_file(path_tmp+'fmri'+param.suffix+'_mean.nii', path_out+file_data+param.suffix+'_mean'+ext_data, param.verbose)
 
@@ -174,18 +181,22 @@ def main():
 def fmri_moco(param):
 
     file_data = 'fmri'
+    ext_data = '.nii'
     mat_final = 'mat_final/'
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
     ext_mat = 'Warp.nii.gz'  # warping field
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', param.verbose)
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(file_data+'.nii')
+    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+'.nii').dim
     sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run(fsloutput+'fslsplit ' + file_data + ' ' + file_data + '_T', param.verbose)
+    im_data = Image(file_data + ext_data)
+    im_data_split_list = split_data(im_data, 3)
+    for im in im_data_split_list:
+        im.save()
 
     # assign an index to each volume
     index_fmri = range(0, nt)
@@ -215,24 +226,39 @@ def fmri_moco(param):
         # Merge Images
         sct.printv('Merge consecutive volumes...', param.verbose)
         file_data_merge_i = file_data + '_' + str(iGroup)
-        cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
+        # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
+        # for it in range(nt_i):
+        #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
+
+        im_fmri_list = []
         for it in range(nt_i):
-            cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
-        sct.run(cmd, param.verbose)
+            im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
+        im_fmri_concat = concat_data(im_fmri_list, 3)
+        im_fmri_concat.setFileName(file_data_merge_i + ext_data)
+        im_fmri_concat.save()
 
         # Average Images
         sct.printv('Average volumes...', param.verbose)
         file_data_mean = file_data + '_mean_' + str(iGroup)
-        cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
-        sct.run(cmd, param.verbose)
+        sct.run('sct_maths -i '+file_data_merge_i+'.nii -o '+file_data_mean+'.nii -mean t')
+        # if not average_data_across_dimension(file_data_merge_i+'.nii', file_data_mean+'.nii', 3):
+        #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+        # cmd = fsloutput + 'fslmaths ' + file_data_merge_i + ' -Tmean ' + file_data_mean
+        # sct.run(cmd, param.verbose)
 
     # Merge groups means
     sct.printv('\nMerging volumes...', param.verbose)
     file_data_groups_means_merge = 'fmri_averaged_groups'
-    cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
+    # cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
+    # for iGroup in range(nb_groups):
+    #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
+    im_mean_list = []
     for iGroup in range(nb_groups):
-        cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
-    sct.run(cmd, param.verbose)
+        im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
+    im_mean_concat = concat_data(im_mean_list, 3)
+    im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
+    im_mean_concat.save()
+
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -272,12 +298,18 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    sct.run(fsloutput+'fslcpgeom fmri fmri_moco')
+    im_fmri = Image('fmri.nii')
+    im_fmri_moco = Image('fmri_moco.nii')
+    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
+    im_fmri_moco.save()
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)
-    cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
-    status, output = sct.run(cmd, param.verbose)
+    sct.run('sct_maths -i fmri_moco.nii -o fmri_moco_mean.nii -mean t')
+    # if not average_data_across_dimension('fmri_moco.nii', 'fmri_moco_mean.nii', 3):
+    #     sct.printv('ERROR in average_data_across_dimension', 1, 'error')
+    # cmd = fsloutput + 'fslmaths fmri_moco -Tmean fmri_moco_mean'
+    # status, output = sct.run(cmd, param.verbose)
 
 
 #=======================================================================================================================

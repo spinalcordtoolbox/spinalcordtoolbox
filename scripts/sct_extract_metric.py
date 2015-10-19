@@ -29,7 +29,8 @@ import nibabel as nib
 import numpy as np
 
 import sct_utils as sct
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
+from msct_image import Image
 
 
 
@@ -206,7 +207,8 @@ def main():
     print '  advanced parameters ....... '+str(adv_param)
 
     # Check if the orientation of the data is RPI
-    orientation_data = get_orientation(fname_data)
+    input_im = Image(fname_data)
+    orientation_data = get_orientation(input_im)
 
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
@@ -215,18 +217,33 @@ def main():
         sct.create_folder(path_tmp)
         # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
-        data = nib.load(set_orientation(fname_data, 'RPI', path_tmp+'orient_data.nii')).get_data()
+        im_orient = set_orientation(input_im, 'RPI')
+        # im_orient.setFileName(path_tmp+'orient_data.nii')
+        # im_orient.save()
+        data = im_orient.data
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            labels[i_label] = nib.load(set_orientation(path_label+label_file[i_label], 'RPI', path_tmp+'orient_'+label_file[i_label])).get_data()
+            im_label = Image(path_label+label_file[i_label])
+            im_label = set_orientation(im_label, 'RPI')
+            # im_label.setFileName(path_tmp+'orient_'+label_file[i_label])
+            # im_label.save()
+            labels[i_label] = im_label.data
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            normalizing_label[0] = nib.load(set_orientation(fname_normalizing_label, 'RPI', path_tmp+'orient_normalizing_volume.nii')).get_data()
+            im_normalizing_label = Image(fname_normalizing_label)
+            im_normalizing_label = set_orientation(im_normalizing_label, 'RPI')
+            # im_normalizing_label.setFileName(path_tmp+'orient_normalizing_volume.nii')
+            # im_normalizing_label.save()
+            normalizing_label[0] = im_normalizing_label.data
         if vertebral_levels:  # if vertebral levels were selected,
-            data_vertebral_labeling = nib.load(set_orientation(fname_vertebral_labeling, 'RPI', path_tmp+'orient_vertebral_labeling.nii.gz')).get_data()
+            im_vertebral_labeling = Image(fname_vertebral_labeling)
+            im_vertebral_labeling = set_orientation(im_vertebral_labeling, 'RPI')
+            # im_vertebral_labeling.setFileName(path_tmp+'orient_vertebral_labeling.nii.gz')
+            # im_vertebral_labeling.save()
+            data_vertebral_labeling = im_vertebral_labeling.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
         status, output = commands.getstatusoutput('rm -rf ' + path_tmp)

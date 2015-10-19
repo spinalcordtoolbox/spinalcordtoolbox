@@ -43,7 +43,7 @@ def main():
     y = ''
     zmin = ''
     zmax = ''
-        
+
     try:
          opts, args = getopt.getopt(sys.argv[1:],'hi:x:y:s:e:c:t:v:')
     except getopt.GetoptError:
@@ -65,7 +65,6 @@ def main():
             cross = arg    
         elif opt in ("-t"):
             fname_template = arg
-
         elif opt in ('-v'):
             verbose = int(arg)
     
@@ -107,7 +106,7 @@ def main():
         for i in range(len(opts)):
             list_opts.append(opts[i][0])
 
-        if cross == 'mm' : 
+        if cross == 'mm' :
             gapx = int(round(gapxy/px))
             gapy = int(round(gapxy/py))
 
@@ -215,7 +214,6 @@ def main():
                 data_t[int(round(nx/2.0)),int(round(ny/2.0)) + gapxy,nz-1] = 5
                 data_t[int(round(nx/2.0)),int(round(ny/2.0)) - gapxy,nz-1] = 6
             
-    
         print '\nSave volume ...'
         hdr_t.set_data_dtype('float32') # set imagetype to uint8
         # save volume
@@ -225,9 +223,6 @@ def main():
         nibabel.save(img_t,file_name_t)
         print '\nFile created : ' + file_name_t
 
-
-
-    
     
 def usage():
     print """

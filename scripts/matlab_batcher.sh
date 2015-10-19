@@ -1,6 +1,6 @@
 #!/bin/sh
 
-matlab_exec=/Applications/MATLAB_R2014a.app/bin/matlab
+matlab_exec=/Applications/MATLAB_R2014b.app/bin/matlab
 X="${1}(${2}); exit"
 echo ${X} > matlab_command.m
 cat matlab_command.m

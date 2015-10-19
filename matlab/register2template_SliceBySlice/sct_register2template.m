@@ -87,7 +87,7 @@ sct_register_SbS(file_src,file_ref);
 %--------------------------------------------------------------------------
 
 for i_file_reg = file_reg
-    sct_unix(['sct_apply_transfo -i ' i_file_reg{1} ' -d ' file_ref ' -w warp_forward.nii'])    
+    if ~isempty(i_file_reg{1}), sct_unix(['sct_apply_transfo -i ' i_file_reg{1} ' -d ' file_ref ' -w warp_forward.nii'])    ; end
 end
 
 %delete([ref_fname '*']);

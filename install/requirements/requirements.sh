@@ -1,21 +1,21 @@
 #!/bin/bash
 # 
-#Installer for following requirements:
+#Installer for requirements
 #
-#	using conda:
-#		numpy
-#		scipy
-#		sympy
-#		matplotlib
-echo "-------------------------------"
-echo "INSTALLER FOR SOME REQUIREMENTS"
-echo "-------------------------------"
+echo "--------------------------"
+echo "INSTALLER FOR REQUIREMENTS"
+echo "--------------------------"
+# Installation using Conda
 if which conda >/dev/null; then
     echo "* CONDA *"
     conda install --yes --file requirementsConda.txt
-    easy_install nibabel
-    pip install dipy
 else
-    echo "Conda is not installed"
-    echo "Cannot install requirements "
+    echo "ERROR: Conda is not installed. Cannot install dependences."
+fi
+# Installation using Pip
+if which pip >/dev/null; then
+    echo "* PIP *"
+    pip install -r requirementsPip.txt
+else
+    echo "ERROR: Pip is not installed. Cannot install dependences."
 fi
