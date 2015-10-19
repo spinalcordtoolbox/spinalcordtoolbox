@@ -43,10 +43,17 @@ class bcolors(object):
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
-def add_suffix(file_ext, suffix):
-    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
-    # add suffix
-    return file_name+suffix+'.'+ext_name
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension on a nii or nii.gz file.
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+    """
+    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
+    ind_nii = fname.rfind('.nii')
+    # return file name with suffix
+    return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
 
