@@ -36,7 +36,7 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area between C2 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 2:4
-# --> mean CSA: 77.1679472754 +/- 1.08332424568
+# --> mean CSA: 76.9820942682 +/- 0.91043855252
 # go back to root folder
 cd ..
 
@@ -56,7 +56,7 @@ sct_crop_image -i t1_seg.nii.gz -m mask_t1.nii.gz -o t1_seg_crop.nii.gz
 # register to template (which was previously registered to the t2).
 sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1_crop.nii.gz -dseg t1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
 # concatenate transformations
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22t1.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22t1_crop.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
 sct_concat_transfo -w warp_t1_crop2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
 # warp template
 sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
@@ -115,7 +115,7 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.4882486318
+# --> MTR = 34.4559152852
 cd ..
 
 
@@ -131,7 +131,7 @@ sct_get_centerline -method auto -i dwi_moco_mean.nii.gz -t t1 -sym 1
 # fine segmentation with propseg
 sct_propseg -i dwi_moco_mean.nii.gz -t t1 -init-centerline dwi_moco_mean_centerline.nii.gz
 # check segmentation
-fslview dwi_moco_mean dwi_moco_mean_seg -l Red -t 0.5 & 
+fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
 # register template to dwi: here we use the template register to the MT to get the correction of the internal structure
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure 
@@ -141,11 +141,11 @@ sct_warp_template -d dwi_moco_mean.nii.gz -w warp_template2dmri.nii.gz
 # visualize white matter template and lateral CST on DWI
 fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.2,1 -t 0.5 label/atlas/WMtract__02.nii.gz -b 0.2,1 -l Red label/atlas/WMtract__17.nii.gz -b 0.2,1 -l Yellow &
 # compute DTI metrics
-sct_dmri_compute_dti -i dmri_moco.nii.gz -bvals bvals.txt -bvecs bvecs.txt
+sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
-# --> 17, right lateral corticospinal tract:    0.783331953736
-# --> 2, left lateral corticospinal tract:    0.755975896959
+# --> 17, right lateral corticospinal tract:    0.778699600834
+# --> 2, left lateral corticospinal tract:    0.765193423187
 cd ..
 
 
