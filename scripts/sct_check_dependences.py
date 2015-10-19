@@ -112,14 +112,14 @@ def main():
     sct.checkRAM(os_running)
 
     # check installation packages
-    print 'Check which Python is running ... '
+    print 'Check which Python is running...'
     print '  '+sys.executable
 
     # get path of the toolbox
+    print 'Check path of SCT...'
     status, output = sct.run('echo $SCT_DIR', verbose)
     path_sct = output
-    if complete_test:
-        print (status, output), '\n'
+    print '  '+path_sct
 
     # fetch version of the toolbox
     print 'Fetch version of the Spinal Cord Toolbox... '
@@ -218,6 +218,7 @@ def main():
         handle_log.close()
         print "File generated: "+file_log+'\n'
 
+    print ''
     sys.exit(e + install_software)
     
 
