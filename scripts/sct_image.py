@@ -430,6 +430,14 @@ def get_orientation(im, filename=False):
 # set_orientation
 # ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False):
+    """
+    Set orientation on image
+    :param im: either Image object or file name. Carefully set param filename.
+    :param orientation:
+    :param data_inversion:
+    :param filename:
+    :return:
+    """
     if filename:
         path, fname, ext = extract_fname(im)
         fname_out = fname+'_'+orientation+ext

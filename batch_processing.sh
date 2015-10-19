@@ -48,13 +48,16 @@ cd t1
 sct_propseg -i t1.nii.gz -t t1
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
-# adjust segmentation (it was not perfect)
-# --> t1_seg_modif.nii.gz
+# create mask around spinal cord (for cropping)
+sct_create_mask -i t1.nii.gz -m centerline,t1_seg.nii.gz -s 61 -f box -o mask_t1.nii.gz
+# crop t1 and t1_seg (for faster registration)
+sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz -o t1_crop.nii.gz
+sct_crop_image -i t1_seg.nii.gz -m mask_t1.nii.gz -o t1_seg_crop.nii.gz
 # register to template (which was previously registered to the t2).
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1.nii.gz -dseg t1_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
+sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T2.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1_crop.nii.gz -dseg t1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
 # concatenate transformations
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T22t1.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
-sct_concat_transfo -w warp_t12MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
+sct_concat_transfo -w warp_t1_crop2MNI-Poly-AMU_T2.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_DIR/data/template/MNI-Poly-AMU_T2.nii.gz -o warp_t12template.nii.gz
 # warp template
 sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -a 0
 # check results
