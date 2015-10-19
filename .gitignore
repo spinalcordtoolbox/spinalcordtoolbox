@@ -1,0 +1,23 @@
+# Can ignore specific files
+.DS_Store
+sct_utils.pyc
+
+# Use wildcards as well
+*~
+*.swp
+._*
+.nfs*
+*.pyc
+*.log
+
+.idea/*
+
+# Can also ignore all directories and files in a directory.
+bin/sct*
+bin/isct*
+bin/msct*
+tmp/**/*
+spinalcordtoolbox_v*
+dev/atlas/create_atlas/WMtracts_outputs
+dev/atlas/validate_atlas/tmp.*
+
