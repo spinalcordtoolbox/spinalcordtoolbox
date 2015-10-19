@@ -525,12 +525,12 @@ def compute_csa(fname_segmentation, name_method, volume_output, verbose, remove_
 
         # Remove temporary files
         print('\nRemove temporary folder used to average CSA...')
-        sct.run('rm -rf '+path_tmp_extract_metric)
+        sct.run('rm -rf '+path_tmp_extract_metric, error_exit='warning')
 
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp, error_exit='warning')
 
 
 #=======================================================================================================================
