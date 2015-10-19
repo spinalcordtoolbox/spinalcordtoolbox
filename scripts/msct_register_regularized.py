@@ -319,7 +319,7 @@ def register_images(fname_source, fname_dest, mask='', paramreg=Paramreg(step='0
     os.chdir('../')
     if remove_tmp_folder:
         print('\nRemove temporary files...')
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp, error_exit='warning')
     if paramreg.algo == 'Rigid':
         return x_displacement, y_displacement, theta_rotation
     if paramreg.algo == 'Translation':
