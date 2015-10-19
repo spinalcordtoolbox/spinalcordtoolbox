@@ -13,7 +13,7 @@
 import sys
 from numpy import concatenate, shape, newaxis
 from msct_parser import Parser
-from msct_image import Image
+from msct_image import Image, get_dimension
 from sct_utils import printv, add_suffix, extract_fname
 
 
@@ -354,7 +354,8 @@ def multicomponent_merge(im_list):
 def orientation(im, ori=None, set=False, get=False, set_data=False, verbose=1):
     verbose = 0 if get else verbose
     printv('\nGet dimensions of data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = im.dim
+    nx, ny, nz, nt, px, py, pz, pt = get_dimension(im)
+
     printv(str(nx) + ' x ' + str(ny) + ' x ' + str(nz)+ ' x ' + str(nt), verbose)
 
     # if data are 3d, directly set or get orientation
@@ -429,6 +430,14 @@ def get_orientation(im, filename=False):
 # set_orientation
 # ==========================================================================================
 def set_orientation(im, orientation, data_inversion=False, filename=False):
+    """
+    Set orientation on image
+    :param im: either Image object or file name. Carefully set param filename.
+    :param orientation:
+    :param data_inversion:
+    :param filename:
+    :return:
+    """
     if filename:
         path, fname, ext = extract_fname(im)
         fname_out = fname+'_'+orientation+ext
