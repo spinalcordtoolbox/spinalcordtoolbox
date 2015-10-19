@@ -23,6 +23,7 @@ from msct_register_regularized import generate_warping_field
 import sct_utils as sct
 from nibabel import load
 
+sse_results = []
 ini_param_rotation = 0.5 #rad
 ini_param_trans_x = 270.0 #pix
 ini_param_trans_y = -150.0 #pix
@@ -95,6 +96,30 @@ def minRigidTransform(params, points_fixed, points_moving):
 
     return SSE(matrix(points_fixed), points_moving_reg)
 
+def minTranslationScalingTransform(params, points_fixed, points_moving):
+    scx, scy, scz, tx, ty, tz = params[0], params[1], params[2], params[3], params[4], params[5]
+
+    rotation_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
+    translation_array = matrix([tx, ty, tz])
+
+    points_moving_barycenter = mean(points_moving, axis=0)
+    points_moving_reg = ((rotation_matrix * (
+        matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
+
+    return SSE(matrix(points_fixed), points_moving_reg)
+
+def minTranslationScalingZTransform(params, points_fixed, points_moving):
+    scz, tx, ty, tz = params[0], params[1], params[2], params[3]
+
+    rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, scz]])
+    translation_array = matrix([tx, ty, tz])
+
+    points_moving_barycenter = mean(points_moving, axis=0)
+    points_moving_reg = ((rotation_matrix * (
+        matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
+
+    sse_results.append(SSE(matrix(points_fixed), points_moving_reg))
+    return SSE(matrix(points_fixed), points_moving_reg)
 
 def minRigid_xy_Transform(params, points_fixed, points_moving):
     gamma, tx, ty = params[0], params[1], params[2]
@@ -265,9 +290,9 @@ def getRigidTransformFromImages(image_fixed, image_moving, constraints='none', m
 
 
 def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='none', show=False):
-    list_constraints = [None, 'none', 'rigid', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy']
+    list_constraints = [None, 'none', 'rigid', 'rigid-decomposed', 'xy', 'translation', 'translation-xy', 'rotation', 'rotation-xy', 'translation-scaling', 'translation-scaling-z']
     if constraints not in list_constraints:
-        raise 'ERROR: the constraints must be one of those: '+', '.join(list_constraints)
+        raise 'ERROR: the constraints must be one of those: ' + ', '.join(list_constraints[1:])
 
     points = (points_fixed, points_moving)
     points_moving_reg = points_moving
@@ -276,10 +301,12 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
     rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
     translation_array = matrix([0.0, 0.0, 0.0])
+    points_moving_barycenter = [0.0, 0.0, 0.0]
 
     if constraints == 'rigid' or constraints == 'none' or constraints is None:
         initial_parameters = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        res = minimize(minRigidTransform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6, options={'maxiter': 10000, 'disp': show})
+        res = minimize(minRigidTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
         alpha, beta, gamma, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5]
         rotation_matrix = matrix([[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
@@ -293,10 +320,35 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
         points_moving_reg = ((rotation_matrix * (
             matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
 
+    elif constraints == 'rigid-decomposed':
+        initial_parameters = [0.0, 0.0, 0.0]
+        res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+
+        translation_array = matrix([res.x[0], res.x[1], res.x[2]])
+        points_moving_reg_tmp = matrix(points_moving) + translation_array
+
+        points = (points_fixed, points_moving_reg_tmp)
+
+        initial_parameters = [0.0, 0.0, 0.0]
+        res = minimize(minRotation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+
+        alpha, beta, gamma = res.x[0], res.x[1], res.x[2]
+        rotation_matrix = matrix(
+            [[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
+              cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
+             [sin(alpha) * cos(beta), sin(alpha) * sin(beta) * sin(gamma) + cos(alpha) * cos(gamma),
+              sin(alpha) * sin(beta) * cos(gamma) - cos(alpha) * sin(gamma)],
+             [-sin(beta), cos(beta) * sin(gamma), cos(beta) * cos(gamma)]])
+        points_moving_barycenter = mean(points_moving_reg_tmp, axis=0)
+        points_moving_reg = ((rotation_matrix * (
+            matrix(points_moving_reg_tmp) - points_moving_barycenter).T).T + points_moving_barycenter)
+
     elif constraints == 'xy':
         initial_parameters = [0.0, 0.0, 0.0]
-        res = minimize(minRigid_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
-                       options={'maxiter': 10000, 'disp': show})
+        res = minimize(minRigid_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
         gamma, tx, ty = res.x[0], res.x[1], res.x[2]
 
@@ -311,26 +363,52 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
     elif constraints == 'translation':
         initial_parameters = [0.0, 0.0, 0.0]
-        res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
-                       options={'maxiter': 10000, 'disp': show})
+        res = minimize(minTranslation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
         translation_array = matrix([res.x[0], res.x[1], res.x[2]])
         points_moving_reg = matrix(points_moving) + translation_array
 
+    elif constraints == 'translation-scaling':
+        initial_parameters = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+        res = minimize(minTranslationScalingTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+
+        scx, scy, scz, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5]
+        rotation_matrix = matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
+        translation_array = matrix([tx, ty, tz])
+
+        points_moving_barycenter = mean(points_moving, axis=0)
+        points_moving_reg = ((rotation_matrix * (
+            matrix(points_moving) - points_moving_barycenter).T).T + points_moving_barycenter) + translation_array
+
+    elif constraints == 'translation-scaling-z':
+        initial_parameters = [1.0, 0.0, 0.0, 0.0]
+        res = minimize(minTranslationScalingZTransform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
+
+        scz, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3]
+        rotation_matrix = matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, scz]])
+        translation_array = matrix([tx, ty, tz])
+
+        points_moving_barycenter = mean(points_moving, axis=0)
+        points_moving_reg = ((rotation_matrix * (matrix(points_moving) - points_moving_barycenter).T).T +
+                             points_moving_barycenter) + translation_array
+
     elif constraints == 'translation-xy':
         initial_parameters = [0.0, 0.0]
-        res = minimize(minTranslation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
-                       options={'maxiter': 10000, 'disp': show})
+        res = minimize(minTranslation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
         translation_array = matrix([res.x[0], res.x[1], 0.0])
         points_moving_reg = matrix(points_moving) + translation_array
 
     elif constraints == 'rotation':
         initial_parameters = [0.0, 0.0, 0.0]
-        res = minimize(minRotation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
-                       options={'maxiter': 10000, 'disp': show})
+        res = minimize(minRotation_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
-        alpha, beta, gamma, tx, ty, tz = res.x[0], res.x[1], res.x[2], res.x[3], res.x[4], res.x[5]
+        alpha, beta, gamma = res.x[0], res.x[1], res.x[2]
         rotation_matrix = matrix(
             [[cos(alpha) * cos(beta), cos(alpha) * sin(beta) * sin(gamma) - sin(alpha) * cos(gamma),
               cos(alpha) * sin(beta) * cos(gamma) + sin(alpha) * sin(gamma)],
@@ -343,8 +421,8 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
 
     elif constraints == 'rotation-xy':
         initial_parameters = [0.0]
-        res = minimize(minRotation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead', tol=1e-6,
-                       options={'maxiter': 10000, 'disp': show})
+        res = minimize(minRotation_xy_Transform, x0=initial_parameters, args=points, method='Nelder-Mead',
+                       tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
 
         gamma = res.x[0]
 
@@ -358,6 +436,10 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
     if show:
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
+
+        print translation_array
+        print rotation_matrix
+        print points_moving_barycenter
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')
@@ -375,9 +457,17 @@ def getRigidTransformFromLandmarks(points_fixed, points_moving, constraints='non
         ax.scatter([points_moving_reg[i, 0] for i in range(0, number_points)],
                    [points_moving_reg[i, 1] for i in range(0, number_points)],
                    [points_moving_reg[i, 2] for i in range(0, number_points)], c='b')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.set_aspect('equal')
+        plt.show()
+
+        fig2 = plt.figure()
+        plt.plot(sse_results)
         plt.show()
 
     # transform numpy matrix to list structure because it is easier to handle after that
     points_moving_reg = points_moving_reg.tolist()
 
-    return rotation_matrix, translation_array, points_moving_reg
+    return rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter

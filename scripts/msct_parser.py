@@ -86,7 +86,12 @@ from msct_types import Coordinate # useful for Coordinate
 
 class Option:
     # list of option type that can be casted
-    OPTION_TYPES = ["str","int","float","long","complex","Coordinate"]
+    OPTION_TYPES = ["str", "int", "float", "long", "complex", "Coordinate"]
+    # list of options that are path type
+    # input file/folder
+    OPTION_PATH_INPUT = ["file", "folder", "image_nifti"]
+    # output file/folder
+    OPTION_PATH_OUTPUT = ["file_output", "folder_output"]
 
     ## Constructor
     def __init__(self, name, type_value, description, mandatory, example, default_value, help, parser, order=0, deprecated_by=None, deprecated_rm=False, deprecated=False):
@@ -103,6 +108,8 @@ class Option:
         self.deprecated_rm = deprecated_rm
         self.deprecated = deprecated
 
+        # TODO: check if the option is correctly set
+
     def __safe_cast__(self, val, to_type):
         return to_type(val)
 
@@ -118,7 +125,7 @@ class Option:
             type_option = type
 
         if type_option in self.OPTION_TYPES:
-            return self.checkStandardType(param,type)
+            return self.checkStandardType(param, type)
 
         elif type_option == "image_nifti":
             return self.checkIfNifti(param)
@@ -126,7 +133,7 @@ class Option:
         elif type_option == "file":
             return self.checkFile(param)
 
-        elif type_option == "file_output": # check if permission are required
+        elif type_option == "file_output":  # check if permission are required
             if not sct.check_write_permission(param):
                 self.parser.usage.error("Error of writing permissions on file: "+param)
             return param
@@ -178,8 +185,9 @@ class Option:
 
     def checkFile(self, param):
         # check if the file exist
-        sct.printv("Check file existence...")
-        sct.check_file_exist(param, 0)
+        sct.printv("Check file existence...", 0)
+        if self.parser.check_file_exist:
+            sct.check_file_exist(param, 0)
         return param
 
     def checkIfNifti(self, param):
@@ -189,13 +197,19 @@ class Option:
         niigz = False
         param_tmp = str()
         if param.lower().endswith('.nii'):
-            nii = os.path.isfile(param)
-            niigz = os.path.isfile(param+'.gz')
+            if self.parser.check_file_exist:
+                nii = os.path.isfile(param)
+                niigz = os.path.isfile(param+'.gz')
+            else:
+                nii, niigz = True, False
             param_tmp = param[:-4]
             pass
         elif param.lower().endswith('.nii.gz'):
-            niigz = os.path.isfile(param)
-            nii = os.path.isfile(param[:-3])
+            if self.parser.check_file_exist:
+                niigz = os.path.isfile(param)
+                nii = os.path.isfile(param[:-3])
+            else:
+                nii, niigz = False, True
             param_tmp = param[:-7]
             pass
         else:
@@ -205,20 +219,23 @@ class Option:
             return param_tmp+'.nii'
         elif niigz:
             return param_tmp+'.nii.gz'
-        if nii and niigz:
-            return param_tmp+'.nii.gz'
-
+        else:
+            sct.printv("ERROR : File does not exist. Exiting", type='error')
 
     def checkFolder(self, param):
         # check if the folder exist. If not, create it.
-        sct.printv("Check folder existence...")
-        sct.check_folder_exist(param, 0)
+        if self.parser.check_file_exist:
+            sct.printv("Check folder existence...")
+            sct.check_folder_exist(param, 0)
         return param
 
     def checkFolderCreation(self, param):
         # check if the folder exist. If not, create it.
         sct.printv("Check folder existence...")
-        result_creation = sct.create_folder(param)
+        if self.parser.check_file_exist:
+            result_creation = sct.create_folder(param)
+        else:
+            result_creation = 0  # no need for checking
         if result_creation == 2:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
@@ -238,14 +255,18 @@ class Parser:
         self.spelling = SpellingChecker()
         self.errors = ''
         self.usage = Usage(self, file_name)
+        self.check_file_exist = True
 
     def add_option(self, name, type_value=None, description=None, mandatory=False, example=None, help=None, default_value=None, deprecated_by=None, deprecated_rm=False, deprecated=False):
         order = len(self.options)+1
         self.options[name] = Option(name, type_value, description, mandatory, example, default_value, help, self, order, deprecated_by, deprecated_rm, deprecated)
 
-    def parse(self, arguments):
+    def parse(self, arguments, check_file_exist=True):
+        # if you only want to parse a string and not checking for file existence, change flag check_file_exist
+        self.check_file_exist = check_file_exist
+
         # if no arguments, print usage and quit
-        if len(arguments) == 0:
+        if len(arguments) == 0 and len([opt for opt in self.options if self.options[opt].mandatory]) != 0:
             self.usage.error()
 
         # check if help is asked by the user
@@ -267,6 +288,7 @@ class Parser:
         # checking if some file names or folder names contains spaces.
         # We suppose here that the user provides correct structure of arguments (i.e., one "-something", one "argument value", one "-somethingelse", one "another argument value", etc.)
         # We also suppose that multiple spaces can be present
+        # we also check if double-quotes are present. If so, we need to concatenate the fields.
         arguments_temp = []
         index_next = 0
         for index in range(0,len(arguments)):
@@ -278,18 +300,27 @@ class Parser:
                     temp_str = arguments[index]
                     index_temp = index
                     if index_temp < len(arguments)-1:
-                        while arguments[index_temp+1][0] != '-': # check if a space is present. If so, concatenation of strings.
-                            temp_str += ' '+arguments[index_temp+1]
-                            index_temp += 1
-                            if index_temp >= len(arguments)-1:
-                                break
+                        if arguments[index] == '"':
+                            while arguments[index_temp + 1][-1] != '"':  # loop until we find a double quote. Then concatenate.
+                                temp_str += ' ' + arguments[index_temp + 1]
+                                index_temp += 1
+                                if index_temp >= len(arguments) - 1:
+                                    break
+                            temp_str += ' ' + arguments[index_temp + 1]
+                            temp_str = temp_str[1:-1]
+                        else:
+                            while arguments[index_temp+1][0] != '-':  # check if a space is present. If so, concatenation of strings.
+                                temp_str += ' '+arguments[index_temp+1]
+                                index_temp += 1
+                                if index_temp >= len(arguments)-1:
+                                    break
                     index_next = index_temp+1
                     arguments_temp.append(temp_str)
         arguments = arguments_temp
 
         skip = False
-        for index,arg in enumerate(arguments):
-            if skip: # if argument need to be skipped, we pass
+        for index, arg in enumerate(arguments):
+            if skip:  # if argument need to be skipped, we pass
                 skip = False
                 continue
 
@@ -307,7 +338,7 @@ class Parser:
                     except KeyError as e:
                         sct.printv("ERROR : Current argument non existent : " + e.message, 1, 'error')
                 if self.options[arg].type_value:
-                    if len(arguments) > index+1: # Check if option is not the last item
+                    if len(arguments) > index+1:  # Check if option is not the last item
                         param = arguments[index+1]
                     else:
                         self.usage.error("ERROR: Option " + self.options[arg].name + " needs an argument...")
@@ -343,10 +374,47 @@ class Parser:
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
 
+    def add_path_to_file(self, dictionary, path_to_add, input_file=True, output_file=False):
+        """
+        This function add a path in front of each value in a dictionary (provided by the parser) for option that are files or folders.
+        This function can affect option files that represent input and/or output with "input_file" and output_file" parameters.
+        The parameter path_to_add must contain the character "/" at its end.
+        Output is the same dictionary as provided but modified with added path.
+        """
+        for key, option in dictionary.iteritems():
+            # Check if option is present in this parser
+            if key in self.options:
+                # If input file is a list, we need to check what type of list it is.
+                # If it contains files, it must be updated.
+                if (input_file and self.options[key].type_value in Option.OPTION_PATH_INPUT) or (output_file and self.options[key].type_value in Option.OPTION_PATH_OUTPUT):
+                    if isinstance(self.options[key].type_value, list):
+                        for i, value in enumerate(option):
+                            option[i] = path_to_add + value
+                        dictionary[key] = option
+                    else:
+                        dictionary[key] = path_to_add + option
+            else:
+                sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
+
+        return dictionary
+
+    def dictionary_to_string(self, dictionary):
+        """
+        This function transform a dictionary (key="-i", value="t2.nii.gz") into a string "-i t2.nii.gz".
+        """
+        result = ""
+        for key, option in dictionary.iteritems():
+            if isinstance(option, list):
+                result = result + ' ' + key + ' ' + self.options[key].type_value[0][0].join([str(op) for op in option])
+            else:
+                result = result + ' ' + key + ' ' + str(option)
+
+        return result
+
+
 ########################################################################################################################
 ####### USAGE
 ########################################################################################################################
-
 class Usage:
     # Constructor
     def __init__(self, parser, file):
@@ -369,13 +437,24 @@ class Usage:
 """+basename(self.file)+"""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(creation[2]).zfill(2)
+Version: """ + str(self.get_sct_version())
 
     def set_description(self, description):
         self.description = '\n\nDESCRIPTION\n' + self.align(description, length=100, pad=0)
 
     def addSection(self, section):
         self.section[len(self.arguments)+1] = section
+
+    def get_sct_version(self):
+        from commands import getstatusoutput
+        from os.path import basename
+        status, path_sct = getstatusoutput('echo $SCT_DIR')
+        fname = str(path_sct)+'/version.txt'
+        content = ""
+        with open(fname, mode = 'r+') as f:
+            content = f.readlines()
+        f.close()
+        return content[0]
 
     def set_usage(self):
         from os.path import basename
@@ -416,7 +495,7 @@ Modified on """ + str(creation[0]) + '-' + str(creation[1]).zfill(2) + '-' +str(
                 type_value = self.refactor_type_value(opt)
                 description = self.arguments[opt].description
                 if self.arguments[opt].default_value:
-                    description += " Default value = "+str(self.arguments[opt].default_value)+"."
+                    description += " Default value = "+str(self.arguments[opt].default_value)
                 if self.arguments[opt].deprecated:
                     description += " Deprecated argument!"
                 line = ["  "+opt+" "+type_value, self.align(description)]

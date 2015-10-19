@@ -13,23 +13,49 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
-
 import sct_utils as sct
+from msct_parser import Parser
+import sct_straighten_spinalcord
+from pandas import DataFrame
+import os.path
 
 
-def test(path_data):
+def test(path_data='', parameters=''):
 
-    folder_data = 't2/'
-    file_data = ['t2.nii.gz', 't2_seg.nii.gz']
+    if not parameters:
+        parameters = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz'
 
-    cmd = 'sct_straighten_spinalcord -i '+ path_data + folder_data + file_data[0] \
-          + ' -c ' + path_data + folder_data + file_data[1] \
-          + ' -r 0' \
-          + ' -v 1'
-    return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    parser = sct_straighten_spinalcord.get_parser()
+    dict_param = parser.parse(parameters.split(), check_file_exist=False)
+    dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
+    param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
+    # Check if input files exist
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
+        status = 200
+        output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
+        return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
+
+    cmd = 'sct_straighten_spinalcord ' + param_with_path
+    status, output = sct.run(cmd, 0)
+
+    # initialization of results: must be NaN if test fails
+    result_mse, result_dist_max = float('nan'), float('nan')
+    if status == 0:
+        # extraction of results
+        output_split = output.split('Maximum x-y error = ')[1].split(' mm')
+        result_dist_max = float(output_split[0])
+        result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
+
+        # integrity testing - straightening has been tested with v2.0.6 on several images.
+        # mse is less than 1.5 and dist_max is less than 4
+        if result_dist_max > 4.0 or result_mse > 1.5:
+            status = 99
+
+    # transform results into Pandas structure
+    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
+
+    return status, output, results
 
 if __name__ == "__main__":
     # call main function

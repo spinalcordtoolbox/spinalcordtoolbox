@@ -13,27 +13,8 @@ sys.path.append(path_sct + '/dev/tamag')
 
 import sct_utils as sct
 
-# path = '/Users/tamag/Desktop/bug_straightening/all_data'
-#
-# path_info = '/Users/tamag/data/data_template/test_new_pipeline/subjects'
-#
-# list_dir = os.listdir(path_info)
-#
-#
-# os.chdir(path + '/T1')
-# for subject in list_dir:
-#     if os.path.isdir(path_info+'/'+subject):
-#         cmd = 'sct_straighten_spinalcord.py -i ' +subject+ '.nii.gz -c '+ subject + '_centerline.nii.gz -a nurbs -o ' + subject+ '_straight.nii.gz -r 0'
-#         sct.printv(cmd)
-#         os.system(cmd)
-#
-#
-# os.chdir(path + '/T2')
-# for subject in list_dir:
-#     if os.path.isdir(path_info+'/'+subject):
-#         cmd = 'sct_straighten_spinalcord.py -i ' +subject+ '.nii.gz -c '+ subject + '_centerline.nii.gz -a nurbs -o ' + subject+ '_straight.nii.gz'
-#         sct.printv(cmd)
-#         os.system(cmd)
+path = '/Users/tamag/data/data_template/info/template_subjects'
+os.chdir(path)
 
 
 

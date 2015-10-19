@@ -4,19 +4,13 @@ import sys, commands
 import numpy as np
 from time import time
 import nibabel as nib
-from dipy.denoise.nlmeans import nlmeans
+from msct_parser import Parser
+import sct_utils as sct
 
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # Append path that contains scripts, to be able to load modules
 sys.path.append(path_sct + '/scripts')
-
-from msct_parser import Parser
-import sct_utils as sct
-
-
-
-
 
 
 # DEFAULT PARAMETERS
@@ -31,7 +25,6 @@ class Param:
         self.output_file_name = ''
 
 
-
 def main(file_to_denoise, param, output_file_name) :
 
     path, file, ext = sct.extract_fname(file_to_denoise)
@@ -40,7 +33,7 @@ def main(file_to_denoise, param, output_file_name) :
     hdr_0 = img.get_header()
 
     data = img.get_data()
-    # aff = img.get_affine()
+    aff = img.get_affine()
 
     if min(data.shape) <= 5:
         sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
@@ -51,6 +44,8 @@ def main(file_to_denoise, param, output_file_name) :
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
+
+    from dipy.denoise.nlmeans import nlmeans
 
     if '-std' in arguments:
         sigma = std_noise
@@ -106,7 +101,6 @@ def main(file_to_denoise, param, output_file_name) :
     else: output_file_name = file + '_denoised' + ext
     nib.save(img_denoise,output_file_name)
     nib.save(img_diff, file + '_difference' +ext)
-
 
 
 #=======================================================================================================================
