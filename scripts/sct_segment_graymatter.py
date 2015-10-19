@@ -383,8 +383,8 @@ def get_parser():
     parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
                             'Choose one of them')
     parser.add_option(name="-l",
-                      type_value="str",
-                      description="Image containing level labels for the target or str indicating the level (if the target has only one slice)"
+                      type_value="file",
+                      description="Image containing level labels for the target"
                                   "If -l is used, no need to provide t2 data",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz')
