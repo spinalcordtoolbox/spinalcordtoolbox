@@ -21,19 +21,16 @@ end
 % =========================================================================
 mkdir(fileparts(output))
 copyfile(list_text{1},output)
-output_fid = fopen(output,'r+');
-first_file=textscan(output_fid,'%s','delimiter','\n','CommentStyle','#');
-Nb_pt=length(first_file{1});
+output_fid = fopen(output,'a+');
+first_file=txt2mat(output);
+Nb_pt=size(first_file,1);
 
 for i_seq=2:length(list_text)
-    fid=fopen(list_text{i_seq},'r');
-    text=textscan(fid,'%s','delimiter','\n','CommentStyle','#');
-    list_text{i_seq}
-    length(text{1})
-    Nb_pt=Nb_pt+length(text{1});
-    for i_line=1:length(text{1})
+    text=txt2mat(list_text{i_seq});
+    Nb_pt=Nb_pt+size(text,1);
+    for i_line=1:size(text,1)
         % write bvecs
-        fprintf(output_fid, '%s\n',text{1}{i_line});
+        fprintf(output_fid, '%s\n',num2str(text(i_line,:)));
     end
 end
 
