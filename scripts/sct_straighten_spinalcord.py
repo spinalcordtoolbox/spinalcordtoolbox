@@ -67,6 +67,15 @@ def _unpickle_method(func_name, obj, cls):
 copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
 
+def is_number(s):
+    """Check if input is float."""
+    try:
+        float(s)
+        return True
+    except TypeError:
+        return False
+
+
 def smooth_centerline(fname_centerline, algo_fitting='hanning', type_window='hanning', window_length=80, verbose=0):
     """
     :param fname_centerline: centerline in RPI orientation, or an Image
@@ -359,6 +368,9 @@ class SpinalCordStraightener(object):
         self.max_distance_straightening = 0.0
 
     def worker_landmarks_curved(self, arguments_worker):
+        """Define landmarks along the centerline. Here, landmarks are densely defined along the centerline, and every
+        gapxy, a cross of 16 landmarks is created (small square and big square = 8+8).
+        """
         try:
             iz = arguments_worker[0]
             iz_curved, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv, x_centerline_fit, y_centerline_fit, \
@@ -367,7 +379,7 @@ class SpinalCordStraightener(object):
             temp_results = []
 
             if iz in iz_curved:
-                # set coordinates for landmark at the center of the cross
+                # at a junction (gapxy): set coordinates for landmarks at the center of the cross
                 coord = Coordinate([0, 0, 0, 0])
                 coord.x, coord.y, coord.z = x_centerline_fit[iz], y_centerline_fit[iz], z_centerline[iz]
                 deriv = Coordinate([0, 0, 0, 0])
@@ -377,8 +389,14 @@ class SpinalCordStraightener(object):
                 cross_coordinates = compute_cross_centerline(coord, deriv, self.gapxy)
 
                 for coord in cross_coordinates:
+                    # check if all coordinates are real (jcohenadad, see issue #584)
+                    if not (is_number(coord.x) and is_number(coord.y) and is_number(coord.z)):
+                        sct.printv('WARNING: Coordinates have complex values at iz='+str(iz)+': '+str(coord), 1, 'warning')
+                        # set wrong coordinates that will be removed later on
+                        coord.x, coord.y, coord.z = 99999, 99999, 99999
                     temp_results.append(coord)
             else:
+                # not a junction: do not create the cross.
                 if self.all_labels >= 1:
                     temp_results.append(Coordinate([x_centerline_fit[iz], y_centerline_fit[iz],
                                                     z_centerline[iz], 0], mode='continuous'))
@@ -438,10 +456,11 @@ class SpinalCordStraightener(object):
         sct.check_file_exist(fname_centerline, verbose)
 
         # Display arguments
-        sct.printv("\nCheck input arguments...", verbose)
+        sct.printv("\nCheck input arguments:", verbose)
         sct.printv("  Input volume ...................... " + fname_anat, verbose)
         sct.printv("  Centerline ........................ " + fname_centerline, verbose)
         sct.printv("  Final interpolation ............... " + interpolation_warp, verbose)
+        sct.printv("  Number of CPU ..................... " + str(self.cpu_number), verbose)
         sct.printv("  Verbose ........................... " + str(verbose), verbose)
         sct.printv("", verbose)
 
@@ -594,6 +613,14 @@ class SpinalCordStraightener(object):
                     z0 = (z_centerline[iz] - middle_slice) * factor_curved_straight + middle_slice
                     landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
                     landmark_curved_value += 1
+
+            # Remove corrupted landmarks (jcohenadad, issue #584)
+            landmark_curved_tmp = []
+            for i_landmark_curved in landmark_curved:
+                if not (i_landmark_curved.x == 99999 and i_landmark_curved.y == 99999 and i_landmark_curved.z == 99999):
+                    landmark_curved_tmp.append(i_landmark_curved)
+            landmark_curved = landmark_curved_tmp
+
 
             # Create NIFTI volumes with landmarks
             # ==========================================================================================
