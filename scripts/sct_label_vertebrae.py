@@ -133,7 +133,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params bspline_meshsize=4x4x8,all_labels=0')
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
