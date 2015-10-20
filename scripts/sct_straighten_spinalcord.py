@@ -16,6 +16,7 @@ import os
 import time
 import commands
 import sys
+from copy import deepcopy
 from msct_parser import Parser
 from sct_label_utils import ProcessLabels
 from sct_crop_image import ImageCropper
@@ -355,7 +356,7 @@ class SpinalCordStraightener(object):
         self.window_length = window_length
         self.crop = crop
 
-        self.cpu_number = 0
+        self.cpu_number = None
         self.results_landmarks_curved = []
 
         self.bspline_meshsize = '5x5x10'
@@ -460,7 +461,6 @@ class SpinalCordStraightener(object):
         sct.printv("  Input volume ...................... " + fname_anat, verbose)
         sct.printv("  Centerline ........................ " + fname_centerline, verbose)
         sct.printv("  Final interpolation ............... " + interpolation_warp, verbose)
-        sct.printv("  Number of CPU ..................... " + str(self.cpu_number), verbose)
         sct.printv("  Verbose ........................... " + str(verbose), verbose)
         sct.printv("", verbose)
 
@@ -614,7 +614,7 @@ class SpinalCordStraightener(object):
                     landmark_straight.append(Coordinate([x0, y0, z0, landmark_curved_value]))
                     landmark_curved_value += 1
 
-            # Remove corrupted landmarks (jcohenadad, issue #584)
+            # Discard corrupted landmarks (jcohenadad, issue #584)
             landmark_curved_tmp = []
             for i_landmark_curved in landmark_curved:
                 if not (i_landmark_curved.x == 99999 and i_landmark_curved.y == 99999 and i_landmark_curved.z == 99999):
@@ -657,18 +657,21 @@ class SpinalCordStraightener(object):
             for index in range(0, len(landmark_curved)):
                 x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
                           int(round(landmark_curved[index].z))
+                # attribute landmark_value to the voxel
+                data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
 
-                # attribute landmark_value to the voxel and its neighbours
-                data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
+                # # attribute landmark_value to the voxel and its neighbours
+                # data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                # z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                 # get x, y and z coordinates of straight landmark (rounded to closest integer)
                 x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
                           int(round(landmark_straight[index].z))
+                data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
 
-                # attribute landmark_value to the voxel and its neighbours
-                data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
+                # # attribute landmark_value to the voxel and its neighbours
+                # data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                # z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
             # Write NIFTI volumes
             sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -676,48 +679,65 @@ class SpinalCordStraightener(object):
             img = Nifti1Image(data_curved_landmarks, None, hdr)
             save(img, 'tmp.landmarks_curved.nii.gz')
             sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
+            hdr_straight_landmarks.set_data_dtype('uint32')
             img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
             save(img, 'tmp.landmarks_straight.nii.gz')
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
+            # Crop landmarks (for faster computation)
+            sct.printv("\nCrop around landmarks (for faster computation)...", verbose)
+            sct.run('sct_crop_image -i tmp.landmarks_curved.nii.gz -bmax -o tmp.landmarks_curved_crop.nii.gz', verbose)
+            sct.run('sct_crop_image -i tmp.landmarks_straight.nii.gz -bmax -o tmp.landmarks_straight_crop.nii.gz', verbose)
+
+            # Adjust LandmarksReal values after cropping
+            # for curved
+            x_adjust = min([int(round(i.x)) for i in landmark_curved]) + padding_x
+            y_adjust = min([int(round(i.y)) for i in landmark_curved]) + padding_y
+            z_adjust = min([int(round(i.z)) for i in landmark_curved]) + padding_z
+            landmark_curved_adjust = deepcopy(landmark_curved)  # here we use deepcopy to copy list with object
+            for index in range(0, len(landmark_curved)):
+                landmark_curved_adjust[index].x = landmark_curved[index].x - x_adjust
+                landmark_curved_adjust[index].y = landmark_curved[index].y - y_adjust
+                landmark_curved_adjust[index].z = landmark_curved[index].z - z_adjust
+            # for straight
+            x_adjust = min([int(round(i.x)) for i in landmark_straight]) + padding_x
+            y_adjust = min([int(round(i.y)) for i in landmark_straight]) + padding_y
+            z_adjust = min([int(round(i.z)) for i in landmark_straight]) + padding_z
+            landmark_straight_adjust = deepcopy(landmark_straight)
+            for index in range(0, len(landmark_straight)):
+                landmark_straight_adjust[index].x = landmark_straight[index].x - x_adjust
+                landmark_straight_adjust[index].y = landmark_straight[index].y - y_adjust
+                landmark_straight_adjust[index].z = landmark_straight[index].z - z_adjust
+            # copy to keep same variable name throughout the code
+            landmark_curved = deepcopy(landmark_curved_adjust)
+            landmark_straight = deepcopy(landmark_straight_adjust)
+
+            # display
             if verbose == 2:
                 from mpl_toolkits.mplot3d import Axes3D
                 import matplotlib.pyplot as plt
-
                 fig = plt.figure()
                 ax = Axes3D(fig)
                 plt_landmarks_curved, = ax.plot([coord.x for coord in landmark_curved],
                                                 [coord.y for coord in landmark_curved],
                                                 [coord.z for coord in landmark_curved],
                                                 'b.', markersize=3)
-
                 plt_landmarks_straight, = ax.plot([coord.x for coord in landmark_straight],
                                                   [coord.y for coord in landmark_straight],
                                                   [coord.z for coord in landmark_straight],
                                                   'r.', markersize=3)
-
                 plt.legend([plt_landmarks_curved, plt_landmarks_straight],
                                ['Landmarks curved', 'Landmarks straight'])
-
                 ax.set_xlabel('x')
                 ax.set_ylabel('y')
                 ax.set_zlabel('z')
                 ax.set_aspect('equal')
                 plt.show()
 
-            # Removing non-matching landmarks
+            # Remove non-matching landmarks
             landmark_curved, landmark_straight = ProcessLabels.remove_label_coord(landmark_curved,
                                                                                   landmark_straight,
                                                                                   symmetry=True)
-
-            # Writing landmark curve in text file
-            landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
-            for i in landmark_straight:
-                landmark_straight_file.write(
-                    str(i.x + padding_x) + "," +
-                    str(i.y + padding_y) + "," +
-                    str(i.z + padding_z) + "\n")
-            landmark_straight_file.close()
 
             # Writing landmark curve in text file
             landmark_curved_file = open("LandmarksRealCurve.txt", "w+")
@@ -728,11 +748,20 @@ class SpinalCordStraightener(object):
                     str(i.z + padding_z) + "\n")
             landmark_curved_file.close()
 
+            # Writing landmark curve in text file
+            landmark_straight_file = open("LandmarksRealStraight.txt", "w+")
+            for i in landmark_straight:
+                landmark_straight_file.write(
+                    str(i.x + padding_x) + "," +
+                    str(i.y + padding_y) + "," +
+                    str(i.z + padding_z) + "\n")
+            landmark_straight_file.close()
+
             # Estimate b-spline transformation curve --> straight
             sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_straight.nii.gz '
-                                     'tmp.landmarks_curved.nii.gz '
+                                     'tmp.landmarks_straight_crop.nii.gz '
+                                     'tmp.landmarks_curved_crop.nii.gz '
                                      'tmp.curve2straight_rigid.txt '
                                      'tmp.warp_curve2straight.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
@@ -743,14 +772,14 @@ class SpinalCordStraightener(object):
                                      ' 0',
                                      verbose=verbose)
 
-            # remove padding for straight labels
-            if crop == 1:
-                ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
-                             output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
-                             verbose=verbose).crop()
-                pass
-            else:
-                sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
+            # # remove padding for straight labels
+            # if crop == 1:
+            #     ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
+            #                  output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
+            #                  verbose=verbose).crop()
+            #     pass
+            # else:
+            #     sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
 
             # Concatenate rigid and non-linear transformations...
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
@@ -762,8 +791,8 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             sct.printv("\nEstimate b-spline transformation: straight --> curve...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_curved.nii.gz '
-                                     'tmp.landmarks_straight.nii.gz '
+                                     'tmp.landmarks_curved_crop.nii.gz '
+                                     'tmp.landmarks_straight_crop.nii.gz '
                                      'tmp.straight2curve_rigid.txt '
                                      'tmp.warp_straight2curve.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
