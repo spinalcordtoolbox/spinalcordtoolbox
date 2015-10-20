@@ -453,8 +453,8 @@ class SpinalCordStraightener(object):
             verbose = 2
 
         # check existence of input files
-        sct.check_file_exist(fname_anat, verbose)
-        sct.check_file_exist(fname_centerline, verbose)
+        # sct.check_file_exist(fname_anat, verbose)
+        # sct.check_file_exist(fname_centerline, verbose)
 
         # Display arguments
         sct.printv("\nCheck input arguments:", verbose)
@@ -471,9 +471,10 @@ class SpinalCordStraightener(object):
         # create temporary folder
         path_tmp = sct.tmp_create(verbose=verbose)
 
-        # copy files into tmp folder
-        sct.run("cp " + fname_anat + " " + path_tmp, verbose)
-        sct.run("cp " + fname_centerline + " " + path_tmp, verbose)
+        # Copying input data to tmp folder
+        sct.printv('\nCopy files to tmp folder...', verbose)
+        sct.run('sct_convert -i '+fname_anat+' -o '+path_tmp+'data.nii')
+        sct.run('sct_convert -i '+fname_centerline+' -o '+path_tmp+'centerline.nii.gz')
 
         # go to tmp folder
         os.chdir(path_tmp)
@@ -481,26 +482,27 @@ class SpinalCordStraightener(object):
         try:
             # resample data to 1mm isotropic
             sct.printv('\nResample data to 1mm isotropic...', verbose)
-            fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_anat + ext_anat + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_anat_resampled)
-            fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i ' + file_centerline + ext_centerline + ' -mm 1.0x1.0x1.0 -x linear -o ' + fname_centerline_resampled)
+            # fname_anat_resampled = file_anat + "_resampled.nii.gz"
+            sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
+            # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
+            sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
-            fname_centerline_orient = file_centerline + "_rpi.nii.gz"
-            fname_centerline_orient = set_orientation(file_centerline+ext_centerline, "RPI", filename=True)
+            sct.run('sct_image -i centerline_1mm.nii.gz -setorient RPI -o centerline_1mm_rpi.nii.gz')
+            # fname_centerline_orient = file_centerline + "_rpi.nii.gz"
+            # fname_centerline_orient = set_orientation(file_centerline+ext_centerline, "RPI", filename=True)
 
             # Get dimension
             sct.printv('\nGet dimensions...', verbose)
             from msct_image import Image
-            image_centerline = Image(fname_centerline_orient)
+            image_centerline = Image('centerline_1mm_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
             sct.printv('.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
             sct.printv('.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
             
             # smooth centerline
-            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(fname_centerline_orient, algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('centerline_1mm_rpi.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
 
             # Get coordinates of landmarks along curved centerline
             # ==========================================================================================
@@ -631,7 +633,7 @@ class SpinalCordStraightener(object):
             padding_x, padding_y, padding_z = padding, padding, padding
             if nx + padding <= leftright_width:
                 padding_x = leftright_width - padding - nx
-            sct.run('sct_image -i '+fname_centerline_orient+' -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
+            sct.run('sct_image -i centerline_1mm_rpi.nii.gz -o tmp.centerline_pad.nii.gz -pad '+str(padding_x)+','+str(padding_y)+','+str(padding_z))
 
             # Open padded centerline for reading
             sct.printv('\nOpen padded centerline for reading...', verbose)
@@ -812,19 +814,20 @@ class SpinalCordStraightener(object):
 
             # Concatenate rigid and non-linear transformations...
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
-            sct.run('sct_concat_transfo -w tmp.straight2curve_rigid.txt,tmp.warp_straight2curve.nii.gz -d '+file_anat+ext_anat+' -o tmp.straight2curve.nii.gz')
+            sct.run('sct_concat_transfo -w tmp.straight2curve_rigid.txt,tmp.warp_straight2curve.nii.gz -d data.nii -o tmp.straight2curve.nii.gz')
 
             # Apply transformation to input image
             sct.printv('\nApply transformation to input image...', verbose)
-            Transform(input_filename=str(file_anat+ext_anat), fname_dest="tmp.landmarks_straight_crop.nii.gz",
-                      output_filename="tmp.anat_rigid_warp.nii.gz", interp=interpolation_warp,
-                      warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
+            sct.run('sct_apply_transfo -i data.nii -d tmp.landmarks_straight_crop.nii.gz -o tmp.anat_rigid_warp.nii.gz -w tmp.curve2straight.nii.gz -x '+interpolation_warp, verbose)
+            # Transform(input_filename='data.nii', fname_dest="tmp.landmarks_straight_crop.nii.gz",
+            #           output_filename="tmp.anat_rigid_warp.nii.gz", interp=interpolation_warp,
+            #           warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
 
             # compute the error between the straightened centerline/segmentation and the central vertical line.
             # Ideally, the error should be zero.
             # Apply deformation to input image
             sct.printv('\nApply transformation to centerline image...', verbose)
-            Transform(input_filename=fname_centerline_orient, fname_dest="tmp.landmarks_straight_crop.nii.gz",
+            Transform(input_filename='centerline.nii.gz', fname_dest="tmp.landmarks_straight_crop.nii.gz",
                       output_filename="tmp.centerline_straight.nii.gz", interp="nn",
                       warp="tmp.curve2straight.nii.gz", verbose=verbose).apply()
             from msct_image import Image
