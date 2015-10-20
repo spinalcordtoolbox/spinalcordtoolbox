@@ -58,15 +58,15 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -o t2_seg_labeled_center.nii.gz')
+        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
         from sct_label_utils import ProcessLabels
         from numpy import linalg
         from math import sqrt
         label_results = ProcessLabels('t2_seg_labeled_center.nii.gz')
-        list_label_results = label_results.display_voxel()
+        list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
         label_manual = ProcessLabels(path_data+'t2/t2_seg_labeled_center_manual.nii.gz')
-        list_label_manual = label_manual.display_voxel()
+        list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
         mse = 0.0
         max_dist = 0.0
         for coord_manual in list_label_manual:
@@ -83,16 +83,16 @@ def test(path_data='', parameters=''):
         # calculate number of label mismatch
         diff_manual_result = len(list_label_manual) - len(list_label_results)
 
-        # display results
-        sct.printv('RMSE = ' + str(rmse) + ' mm')
-        sct.printv('Max distance = ' + str(max_dist) + ' mm')
-        sct.printv('Diff manual-test = ' + str(diff_manual_result))
+        # # display results
+        # sct.printv('RMSE = ' + str(rmse) + ' mm')
+        # sct.printv('Max distance = ' + str(max_dist) + ' mm')
+        # sct.printv('Diff manual-test = ' + str(diff_manual_result))
 
         # check if MSE is superior to threshold
-        if rmse > 0.1:
+        if rmse > 2:
             status = 99
             output += '\nRMSE higher than threshold.'
-        if max_dist > 1:
+        if max_dist > 3:
             status = 99
             output += '\nMax distance higher than threshold.'
         if abs(diff_manual_result) > 3:
