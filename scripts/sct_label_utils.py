@@ -308,7 +308,7 @@ class ProcessLabels(object):
         return image_output
 
 
-    def label_vertebrae(self, levels_user):
+    def label_vertebrae(self, levels_user=None):
         """
         Finds the center of mass of vertebral levels specified by the user.
         :return: image_output: Image with labels.
@@ -318,7 +318,8 @@ class ProcessLabels(object):
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
         # if user did not specify levels, include all:
-        levels_user = [int(i.value) for i in list_coordinates]
+        if levels_user == None:
+            levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
             # check if this level is NOT in levels_user
