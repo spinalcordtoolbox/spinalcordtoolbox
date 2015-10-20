@@ -317,6 +317,8 @@ class ProcessLabels(object):
         image_cubic2point = self.cubic_to_point()
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        # if user did not specify levels, include all:
+        levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
             # check if this level is NOT in levels_user
@@ -596,9 +598,7 @@ def get_parser():
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
 - increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. You need to provide:
-    - labeled segmentation (flag '-i')
-    - vertebral levels where to create labels (flag 'level')
+- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
