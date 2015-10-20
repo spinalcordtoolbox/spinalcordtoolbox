@@ -57,19 +57,50 @@ def test(path_data='', parameters=''):
     result_mse = float('nan'), float('nan')
 
     if status == 0:
-        # open output data
-        data_result = Image('t2_seg_labeled.nii.gz').data
-        data_goldstandard = Image(path_data+'t2/t2_seg_labeled.nii.gz').data
-        # compute MSE
-        ind_nonzero = where(data_result>0)  # only get non-zero values to obtain meaningful MSE calculations
-        result_mse = ((data_result[ind_nonzero] - data_goldstandard[ind_nonzero]) ** 2).mean()
+        # extract center of vertebral labels
+        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -o t2_seg_labeled_center.nii.gz')
+        # open labels
+        from sct_label_utils import ProcessLabels
+        from numpy import linalg
+        from math import sqrt
+        label_results = ProcessLabels('t2_seg_labeled_center.nii.gz')
+        list_label_results = label_results.display_voxel()
+        label_manual = ProcessLabels(path_data+'t2/t2_seg_labeled_center_manual.nii.gz')
+        list_label_manual = label_manual.display_voxel()
+        mse = 0.0
+        max_dist = 0.0
+        for coord_manual in list_label_manual:
+            for coord in list_label_results:
+                if round(coord.value) == round(coord_manual.value):
+                    # Calculate MSE
+                    mse += ((coord_manual.x - coord.x) ** 2 + (coord_manual.y - coord.y) ** 2 + (coord_manual.z - coord.z) ** 2) / float(3)
+                    # Calculate distance (Frobenius norm)
+                    dist = linalg.norm([(coord_manual.x - coord.x), (coord_manual.y - coord.y), (coord_manual.z - coord.z)])
+                    if dist > max_dist:
+                        max_dist = dist
+                    break
+        rmse = sqrt(mse / len(list_label_manual))
+        # calculate number of label mismatch
+        diff_manual_result = len(list_label_manual) - len(list_label_results)
+
+        # display results
+        sct.printv('RMSE = ' + str(rmse) + ' mm')
+        sct.printv('Max distance = ' + str(max_dist) + ' mm')
+        sct.printv('Diff manual-test = ' + str(diff_manual_result))
+
         # check if MSE is superior to threshold
-        if result_mse > 0.0:
+        if rmse > 0.1:
             status = 99
-            output += '\nResulting image differs from gold-standard.'
+            output += '\nRMSE higher than threshold.'
+        if max_dist > 1:
+            status = 99
+            output += '\nMax distance higher than threshold.'
+        if abs(diff_manual_result) > 3:
+            status = 99
+            output += '\nDiff manual-result higher than threshold.'
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result}, index=[path_data])
 
     return status, output, results
 
