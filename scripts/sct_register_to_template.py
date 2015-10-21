@@ -216,7 +216,7 @@ def main():
     image_label_template = Image(fname_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
-        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondance in tempalte space. \nLabel max '
+        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
@@ -263,9 +263,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    # sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0 -v '+str(verbose), verbose)
-    # jcohenadad, issue #610
-    sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -params all_labels=0 -r 0 -v '+str(verbose), verbose)
+    sct.run('sct_straighten_spinalcord -i segmentation_rpi_crop.nii.gz -c segmentation_rpi_crop.nii.gz -r 0 -v '+str(verbose), verbose)
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d data_rpi.nii -o warp_straight2curve.nii.gz')
 
