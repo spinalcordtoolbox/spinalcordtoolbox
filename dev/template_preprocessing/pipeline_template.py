@@ -54,32 +54,68 @@ import matplotlib.pyplot as plt
 
 # add path to scripts
 PATH_INFO = ''  # corresponds to the variable 'path_results' in file preprocess_data_template.py
-PATH_OUTPUT = '' # folder where you want the results to be stored
+PATH_OUTPUT = ''  # folder where you want the results to be stored
+
+# folder to dataset
+folder_data_errsm = '/Volumes/data_shared/montreal_criugm/errsm'
+folder_data_marseille = '/Volumes/data_shared/marseille'
+folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
+
+# out because movement artefact:
+# ['errsm_22', folder_data_errsm+'/errsm_22/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_22/25-SPINE_T2'],\
 
 # define subject
-SUBJECTS_LIST = [['errsm_02', '/Volumes/data_shared/montreal_criugm/errsm_02/22-SPINE_T1', '/Volumes/data_shared/montreal_criugm/errsm_02/28-SPINE_T2'],['errsm_04', '/Volumes/data_shared/montreal_criugm/errsm_04/16-SPINE_memprage/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_04/18-SPINE_space'],\
-                       ['errsm_05', '/Volumes/data_shared/montreal_criugm/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_05/24-SPINE_SPACE'],['errsm_09', '/Volumes/data_shared/montreal_criugm/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_09/33-SPINE_SPACE'],\
-                       ['errsm_10', '/Volumes/data_shared/montreal_criugm/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_10/20-SPINE_SPACE'], ['errsm_11', '/Volumes/data_shared/montreal_criugm/errsm_11/24-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_11/09-SPINE_T2'],\
-                       ['errsm_12', '/Volumes/data_shared/montreal_criugm/errsm_12/19-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_12/18-SPINE_T2'],['errsm_13', '/Volumes/data_shared/montreal_criugm/errsm_13/33-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_13/34-SPINE_T2'],\
-                       ['errsm_14', '/Volumes/data_shared/montreal_criugm/errsm_14/5002-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_14/5003-SPINE_T2'], ['errsm_16', '/Volumes/data_shared/montreal_criugm/errsm_16/23-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_16/39-SPINE_T2'],\
-                       ['errsm_17', '/Volumes/data_shared/montreal_criugm/errsm_17/41-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_17/42-SPINE_T2'], ['errsm_18', '/Volumes/data_shared/montreal_criugm/errsm_18/36-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_18/33-SPINE_T2'],\
-                       ['errsm_21', '/Volumes/data_shared/montreal_criugm/errsm_21/27-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_21/30-SPINE_T2'],['errsm_22', '/Volumes/data_shared/montreal_criugm/errsm_22/29-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_22/25-SPINE_T2'],\
-                       ['errsm_23', '/Volumes/data_shared/montreal_criugm/errsm_23/29-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_23/28-SPINE_T2'],['errsm_24', '/Volumes/data_shared/montreal_criugm/errsm_24/20-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_24/24-SPINE_T2'],\
-                       ['errsm_25', '/Volumes/data_shared/montreal_criugm/errsm_25/25-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_25/26-SPINE_T2'],['errsm_30', '/Volumes/data_shared/montreal_criugm/errsm_30/51-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_30/50-SPINE_T2'],\
-                       ['errsm_31', '/Volumes/data_shared/montreal_criugm/errsm_31/31-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_31/32-SPINE_T2'],['errsm_32', '/Volumes/data_shared/montreal_criugm/errsm_32/16-SPINE_T1/echo_2.09 ', '/Volumes/data_shared/montreal_criugm/errsm_32/19-SPINE_T2'],\
-                       ['errsm_33', '/Volumes/data_shared/montreal_criugm/errsm_33/30-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_33/31-SPINE_T2'],['1','/Volumes/data_shared/marseille/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101','/Volumes/data_shared/marseille/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],\
-                       ['ALT','/Volumes/data_shared/marseille/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15','/Volumes/data_shared/marseille/ALT/01_0100_space-composing'],['JD','/Volumes/data_shared/marseille/JD/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23','/Volumes/data_shared/marseille/JD/01_0100_compo-space'],\
-                       ['JW','/Volumes/data_shared/marseille/JW/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5','/Volumes/data_shared/marseille/JW/01_0100_compo-space'],['MLL','/Volumes/data_shared/marseille/MLL_1016/01_0008_sc-mprage-1mm-2palliers-fov384-comp-sp-7','/Volumes/data_shared/marseille/MLL_1016/01_0100_t2-compo'],\
-                       ['MT','/Volumes/data_shared/marseille/MT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5','/Volumes/data_shared/marseille/MT/01_0100_t2composing'],['T045', '/Volumes/data_shared/marseille/T045/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/T045/01_0101_t2-3d-composing'],\
-                       ['T047','/Volumes/data_shared/marseille/T047/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5','/Volumes/data_shared/marseille/T047/01_0100_t2-3d-composing'],['VC','/Volumes/data_shared/marseille/VC/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23','/Volumes/data_shared/marseille/VC/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-113'],\
-                       ['VG','/Volumes/data_shared/marseille/VG/T1/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15','/Volumes/data_shared/marseille/VG/T2/01_0024_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-11'],['VP','/Volumes/data_shared/marseille/VP/01_0011_sc-mprage-1mm-2palliers-fov384-comp-sp-25','/Volumes/data_shared/marseille/VP/01_0100_space-compo'],\
-                       ['pain_pilot_1','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot1/24-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot1/25-SPINE'],['pain_pilot_2','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot2/13-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot2/30-SPINE_T2'],\
-                       ['pain_pilot_4','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot4/32-SPINE_T2'],['TM', '/Volumes/data_shared/marseille/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/TM_T057c/01_0105_t2-composing'],\
-                       ['errsm_20', '/Volumes/data_shared/montreal_criugm/errsm_20/12-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_20/34-SPINE_T2'],['pain_pilot_3','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot3/31-SPINE_T2'],\
-                       ['errsm_34','/Volumes/data_shared/montreal_criugm/errsm_34/41-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_34/40-SPINE_T2'],['errsm_35','/Volumes/data_shared/montreal_criugm/errsm_35/37-SPINE_T1/echo_2.09','/Volumes/data_shared/montreal_criugm/errsm_35/38-SPINE_T2'],\
-                       ['pain_pilot_7', '/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot7/32-SPINE_T1/echo_2.09', '/Volumes/data_shared/montreal_criugm/d_sp_pain_pilot7/33-SPINE_T2'], ['errsm_03', '/Volumes/data_shared/montreal_criugm/errsm_03/32-SPINE_all/echo_2.09', '/Volumes/data_shared/montreal_criugm/errsm_03/38-SPINE_all_space'],\
-                       ['FR', '/Volumes/data_shared/marseille/FR_T080/01_0039_sc-mprage-1mm-3palliers-fov384-comp-sp-13', '/Volumes/data_shared/marseille/FR_T080/01_0104_spine2'],\
-                       ['GB', '/Volumes/data_shared/marseille/GB_T083/01_0029_sc-mprage-1mm-2palliers-fov384-comp-sp-5', '/Volumes/data_shared/marseille/GB_T083/01_0033_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7']]
+SUBJECTS_LIST = [['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
+                 ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
+                 ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
+                 ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
+                 ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
+                 ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2'],
+                 ['errsm_12', folder_data_errsm+'/errsm_12/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_12/18-SPINE_T2'],
+                 ['errsm_13', folder_data_errsm+'/errsm_13/33-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_13/34-SPINE_T2'],
+                 ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
+                 ['errsm_16', folder_data_errsm+'/errsm_16/23-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_16/39-SPINE_T2'],
+                 ['errsm_17', folder_data_errsm+'/errsm_17/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_17/42-SPINE_T2'],
+                 ['errsm_18', folder_data_errsm+'/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_18/33-SPINE_T2'],
+                 ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
+                 ['errsm_23', folder_data_errsm+'/errsm_23/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_23/28-SPINE_T2'],
+                 ['errsm_24', folder_data_errsm+'/errsm_24/20-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_24/24-SPINE_T2'],
+                 ['errsm_25', folder_data_errsm+'/errsm_25/25-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_25/26-SPINE_T2'],
+                 ['errsm_30', folder_data_errsm+'/errsm_30/51-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_30/50-SPINE_T2'],
+                 ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
+                 ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
+                 ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
+                 ['1', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
+                 ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
+                 ['JD', folder_data_marseille+'/JD/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', folder_data_marseille+'/JD/01_0100_compo-space'],
+                 ['JW', folder_data_marseille+'/JW/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/JW/01_0100_compo-space'],
+                 ['MLL', folder_data_marseille+'/MLL_1016/01_0008_sc-mprage-1mm-2palliers-fov384-comp-sp-7', folder_data_marseille+'/MLL_1016/01_0100_t2-compo'],
+                 ['MT', folder_data_marseille+'/MT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/MT/01_0100_t2composing'],
+                 ['T045', folder_data_marseille+'/T045/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/T045/01_0101_t2-3d-composing'],
+                 ['T047', folder_data_marseille+'/T047/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/T047/01_0100_t2-3d-composing'],
+                 ['VC', folder_data_marseille+'/VC/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', folder_data_marseille+'/VC/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-113'],
+                 ['VG', folder_data_marseille+'/VG/T1/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/VG/T2/01_0024_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-11'],
+                 ['VP', folder_data_marseille+'/VP/01_0011_sc-mprage-1mm-2palliers-fov384-comp-sp-25', folder_data_marseille+'/VP/01_0100_space-compo'],
+                 ['pain_pilot_1', folder_data_pain+'/d_sp_pain_pilot1/24-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot1/25-SPINE'],
+                 ['pain_pilot_2', folder_data_pain+'/d_sp_pain_pilot2/13-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot2/30-SPINE_T2'],
+                 ['pain_pilot_4', folder_data_pain+'/d_sp_pain_pilot4/33-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot4/32-SPINE_T2'],
+                 ['TM', folder_data_marseille+'/TM_T057c/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/TM_T057c/01_0105_t2-composing'],
+                 ['errsm_20', folder_data_errsm+'/errsm_20/12-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_20/34-SPINE_T2'],
+                 ['pain_pilot_3', folder_data_pain+'/d_sp_pain_pilot3/16-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot3/31-SPINE_T2'],
+                 ['errsm_34', folder_data_errsm+'/errsm_34/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_34/40-SPINE_T2'],
+                 ['errsm_35', folder_data_errsm+'/errsm_35/37-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_35/38-SPINE_T2'],
+                 ['pain_pilot_7', folder_data_pain+'/d_sp_pain_pilot7/32-SPINE_T1/echo_2.09', folder_data_pain+'/d_sp_pain_pilot7/33-SPINE_T2'],
+                 ['errsm_03', folder_data_errsm+'/errsm_03/32-SPINE_all/echo_2.09', folder_data_errsm+'/errsm_03/38-SPINE_all_space'],
+                 ['FR', folder_data_marseille+'/FR_T080/01_0039_sc-mprage-1mm-3palliers-fov384-comp-sp-13', folder_data_marseille+'/FR_T080/01_0104_spine2'],
+                 ['GB', folder_data_marseille+'/GB_T083/01_0029_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/GB_T083/01_0033_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7'],
+                 ['errsm_36', folder_data_errsm+'/errsm_36/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_36/31-SPINE_T2'],
+                 ['errsm_37', folder_data_errsm+'/errsm_37/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_37/20-SPINE_T2'],
+                 ['errsm_43', folder_data_errsm+'/errsm_43/22-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_43/18-SPINE_T2'],
+                 ['errsm_44', folder_data_errsm+'/errsm_44/18-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_44/19-SPINE_T2'],
+                 ['AM', folder_data_marseille+'/AM/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/AM/01_0100_compo-t2-spine'],
+                 ['HB', folder_data_marseille+'/HB/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-29', folder_data_marseille+'/HB/01_0100_t2-compo'],
+                 ['PA', folder_data_marseille+'/PA/01_0034_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/PA/01_0038_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7']
+                 ]
 
 
 #Parameters:
@@ -89,6 +125,7 @@ y_size_of_template_space = 200
 number_labels_for_template = 20  # vertebral levels
 
 def main():
+
     # Processing of T1 data for template
     do_preprocessing('T1')
     create_cross('T1')
@@ -125,9 +162,9 @@ def do_preprocessing(contrast):
         list_file = os.listdir(PATH_OUTPUT + '/subjects/'+subject+'/'+contrast)
         if 'data.nii.gz' not in list_file:
             print '\nImporting dicoms and converting to nii...'
-            if contrast =='T1':
+            if contrast == 'T1':
                 sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][1] + '/*.dcm')
-            if contrast =='T2':
+            if contrast == 'T2':
                 sct.run('dcm2nii -o . -r N ' + SUBJECTS_LIST[i][2] + '/*.dcm')
 
             # change file name
@@ -155,7 +192,7 @@ def do_preprocessing(contrast):
             zmax_anatomic = line.split(',')[1]
             zmin_seg = line.split(',')[2]
             zmax_seg = line.split(',')[3]
-            if len(line_list)==6:
+            if len(line_list) == 6:
                 ymin_anatomic = line.split(',')[4]
                 ymax_anatomic = line.split(',')[5]
         file_results.close()
@@ -195,7 +232,8 @@ def do_preprocessing(contrast):
         print '\nErasing 3 top and 3 bottom slices of the segmentation to avoid edge effects of propseg...'
         path_seg, file_seg, ext_seg = sct.extract_fname('data_RPI_crop_seg.nii.gz')
         image_seg = nibabel.load('data_RPI_crop_seg.nii.gz')
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI_crop_seg.nii.gz').dim
         data_seg = image_seg.get_data()
         hdr_seg = image_seg.get_header()
            # List slices that contain non zero values
@@ -215,7 +253,7 @@ def do_preprocessing(contrast):
         # - data_crop_denoised_seg_mod_crop.nii.gz
         print '\nCropping segmentation...'
         if zmax_seg == 'max':
-            nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('data_RPI_crop_seg.nii.gz')
+            nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI_crop_seg.nii.gz').dim
             sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
         else: sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
 
@@ -321,7 +359,8 @@ def create_cross(contrast):
         print '\nCalculating distances between : (last_label and bottom)  and (first label and top)...'
         img_label = nibabel.load('labels_vertebral_dilated_reg_2point_crop.nii.gz')
         data_labels = img_label.get_data()
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension('labels_vertebral_dilated_reg_2point_crop.nii.gz')
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image('labels_vertebral_dilated_reg_2point_crop.nii.gz').dim
         X, Y, Z = (data_labels > 0).nonzero()
         list_coordinates = [([X[i], Y[i], Z[i], data_labels[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
         for i in range(len(list_coordinates)):
@@ -433,7 +472,8 @@ def align_vertebrae(contrast):
             os.makedirs(PATH_OUTPUT +'/Image_results')
         f = nibabel.load(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
         data = f.get_data()
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz')
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(PATH_OUTPUT +'/Final_results/'+subject+'_aligned_' + contrast + '.nii.gz').dim
         sagital_middle = nx / 2
         coronal_middle = ny / 2
         sagittal = data[sagital_middle, :, :].T
