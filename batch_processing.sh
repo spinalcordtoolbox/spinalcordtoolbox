@@ -95,9 +95,9 @@ sct_compute_mtr -i mt0_reg.nii.gz -j mt1_crop.nii.gz
 # tips: here we only rely on the segmentation (not the image), because the close proximity of the cord with the spine can induce inaccuracies in the registration on some slices.
 sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
 # concat transfo
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mt1.nii.gz -o warp_template2mt.nii.gz
+sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
-sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz
+sct_warp_template -d mtr.nii.gz -w warp_template2mt.nii.gz
 # OPTIONAL PART: SEGMENT GRAY MATTER:
 # <<<<<<<<<<
 # add mt1 and mt0 to increase GM/WM contrast
