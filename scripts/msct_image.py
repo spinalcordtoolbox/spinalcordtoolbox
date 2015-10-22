@@ -586,6 +586,20 @@ class Image(object):
 
             return coordi_pix_list
 
+    def saveSagittalPlan(self, format='.png'):
+        copy_rpi = Image(self)
+        copy_rpi.change_orientation('RPI')
+        nx, ny, nz, nt, px, py, pz, pt = self.dim
+        sagittal_slice = copy_rpi.data[int(round(nx/2)), :, :]
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        filename_png = copy_rpi.file_name + format
+        plt.imshow(sagittal_slice, cmap=cm.gray, interpolation='nearest')
+        plt.axis('off')
+        plt.savefig(filename_png, bbox_inches='tight')
+        return filename_png
+
+
 
 def find_zmin_zmax(fname):
     import sct_utils as sct
