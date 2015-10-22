@@ -1618,7 +1618,7 @@ if not os.path.isdir(path_results + '/T1/T047'):
 os.chdir(path_results + '/T1/T047')
 sct.run('dcm2nii -o . -r N '+folder_data_marseille+'/T047/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5/*.dcm')
 sct.run('mv *.nii.gz data.nii.gz')
-sct.run('sct_orientation -i data.nii.gz -s RPI')
+sct.run('sct_image -i data.nii.gz -setorient RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 87,105,96,20:85,99,129,19:85,94,157,18:85,91,184,17:85,89,208,16:85,89,232,15:85,90,257,14:85,94,280,13:84,99,303,12:84,106,325,11:84,113,344,10:84,120,363,9:84,127,381,8:84,131,398,7:84,131,415,6:85,132,432,5:85,131,449,4:86,130,467,3:85,131,535,2:85,131,561,1')
 sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 30 -end 577')
 f_crop = open('crop.txt', 'w')

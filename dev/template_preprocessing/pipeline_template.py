@@ -53,8 +53,8 @@ from numpy import array
 import matplotlib.pyplot as plt
 
 # add path to scripts
-PATH_INFO = ''  # corresponds to the variable 'path_results' in file preprocess_data_template.py
-PATH_OUTPUT = ''  # folder where you want the results to be stored
+PATH_INFO = '/Users/benjamindeleener/data/template_preprocessing'  # corresponds to the variable 'path_results' in file preprocess_data_template.py
+PATH_OUTPUT = '/Users/benjamindeleener/data/template_preprocessing_final'  # folder where you want the results to be stored
 
 # folder to dataset
 folder_data_errsm = '/Volumes/data_shared/montreal_criugm/errsm'
@@ -117,7 +117,6 @@ SUBJECTS_LIST = [['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_
                  ['PA', folder_data_marseille+'/PA/01_0034_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/PA/01_0038_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-7']
                  ]
 
-
 #Parameters:
 height_of_template_space = 1100
 x_size_of_template_space = 200
@@ -125,20 +124,38 @@ y_size_of_template_space = 200
 number_labels_for_template = 20  # vertebral levels
 
 def main():
+    import time
+
+    start = time.time()
 
     # Processing of T1 data for template
     do_preprocessing('T1')
+    """
     create_cross('T1')
     push_into_templace_space('T1')
     average_levels('T1')
-    align_vertebrae('T1')
+    align_vertebrae('T1')"""
+    end_T1 = time.time()
+    hours_t1, rem_t1 = divmod(end_T1 - start, 3600)
+    minutes_t1, seconds_t1 = divmod(rem_t1, 60)
+    print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours_t1), int(minutes_t1), seconds_t1))
 
+    start_t2 = time.time()
     # Processing of T2 data for template
     do_preprocessing('T2')
-    create_cross('T2')
+    """create_cross('T2')
     push_into_templace_space('T2')
     average_levels('T2')
-    align_vertebrae('T2')
+    align_vertebrae('T2')"""
+    end_T2 = time.time()
+    hours_t2, rem_t2 = divmod(end_T2 - start_t2, 3600)
+    minutes_t2, seconds_t2 = divmod(rem_t2, 60)
+    print("T1 = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t1), int(minutes_t1), seconds_t1))
+    print("T2 = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t2), int(minutes_t2), seconds_t2))
+
+    hours_t2, rem_t2 = divmod(end_T2 - start, 3600)
+    minutes_t2, seconds_t2 = divmod(rem_t2, 60)
+    print("Total = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t2), int(minutes_t2), seconds_t2))
 
 
 def do_preprocessing(contrast):
@@ -176,7 +193,7 @@ def do_preprocessing(contrast):
         # - data.nii.gz
         # - data_RPI.nii.gz
         print '\nConverting to RPI...'
-        sct.run('sct_orientation -i data.nii.gz -s RPI')
+        sct.run('sct_image -i data.nii.gz -setorient RPI')
 
         # Get info from txt file
         print '\nRecover infos from text file' + PATH_INFO + '/' + contrast + '/' + subject+ '/' + 'crop.txt'
@@ -268,13 +285,17 @@ def do_preprocessing(contrast):
             print '\nERROR: No label file centerline_propseg_RPI.nii.gz or labels_updown.nii.gz in '+PATH_INFO+ '/' + contrast + '/' + subject +'. There must be at least one. Check '+ path_sct+'/dev/template_preprocessing/Readme.md for necessary inputs.'
             sys.exit(2)
         if labels_updown:
+            # Creation of centerline from seg and labels for intensity normalization.
+            print '\nExtracting centerline for intensity normalization...'
+            sct.run('sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz')
             sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/labels_updown.nii.gz seg_and_labels.nii.gz')
-        else: sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
+        else:
+            sct.run(
+                'sct_get_centerline -i data_RPI_crop_seg_mod_crop.nii.gz -method labels -l ' + PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz')
+            sct.run('fslmaths data_RPI_crop_seg_mod_crop.nii.gz -add '+ PATH_INFO + '/' + contrast + '/' + subject + '/centerline_propseg_RPI.nii.gz seg_and_labels.nii.gz')
 
 
-        # Creation of centerline from seg and labels for intensity normalization.
-        print '\nExtracting centerline for intensity normalization...'
-        sct.run('sct_get_centerline_from_labels -i seg_and_labels.nii.gz')
+
 
         # Normalisation of intensity with centerline before straightening (pb of brainstem with bad centerline)
         print '\nNormalizing intensity...'
