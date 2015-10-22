@@ -31,6 +31,8 @@ def test(path_data='', parameters=''):
                      '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3 ' \
                      '-t template/ -r 0'
 
+    print parameters
+
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
@@ -47,7 +49,7 @@ def test(path_data='', parameters=''):
                   'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
             index=[path_data])
 
-    if not os.path.isfile(dict_param_with_path['-t']):
+    if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
         dict_param_with_path['-t'] = path_sct + '/data/template/'
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
@@ -76,7 +78,9 @@ def test(path_data='', parameters=''):
     param_with_path += ' -o ' + path_output
 
     cmd = 'sct_register_to_template ' + param_with_path
-    status, output = sct.run(cmd, verbose)
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, verbose)
+    output += o
 
     # if command ran without error, test integrity
     if status == 0:
@@ -112,7 +116,7 @@ def test(path_data='', parameters=''):
             status = 99
 
         # concatenate outputs
-        output = output1 + output2
+        output = output + output1 + output2
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output,
