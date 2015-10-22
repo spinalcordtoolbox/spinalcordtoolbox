@@ -366,7 +366,7 @@ def main():
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)
-    sct.run('sct_maths -i '+ftmp_seg+' -thr 0.5 -o '+add_suffix(ftmp_seg, '_thr'))
+    sct.run('sct_maths -i '+ftmp_seg+' -thr 0.4 -o '+add_suffix(ftmp_seg, '_thr'))
     sct.run('sct_maths -i '+add_suffix(ftmp_seg, '_thr')+' -bin -o '+add_suffix(ftmp_seg, '_thr_bin'))
     ftmp_seg = add_suffix(ftmp_seg, '_thr_bin')
 
