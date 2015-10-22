@@ -216,7 +216,7 @@ def main():
     image_label_template = Image(fname_template_label)
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
-        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondance in tempalte space. \nLabel max '
+        sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
                    'provided: ' + str(labels[-1].value) + '\nLabel max from template: ' +
                    str(labels_template[-1].value), verbose, 'error')
 
