@@ -886,11 +886,17 @@ class SpinalCordStraightener(object):
         sct.printv("Maximum x-y error = " + str(round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
         sct.printv("Accuracy of straightening (MSE) = " + str(round(self.mse_straightening, 2)) +
                    " mm", verbose, "bold")
+
         # display elapsed time
         elapsed_time = time.time() - start_time
         sct.printv("\nFinished! Elapsed time: " + str(int(round(elapsed_time))) + "s", verbose)
         sct.printv("\nTo view results, type:", verbose)
         sct.printv("fslview " + fname_straight + " &\n", verbose, "info")
+
+        from msct_image import Image
+        filename_straightened_image_png = Image(fname_output).saveSagittalPlan()
+        sct.printv('Or take a look at this image: ' + filename_straightened_image_png)
+
 
 
 def get_parser():
