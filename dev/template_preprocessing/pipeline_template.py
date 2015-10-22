@@ -64,8 +64,9 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 # out because movement artefact:
 # ['errsm_22', folder_data_errsm+'/errsm_22/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_22/25-SPINE_T2'],\
 
-# define subject
-SUBJECTS_LIST = [['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
+#already done
+"""
+['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
                  ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
@@ -77,6 +78,10 @@ SUBJECTS_LIST = [['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_
                  ['errsm_16', folder_data_errsm+'/errsm_16/23-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_16/39-SPINE_T2'],
                  ['errsm_17', folder_data_errsm+'/errsm_17/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_17/42-SPINE_T2'],
                  ['errsm_18', folder_data_errsm+'/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_18/33-SPINE_T2'],
+"""
+
+# define subject
+SUBJECTS_LIST = [
                  ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
                  ['errsm_23', folder_data_errsm+'/errsm_23/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_23/28-SPINE_T2'],
                  ['errsm_24', folder_data_errsm+'/errsm_24/20-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_24/24-SPINE_T2'],
@@ -272,7 +277,8 @@ def do_preprocessing(contrast):
         if zmax_seg == 'max':
             nx, ny, nz, nt, px, py, pz, pt = Image('data_RPI_crop_seg.nii.gz').dim
             sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + str(nz) + ' -dim 2 -b 0')
-        else: sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
+        else:
+            sct.run('sct_crop_image -i data_RPI_crop_seg_mod.nii.gz -o data_RPI_crop_seg_mod_crop.nii.gz -start ' + zmin_seg + ' -end ' + zmax_seg + ' -dim 2 -b 0')
 
         # Concatenate segmentation and labels_updown if labels_updown is inputed. If not, it concatenates the segmentation and centerline_propseg_RPI.
         print '\nConcatenating segmentation and label files...'
@@ -310,8 +316,8 @@ def do_preprocessing(contrast):
         # - data_RPI_crop_normalized_straight.nii.gz
         print '\nStraightening image using centerline...'
         cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz')
-        sct.printv(cmd_straighten)
-        os.system(cmd_straighten)
+        #sct.printv(cmd_straighten)
+        sct.run(cmd_straighten)
 
         # # # normalize intensity
         # print '\nNormalizing intensity of the straightened image...'
