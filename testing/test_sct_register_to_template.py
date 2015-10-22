@@ -31,8 +31,6 @@ def test(path_data='', parameters=''):
                      '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3 ' \
                      '-t template/ -r 0'
 
-    print parameters
-
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
