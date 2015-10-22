@@ -326,7 +326,7 @@ def erode(data, radius):
 def smooth(data, sigmas):
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter
-    return gaussian_filter(data, sigmas)
+    return gaussian_filter(data.astype(float), sigmas)
 
 
 def get_data(list_fname):
