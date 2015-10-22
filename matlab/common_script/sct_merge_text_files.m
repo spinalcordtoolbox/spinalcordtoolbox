@@ -10,7 +10,7 @@ list_text=sort_nat(list_text);
 % DON'T CHANGE BELOW
 % =========================================================================
 
-if transpose
+if exist('transpose','var') && transpose
     for i_seq=1:length(list_text)
         unix(['sct_dmri_transpose_bvecs.py ' list_text{i_seq}]);
         list_text{i_seq} = strrep(list_text{i_seq},'.bvec','_t.bvec');
