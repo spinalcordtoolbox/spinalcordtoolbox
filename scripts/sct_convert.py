@@ -51,18 +51,22 @@ def get_parser():
 
 # conversion
 # ==========================================================================================
-def convert(fname_in, fname_out):
+def convert(fname_in, fname_out, type=None, verbose=1):
     """
     Convert data
     :return True/False
     """
     from msct_image import Image
+    from sct_utils import printv
+    printv('sct_convert -i '+fname_in+' -o '+fname_out, verbose, 'code')
     # Open file
     im = Image(fname_in)
     # Save file
     im.setFileName(fname_out)
+    if type is not None:
+        im.changeType(type=type)
     im.save()
-    return True
+    return im
 
 
 # MAIN

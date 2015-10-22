@@ -110,7 +110,7 @@ class WarpTemplate:
 
         # create output folder
         if os.path.exists(self.folder_out):
-            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose)
+            sct.printv('WARNING: Output folder already exists. Deleting it...', self.verbose, 'warning')
             sct.run('rm -rf '+self.folder_out)
         sct.run('mkdir '+self.folder_out)
 
@@ -219,7 +219,7 @@ if __name__ == "__main__":
                       type_value="multiple_choice",
                       description="""Verbose.""",
                       mandatory=False,
-                      default_value='0',
+                      default_value='1',
                       example=['0', '1'])
 
     arguments = parser.parse(sys.argv[1:])

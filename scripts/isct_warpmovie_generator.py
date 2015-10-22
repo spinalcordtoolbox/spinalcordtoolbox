@@ -13,8 +13,10 @@
 #########################################################################################
 
 from msct_image import Image
-from sct_utils import run, printv
-
+from sct_utils import run, printv, extract_fname
+from scipy.misc import toimage
+# from sct_utils import tmp_create, tmp_copy_nifti
+# from os import chdir
 
 class WarpingField(Image):
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath="", verbose=1):
@@ -79,15 +81,26 @@ if __name__ == "__main__":
     warping_fields = [WarpingField(filename) for filename in warping_fields_filename]
 
     filenames_output = []
+
+    # path_tmp = tmp_create()
+    # tmp_copy_nifti(input_file, path_tmp, 'raw.nii')
+    # run('cp '+warping_fields_filename[0]+' '+path_tmp)
+    # chdir(path_tmp)
+    run('mkdir images')
+    run('mkdir niftis')
     while True:
         try:
             warping_fields[0].num_of_frames = number_of_frames
             image_output_iter, iteration = warping_fields[0].next()
             image_output_iter.save()
             filename_warp = image_output_iter.path + image_output_iter.file_name + image_output_iter.ext
-            filename_output = "tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
+            filename_output = "niftis/tmp.warped_image_" + str(iteration - 1) + image_output_iter.ext
             run("sct_apply_transfo -i " + input_file + " -d " + reference_image + " -w " + filename_warp +
                 " -o " + filename_output)
+            result=Image(filename_output)
+            result.change_orientation()
+
+            toimage(result.data[int(result.data.shape[0]/2)].squeeze(), cmin=0.0).save('images/'+extract_fname(filename_output)[1]+'.jpg')
             filenames_output.append(filename_output)
         except ValueError:
             printv('\nError during warping field generation...', 1, 'error')
@@ -95,9 +108,3 @@ if __name__ == "__main__":
             printv('\nFinished iterations.')
             break
 
-    # run("fslmerge -t " + output_file + " " + " ".join(filenames_output))
-    from sct_concat_data import concat_data
-    concat_data(','.join(filenames_output), output_file, dim=3)
-    run("rm -rf tmp.*")
-
-    printv('fslview ' + output_file + " &", 1, 'info')
