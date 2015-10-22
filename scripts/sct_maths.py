@@ -114,6 +114,11 @@ def get_parser():
                       description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
                       mandatory=False,
                       example='0.5')
+    parser.add_option(name="-laplace",
+                      type_value=[[','], 'float'],
+                      description='Laplacian filtering with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
+                      mandatory=False,
+                      example='0.5')
     parser.add_option(name='-denoise',
                       type_value='int',
                       description='Non-local means adaptative denoising from P. Coupe et al algorithm.',
@@ -183,6 +188,17 @@ def main(args = None):
     elif '-sub' in arguments:
         data2 = get_data_or_scalar(arguments["-sub"], data)
         data_out = data - data2
+
+    elif "-laplace" in arguments:
+        sigmas = arguments["-laplace"]
+        if len(sigmas) == 1:
+            sigmas = [sigmas[0] for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.usage.generate(error='ERROR: -laplace need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        [sigmas[i] / dim[i+4] for i in range(3)]
+        # smooth data
+        data_out = laplace(data, sigmas)
 
     elif '-mul' in arguments:
         from numpy import prod
@@ -393,11 +409,21 @@ def denoise_ornlm(data_in, v=3, f=1, h=0.01):
 
 def smooth(data, sigmas):
     """
-    Smooth data
+    Smooth data by convolving Gaussian kernel
     """
     assert len(data.shape) == len(sigmas)
     from scipy.ndimage.filters import gaussian_filter
     return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
+
+
+def laplace(data, sigmas):
+    """
+    Smooth data by convolving 2nd derivative of Gaussian kernel
+    """
+    assert len(data.shape) == len(sigmas)
+    from scipy.ndimage.filters import gaussian_laplace
+    return gaussian_laplace(data.astype(float), sigmas)
+
 
 
 
