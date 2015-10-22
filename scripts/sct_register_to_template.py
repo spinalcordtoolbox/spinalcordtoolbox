@@ -246,7 +246,8 @@ def main():
 
     # smooth segmentation (jcohenadad, issue #613)
     sct.printv('\nSmooth segmentation...', verbose)
-    sct.run('fslmaths '+ftmp_seg+' -kernel sphere 3 -fmean '+add_suffix(ftmp_seg, '_smooth'))
+    # sct.run('fslmaths '+ftmp_seg+' -kernel sphere 3 -fmean '+add_suffix(ftmp_seg, '_smooth'))
+    sct.run('sct_maths -i '+ftmp_seg+' -smooth 3 -o '+add_suffix(ftmp_seg, '_smooth'))
     ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
     # resample data to 1mm isotropic
