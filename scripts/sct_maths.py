@@ -146,7 +146,9 @@ def main(args = None):
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    data = Image(fname_in).data  # 3d or 4d numpy array
+    im = Image(fname_in)
+    data = im.data  # 3d or 4d numpy array
+    dim = im.dim
 
     # run command
     if '-otsu' in arguments:
@@ -213,6 +215,9 @@ def main(args = None):
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        [sigmas[i] / dim[i+4] for i in range(3)]
+        # smooth data
         data_out = smooth(data, sigmas)
 
     elif '-dilate' in arguments:
@@ -259,8 +264,8 @@ def main(args = None):
     #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('Created file:\n--> '+str(fname_out)+'\n', verbose, 'info')
-
+    printv('\nDone! To view results, type:', verbose)
+    printv('fslview '+fname_out+' &\n', verbose, 'info')
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -321,12 +326,6 @@ def erode(data, radius):
     from skimage.morphology import erosion, ball
     selem = ball(radius)
     return erosion(data, selem=selem, out=None)
-
-
-def smooth(data, sigmas):
-    assert len(data.shape) == len(sigmas)
-    from scipy.ndimage.filters import gaussian_filter
-    return gaussian_filter(data.astype(float), sigmas)
 
 
 def get_data(list_fname):
@@ -390,6 +389,17 @@ def denoise_ornlm(data_in, v=3, f=1, h=0.01):
     dat = data_in.astype(float64)
     denoised = array(ornlm(dat, v, f, max(dat)*h))
     return denoised
+
+
+def smooth(data, sigmas):
+    """
+    Smooth data
+    """
+    assert len(data.shape) == len(sigmas)
+    from scipy.ndimage.filters import gaussian_filter
+    return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
+
+
 
 # def check_shape(data):
 #     """
