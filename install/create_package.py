@@ -73,12 +73,13 @@ sct.run('cp ../LICENSE '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../version.txt '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../batch_processing.sh '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp ../batch_processing.sh '+folder_sct)
-sct.run('cp -r ../flirtsch '+folder_sct+'spinalcordtoolbox/')
 sct.run('cp -r ../scripts '+folder_sct+'spinalcordtoolbox/')
+sct.run('cp -r ../external '+folder_sct+'spinalcordtoolbox/')
 
 # install
 sct.run('mkdir '+folder_sct+'spinalcordtoolbox/install')
 sct.run('cp -r ../install/create_links.sh '+folder_sct + 'spinalcordtoolbox/install/')
+sct.run('cp -r ../install/install_external.py '+folder_sct + 'spinalcordtoolbox/install/')
 sct.run('cp -r ../install/requirements ' + folder_sct + 'spinalcordtoolbox/install/')
 
 # bin
@@ -102,7 +103,7 @@ sct.run('find '+folder_sct+' -type f -name .DS_Store -delete')
 if OSname == 'osx':
     sct.run('find '+folder_sct+' -type d | xargs dot_clean -m')
 
-# remove python-related files
+# remove Pycharm-related files
 sct.run('rm '+folder_sct+'spinalcordtoolbox/scripts/*.pyc')
 if os.path.exists(folder_sct+'spinalcordtoolbox/scripts/.idea'):
     sct.run('rm -rf '+folder_sct+'spinalcordtoolbox/scripts/.idea')

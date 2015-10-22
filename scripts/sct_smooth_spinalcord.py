@@ -20,7 +20,8 @@ import os
 import sys
 import time
 import sct_utils as sct
-from sct_orientation import set_orientation
+from sct_image import set_orientation
+from shutil import move
 from numpy import append, insert, nonzero, transpose, array
 from nibabel import load, Nifti1Image, save
 from scipy import ndimage
@@ -86,6 +87,19 @@ def main():
     sct.check_file_exist(fname_anat, verbose)
     sct.check_file_exist(fname_centerline, verbose)
 
+    # Check that input is 3D:
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(fname_anat).dim
+    dim = 4  # by default, will be adjusted later
+    if nt == 1:
+        dim = 3
+    if nz == 1:
+        dim = 2
+    if dim == 4:
+        sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
+                   'sct_image -i '+fname_anat+' -split t -o '+fname_anat, verbose, 'warning')
+        sct.printv('4D images not supported, aborting ...', verbose, 'error')
+
     # Extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
@@ -109,10 +123,12 @@ def main():
 
     # Change orientation of the input image into RPI
     print '\nOrient input volume to RPI orientation...'
-    set_orientation('anat.nii', 'RPI', 'anat_rpi.nii')
+    fname_anat_rpi = set_orientation('anat.nii', 'RPI', filename=True)
+    move(fname_anat_rpi, 'anat_rpi.nii')
     # Change orientation of the input image into RPI
     print '\nOrient centerline to RPI orientation...'
-    set_orientation('centerline.nii', 'RPI', 'centerline_rpi.nii')
+    fname_centerline_rpi = set_orientation('centerline.nii', 'RPI', filename=True)
+    move(fname_centerline_rpi, 'centerline_rpi.nii')
 
     # ## new
     #
@@ -198,7 +214,7 @@ def main():
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
-    sct.run('isct_c3d anat_rpi_straight.nii -smooth 0x0x'+str(sigma)+'vox -o anat_rpi_straight_smooth.nii', verbose)
+    sct.run('sct_maths -i anat_rpi_straight.nii -smooth 0,0,'+str(sigma)+' -o anat_rpi_straight_smooth.nii', verbose)
 
     # Apply the reversed warping field to get back the curved spinal cord
     print '\nApply the reversed warping field to get back the curved spinal cord...'

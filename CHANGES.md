@@ -1,7 +1,17 @@
 # CHANGES TO RELEASE
 
-##(TBD)
+##2.1 (TBD)
+- NEW: **sct_testing**: test SCT functions and their integrity
+- NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
+- NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
+- NEW: **sct_label_vertebrae**: can automatically label vertebral levels given an anatomical scan, a centerline and few prior info.
+- NEW: **sct_segment_graymatter**: segment spinal cord gray matter using multi-atlas approach from Asman et al.
+- NEW: **sct_register_graymatter**: improve registration to the template using gray matter segmentation
+- NEW: no more dependence with FSL
+- NEW: no more dependence with c3d
+- NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
 - BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
+- OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
 
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
