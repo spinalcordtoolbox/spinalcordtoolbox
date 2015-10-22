@@ -32,9 +32,10 @@ class Param:
 
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
-                 coordinates=None, verbose=1):
+                 coordinates=None, verbose=1, vertebral_levels=None):
         self.image_input = Image(fname_label, verbose=verbose)
 
+        self.image_ref = None
         if fname_ref is not None:
             self.image_ref = Image(fname_ref, verbose=verbose)
 
@@ -46,6 +47,7 @@ class ProcessLabels(object):
         else:
             self.fname_output = fname_output
         self.cross_radius = cross_radius
+        self.vertebral_levels = vertebral_levels
         self.dilate = dilate
         self.coordinates = coordinates
         self.verbose = verbose
@@ -85,8 +87,12 @@ class ProcessLabels(object):
             self.fname_output = None
         elif type_process == 'cubic-to-point':
             self.output_image = self.cubic_to_point()
+        elif type_process == 'label-vertebrae':
+            self.output_image = self.label_vertebrae(self.vertebral_levels)
+        elif type_process == 'label-vertebrae-from-disks':
+            self.output_image = self.label_vertebrae_from_disks(self.vertebral_levels)
         else:
-            sct.printv('Error: The chosen process is not available.',1,'error')
+            sct.printv('Error: The chosen process is not available.', 1, 'error')
 
         # save the output image as minimized integers
         if self.fname_output is not None:
@@ -96,9 +102,78 @@ class ProcessLabels(object):
             else:
                 self.output_image.save()
 
+    @staticmethod
+    def get_crosses_coordinates(coordinates_input, gapxy=15, image_ref=None, dilate=False):
+        from msct_types import Coordinate
+
+        # if reference image is provided (segmentation), we draw the cross perpendicular to the centerline
+        if image_ref is not None:
+            # smooth centerline
+            from sct_straighten_spinalcord import smooth_centerline
+            x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline(self.image_ref, verbose=self.verbose)
+
+        # compute crosses
+        cross_coordinates = []
+        for coord in coordinates_input:
+            if image_ref is None:
+                from sct_straighten_spinalcord import compute_cross
+                cross_coordinates_temp = compute_cross(coord, gapxy)
+            else:
+                from sct_straighten_spinalcord import compute_cross_centerline
+                from numpy import where
+                index_z = where(z_centerline == coord.z)
+                deriv = Coordinate([x_centerline_deriv[index_z][0], y_centerline_deriv[index_z][0], z_centerline_deriv[index_z][0], 0.0])
+                cross_coordinates_temp = compute_cross_centerline(coord, deriv, gapxy)
+
+            for i, coord_cross in enumerate(cross_coordinates_temp):
+                coord_cross.value = coord.value * 10 + i + 1
+
+            # dilate cross to 3x3x3
+            if dilate:
+                additional_coordinates = []
+                for coord_temp in cross_coordinates_temp:
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x+1.0, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y+1.0, coord_temp.z-1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z+1.0, coord_temp.value]))
+                    additional_coordinates.append(Coordinate([coord_temp.x-1.0, coord_temp.y-1.0, coord_temp.z-1.0, coord_temp.value]))
+
+                cross_coordinates_temp.extend(additional_coordinates)
+
+            cross_coordinates.extend(cross_coordinates_temp)
+
+        cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
+        return cross_coordinates
 
     def cross(self):
-        image_output = Image(self.image_input, self.verbose)
+        """
+        create a cross.
+        :return:
+        """
+        output_image = Image(self.image_input, self.verbose)
         nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
 
         coordinates_input = self.image_input.getNonZeroCoordinates()
@@ -106,39 +181,15 @@ class ProcessLabels(object):
         dx = d / px  # cross radius in mm
         dy = d / py
 
-        # for all points with non-zeros neighbors, force the neighbors to 0
-        for coord in coordinates_input:
-            image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
-            image_output.data[coord.x][coord.y + dy][
-                coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
-            image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
-            image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
-            image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
+        # clean output_image
+        output_image.data *= 0
 
-            # dilate cross to 3x3
-            if self.dilate:
-                image_output.data[coord.x - 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x][coord.y + dy - 1][coord.z] = \
-                    image_output.data[coord.x + 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y + dy][coord.z] = \
-                    image_output.data[coord.x + 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x][coord.y + dy + 1][coord.z] = \
-                    image_output.data[coord.x - 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y + dy][coord.z] = \
-                    image_output.data[coord.x][coord.y + dy][coord.z]
-                image_output.data[coord.x + dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx][coord.y - 1][coord.z] = \
-                    image_output.data[coord.x + dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx + 1][coord.y][coord.z] = \
-                    image_output.data[coord.x + dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx][coord.y + 1][coord.z] = \
-                    image_output.data[coord.x + dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx - 1][coord.y][coord.z] = \
-                    image_output.data[coord.x + dx][coord.y][coord.z]
-                image_output.data[coord.x - 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x][coord.y - dy - 1][coord.z] = \
-                    image_output.data[coord.x + 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y - dy][coord.z] = \
-                    image_output.data[coord.x + 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x][coord.y - dy + 1][coord.z] = \
-                    image_output.data[coord.x - 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y - dy][coord.z] = \
-                    image_output.data[coord.x][coord.y - dy][coord.z]
-                image_output.data[coord.x - dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx][coord.y - 1][coord.z] = \
-                    image_output.data[coord.x - dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx + 1][coord.y][coord.z] = \
-                    image_output.data[coord.x - dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx][coord.y + 1][coord.z] = \
-                    image_output.data[coord.x - dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx - 1][coord.y][coord.z] = \
-                    image_output.data[coord.x - dx][coord.y][coord.z]
+        cross_coordinates = self.get_crosses_coordinates(coordinates_input, dx, self.image_ref, self.dilate)
 
-        return image_output
+        for coord in cross_coordinates:
+            output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
+
+        return output_image
 
     def plan(self, width, offset=0, gap=1):
         """
@@ -183,136 +234,42 @@ class ProcessLabels(object):
             image_output.data[:, :, coord.z] = coord.value
 
         return image_output
+
     def cubic_to_point(self):
         """
-        This function calculates the center of mass of each group of labels and returns a file of same size with only a label by group at the center of mass.
+        This function calculates the center of mass of each group of labels and returns a file of same size with only a
+         label by group at the center of mass of this group.
         It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
-        :return:
+        Be careful: this algorithm computes the center of mass of voxels with same value, if two groups of voxels with
+         the same value are present but separated in space, this algorithm will compute the center of mass of the two
+         groups together.
+        :return: image_output
         """
         from scipy import ndimage
-        from numpy import array,mean
-        data = self.image_input.data
+        from numpy import array, mean
 
+        # 0. Initialization of output image
+        output_image = self.image_input.copy()
+        output_image.data *= 0
 
-        # pb: doesn't work if several groups have same value
-        image_output = self.image_input.copy()
-        data_output = image_output.data
-        data_output *= 0
+        # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
         coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
-        #list of present values
-        list_values = []
-        for i,coord in enumerate(coordinates):
-            if i == 0 or coord.value != coordinates[i-1].value:
-                list_values.append(coord.value)
 
-        # make list of group of labels coordinates per value
-        list_group_labels = []
-        list_barycenter = []
-        for i in range(0, len(list_values)):
-            #mean_coord = mean(array([[coord.x, coord.y, coord.z] for coord in coordinates if coord.value==i]))
-            list_group_labels.append([])
-            list_group_labels[i] = [coordinates[j] for j in range(len(coordinates)) if coordinates[j].value == list_values[i]]
-            # find barycenter: first define each case as a coordinate instance then calculate the value
-            list_barycenter.append([0,0,0,0])
-            sum_x = 0
-            sum_y = 0
-            sum_z = 0
-            for j in range(len(list_group_labels[i])):
-                sum_x += list_group_labels[i][j].x
-                sum_y += list_group_labels[i][j].y
-                sum_z += list_group_labels[i][j].z
-            list_barycenter[i][0] = int(round(sum_x/len(list_group_labels[i])))
-            list_barycenter[i][1] = int(round(sum_y/len(list_group_labels[i])))
-            list_barycenter[i][2] = int(round(sum_z/len(list_group_labels[i])))
-            list_barycenter[i][3] = list_group_labels[i][0].value
+        # 2. Separate all coordinates into groups by value
+        groups = dict()
+        for coord in coordinates:
+            if coord.value in groups:
+                groups[coord.value].append(coord)
+            else:
+                groups[coord.value] = [coord]
 
-        # put value of group at each center of mass
-        for i in range(len(list_values)):
-            data_output[list_barycenter[i][0],list_barycenter[i][1], list_barycenter[i][2]] = list_barycenter[i][3]
+        # 3. Compute the center of mass of each group of voxels and write them into the output image
+        for value, list_coord in groups.iteritems():
+            center_of_mass = sum(list_coord)/float(len(list_coord))
+            sct.printv("Value = " + str(center_of_mass.value) + " : ("+str(center_of_mass.x) + ", "+str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( "+ str(round(center_of_mass.x)) + ", " + str(round(center_of_mass.y)) + ", " + str(round(center_of_mass.z)) + ")", verbose=self.verbose)
+            output_image.data[round(center_of_mass.x), round(center_of_mass.y), round(center_of_mass.z)] = center_of_mass.value
 
-        return image_output
-
-        # Process to use if one wants to calculate the center of mass of a group of labels ordered by volume (and not by value)
-        # image_output = self.image_input.copy()
-        # data_output = image_output.data
-        # data_output *= 0
-        # nx = image_output.data.shape[0]
-        # ny = image_output.data.shape[1]
-        # nz = image_output.data.shape[2]
-        # print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
-        #
-        # z_centerline = [iz for iz in range(0, nz, 1) if data[:,:,iz].any() ]
-        # nz_nonz = len(z_centerline)
-        # if nz_nonz==0 :
-        #     print '\nERROR: Label file is empty'
-        #     sys.exit()
-        # x_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        # y_centerline = [0 for iz in range(0, nz_nonz, 1)]
-        # print '\nGet center of mass for each slice of the label file ...'
-        # for iz in xrange(len(z_centerline)):
-        #     x_centerline[iz], y_centerline[iz] = ndimage.measurements.center_of_mass(array(data[:,:,z_centerline[iz]]))
-        #
-        # ## Calculate mean coordinate according to z for each cube of labels:
-        # list_cube_labels_x = [[]]
-        # list_cube_labels_y = [[]]
-        # list_cube_labels_z = [[]]
-        # count = 0
-        # for i in range(nz_nonz-1):
-        #     # Make a list of group of slices that contains a non zero value
-        #     # check if the group is only one slice of height (at first slice)
-        #     if i==0 and z_centerline[i] - z_centerline[i+1] != -1:
-        #         list_cube_labels_z[count].append(z_centerline[i])
-        #         list_cube_labels_x[count].append(x_centerline[i])
-        #         list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z.append([])
-        #         list_cube_labels_x.append([])
-        #         list_cube_labels_y.append([])
-        #         count += 1
-        #     # check if the group is only one slice of height (in the middle)
-        #     if i>0 and z_centerline[i-1] - z_centerline[i] != -1 and z_centerline[i] - z_centerline[i+1] != -1:
-        #         list_cube_labels_z[count].append(z_centerline[i])
-        #         list_cube_labels_x[count].append(x_centerline[i])
-        #         list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z.append([])
-        #         list_cube_labels_x.append([])
-        #         list_cube_labels_y.append([])
-        #         count += 1
-        #     if z_centerline[i] - z_centerline[i+1] == -1:
-        #         # Verify if the value has already been recovered and add if not
-        #         #If the group is empty add first value do not if it is not empty as it will copy it for a second time
-        #         if len(list_cube_labels_z[count]) == 0 :#or list_cube_labels[count][-1] != z_centerline[i]:
-        #             list_cube_labels_z[count].append(z_centerline[i])
-        #             list_cube_labels_x[count].append(x_centerline[i])
-        #             list_cube_labels_y[count].append(y_centerline[i])
-        #         list_cube_labels_z[count].append(z_centerline[i+1])
-        #         list_cube_labels_x[count].append(x_centerline[i+1])
-        #         list_cube_labels_y[count].append(y_centerline[i+1])
-        #         if i+2 < nz_nonz-1 and z_centerline[i+1] - z_centerline[i+2] != -1:
-        #             list_cube_labels_z.append([])
-        #             list_cube_labels_x.append([])
-        #             list_cube_labels_y.append([])
-        #             count += 1
-        #
-        # z_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # x_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # y_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # v_label_mean = [0 for i in range(len(list_cube_labels_z))]
-        # for i in range(len(list_cube_labels_z)):
-        #     for j in range(len(list_cube_labels_z[i])):
-        #         z_label_mean[i] += list_cube_labels_z[i][j]
-        #         x_label_mean[i] += list_cube_labels_x[i][j]
-        #         y_label_mean[i] += list_cube_labels_y[i][j]
-        #     z_label_mean[i] = int(round(z_label_mean[i]/len(list_cube_labels_z[i])))
-        #     x_label_mean[i] = int(round(x_label_mean[i]/len(list_cube_labels_x[i])))
-        #     y_label_mean[i] = int(round(y_label_mean[i]/len(list_cube_labels_y[i])))
-        #     # We suppose that the labels' value of the group is the value of the barycentre
-        #     v_label_mean[i] = data[x_label_mean[i],y_label_mean[i], z_label_mean[i]]
-        #
-        # ## Put labels of value one into mean coordinates
-        # for i in range(len(z_label_mean)):
-        #     data_output[x_label_mean[i],y_label_mean[i], z_label_mean[i]] = v_label_mean[i]
-        #
-        # return image_output
+        return output_image
 
     def increment_z_inverse(self):
         """
@@ -349,6 +306,52 @@ class ProcessLabels(object):
                     image_output.data[coord.x, coord.y, coord.z] = coordinates_ref[j].value
 
         return image_output
+
+
+    def label_vertebrae(self, levels_user=None):
+        """
+        Finds the center of mass of vertebral levels specified by the user.
+        :return: image_output: Image with labels.
+        """
+        # get center of mass of each vertebral level
+        image_cubic2point = self.cubic_to_point()
+        # get list of coordinates for each label
+        list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        # if user did not specify levels, include all:
+        if levels_user == None:
+            levels_user = [int(i.value) for i in list_coordinates]
+        # loop across labels and remove those that are not listed by the user
+        for i_label in range(len(list_coordinates)):
+            # check if this level is NOT in levels_user
+            if not levels_user.count(int(list_coordinates[i_label].value)):
+                # if not, set value to zero
+                image_cubic2point.data[list_coordinates[i_label].x, list_coordinates[i_label].y, list_coordinates[i_label].z] = 0
+
+        # list all labels
+        return image_cubic2point
+
+    def label_vertebrae_from_disks(self, levels_user):
+        """
+        Finds the center of mass of vertebral levels specified by the user.
+        :param levels_user:
+        :return:
+        """
+        image_cubic2point = self.cubic_to_point()
+        # get list of coordinates for each label
+        list_coordinates_disks = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        image_cubic2point.data *= 0
+        # compute vertebral labels from disk labels
+        list_coordinates_vertebrae = []
+        for i_label in range(len(list_coordinates_disks)-1):
+            list_coordinates_vertebrae.append((list_coordinates_disks[i_label] + list_coordinates_disks[i_label+1]) / 2.0)
+        # loop across labels and remove those that are not listed by the user
+        for i_label in range(len(list_coordinates_vertebrae)):
+            # check if this level is NOT in levels_user
+            if levels_user.count(int(list_coordinates_vertebrae[i_label].value)):
+                image_cubic2point.data[int(list_coordinates_vertebrae[i_label].x), int(list_coordinates_vertebrae[i_label].y), int(list_coordinates_vertebrae[i_label].z)] = list_coordinates_vertebrae[i_label].value
+
+        return image_cubic2point
+
 
     def symmetrizer(self, side='left'):
         """
@@ -563,17 +566,19 @@ class ProcessLabels(object):
                     coordinates_input[i+1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist)
 
 
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
 
+class Param:
+    def __init__(self):
+        self.verbose = '1'
+        self.remove_tmp_files = '1'
+
+
+# PARSER
+# ==========================================================================================
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Utility function for labels.')
+    parser.usage.set_description('Utility function for labels. Choose your process.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="labels or image to create labels on. Must be 3D.",
@@ -587,7 +592,16 @@ if __name__ == "__main__":
                       default_value="labels.nii.gz")
     parser.add_option(name="-t",
                       type_value="str",
-                      description="""process:\ncross: create a cross. Must use flag "-c"\nremove: remove labels. Must use flag "-r"\nremove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names.\ndisplay-voxel: display all labels in file\ncreate: create labels. Must use flag "-x" to list labels\nadd: add label to an existing image (-i).\nincrement: increment labels from top to bottom (in z direction, suppose RPI orientation)\nMSE: compute Mean Square Error between labels input and reference input "-r"\ncubic-to-point: transform each volume of labels by value into a discrete single voxel label. """,
+                      description="""process:
+- add: add label to an existing image (-i).
+- cross: create a cross. Must use flag "-c"
+- create: create labels. Must use flag "-x" to list labels
+- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
+- display-voxel: display all labels in file
+- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
+- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
+- MSE: compute Mean Square Error between labels input and reference input "-r"
+- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
                       example="create")
     parser.add_option(name="-x",
@@ -607,13 +621,29 @@ if __name__ == "__main__":
                       type_value=None,
                       description="dilatation bool for cross generation ('-c' option).",
                       mandatory=False)
+    parser.add_option(name="-level",
+                      type_value=[[','], 'int'],
+                      description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
+                      mandatory=False)
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="verbose. Default=" + str(param_default.verbose),
                       mandatory=False,
                       example=['0', '1'])
-    arguments = parser.parse(sys.argv[1:])
+    return parser
 
+
+# MAIN
+# ==========================================================================================
+def main(args=None):
+
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
+
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
     input_filename = arguments["-i"]
     process_type = arguments["-t"]
     input_fname_output = None
@@ -621,6 +651,7 @@ if __name__ == "__main__":
     input_cross_radius = 5
     input_dilate = False
     input_coordinates = None
+    vertebral_levels = None
     input_verbose = '1'
     input_fname_output = arguments["-o"]
     if "-r" in arguments:
@@ -631,7 +662,19 @@ if __name__ == "__main__":
         input_cross_radius = arguments["-c"]
     if "-d" in arguments:
         input_dilate = arguments["-d"]
+    if "-level" in arguments:
+        vertebral_levels = arguments["-level"]
     if "-v" in arguments:
         input_verbose = arguments["-v"]
-    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose)
+    processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
     processor.process(process_type)
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # # initialize parameters
+    param = Param()
+    param_default = Param()
+    # call main function
+    main()

@@ -20,18 +20,20 @@ import commands
 import subprocess
 import re
 
+# TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
+# TODO: check if user has bash or t-schell for fsloutput definition
 
 fsloutput = 'export FSLOUTPUTTYPE=NIFTI; ' # for faster processing, all outputs are in NIFTI'
 
 
 # define class color
-class bcolors:
-    blue = '\033[94m'
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
     green = '\033[92m'
     yellow = '\033[93m'
-    red = '\033[91m'
-    normal = '\033[0m'
-    purple = '\033[95m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
@@ -41,10 +43,17 @@ class bcolors:
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
-def add_suffix(file_ext, suffix):
-    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
-    # add suffix
-    return file_name+suffix+'.'+ext_name
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension on a nii or nii.gz file.
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+    """
+    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
+    ind_nii = fname.rfind('.nii')
+    # return file name with suffix
+    return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
 
@@ -62,7 +71,7 @@ def run_old(cmd, verbose=1):
         return status, output
 
 
-def run(cmd, verbose=1):
+def run(cmd, verbose=1, error_exit='error', raise_exception=False):
     if verbose==2:
         printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
     if verbose:
@@ -85,9 +94,11 @@ def run(cmd, verbose=1):
     # need to remove the last \n character in the output -> return output_final[0:-1]
     if status_output:
         # from inspect import stack
-        printv("ERROR\n"+output_final[0:-1], 1, 'error')
+        printv(output_final[0:-1], 1, error_exit)
         # printv('\nERROR in '+stack()[1][1]+'\n', 1, 'error')  # print name of parent function
         # sys.exit()
+        if raise_exception:
+            raise Exception(output_final[0:-1])
     else:
         # no need to output process.returncode (because different from 0)
         return status_output, output_final[0:-1]
@@ -261,9 +272,9 @@ def check_if_3d(fname):
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_orientation import get_orientation
-    if not get_orientation(fname) == 'RPI':
-        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_orientation to reorient your data. Exit program.\n', 1, 'error')
+    from sct_image import get_orientation
+    if not get_orientation(fname, filename=True) == 'RPI':
+        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -280,6 +291,35 @@ def find_file_within_folder(fname, directory):
             if fnmatch.fnmatch(file, fname):
                 all_path.append(os.path.join(root, file))
     return all_path
+
+#=======================================================================================================================
+# create temporary folder and return path of tmp dir
+#=======================================================================================================================
+
+def tmp_create(verbose=1):
+    # path_tmp = tmp_create()
+    printv('\nCreate temporary folder...', verbose)
+    import time
+    import random
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S")+'_'+str(random.randint(1, 1000000)), 1)
+    run('mkdir '+path_tmp, verbose)
+    return path_tmp
+
+
+#=======================================================================================================================
+# copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
+#=======================================================================================================================
+def tmp_copy_nifti(fname,path_tmp,fname_out='data.nii',verbose=0):
+    # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
+    path_fname, file_fname, ext_fname = extract_fname(fname)
+    path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
+
+    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    if ext_fname_out == '.nii':
+       run('fslchfiletype NIFTI ' + path_tmp + file_fname_out,0)
+    elif ext_fname_out == '.nii.gz':
+        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out,0)
+
 
 
 #=======================================================================================================================
@@ -310,9 +350,14 @@ def generate_output_file(fname_in, fname_out, verbose=1):
     if os.path.isfile(path_out+file_out+ext_out):
         printv('  WARNING: File '+path_out+file_out+ext_out+' already exists. Deleting it...', 1, 'warning')
         os.remove(path_out+file_out+ext_out)
-    # Generate output file
-    from sct_convert import convert
-    convert(fname_in, fname_out)
+    if ext_in != ext_out:
+        # Generate output file
+        from sct_convert import convert
+        convert(fname_in, fname_out)
+    else:
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
     # # Move file to output folder (keep the same extension as input)
     # shutil.move(fname_in, path_out+file_out+ext_in)
     # # convert to nii (only if necessary)
@@ -360,7 +405,7 @@ def printv(string, verbose=1, type='normal'):
     elif type == 'bold':
         color = bcolors.bold
     elif type == 'process':
-        color = bcolors.purple
+        color = bcolors.magenta
 
     # print message
     if verbose:
@@ -661,16 +706,6 @@ class Version(object):
         result = result+"_"+self.beta
         return result
 
-class shell_colours(object):
-    default = '\033[0m'
-    rfg_kbg = '\033[91m'
-    gfg_kbg = '\033[92m'
-    yfg_kbg = '\033[93m'
-    mfg_kbg = '\033[95m'
-    yfg_bbg = '\033[104;93m'
-    bfg_kbg = '\033[34m'
-    bold = '\033[1m'
-
 class MsgUser(object): 
     __debug = False
     __quiet = False
@@ -719,20 +754,20 @@ class MsgUser(object):
     def skipped(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.mfg_kbg, "[Skipped] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.magenta, "[Skipped] ", bcolors.normal, msg ) )
 
     @classmethod
     def ok(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.gfg_kbg, "[OK] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.green, "[OK] ", bcolors.normal, msg ) )
     
     @classmethod
     def failed(cls, msg):
-        print "".join( (shell_colours.rfg_kbg, "[FAILED] ", shell_colours.default, msg ) )
+        print "".join( (bcolors.red, "[FAILED] ", bcolors.normal, msg ) )
     
     @classmethod
     def warning(cls, msg):
         if cls.__quiet:
             return
-        print "".join( (shell_colours.bfg_kbg, shell_colours.bold, "[Warning]", shell_colours.default, " ", msg ) )
+        print "".join( (bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg ) )

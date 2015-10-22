@@ -13,7 +13,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import commands
+import sct_utils as sct
+from time import sleep
 
 
 def test(path_data):
@@ -24,15 +25,31 @@ def test(path_data):
 
     # define command
     cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
+          + ' -p centerline' \
+          + ' -v 1'
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, 0)
+    output += o
+
+    # define command
+    cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
+          + ' -p length'
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, 0)
+    output += o
+
+    # define command
+    cmd = 'sct_process_segmentation -i ' + path_data + folder_data + file_data \
           + ' -p csa' \
           + ' -s 1'\
           + ' -b 1'\
           + ' -r 0'\
           + ' -v 1'
-    # return
-    #return sct.run(cmd, 0)
-    return commands.getstatusoutput(cmd)
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, 0)
+    output += o
 
+    return status, output
 
 if __name__ == "__main__":
     # call main function

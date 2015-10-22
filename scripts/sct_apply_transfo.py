@@ -24,6 +24,67 @@ import sct_utils as sct
 from sct_crop_image import ImageCropper
 
 
+class Param:
+    def __init__(self):
+        self.verbose = '1'
+        self.remove_tmp_files = '1'
+
+
+# PARSER
+# ==========================================================================================
+def get_parser():
+    # parser initialisation
+    parser = Parser(__file__)
+    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="input image",
+                      mandatory=True,
+                      example="t2.nii.gz")
+    parser.add_option(name="-d",
+                      type_value="file",
+                      description="destination image",
+                      mandatory=True,
+                      example="out.nii.gz")
+    parser.add_option(name="-w",
+                      type_value=[[','], "file"],
+                      description="warping field",
+                      mandatory=True,
+                      example="warp1.nii.gz,warp2.nii.gz")
+    parser.add_option(name="-c",
+                      type_value="int",
+                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0','1','2'])
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="registered source.",
+                      mandatory=False,
+                      default_value='',
+                      example="dest.nii.gz")
+    parser.add_option(name="-x",
+                      type_value="multiple_choice",
+                      description="interpolation method",
+                      mandatory=False,
+                      default_value='spline',
+                      example=['nn','linear','spline'])
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1', '2'])
+
+    return parser
+
+
 class Transform:
     def __init__(self, input_filename, warp, fname_dest, output_filename='', verbose=0, crop=0, interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
@@ -124,24 +185,33 @@ class Transform:
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             from sct_convert import convert
             convert(fname_src, path_tmp+'data.nii')
+            os.chdir(path_tmp)
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_split_data import split_data
-            if not split_data(path_tmp+'data.nii', 3, '_T'):
-                sct.printv('ERROR in split_data.', 1, 'error')
+            from sct_image import split_data
+            im_dat = Image('data.nii')
+            data_split_list = split_data(im_dat, 3)
+            for im in data_split_list:
+                im.save()
+
             # apply transfo
             sct.printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):
-                file_data_split = path_tmp+'data_T'+str(it).zfill(4)+'.nii'
-                file_data_split_reg = path_tmp+'data_reg_T'+str(it).zfill(4)+'.nii'
+                file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
+                file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
                 sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_concat_data import concat_data
+            from sct_image import concat_data
             import glob
-            concat_data(glob.glob(path_tmp+'data_reg_T*.nii'), fname_out, dim=3)
-
+            path_out, name_out, ext_out = sct.extract_fname(fname_out)
+            im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
+            im_out = concat_data(im_list, 3)
+            im_out.setFileName(name_out+ext_out)
+            im_out.save()
+            os.chdir('..')
+            sct.generate_output_file(path_tmp+name_out+ext_out, fname_out)
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
@@ -164,61 +234,17 @@ class Transform:
         sct.printv('fslview '+fname_dest+' '+fname_out+' &\n', verbose, 'info')
 
 
-if __name__ == "__main__":
+# MAIN
+# ==========================================================================================
+def main(args=None):
 
-    # Initialize parser
-    parser = Parser(__file__)
+    # check user arguments
+    if not args:
+        args = sys.argv[1:]
 
-    # Mandatory arguments
-    parser.usage.set_description('Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).')
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="destination image",
-                      mandatory=True,
-                      example="out.nii.gz")
-    parser.add_option(name="-w",
-                      type_value=[[','], "file"],
-                      description="warping field",
-                      mandatory=True,
-                      example="warp1.nii.gz,warp2.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="int",
-                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0','1','2'])
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="registered source.",
-                      mandatory=False,
-                      default_value='',
-                      example="dest.nii.gz")
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="interpolation method",
-                      mandatory=False,
-                      default_value='spline',
-                      example=['nn','linear','spline'])
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1', '2'])
-
+    # Get parser info
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-
     input_filename = arguments["-i"]
     fname_dest = arguments["-d"]
     warp_filename = arguments["-w"]
@@ -237,3 +263,12 @@ if __name__ == "__main__":
         transform.verbose = arguments["-v"]
 
     transform.apply()
+
+
+# START PROGRAM
+# ==========================================================================================
+if __name__ == "__main__":
+    # # initialize parameters
+    param = Param()
+    # call main function
+    main()

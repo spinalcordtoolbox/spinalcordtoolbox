@@ -101,8 +101,9 @@ def main():
 
     # Copying input data to tmp folder and convert to nii
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.run('isct_c3d '+fname_mt0+' -o '+path_tmp+'mt0.nii')
-    sct.run('isct_c3d '+fname_mt1+' -o '+path_tmp+'mt1.nii')
+    from sct_convert import convert
+    convert(fname_mt0, path_tmp+'mt0.nii', type='float32')
+    convert(fname_mt1, path_tmp+'mt1.nii', type='float32')
 
     # go to tmp folder
     os.chdir(path_tmp)
