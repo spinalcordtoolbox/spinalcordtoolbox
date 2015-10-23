@@ -46,7 +46,7 @@ ind_ab=[0 ind_ab max(T)];
 %% GENERATE SPLINE
 msgbox({'Use the slider (figure 28, bottom) to calibrate the smoothness of the regularization along time' 'Press any key when are done..'})
 
-hsl = uicontrol('Style','slider','Min',-10,'Max',0,...
+hsl = uicontrol('Style','slider','Min',-10,'Max',10,...
                 'SliderStep',[1 1]./10,'Value',-2,...
                 'Position',[20 20 200 20]);
 set(hsl,'Callback',@(hObject,eventdata) GenerateSplines(X,Y,T,Z_index,ind_ab,10^(get(hObject,'Value')),color ))
@@ -54,7 +54,7 @@ set(hsl,'Callback',@(hObject,eventdata) GenerateSplines(X,Y,T,Z_index,ind_ab,10^
 
 pause
 
-[Xout, Yout]=GenerateSplines(X,Y,T,Z_index,ind_ab,10^(get(hsl,'Value')),color)
+[Xout, Yout]=GenerateSplines(X,Y,T,Z_index,ind_ab,10^(get(hsl,'Value')),color);
 j_disp(log_spline,['...done!'])
 %% SAVE MATRIX
 j_progress('\nSave Matrix...')
@@ -89,8 +89,7 @@ for iZ=unique(Z_index)
         
         index=Ttmp>ind_ab(iab-1) & Ttmp<=ind_ab(iab);% Piece index
         if length(find(index))>1
-            Xfitresult=spline(Ttmp(index),Xtmp(index),smoothness); Yfitresult=spline(Ttmp(index),Ytmp(index),smoothness);
-            Xout(iZ,Tpiece) = feval(Xfitresult,Tpiece); Yout(iZ,Tpiece)=feval(Yfitresult,Tpiece);
+            Xout(iZ,Tpiece)=spline(Ttmp(index),Xtmp(index),smoothness,Tpiece); Yout(iZ,Tpiece)=spline(Ttmp(index),Ytmp(index),smoothness,Tpiece);
         else
             [~,closestT_l]=min(abs(Ttmp-mean([ind_ab(iab), ind_ab(iab-1)])));
             Xout(iZ,Tpiece)=Xtmp(closestT_l);
@@ -108,20 +107,21 @@ end
 drawnow;
 
 
-function fitresult = spline(T,M_motion_t,smoothness)
+function M_motion_t_smooth = spline(T,M_motion_t,smoothness,Tout)
+M_motion_t_smooth=smoothn_x(T,M_motion_t,Tout,smoothness,1);
 
-%% Fit: 'sct_moco_spline'.
-[xData, yData] = prepareCurveData( T, M_motion_t );
-
-% Set up fittype and options.
-ft = fittype( 'smoothingspline' );
-opts = fitoptions( ft );
-opts.SmoothingParam = smoothness;
-
-% Fit model to data.
-[fitresult, gof] = fit( xData, yData, ft, opts );
-M_motion_t = feval(fitresult,T);
-
-
-
-
+% 
+% %% Fit: 'sct_moco_spline'.
+% [xData, yData] = prepareCurveData( T, M_motion_t );
+% % Set up fittype and options.
+% ft = fittype( 'smoothingspline' );
+% opts = fitoptions( ft );
+% opts.SmoothingParam = smoothness;
+% 
+% % Fit model to data.
+% [fitresult, gof] = fit( xData, yData, ft, opts );
+% M_motion_t = feval(fitresult,T);
+% 
+% 
+% 
+% 
