@@ -159,6 +159,10 @@ def main():
         verbose = int(arguments['-v'])
         if '-param-straighten' in arguments:
             param.param_straighten = arguments['-param-straighten']
+        if 'cpu-nb' in arguments:
+            arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
+        else:
+            arg_cpu = ''
         if '-p' in arguments:
             paramreg_user = arguments['-p']
             # update registration parameters
@@ -292,7 +296,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose)+' '+param.param_straighten, verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
