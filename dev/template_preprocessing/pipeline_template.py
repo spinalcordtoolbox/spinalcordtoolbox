@@ -189,7 +189,7 @@ def main():
     timer['T1'].stop()
 
     timer['T2'].start()
-    Processing of T2 data for template
+    # Processing of T2 data for template
     do_preprocessing('T2')
     create_cross('T2')
     push_into_templace_space('T2')
