@@ -50,6 +50,7 @@ class Param:
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.zsubsample = '0.25'
+        self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
@@ -103,6 +104,12 @@ def get_parser():
                                       '2'].gradStep + """\n--""",
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
+    parser.add_option(name="-param-straighten",
+                      type_value='str',
+                      description="""Parameters for straightening (see sct_straighten_spinalcord).""",
+                      mandatory=False,
+                      default_value='',
+                      example="-params -cpu-nb=0,bspline_meshsize=3x3x5")
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -145,6 +152,8 @@ def main():
         path_template = arguments['-t']
         remove_temp_files = int(arguments['-r'])
         verbose = int(arguments['-v'])
+        if '-param-straighten' in arguments:
+            param.param_straighten = arguments['-param-straighten']
         if '-p' in arguments:
             paramreg_user = arguments['-p']
             # update registration parameters
@@ -278,7 +287,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose), verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose)+' '+param.param_straighten, verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
