@@ -359,7 +359,7 @@ class SpinalCordStraightener(object):
         self.cpu_number = None
         self.results_landmarks_curved = []
 
-        self.bspline_meshsize = '5x5x10'
+        self.bspline_meshsize = '3x3x5'
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '3'
         self.all_labels = 1
@@ -961,7 +961,7 @@ def get_parser():
                                   "\nall_labels : 0,1. Default = 1"
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
                                   "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
-                                  "Default=5x5x10"
+                                  "Default=3x3x5"
                                   "\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. "
                                   "Default=3"
                                   "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
