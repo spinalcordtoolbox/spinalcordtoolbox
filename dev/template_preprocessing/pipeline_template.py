@@ -51,6 +51,7 @@ import nibabel
 from scipy import ndimage
 from numpy import array
 import matplotlib.pyplot as plt
+import time
 
 # add path to scripts
 PATH_INFO = '/Users/benjamindeleener/data/template_preprocessing'  # corresponds to the variable 'path_results' in file preprocess_data_template.py
@@ -64,24 +65,20 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 # out because movement artefact:
 # ['errsm_22', folder_data_errsm+'/errsm_22/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_22/25-SPINE_T2'],\
 
-#already done
-"""
-['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
+# define subject
+SUBJECTS_LIST = [['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
+                 ['errsm_02', folder_data_errsm+'/errsm_02/22-SPINE_T1', folder_data_errsm+'/errsm_02/28-SPINE_T2'],
                  ['errsm_04', folder_data_errsm+'/errsm_04/16-SPINE_memprage/echo_2.09', folder_data_errsm+'/errsm_04/18-SPINE_space'],
                  ['errsm_05', folder_data_errsm+'/errsm_05/23-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_05/24-SPINE_SPACE'],
                  ['errsm_09', folder_data_errsm+'/errsm_09/34-SPINE_MEMPRAGE2/echo_2.09', folder_data_errsm+'/errsm_09/33-SPINE_SPACE'],
                  ['errsm_10', folder_data_errsm+'/errsm_10/13-SPINE_MEMPRAGE/echo_2.09', folder_data_errsm+'/errsm_10/20-SPINE_SPACE'],
-                 ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2'],
                  ['errsm_12', folder_data_errsm+'/errsm_12/19-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_12/18-SPINE_T2'],
                  ['errsm_13', folder_data_errsm+'/errsm_13/33-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_13/34-SPINE_T2'],
                  ['errsm_14', folder_data_errsm+'/errsm_14/5002-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_14/5003-SPINE_T2'],
                  ['errsm_16', folder_data_errsm+'/errsm_16/23-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_16/39-SPINE_T2'],
                  ['errsm_17', folder_data_errsm+'/errsm_17/41-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_17/42-SPINE_T2'],
                  ['errsm_18', folder_data_errsm+'/errsm_18/36-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_18/33-SPINE_T2'],
-"""
-
-# define subject
-SUBJECTS_LIST = [
+                 ['errsm_11', folder_data_errsm+'/errsm_11/24-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_11/09-SPINE_T2'],
                  ['errsm_21', folder_data_errsm+'/errsm_21/27-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_21/30-SPINE_T2'],
                  ['errsm_23', folder_data_errsm+'/errsm_23/29-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_23/28-SPINE_T2'],
                  ['errsm_24', folder_data_errsm+'/errsm_24/20-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_24/24-SPINE_T2'],
@@ -90,7 +87,7 @@ SUBJECTS_LIST = [
                  ['errsm_31', folder_data_errsm+'/errsm_31/31-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_31/32-SPINE_T2'],
                  ['errsm_32', folder_data_errsm+'/errsm_32/16-SPINE_T1/echo_2.09 ', folder_data_errsm+'/errsm_32/19-SPINE_T2'],
                  ['errsm_33', folder_data_errsm+'/errsm_33/30-SPINE_T1/echo_2.09', folder_data_errsm+'/errsm_33/31-SPINE_T2'],
-                 ['1', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
+                 ['ED', folder_data_marseille+'/ED/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-101', folder_data_marseille+'/ED/01_0008_sc-tse-spc-1mm-3palliers-fov256-nopat-comp-sp-65'],
                  ['ALT', folder_data_marseille+'/ALT/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-15', folder_data_marseille+'/ALT/01_0100_space-composing'],
                  ['JD', folder_data_marseille+'/JD/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-23', folder_data_marseille+'/JD/01_0100_compo-space'],
                  ['JW', folder_data_marseille+'/JW/01_0007_sc-mprage-1mm-2palliers-fov384-comp-sp-5', folder_data_marseille+'/JW/01_0100_compo-space'],
@@ -127,40 +124,83 @@ height_of_template_space = 1100
 x_size_of_template_space = 200
 y_size_of_template_space = 200
 number_labels_for_template = 20  # vertebral levels
+straightening_parameters = '-params bspline_meshsize=5x5x15'
+
+class TimeObject:
+    def __init__(self, number_of_subjects=1):
+        self.start_timer = 0
+        self.time_list = []
+        self.total_number_of_subjects = number_of_subjects
+        self.number_of_subjects_done = 0
+        self.is_started = False
+
+    def start(self):
+        self.start_timer = time.time()
+        self.is_started = True
+
+    def one_subject_done(self):
+        self.number_of_subjects_done += 1
+        self.time_list.append(time.time() - self.start_timer)
+        remaining_subjects = self.total_number_of_subjects - self.number_of_subjects_done
+        time_one_subject = self.time_list[-1] / self.number_of_subjects_done
+        remaining_time = remaining_subjects * time_one_subject
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        sct.printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def stop(self):
+        self.time_list.append(time.time() - self.start_timer)
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        sct.printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        self.is_started = False
+
+    def printRemainingTime(self):
+        remaining_subjects = self.total_number_of_subjects - self.number_of_subjects_done
+        time_one_subject = self.time_list[-1] / self.number_of_subjects_done
+        remaining_time = remaining_subjects * time_one_subject
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            sct.printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            sct.printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def printTotalTime(self):
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            sct.printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            sct.printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+timer = dict()
+timer['T1'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
+timer['T2'] = TimeObject(number_of_subjects=len(SUBJECTS_LIST))
 
 def main():
-    import time
-
-    start = time.time()
-
+    timer['T1'].start()
     # Processing of T1 data for template
     do_preprocessing('T1')
-    """
     create_cross('T1')
     push_into_templace_space('T1')
     average_levels('T1')
-    align_vertebrae('T1')"""
-    end_T1 = time.time()
-    hours_t1, rem_t1 = divmod(end_T1 - start, 3600)
-    minutes_t1, seconds_t1 = divmod(rem_t1, 60)
-    print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours_t1), int(minutes_t1), seconds_t1))
+    align_vertebrae('T1')
+    timer['T1'].stop()
 
-    start_t2 = time.time()
-    # Processing of T2 data for template
+    timer['T2'].start()
+    Processing of T2 data for template
     do_preprocessing('T2')
-    """create_cross('T2')
+    create_cross('T2')
     push_into_templace_space('T2')
     average_levels('T2')
-    align_vertebrae('T2')"""
-    end_T2 = time.time()
-    hours_t2, rem_t2 = divmod(end_T2 - start_t2, 3600)
-    minutes_t2, seconds_t2 = divmod(rem_t2, 60)
-    print("T1 = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t1), int(minutes_t1), seconds_t1))
-    print("T2 = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t2), int(minutes_t2), seconds_t2))
+    align_vertebrae('T2')
+    timer['T2'].stop()
 
-    hours_t2, rem_t2 = divmod(end_T2 - start, 3600)
-    minutes_t2, seconds_t2 = divmod(rem_t2, 60)
-    print("Total = {:0>2}:{:0>2}:{:05.2f}".format(int(hours_t2), int(minutes_t2), seconds_t2))
+    sct.printv('T1 time:')
+    timer['T2'].printTotalTime()
+    sct.printv('T2 time:')
+    timer['T2'].printTotalTime()
 
 
 def do_preprocessing(contrast):
@@ -315,7 +355,7 @@ def do_preprocessing(contrast):
         # - warp_curve2straight.nii.gz
         # - data_RPI_crop_normalized_straight.nii.gz
         print '\nStraightening image using centerline...'
-        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz')
+        cmd_straighten = ('sct_straighten_spinalcord -i data_RPI_crop_normalized.nii.gz -c ' + PATH_OUTPUT + '/subjects/' + subject + '/' + contrast + '/seg_and_labels.nii.gz -a nurbs -o data_RPI_crop_normalized_straight.nii.gz '+straightening_parameters)
         #sct.printv(cmd_straighten)
         sct.run(cmd_straighten)
 
@@ -514,6 +554,8 @@ def align_vertebrae(contrast):
             ax[i].set_axis_off()
         fig1 = plt.gcf()
         fig1.savefig(PATH_OUTPUT +'/Image_results'+'/'+subject+'_aligned_' + contrast + '.png', format='png')
+
+        timer[contrast].one_subject_done()
 
 #=======================================================================================================================
 # Start program
