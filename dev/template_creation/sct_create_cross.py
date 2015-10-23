@@ -92,7 +92,8 @@ def main():
     
     if fname != '':
         print '\nGet dimensions of input...'
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
         print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
         print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
@@ -155,7 +156,7 @@ def main():
     if fname_template != '' :
     
         print '\nGet dimensions of template...'
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_template)
+        nx, ny, nz, nt, px, py, pz, pt = Image(fname_template).dim
         print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
         print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
         
