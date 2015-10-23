@@ -89,15 +89,18 @@ def test(path_data='', parameters=''):
         # sct.printv('Diff manual-test = ' + str(diff_manual_result))
 
         # check if MSE is superior to threshold
-        if rmse > 2:
+        th_rmse = 2
+        if rmse > th_rmse:
             status = 99
-            output += '\nRMSE higher than threshold.'
-        if max_dist > 3:
+            output += '\nRMSE = '+str(rmse)+'. Threshold = '+str(th_rmse)
+        th_max_dist = 3
+        if max_dist > th_max_dist:
             status = 99
-            output += '\nMax distance higher than threshold.'
+            output += '\nMax distance = '+str(max_dist)+'. Threshold = '+str(th_max_dist)
+        th_diff_manual_result = 3
         if abs(diff_manual_result) > 3:
             status = 99
-            output += '\nDiff manual-result higher than threshold.'
+            output += '\nDiff manual-result = '+str(diff_manual_result)+'. Threshold = '+str(th_diff_manual_result)
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result}, index=[path_data])
