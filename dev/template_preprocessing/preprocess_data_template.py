@@ -43,7 +43,7 @@ folder_data_pain = '/Volumes/data_shared/montreal_criugm/simon'
 
 # Creation of necessary files for T2 preprocessing
 
-
+"""
 # Preprocessing for subject errsm_36
 if not os.path.isdir(path_results + '/T2/errsm_36'):
     os.makedirs(path_results + '/T2/errsm_36')
@@ -542,7 +542,7 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-
+"""
 # Preprocessing for subject errsm_34
 if not os.path.isdir(path_results + '/T2/errsm_34'):
     os.makedirs(path_results + '/T2/errsm_34')
@@ -550,7 +550,7 @@ os.chdir(path_results + '/T2/errsm_34')
 sct.run('dcm2nii -o . -r N '+folder_data_errsm+'/errsm_34/40-SPINE_T2/*.dcm')
 sct.run('mv *.nii.gz data.nii.gz')
 sct.run('sct_image -i data.nii.gz -setorient RPI')
-sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 17,133,73,20:19,131,107,19:21,127,139,18:23,125,170,17:25,123,197,16:25,120,223,16:27,117,247,15:27,117,271,14:28,120,295,13:28,124,318,12:28,131,341,11:27,138,363,10:27,151,381,9:27,161,400,8:26,167,416,7:26,170,434,6:24,173,452,5:23,178,471,4:21,183,490,3:20,187,556,2:19,190,581,1')
+sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 19,131,107,20:21,127,139,19:23,125,170,18:25,123,197,17:25,120,223,16:27,117,247,15:27,117,271,14:28,120,295,13:28,124,318,12:28,131,341,11:27,138,363,10:27,151,381,9:27,161,400,8:26,167,416,7:26,170,434,6:24,173,452,5:23,178,471,4:21,183,490,3:20,187,556,2:19,190,581,1')
 sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start 0 -end 613')
 f_crop = open('crop.txt', 'w')
 f_crop.write('0,613,0,544')
@@ -561,7 +561,7 @@ os.remove('data.nii.gz')
 os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
-
+"""
 
 # Preprocessing for subject ALT
 if not os.path.isdir(path_results + '/T2/ALT'):
@@ -677,9 +677,9 @@ f_crop.write('29,580,0,10')
 f_crop.close()
 sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x 23,78,0,1:23,77,22,1:22,77,40,1:22,77,58,1:22,77,74,1:22,76,89,1:23,73,113,1:24,71,133,1:24,70,146,1:25,68,164,1:26,67,182,1:26,66,202,1:27,67,217,1:27,68,236,1:27,70,253,1:27,74,275,1:27,79,292,1:27,84,308,1:27,91,327,1:27,98,346,1:27,105,366,1:26,110,384,1:26,111,403,1:24,112,421,1:22,111,438,1:21,110,455,1:20,110,469,1:19,109,482,1:19,111,493,1:19,113,504,1:18,113,519,1:18,114,533,1:18,117,539,1:18,124,551,1')
 sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o labels_updown.nii.gz -t create -x 23,78,0,1:23,78,15,1:22,77,33,1:22,77,53,1:22,76,72,1:22,75,86,1:23,74,106,1:24,72,126,1:25,70,144,1:25,68,161,1:26,67,175,1:26,67,187,1:26,66,199,1:26,111,398,1:25,112,407,1:24,112,420,1:23,111,434,1:21,111,449,1:20,110,467,1:20,109,483,1:19,111,494,1:19,112,504,1:19,113,514,1:19,113,523,1:19,114,533,1:19,118,541,1:19,123,551,1')
-os.remove('data.nii.gz')
-os.remove('data_RPI.nii.gz')
-os.remove('data_RPI_crop.nii.gz')
+# os.remove('data.nii.gz')
+# os.remove('data_RPI.nii.gz')
+# os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
 
@@ -1171,7 +1171,7 @@ sct.run('sct_image -i data.nii.gz -setorient RPI')
 sct.run('sct_label_utils -i data_RPI.nii.gz -o labels_vertebral.nii.gz -t create -x 91,73,91,20:90,67,121,19:88,61,151,18:86,57,180,17:84,55,205,16:83,56,231,15:83,57,258,14:83,62,283,13:83,71,306,12:82,82,327,11:80,94,346,10:79,112,361,9:79,127,377,8:79,139,391,7:79,142,406,6:81,144,421,5:81,145,437,4:82,143,455,3:84,133,517,2:85,137,540,1')
 sct.run('sct_crop_image -i data_RPI.nii.gz -o data_RPI_crop.nii.gz -dim 2 -start  15 -end 555 ')
 f_crop = open('crop.txt', 'w')
-f_crop.write('15,555,0,367')
+f_crop.write('15,555,0,480')
 f_crop.close()
 sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o centerline_propseg_RPI.nii.gz -t create -x 92,75,0,1:91,69,33,1:90,63,78,1:89,59,109,1:88,55,141,1:86,52,168,1:83,51,202,1:83,53,241,1:83,59,273,1:82,71,301,1:79,93,335,1:78,115,360,1:78,122,369,1:79,134,392,1:80,136,401,1:81,137,416,1:81,137,427,1:83,135,446,1:83,132,457,1:84,131,469,1:85,129,483,1:86,132,507,1:84,141,540,1')
 sct.run('sct_label_utils -i data_RPI_crop.nii.gz -o labels_updown.nii.gz -t create -x 84,129,480,1:84,129,489,1:84,129,497,1:84,129,505,1:84,129,512,1:84,129,518,1:84,130,524,1:84,132,529,1:84,134,534,1:84,137,540,1')
@@ -2048,4 +2048,4 @@ os.remove('data_RPI.nii.gz')
 os.remove('data_RPI_crop.nii.gz')
 os.chdir('../..')
 
-
+"""
