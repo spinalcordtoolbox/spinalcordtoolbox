@@ -303,6 +303,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         # I_corr = np.zeros((length_z_corr))
         I_corr = np.zeros((length_z_corr, len(length_y_corr)))
         ind_y = 0
+        allzeros = 0
         for iy in length_y_corr:
             # loop across range of z defined by template distance
             ind_I = 0
@@ -325,9 +326,12 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
                 if np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
-                    printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
+                    allzeros = 1
+                    # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
                 ind_I = ind_I + 1
             ind_y = ind_y + 1
+        if allzeros:
+            printv('.. WARNING: Data contained zero. We are probably at the edge.', verbose)
 
         # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
         gaussian_window = gaussian(length_z_corr, std=length_z_corr/gaussian_std_factor)
@@ -540,7 +544,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         import matplotlib.pyplot as plt
 
     size_AP_mirror = 2
-    searching_window = range(-14, 15)
+    searching_window = range(-9, 13)
     fig_local_adjustment = 4  # fig number
     thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
     gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
@@ -586,12 +590,12 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # keep peak with maximum correlation
         ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
         printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        # check if correlation is high enough
+        # check if correlation is too low
         if I_corr_adj[ind_peak] < thr_corr:
             printv('.... WARNING: Correlation is too low. Using initial current_z provided.', verbose)
             adjusted_z = current_z
         else:
-            adjusted_z = int(current_z + round(searching_window[ind_peak]/2))
+            adjusted_z = int(current_z + round(searching_window[ind_peak]/2)) + 1
             printv('.... Update init_z position to: '+str(adjusted_z), verbose)
     if verbose == 2:
         # display peak
