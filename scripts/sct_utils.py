@@ -43,10 +43,17 @@ class bcolors(object):
 #=======================================================================================================================
 # add suffix
 #=======================================================================================================================
-def add_suffix(file_ext, suffix):
-    file_name, ext_name = file_ext.split(os.extsep, 1)  # here we use os.extsep to account for nii.gz extensions
-    # add suffix
-    return file_name+suffix+'.'+ext_name
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension on a nii or nii.gz file.
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+    """
+    # get index of extension. Here, we search from the end to avoid issue with folders that have ".nii" in their name.
+    ind_nii = fname.rfind('.nii')
+    # return file name with suffix
+    return fname[:ind_nii] + suffix + fname[ind_nii:]
 
 
 
@@ -265,9 +272,9 @@ def check_if_3d(fname):
 # check_if_rpi:  check if data are in RPI orientation
 #=======================================================================================================================
 def check_if_rpi(fname):
-    from sct_orientation import get_orientation
-    if not get_orientation(fname) == 'RPI':
-        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_orientation to reorient your data. Exit program.\n', 1, 'error')
+    from sct_image import get_orientation
+    if not get_orientation(fname, filename=True) == 'RPI':
+        printv('\nERROR: '+fname+' is not in RPI orientation. Use sct_image -setorient to reorient your data. Exit program.\n', 1, 'error')
 
 
 #=======================================================================================================================
@@ -293,7 +300,8 @@ def tmp_create(verbose=1):
     # path_tmp = tmp_create()
     printv('\nCreate temporary folder...', verbose)
     import time
-    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+    import random
+    path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S")+'_'+str(random.randint(1, 1000000)), 1)
     run('mkdir '+path_tmp, verbose)
     return path_tmp
 

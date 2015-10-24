@@ -105,42 +105,34 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '  '+os_running+' ('+platform.platform()+')'
+    print '.. '+os_running+' ('+platform.platform()+')'
+
+    # Check number of CPU cores
+    print 'Check number of CPU cores...'
+    from multiprocessing import cpu_count
+    print '.. Available: ' + str(cpu_count())
+    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
+    print '.. Used by SCT: ' + output
 
     # check RAM
     print 'Check RAM... '
     sct.checkRAM(os_running)
 
     # check installation packages
-    print 'Check which Python is running ... '
-    print '  '+sys.executable
+    print 'Check which Python is running...'
+    print '.. '+sys.executable
 
     # get path of the toolbox
+    print 'Check SCT path...'
     status, output = sct.run('echo $SCT_DIR', verbose)
     path_sct = output
-    if complete_test:
-        print (status, output), '\n'
+    print '.. '+path_sct
 
     # fetch version of the toolbox
-    print 'Fetch version of the Spinal Cord Toolbox... '
+    print 'Check SCT version... '
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print "  version: "+version_sct
-
-    # check if git is installed
-    print_line('Check if git is installed ')
-    cmd = 'which git'
-    status, output = commands.getstatusoutput(cmd)
-    if output:
-        print_ok()
-    else:
-        print_fail()
-        print '  git is not installed.'
-        print '  - To install it: http://git-scm.com/book/en/v1/Getting-Started-Installing-Git'
-        e = 1
-    if complete_test:
-        print '>> '+cmd
-        print (status, output), '\n'
+    print ".. "+version_sct
 
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
@@ -227,28 +219,13 @@ def main():
     if complete_test:
         print (status, output), '\n'
 
-    # Check ANTs integrity
-    print_line('Check integrity of ANTs output ')
-    cmd_ants_test = 'isct_test_ants'
-    # if not complete_test:
-    #     cmd_ants_test += ' -v 0'
-    (status, output) = commands.getstatusoutput(cmd_ants_test)
-    if status in [0]:
-        print_ok()
-    else:
-        print_fail()
-        print output
-        e = 1
-    if complete_test:
-        print (status, output), '\n'
-    print
-    
     # close log file
     if create_log_file:
         sys.stdout = orig_stdout
         handle_log.close()
         print "File generated: "+file_log+'\n'
 
+    print ''
     sys.exit(e + install_software)
     
 
