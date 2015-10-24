@@ -38,7 +38,7 @@ class SegmentationParam:
         self.path_model = path_sct+'/data/gm_model' # None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
         self.todo_model = 'load'  # 'compute'
         self.new_model_dir = './gm_model'
-        self.output_name = ''
+        self.output_path = ''
         self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
         self.reg_metric = 'MI'
         self.target_denoising = True
@@ -54,13 +54,14 @@ class SegmentationParam:
         self.res_type = 'prob'
         self.dev = False
         self.verbose = 1
+        self.remove_tmp = 1
 
     def __repr__(self):
         s = ''
         s += 'path_model: ' + str(self.path_model) + '\n'
         s += 'todo_model: ' + str(self.todo_model) + '\n'
         s += 'new_model_dir: ' + str(self.new_model_dir) + '  *** only used if todo_model=compute ***\n'
-        s += 'output_name: ' + str(self.output_name) + '\n'
+        s += 'output_path: ' + str(self.output_path) + '\n'
         s += 'reg: ' + str(self.reg) + '\n'
         s += 'reg_metric: ' + str(self.reg_metric) + '\n'
         s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***\n'
@@ -75,6 +76,7 @@ class SegmentationParam:
         s += 'z_regularisation: ' + str(self.z_regularisation) + '\n'
         s += 'res_type: ' + str(self.res_type) + '\n'
         s += 'verbose: ' + str(self.verbose) + '\n'
+        s += 'remove_tmp: ' + str(self.remove_tmp) + '\n'
 
         return s
 
@@ -1084,30 +1086,31 @@ sct_Image
             self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image)
 
         # get & save the result gray matter segmentation
-        if gm_seg_param.output_name == '':
-            suffix = ''
-            if self.model.param.dev:
-                suffix += '_' + gm_seg_param.res_type
-                for transfo in self.model.dictionary.coregistration_transfos:
-                    suffix += '_' + transfo
-                if self.model.param.use_levels:
-                    suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
-                else:
-                    suffix += '_no_levels'
-                if self.model.param.z_regularisation:
-                    suffix += '_Zregularisation'
-                if self.model.param.target_normalization:
-                    suffix += '_normalized'
+        # if gm_seg_param.output_name == '':
+        suffix = ''
+        if self.model.param.dev:
+            suffix += '_' + gm_seg_param.res_type
+            for transfo in self.model.dictionary.coregistration_transfos:
+                suffix += '_' + transfo
+            if self.model.param.use_levels:
+                suffix += '_with_levels_' + '_'.join(str(self.model.param.weight_gamma).split('.'))  # replace the '.' by a '_'
+            else:
+                suffix += '_no_levels'
+            if self.model.param.z_regularisation:
+                suffix += '_Zregularisation'
+            if self.model.param.target_normalization:
+                suffix += '_normalized'
 
-            name_res_wmseg = sct.extract_fname(target_fname)[1] + '_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
-            name_res_gmseg = sct.extract_fname(target_fname)[1] + '_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
-            ext = sct.extract_fname(target_fname)[2]
+        name_res_wmseg = sct.extract_fname(target_fname)[1] + '_wmseg' + suffix  # TODO: remove suffix when parameters are all optimized
+        name_res_gmseg = sct.extract_fname(target_fname)[1] + '_gmseg' + suffix  # TODO: remove suffix when parameters are all optimized
+        ext = sct.extract_fname(target_fname)[2]
+        '''
         else:
             name_res_wmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_wmseg'
             name_res_gmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_gmseg'
             ext = sct.extract_fname(gm_seg_param.output_name)[2]
-
-        if len(self.target_seg_methods.target) == 1:
+        '''
+        if len(self.target_seg_methods.target) == 1: # if target is 2D (1 SLICE)
             self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg), absolutepath=name_res_wmseg + ext)
             self.res_gm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].gm_seg), absolutepath=name_res_gmseg + ext)
         else:
@@ -1239,7 +1242,7 @@ if __name__ == "__main__":
         if "-i" in arguments:
             input_target_fname = arguments["-i"]
         if "-o" in arguments:
-            param.output_name = arguments["-o"]
+            param.output_path = arguments["-o"]
         if "-model" in arguments:
             param.path_model = arguments["-model"]
         if "-todo-model" in arguments:

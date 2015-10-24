@@ -24,12 +24,6 @@ from msct_parser import Parser
 from msct_image import Image
 
 
-class Param:
-    def __init__(self):
-        self.verbose = '1'
-        self.remove_tmp_files = '1'
-
-
 # PARSER
 # ==========================================================================================
 def get_parser():
@@ -61,17 +55,24 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
+#    parser.add_option(name='-param',
+#                      type_value=[',', str],
+#                      description='Parameters for labeling vertebrae. Separate with ",":\n'
+#                      'laplacian: Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.'
+#                      mandatory=False,
+#                      default_value='laplacian=1',
+#                      example='laplacian=0')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
                       mandatory=False,
-                      default_value=param.remove_tmp_files,
+                      default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
                       mandatory=False,
-                      default_value=param.verbose,
+                      default_value='1',
                       example=['0', '1', '2'])
     parser.add_option(name="-h",
                       type_value=None,
@@ -106,25 +107,25 @@ def main(args=None):
         initz = arguments['-initz']
     if '-initcenter' in arguments:
         initcenter = arguments['-initcenter']
-    param.verbose = int(arguments['-v'])
-    param.remove_tmp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
+    remove_tmp_files = int(arguments['-r'])
 
     # create temporary folder
-    printv('\nCreate temporary folder...', param.verbose)
+    printv('\nCreate temporary folder...', verbose)
     path_tmp = slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
-    run('mkdir '+path_tmp, param.verbose)
+    run('mkdir '+path_tmp, verbose)
 
     # Copying input data to tmp folder
-    printv('\nCopying input data to tmp folder...', param.verbose)
+    printv('\nCopying input data to tmp folder...', verbose)
     run('sct_convert -i '+fname_in+' -o '+path_tmp+'data.nii')
     run('sct_convert -i '+fname_seg+' -o '+path_tmp+'segmentation.nii.gz')
 
     # Go go temp folder
-    # path_tmp = '/Users/julien/data/sct_debug/vertebral_levels/tmp.150917171852/'
+    # path_tmp = '/Users/julien/data/biospective/20151013_demo_spinalcordv2.1.b9/200_006_s2_T2/tmp.151013175622/'
     chdir(path_tmp)
 
     # create label to identify disc
-    printv('\nCreate label to identify disc...', param.verbose)
+    printv('\nCreate label to identify disc...', verbose)
     if initz:
         create_label_z('segmentation.nii.gz', initz[0], initz[1])  # create label located at z_center
     elif initcenter:
@@ -138,34 +139,42 @@ def main(args=None):
         printv('\nERROR: You need to initialize the disc detection algorithm using one of these two options: -initz, -initcenter\n', 1, 'error')
 
     # Straighten spinal cord
-    printv('\nStraighten spinal cord...', param.verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0')
+    printv('\nStraighten spinal cord...', verbose)
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0,bspline_meshsize=3x3x5')  # here using all_labels=0 because of issue #610
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
-    printv('\nApply straightening to segmentation...', param.verbose)
+    printv('\nApply straightening to segmentation...', verbose)
     run('sct_apply_transfo -i segmentation.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o segmentation_straight.nii.gz -x linear')
     # Threshold segmentation to 0.5
     run('sct_maths -i segmentation_straight.nii.gz -thr 0.5 -o segmentation_straight.nii.gz')
 
     # Apply straightening to z-label
-    printv('\nDilate z-label and apply straightening...', param.verbose)
+    printv('\nDilate z-label and apply straightening...', verbose)
     run('sct_apply_transfo -i labelz.nii.gz -d data_straight.nii -w warp_curve2straight.nii.gz -o labelz_straight.nii.gz -x nn')
 
     # get z value and disk value to initialize labeling
-    printv('\nGet z and disc values from straight label...', param.verbose)
+    printv('\nGet z and disc values from straight label...', verbose)
     init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
-    printv('.. '+str(init_disc), param.verbose)
+    printv('.. '+str(init_disc), verbose)
+
+    # denoise data
+    printv('\nDenoise data...', verbose)
+    run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
+
+    # apply laplacian filtering
+    printv('\nApply Laplacian filter...', verbose)
+    run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
 
     # detect vertebral levels on straight spinal cord
-    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc)
+    vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
-    # un-straighten spinal cord
-    printv('\nUn-straighten labeling...', param.verbose)
+    # un-straighten labelled spinal cord
+    printv('\nUn-straighten labeling...', verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
     # Clean labeled segmentation
-    printv('\nClean labeled segmentation (correct interpolation errors)...', param.verbose)
+    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii.gz', 'segmentation.nii.gz', 'segmentation_labeled.nii.gz')
 
     # Build fname_out
@@ -177,23 +186,23 @@ def main(args=None):
     chdir('..')
 
     # Generate output files
-    printv('\nGenerate output files...', param.verbose)
+    printv('\nGenerate output files...', verbose)
     generate_output_file(path_tmp+'segmentation_labeled.nii.gz', fname_out)
 
     # Remove temporary files
-    if param.remove_tmp_files == 1:
-        printv('\nRemove temporary files...', param.verbose)
+    if remove_tmp_files == 1:
+        printv('\nRemove temporary files...', verbose)
         run('rm -rf '+path_tmp)
 
     # to view results
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', param.verbose, 'info')
+    printv('\nDone! To view results, type:', verbose)
+    printv('fslview '+fname_in+' '+fname_out+' -l Random-Rainbow -t 0.5 &\n', verbose, 'info')
 
 
 
 # Detect vertebral levels
 # ==========================================================================================
-def vertebral_detection(fname, fname_seg, init_disc):
+def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
     shift_AP = 15  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
@@ -201,10 +210,10 @@ def vertebral_detection(fname, fname_seg, init_disc):
     size_IS = 7  # window size in RL direction (=z) in mm
     searching_window_for_maximum = 5  # size used for finding local maxima
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
+    gaussian_std_factor = 5  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
     fig_anat_straight = 1  # handle for figure
     fig_pattern = 2  # handle for figure
     fig_corr = 3  # handle for figure
-    verbose = param.verbose
     # define mean distance between adjacent discs: C1/C2 -> C2/C3, C2/C3 -> C4/C5, ..., L1/L2 -> L2/L3.
     mean_distance = np.array([18, 16, 17.0000, 16.0000, 15.1667, 15.3333, 15.8333,   18.1667,   18.6667,   18.6667,
     19.8333,   20.6667,   21.6667,   22.3333,   23.8333,   24.1667,   26.0000,   28.6667,   30.5000,   33.5000,
@@ -217,14 +226,11 @@ def vertebral_detection(fname, fname_seg, init_disc):
 
     # open anatomical volume
     img = Image(fname)
+    data = img.data
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(img.data, [3, 1, 0], output=None, mode="reflect")
-
-    # printv('\nDenoise data...', verbose)
-    # from sct_maths import denoise_ornlm
-    # data = denoise_ornlm(img.data)
+    data = gaussian_filter(data, [3, 1, 0], output=None, mode="reflect")
 
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -276,6 +282,8 @@ def vertebral_detection(fname, fname_seg, init_disc):
     # append value to main list
     list_disc_z = np.append(list_disc_z, current_z).astype(int)
     list_disc_value = np.append(list_disc_value, current_disc).astype(int)
+    # update initial value (used when switching disc search to inferior direction)
+    init_disc[0] = current_z
     # define mean distance to next disc
     approx_distance_to_next_disc = int(round(mean_distance[current_disc]))
     # find_disc(data, current_z, current_disc, approx_distance_to_next_disc, direction)
@@ -299,6 +307,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
         # I_corr = np.zeros((length_z_corr))
         I_corr = np.zeros((length_z_corr, len(length_y_corr)))
         ind_y = 0
+        allzeros = 0
         for iy in length_y_corr:
             # loop across range of z defined by template distance
             ind_I = 0
@@ -321,12 +330,15 @@ def vertebral_detection(fname, fname_seg, init_disc):
                 if np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
-                    printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
+                    allzeros = 1
+                    # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
                 ind_I = ind_I + 1
             ind_y = ind_y + 1
+        if allzeros:
+            printv('.. WARNING: Data contained zero. We are probably at the edge.', verbose)
 
         # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-        gaussian_window = gaussian(length_z_corr, std=length_z_corr/5)
+        gaussian_window = gaussian(length_z_corr, std=length_z_corr/gaussian_std_factor)
         I_corr_adj = np.multiply(I_corr.transpose(), gaussian_window).transpose()
 
         # display correlation curves
@@ -348,7 +360,7 @@ def vertebral_detection(fname, fname_seg, init_disc):
             # ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
             ind_peak[0] = np.where(I_corr_adj == I_corr_adj.max())[0]  # index of max along z
             ind_peak[1] = np.where(I_corr_adj == I_corr_adj.max())[1]  # index of max along y
-            printv('.. Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak[0]][ind_peak[1]])+')', verbose)
+            printv('.. Peak found: z='+str(ind_peak[0])+', y='+str(ind_peak[1])+' (correlation = '+str(I_corr_adj[ind_peak[0]][ind_peak[1]])+')', verbose)
             # check if correlation is high enough
             if I_corr_adj[ind_peak[0]][ind_peak[1]] < thr_corr:
                 printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
@@ -535,10 +547,12 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
     if verbose == 2:
         import matplotlib.pyplot as plt
 
-    size_AP_mirror = 2
-    searching_window = range(-14, 15)
-    fig_local_adjustment = 4
-    thr_corr = 0.2
+    size_AP_mirror = 1
+    searching_window = range(-9, 13)
+    fig_local_adjustment = 4  # fig number
+    thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
+    gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
+
     # Get pattern centered at current_z = init_disc[0]
     pattern = data[xc-size_RL:xc+size_RL+1, yc+shift_AP-size_AP_mirror:yc+shift_AP+size_AP_mirror+1, current_z-size_IS:current_z+size_IS+1]
     # if pattern is missing data (because close to the edge), do not perform correlation and return current_z
@@ -564,7 +578,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         I_corr[ind_I] = np.corrcoef(pattern1d_shift_mirr, pattern1d)[0, 1]
         ind_I = ind_I + 1
     # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
-    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/3)
+    gaussian_window = gaussian(len(searching_window), std=len(searching_window)/gaussian_std_factor)
     I_corr_adj = np.multiply(I_corr, gaussian_window)
     # display
     if verbose == 2:
@@ -580,14 +594,13 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # keep peak with maximum correlation
         ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
         printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        # check if correlation is high enough
+        # check if correlation is too low
         if I_corr_adj[ind_peak] < thr_corr:
             printv('.... WARNING: Correlation is too low. Using initial current_z provided.', verbose)
             adjusted_z = current_z
         else:
-            adjusted_z = int(current_z + round(searching_window[ind_peak]/2))
+            adjusted_z = int(current_z + round(searching_window[ind_peak]/2)) + 1
             printv('.... Update init_z position to: '+str(adjusted_z), verbose)
-
     if verbose == 2:
         # display peak
         plt.figure(fig_local_adjustment), plt.plot(ind_peak, I_corr_adj[ind_peak], 'ro')
@@ -632,7 +645,5 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    # # initialize parameters
-    param = Param()
     # call main function
     main()

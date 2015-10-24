@@ -19,11 +19,13 @@ import sys
 import commands
 import nibabel
 import numpy
+from shutil import move
 import sct_utils as sct
 from msct_nurbs import NURBS
 from sct_utils import fsloutput
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation, set_orientation
 from msct_image import Image
+from sct_image import split_data, concat_data
 
 
 ## Default parameters
@@ -102,22 +104,25 @@ def main():
     print ''
     
     # Get input image orientation
-    input_image_orientation = get_orientation(fname_anat)
+    im_anat = Image(fname_anat)
+    input_image_orientation = get_orientation(im_anat)
 
     # Reorient input data into RL PA IS orientation
-    set_orientation(fname_anat, 'RPI', 'tmp.anat_orient.nii')
-    set_orientation(fname_centerline, 'RPI', 'tmp.centerline_orient.nii')
+    im_centerline = Image(fname_centerline)
+    im_anat_orient = set_orientation(im_anat, 'RPI')
+    im_anat_orient.setFileName('tmp.anat_orient.nii')
+    im_centerline_orient = set_orientation(im_centerline, 'RPI')
+    im_centerline_orient.setFileName('tmp.centerline_orient.nii')
 
     # Open centerline
     #==========================================================================================
     print '\nGet dimensions of input centerline...'
-    nx, ny, nz, nt, px, py, pz, pt = Image('tmp.centerline_orient.nii').dim
+    nx, ny, nz, nt, px, py, pz, pt = im_centerline_orient.dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
     print '\nOpen centerline volume...'
-    file = nibabel.load('tmp.centerline_orient.nii')
-    data = file.get_data()
+    data = im_centerline_orient.data
 
     X, Y, Z = (data>0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
@@ -164,19 +169,20 @@ def main():
     #==========================================================================================
     # Split input volume
     print '\nSplit input volume...'
-    from sct_split_data import split_data
-    if not split_data('tmp.anat_orient.nii', 2, '_z'):
-        sct.printv('ERROR in split_data.', 1, 'error')
-    file_anat_split = ['tmp.anat_orient_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    im_anat_orient_split_list = split_data(im_anat_orient, 2)
+    file_anat_split = []
+    for im in im_anat_orient_split_list:
+        file_anat_split.append(im.absolutepath)
+        im.save()
 
     # initialize variables
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     z_init = min_z_index
     displacement_max_z_index = x_centerline_fit[z_init-min_z_index]-x_centerline_fit[max_z_index-min_z_index]
 
     # write centerline as text file
     print '\nGenerate fitted transformation matrices...'
-    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat_inv_cumul_fit = ['tmp.mat_inv_cumul_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(min_z_index, max_z_index+1, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
@@ -208,21 +214,24 @@ def main():
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'
-    file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_anat_split_fit = ['tmp.anat_orient_fit_Z'+str(z).zfill(4) for z in range(0,nz,1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
         sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_inv_cumul_fit[iz]+' -out '+file_anat_split_fit[iz]+' -interp '+interp)
 
     # Merge into 4D volume
     print '\nMerge into 4D volume...'
-    from sct_concat_data import concat_data
     from glob import glob
-    concat_data(glob('tmp.anat_orient_fit_z*.nii'), 'tmp.anat_orient_fit.nii', dim=2)
+    im_to_concat_list = [Image(fname) for fname in glob('tmp.anat_orient_fit_Z*.nii')]
+    im_concat_out = concat_data(im_to_concat_list, 2)
+    im_concat_out.setFileName('tmp.anat_orient_fit.nii')
+    im_concat_out.save()
     # sct.run(fsloutput+'fslmerge -z tmp.anat_orient_fit tmp.anat_orient_fit_z*')
 
     # Reorient data as it was before
     print '\nReorient data back into native orientation...'
-    set_orientation('tmp.anat_orient_fit.nii', input_image_orientation, 'tmp.anat_orient_fit_reorient.nii')
+    fname_anat_fit_orient = set_orientation(im_concat_out.absolutepath, input_image_orientation, filename=True)
+    move(fname_anat_fit_orient, 'tmp.anat_orient_fit_reorient.nii')
 
     # Generate output file (in current folder)
     print '\nGenerate output file (in current folder)...'
