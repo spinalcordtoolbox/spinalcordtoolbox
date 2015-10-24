@@ -133,7 +133,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0')  # here using all_labels=0 because of issue #610
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0,bspline_meshsize=3x3x5')  # here using all_labels=0 because of issue #610
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -151,10 +151,18 @@ def main(args=None):
     init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
     printv('.. '+str(init_disc), verbose)
 
+    # denoise data
+    printv('\nDenoise data...', verbose)
+    run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
+
+    # apply laplacian filtering
+    printv('\nApply Laplacian filter...', verbose)
+    run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
+
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
-    # un-straighten spinal cord
+    # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
@@ -533,7 +541,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
 
     size_AP_mirror = 2
     searching_window = range(-14, 15)
-    fig_local_adjustment = 4
+    fig_local_adjustment = 4  # fig number
     thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
     gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
 
