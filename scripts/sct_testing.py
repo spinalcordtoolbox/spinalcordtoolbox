@@ -153,10 +153,10 @@ def fill_functions():
     functions.append('sct_fmri_compute_tsnr')
     functions.append('sct_fmri_moco')
     functions.append('sct_get_centerline')
+    functions.append('sct_image')
     functions.append('sct_label_utils')
     functions.append('sct_label_vertebrae')
     functions.append('sct_maths')
-    functions.append('sct_orientation')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
     functions.append('sct_register_multimodal')
@@ -166,6 +166,7 @@ def fill_functions():
     functions.append('sct_smooth_spinalcord')
     functions.append('sct_straighten_spinalcord')
     functions.append('sct_warp_template')
+    functions.append('sct_documentation')
     return functions
 
 
@@ -202,14 +203,14 @@ def print_fail():
 # write to log file
 # ==========================================================================================
 def write_to_log_file(fname_log, string, mode='w'):
-
-    '''
+    """
     status, output = sct.run('echo $SCT_DIR', 0)
     path_logs_dir = output + '/testing/logs'
 
     if not os.path.isdir(path_logs_dir):
         os.makedirs(path_logs_dir)
-    '''
+    """
+
     string = "test ran at "+time.strftime("%y%m%d%H%M%S")+"\n" \
              + fname_log \
              + string
@@ -242,7 +243,10 @@ def test_function(script_name):
     # import function as a module
     script_tested = importlib.import_module(script_name)
     # test function
-    status, output = script_tested.test(param.path_data)
+    result_test = script_tested.test(param.path_data)
+    # test functions can return 2 or 3 variables, depending if there is results.
+    # In this script, we look only at the first two variables.
+    status, output = result_test[0], result_test[1]
     # write log file
     write_to_log_file(fname_log, output, 'w')
     # manage status

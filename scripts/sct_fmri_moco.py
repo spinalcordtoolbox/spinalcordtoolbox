@@ -22,7 +22,7 @@ import sct_utils as sct
 import msct_moco as moco
 from sct_convert import convert
 from msct_image import Image
-from sct_copy_header import copy_header
+from sct_image import copy_header, split_data, concat_data
 # from sct_average_data_across_dimension import average_data_across_dimension
 
 
@@ -193,7 +193,10 @@ def fmri_moco(param):
 
     # Split into T dimension
     sct.printv('\nSplit along T dimension...', param.verbose)
-    status, output = sct.run('sct_split_data -i ' + file_data + ext_data + ' -dim t -suffix _T', param.verbose)
+    im_data = Image(file_data + ext_data)
+    im_data_split_list = split_data(im_data, 3)
+    for im in im_data_split_list:
+        im.save()
 
     # assign an index to each volume
     index_fmri = range(0, nt)
@@ -226,11 +229,13 @@ def fmri_moco(param):
         # cmd = fsloutput + 'fslmerge -t ' + file_data_merge_i
         # for it in range(nt_i):
         #     cmd = cmd + ' ' + file_data + '_T' + str(index_fmri_i[it]).zfill(4)
-        cmd = 'sct_concat_data -dim t -o ' + file_data_merge_i + ext_data + ' -i '
+
+        im_fmri_list = []
         for it in range(nt_i):
-            cmd = cmd + file_data + '_T' + str(index_fmri_i[it]).zfill(4) + ext_data + ','
-        cmd = cmd[:-1]  # remove ',' at the end of the string
-        sct.run(cmd, param.verbose)
+            im_fmri_list.append(im_data_split_list[index_fmri_i[it]])
+        im_fmri_concat = concat_data(im_fmri_list, 3)
+        im_fmri_concat.setFileName(file_data_merge_i + ext_data)
+        im_fmri_concat.save()
 
         # Average Images
         sct.printv('Average volumes...', param.verbose)
@@ -247,11 +252,13 @@ def fmri_moco(param):
     # cmd = fsloutput + 'fslmerge -t ' + file_data_groups_means_merge
     # for iGroup in range(nb_groups):
     #     cmd = cmd + ' ' + file_data + '_mean_' + str(iGroup)
-    cmd = 'sct_concat_data -dim t -o ' + file_data_groups_means_merge + ext_data + ' -i '
+    im_mean_list = []
     for iGroup in range(nb_groups):
-        cmd = cmd + file_data + '_mean_' + str(iGroup) + ext_data + ','
-    cmd = cmd[:-1]  # remove ',' at the end of the string
-    sct.run(cmd, param.verbose)
+        im_mean_list.append(Image(file_data + '_mean_' + str(iGroup) + ext_data))
+    im_mean_concat = concat_data(im_mean_list, 3)
+    im_mean_concat.setFileName(file_data_groups_means_merge + ext_data)
+    im_mean_concat.save()
+
 
     # Estimate moco on dwi groups
     sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
@@ -291,7 +298,10 @@ def fmri_moco(param):
 
     # copy geometric information from header
     # NB: this is required because WarpImageMultiTransform in 2D mode wrongly sets pixdim(3) to "1".
-    copy_header('fmri.nii', 'fmri_moco.nii')
+    im_fmri = Image('fmri.nii')
+    im_fmri_moco = Image('fmri_moco.nii')
+    im_fmri_moco = copy_header(im_fmri, im_fmri_moco)
+    im_fmri_moco.save()
 
     # Average volumes
     sct.printv('\nAveraging data...', param.verbose)

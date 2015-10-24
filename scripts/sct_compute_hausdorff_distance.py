@@ -16,6 +16,7 @@ import os
 import numpy as np
 import sct_utils as sct
 from msct_image import Image, get_dimension
+from sct_image import set_orientation
 from msct_parser import Parser
 import msct_gmseg_utils as sct_gm
 
@@ -45,9 +46,7 @@ class Thinning:
             self.thinned_image = Image(param=self.zhang_suen(self.image.data), absolutepath=self.image.path + self.image.file_name + '_thinned' + self.image.ext, hdr=self.image.hdr)
 
         elif self.dim_im == 3:
-            status, orientation = sct.run('sct_orientation -i ' + self.image.absolutepath)
-            # orientation = orientation[4:7]
-            assert orientation == 'IRP'
+            assert self.image.orientation == 'IRP'
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
@@ -202,18 +201,14 @@ class ComputeDistances:
         self.dist2_distribution = None
 
         if self.dim_im == 3:
-            status, orientation1 = sct.run('sct_orientation -i ' + self.im1.absolutepath)
-            self.orientation1 = orientation1  # [4:7]
+            self.orientation1 = self.im1.orientation
             if self.orientation1 != 'IRP':
-                sct.run('sct_orientation -i ' + self.im1.absolutepath + ' -s IRP')
-                self.im1 = Image(self.im1.file_name + '_IRP' + self.im1.ext)
+                self.im1 = set_orientation(self.im1, 'IRP')
 
             if self.im2 is not None:
-                status, orientation2 = sct.run('sct_orientation -i ' + self.im2.absolutepath)
-                orientation2 = orientation2  # [4:7]
-                if orientation2 != 'IRP':
-                    sct.run('sct_orientation -i ' + self.im2.absolutepath + ' -s IRP')
-                    self.im2 = Image(self.im2.file_name + '_IRP' + self.im2.ext)
+                self.orientation2 = self.im2.orientation
+                if self.orientation2 != 'IRP':
+                    self.im2 = set_orientation(self.im2, 'IRP')
 
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
