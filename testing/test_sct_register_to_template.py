@@ -28,7 +28,7 @@ def test(path_data='', parameters=''):
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
-                     '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3 ' \
+                     '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3,metric=MI:step=3,iter=0 ' \
                      '-t template/ -r 0'
 
     parser = sct_register_to_template.get_parser()
