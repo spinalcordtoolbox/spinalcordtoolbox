@@ -88,8 +88,8 @@ class Image(object):
         :return:
         """
         from nibabel import load, spatialimages
-        from sct_utils import check_file_exist, printv, extract_fname
-        from sct_orientation import get_orientation
+        from sct_utils import check_file_exist, printv, extract_fname, run
+        from sct_image import get_orientation
 
         # check_file_exist(path, verbose=verbose)
         im_file = None
@@ -97,7 +97,7 @@ class Image(object):
             im_file = load(path)
         except spatialimages.ImageFileError:
             printv('Error: make sure ' + path + ' is an image.', 1, 'error')
-        self.orientation = get_orientation(path)
+        self.orientation = get_orientation(path, filename=True)
         self.data = im_file.get_data()
         self.hdr = im_file.get_header()
         self.absolutepath = path
@@ -197,7 +197,7 @@ class Image(object):
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-    def save(self, type=''):
+    def save(self, type='', verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -231,7 +231,7 @@ class Image(object):
         img = Nifti1Image(self.data, None, self.hdr)
         fname_out = self.path + self.file_name + self.ext
         if path.isfile(fname_out):
-            printv('WARNING: File '+fname_out+' already exists. Deleting it.', 1, 'warning')
+            printv('WARNING: File '+fname_out+' already exists. Deleting it.', verbose, 'warning')
             remove(fname_out)
         # save file
         save(img, fname_out)
@@ -304,6 +304,29 @@ class Image(object):
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
         return list_coordinates
+
+    def getCoordinatesAveragedByValue(self):
+        """
+        This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
+        :return: list of coordinates that represent the center of mass of each group of value.
+        """
+        # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
+        coordinates = self.getNonZeroCoordinates(sorting='value')
+
+        # 2. Separate all coordinates into groups by value
+        groups = dict()
+        for coord in coordinates:
+            if coord.value in groups:
+                groups[coord.value].append(coord)
+            else:
+                groups[coord.value] = [coord]
+
+        # 3. Compute the center of mass of each group of voxels and write them into the output image
+        averaged_coordinates = []
+        for value, list_coord in groups.iteritems():
+            averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
+
+        return averaged_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
     # orientation must be IRP to be able to go trough slices as first dimension
@@ -414,8 +437,8 @@ class Image(object):
         opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
 
         if self.orientation is None:
-            from sct_orientation import get_orientation
-            self.orientation = get_orientation(self.file_name)
+            from sct_image import get_orientation
+            self.orientation = get_orientation(self)
         # get orientation to return at the end of function
         raw_orientation = self.orientation
 
