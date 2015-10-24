@@ -145,8 +145,8 @@ fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lig
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
-# --> 17, right lateral corticospinal tract:    0.778339820985
-# --> 2, left lateral corticospinal tract:    0.76142327915
+# --> 17, right lateral corticospinal tract:    0.783654617705
+# --> 2, left lateral corticospinal tract:    0.767101879797
 cd ..
 
 
