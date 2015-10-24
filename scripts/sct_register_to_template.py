@@ -132,37 +132,30 @@ def main():
     parser = get_parser()
     param = Param()
 
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
-        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
-        fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
-        path_output = './'
-        path_template = param.path_template
-        remove_temp_files = 0
-        verbose = 2
-    else:
-        arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(sys.argv[1:])
 
-        # get arguments
-        fname_data = arguments['-i']
-        fname_seg = arguments['-s']
-        fname_landmarks = arguments['-l']
+    # get arguments
+    fname_data = arguments['-i']
+    fname_seg = arguments['-s']
+    fname_landmarks = arguments['-l']
+    if '-ofolder' in arguments:
         path_output = arguments['-ofolder']
-        path_template = arguments['-t']
-        remove_temp_files = int(arguments['-r'])
-        verbose = int(arguments['-v'])
-        if '-param-straighten' in arguments:
-            param.param_straighten = arguments['-param-straighten']
-        if 'cpu-nb' in arguments:
-            arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
-        else:
-            arg_cpu = ''
-        if '-p' in arguments:
-            paramreg_user = arguments['-p']
-            # update registration parameters
-            for paramStep in paramreg_user:
-                paramreg.addStep(paramStep)
+    else:
+        path_output = ''
+    path_template = arguments['-t']
+    remove_temp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
+    if '-param-straighten' in arguments:
+        param.param_straighten = arguments['-param-straighten']
+    if 'cpu-nb' in arguments:
+        arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
+    else:
+        arg_cpu = ''
+    if '-p' in arguments:
+        paramreg_user = arguments['-p']
+        # update registration parameters
+        for paramStep in paramreg_user:
+            paramreg.addStep(paramStep)
 
     # initialize other parameters
     file_template = param.file_template
