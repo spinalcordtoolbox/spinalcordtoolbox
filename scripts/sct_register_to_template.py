@@ -81,11 +81,11 @@ def get_parser():
                       mandatory=True,
                       default_value='',
                       example="anat_labels.nii.gz")
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
                       mandatory=False,
-                      default_value='./')
+                      default_value='')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to MNI-Poly-AMU template.",
@@ -148,7 +148,7 @@ def main():
         fname_data = arguments['-i']
         fname_seg = arguments['-s']
         fname_landmarks = arguments['-l']
-        path_output = arguments['-o']
+        path_output = arguments['-ofolder']
         path_template = arguments['-t']
         remove_temp_files = int(arguments['-r'])
         verbose = int(arguments['-v'])
