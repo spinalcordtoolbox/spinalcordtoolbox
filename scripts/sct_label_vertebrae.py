@@ -55,6 +55,13 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
+#    parser.add_option(name='-param',
+#                      type_value=[',', str],
+#                      description='Parameters for labeling vertebrae. Separate with ",":\n'
+#                      'laplacian: Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.'
+#                      mandatory=False,
+#                      default_value='laplacian=1',
+#                      example='laplacian=0')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -219,14 +226,11 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
     # open anatomical volume
     img = Image(fname)
+    data = img.data
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(img.data, [3, 1, 0], output=None, mode="reflect")
-
-    # printv('\nDenoise data...', verbose)
-    # from sct_maths import denoise_ornlm
-    # data = denoise_ornlm(img.data)
+    data = gaussian_filter(data, [3, 1, 0], output=None, mode="reflect")
 
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -543,7 +547,7 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
     if verbose == 2:
         import matplotlib.pyplot as plt
 
-    size_AP_mirror = 2
+    size_AP_mirror = 1
     searching_window = range(-9, 13)
     fig_local_adjustment = 4  # fig number
     thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
