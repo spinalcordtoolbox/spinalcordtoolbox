@@ -70,7 +70,7 @@ def get_parser():
                       description='Set orientation of the input image',
                       mandatory=False,
                       example='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split())
-    parser.add_option(name="-setorient_data",
+    parser.add_option(name="-setorient-data",
                       type_value="multiple_choice",
                       description='Set orientation of the input image\'s data. Use with care !ro',
                       mandatory=False,
