@@ -867,14 +867,14 @@ class SpinalCordStraightener(object):
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
         sct.printv("\nGenerate output file (in current folder)...", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", "warp_curve2straight.nii.gz", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", "warp_straight2curve.nii.gz", verbose)
+        sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
+        sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
-                                                      file_anat + "_straight" + ext_anat, verbose)
+                                                      self.path_output + file_anat + "_straight" + ext_anat, verbose)
         else:
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz',
-                                                      fname_output, verbose)  # straightened anatomic
+                                                      self.path_output + fname_output, verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:
@@ -920,10 +920,15 @@ def get_parser():
                       default_value=30)
     parser.add_option(name="-o",
                       type_value="file_output",
-                      description="output file",
+                      description="straightened file",
                       mandatory=False,
                       default_value='',
-                      example="out.nii.gz")
+                      example="data_straight.nii.gz")
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder (all outputs will go there).",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
@@ -1001,6 +1006,10 @@ if __name__ == "__main__":
         sc_straight.interpolation_warp = str(arguments["-x"])
     if "-o" in arguments:
         sc_straight.output_filename = str(arguments["-o"])
+    if '-ofolder' in arguments:
+        sc_straight.path_output = arguments['-ofolder']
+    else:
+        sc_straight.path_output = ''
     if "-a" in arguments:
         sc_straight.algo_fitting = str(arguments["-a"])
     if "-f" in arguments:
