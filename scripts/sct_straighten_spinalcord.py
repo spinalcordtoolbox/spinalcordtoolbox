@@ -359,7 +359,7 @@ class SpinalCordStraightener(object):
         self.cpu_number = None
         self.results_landmarks_curved = []
 
-        self.bspline_meshsize = '3x3x5'
+        self.bspline_meshsize = '5x5x10'  # JULIEN
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '3'
         self.all_labels = 1
@@ -480,12 +480,15 @@ class SpinalCordStraightener(object):
         os.chdir(path_tmp)
 
         try:
-            # resample data to 1mm isotropic
-            sct.printv('\nResample data to 1mm isotropic...', verbose)
-            # fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
-            # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
+            # JULIEN
+            sct.run('cp data.nii data_1mm.nii')
+            sct.run('cp centerline.nii.gz centerline_1mm.nii.gz')
+            # # resample data to 1mm isotropic
+            # sct.printv('\nResample data to 1mm isotropic...', verbose)
+            # # fname_anat_resampled = file_anat + "_resampled.nii.gz"
+            # sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
+            # # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
+            # sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
@@ -659,21 +662,27 @@ class SpinalCordStraightener(object):
             for index in range(0, len(landmark_curved)):
                 x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
                           int(round(landmark_curved[index].z))
-                # attribute landmark_value to the voxel
-                data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
 
-                # # attribute landmark_value to the voxel and its neighbours
-                # data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                # z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
+                # attribute landmark_value to the voxel
+                # JULIEN
+                # data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
+
+                # JULIEN
+                # attribute landmark_value to the voxel and its neighbours
+                data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                 # get x, y and z coordinates of straight landmark (rounded to closest integer)
                 x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
                           int(round(landmark_straight[index].z))
-                data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
 
-                # # attribute landmark_value to the voxel and its neighbours
-                # data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                # z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
+                # JULIEN
+                # data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
+
+                # JULIEN
+                # attribute landmark_value to the voxel and its neighbours
+                data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
             # Write NIFTI volumes
             sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -681,11 +690,13 @@ class SpinalCordStraightener(object):
             img = Nifti1Image(data_curved_landmarks, None, hdr)
             save(img, 'tmp.landmarks_curved.nii.gz')
             sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-            hdr_straight_landmarks.set_data_dtype('uint32')
+            # JULIEN
+            # hdr_straight_landmarks.set_data_dtype('uint32')
             img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
             save(img, 'tmp.landmarks_straight.nii.gz')
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
+            # JULIEN
             crop_landmarks = 0
             safety_pad = 1
             if crop_landmarks == 1:
@@ -772,8 +783,8 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation curve --> straight
             sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_straight_crop.nii.gz '
-                                     'tmp.landmarks_curved_crop.nii.gz '
+                                     'tmp.landmarks_straight.nii.gz '
+                                     'tmp.landmarks_curved.nii.gz '
                                      'tmp.curve2straight_rigid.txt '
                                      'tmp.warp_curve2straight.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
@@ -784,14 +795,16 @@ class SpinalCordStraightener(object):
                                      ' 0',
                                      verbose=verbose)
 
-            # # remove padding for straight labels
-            # if crop == 1:
-            #     ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
-            #                  output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
-            #                  verbose=verbose).crop()
-            #     pass
-            # else:
-            #     sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
+            # JULIEN
+            # remove padding for straight labels
+            crop = 1
+            if crop == 1:
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
+                             output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
+                             verbose=verbose).crop()
+                pass
+            else:
+                sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
 
             # Concatenate rigid and non-linear transformations...
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
@@ -800,8 +813,8 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             sct.printv("\nEstimate b-spline transformation: straight --> curve...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_curved_crop.nii.gz '
-                                     'tmp.landmarks_straight_crop.nii.gz '
+                                     'tmp.landmarks_curved.nii.gz '
+                                     'tmp.landmarks_straight.nii.gz '
                                      'tmp.straight2curve_rigid.txt '
                                      'tmp.warp_straight2curve.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
