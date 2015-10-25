@@ -92,15 +92,15 @@ def test(path_data='', parameters=''):
         th_rmse = 2
         if rmse > th_rmse:
             status = 99
-            output += '\nRMSE = '+str(rmse)+'. Threshold = '+str(th_rmse)
+            output += '\nWARNING: RMSE = '+str(rmse)+' < '+str(th_rmse)
         th_max_dist = 3
         if max_dist > th_max_dist:
             status = 99
-            output += '\nMax distance = '+str(max_dist)+'. Threshold = '+str(th_max_dist)
+            output += '\nWARNING: Max distance = '+str(max_dist)+' < '+str(th_max_dist)
         th_diff_manual_result = 3
         if abs(diff_manual_result) > 3:
             status = 99
-            output += '\nDiff manual-result = '+str(diff_manual_result)+'. Threshold = '+str(th_diff_manual_result)
+            output += '\nWARNING: Diff manual-result = '+str(diff_manual_result)+' < '+str(th_diff_manual_result)
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result}, index=[path_data])
