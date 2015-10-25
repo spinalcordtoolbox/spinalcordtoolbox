@@ -49,8 +49,10 @@ def test(path_data='', parameters=''):
     # run command
     cmd = 'sct_straighten_spinalcord ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
     status, o = sct.run(cmd, 0)
     output += o
+    duration = time.time() - time_start
 
     # initialization of results: must be NaN if test fails
     result_mse, result_dist_max = float('nan'), float('nan')
@@ -86,7 +88,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice, 'duration': duration}, index=[path_data])
 
     return status, output, results
 
