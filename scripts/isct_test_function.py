@@ -114,6 +114,9 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
         return results_dataframe
     except KeyboardInterrupt:
         return 'KeyboardException'
+    except Exception as e:
+        print e
+        sys.exit(2)
 
 
 def function_launcher(args):
@@ -146,12 +149,13 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     pool = Pool(processes=nb_cpu, initializer=init_worker)
-    async_results = pool.map_async(function_launcher, data_and_params)
-    pool.close()
 
     try:
+        async_results = pool.map_async(function_launcher, data_and_params).get(9999999)
+            # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        pool.close()
         pool.join()  # waiting for all the jobs to be done
-        results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(async_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -159,6 +163,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         sys.exit(2)
     except Exception as e:
         print e
+        pool.terminate()
+        pool.join()
         sys.exit(2)
 
     return results
