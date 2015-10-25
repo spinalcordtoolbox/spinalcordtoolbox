@@ -66,14 +66,14 @@ def test(path_data='', parameters=''):
         cmd = 'sct_dice_coefficient tmp_seg_straight_curved.nii.gz ' + dict_param_with_path['-c']
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
-        dice = float(output2.split('3D Dice coefficient = ')[1])
+        result_dice = float(output2.split('3D Dice coefficient = ')[1])
         th_dice = 0.95
-        if dice < th_dice:
+        if result_dice < th_dice:
             status = 99
-            output += '\nWARNING: DICE = '+str(dice)+' < '+str(th_dice)
+            output += '\nWARNING: DICE = '+str(result_dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max, 'dice': result_dice}, index=[path_data])
 
     return status, output, results
 
