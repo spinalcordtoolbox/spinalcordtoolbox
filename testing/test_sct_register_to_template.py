@@ -119,7 +119,7 @@ def test(path_data='', parameters=''):
         output = output + output1 + output2
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration': duration}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
