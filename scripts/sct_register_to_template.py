@@ -57,9 +57,7 @@ class Param:
 # get default parameters
 step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MI', iter='3')
-# JULIEN
-# step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
-step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='0')
+step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
 
 
@@ -406,29 +404,52 @@ def main():
     # >>>>>>>>>>>>>>
 
 
+    # JULIEN <<<<<<<<<<
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
-
     import msct_register_landmarks
-    # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
-    # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
     (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
+        msct_register_landmarks.getRigidTransformFromLandmarks(
+            points_fixed, points_moving, constraints='translation-scaling-z', show=False)
 
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
     text_file.write("#Transform 0\n")
-    text_file.write("Transform: AffineTransform_double_3_3\n")
+    text_file.write("Transform: FixedCenterOfRotationAffineTransform_double_3_3\n")
     text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
-        rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
-        rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
-        rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
-        -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
-    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
-                                                           -points_moving_barycenter[1],
+        1.0/rotation_matrix[0, 0], rotation_matrix[0, 1],     rotation_matrix[0, 2],
+        rotation_matrix[1, 0],     1.0/rotation_matrix[1, 1], rotation_matrix[1, 2],
+        rotation_matrix[2, 0],     rotation_matrix[2, 1],     1.0/rotation_matrix[2, 2],
+        translation_array[0, 0],   translation_array[0, 1],   -translation_array[0, 2]))
+    text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (points_moving_barycenter[0],
+                                                           points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
+
+    # # Register curved landmarks on straight landmarks based on python implementation
+    # sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
+    #
+    # import msct_register_landmarks
+    # # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
+    # # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
+    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
+    #         msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
+    # # writing rigid transformation file
+    # text_file = open("straight2templateAffine.txt", "w")
+    # text_file.write("#Insight Transform File V1.0\n")
+    # text_file.write("#Transform 0\n")
+    # text_file.write("Transform: AffineTransform_double_3_3\n")
+    # text_file.write("Parameters: %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f %.9f\n" % (
+    #     rotation_matrix[0, 0], rotation_matrix[0, 1], rotation_matrix[0, 2],
+    #     rotation_matrix[1, 0], rotation_matrix[1, 1], rotation_matrix[1, 2],
+    #     rotation_matrix[2, 0], rotation_matrix[2, 1], rotation_matrix[2, 2],
+    #     -translation_array[0, 0], -translation_array[0, 1], translation_array[0, 2]))
+    # text_file.write("FixedParameters: %.9f %.9f %.9f\n" % (-points_moving_barycenter[0],
+    #                                                        -points_moving_barycenter[1],
+    #                                                        points_moving_barycenter[2]))
+    # text_file.close()
+    # >>>>>>>>>>>>>
     
     # Concatenate transformations: curve --> straight --> affine
     sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -438,7 +459,10 @@ def main():
     sct.printv('\nApply transformation...', verbose)
     sct.run('sct_apply_transfo -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz')
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+    # JULIEN
+    # sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+    sct.run('sct_apply_transfo -i seg_1mm_rpi.nii.gz -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+    # >>>
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
     # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
