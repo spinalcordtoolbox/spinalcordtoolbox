@@ -686,7 +686,7 @@ class SpinalCordStraightener(object):
             save(img, 'tmp.landmarks_straight.nii.gz')
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
-            crop_landmarks = 1
+            crop_landmarks = 0
             safety_pad = 1
             if crop_landmarks == 1:
                 # Crop landmarks (for faster computation)

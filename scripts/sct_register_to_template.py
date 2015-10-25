@@ -256,15 +256,16 @@ def main():
     sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
     ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
+    # JULIEN
     # resample data to 1mm isotropic
-    sct.printv('\nResample data to 1mm isotropic...', verbose)
-    sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
-    sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
-    ftmp_data = add_suffix(ftmp_data, '_1mm')
-    ftmp_seg = add_suffix(ftmp_seg, '_1mm')
+    # sct.printv('\nResample data to 1mm isotropic...', verbose)
+    # sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
+    # ftmp_data = add_suffix(ftmp_data, '_1mm')
+    # sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
+    # ftmp_seg = add_suffix(ftmp_seg, '_1mm')
     # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
-    resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
-    ftmp_label = add_suffix(ftmp_label, '_1mm')
+    # resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
+    # ftmp_label = add_suffix(ftmp_label, '_1mm')
 
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
@@ -364,8 +365,8 @@ def main():
     # Apply affine transformation
     sct.printv('\nApply transformation...', verbose)
     sct.run('sct_apply_transfo -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz')
-    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
+    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
     # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
     # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
