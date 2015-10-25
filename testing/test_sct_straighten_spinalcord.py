@@ -36,8 +36,21 @@ def test(path_data='', parameters=''):
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
+    # create output folder to deal with multithreading (i.e., we don't want to have outputs from several subjects in the current directory)
+    import time, random
+    subject_folder = path_data.split('/')
+    if subject_folder[-1] == '' and len(subject_folder) > 1:
+        subject_folder = subject_folder[-2]
+    else:
+        subject_folder = subject_folder[-1]
+    path_output = sct.slash_at_the_end('sct_straighten_spinalcord_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
+    param_with_path += ' -ofolder ' + path_output
+
+    # run command
     cmd = 'sct_straighten_spinalcord ' + param_with_path
-    status, output = sct.run(cmd, 0)
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    status, o = sct.run(cmd, 0)
+    output += o
 
     # initialization of results: must be NaN if test fails
     result_mse, result_dist_max = float('nan'), float('nan')
@@ -57,13 +70,13 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: RMSE = '+str(result_mse)+' < '+str(th_result_mse)
         # apply curved2straight, then straight2curve, then compared results
         path_input, file_input, ext_input = sct.extract_fname(dict_param_with_path['-i'])
-        sct.run('sct_apply_transfo -i '+dict_param_with_path['-c']+' -d '+file_input+'_straight'+ext_input+' -w warp_curve2straight.nii.gz -o tmp_seg_straight.nii.gz -x linear', 0)
-        sct.run('sct_apply_transfo -i tmp_seg_straight.nii.gz -d '+dict_param_with_path['-c']+' -w warp_straight2curve.nii.gz -o tmp_seg_straight_curved.nii.gz -x nn', 0)
+        sct.run('sct_apply_transfo -i '+dict_param_with_path['-c']+' -d '+path_output+file_input+'_straight'+ext_input+' -w '+path_output+'warp_curve2straight.nii.gz -o '+path_output+'tmp_seg_straight.nii.gz -x linear', 0)
+        sct.run('sct_apply_transfo -i '+path_output+'tmp_seg_straight.nii.gz -d '+dict_param_with_path['-c']+' -w '+path_output+'warp_straight2curve.nii.gz -o '+path_output+'tmp_seg_straight_curved.nii.gz -x nn', 0)
         # threshold and binarize
-        sct.run('sct_maths -i tmp_seg_straight_curved.nii.gz -thr 0.5 -o tmp_seg_straight_curved.nii.gz', 0)
-        sct.run('sct_maths -i tmp_seg_straight_curved.nii.gz -bin -o tmp_seg_straight_curved.nii.gz', 0)
+        sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -thr 0.5 -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
+        sct.run('sct_maths -i '+path_output+'tmp_seg_straight_curved.nii.gz -bin -o '+path_output+'tmp_seg_straight_curved.nii.gz', 0)
         # compute DICE
-        cmd = 'sct_dice_coefficient tmp_seg_straight_curved.nii.gz ' + dict_param_with_path['-c']
+        cmd = 'sct_dice_coefficient '+path_output+'tmp_seg_straight_curved.nii.gz ' + dict_param_with_path['-c']
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
         result_dice = float(output2.split('3D Dice coefficient = ')[1])
