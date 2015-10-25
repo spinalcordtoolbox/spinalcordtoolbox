@@ -77,8 +77,10 @@ def test(path_data='', parameters=''):
 
     cmd = 'sct_register_to_template ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
     status, o = sct.run(cmd, verbose)
     output += o
+    duration = time.time() - time_start
 
     # if command ran without error, test integrity
     if status == 0:
@@ -117,9 +119,7 @@ def test(path_data='', parameters=''):
         output = output + output1 + output2
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output,
-                              'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template},
-                        index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration': duration}, index=[path_data])
 
     return status, output, results
 
