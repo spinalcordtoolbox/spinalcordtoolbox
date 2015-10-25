@@ -56,8 +56,10 @@ class Param:
 
 # get default parameters
 step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
-step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MI', iter='5')
-step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
+step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MI', iter='3')
+# JULIEN
+# step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
+step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='0')
 paramreg = ParamregMultiStep([step1, step2, step3])
 
 
@@ -252,20 +254,19 @@ def main():
 
     # smooth segmentation (jcohenadad, issue #613)
     sct.printv('\nSmooth segmentation...', verbose)
-    # sct.run('fslmaths '+ftmp_seg+' -kernel sphere 3 -fmean '+add_suffix(ftmp_seg, '_smooth'))
-    sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
-    ftmp_seg = add_suffix(ftmp_seg, '_smooth')
-
     # JULIEN
+    # sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
+    # ftmp_seg = add_suffix(ftmp_seg, '_smooth')
+
     # resample data to 1mm isotropic
-    # sct.printv('\nResample data to 1mm isotropic...', verbose)
-    # sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
-    # ftmp_data = add_suffix(ftmp_data, '_1mm')
-    # sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
-    # ftmp_seg = add_suffix(ftmp_seg, '_1mm')
+    sct.printv('\nResample data to 1mm isotropic...', verbose)
+    sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
+    ftmp_data = add_suffix(ftmp_data, '_1mm')
+    sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
+    ftmp_seg = add_suffix(ftmp_seg, '_1mm')
     # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
-    # resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
-    # ftmp_label = add_suffix(ftmp_label, '_1mm')
+    resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
+    ftmp_label = add_suffix(ftmp_label, '_1mm')
 
     # Change orientation of input images to RPI
     sct.printv('\nChange orientation of input images to RPI...', verbose)
@@ -290,49 +291,120 @@ def main():
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
 
+
+    # JULIEN <<<<<<<<<<<<<
+
+    # # Label preparation:
+    # # --------------------------------------------------------------------------------
+    # # Remove unused label on template. Keep only label present in the input label image
+    # sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
+    # sct.run('sct_label_utils -t remove -i '+ftmp_template_label+' -o '+ftmp_template_label+' -r '+ftmp_label)
+    #
+    # # Dilating the input label so they can be straighten without losing them
+    # sct.printv('\nDilating input labels using 3vox ball radius')
+    # sct.run('sct_maths -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_dilate')+' -dilate 3')
+    # ftmp_label = add_suffix(ftmp_label, '_dilate')
+    #
+    # # Apply straightening to labels
+    # sct.printv('\nApply straightening to labels...', verbose)
+    # sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
+    # ftmp_label = add_suffix(ftmp_label, '_straight')
+    #
+    # # Create crosses for the template labels and get coordinates
+    # sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
+    # template_image = Image(ftmp_template_label)
+    # coordinates_input = template_image.getNonZeroCoordinates()
+    # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # if verbose == 2:
+    #     template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
+    #     template_image.save(type='minimize_int')
+    #
+    # # Create crosses for the input labels into straight space and get coordinates
+    # sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
+    # label_straight_image = Image(ftmp_label)
+    # coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
+    # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # if verbose == 2:
+    #     label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
+    #     label_straight_image.save(type='minimize_int')
+    #
+    # # Reorganize landmarks
+    # points_fixed, points_moving = [], []
+    # for coord in landmark_straight:
+    #     point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+    #
+    # for coord in landmark_template:
+    #     point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+    #     points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+
+    sct.run('cp template_label.nii.gz template_labels.nii.gz')
+    sct.run('cp label_1mm_rpi.nii.gz landmarks_rpi.nii.gz')
+    sct.run('cp seg_1mm_rpi_crop_straight.nii.gz segmentation_rpi_crop_straight.nii.gz')
+
     # Label preparation:
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
     sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-    sct.run('sct_label_utils -t remove -i '+ftmp_template_label+' -o '+ftmp_template_label+' -r '+ftmp_label)
+    sct.run('sct_label_utils -t remove -i template_labels.nii.gz -o template_label.nii.gz -r landmarks_rpi.nii.gz')
 
-    # Dilating the input label so they can be straighten without losing them
-    sct.printv('\nDilating input labels using 3vox ball radius')
-    sct.run('sct_maths -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_dilate')+' -dilate 3')
-    ftmp_label = add_suffix(ftmp_label, '_dilate')
+    # Make sure landmarks are INT
+    sct.printv('\nConvert landmarks to INT...', verbose)
+    from sct_convert import convert
+    convert('template_label.nii.gz', 'template_label.nii.gz', type='int32')
+
+    # Create a cross for the template labels - 5 mm
+    sct.printv('\nCreate a 5 mm cross for the template labels...', verbose)
+    sct.run('sct_label_utils -t cross -i template_label.nii.gz -o template_label_cross.nii.gz -c 5')
+
+    # Create a cross for the input labels and dilate for straightening preparation - 5 mm
+    sct.printv('\nCreate a 5mm cross for the input labels and dilate for straightening preparation...', verbose)
+    sct.run('sct_label_utils -t cross -i landmarks_rpi.nii.gz -o landmarks_rpi_cross3x3.nii.gz -c 5 -d')
+
+    # Cropping also the labels before applying straightening
+    sct.run('sct_crop_image -i landmarks_rpi_cross3x3.nii.gz -o landmarks_rpi_cross3x3_crop.nii.gz -dim 2 -start ' + cropping_slices[0] + ' -end ' + cropping_slices[1])
 
     # Apply straightening to labels
     sct.printv('\nApply straightening to labels...', verbose)
-    sct.run('sct_apply_transfo -i '+ftmp_label+' -o '+add_suffix(ftmp_label, '_straight')+' -d '+add_suffix(ftmp_seg, '_straight')+' -w warp_curve2straight.nii.gz -x nn')
-    ftmp_label = add_suffix(ftmp_label, '_straight')
+    sct.run('sct_apply_transfo -i landmarks_rpi_cross3x3_crop.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz -d segmentation_rpi_crop_straight.nii.gz -w warp_curve2straight.nii.gz -x nn')
 
-    # Create crosses for the template labels and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
-    template_image = Image(ftmp_template_label)
-    coordinates_input = template_image.getNonZeroCoordinates()
-    landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
-    if verbose == 2:
-        template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
-        template_image.save(type='minimize_int')
+    # Convert landmarks from FLOAT32 to INT
+    sct.printv('\nConvert landmarks from FLOAT32 to INT...', verbose)
+    convert('landmarks_rpi_cross3x3_straight.nii.gz', 'landmarks_rpi_cross3x3_straight.nii.gz', type='int32')
 
-    # Create crosses for the input labels into straight space and get coordinates
-    sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
-    label_straight_image = Image(ftmp_label)
-    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
-    landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
-    if verbose == 2:
-        label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
-        label_straight_image.save(type='minimize_int')
+    # Remove labels that do not correspond with each others.
+    sct.printv('\nRemove labels that do not correspond with each others.', verbose)
+    sct.run('sct_label_utils -t remove-symm -i landmarks_rpi_cross3x3_straight.nii.gz -o landmarks_rpi_cross3x3_straight.nii.gz,template_label_cross.nii.gz -r template_label_cross.nii.gz')
 
+    # Estimate affine transfo: straight --> template (landmark-based)'
+    sct.printv('\nEstimate affine transfo: straight anat --> template (landmark-based)...', verbose)
+
+    # converting landmarks straight and curved to physical coordinates
+    image_straight = Image('landmarks_rpi_cross3x3_straight.nii.gz')
+    landmark_straight = image_straight.getNonZeroCoordinates(sorting='value')
+    image_template = Image('template_label_cross.nii.gz')
+    landmark_template = image_template.getNonZeroCoordinates(sorting='value')
     # Reorganize landmarks
     points_fixed, points_moving = [], []
+    landmark_straight_mean = []
     for coord in landmark_straight:
-        point_straight = label_straight_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
-        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
+        if coord.value not in [c.value for c in landmark_straight_mean]:
+            temp_landmark = coord
+            temp_number = 1
+            for other_coord in landmark_straight:
+                if coord.hasEqualValue(other_coord) and coord != other_coord:
+                    temp_landmark += other_coord
+                    temp_number += 1
+            landmark_straight_mean.append(temp_landmark / temp_number)
 
+    for coord in landmark_straight_mean:
+        point_straight = image_straight.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        points_moving.append([point_straight[0][0], point_straight[0][1], point_straight[0][2]])
     for coord in landmark_template:
-        point_template = template_image.transfo_pix2phys([[coord.x, coord.y, coord.z]])
+        point_template = image_template.transfo_pix2phys([[coord.x, coord.y, coord.z]])
         points_fixed.append([point_template[0][0], point_template[0][1], point_template[0][2]])
+    # >>>>>>>>>>>>>>
+
 
     # Register curved landmarks on straight landmarks based on python implementation
     sct.printv('\nComputing rigid transformation (algo=translation-scaling-z) ...', verbose)
