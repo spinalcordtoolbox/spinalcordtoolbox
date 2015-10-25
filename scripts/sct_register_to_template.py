@@ -312,8 +312,12 @@ def main():
     sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
     template_image = Image(ftmp_template_label)
     coordinates_input = template_image.getNonZeroCoordinates()
-    landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # JULIEN <<<<<
+    # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    landmark_template = coordinates_input
+    # >>>>>
     if verbose == 2:
+        # TODO: assign cross to image before saving
         template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
         template_image.save(type='minimize_int')
 
@@ -321,8 +325,12 @@ def main():
     sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
     label_straight_image = Image(ftmp_label)
     coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
-    landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    # JULIEN <<<<<
+    # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    landmark_straight = coordinates_input
+    # >>>>>
     if verbose == 2:
+        # TODO: assign cross to image before saving
         label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
         label_straight_image.save(type='minimize_int')
 
@@ -461,17 +469,16 @@ def main():
     sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
 
-    # Apply affine transformation
+    # Apply transformation
     sct.printv('\nApply transformation...', verbose)
     sct.run('sct_apply_transfo -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz')
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
     # JULIEN
-    # sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
-    sct.run('sct_apply_transfo -i seg_1mm_rpi.nii.gz -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
+    # OLD IMPLEMENTATION:
+    # sct.run('sct_apply_transfo -i seg_1mm_rpi.nii.gz -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     # >>>
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
-    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)
@@ -537,6 +544,7 @@ def main():
     sct.printv('\nConcatenate transformations: anat --> template...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
     # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+    sct.printv('\nConcatenate transformations: template --> anat...', verbose)
     warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 
