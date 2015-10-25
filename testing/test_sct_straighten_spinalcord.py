@@ -46,11 +46,31 @@ def test(path_data='', parameters=''):
         output_split = output.split('Maximum x-y error = ')[1].split(' mm')
         result_dist_max = float(output_split[0])
         result_mse = float(output_split[1].split('Accuracy of straightening (MSE) = ')[1])
-
-        # integrity testing - straightening has been tested with v2.0.6 on several images.
-        # mse is less than 1.5 and dist_max is less than 4
-        if result_dist_max > 4.0 or result_mse > 1.5:
+        # integrity testing
+        th_result_dist_max = 4.0
+        if result_dist_max > th_result_dist_max:
             status = 99
+            output += '\nWARNING: Maximum x-y error = '+str(result_dist_max)+' < '+str(th_result_dist_max)
+        th_result_mse = 1.5
+        if result_mse > th_result_mse:
+            status = 99
+            output += '\nWARNING: RMSE = '+str(result_mse)+' < '+str(th_result_mse)
+        # apply curved2straight, then straight2curve, then compared results
+        path_input, file_input, ext_input = sct.extract_fname(dict_param_with_path['-i'])
+        sct.run('sct_apply_transfo -i '+dict_param_with_path['-c']+' -d '+file_input+'_straight'+ext_input+' -w warp_curve2straight.nii.gz -o tmp_seg_straight.nii.gz -x linear', 0)
+        sct.run('sct_apply_transfo -i tmp_seg_straight.nii.gz -d '+dict_param_with_path['-c']+' -w warp_straight2curve.nii.gz -o tmp_seg_straight_curved.nii.gz -x nn', 0)
+        # threshold and binarize
+        sct.run('sct_maths -i tmp_seg_straight_curved.nii.gz -thr 0.5 -o tmp_seg_straight_curved.nii.gz', 0)
+        sct.run('sct_maths -i tmp_seg_straight_curved.nii.gz -bin -o tmp_seg_straight_curved.nii.gz', 0)
+        # compute DICE
+        cmd = 'sct_dice_coefficient tmp_seg_straight_curved.nii.gz ' + dict_param_with_path['-c']
+        status2, output2 = sct.run(cmd, 0)
+        # parse output and compare to acceptable threshold
+        dice = float(output2.split('3D Dice coefficient = ')[1])
+        th_dice = 0.95
+        if dice < th_dice:
+            status = 99
+            output += '\nWARNING: DICE = '+str(dice)+' < '+str(th_dice)
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'mse': result_mse, 'dist_max': result_dist_max}, index=[path_data])
