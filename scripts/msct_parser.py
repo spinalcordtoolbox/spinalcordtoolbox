@@ -240,6 +240,8 @@ class Option:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
             sct.printv("Folder "+param+" has been created.", 0, type='warning')
+        # add slash at the end
+        param = sct.slash_at_the_end(param, 1)
         return param
 
 
