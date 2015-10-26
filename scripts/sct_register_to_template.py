@@ -346,8 +346,11 @@ def main():
     import msct_register_landmarks
     # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
+    if verbose == 2:
+        show_transfo = True
+    else:
+        show_transfo = False
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=show_transfo)
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
