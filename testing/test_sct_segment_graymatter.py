@@ -126,8 +126,8 @@ def test(path_data, parameters=''):
         if result_hausdorff > hd_threshold or result_dice_wm < wm_dice_threshold:
             status = 99
             output += '\nResulting segmentation is too different from manual segmentation:\n' \
-                      'WM dice: '+result_dice_wm+'\n' \
-                      'Hausdorff distance: '+result_hausdorff+'\n'
+                      'WM dice: '+str(result_dice_wm)+'\n' \
+                      'Hausdorff distance: '+str(result_hausdorff)+'\n'
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'dice_wm': result_dice_wm, 'hausdorff': result_hausdorff, 'med_dist': result_median_dist}, index=[path_data])
