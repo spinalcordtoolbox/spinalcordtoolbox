@@ -307,7 +307,7 @@ def main():
     # Create crosses for the template labels and get coordinates
     sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
     template_image = Image(ftmp_template_label)
-    coordinates_input = template_image.getNonZeroCoordinates()
+    coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
     # jcohenadad, issue #628 <<<<<
     # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_template = coordinates_input
@@ -320,7 +320,7 @@ def main():
     # Create crosses for the input labels into straight space and get coordinates
     sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
     label_straight_image = Image(ftmp_label)
-    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
+    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # jcohenadad, issue #628 <<<<<
     # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_straight = coordinates_input
@@ -346,8 +346,11 @@ def main():
     import msct_register_landmarks
     # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
+    if verbose == 2:
+        show_transfo = True
+    else:
+        show_transfo = False
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=show_transfo)
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
