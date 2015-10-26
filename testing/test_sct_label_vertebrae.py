@@ -50,8 +50,10 @@ def test(path_data='', parameters=''):
 
     cmd = 'sct_label_vertebrae ' + param_with_path
     output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
     status, o = sct.run(cmd, 0)
     output += o
+    duration = time.time() - time_start
 
     # initialization of results: must be NaN if test fails
     result_mse = float('nan'), float('nan')
@@ -65,7 +67,7 @@ def test(path_data='', parameters=''):
         from math import sqrt
         label_results = ProcessLabels('t2_seg_labeled_center.nii.gz')
         list_label_results = label_results.image_input.getNonZeroCoordinates(sorting='value')
-        label_manual = ProcessLabels(path_data+'t2/t2_seg_labeled_center_manual.nii.gz')
+        label_manual = ProcessLabels(path_data+'t2/t2_labeled_center_manual.nii.gz')
         list_label_manual = label_manual.image_input.getNonZeroCoordinates(sorting='value')
         mse = 0.0
         max_dist = 0.0
@@ -103,7 +105,7 @@ def test(path_data='', parameters=''):
             output += '\nWARNING: Diff manual-result = '+str(diff_manual_result)+' > '+str(th_diff_manual_result)
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'rmse': rmse, 'max_dist': max_dist, 'diff_man': diff_manual_result, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
