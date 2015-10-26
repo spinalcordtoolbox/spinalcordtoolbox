@@ -119,11 +119,8 @@ def resample():
     new_im.hdr = input_im.hdr
     new_im.hdr.set_zooms(zooms_to_set)
 
-    # Set correctly the pix dim in sform:
-    base_affine = new_im.hdr.get_base_affine()
-    new_im.hdr.structarr['srow_x'][0] = base_affine[0, 0]
-    new_im.hdr.structarr['srow_y'][1] = base_affine[1, 1]
-    new_im.hdr.structarr['srow_z'][2] = base_affine[2, 2]
+    # Set the sform correctly:
+    new_im.hdr.set_sform(new_im.hdr.get_qform())
 
     new_im.save()
 
