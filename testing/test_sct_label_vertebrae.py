@@ -96,7 +96,7 @@ def test(path_data='', parameters=''):
         if rmse > th_rmse:
             status = 99
             output += '\nWARNING: RMSE = '+str(rmse)+' > '+str(th_rmse)
-        th_max_dist = 3
+        th_max_dist = 3.2
         if max_dist > th_max_dist:
             status = 99
             output += '\nWARNING: Max distance = '+str(max_dist)+' > '+str(th_max_dist)
