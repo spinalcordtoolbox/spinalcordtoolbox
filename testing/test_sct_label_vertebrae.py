@@ -12,6 +12,7 @@
 
 import sct_utils as sct
 # from msct_parser import Parser
+import time, random
 import sct_label_vertebrae
 from pandas import DataFrame
 import os.path
