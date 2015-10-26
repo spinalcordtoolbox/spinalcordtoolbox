@@ -307,7 +307,7 @@ def main():
     # Create crosses for the template labels and get coordinates
     sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
     template_image = Image(ftmp_template_label)
-    coordinates_input = template_image.getNonZeroCoordinates()
+    coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
     # jcohenadad, issue #628 <<<<<
     # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_template = coordinates_input
@@ -320,7 +320,7 @@ def main():
     # Create crosses for the input labels into straight space and get coordinates
     sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
     label_straight_image = Image(ftmp_label)
-    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
+    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
     # jcohenadad, issue #628 <<<<<
     # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
     landmark_straight = coordinates_input
