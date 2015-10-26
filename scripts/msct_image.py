@@ -326,6 +326,7 @@ class Image(object):
         for value, list_coord in groups.iteritems():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
+        averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
