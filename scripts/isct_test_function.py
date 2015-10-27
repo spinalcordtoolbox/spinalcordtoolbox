@@ -253,11 +253,12 @@ if __name__ == "__main__":
     # count tests that passed
     count_passed = results_subset.status[results_subset.status == 0].count()
 
-    results_display = results_display.set_index('subject')
+    # results_display = results_display.set_index('subject')
+    # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
+    results_display.set_index('subject').reset_index()
 
     # printing results
     print '\nResults for "' + function_to_test + ' ' + parameters + '":'
     print 'Dataset: ' + dataset
     print results_display.to_string()
-    print '\nPassed: ' + str(count_passed) + '/' + str(len(results_subset))
-
+    print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
