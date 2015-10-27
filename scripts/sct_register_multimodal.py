@@ -461,6 +461,8 @@ def register(src, dest, paramreg, param, i_step_str):
             sct.run('sct_image -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
             dest = dest_pad
 
+        scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
@@ -470,7 +472,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
+               '--output [step'+i_step_str+','+scr_regStep+'] '
                '--interpolation BSpline[3] '
                +masking)
         if param.verbose >= 1:
