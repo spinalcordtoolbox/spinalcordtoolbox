@@ -453,7 +453,7 @@ Version: """ + str(self.get_sct_version())
         status, path_sct = getstatusoutput('echo $SCT_DIR')
         fname = str(path_sct)+'/version.txt'
         content = ""
-        with open(fname, mode = 'r+') as f:
+        with open(fname, mode = 'r') as f:
             content = f.readlines()
         f.close()
         return content[0]
