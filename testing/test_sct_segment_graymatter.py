@@ -79,7 +79,7 @@ def test(path_data, parameters=''):
             n_slice, dc = line.split(' ')
             # remove \n from dice result
             dc = dc[:-1]
-            if dc == '0':
+            if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:
                 gm_dice.append(float(dc))
