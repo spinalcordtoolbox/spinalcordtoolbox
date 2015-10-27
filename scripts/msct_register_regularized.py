@@ -10,7 +10,9 @@
 #
 
 
-import os, sys, commands
+import os
+import sys
+import commands
 
 # Get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
@@ -29,8 +31,7 @@ import time
 from math import asin
 
 
-
-def register_seg(seg_input, seg_dest):
+def register_seg(seg_input, seg_dest, verbose=1):
     """Slice-by-slice registration by translation of two segmentations.
 
     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
@@ -52,25 +53,30 @@ def register_seg(seg_input, seg_dest):
     seg_input_data = seg_input_img.data
     seg_dest_data = seg_dest_img.data
 
-    x_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
-    y_center_of_mass_input = [0 for i in range(seg_dest_data.shape[2])]
-    print '\nGet center of mass of the input segmentation for each slice (corresponding to a slice in the output segmentation)...' #different if size of the two seg are different
-    #TO DO: select only the slices corresponding to the output segmentation
-    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0,0,0]])
+    x_center_of_mass_input = [0] * seg_dest_data.shape[2]
+    y_center_of_mass_input = [0] * seg_dest_data.shape[2]
+    sct.printv('\nGet center of mass of the input segmentation for each slice '
+               '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
+    # TODO: select only the slices corresponding to the output segmentation
+    coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
     for iz in xrange(seg_dest_data.shape[2]):
         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
-
-    x_center_of_mass_output = [0 for i in range(seg_dest_data.shape[2])]
-    y_center_of_mass_output = [0 for i in range(seg_dest_data.shape[2])]
-    print '\nGet center of mass of the output segmentation for each slice ...'
+    x_center_of_mass_output = [0] * seg_dest_data.shape[2]
+    y_center_of_mass_output = [0] * seg_dest_data.shape[2]
+    sct.printv('\nGet center of mass of the output segmentation for each slice ...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
-        x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:,:,iz]))
+        try:
+            x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
+        except Exception as e:
+            sct.printv('WARNING: Exception error in msct_register_regularized during register_seg:', 1, 'warning')
+            print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
+            print e
 
-    x_displacement = [0 for i in range(seg_input_data.shape[2])]
-    y_displacement = [0 for i in range(seg_input_data.shape[2])]
-    print '\nGet displacement by voxel...'
+    x_displacement = [0] * seg_input_data.shape[2]
+    y_displacement = [0] * seg_input_data.shape[2]
+    sct.printv('\nGet displacement by voxel...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
         x_displacement[iz] = -(x_center_of_mass_output[iz] - x_center_of_mass_input[iz])    # WARNING: in ITK's coordinate system, this is actually Tx and not -Tx
         y_displacement[iz] = y_center_of_mass_output[iz] - y_center_of_mass_input[iz]      # This is Ty in ITK's and fslview' coordinate systems
