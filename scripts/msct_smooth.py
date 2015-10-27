@@ -611,6 +611,12 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
 
     from numpy import mean, median, std, isnan, asarray
     from copy import copy
+
+    # if nan are detected in data, replace by extreme values so that they are detected by outliers detection algo
+    for i in xrange(len(data)):
+        if isnan(data[i]):
+            data[i] = 9999999
+
     if type == 'std':
         u = mean(data)
         s = std(data)
@@ -627,7 +633,7 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
         mdev = 1.4826 * median(d)
         s = d/mdev if mdev else 0.
         mean_s = mean(s)
-        index_1 = s>5* mean_s
+        index_1 = s > 5 * mean_s
         mask_1 = copy(data)
         mask_1[index_1] = None
         filtered_1 = [e for i,e in enumerate(data.tolist()) if not isnan(mask_1[i])]
