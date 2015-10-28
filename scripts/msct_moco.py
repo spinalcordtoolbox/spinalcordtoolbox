@@ -24,6 +24,7 @@ import commands
 import numpy as np
 import sct_utils as sct
 from msct_image import Image
+from sct_image import split_data
 
 
 #=======================================================================================================================
@@ -62,7 +63,8 @@ def moco(param):
 
     # Get size of data
     sct.printv('\nGet dimensions data...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(file_data+ext).dim
+    data_im = Image(file_data+ext)
+    nx, ny, nz, nt, px, py, pz, pt = data_im.dim
     sct.printv(('.. '+str(nx)+' x '+str(ny)+' x '+str(nz)+' x '+str(nt)), verbose)
 
     # copy file_target to a temporary file
@@ -72,7 +74,9 @@ def moco(param):
 
     # Split data along T dimension
     sct.printv('\nSplit data along T dimension...', verbose)
-    sct.run('sct_split_data -i '+file_data+ext+' -dim t -suffix _T', param.verbose)
+    data_split_list = split_data(data_im, dim=3)
+    for im in data_split_list:
+        im.save()
     file_data_splitT = file_data + '_T'
 
     # Motion correction: initialization
@@ -127,11 +131,13 @@ def moco(param):
         # cmd = fsloutput + 'fslmerge -t ' + file_data_moco
         # for indice_index in range(len(index)):
         #     cmd = cmd + ' ' + file_data_splitT_moco_num[indice_index]
-        cmd = 'sct_concat_data -dim t -o ' + file_data_moco + ext + ' -i '
+        from sct_image import concat_data
+        im_list = []
         for indice_index in range(len(index)):
-            cmd = cmd + file_data_splitT_moco_num[indice_index] + ext + ','
-        cmd = cmd[:-1]  # remove ',' at the end of the string
-        sct.run(cmd, verbose)
+            im_list.append(Image(file_data_splitT_moco_num[indice_index] + ext))
+        im_out = concat_data(im_list, 3)
+        im_out.setFileName(file_data_moco + ext)
+        im_out.save()
 
 
 #=======================================================================================================================
