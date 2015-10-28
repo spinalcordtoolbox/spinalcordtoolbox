@@ -164,7 +164,11 @@ class Option:
             sub_type = type_option[1]
             param_splitted = param.split(delimiter)
             if len(param_splitted) != 0:
-                return list([self.check_integrity(val,sub_type) for val in param_splitted])
+                # check if files are separated by space (if "*" was used)
+                if not param_splitted[0].find(' ') == -1:
+                    # if so, split and return list
+                    param_splitted = param_splitted[0].split(' ')
+                return list([self.check_integrity(val, sub_type) for val in param_splitted])
             else:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
