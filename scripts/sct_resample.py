@@ -118,6 +118,10 @@ def resample():
 
     new_im.hdr = input_im.hdr
     new_im.hdr.set_zooms(zooms_to_set)
+
+    # Set the sform correctly:
+    new_im.hdr.set_sform(new_im.hdr.get_qform())
+
     new_im.save()
 
     # to view results
@@ -155,28 +159,28 @@ if __name__ == "__main__":
                                 'Please choose only one of the 3 options.')
         parser.add_option(name="-f",
                           type_value="str",
-                          description="Resampling factor in each of the first 3 dimensions (x,y,z). Separate with \"x\"\n"
+                          description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
                                       "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
                           mandatory=False,
                           example='0.5x0.5x1')
         parser.add_option(name="-mm",
                           type_value="str",
-                          description="Resampling size in mm per voxel in each of the first 3 dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False,
-                          example='0.1x0.1x5')
+                          description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False)
+                          # example='0.1x0.1x5')
         parser.add_option(name="-vox",
                           type_value="str",
-                          description="Resampling size in number of voxels in each of the first 3 dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False,
-                          example='50x50x20')
+                          description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
+                          mandatory=False)
+                          # example='50x50x20')
         parser.usage.addSection('MISC')
         parser.add_option(name="-x",
                           type_value='multiple_choice',
-                          description="Interpolation. nn (nearest neighbor : spline of order 0), trilinear (spline of order 1), or spline (cubic spline: order 2).\n"
+                          description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
                                       "You can also choose the order of the spline using an integer from 3 to 5.",
                           mandatory=False,
-                          default_value='trilinear',
-                          example=['nn', 'trilinear', 'spline', '3', '4', '5'])
+                          default_value='linear',
+                          example=['nn', 'linear', 'spline', '3', '4', '5'])
 
         parser.add_option(name="-o",
                           type_value="file_output",
@@ -185,7 +189,7 @@ if __name__ == "__main__":
                           example='dwi_resampled.nii.gz')
         parser.add_option(name="-v",
                           type_value='multiple_choice',
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                          description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
                           mandatory=False,
                           default_value=1,
                           example=['0', '1', '2'])

@@ -168,6 +168,55 @@ class ProcessLabels(object):
         cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
+    # JULIEN <<<<<<
+    # OLD IMPLEMENTATION:
+    # def cross(self):
+    #     """
+    #     create a cross.
+    #     :return:
+    #     """
+    #     image_output = Image(self.image_input, self.verbose)
+    #     nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
+    #
+    #     coordinates_input = self.image_input.getNonZeroCoordinates()
+    #     d = self.cross_radius  # cross radius in pixel
+    #     dx = d / px  # cross radius in mm
+    #     dy = d / py
+    #
+    #     # for all points with non-zeros neighbors, force the neighbors to 0
+    #     for coord in coordinates_input:
+    #         image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
+    #         image_output.data[coord.x][coord.y + dy][
+    #             coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
+    #         image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
+    #         image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
+    #         image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
+    #
+    #         # dilate cross to 3x3
+    #         if self.dilate:
+    #             image_output.data[coord.x - 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x][coord.y + dy - 1][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y + dy][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x][coord.y + dy + 1][coord.z] = \
+    #                 image_output.data[coord.x - 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y + dy][coord.z] = \
+    #                 image_output.data[coord.x][coord.y + dy][coord.z]
+    #             image_output.data[coord.x + dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx][coord.y - 1][coord.z] = \
+    #                 image_output.data[coord.x + dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx + 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x + dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx][coord.y + 1][coord.z] = \
+    #                 image_output.data[coord.x + dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx - 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x + dx][coord.y][coord.z]
+    #             image_output.data[coord.x - 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x][coord.y - dy - 1][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y - dy][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x][coord.y - dy + 1][coord.z] = \
+    #                 image_output.data[coord.x - 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y - dy][coord.z] = \
+    #                 image_output.data[coord.x][coord.y - dy][coord.z]
+    #             image_output.data[coord.x - dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx][coord.y - 1][coord.z] = \
+    #                 image_output.data[coord.x - dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx + 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x - dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx][coord.y + 1][coord.z] = \
+    #                 image_output.data[coord.x - dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx - 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x - dx][coord.y][coord.z]
+    #
+    #     return image_output
+    # >>>>>>>>>
     def cross(self):
         """
         create a cross.
@@ -190,6 +239,7 @@ class ProcessLabels(object):
             output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
 
         return output_image
+    # >>>
 
     def plan(self, width, offset=0, gap=1):
         """
@@ -308,7 +358,7 @@ class ProcessLabels(object):
         return image_output
 
 
-    def label_vertebrae(self, levels_user):
+    def label_vertebrae(self, levels_user=None):
         """
         Finds the center of mass of vertebral levels specified by the user.
         :return: image_output: Image with labels.
@@ -317,6 +367,9 @@ class ProcessLabels(object):
         image_cubic2point = self.cubic_to_point()
         # get list of coordinates for each label
         list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
+        # if user did not specify levels, include all:
+        if levels_user == None:
+            levels_user = [int(i.value) for i in list_coordinates]
         # loop across labels and remove those that are not listed by the user
         for i_label in range(len(list_coordinates)):
             # check if this level is NOT in levels_user
@@ -596,9 +649,7 @@ def get_parser():
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
 - increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
-- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. You need to provide:
-    - labeled segmentation (flag '-i')
-    - vertebral levels where to create labels (flag 'level')
+- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
