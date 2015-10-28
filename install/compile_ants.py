@@ -15,6 +15,11 @@ import os
 import getopt
 import sys
 
+url_to_ants_repository = 'https://github.com/benjamindeleener/ANTs/archive/master.zip'
+ants_downloaded_folder = 'ANTs-master'
+ants_downloaded_file = ants_downloaded_folder + '.zip'
+listOS = ['osx', 'linux']
+
 
 def usage():
     print 'USAGE: \n' \
@@ -29,18 +34,18 @@ def usage():
         '  '+os.path.basename(__file__)+'\n' \
         '\n' \
         'MANDATORY ARGUMENTS\n' \
-        '  -a <path2ants>	 directory in which ANTs is. Must contains ANTs/ folder.\n' \
-        '  -s <OS name>      name of the OS {osx,linux}.\n' \
-        '  -f <script>		 name of scripts to compile. Separated by commas.\n' \
+        '  -s <OS name>\t\tname of the OS {'+', '.join(listOS)+'}.\n' \
+        '\n' \
+        'OPTIONAL ARGUMENT\n' \
+        '  -f <script>\t\tname of scripts to compile. Separated by commas.\n\t\t\tIf not provided, all necessary scripts are compiled and copied in SCT.\n' \
+        '  -a <path2ants>\tdirectory in which ANTs is. Must contains ANTs/ folder.\n\t\t\tIf not specified, ANTs folder is downloaded from \n\t\t\t'+url_to_ants_repository+'\n' \
         '\n'\
         'EXAMPLE:\n' \
         '  compile_ants.py -s linux\n'
     sys.exit(2)
 
 
-listOS = ['osx', 'linux']
 os_target = ''
-
 path_ants = ''
 scripts_target = ''
 ants_scripts = ['ANTSLandmarksBSplineTransform',
@@ -49,6 +54,8 @@ ants_scripts = ['ANTSLandmarksBSplineTransform',
                 'antsSliceRegularizedRegistration',
                 'ANTSUseLandmarkImagesToGetAffineTransform',
                 'ComposeMultiTransform']
+
+pwd = os.getcwd()
 
 # Check input param
 try:
@@ -67,18 +74,34 @@ for opt, arg in opts:
         scripts_target = str(arg)
 
 if os_target not in listOS:
-    print 'ERROR: OS name should be one of the following: ' + '[%s]' % ', '.join(map(str, listOS))
+    print 'ERROR: OS name should be one of the following: ' + '[%s]' % ', '.join(map(str, listOS)) + '\n'
     usage()
 
 if not path_ants:
-    print 'ERROR: ANTs folder must be specified.'
-    usage()
+    print 'ANTs folder not specified. Cloning from SCT repository...'
+    path_ants = pwd + '/'
+    from installer import download_file, InstallationResult
+    file_download_result = download_file(url_to_ants_repository, ants_downloaded_file)
+    if file_download_result.status == InstallationResult.SUCCESS:
+        # unzip ants repository
+        cmd = 'unzip -u -d ./ ' + ants_downloaded_file
+        print ">> " + cmd
+        status, output = sct.run(cmd)
+        if status != 0:
+            print '\nERROR! \n' + output + '\nExit program.\n'
+            sys.exit(2)
+        sct.run('mv ' + ants_downloaded_folder + ' ANTs/')
+    else:
+        print 'ERROR: ANTs download failed. Please check your internet connexion or contact administrators.\n'
+        usage()
+
 else:
     path_ants = sct.slash_at_the_end(path_ants) + '/'
-    if not os.path.isdir(path_ants + 'ANTs/'):
-        print 'ERROR: Path to ANTs must be a directory containing the folder ANTs/.'
-        print 'Path specified: ' + path_ants
-        usage()
+
+if not os.path.isdir(path_ants + 'ANTs/'):
+    print 'ERROR: Path to ANTs must be a directory containing the folder ANTs/.'
+    print 'Path specified: ' + path_ants + '\n'
+    usage()
 
 # process list of scripts
 scripts = ants_scripts
@@ -92,7 +115,7 @@ if scripts_target:
             print 'WARNING: the ANTs binary ' + sc + ' is not part of SCT. It wasn\'t included into SCT.'
 
 if not scripts:
-    print 'ERROR: No scripts to compile. Please check input.'
+    print 'ERROR: No scripts to compile. Please check input.\n'
     usage()
 
 if not os.path.isdir(path_ants + 'antsbin/'):
@@ -108,3 +131,7 @@ status, path_sct = sct.run('echo $SCT_DIR')
 for script in scripts:
     sct.run('cp ' + path_ants + 'antsbin/bin/' + script + ' ' + path_sct + '/bin/' + os_target + '/isct_' + script,
             verbose=2)
+
+# some cleaning
+os.chdir(pwd)
+sct.run('rm -rf ANTs/')
