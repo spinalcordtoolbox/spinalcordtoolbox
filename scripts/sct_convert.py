@@ -66,7 +66,7 @@ def convert(fname_in, fname_out, type=None, verbose=1):
     if type is not None:
         im.changeType(type=type)
     im.save()
-    return True
+    return im
 
 
 # MAIN

@@ -429,6 +429,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # update variables
         src = src_crop
         dest = dest_crop
+        scr_regStep = sct.add_suffix(src, '_regStep'+i_step_str)
         # estimate transfo
         cmd = ('isct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
@@ -438,7 +439,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '-f 1 '
                '-s '+paramreg.steps[i_step_str].smooth+' '
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-               '-o [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
@@ -457,8 +458,10 @@ def register(src, dest, paramreg, param, i_step_str):
         # N.B. no need to pad if iter = 0
         if not paramreg.steps[i_step_str].iter == '0':
             dest_pad = sct.add_suffix(dest, '_pad')
-            sct.run('sct_maths -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
+            sct.run('sct_image -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
             dest = dest_pad
+
+        scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
 
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
@@ -469,7 +472,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
+               '--output [step'+i_step_str+','+scr_regStep+'] '
                '--interpolation BSpline[3] '
                +masking)
         if param.verbose >= 1:
@@ -487,13 +490,13 @@ def register(src, dest, paramreg, param, i_step_str):
     status, output = sct.run(cmd, param.verbose)
 
     if not os.path.isfile(warp_forward_out):
-        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']: # no inverse warping field for rigid and affine
-        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+        # no forward warping field for rigid and affine
+        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']:
+        # no inverse warping field for rigid and affine
+        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
@@ -523,7 +526,7 @@ if __name__ == "__main__":
 #===========
 #if convertDeformation:
 #    print('\nConvert deformation field...')
-#    cmd = 'sct_maths -i tmp.regWarp.nii -mcs  -o tmp.regWarp_x.nii,tmp.regWarp_y.nii,tmp.regWarp_z.nii'
+#    cmd = 'sct_image -i tmp.regWarp.nii -mcs  -o tmp.regWarp.nii'
 #    print(">> "+cmd)
 #    os.system(cmd)
 #    cmd = 'fslmerge -t '+path_out+'warp_comp.nii tmp.regWarp_x.nii tmp.regWarp_y.nii tmp.regWarp_z.nii'

@@ -185,24 +185,33 @@ class Transform:
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             from sct_convert import convert
             convert(fname_src, path_tmp+'data.nii')
+            os.chdir(path_tmp)
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
-            from sct_split_data import split_data
-            if not split_data(path_tmp+'data.nii', 3, '_T'):
-                sct.printv('ERROR in split_data.', 1, 'error')
+            from sct_image import split_data
+            im_dat = Image('data.nii')
+            data_split_list = split_data(im_dat, 3)
+            for im in data_split_list:
+                im.save()
+
             # apply transfo
             sct.printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):
-                file_data_split = path_tmp+'data_T'+str(it).zfill(4)+'.nii'
-                file_data_split_reg = path_tmp+'data_reg_T'+str(it).zfill(4)+'.nii'
+                file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
+                file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
                 sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
-            from sct_concat_data import concat_data
+            from sct_image import concat_data
             import glob
-            concat_data(glob.glob(path_tmp+'data_reg_T*.nii'), fname_out, dim=3)
-
+            path_out, name_out, ext_out = sct.extract_fname(fname_out)
+            im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
+            im_out = concat_data(im_list, 3)
+            im_out.setFileName(name_out+ext_out)
+            im_out.save()
+            os.chdir('..')
+            sct.generate_output_file(path_tmp+name_out+ext_out, fname_out)
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)

@@ -19,7 +19,7 @@ import sct_utils as sct
 # Over pad the input file, smooth and return the centerline
 #=======================================================================================================================
 def smooth(fname, padding):
-    sct.run('sct_maths -i '+fname+' -o tmp.centerline_pad.nii.gz -pad '+str(padding)+','+str(padding)+','+str(padding))
+    sct.run('sct_image -i '+fname+' -o tmp.centerline_pad.nii.gz -pad '+str(padding)+','+str(padding)+','+str(padding))
 
 
 #=======================================================================================================================
@@ -467,7 +467,7 @@ def mean_squared_error(x, x_fit):
 #=======================================================================================================================
 # windowing
 #=======================================================================================================================
-def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
+def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0, remove_edge_points=2):
     """smooth the data using a window with requested size.
 
     This method is based on the convolution of a scaled window with the signal.
@@ -482,7 +482,7 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
             flat window will produce a moving average smoothing.
 
     output:
-        y: the smoothed signal (type: array)
+        y: the smoothed signal (type: array). Same size as x.
 
     example:
 
@@ -501,11 +501,10 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
     from math import ceil, floor
     import sct_utils as sct
 
-
     # outlier detection
     if robust:
-        mask = outliers_detection(x)
-        x = outliers_completion(mask)
+        mask = outliers_detection(x, type='median', factor=2, return_filtered_signal='no', verbose=verbose)
+        x = outliers_completion(mask, verbose=0)
 
     if x.ndim != 1:
         raise ValueError, "smooth only accepts 1 dimension arrays."
@@ -527,23 +526,30 @@ def smoothing_window(x, window_len=11, window='hanning', verbose = 0, robust=0):
     # make window_len as odd integer (x = x+1 if x is even)
     window_len_int = ceil((floor(window_len) + 1)/2)*2 - 1
 
+    # make sure there are enough points before removing those at the edge
+    size_curve = x.size
+    if size_curve < 10:
+        remove_edge_points = 0
+
     # s = r_[x[window_len_int-1:0:-1], x, x[-1:-window_len_int:-1]]
+
+    # Extend the curve before smoothing using mirroring technique, to avoid edge effect during smoothing
+    if not remove_edge_points == 0:
+        x_extended = x[remove_edge_points:-remove_edge_points]  # remove points at the edge (jcohenadad, issue #513)
+    else:
+        x_extended = x
+    x_extended_tmp = x_extended
+    size_padding = int(round((window_len_int-1)/2.0) + remove_edge_points)
+
+    for i in range(size_padding):
+        x_extended = append(x_extended, 2*x_extended_tmp[-1] - x_extended_tmp[-2-i])
+        x_extended = insert(x_extended, 0, 2*x_extended_tmp[0] - x_extended_tmp[i+1])
 
     # Creation of the window
     if window == 'flat': #moving average
         w = ones(window_len, 'd')
     else:
         w = eval(window+'(window_len_int)')
-
-    ##Implementation of an extended curve to apply the smoothing on in order to avoid edge effects
-    # Extend the curve before smoothing
-    x_extended = x
-    size_curve = x.shape[0]
-    size_padding = int(round((window_len_int-1)/2.0))
-
-    for i in range(size_padding):
-        x_extended = append(x_extended, 2*x[-1] - x[-2-i])
-        x_extended = insert(x_extended, 0, 2*x[0] - x[i+1])
 
     # Convolution of the window with the extended signal
     y = convolve(x_extended, w/w.sum(), mode='valid')
@@ -605,6 +611,12 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
 
     from numpy import mean, median, std, isnan, asarray
     from copy import copy
+
+    # if nan are detected in data, replace by extreme values so that they are detected by outliers detection algo
+    for i in xrange(len(data)):
+        if isnan(data[i]):
+            data[i] = 9999999
+
     if type == 'std':
         u = mean(data)
         s = std(data)
@@ -621,7 +633,7 @@ def outliers_detection(data, type='median', factor=2, return_filtered_signal='no
         mdev = 1.4826 * median(d)
         s = d/mdev if mdev else 0.
         mean_s = mean(s)
-        index_1 = s>5* mean_s
+        index_1 = s > 5 * mean_s
         mask_1 = copy(data)
         mask_1[index_1] = None
         filtered_1 = [e for i,e in enumerate(data.tolist()) if not isnan(mask_1[i])]

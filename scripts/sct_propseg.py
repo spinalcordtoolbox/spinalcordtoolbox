@@ -40,13 +40,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
                       example=['t1','t2'])
+
     parser.usage.addSection("General options")
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="output folder.",
                       mandatory=False,
                       example="My_Output_Folder/",
-                      default_value=".")
+                      default_value="")
     parser.add_option(name="-down",
                       type_value="int",
                       description="down limit of the propagation, default is 0",
@@ -162,7 +163,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
-    folder_output = arguments["-o"]
+    if "-ofolder" in arguments:
+        folder_output = arguments["-ofolder"]
+    else:
+        folder_output = '.'
     cmd += " -o " + folder_output
 
     if "-down" in arguments:

@@ -8,10 +8,10 @@ end
 nii=load_nii([fname ext]);
 pos=sct_centerline_createRoi(nii.img);
 v=double(nii.img);
-[~,~,S]=minimalPath3d(v(pos(1):pos(2),pos(3):pos(4),pos(5):pos(6)),sqrt(2),1,verbose);
+[~,~,S]=sct_minimalPath3d(v(pos(1):pos(2),pos(3):pos(4),pos(5):pos(6)),sqrt(2),1,verbose);
 S=int8(S); S(S==0)=inf; S=smooth3(S);
 S2=inf*zeros(size(nii.img));
-[~,~,S2(pos(1):pos(2),pos(3):pos(4),pos(5):pos(6))]=minimalPath3d(S,1,0,verbose);
+[~,~,S2(pos(1):pos(2),pos(3):pos(4),pos(5):pos(6))]=sct_minimalPath3d(S,1,0,verbose);
 binaire2=false(size(S2));
 N=floor(15*15/(nii.scales(1)*nii.scales(2)));
 centerline=nan*zeros(size(nii.img,3),3);

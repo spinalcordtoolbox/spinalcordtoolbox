@@ -23,10 +23,10 @@ import time
 import numpy
 import nibabel
 from scipy import ndimage
-from sct_orientation import get_orientation, set_orientation
+from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
-from sct_copy_header import copy_header
+from sct_image import copy_header, concat_data
 
 
 # DEFAULT PARAMETERS
@@ -126,9 +126,9 @@ def create_mask():
 
     # check if orientation is RPI
     sct.printv('\nCheck if orientation is RPI...', param.verbose)
-    status, output = sct.run('sct_orientation -i '+param.fname_data)
-    if not output == 'RPI':
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_orientation to put your image in RPI.\n', 1, 'error')
+    ori = get_orientation(param.fname_data, filename=True)
+    if not ori == 'RPI':
+        sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
 
     # display input parameters
     sct.printv('\nInput parameters:', param.verbose)
@@ -219,15 +219,18 @@ def create_mask():
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
     # merge along Z
     # cmd = 'fslmerge -z mask '
-    cmd = 'sct_concat_data -dim z -o mask.nii.gz -i '
+    im_list = []
     for iz in range(nz):
-        cmd = cmd + file_mask+str(iz)+'.nii,'
-    # remove ',' at the end of the string
-    cmd = cmd[:-1]
-    status, output = sct.run(cmd, param.verbose)
+        im_list.append(Image(file_mask+str(iz)+'.nii'))
+    im_out = concat_data(im_list, 2)
+    im_out.setFileName('mask.nii.gz')
+    im_out.save()
 
     # copy geometry
-    copy_header('data.nii', 'mask.nii.gz')
+    im_dat = Image('data.nii')
+    im_mask = Image('mask.nii.gz')
+    im_mask = copy_header(im_dat, im_mask)
+    im_mask.save()
 
     # come back to parent folder
     os.chdir('..')
@@ -239,7 +242,7 @@ def create_mask():
     # Remove temporary files
     if param.remove_tmp_files == 1:
         sct.printv('\nRemove temporary files...', param.verbose)
-        sct.run('rm -rf '+path_tmp, param.verbose)
+        sct.run('rm -rf '+path_tmp, param.verbose, error_exit='warning')
 
     # to view results
     sct.printv('\nDone! To view results, type:', param.verbose)
