@@ -180,6 +180,11 @@ def main():
                                     "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
+    parser.add_option(name="-identity",
+                      type_value="int",
+                      description="just put source into destination (no optimization).",
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
@@ -222,20 +227,11 @@ def main():
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+    identity = arguments['-identity']
 
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_dest = path_sct_data+'/mt/mt1.nii.gz'
-        fname_src = path_sct_data+'/t2/t2.nii.gz'
-        param_user = '10,syn,0.5,MI'
-        remove_temp_files = '0'
-        verbose = 1
 
     # print arguments
     print '\nInput parameters:'
@@ -256,13 +252,14 @@ def main():
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_if_3d(fname_src)
-    sct.check_if_3d(fname_dest)
+    # sct.printv('\nCheck if input data are 3D...', verbose)
+    # sct.check_if_3d(fname_src)
+    # sct.check_if_3d(fname_dest)
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)
-    sct.check_if_rpi(fname_dest)
+    if not identity:
+        sct.check_if_rpi(fname_dest)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -296,6 +293,11 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    if identity:
+        # overwrite paramreg and only do one identity transformation
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramreg = ParamregMultiStep([step0])
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
