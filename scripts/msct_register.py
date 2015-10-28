@@ -26,7 +26,7 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
     # Calculate displacement
     current_algo = paramreg.algo
     if paramreg.type == 'seg':
-        res_reg = register_seg(fname_source, fname_dest)
+        res_reg = register_seg(fname_source, fname_dest, verbose)
 
     elif paramreg.type == 'im':
         if paramreg.algo == 'slicereg2d_pointwise':
@@ -340,8 +340,8 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
 #     print'\n\tSplitting warping fields ...'
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
+#     sct.run('sct_image -i ' + name_warp_syn + '.nii.gz  -mcs -o ' + name_warp_syn )
+#     sct.run('sct_image -i ' + name_warp_syn + '_inverse.nii.gz -mcs -o ' + name_warp_syn + '_inverse.nii.gz)
 #     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
 #     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
 #     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()
@@ -368,7 +368,7 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
 #
 #     print'\nSaving regularized warping fields...'
 #     '''
-#     from sct_maths import multicomponent_merge
+#     from sct_image import multicomponent_merge
 #     from msct_image import Image
 #     data_warp_smooth = multicomponent_merge([data_warp_x_smooth, data_warp_y_smooth])[0]
 #     hdr_warp.set_intent('vector', (), '')
@@ -443,8 +443,8 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
 #     print'\n\tSplitting warping fields ...'
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
+#     sct.run('sct_image -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '.nii.gz')
+#     sct.run('sct_image -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_inverse.nii.gz')
 #
 #     im_warp_x = Image(name_warp_syn + '_x.nii.gz')
 #     data_warp_x = im_warp_x.data
@@ -548,8 +548,8 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
 #     print'\n\tSplitting warping fields ...'
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '.nii.gz -oo ' + name_warp_syn + '_x.nii.gz ' + name_warp_syn + '_y.nii.gz')
 #     # sct.run('isct_c3d -mcs ' + name_warp_syn + '_inverse.nii.gz -oo ' + name_warp_syn + '_x_inverse.nii.gz ' + name_warp_syn + '_y_inverse.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '.nii.gz -w -mcs -o ' + name_warp_syn + '_x.nii.gz,' + name_warp_syn + '_y.nii.gz')
-#     sct.run('sct_maths -i ' + name_warp_syn + '_inverse.nii.gz -w -mcs -o ' + name_warp_syn + '_x_inverse.nii.gz,' + name_warp_syn + '_y_inverse.nii.gz')
+#     sct.run('sct_image -i ' + name_warp_syn + '.nii.gz  -mcs -o ' + name_warp_syn + '.nii.gz')
+#     sct.run('sct_image -i ' + name_warp_syn + '_inverse.nii.gz -mcs -o ' + name_warp_syn + '_inverse.nii.gz')
 #     data_warp_x = load(name_warp_syn + '_x.nii.gz').get_data()
 #     data_warp_y = load(name_warp_syn + '_y.nii.gz').get_data()
 #     hdr_warp = load(name_warp_syn + '_x.nii.gz').get_header()

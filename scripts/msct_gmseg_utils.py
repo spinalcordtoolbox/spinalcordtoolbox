@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from msct_image import Image, get_dimension
 import sct_utils as sct
 from msct_parser import Parser
+from sct_image import set_orientation, get_orientation
 
 
 class Slice:
@@ -575,14 +576,16 @@ def crop_t2_star_pipeline(path, box_size=75):
                         mask_im = Image(mask_box)
                         seg_in_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                         seg_in_name += '_croped'
-                        sct.run('sct_orientation -i ' + seg_in_name + '_croped'+ext + ' -s IRP')
+                        seg_in_im.setFileName(seg_in_name +ext)
+                        seg_in_im = set_orientation(seg_in_im, 'IRP')
 
                     if manual_seg_croped == '':
                         manual_seg_im = Image(manual_seg)
                         mask_im = Image(mask_box)
                         manual_seg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
                         manual_seg_name += '_croped'
-                        sct.run('sct_orientation -i ' + manual_seg_name + '_croped'+ext + ' -s IRP')
+                        manual_seg_im.setFileName(manual_seg_name+ext)
+                        manual_seg_im = set_orientation(manual_seg_im, 'IRP')
 
                 except Exception, e:
                     sct.printv('WARNING: an error occured ... \n ' + str(e), 1, 'warning')
@@ -617,7 +620,9 @@ def crop_t2_star(t2star, sc_seg, box_size=75):
         mask_im = Image(mask_box)
         seg_in_im.crop_and_stack(mask_im, suffix='_croped', save=True)
         seg_in_name += '_croped'
-        sct.run('sct_orientation -i ' + seg_in_name +ext + ' -s IRP')
+        seg_in_im.setFileName(seg_in_name +ext)
+        seg_in_im = set_orientation(seg_in_im, 'IRP')
+
         fname_seg_in_IRP = seg_in_name+'_IRP'+ext
 
         if t2star_name + '_square_mask_from_sc_seg_IRP.nii.gz' in os.listdir('.'):
@@ -658,12 +663,12 @@ def save_by_slice(dic_dir):
                 if 'level' in file_name:
                     path_file_levels = subject_path + '/' + file_name
                     if 'IRP' not in file_name:
-                        sct.run('sct_orientation -i ' + subject_path + '/' + file_name + ' -s IRP')
+                        sct.run('sct_image -i ' + subject_path + '/' + file_name + ' -setorient IRP')
                         path_file_levels = subject_path + '/' + sct.extract_fname(file_name)[1] + '_IRP.nii.gz'
 
             if path_file_levels is None and 'label' in os.listdir(subject_path):
                 if 'MNI-Poly-AMU_level_IRP.nii.gz' not in sct.run('ls ' + subject_path + '/label/template')[1]:
-                    sct.run('sct_orientation -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -s IRP')
+                    sct.run('sct_image -i ' + subject_path + '/label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
                 path_file_levels = subject_path + '/label/template/MNI-Poly-AMU_level_IRP.nii.gz'
             elif path_file_levels is not None:
                 im_levels = Image(path_file_levels)
@@ -756,12 +761,13 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     :param interpolation: type of interpolation used for the resampling
     :return: file name after resampling (or original fname if it was already in the correct resolution)
     """
-    status, orientation = sct.run('sct_orientation -i ' + fname)
-    # orientation = orientation[4:7]
+    im_in = Image(fname)
+    orientation = get_orientation(im_in)
     if orientation != 'RPI':
-        sct.run('sct_orientation -i ' + fname + ' -s RPI')
-        fname = sct.extract_fname(fname)[1] + '_RPI.nii.gz'
-    nx, ny, nz, nt, px, py, pz, pt = get_dimension(Image(fname))
+        im_in = set_orientation(im_in, 'RPI')
+        im_in.save()
+        fname = im_in.absolutepath
+    nx, ny, nz, nt, px, py, pz, pt = im_in.dim
 
     if round(px, 2) != round(npx, 2) or round(py, 2) != round(npy, 2):
         name_resample = sct.extract_fname(fname)[1] + suffix
@@ -775,13 +781,16 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
             sct.run('sct_maths -i ' + name_resample + ' -bin -o ' + name_resample)
 
         if orientation != 'RPI':
-            sct.run('sct_orientation -i ' + name_resample + ' -s ' + orientation)
-            name_resample = sct.extract_fname(name_resample)[1] + '_' + orientation + '.nii.gz'
+            im_resample = Image(name_resample)
+            im_resample = set_orientation(im_resample, orientation)
+            im_resample.save()
+            name_resample = im_resample.absolutepath
         return name_resample
     else:
         if orientation != 'RPI':
-            sct.run('sct_orientation -i ' + fname + ' -s ' + orientation)
-            fname = sct.extract_fname(fname)[1] + '_' + orientation + '.nii.gz'
+            im_in = set_orientation(im_in, orientation)
+            im_in.save()
+            fname = im_in.absolutepath
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
 
@@ -819,11 +828,13 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
 
             new_names = []
             for f_name in [t2star, scseg, gmseg]:
-                status, output = sct.run('sct_orientation -i ' + f_name)
-                # if output[4:7] != 'RPI':
-                if output != 'RPI':
-                    status, output = sct.run('sct_orientation -i ' + f_name + ' -s RPI')
-                    new_names.append(output.split(':')[1][1:-1])
+                im = Image(f_name)
+                orientation = get_orientation(im)
+                if orientation != 'RPI':
+                    im = set_orientation(im, 'RPI')
+                    new_names.append(im.absolutepath)
+                    im.save()
+                    # new_names.append(output.split(':')[1][1:-1])
                 else:
                     new_names.append(f_name)
 
@@ -846,7 +857,7 @@ def dataset_preprocessing(path_to_dataset, denoise=True):
             gmseg_im = Image(gmseg)
             mask_im = Image(mask_box)
             gmseg_im.crop_and_stack(mask_im, suffix='_croped', save=True)
-            sct.run('sct_orientation -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -s IRP')
+            sct.run('sct_image -i '+sct.extract_fname(gmseg)[1] + '_croped.nii.gz -setorient IRP')
 
             os.chdir(original_path)
     save_by_slice(path_to_dataset)
@@ -882,7 +893,7 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
     cmd_warp = 'sct_warp_template -d ' + t2star_fname + ' -w ' + total_warp_name
     sct.run(cmd_warp)
 
-    sct.run('sct_orientation -i ./label/template/MNI-Poly-AMU_level.nii.gz -s IRP')
+    sct.run('sct_image -i ./label/template/MNI-Poly-AMU_level.nii.gz -setorient IRP')
 
     return './label/template/MNI-Poly-AMU_level_IRP.nii.gz'
 
@@ -895,9 +906,7 @@ def compute_level_file(t2star_fname, t2star_sc_seg_fname , t2_fname, t2_seg_fnam
 # ------------------------------------------------------------------------------------------------------------------
 def inverse_square_crop(croped_image, square_mask):
     if square_mask.orientation != 'IRP':
-        sct.run('sct_orientation -i ' + square_mask.file_name + square_mask.ext + ' -s IRP')
-        square_mask.file_name += '_IRP'
-        square_mask = Image(square_mask.file_name + square_mask.ext)
+        square_mask = set_orientation(square_mask, 'IRP')
     nz_coord = square_mask.getNonZeroCoordinates()
 
     assert len(nz_coord) == croped_image.data.size
@@ -907,21 +916,6 @@ def inverse_square_crop(croped_image, square_mask):
     if dim == 3:
         done_slices = []
         for coord in nz_coord:
-            '''
-            x_y_z = [coord.x, coord.y, coord.z]
-            if 'I' in square_mask.orientation:
-                IS_dim_coord = x_y_z[square_mask.orientation.find('I')]
-            else:
-                IS_dim_coord = x_y_z[square_mask.orientation.find('S')]
-            if 'R' in square_mask.orientation:
-                RL_dim_coord = x_y_z[square_mask.orientation.find('R')]
-            else:
-                RL_dim_coord = x_y_z[square_mask.orientation.find('L')]
-            if 'P' in square_mask.orientation:
-                PA_dim_coord = x_y_z[square_mask.orientation.find('P')]
-            else:
-                PA_dim_coord = x_y_z[square_mask.orientation.find('A')]
-            '''
             if coord.x not in done_slices:
                 inverse_croped.data[coord.x, coord.y: coord.y + croped_image.data.shape[1], coord.z: coord.z + croped_image.data.shape[2]] = croped_image.data[coord.x]
                 done_slices.append(coord.x)
@@ -929,7 +923,7 @@ def inverse_square_crop(croped_image, square_mask):
         coord = nz_coord[0]
         inverse_croped.data[coord.x: coord.x + croped_image.data.shape[0], coord.y: coord.y + croped_image.data.shape[1]] = croped_image.data
 
-    inverse_croped.file_name = croped_image.file_name + '_original_dimension'
+    inverse_croped.setFileName(croped_image.file_name + '_original_dimension' + croped_image.ext)
 
     return inverse_croped
 
@@ -1252,10 +1246,10 @@ def compute_error_map_by_level(data_path):
             if res_wm_seg != '' and level != '' and sq_mask!= '':
 
                 ref_wm_seg = 'validation/ref_wm_seg.nii.gz'
-                status, ref_ori = sct.run('sct_orientation -i ' + ref_wm_seg)
+                status, ref_ori = sct.run('sct_image -i ' + ref_wm_seg + ' -getorient')
                 # ref_ori = ref_ori[4:7]
                 if ref_ori != 'IRP':
-                    sct.run('sct_orientation -i ' + ref_wm_seg + ' -s IRP')
+                    sct.run('sct_image -i ' + ref_wm_seg + ' -setorient IRP')
                     ref_wm_seg = sct.extract_fname(ref_wm_seg)[0] + sct.extract_fname(ref_wm_seg)[1] + '_IRP' + sct.extract_fname(ref_wm_seg)[2]
 
                 level_im = Image(level)
@@ -1364,10 +1358,10 @@ def compute_hausdorff_dist_on_loocv_results(data_path):
                             res_gm_seg = fname
                     if res_gm_seg != '' and sq_mask != '' and level != '':
                         ref_gm_seg = 'ref_gm_seg.nii.gz'
-                        status, ref_ori = sct.run('sct_orientation -i ' + ref_gm_seg)
+                        status, ref_ori = sct.run('sct_image -i ' + ref_gm_seg+' -getorient')
                         # ref_ori = ref_ori[4:7]
                         if ref_ori != 'IRP':
-                            sct.run('sct_orientation -i ' + ref_gm_seg + ' -s IRP')
+                            sct.run('sct_image -i ' + ref_gm_seg + ' -setorient IRP')
                             ref_gm_seg = sct.extract_fname(ref_gm_seg)[0] + sct.extract_fname(ref_gm_seg)[1] + '_IRP' + sct.extract_fname(ref_gm_seg)[2]
 
                         level_im = Image(level)
