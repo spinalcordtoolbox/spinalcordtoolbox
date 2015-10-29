@@ -3,7 +3,6 @@
 # Installer for requirements
 #
 
-from sys import exit
 from commands import getstatusoutput
 
 print '\n--------------------------'
