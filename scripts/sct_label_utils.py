@@ -626,6 +626,8 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param_default = Param()
+
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Utility function for labels. Choose your process.')
