@@ -59,10 +59,13 @@ def test(path_data):
     # if command ran without error, test integrity
     if status == 0:
         from msct_image import Image
-        threshold = 1e-3
         # compare with gold-standard registration
-        data_gold = Image(path_data + folder_data + file_data[-1]).data
+        im_gold = Image(path_data + folder_data + file_data[-1])
+        data_gold = im_gold.data
         data_res = Image('data_'+algo_default+'_reg.nii.gz').data
+
+        nx, ny, nz, nt, px, py, pz, pt = im_gold.dim
+        threshold = 1e-3 * nx * ny * nz * nt  # set the difference threshold to 1e-3 pe voxel
         # check if non-zero elements are present when computing the difference of the two images
         diff = data_gold - data_res
         import numpy as np
