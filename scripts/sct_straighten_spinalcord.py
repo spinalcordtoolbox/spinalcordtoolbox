@@ -907,7 +907,7 @@ class SpinalCordStraightener(object):
         sct.printv("fslview " + fname_straight + " &\n", verbose, "info")
 
         from msct_image import Image
-        filename_straightened_image_png = Image(fname_output).saveSagittalPlan()
+        filename_straightened_image_png = Image(fname_straight).saveSagittalPlan()
         sct.printv('Or take a look at this image: ' + filename_straightened_image_png)
 
 
