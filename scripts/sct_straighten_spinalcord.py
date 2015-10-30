@@ -911,7 +911,6 @@ class SpinalCordStraightener(object):
         sct.printv('Or take a look at this image: ' + filename_straightened_image_png)
 
 
-
 def get_parser():
     # Initialize parser
     parser = Parser(__file__)
