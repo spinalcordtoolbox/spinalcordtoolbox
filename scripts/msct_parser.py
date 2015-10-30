@@ -164,7 +164,11 @@ class Option:
             sub_type = type_option[1]
             param_splitted = param.split(delimiter)
             if len(param_splitted) != 0:
-                return list([self.check_integrity(val,sub_type) for val in param_splitted])
+                # check if files are separated by space (if "*" was used)
+                if not param_splitted[0].find(' ') == -1:
+                    # if so, split and return list
+                    param_splitted = param_splitted[0].split(' ')
+                return list([self.check_integrity(val, sub_type) for val in param_splitted])
             else:
                 self.parser.usage.error("ERROR: Option "+self.name+" must be correctly written. See usage.")
 
@@ -240,6 +244,8 @@ class Option:
             sct.printv("ERROR: Permission denied for folder creation...", type="error")
         elif result_creation == 1:
             sct.printv("Folder "+param+" has been created.", 0, type='warning')
+        # add slash at the end
+        param = sct.slash_at_the_end(param, 1)
         return param
 
 
@@ -451,7 +457,7 @@ Version: """ + str(self.get_sct_version())
         status, path_sct = getstatusoutput('echo $SCT_DIR')
         fname = str(path_sct)+'/version.txt'
         content = ""
-        with open(fname, mode = 'r+') as f:
+        with open(fname, mode = 'r') as f:
             content = f.readlines()
         f.close()
         return content[0]

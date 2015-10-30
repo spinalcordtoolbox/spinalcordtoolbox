@@ -540,6 +540,81 @@ def runProcess(cmd, verbose=1):
     return process.returncode, output_final[0:-1]
 
 
+def edit_profile_files(path_home, SCT_DIR):
+        file_profile = ['.bashrc', '.profile', '.bash_login', '.bash_profile', ]  # Files are listed in inverse order of reading when shell starts
+        file_profile_default = ''
+        # TODO: deal with TSCH and CSH
+        # edit_profile_files()
+
+        # loop across profile files
+        print "Delete previous SCT entries in existing profile files..."
+        for i_file in file_profile:
+        # delete previous SCT entries
+            if not os.path.isfile(path_home+i_file):
+                print '.. '+i_file+': Not found.'
+            else:
+                print '.. '+i_file+': Found! Deleting previous SCT entries...'
+                # update default_file_profile
+                file_profile_default = i_file
+                if "SPINALCORDTOOLBOX" in open(path_home+i_file).read():
+                    cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
+                    status, output = runProcess(cmd)
+                    if status != 0:
+                        print '\nERROR: \n' + output + '\nExit program.\n'
+                        sys.exit()
+
+        print "Add entries to .bashrc..."
+        with open(path_home+".bashrc", "a") as bashrc:
+            bashrc.write("\n# SPINALCORDTOOLBOX (added on " + str(date.today()) + ")")
+            bashrc.write("\nSCT_DIR=\"" + SCT_DIR + "\"")
+            bashrc.write("\nexport PATH=${PATH}:$SCT_DIR/bin")
+            bashrc.write("\nexport PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts")
+            bashrc.write("\nexport SCT_DIR PATH")
+            from multiprocessing import cpu_count
+            number_of_cpu = cpu_count()
+            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
+            bashrc.close()
+
+        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the
+        # current instance of bash
+        os.environ['SCT_DIR'] = SCT_DIR
+        os.environ['PATH'] = os.environ['PATH']+":"+SCT_DIR+"/bin"
+        if 'PYTHONPATH' in os.environ:
+            os.environ['PYTHONPATH'] = os.environ['PYTHONPATH']+":"+SCT_DIR+"/scripts"
+        else:
+            os.environ['PYTHONPATH'] = SCT_DIR+"/scripts"
+
+        # Check if no profile file other than .bashrc exist
+        print "Check if no profile file other than .bashrc exist..."
+        if file_profile_default == '' or file_profile_default == '.bashrc':
+            print '.. WARNING: No default profile file found: .bash_profile will be created...'
+            file_profile_default = '.bash_profile'
+        else:
+            print '.. OK: Default profile file is:' + file_profile_default
+
+        # Check if .bashrc is sourced in default profile file
+        print "Check if .bashrc is sourced in default profile..."
+        if "source ~/.bashrc" in open(path_home+file_profile_default).read():
+            print ".. .bashrc seems to be sourced already"
+        # TODO: check for the case if the user did comment source ~/.bashrc in his .bash_profile
+        else:
+            print ".. .bashrc is NOT sourced. Appending to "+file_profile_default+" ..."
+            with open(path_home+file_profile_default, "a") as bashprofile:
+                bashprofile.write("\nif [ -f ~/.bashrc ]; then")
+                bashprofile.write("\n  source ~/.bashrc")
+                bashprofile.write("\nfi")
+                bashprofile.close()
+
+        # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
+        print "Source .bashrc:"
+        cmd = ". ~/.bashrc"
+        status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
+        # status, output = commands.getstatusoutput(cmd)
+        if status != 0:
+            print '\nERROR! \n' + output + '\nExit program.\n'
+            sys.exit()
+
+
 class Installer:
     def __init__(self):
         self.path_install = "/usr/local/spinalcordtoolbox"
@@ -566,8 +641,9 @@ class Installer:
         print ""
         print "============================="
         print "SPINAL CORD TOOLBOX INSTALLER"
-        print "Modified: 2015-10-06"
+        print "Modified: 2015-10-24"
         print "============================="
+
 
         # Check OS
         try:
@@ -575,6 +651,25 @@ class Installer:
         except UnsupportedOs, e:
             MsgUser.debug(str(e))
             raise InstallFailed(str(e))
+
+        # check if sudo is needed to write in installation folder
+        MsgUser.message("\nCheck if administrator permission is needed for installation...")
+        print ".. Installation path: "+self.path_install
+        if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
+            MsgUser.message(".. no sudo needed for adding elements.")
+            self.issudo = ""
+        else:
+            MsgUser.message(".. sudo needed for adding elements.")
+            self.issudo = "sudo "
+
+        # check if last character is "/". If so, remove it.
+        if self.path_install[-1:] == '/':
+            self.path_install = self.path_install[:-1]
+
+        self.SCT_DIR = self.path_install
+
+        # Retrieving home folder because in python, paths with ~ do not seem to work.
+        self.home = os.path.expanduser('~')+'/'
 
         # Check Python
         print ('\nCheck which Python distribution is running...')
@@ -621,25 +716,6 @@ class Installer:
                         print ('.. OK!')
         else:
             print('.. OK!')
-
-        # check if sudo is needed to write in installation folder
-        MsgUser.message("\nCheck if administrator permission is needed for installation...")
-        print ".. Installation path: "+self.path_install
-        if os.access(os.path.abspath(os.path.join(self.path_install, os.pardir)), os.W_OK):
-            MsgUser.message(".. no sudo needed for adding elements.")
-            self.issudo = ""
-        else:
-            MsgUser.message(".. sudo needed for adding elements.")
-            self.issudo = "sudo "
-
-        # check if last character is "/". If so, remove it.
-        if self.path_install[-1:] == '/':
-            self.path_install = self.path_install[:-1]
-
-        self.SCT_DIR = self.path_install
-
-        # Retrieving home folder because in python, paths with ~ do not seem to work.
-        self.home = os.path.expanduser('~')
 
         # check if SCT folder already exists - if so, delete it
         print ""
@@ -717,80 +793,15 @@ class Installer:
         if status != 0:
             print '\nERROR! \n' + output + '\nExit program.\n'
 
-        # check if .bashrc was already modified. If so, we delete lines related to SCT
-        print "\nEdit .bashrc..."
-
-        # check if .bashrc exist. If not, create it.
-        if not os.path.isfile(self.home+"/.bashrc"):
-            print "  ~/.bashrc does not exist. Creating it..."
-            open(self.home+'/.bashrc', 'w+').close()
-        else:
-            if "SPINALCORDTOOLBOX" in open(self.home+'/.bashrc').read():
-                print ".. Deleting previous SCT entries in .bashrc"
-                cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bashrc > .bashrc_temp && > ~/.bashrc && cat .bashrc_temp >> ~/.bashrc && rm .bashrc_temp"
-                status, output = runProcess(cmd)
-                if status != 0:
-                    print '\nERROR! \n' + output + '\nExit program.\n'
-                # test if .bash_profile exists
-                if os.path.isfile(self.home+"/.bash_profile"):
-                    # delete previous entries in .bash_profile
-                    print ".. Deleting previous SCT entries in .bash_profile"
-                    cmd = "awk '!/SCT_DIR|SPINALCORDTOOLBOX|ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS/' ~/.bash_profile > .bash_profile_temp && > ~/.bash_profile && cat .bash_profile_temp >> ~/.bash_profile && rm .bash_profile_temp"
-                    status, output = runProcess(cmd)
-                    # status, output = commands.getstatusoutput(cmd)
-                    if status != 0:
-                        print '\nERROR! \n' + output + '\nExit program.\n'
-
-        # edit .bashrc. Add bin
-        with open(self.home+"/.bashrc", "a") as bashrc:
-            bashrc.write("\n# SPINALCORDTOOLBOX (added on " + str(date.today()) + ")")
-            bashrc.write("\nSCT_DIR=\"" + self.SCT_DIR + "\"")
-            bashrc.write("\nexport PATH=${PATH}:$SCT_DIR/bin")
-            # add PYTHONPATH variable to allow import of modules
-            bashrc.write("\nexport PYTHONPATH=${PYTHONPATH}:$SCT_DIR/scripts")
-            bashrc.write("\nexport SCT_DIR PATH")
-            # forbid to run several ITK instances in parallel (see issue #201).
-            from multiprocessing import cpu_count
-            number_of_cpu = cpu_count()
-            bashrc.write("\nexport ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS="+str(number_of_cpu))
-            bashrc.close()
-
-        # Because python script cannot source bashrc or bash_profile, it is necessary to modify environment in the
-        # current instance of bash
-        os.environ['SCT_DIR'] = self.SCT_DIR
-        os.environ['PATH'] = os.environ['PATH']+":"+self.SCT_DIR+"/bin"
-        if 'PYTHONPATH' in os.environ:
-            os.environ['PYTHONPATH'] = os.environ['PYTHONPATH']+":"+self.SCT_DIR+"/scripts"
-        else:
-            os.environ['PYTHONPATH'] = self.SCT_DIR+"/scripts"
-
-        # check if .bash_profile exists. If so, we check if link to .bashrc is present in it.
-        # If not, we add it at the end.
-        print "\nCheck if .bash_profile exists..."
-        if os.path.isfile(self.home+"/.bash_profile"):
-            if "source ~/.bashrc" in open(self.home+'/.bash_profile').read():
-                print ".. .bashrc seems to be called in .bash_profile"
-            # TODO: check for the case if the user did comment source ~/.bashrc in his .bash_profile
-            else:
-                print ".. edit .bash_profile..."
-                with open(self.home+"/.bash_profile", "a") as bashprofile:
-                    bashprofile.write("\nif [ -f ~/.bashrc ]; then")
-                    bashprofile.write("\n  source ~/.bashrc")
-                    bashprofile.write("\nfi")
-                    bashprofile.close()
-
-        # launch .bashrc. This line doesn't always work. Best way is to open a new terminal.
-        cmd = ". ~/.bashrc"
-        status, output = runProcess(cmd)  # runProcess does not seems to work on Travis when sourcing .bashrc
-        # status, output = commands.getstatusoutput(cmd)
-        if status != 0:
-            print '\nERROR! \n' + output + '\nExit program.\n'
+        # Edit profile files (.bashrc, .bash_profile, ...)
+        print "\nEdit profile files..."
+        edit_profile_files(self.home, self.SCT_DIR)
 
         # install required software
         print "\nInstall dependences... Depending on your internet connection, this may take several minutes."
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
-        cmd = self.issudo + "bash requirements.sh"
+        cmd = "python requirements.py"
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:

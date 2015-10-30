@@ -235,9 +235,6 @@ class FullGmSegmentation:
             else:
                 bin = False
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
-            res_im_original_size = Image(old_res_name)
-            res_im_original_size.hdr = self.preprocessed.original_header
-            res_im_original_size.save()
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)

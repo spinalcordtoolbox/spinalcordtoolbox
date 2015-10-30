@@ -114,6 +114,9 @@ def process_results(results, subjects_name, function, folder_dataset, parameters
         return results_dataframe
     except KeyboardInterrupt:
         return 'KeyboardException'
+    except Exception as e:
+        print e
+        sys.exit(2)
 
 
 def function_launcher(args):
@@ -146,12 +149,13 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
     data_and_params = itertools.izip(itertools.repeat(function), data_subjects, itertools.repeat(parameters))
 
     pool = Pool(processes=nb_cpu, initializer=init_worker)
-    async_results = pool.map_async(function_launcher, data_and_params)
-    pool.close()
 
     try:
+        async_results = pool.map_async(function_launcher, data_and_params).get(9999999)
+            # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        pool.close()
         pool.join()  # waiting for all the jobs to be done
-        results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        results = process_results(async_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
     except KeyboardInterrupt:
         print "\nWarning: Caught KeyboardInterrupt, terminating workers"
         pool.terminate()
@@ -159,6 +163,8 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
         sys.exit(2)
     except Exception as e:
         print e
+        pool.terminate()
+        pool.join()
         sys.exit(2)
 
     return results
@@ -227,6 +233,7 @@ if __name__ == "__main__":
 
     verbose = arguments["-v"]
 
+    print 'Testing...'
     results = test_function(function_to_test, dataset, parameters, nb_cpu, verbose)
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -247,11 +254,12 @@ if __name__ == "__main__":
     # count tests that passed
     count_passed = results_subset.status[results_subset.status == 0].count()
 
-    results_display = results_display.set_index('subject')
+    # results_display = results_display.set_index('subject')
+    # jcohenadad, 2015-10-27: added .reset_index() for better visual clarity
+    results_display = results_display.set_index('subject').reset_index()
 
     # printing results
     print '\nResults for "' + function_to_test + ' ' + parameters + '":'
     print 'Dataset: ' + dataset
     print results_display.to_string()
-    print '\nPassed: ' + str(count_passed) + '/' + str(len(results_subset))
-
+    print 'Passed: ' + str(count_passed) + '/' + str(len(results_subset))
