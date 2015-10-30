@@ -13,7 +13,7 @@
 # - str, int, float, long, complex (check if input is the correct type)
 # - multiple_choice
 # - coordinate [x, y, z, value]
-# - lists, for example list of coordinate: [[','],'Coordinate']
+# - lists, for example list of coordinate:
 # - None, return True when detected (example of boolean)
 #
 # The parser returns a dictionary with all mandatory arguments as well as optional arguments with default values.
