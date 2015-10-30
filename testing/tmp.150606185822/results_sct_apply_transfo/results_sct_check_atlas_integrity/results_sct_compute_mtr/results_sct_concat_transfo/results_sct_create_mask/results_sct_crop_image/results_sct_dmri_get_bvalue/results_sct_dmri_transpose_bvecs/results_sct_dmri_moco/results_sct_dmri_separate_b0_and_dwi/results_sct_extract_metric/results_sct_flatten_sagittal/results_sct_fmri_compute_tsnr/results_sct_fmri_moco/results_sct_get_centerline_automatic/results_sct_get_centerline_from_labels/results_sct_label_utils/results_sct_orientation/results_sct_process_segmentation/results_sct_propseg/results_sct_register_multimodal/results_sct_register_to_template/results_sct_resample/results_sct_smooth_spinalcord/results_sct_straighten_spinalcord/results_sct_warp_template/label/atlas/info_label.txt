@@ -1,0 +1,32 @@
+# White matter atlas
+# ID, name, file
+0, left fasciculus gracilis, WMtract__00.nii.gz
+1, left fasciculus cuneatus, WMtract__01.nii.gz
+2, left lateral corticospinal tract, WMtract__02.nii.gz
+3, left ventral spinocerebellar tract, WMtract__03.nii.gz
+4, left rubrospinal tract, WMtract__04.nii.gz
+5, left lateral reticulospinal tract, WMtract__05.nii.gz
+6, left spinal lemniscus (spinothalamic and spinoreticular tracts), WMtract__06.nii.gz
+7, left spino-olivary tract, WMtract__07.nii.gz
+8, left ventrolateral reticulospinal tract, WMtract__08.nii.gz
+9, left lateral vestibulospinal tract, WMtract__09.nii.gz
+10, left ventral reticulospinal tract, WMtract__10.nii.gz
+11, left ventral corticospinal tract, WMtract__11.nii.gz
+12, left tectospinal tract, WMtract__12.nii.gz
+13, left medial reticulospinal tract, WMtract__13.nii.gz
+14, left medial longitudinal fasciculus, WMtract__14.nii.gz
+15, right fasciculus gracilis, WMtract__15.nii.gz
+16, right fasciculus cuneatus, WMtract__16.nii.gz
+17, right lateral corticospinal tract, WMtract__17.nii.gz
+18, right ventral spinocerebellar tract, WMtract__18.nii.gz
+19, right rubrospinal tract, WMtract__19.nii.gz
+20, right lateral reticulospinal tract, WMtract__20.nii.gz
+21, right spinal lemniscus (spinothalamic and spinoreticular tracts), WMtract__21.nii.gz
+22, right spino-olivary tract, WMtract__22.nii.gz
+23, right ventrolateral reticulospinal tract, WMtract__23.nii.gz
+24, right lateral vestibulospinal tract, WMtract__24.nii.gz
+25, right ventral reticulospinal tract, WMtract__25.nii.gz
+26, right ventral corticospinal tract, WMtract__26.nii.gz
+27, right tectospinal tract, WMtract__27.nii.gz
+28, right medial reticulospinal tract, WMtract__28.nii.gz
+29, right medial longitudinal fasciculus, WMtract__29.nii.gz
