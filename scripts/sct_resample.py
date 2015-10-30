@@ -118,6 +118,10 @@ def resample():
 
     new_im.hdr = input_im.hdr
     new_im.hdr.set_zooms(zooms_to_set)
+
+    # Set the sform correctly:
+    new_im.hdr.set_sform(new_im.hdr.get_qform())
+
     new_im.save()
 
     # to view results

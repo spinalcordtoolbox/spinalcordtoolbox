@@ -23,6 +23,8 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param = Param()
+
     # parser initialisation
     parser = Parser(__file__)
 

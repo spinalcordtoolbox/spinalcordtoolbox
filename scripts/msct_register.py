@@ -26,7 +26,7 @@ def register_slicereg2d(fname_source, fname_dest, fname_mask='', window_length=3
     # Calculate displacement
     current_algo = paramreg.algo
     if paramreg.type == 'seg':
-        res_reg = register_seg(fname_source, fname_dest)
+        res_reg = register_seg(fname_source, fname_dest, verbose)
 
     elif paramreg.type == 'im':
         if paramreg.algo == 'slicereg2d_pointwise':
