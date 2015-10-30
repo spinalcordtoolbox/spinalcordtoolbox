@@ -19,8 +19,16 @@ class param:
         self.output_name = ''
         
 # check if needed Python libraries are already installed or not
-import sys
+import sys,commands
 import getopt
+
+
+# Get path of the toolbox
+status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
+
+
 import sct_utils as sct
 import nibabel
 import os
@@ -90,7 +98,8 @@ def main():
     
     print template_absolute_path
     print '\nGet dimensions of template...'
-    nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(template_absolute_path)
+    from msct_image import Image
+    nx, ny, nz, nt, px, py, pz, pt = Image(template_absolute_path).dim
     print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
     print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
     
