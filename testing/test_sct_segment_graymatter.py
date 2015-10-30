@@ -79,7 +79,7 @@ def test(path_data, parameters=''):
             n_slice, dc = line.split(' ')
             # remove \n from dice result
             dc = dc[:-1]
-            if dc == '0':
+            if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:
                 gm_dice.append(float(dc))
@@ -126,8 +126,8 @@ def test(path_data, parameters=''):
         if result_hausdorff > hd_threshold or result_dice_wm < wm_dice_threshold:
             status = 99
             output += '\nResulting segmentation is too different from manual segmentation:\n' \
-                      'WM dice: '+result_dice_wm+'\n' \
-                      'Hausdorff distance: '+result_hausdorff+'\n'
+                      'WM dice: '+str(result_dice_wm)+'\n' \
+                      'Hausdorff distance: '+str(result_hausdorff)+'\n'
 
     # transform results into Pandas structure
     results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'dice_wm': result_dice_wm, 'hausdorff': result_hausdorff, 'med_dist': result_median_dist}, index=[path_data])

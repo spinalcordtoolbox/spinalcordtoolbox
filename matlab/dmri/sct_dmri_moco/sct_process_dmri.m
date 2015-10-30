@@ -374,7 +374,7 @@ switch (sct.dmri.crop.method)
         j_disp(sct.log,['.. Cropping method: ',sct.dmri.crop.method])
         
         % extract one image (to reslice center_line from anat to dw images)
-        cmd = [fsloutput,'fslroi ',fname_data,' ','tmp.dmri.crop.',sct.dmri.file, '_1',' ','1 1'];
+        cmd = [fsloutput,'fslmaths ',fname_data,' -Tmean ','tmp.dmri.crop.',sct.dmri.file, '_1'];
         j_disp(sct.log,['>> ',cmd]);
         [status result] = unix(cmd);
         if status, error(result); end
@@ -451,9 +451,7 @@ switch (sct.dmri.crop.method)
             
             
         else
-            param.interval = floor(sct.dmri.nz/3);
-            param.img = file_data_1;
-            centerline = sct_get_centerline(param);
+            centerline = sct_get_centerline_manual([file_data_1 '.nii']);
             
             if sct.dmri.crop.margin < 3, margin=15; else margin = sct.dmri.crop.margin; end % crop size around centerline
             minX = min(centerline(:,1))- margin;
@@ -1060,10 +1058,27 @@ if ~strcmp(sct.dmri.moco_intra.method,'none')
             if strcmp(sct.dmri.moco_intra.ref,'b0_mean')
                 fname_target = [sct.dmri.file_b0,'_mean'];
             else
-                num_b0 = str2num(sct.dmri.moco_intra.ref);
+                if ~str2num(sct.dmri.moco_intra.ref)
+                    fname_data = [sct.dmri.path,sct.dmri.file];
+                    data=load_nii_data([fname_data sct.ext]);
+                    data=data(:,:,:,index_b0);
+                    figure(14)
+                    imagesc(data(:,:,ceil(end/2),1)); colormap gray; axis image;
+                    msgbox({'Use the slider (figure 14, bottom) to select the ref (highest contrast, no CSF)' 'Press any key when are done..'})
+                    hsl = uicontrol('Style','slider','Min',1,'Max',sct.dmri.nt,...
+                        'SliderStep',[1 1]./sct.dmri.nt,'Value',1,...
+                        'Position',[20 20 200 20]);
+                    set(hsl,'Callback',@(hObject,eventdata)  display_midleslice(hObject,data))
+                    pause
+                    
+                    num_b0=round(get(hsl,'Value'));
+                    close(14)
+                else
+                    num_b0 = str2num(sct.dmri.moco_intra.ref);
+                end
                 % Extract corresponding b=0 image
                 j_disp(sct.log,['.. Extract b=0 images #',num2str(num_b0),' to use for registration target'])
-                fname_data = [sct.dmri.path,sct.dmri.file];
+
                 fname_b0 = [sct.dmri.path,'ref_moco.b0',num2str(num_b0)];
                 cmd = [fsloutput,'fslroi ',fname_data,' ',fname_b0,' ',num2str(index_b0(num_b0)-1),' 1'];
                 j_disp(sct.log,['>> ',cmd]); [status result] = unix(cmd); if status, error(result); end
@@ -1839,6 +1854,9 @@ list=sort_nat({list.name});
 for imat=1:length(list), M_tmp=load(list{imat}); X(imat,:)=[M_tmp(1,4) M_tmp(2,4)]; end
 A=X(:,1); A(A==0)=[];
 plot(X(:,1))
+
+function display_midleslice(hObject,data)
+set(hObject,'Value',round(get(hObject,'Value'))); imagesc(data(:,:,ceil(end/2),round(get(hObject,'Value')))); colormap gray; axis image;
 
 
 

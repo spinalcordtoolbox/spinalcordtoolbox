@@ -19,10 +19,6 @@ class BaseScript(object):
     def __init__(self):
         pass
 
-    @staticmethod
-    def get_parser():
-        raise NotImplementedError("This method should be implemented in a child class")
-
 
 class Algorithm(object):
     """

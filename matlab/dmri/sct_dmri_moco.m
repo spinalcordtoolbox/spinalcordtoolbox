@@ -39,7 +39,7 @@ interp={'nearestneighbour', 'spline', 'sinc'};
 addOptional(p,'interp','spline',@(x) any(validatestring(x,interp)));
 addOptional(p,'gaussian_mask',0,@isnumeric);
 addOptional(p,'slicewise',1,@isnumeric);
-addOptional(p,'ref',1,@isnumeric);
+addOptional(p,'ref',0,@isnumeric);
 
 parse(p,varargin{:})
 in=p.Results;
@@ -51,7 +51,7 @@ else
 end
 
 if ~isempty(in.scheme)
-    [in.bvec, in.bval]=scd_scheme2bvecsbvals(in.scheme,sct_tool_remove_extension(in.scheme,1));
+    [~,~,in.bvec, in.bval]=scd_scheme2bvecsbvals(scd_schemefile_read(in.scheme),sct_tool_remove_extension(in.scheme,1));
 end
 
 if isempty(in.bvec)

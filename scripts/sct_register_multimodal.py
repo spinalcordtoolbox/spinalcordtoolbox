@@ -180,6 +180,11 @@ def main():
                                     "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
+    parser.add_option(name="-identity",
+                      type_value="int",
+                      description="just put source into destination (no optimization).",
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
@@ -222,20 +227,14 @@ def main():
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
+    if "-identity" in arguments:
+        identity = arguments['-identity']
+    else:
+        identity = 0
 
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_dest = path_sct_data+'/mt/mt1.nii.gz'
-        fname_src = path_sct_data+'/t2/t2.nii.gz'
-        param_user = '10,syn,0.5,MI'
-        remove_temp_files = '0'
-        verbose = 1
 
     # print arguments
     print '\nInput parameters:'
@@ -256,13 +255,14 @@ def main():
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_if_3d(fname_src)
-    sct.check_if_3d(fname_dest)
+    # sct.printv('\nCheck if input data are 3D...', verbose)
+    # sct.check_if_3d(fname_src)
+    # sct.check_if_3d(fname_dest)
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)
-    sct.check_if_rpi(fname_dest)
+    if not identity:
+        sct.check_if_rpi(fname_dest)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -296,6 +296,11 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    if identity:
+        # overwrite paramreg and only do one identity transformation
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramreg = ParamregMultiStep([step0])
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
@@ -429,6 +434,7 @@ def register(src, dest, paramreg, param, i_step_str):
         # update variables
         src = src_crop
         dest = dest_crop
+        scr_regStep = sct.add_suffix(src, '_regStep'+i_step_str)
         # estimate transfo
         cmd = ('isct_antsSliceRegularizedRegistration '
                '-t Translation[0.5] '
@@ -438,7 +444,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '-f 1 '
                '-s '+paramreg.steps[i_step_str].smooth+' '
                '-v 1 '  # verbose (verbose=2 does not exist, so we force it to 1)
-               '-o [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '  # here the warp name is stage10 because antsSliceReg add "Warp"
+               '-o [step'+i_step_str+','+scr_regStep+'] '  # here the warp name is stage10 because antsSliceReg add "Warp"
                +masking)
         warp_forward_out = 'step'+i_step_str+'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str+'InverseWarp.nii.gz'
@@ -460,6 +466,8 @@ def register(src, dest, paramreg, param, i_step_str):
             sct.run('sct_image -i '+dest+' -o '+dest_pad+' -pad 0,0,'+str(param.padding))
             dest = dest_pad
 
+        scr_regStep = sct.add_suffix(src, '_regStep' + i_step_str)
+
         cmd = ('isct_antsRegistration '
                '--dimensionality 3 '
                '--transform '+paramreg.steps[i_step_str].algo+'['+paramreg.steps[i_step_str].gradStep +
@@ -469,7 +477,7 @@ def register(src, dest, paramreg, param, i_step_str):
                '--shrink-factors '+paramreg.steps[i_step_str].shrink+' '
                '--smoothing-sigmas '+paramreg.steps[i_step_str].smooth+'mm '
                '--restrict-deformation 1x1x0 '
-               '--output [step'+i_step_str+','+src+'_regStep'+i_step_str+'.nii] '
+               '--output [step'+i_step_str+','+scr_regStep+'] '
                '--interpolation BSpline[3] '
                +masking)
         if param.verbose >= 1:
@@ -487,13 +495,13 @@ def register(src, dest, paramreg, param, i_step_str):
     status, output = sct.run(cmd, param.verbose)
 
     if not os.path.isfile(warp_forward_out):
-        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
-    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']: # no inverse warping field for rigid and affine
-        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n', 1, 'error')
-        sct.printv(output, 1, 'error')
-        sct.printv('\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+        # no forward warping field for rigid and affine
+        sct.printv('\nERROR: file '+warp_forward_out+' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
+    elif not os.path.isfile(warp_inverse_out) and paramreg.steps[i_step_str].algo not in ['rigid', 'affine']:
+        # no inverse warping field for rigid and affine
+        sct.printv('\nERROR: file '+warp_inverse_out+' doesn\'t exist (or is not a file).\n' + output +
+                   '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
         if paramreg.steps[i_step_str].algo in ['rigid', 'affine']:
