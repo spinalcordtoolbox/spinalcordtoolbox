@@ -24,6 +24,7 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -114,9 +115,17 @@ def get_parser():
                       description='Gaussian smoothing filter with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
                       mandatory=False,
                       example='0.5')
+    parser.add_option(name="-laplace",
+                      type_value=[[','], 'float'],
+                      description='Laplacian filtering with specified standard deviations in mm for each axis (e.g.: 2,2,1) or single value for all axis (e.g.: 2).',
+                      mandatory=False,
+                      example='0.5')
     parser.add_option(name='-denoise',
-                      type_value='int',
-                      description='Non-local means adaptative denoising from P. Coupe et al algorithm.',
+                      type_value=[[','], 'str'],
+                      description='Non-local means adaptative denoising from P. Coupe et al. Separate with ",". Example: v=3,f=1,h=0.05.\n'
+                        'v:  similar patches in the non-local means are searched for locally, inside a cube of side 2*v+1 centered at each voxel of interest. Default: v=3\n'
+                        'f:  the size of the block to be used (2*f+1)x(2*f+1)x(2*f+1) in the blockwise non-local means implementation. Default: f=1\n'
+                        'h:  the standard deviation of rician noise in the input image, expressed as a ratio of the maximum intensity in the image. The higher, the more aggressive the denoising. Default: h=0.01',
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
@@ -146,7 +155,9 @@ def main(args = None):
     verbose = int(arguments['-v'])
 
     # Open file(s)
-    data = Image(fname_in).data  # 3d or 4d numpy array
+    im = Image(fname_in)
+    data = im.data  # 3d or 4d numpy array
+    dim = im.dim
 
     # run command
     if '-otsu' in arguments:
@@ -182,6 +193,17 @@ def main(args = None):
         data2 = get_data_or_scalar(arguments["-sub"], data)
         data_out = data - data2
 
+    elif "-laplace" in arguments:
+        sigmas = arguments["-laplace"]
+        if len(sigmas) == 1:
+            sigmas = [sigmas[0] for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.usage.generate(error='ERROR: -laplace need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        [sigmas[i] / dim[i+4] for i in range(3)]
+        # smooth data
+        data_out = laplace(data, sigmas)
+
     elif '-mul' in arguments:
         from numpy import prod
         data2 = get_data_or_scalar(arguments["-mul"], data)
@@ -213,6 +235,9 @@ def main(args = None):
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
             printv(parser.usage.generate(error='ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        [sigmas[i] / dim[i+4] for i in range(3)]
+        # smooth data
         data_out = smooth(data, sigmas)
 
     elif '-dilate' in arguments:
@@ -222,7 +247,18 @@ def main(args = None):
         data_out = erode(data, arguments['-erode'])
 
     elif '-denoise' in arguments:
-        data_out = denoise_ornlm(data)
+        # parse denoising arguments
+        v, f, h = 3, 1, 0.01  # default arguments
+        list_denoise = arguments['-denoise']
+        for i in list_denoise:
+            if 'v' in i:
+                v = int(i.split('=')[1])
+            if 'f' in i:
+                f = int(i.split('=')[1])
+            if 'h' in i:
+                h = float(i.split('=')[1])
+        data_out = denoise_ornlm(data, v, f, h)
+    # if no flag is set
     else:
         data_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
@@ -259,8 +295,8 @@ def main(args = None):
     #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
-    printv('Created file:\n--> '+str(fname_out)+'\n', verbose, 'info')
-
+    printv('\nDone! To view results, type:', verbose)
+    printv('fslview '+fname_out+' &\n', verbose, 'info')
 
 def otsu(data, nbins):
     from skimage.filters import threshold_otsu
@@ -323,12 +359,6 @@ def erode(data, radius):
     return erosion(data, selem=selem, out=None)
 
 
-def smooth(data, sigmas):
-    assert len(data.shape) == len(sigmas)
-    from scipy.ndimage.filters import gaussian_filter
-    return gaussian_filter(data, sigmas)
-
-
 def get_data(list_fname):
     """
     Get data from file names separated by ","
@@ -378,7 +408,7 @@ def concatenate_along_4th_dimension(data1, data2):
     return concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.01):
+def denoise_ornlm(data_in, v=3, f=1, h=0.05):
     from commands import getstatusoutput
     from sys import path
     # append python path for importing module
@@ -390,6 +420,27 @@ def denoise_ornlm(data_in, v=3, f=1, h=0.01):
     dat = data_in.astype(float64)
     denoised = array(ornlm(dat, v, f, max(dat)*h))
     return denoised
+
+
+def smooth(data, sigmas):
+    """
+    Smooth data by convolving Gaussian kernel
+    """
+    assert len(data.shape) == len(sigmas)
+    from scipy.ndimage.filters import gaussian_filter
+    return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
+
+
+def laplace(data, sigmas):
+    """
+    Smooth data by convolving 2nd derivative of Gaussian kernel
+    """
+    assert len(data.shape) == len(sigmas)
+    from scipy.ndimage.filters import gaussian_laplace
+    return gaussian_laplace(data.astype(float), sigmas)
+
+
+
 
 # def check_shape(data):
 #     """

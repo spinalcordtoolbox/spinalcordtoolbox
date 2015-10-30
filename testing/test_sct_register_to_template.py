@@ -28,8 +28,8 @@ def test(path_data='', parameters=''):
 
     if not parameters:
         parameters = '-i t2/t2.nii.gz -l t2/labels.nii.gz -s t2/t2_seg.nii.gz ' \
-                     '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3 ' \
-                     '-t template/'
+                     '-p step=1,type=seg,algo=slicereg,metric=MeanSquares,iter=5:step=2,type=seg,algo=bsplinesyn,iter=3,metric=MI:step=3,iter=0 ' \
+                     '-t template/ -r 0'
 
     parser = sct_register_to_template.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -47,7 +47,7 @@ def test(path_data='', parameters=''):
                   'dice_template2anat': float('nan'), 'dice_anat2template': float('nan')},
             index=[path_data])
 
-    if not os.path.isfile(dict_param_with_path['-t']):
+    if not os.path.isdir(dict_param_with_path['-t']):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
         dict_param_with_path['-t'] = path_sct + '/data/template/'
         param_with_path = parser.dictionary_to_string(dict_param_with_path)
@@ -73,10 +73,14 @@ def test(path_data='', parameters=''):
     else:
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_register_to_template_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -o ' + path_output
+    param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_register_to_template ' + param_with_path
-    status, output = sct.run(cmd, verbose)
+    output = '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
+    time_start = time.time()
+    status, o = sct.run(cmd, verbose)
+    output += o
+    duration = time.time() - time_start
 
     # if command ran without error, test integrity
     if status == 0:
@@ -112,12 +116,10 @@ def test(path_data='', parameters=''):
             status = 99
 
         # concatenate outputs
-        output = output1 + output2
+        output = output + output1 + output2
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output,
-                              'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template},
-                        index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'dice_template2anat': dice_template2anat, 'dice_anat2template': dice_anat2template, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
