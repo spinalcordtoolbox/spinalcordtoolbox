@@ -23,7 +23,7 @@ import os.path
 def test(path_data='', parameters=''):
 
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz'
+        parameters = '-i t2/t2.nii.gz -c t2/t2_seg.nii.gz -qc 0'
 
     parser = sct_straighten_spinalcord.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
