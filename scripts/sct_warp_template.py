@@ -141,7 +141,7 @@ class WarpTemplate:
             # output QC image
             im = Image(self.fname_src)
             im_wm = Image(self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz')
-            im.save_multiple_slices(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan')
+            im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan')
 
 
 # Warp labels
