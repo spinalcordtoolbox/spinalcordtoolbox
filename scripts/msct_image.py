@@ -716,7 +716,7 @@ class Image(object):
             printv(str(e), self.verbose, type='warning')
         return filename_png
 
-    def save_multiple_slices(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', verbose=1):
         from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
