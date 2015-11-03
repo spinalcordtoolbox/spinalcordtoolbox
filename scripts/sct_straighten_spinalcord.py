@@ -911,7 +911,7 @@ class SpinalCordStraightener(object):
         if qc:
             from msct_image import Image
             # filename_straightened_image_png = Image(fname_straight).saveSagittalPlan()
-            filename_straightened_image_png = Image(fname_straight).save_plan(plan='sagittal')
+            filename_straightened_image_png = Image(fname_straight).save_plane(plane='sagittal')
             sct.printv('QC output image: ' + filename_straightened_image_png + '\n', verbose, 'info')
 
 

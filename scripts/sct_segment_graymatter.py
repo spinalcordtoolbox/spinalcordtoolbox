@@ -179,7 +179,7 @@ class FullGmSegmentation:
             # output QC image
             im = Image(self.target_fname)
             im_gmseg = Image(self.param.output_path+self.res_names['gm_seg'])
-            filename_gmseg_image_png = im.save_plan(plan='axial', suffix='_gmseg_mid_axial_plan', seg=im_gmseg, thr=float(b.split(',')[0]))
+            filename_gmseg_image_png = im.save_plane(plane='axial', suffix='_gmseg_mid_axial_plan', seg=im_gmseg, thr=float(b.split(',')[0]))
             sct.printv('QC output image: ' + filename_gmseg_image_png + '\n', self.param.verbose, 'info')
 
         if self.param.remove_tmp:
