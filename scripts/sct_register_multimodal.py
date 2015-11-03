@@ -181,10 +181,11 @@ def main():
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
-                      type_value="int",
+                      type_value="multiple_choice",
                       description="just put source into destination (no optimization).",
                       mandatory=False,
-                      default_value=0)
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
