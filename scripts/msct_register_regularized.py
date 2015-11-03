@@ -33,9 +33,8 @@ from math import asin
 
 def register_seg(seg_input, seg_dest, verbose=1):
     """Slice-by-slice registration by translation of two segmentations.
-
     For each slice, we estimate the translation vector by calculating the difference of position of the two centers of
-    mass.
+    mass in voxel unit.
     The segmentations can be of different sizes but the output segmentation must be smaller than the input segmentation.
 
     input:
@@ -58,14 +57,24 @@ def register_seg(seg_input, seg_dest, verbose=1):
     sct.printv('\nGet center of mass of the input segmentation for each slice '
                '(corresponding to a slice in the output segmentation)...', verbose)  # different if size of the two seg are different
     # TODO: select only the slices corresponding to the output segmentation
+
+    # grab physical coordinates of destination origin
     coord_origin_dest = seg_dest_img.transfo_pix2phys([[0, 0, 0]])
+
+    # grab the voxel coordinates of the destination origin from the source image
     [[x_o, y_o, z_o]] = seg_input_img.transfo_phys2pix(coord_origin_dest)
+
+    # calculate center of mass for each slice of the input image
     for iz in xrange(seg_dest_data.shape[2]):
+        # starts from z_o, which is the origin of the destination image in the source image
         x_center_of_mass_input[iz], y_center_of_mass_input[iz] = ndimage.measurements.center_of_mass(array(seg_input_data[:, :, z_o + iz]))
 
+    # initialize data
     x_center_of_mass_output = [0] * seg_dest_data.shape[2]
     y_center_of_mass_output = [0] * seg_dest_data.shape[2]
-    sct.printv('\nGet center of mass of the output segmentation for each slice ...', verbose)
+
+    # calculate center of mass for each slice of the destination image
+    sct.printv('\nGet center of mass of the destination segmentation for each slice ...', verbose)
     for iz in xrange(seg_dest_data.shape[2]):
         try:
             x_center_of_mass_output[iz], y_center_of_mass_output[iz] = ndimage.measurements.center_of_mass(array(seg_dest_data[:, :, iz]))
@@ -74,6 +83,7 @@ def register_seg(seg_input, seg_dest, verbose=1):
             print 'Error on line {}'.format(sys.exc_info()[-1].tb_lineno)
             print e
 
+    # calculate displacement in voxel space
     x_displacement = [0] * seg_input_data.shape[2]
     y_displacement = [0] * seg_input_data.shape[2]
     sct.printv('\nGet displacement by voxel...', verbose)
@@ -420,8 +430,8 @@ def generate_warping_field(fname_dest, x_trans, y_trans, theta_rot=None, center_
         for i in range(nx):
             for j in range(ny):
                 for k in range(nz):
-                    data_warp[i, j, k, 0, 0] = x_trans[k]
-                    data_warp[i, j, k, 0, 1] = y_trans[k]
+                    data_warp[i, j, k, 0, 0] = px * x_trans[k]
+                    data_warp[i, j, k, 0, 1] = py * y_trans[k]
                     data_warp[i, j, k, 0, 2] = 0
     # # For rigid transforms (not optimized)
     # if theta_rot != None:
