@@ -228,11 +228,7 @@ def main():
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
-    if "-identity" in arguments:
-        identity = arguments['-identity']
-    else:
-        identity = 0
-
+    identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
