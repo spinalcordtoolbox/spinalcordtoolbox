@@ -179,7 +179,7 @@ class FullGmSegmentation:
             # output QC image
             im = Image(self.target_fname)
             im_gmseg = Image(self.param.output_path+self.res_names['gm_seg'])
-            im.save_multiple_slices(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow')
+            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow')
 
         if self.param.remove_tmp:
             sct.printv('Remove temporary folder ...', self.param.verbose, 'normal')
