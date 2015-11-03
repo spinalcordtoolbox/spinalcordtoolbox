@@ -587,40 +587,14 @@ class Image(object):
 
             return coordi_pix_list
 
-    '''
-    def saveSagittalPlan(self, format='.png'):
-        copy_rpi = Image(self)
-        copy_rpi.change_orientation('RPI')
-        nx, ny, nz, nt, px, py, pz, pt = self.dim
-        sagittal_slice = copy_rpi.data[int(round(nx/2)), :, :]
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        filename_png = copy_rpi.file_name + format
-        plt.imshow(sagittal_slice, cmap=cm.gray, interpolation='nearest')
-        plt.axis('off')
-        plt.savefig(filename_png, bbox_inches='tight')
-        return filename_png
-    '''
-
-    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0):
+    def get_slice(self, plane='sagittal', index=None, seg=None):
         """
-        Save a slice of self in the specified plan.
 
         :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
-
         :param index: index of the slice to save (if none, middle slice in the given direction/plan)
-
-        :param format: format to be saved in. default = '.png'
-
-        :param suffix: suffix to add to the image file name.
-
         :param seg: segmentation to add in transparency to the image to save. Type Image.
-
-        :param thr: threshold to apply to the segmentation
+        :return slice, slice_seg: ndarrays of the selected slices
         """
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-
         copy_rpi = Image(self)
         copy_rpi.change_orientation('RPI')
         if seg is not None:
@@ -664,6 +638,32 @@ class Image(object):
             from sct_utils import printv
             printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
 
+        return slice, slice_seg
+
+    #
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0):
+        """
+        Save a slice of self in the specified plan.
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+
+        :param format: format to be saved in. default = '.png'
+
+        :param suffix: suffix to add to the image file name.
+
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+
+        :param thr: threshold to apply to the segmentation
+
+        :return filename_png: file name of the saved image
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
+        slice, slice_seg = self.get_slice(plane=plane, index=index, seg=seg)
+
         if seg is not None:
             import matplotlib.colors as col
             slice_seg[slice_seg < thr] = 0
@@ -672,7 +672,7 @@ class Image(object):
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
             cmap_ry = col.LinearSegmentedColormap.from_list('my_cmap', [color_white, color_yellow, color_red], N=256)
 
-        filename_png = copy_rpi.file_name + suffix + format
+        filename_png = self.file_name + suffix + format
         try:
             plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
             if seg is not None:
