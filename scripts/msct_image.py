@@ -602,11 +602,11 @@ class Image(object):
         return filename_png
     '''
 
-    def save_plan(self, plan='sagittal', index=None, format='.png', suffix='', seg=None, thr=0):
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0):
         """
         Save a slice of self in the specified plan.
 
-        :param plan: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
 
         :param index: index of the slice to save (if none, middle slice in the given direction/plan)
 
@@ -628,35 +628,35 @@ class Image(object):
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         slice = None
         slice_seg = None
-        if plan == 'sagittal':
+        if plane == 'sagittal':
             if index is None:
                 slice = copy_rpi.data[int(round(nx/2)), :, :]
                 if seg is not None:
                     slice_seg = seg.data[int(round(nx/2)), :, :]
             else:
-                assert index < nx
+                assert index < nx, 'Index larger than image dimension.'
                 slice = copy_rpi.data[index, :, :]
                 if seg is not None:
                     slice_seg = seg.data[index, :, :]
 
-        elif plan == 'coronal':
+        elif plane == 'coronal':
             if index is None:
                 slice = copy_rpi.data[:, int(round(ny/2)), :]
                 if seg is not None:
                     slice_seg = seg.data[:, int(round(ny/2)), :]
             else:
-                assert index < ny
+                assert index < ny, 'Index larger than image dimension.'
                 slice = copy_rpi.data[:, index, :]
                 if seg is not None:
                     slice_seg = seg.data[:, index, :]
 
-        elif plan == 'axial' or plan == 'transverse':
+        elif plane == 'axial' or plane == 'transverse':
             if index is None:
                 slice = copy_rpi.data[:, :, int(round(nz/2))]
                 if seg is not None:
                     slice_seg = seg.data[:, :, int(round(nz/2))]
             else:
-                assert index < nz
+                assert index < nz, 'Index larger than image dimension.'
                 slice = copy_rpi.data[:, :, index]
                 if seg is not None:
                     slice_seg = seg.data[:, :, index]
@@ -673,11 +673,16 @@ class Image(object):
             cmap_ry = col.LinearSegmentedColormap.from_list('my_cmap', [color_white, color_yellow, color_red], N=256)
 
         filename_png = copy_rpi.file_name + suffix + format
-        plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
-        if seg is not None:
-            plt.imshow(slice_seg, cmap=cmap_ry, interpolation='nearest')
-        plt.axis('off')
-        plt.savefig(filename_png, bbox_inches='tight')
+        try:
+            plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
+            if seg is not None:
+                plt.imshow(slice_seg, cmap=cmap_ry, interpolation='nearest')
+            plt.axis('off')
+            plt.savefig(filename_png, bbox_inches='tight')
+        except RuntimeError, e:
+            from sct_utils import printv
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(e, self.verbose, type='warning')
         return filename_png
 
 
