@@ -682,7 +682,7 @@ class Image(object):
         except RuntimeError, e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
-            printv(e, self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
         return filename_png
 
 
