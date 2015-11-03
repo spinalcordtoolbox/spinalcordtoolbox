@@ -52,11 +52,10 @@ class Param:
         self.outSuffix  = "_reg"
         self.fname_mask = ''
         self.padding = 5
-        self.outlier_factor = 2
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '31'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '0', detect_outlier = '0'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -66,7 +65,8 @@ class Paramreg(object):
         self.smooth = smooth
         self.gradStep = gradStep
         self.poly = poly  # slicereg only
-        self.window_length = window_length
+        self.window_length = window_length  # str
+        self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -177,7 +177,8 @@ def main():
                                     "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
                                     "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
                                     "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
-                                    "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -450,9 +451,17 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicereg2d
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
-        register_slicereg2d(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=paramreg.steps[i_step_str],
-                                        fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
-                                        verbose=param.verbose, ants_registration_params=ants_registration_params)
+        register_slicereg2d(src,
+                            dest,
+                            window_length=paramreg.steps[i_step_str].window_length,
+                            paramreg=paramreg.steps[i_step_str],
+                            fname_mask=fname_mask,
+                            warp_forward_out=warp_forward_out,
+                            warp_inverse_out=warp_inverse_out,
+                            detect_outlier=paramreg.steps[i_step_str].detect_outlier,
+                            remove_temp_files=param.remove_temp_files,
+                            verbose=param.verbose,
+                            ants_registration_params=ants_registration_params)
         cmd = ('')
 
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
