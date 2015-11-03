@@ -1016,7 +1016,7 @@ def get_parser():
                       type_value="multiple_choice",
                       description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
                       mandatory=False,
-                      default_value="0",
+                      default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
                       type_value="multiple_choice",
