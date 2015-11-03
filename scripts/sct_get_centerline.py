@@ -388,7 +388,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Delete temporary files
     if remove_tmp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp, error_exit='warning')
 
     # print number of warnings
     print '\nNumber of warnings: '+str(warning_count)+' (if >10, you should probably reduce the gap and/or increase the kernel size'
