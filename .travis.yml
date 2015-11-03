@@ -39,7 +39,7 @@ before_install:
 install:
 # Install requirements
   - cd install/requirements
-  - ./requirements.sh
+  - python requirements.py
   - cd ../../
 # set PATH
   - SCT_DIR="${HOME}/build/neuropoly/spinalcordtoolbox"

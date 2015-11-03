@@ -436,6 +436,7 @@ class SpinalCordStraightener(object):
         window_length = self.window_length
         type_window = self.type_window
         crop = self.crop
+        qc = self.qc
 
         # start timer
         start_time = time.time()
@@ -904,11 +905,14 @@ class SpinalCordStraightener(object):
         elapsed_time = time.time() - start_time
         sct.printv("\nFinished! Elapsed time: " + str(int(round(elapsed_time))) + "s", verbose)
         sct.printv("\nTo view results, type:", verbose)
-        sct.printv("fslview " + fname_straight + " &\n", verbose, "info")
+        sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
 
-        from msct_image import Image
-        filename_straightened_image_png = Image(fname_straight).saveSagittalPlan()
-        sct.printv('Or take a look at this image: ' + filename_straightened_image_png)
+        # output QC image
+        if qc:
+            from msct_image import Image
+            # filename_straightened_image_png = Image(fname_straight).saveSagittalPlan()
+            filename_straightened_image_png = Image(fname_straight).save_plane(plane='sagittal')
+            sct.printv('QC output image: ' + filename_straightened_image_png + '\n', verbose, 'info')
 
 
 def get_parser():
@@ -970,13 +974,13 @@ def get_parser():
                       description="Crop option. 0: no crop, 1: crop around landmarks.",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value=1)
+                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
                       mandatory=False,
                       example=['0', '1', '2'],
-                      default_value=1)
+                      default_value='1')
 
     parser.add_option(name="-params",
                       type_value=[[','], 'str'],
@@ -994,6 +998,13 @@ def get_parser():
                                   "improve warping field of straightening. Default=150.",
                       mandatory=False,
                       example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
+
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
 
     parser.add_option(name="-cpu-nb",
                       type_value="int",
@@ -1036,6 +1047,8 @@ if __name__ == "__main__":
         sc_straight.verbose = int(arguments["-v"])
     if "-cpu-nb" in arguments:
         sc_straight.cpu_number = int(arguments["-cpu-nb"])
+    if '-qc' in arguments:
+        sc_straight.qc = int(arguments['-qc'])
 
     if "-params" in arguments:
         params_user = arguments['-params']
