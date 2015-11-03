@@ -185,6 +185,14 @@ class Transform:
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             from sct_convert import convert
             convert(fname_src, path_tmp+'data.nii')
+            sct.run('cp '+fname_dest+' '+path_tmp+file_dest+ext_dest)
+            fname_warp_list_tmp = []
+            for fname_warp in fname_warp_list:
+                path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
+                sct.run('cp '+fname_warp+' '+path_tmp+file_warp+ext_warp)
+                fname_warp_list_tmp.append(file_warp+ext_warp)
+            fname_warp_list_invert_tmp = fname_warp_list_tmp[::-1]
+
             os.chdir(path_tmp)
             # split along T dimension
             sct.printv('\nSplit along T dimension...', verbose)
@@ -199,7 +207,7 @@ class Transform:
             for it in range(nt):
                 file_data_split = 'data_T'+str(it).zfill(4)+'.nii'
                 file_data_split_reg = 'data_reg_T'+str(it).zfill(4)+'.nii'
-                sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert)+' -r '+fname_dest+interp, verbose)
+                sct.run('isct_antsApplyTransforms -d 3 -i '+file_data_split+' -o '+file_data_split_reg+' -t '+' '.join(fname_warp_list_invert_tmp)+' -r '+file_dest+ext_dest+interp, verbose)
 
             # Merge files back
             sct.printv('\nMerge file back...', verbose)
@@ -215,7 +223,7 @@ class Transform:
             # Delete temporary folder if specified
             if int(remove_temp_files):
                 sct.printv('\nRemove temporary files...', verbose)
-                sct.run('rm -rf '+path_tmp, verbose)
+                sct.run('rm -rf '+path_tmp, verbose, error_exit='warning')
 
         # 2. crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]

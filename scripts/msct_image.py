@@ -587,6 +587,7 @@ class Image(object):
 
             return coordi_pix_list
 
+    '''
     def saveSagittalPlan(self, format='.png'):
         copy_rpi = Image(self)
         copy_rpi.change_orientation('RPI')
@@ -599,7 +600,90 @@ class Image(object):
         plt.axis('off')
         plt.savefig(filename_png, bbox_inches='tight')
         return filename_png
+    '''
 
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0):
+        """
+        Save a slice of self in the specified plan.
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+
+        :param format: format to be saved in. default = '.png'
+
+        :param suffix: suffix to add to the image file name.
+
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+
+        :param thr: threshold to apply to the segmentation
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+
+        copy_rpi = Image(self)
+        copy_rpi.change_orientation('RPI')
+        if seg is not None:
+            seg.change_orientation('RPI')
+        nx, ny, nz, nt, px, py, pz, pt = self.dim
+        slice = None
+        slice_seg = None
+        if plane == 'sagittal':
+            if index is None:
+                slice = copy_rpi.data[int(round(nx/2)), :, :]
+                if seg is not None:
+                    slice_seg = seg.data[int(round(nx/2)), :, :]
+            else:
+                assert index < nx, 'Index larger than image dimension.'
+                slice = copy_rpi.data[index, :, :]
+                if seg is not None:
+                    slice_seg = seg.data[index, :, :]
+
+        elif plane == 'coronal':
+            if index is None:
+                slice = copy_rpi.data[:, int(round(ny/2)), :]
+                if seg is not None:
+                    slice_seg = seg.data[:, int(round(ny/2)), :]
+            else:
+                assert index < ny, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, index, :]
+                if seg is not None:
+                    slice_seg = seg.data[:, index, :]
+
+        elif plane == 'axial' or plane == 'transverse':
+            if index is None:
+                slice = copy_rpi.data[:, :, int(round(nz/2))]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, int(round(nz/2))]
+            else:
+                assert index < nz, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, :, index]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, index]
+        else:
+            from sct_utils import printv
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+
+        if seg is not None:
+            import matplotlib.colors as col
+            slice_seg[slice_seg < thr] = 0
+            color_red = col.colorConverter.to_rgba('red',alpha=0.7)
+            color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
+            color_white = col.colorConverter.to_rgba('white', alpha=0.0)
+            cmap_ry = col.LinearSegmentedColormap.from_list('my_cmap', [color_white, color_yellow, color_red], N=256)
+
+        filename_png = copy_rpi.file_name + suffix + format
+        try:
+            plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
+            if seg is not None:
+                plt.imshow(slice_seg, cmap=cmap_ry, interpolation='nearest')
+            plt.axis('off')
+            plt.savefig(filename_png, bbox_inches='tight')
+        except RuntimeError, e:
+            from sct_utils import printv
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
+        return filename_png
 
 
 def find_zmin_zmax(fname):
