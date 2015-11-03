@@ -35,6 +35,7 @@ def register_slicereg2d(fname_source,
     # Calculate displacement
     current_algo = paramreg.algo
     if paramreg.type == 'seg':
+        # calculate translation of center of mass between source and destination in voxel space
         res_reg = register_seg(fname_source, fname_dest, verbose)
 
     elif paramreg.type == 'im':
