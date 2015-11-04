@@ -340,7 +340,7 @@ class ProcessLabels(object):
     def labelize_from_disks(self):
         """
         This function creates an image with regions labelized depending on values from reference.
-        Typically, user inputs an segmentation image, and labels with disks position, and this function produces
+        Typically, user inputs a segmentation image, and labels with disks position, and this function produces
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
@@ -626,6 +626,8 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param_default = Param()
+
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Utility function for labels. Choose your process.')

@@ -53,6 +53,7 @@ class SegmentationParam:
         self.z_regularisation = False
         self.res_type = 'prob'
         self.dev = False
+        self.qc = 0
         self.verbose = 1
         self.remove_tmp = 1
 
@@ -75,6 +76,7 @@ class SegmentationParam:
         s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
         s += 'z_regularisation: ' + str(self.z_regularisation) + '\n'
         s += 'res_type: ' + str(self.res_type) + '\n'
+        s += 'qc: ' + str(self.qc) + '\n'
         s += 'verbose: ' + str(self.verbose) + '\n'
         s += 'remove_tmp: ' + str(self.remove_tmp) + '\n'
 

@@ -801,7 +801,7 @@ class Installer:
         print "\nInstall dependences... Depending on your internet connection, this may take several minutes."
         current_dir = os.getcwd()
         os.chdir(self.SCT_DIR+"/install/requirements")
-        cmd = self.issudo + "bash requirements.sh"
+        cmd = "python requirements.py"
         status, output = runProcess(cmd)
         # status, output = commands.getstatusoutput(cmd)
         if status != 0:

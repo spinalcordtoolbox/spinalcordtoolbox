@@ -28,7 +28,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -l mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz'
+        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -l mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -48,7 +48,7 @@ def test(path_data, parameters=''):
     else:
         subject_folder = subject_folder[-1]
     path_output = sct.slash_at_the_end('sct_segment_graymatter_' + subject_folder + '_' + time.strftime("%y%m%d%H%M%S") + '_'+str(random.randint(1, 1000000)), slash=1)
-    param_with_path += ' -o ' + path_output
+    param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_segment_graymatter ' + param_with_path
     status, output = sct.run(cmd, 0)
@@ -79,7 +79,7 @@ def test(path_data, parameters=''):
             n_slice, dc = line.split(' ')
             # remove \n from dice result
             dc = dc[:-1]
-            if dc == '0':
+            if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:
                 gm_dice.append(float(dc))
