@@ -737,14 +737,16 @@ class Image(object):
             gap = max_n_slices/n_slices
             index_list = [((i+1)*gap)-1 for i in range(n_slices)]
         index_list.sort()
-
-        filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format)
-        info_str = 'QC output image: ' + filename_image_png
-        if seg is not None:
-            filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format)
-            info_str += ' & ' + filename_gmseg_image_png
-
-        printv(info_str, verbose, 'info')
+        try:
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format)
+            info_str = 'QC output image: ' + filename_image_png
+            if seg is not None:
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format)
+                info_str += ' & ' + filename_gmseg_image_png
+            printv(info_str, verbose, 'info')
+        except RuntimeError, e:
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
 
 
 
