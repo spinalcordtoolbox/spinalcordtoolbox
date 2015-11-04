@@ -74,7 +74,7 @@ cd ..
 # ----------
 cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
-sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -p step=1,iter=0 -x nn
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline -o t2_seg_reg_centerline.nii.gz
 # segment mt1
