@@ -28,7 +28,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -l mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz'
+        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -l mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
