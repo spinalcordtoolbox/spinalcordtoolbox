@@ -47,12 +47,13 @@ class Param:
         self.list_labels_nn = ['MNI-Poly-AMU_level.nii.gz', 'MNI-Poly-AMU_CSF.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.list_labels_spline = ['']  # list of files for which spline interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
+        self.qc = 1
 
 
 # MAIN
 # ==========================================================================================
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
 
         # Initialization
         self.fname_src = ''
@@ -66,6 +67,7 @@ class WarpTemplate:
         self.warp_atlas = param.warp_atlas
         self.warp_spinal_levels = param.warp_spinal_levels
         self.verbose = param.verbose
+        self.qc = param.qc
         start_time = time.time()
 
 
@@ -85,6 +87,7 @@ class WarpTemplate:
             self.folder_out = folder_out
             self.path_template = path_template
             self.verbose = verbose
+            self.qc = qc
 
         # Check file existence
         sct.printv('\nCheck file existence...', self.verbose)
@@ -133,6 +136,12 @@ class WarpTemplate:
         sct.printv('\nDone! To view results, type:', self.verbose)
         sct.printv('fslview '+self.fname_src+' '+self.folder_out+self.folder_template+'MNI-Poly-AMU_T2.nii.gz -b 0,4000 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &\n', self.verbose, 'info')
 
+        if self.qc:
+            from msct_image import Image
+            # output QC image
+            im = Image(self.fname_src)
+            im_wm = Image(self.folder_out+self.folder_template+'MNI-Poly-AMU_WM.nii.gz')
+            im.save_quality_control(plane='axial', n_slices=4, seg=im_wm, thr=0.5, cmap_col='blue-cyan')
 
 
 # Warp labels
@@ -215,6 +224,12 @@ if __name__ == "__main__":
                       description="Specify path to template data.",
                       mandatory=False,
                       default_value=str(param_default.path_template))
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="""Verbose.""",
@@ -231,6 +246,7 @@ if __name__ == "__main__":
     folder_out = arguments["-o"]
     path_template = arguments["-t"]
     verbose = int(arguments["-v"])
+    qc = int(arguments["-qc"])
 
     # call main function
-    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
+    WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc)

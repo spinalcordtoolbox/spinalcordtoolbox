@@ -55,7 +55,7 @@ class Param:
 
 
 # get default parameters
-step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
+step1 = Paramreg(step='1', type='seg', algo='slicereg2d_translation', metric='MeanSquares', iter='10')
 step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='3')
 step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
 paramreg = ParamregMultiStep([step1, step2, step3])
@@ -283,7 +283,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')

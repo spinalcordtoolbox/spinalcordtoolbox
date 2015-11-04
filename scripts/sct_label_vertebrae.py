@@ -55,13 +55,18 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
-#    parser.add_option(name='-param',
-#                      type_value=[',', str],
-#                      description='Parameters for labeling vertebrae. Separate with ",":\n'
-#                      'laplacian: Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.'
-#                      mandatory=False,
-#                      default_value='laplacian=1',
-#                      example='laplacian=0')
+    parser.add_option(name="-denoise",
+                      type_value="multiple_choice",
+                      description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
+    parser.add_option(name="-laplacian",
+                      type_value="multiple_choice",
+                      description="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -109,6 +114,8 @@ def main(args=None):
         initcenter = arguments['-initcenter']
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
+    denoise = int(arguments['-denoise'])
+    laplacian = int(arguments['-laplacian'])
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
@@ -140,7 +147,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0,bspline_meshsize=3x3x5')  # here using all_labels=0 because of issue #610
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0,bspline_meshsize=3x3x5 -qc 0')  # here using all_labels=0 because of issue #610
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -159,12 +166,14 @@ def main(args=None):
     printv('.. '+str(init_disc), verbose)
 
     # denoise data
-    printv('\nDenoise data...', verbose)
-    run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
+    if denoise:
+        printv('\nDenoise data...', verbose)
+        run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
 
     # apply laplacian filtering
-    printv('\nApply Laplacian filter...', verbose)
-    run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
+    if laplacian:
+        printv('\nApply Laplacian filter...', verbose)
+        run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
 
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
@@ -204,7 +213,7 @@ def main(args=None):
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
-    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
     size_IS = 7  # window size in RL direction (=z) in mm
