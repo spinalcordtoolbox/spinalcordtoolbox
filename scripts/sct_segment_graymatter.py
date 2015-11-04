@@ -467,16 +467,16 @@ def get_parser():
                       default_value='1')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
-                      description="""Remove temporary files.""",
+                      description='Remove temporary files.',
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
-                      type_value="int",
+                      type_value='multiple_choice',
                       description="verbose: 0 = nothing, 1 = classic, 2 = expended",
                       mandatory=False,
-                      default_value=0,
-                      example='1')
+                      example=['0', '1', '2'],
+                      default_value='1')
 
     return parser
 
@@ -526,12 +526,9 @@ if __name__ == "__main__":
             param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
-        if "-v" in arguments:
-            param.verbose = arguments["-v"]
-        if "-qc" in arguments:
-            param.qc = arguments["-qc"]
-        if "-r" in arguments:
-            param.remove_tmp = arguments["-r"]
+        param.verbose = int(arguments["-v"])
+        param.qc = int(arguments["-qc"])
+        param.remove_tmp = int(arguments["-r"])
 
         if input_level_fname is None and input_t2_data is None:
             param.use_levels = False
