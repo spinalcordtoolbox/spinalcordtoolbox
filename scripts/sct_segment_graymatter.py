@@ -175,6 +175,12 @@ class FullGmSegmentation:
             b = '0.3,1'
         sct.printv('fslview ' + self.target_fname + ' '+self.param.output_path+self.res_names['wm_seg']+' -l '+wm_col+' -t 0.4 -b '+b+' '+self.param.output_path+self.res_names['gm_seg']+' -l '+gm_col+' -t 0.4  -b '+b+' &', param.verbose, 'info')
 
+        if self.param.qc:
+            # output QC image
+            im = Image(self.target_fname)
+            im_gmseg = Image(self.param.output_path+self.res_names['gm_seg'])
+            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow')
+
         if self.param.remove_tmp:
             sct.printv('Remove temporary folder ...', self.param.verbose, 'normal')
             sct.run('rm -rf '+self.tmp_dir)
@@ -235,9 +241,6 @@ class FullGmSegmentation:
             else:
                 bin = False
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
-            res_im_original_size = Image(old_res_name)
-            res_im_original_size.hdr = self.preprocessed.original_header
-            res_im_original_size.save()
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
@@ -444,7 +447,7 @@ def get_parser():
     parser.add_option(name="-ratio",
                       description="Compute GM/WM ratio",
                       mandatory=False)
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
@@ -456,6 +459,12 @@ def get_parser():
                       mandatory=False,
                       example='manual_gm_seg.nii.gz')
     parser.usage.addSection('MISC')
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -494,7 +503,7 @@ if __name__ == "__main__":
         if "-model" in arguments:
             param.path_model = arguments["-model"]
         param.todo_model = 'load'
-        param.output_path = sct.slash_at_the_end(arguments["-o"], slash=1)
+        param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
@@ -519,6 +528,8 @@ if __name__ == "__main__":
             input_ref_gm_seg = arguments["-ref"]
         if "-v" in arguments:
             param.verbose = arguments["-v"]
+        if "-qc" in arguments:
+            param.qc = arguments["-qc"]
         if "-r" in arguments:
             param.remove_tmp = arguments["-r"]
 
