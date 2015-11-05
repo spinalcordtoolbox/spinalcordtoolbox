@@ -894,7 +894,7 @@ OPTIONAL ARGUMENTS
                         cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
                         Default = all labels.
                         You can also select labels using 1:3 to get labels 1,2,3.
-                        Following shortcuts are also available:
+                        Following shortcuts are also available for the folder label "atlas/":
                         -l sc: extract in the spinal cord cord
                         -l wm: extract in the white matter
                         -l gm: extract in the gray matter
