@@ -95,6 +95,8 @@ def main():
     ml_clusters = param.ml_clusters
     adv_param = param.adv_param
     adv_param_user = ''
+    clustered_labels = []
+    matching_cluster_labels = []
 
     # Parameters for debug mode
     if param.debug:
