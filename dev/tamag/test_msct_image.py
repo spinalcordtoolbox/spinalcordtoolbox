@@ -18,7 +18,7 @@ PATH_INFO = '/Users/tamag/data/data_template/info/template_subjects/T1'  # to be
 import sct_utils as sct
 from numpy import asarray, array
 from msct_smooth import smoothing_window
-from msct_register_reg import register_images,register_seg,generate_warping_field
+from msct_register_regularized import register_images,register_seg,generate_warping_field
 from msct_image import Image
 from scipy.ndimage.filters import laplace
 
@@ -74,7 +74,3 @@ bla
 #
 # img_f = nibabel.Nifti1Image(data_f, None, hdr_3)
 # nibabel.save(img_f, "rehauss.nii.gz")
-
-
-
-

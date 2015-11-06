@@ -52,11 +52,10 @@ class Param:
         self.outSuffix  = "_reg"
         self.fname_mask = ''
         self.padding = 5
-        self.outlier_factor = 2
 
 # Parameters for registration
 class Paramreg(object):
-    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '31'):
+    def __init__(self, step='1', type='im', algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0', gradStep='0.5', poly='3', window_length = '0', detect_outlier = '0'):
         self.step = step
         self.type = type
         self.algo = algo
@@ -66,7 +65,8 @@ class Paramreg(object):
         self.smooth = smooth
         self.gradStep = gradStep
         self.poly = poly  # slicereg only
-        self.window_length = window_length
+        self.window_length = window_length  # str
+        self.detect_outlier = detect_outlier  # str. detect outliers, for methods slicereg2d_xx
 
     # update constructor with user's parameters
     def update(self, paramreg_user):
@@ -177,9 +177,16 @@ def main():
                                     "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
                                     "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
                                     "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
-                                    "window_length: <int> size of hanning window for smoothing along z for slicereg2d_pointwise, slicereg2d_translation, slicereg2d_rigid. Default="+paramreg.steps['1'].window_length, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
+    parser.add_option(name="-identity",
+                      type_value="multiple_choice",
+                      description="just put source into destination (no optimization).",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-z",
                       type_value="int",
                       description="""size of z-padding to enable deformation at edges when using SyN.""",
@@ -222,20 +229,10 @@ def main():
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
-
+    identity = int(arguments['-identity'])
     interp = arguments['-x']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
-
-    # Parameters for debug mode
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
-        fname_dest = path_sct_data+'/mt/mt1.nii.gz'
-        fname_src = path_sct_data+'/t2/t2.nii.gz'
-        param_user = '10,syn,0.5,MI'
-        remove_temp_files = '0'
-        verbose = 1
 
     # print arguments
     print '\nInput parameters:'
@@ -256,13 +253,14 @@ def main():
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_if_3d(fname_src)
-    sct.check_if_3d(fname_dest)
+    # sct.printv('\nCheck if input data are 3D...', verbose)
+    # sct.check_if_3d(fname_src)
+    # sct.check_if_3d(fname_dest)
 
     # check if destination data is RPI
     sct.printv('\nCheck if destination data is RPI...', verbose)
-    sct.check_if_rpi(fname_dest)
+    if not identity:
+        sct.check_if_rpi(fname_dest)
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -296,6 +294,11 @@ def main():
 
     # go to tmp folder
     os.chdir(path_tmp)
+
+    if identity:
+        # overwrite paramreg and only do one identity transformation
+        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramreg = ParamregMultiStep([step0])
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
@@ -448,9 +451,17 @@ def register(src, dest, paramreg, param, i_step_str):
         from msct_register import register_slicereg2d
         warp_forward_out = 'step'+i_step_str + 'Warp.nii.gz'
         warp_inverse_out = 'step'+i_step_str + 'InverseWarp.nii.gz'
-        register_slicereg2d(src, dest, window_length=paramreg.steps[i_step_str].window_length, paramreg=paramreg.steps[i_step_str],
-                                        fname_mask=fname_mask, warp_forward_out=warp_forward_out, warp_inverse_out=warp_inverse_out, factor=param.outlier_factor, remove_temp_files=param.remove_temp_files,
-                                        verbose=param.verbose, ants_registration_params=ants_registration_params)
+        register_slicereg2d(src,
+                            dest,
+                            window_length=paramreg.steps[i_step_str].window_length,
+                            paramreg=paramreg.steps[i_step_str],
+                            fname_mask=fname_mask,
+                            warp_forward_out=warp_forward_out,
+                            warp_inverse_out=warp_inverse_out,
+                            detect_outlier=paramreg.steps[i_step_str].detect_outlier,
+                            remove_temp_files=param.remove_temp_files,
+                            verbose=param.verbose,
+                            ants_registration_params=ants_registration_params)
         cmd = ('')
 
     elif paramreg.steps[i_step_str].algo.lower() in ants_registration_params:
