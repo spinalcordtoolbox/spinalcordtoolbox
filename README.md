@@ -1,5 +1,5 @@
 
-# Spinal Cord Toolbox [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
+# Spinal Cord Toolbox [![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox) [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
 
 
 Comprehensive and open-source library of analysis tools for MRI of the spinal cord.
@@ -30,9 +30,6 @@ Comprehensive and open-source library of analysis tools for MRI of the spinal co
 #### Registration
 - [De Leener et al. Template-based analysis of multi-parametric MRI data with the Spinal Cord Toolbox. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/deleener_ismrm15_sct.pdf) 
 - [Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc. ISMRM, Toronto, Canada 2015](https://dl.dropboxusercontent.com/u/20592661/publications/cohenadad_ismrm15_slicereg.pdf)
-
-## Statistics
-[![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
 
 ## License
 
