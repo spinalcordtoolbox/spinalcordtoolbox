@@ -22,9 +22,10 @@ import sys
 import getopt
 from commands import getstatusoutput
 
- # get path of the toolbox
+# Get path of the toolbox
 status, path_sct = getstatusoutput('echo $SCT_DIR')
-#print path_sct
+# Append path that contains scripts, to be able to load modules
+sys.path.append(path_sct + '/scripts')
 
 import sct_utils as sct
 import os
@@ -34,7 +35,8 @@ def main():
     #Initialization
     fname = ''
     landmarks_native = ''
-    landmarks_template = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
+    #landmarks_template = path_sct + '/dev/template_creation/template_landmarks-mm.nii.gz'
+    landmarks_template = path_sct + '/dev/template_creation/landmark_native.nii.gz'
     reference = path_sct + '/dev/template_creation/template_shape.nii.gz'
     verbose = param.verbose
     interpolation_method = 'spline'
@@ -47,13 +49,13 @@ def main():
         if opt == '-h':
             usage()
         elif opt in ("-i"):
-            fname = arg   
+            fname = arg
         elif opt in ("-n"):
             landmarks_native = arg
         elif opt in ("-t"):
             landmarks_template = arg
         elif opt in ("-R"):
-            reference = arg                
+            reference = arg
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-a'):
@@ -62,18 +64,18 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname == '' :
         usage()
-    
+
     # check existence of input files
     print'\nCheck if file exists ...'
-    
+
     sct.check_file_exist(fname)
     sct.check_file_exist(landmarks_native)
     sct.check_file_exist(landmarks_template)
     sct.check_file_exist(reference)
-    
+
     path_input, file_input, ext_input = sct.extract_fname(fname)
-    
-        
+
+
     output_name = path_input + file_input + '_2temp' + ext_input
     print output_name
     transfo = 'native2temp.txt'
@@ -88,15 +90,15 @@ def main():
 
     print '\nEstimate rigid transformation between paired landmarks...'
     sct.run('isct_ANTSUseLandmarkImagesToGetAffineTransform ' + landmarks_template + ' '+ landmarks_native + ' affine ' + transfo)
-    
+
     # Apply rigid transformation
     print '\nApply affine transformation to native landmarks...'
     sct.run('sct_apply_transfo -i ' + fname + ' -o ' + output_name + ' -d ' + reference + ' -w ' + transfo +' -x ' + interpolation_method)
     # sct.run('WarpImageMultiTransform 3 ' + fname + ' ' + output_name + ' -R ' + reference + ' ' + transfo)
-    
+
     print '\nFile created : ' + output_name
-  
-    
+
+
 def usage():
     print """
 """+os.path.basename(__file__)+"""
@@ -116,7 +118,7 @@ MANDATORY ARGUMENTS
   -n <anatomical_landmarks> landmarks in native space. See sct_create_cross.py
   -t <template_landmarks>   landmarks in template_space. See sct_create_cross.py
   -R <reference>            Reference image. Empty template image
-  
+
 OPTIONAL ARGUMENTS
   -v {0,1}                   verbose. Default="""+str(param.verbose)+"""
   -a {nn, linear, spline}    interpolation method. Default=spline.
