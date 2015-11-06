@@ -24,6 +24,7 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -225,7 +226,7 @@ def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
     im_out.setFileName(im_out.file_name+'_pad'+im_out.ext)
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im_out.hdr.get_best_affine(), [-padding_x, -padding_y, -padding_z, 1])
+    new_origin = dot(im_out.hdr.get_qform(), [-padding_x, -padding_y, -padding_z, 1])
 
     im_out.hdr.structarr['qoffset_x'] = new_origin[0]
     im_out.hdr.structarr['qoffset_y'] = new_origin[1]
