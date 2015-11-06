@@ -153,7 +153,8 @@ def main():
         data_labels_input = file_labels_input.get_data()
         data_labels_middle = copy(data_labels_input)
         data_labels_middle *= 0
-        nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(landmark)
+        from msct_image import Image
+        nx, ny, nz, nt, px, py, pz, pt = Image(landmark).dim
         X,Y,Z = data_labels_input.nonzero()
         x_middle = int(round(nx/2.0))
         y_middle = int(round(ny/2.0))
@@ -177,7 +178,7 @@ def main():
 
 
         #estimate Bspline transform to register to template
-        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 40*40*1 2 5 1')
+        sct.run('isct_ANTSUseLandmarkImagesToGetBSplineDisplacementField labels_template_middle_xy.nii.gz labels_input_middle_xy.nii.gz '+ warping+' 40x40x1 5 5 0')
 
         # select centerline of warping field according to z and extend it
         sct.run('isct_c3d -mcs '+warping+' -oo warp_vecx.nii.gz warp_vecy.nii.gz warp_vecz.nii.gz')
