@@ -268,6 +268,9 @@ def main():
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
+    data[np.isinf(data)] = 0.0
+    data[np.isnan(data)] = 0.0
+    data[np.isposinf(data)] = np.nanmax(data)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
