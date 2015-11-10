@@ -1,4 +1,4 @@
-function sct_cropXY(data_file,varargin)
+function [fslroi_input,minX,maxX,minY,maxY,minZ,maxZ]=sct_cropXY(data_file,varargin)
 %sct_cropXY(data_file [,method,param])
 % EXAMPLES:
 % sct_cropXY data_file.nii
@@ -166,6 +166,7 @@ switch (crop_method)
         if crop_margin < 3, margin=15; else margin = crop_margin; end % crop size around centerline
         
         fname_datacrop = [data_path,data_file,'_crop'];
+        minX=dims(1)/2-margin; maxX=dims(1)/2+margin; minY=dims(2)/2-margin; maxY=dims(2)/2+margin; minZ=0; maxZ=dims(3);
         cmd = [fsloutput,'fslroi ',fname_data,' ',fname_datacrop,' ',num2str(dims(1)/2-margin),' ',num2str(2*margin),' ',num2str(dims(2)/2-margin),' ',num2str(2*margin),' 0 -1'];
         disp(['>> ',cmd]);
         [status result] = unix(cmd); % run UNIX command
@@ -217,7 +218,7 @@ switch (crop_method)
         
         fname_datacrop = [data_path,data_file,'_crop'];
         
-        centerline = sct_get_centerline([file_data_1 '.nii']);
+        centerline = sct_get_centerline_manual([file_data_1 '.nii']);
         
         if crop_margin < 3, margin=15; else margin = crop_margin; end % crop size around centerline
         minX = min(centerline(:,1))- margin;
@@ -260,3 +261,5 @@ switch (crop_method)
         disp(['-----------------------------------------------'])
         error(['croping method ' crop_method ' isn''t correct'])
 end
+
+fslroi_input = [minX maxX-minX minY maxY-minY minZ maxZ-minZ];
