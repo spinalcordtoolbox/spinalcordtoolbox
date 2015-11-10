@@ -105,7 +105,14 @@ def main():
         os_running = 'osx'
     elif (platform_running.find('linux') != -1):
         os_running = 'linux'
-    print '  '+os_running+' ('+platform.platform()+')'
+    print '.. '+os_running+' ('+platform.platform()+')'
+
+    # Check number of CPU cores
+    print 'Check number of CPU cores...'
+    from multiprocessing import cpu_count
+    print '.. Available: ' + str(cpu_count())
+    status, output = sct.run('echo $ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0)
+    print '.. Used by SCT: ' + output
 
     # check RAM
     print 'Check RAM... '
@@ -113,19 +120,19 @@ def main():
 
     # check installation packages
     print 'Check which Python is running...'
-    print '  '+sys.executable
+    print '.. '+sys.executable
 
     # get path of the toolbox
-    print 'Check path of SCT...'
+    print 'Check SCT path...'
     status, output = sct.run('echo $SCT_DIR', verbose)
     path_sct = output
-    print '  '+path_sct
+    print '.. '+path_sct
 
     # fetch version of the toolbox
-    print 'Fetch version of the Spinal Cord Toolbox... '
+    print 'Check SCT version... '
     with open (path_sct+"/version.txt", "r") as myfile:
         version_sct = myfile.read().replace('\n', '')
-    print "  version: "+version_sct
+    print ".. "+version_sct
 
     # loop across python packages -- CONDA
     version_requirements = get_version_requirements()
