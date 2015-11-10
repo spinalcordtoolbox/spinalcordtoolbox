@@ -175,6 +175,12 @@ class FullGmSegmentation:
             b = '0.3,1'
         sct.printv('fslview ' + self.target_fname + ' '+self.param.output_path+self.res_names['wm_seg']+' -l '+wm_col+' -t 0.4 -b '+b+' '+self.param.output_path+self.res_names['gm_seg']+' -l '+gm_col+' -t 0.4  -b '+b+' &', param.verbose, 'info')
 
+        if self.param.qc:
+            # output QC image
+            im = Image(self.target_fname)
+            im_gmseg = Image(self.param.output_path+self.res_names['gm_seg'])
+            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow')
+
         if self.param.remove_tmp:
             sct.printv('Remove temporary folder ...', self.param.verbose, 'normal')
             sct.run('rm -rf '+self.tmp_dir)
@@ -206,7 +212,7 @@ class FullGmSegmentation:
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
         if compute_ratio:
-            self.ratio_name = self.compute_ratio()
+            self.ratio_name = self.compute_ratio(type=compute_ratio)
 
         os.chdir('..')
 
@@ -235,9 +241,6 @@ class FullGmSegmentation:
             else:
                 bin = False
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
-            res_im_original_size = Image(old_res_name)
-            res_im_original_size.hdr = self.preprocessed.original_header
-            res_im_original_size.save()
 
             if self.param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
@@ -251,10 +254,17 @@ class FullGmSegmentation:
         self.res_names['corrected_wm_seg'] = tmp_res_names[2]
 
     # ------------------------------------------------------------------------------------------------------------------
-    def compute_ratio(self):
+    def compute_ratio(self, type='slice'):
+        from numpy import mean, nonzero
+        from math import isnan
         ratio_dir =  'ratio/'
         sct.run('mkdir '+ratio_dir)
-
+        if type == 'level':
+            assert self.preprocessed.level_fname is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
+            levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.level_fname).data]
+            levels_ratio = {}
+            for l in levels:
+                levels_ratio[l] = []
         gm_seg = 'res_gmseg.nii.gz'
         wm_seg = 'res_wmseg.nii.gz'
         sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
@@ -281,11 +291,18 @@ class FullGmSegmentation:
         gm_csa.close()
         wm_csa.close()
 
+        ratio.write(type+' #, ratio GM/WM \n')
         for gm_line, wm_line in zip(gm_lines, wm_lines):
             i, gm_area = gm_line.split(',')
             j, wm_area = wm_line.split(',')
             assert i == j
-            ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
+            if type == 'level':
+                levels_ratio[levels[int(i)]].append(float(gm_area)/float(wm_area))
+            else:
+                ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
+        if type == 'level':
+            for l, ratio_list in sorted(levels_ratio.items()):
+                ratio.write(str(l)+','+str(mean(ratio_list))+'\n')
 
         ratio.close()
         os.chdir('..')
@@ -442,9 +459,12 @@ def get_parser():
                       default_value='prob',
                       example=['binary', 'prob'])
     parser.add_option(name="-ratio",
-                      description="Compute GM/WM ratio",
-                      mandatory=False)
-    parser.add_option(name="-o",
+                      type_value='multiple_choice',
+                      description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', 'slice', 'level'])
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
                       mandatory=False,
@@ -456,18 +476,24 @@ def get_parser():
                       mandatory=False,
                       example='manual_gm_seg.nii.gz')
     parser.usage.addSection('MISC')
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
     parser.add_option(name="-r",
                       type_value="multiple_choice",
-                      description="""Remove temporary files.""",
+                      description='Remove temporary files.',
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
     parser.add_option(name="-v",
-                      type_value="int",
+                      type_value='multiple_choice',
                       description="verbose: 0 = nothing, 1 = classic, 2 = expended",
                       mandatory=False,
-                      default_value=0,
-                      example='1')
+                      example=['0', '1', '2'],
+                      default_value='1')
 
     return parser
 
@@ -494,7 +520,7 @@ if __name__ == "__main__":
         if "-model" in arguments:
             param.path_model = arguments["-model"]
         param.todo_model = 'load'
-        param.output_path = sct.slash_at_the_end(arguments["-o"], slash=1)
+        param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
@@ -512,15 +538,17 @@ if __name__ == "__main__":
             param.target_means = arguments["-means"]
 
         if "-ratio" in arguments:
-            compute_ratio = True
+            if arguments["-ratio"] == '0':
+                compute_ratio = False
+            else:
+                compute_ratio = arguments["-ratio"]
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
-        if "-v" in arguments:
-            param.verbose = arguments["-v"]
-        if "-r" in arguments:
-            param.remove_tmp = arguments["-r"]
+        param.verbose = int(arguments["-v"])
+        param.qc = int(arguments["-qc"])
+        param.remove_tmp = int(arguments["-r"])
 
         if input_level_fname is None and input_t2_data is None:
             param.use_levels = False

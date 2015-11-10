@@ -359,7 +359,7 @@ class SpinalCordStraightener(object):
         self.cpu_number = None
         self.results_landmarks_curved = []
 
-        self.bspline_meshsize = '5x5x10'
+        self.bspline_meshsize = '5x5x10'  # JULIEN
         self.bspline_numberOfLevels = '3'
         self.bspline_order = '3'
         self.all_labels = 1
@@ -436,6 +436,7 @@ class SpinalCordStraightener(object):
         window_length = self.window_length
         type_window = self.type_window
         crop = self.crop
+        qc = self.qc
 
         # start timer
         start_time = time.time()
@@ -480,12 +481,15 @@ class SpinalCordStraightener(object):
         os.chdir(path_tmp)
 
         try:
-            # resample data to 1mm isotropic
-            sct.printv('\nResample data to 1mm isotropic...', verbose)
-            # fname_anat_resampled = file_anat + "_resampled.nii.gz"
-            sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
-            # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
-            sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
+            # JULIEN
+            sct.run('cp data.nii data_1mm.nii')
+            sct.run('cp centerline.nii.gz centerline_1mm.nii.gz')
+            # # resample data to 1mm isotropic
+            # sct.printv('\nResample data to 1mm isotropic...', verbose)
+            # # fname_anat_resampled = file_anat + "_resampled.nii.gz"
+            # sct.run('sct_resample -i data.nii -mm 1.0x1.0x1.0 -x linear -o data_1mm.nii')
+            # # fname_centerline_resampled = file_centerline + "_resampled.nii.gz"
+            # sct.run('sct_resample -i centerline.nii.gz -mm 1.0x1.0x1.0 -x linear -o centerline_1mm.nii.gz')
 
             # Change orientation of the input centerline into RPI
             sct.printv("\nOrient centerline to RPI orientation...", verbose)
@@ -659,21 +663,27 @@ class SpinalCordStraightener(object):
             for index in range(0, len(landmark_curved)):
                 x, y, z = int(round(landmark_curved[index].x)), int(round(landmark_curved[index].y)), \
                           int(round(landmark_curved[index].z))
-                # attribute landmark_value to the voxel
-                data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
 
-                # # attribute landmark_value to the voxel and its neighbours
-                # data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                # z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
+                # attribute landmark_value to the voxel
+                # JULIEN
+                # data_curved_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_curved[index].value
+
+                # JULIEN
+                # attribute landmark_value to the voxel and its neighbours
+                data_curved_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                z + padding_z - 1:z + padding_z + 2] = landmark_curved[index].value
 
                 # get x, y and z coordinates of straight landmark (rounded to closest integer)
                 x, y, z = int(round(landmark_straight[index].x)), int(round(landmark_straight[index].y)), \
                           int(round(landmark_straight[index].z))
-                data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
 
-                # # attribute landmark_value to the voxel and its neighbours
-                # data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
-                # z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
+                # JULIEN
+                # data_straight_landmarks[x + padding_x, y + padding_y, z + padding_z] = landmark_straight[index].value
+
+                # JULIEN
+                # attribute landmark_value to the voxel and its neighbours
+                data_straight_landmarks[x + padding_x - 1:x + padding_x + 2, y + padding_y - 1:y + padding_y + 2,
+                z + padding_z - 1:z + padding_z + 2] = landmark_straight[index].value
 
             # Write NIFTI volumes
             sct.printv('\nWrite NIFTI volumes...', verbose)
@@ -681,12 +691,14 @@ class SpinalCordStraightener(object):
             img = Nifti1Image(data_curved_landmarks, None, hdr)
             save(img, 'tmp.landmarks_curved.nii.gz')
             sct.printv('.. File created: tmp.landmarks_curved.nii.gz', verbose)
-            hdr_straight_landmarks.set_data_dtype('uint32')
+            # JULIEN
+            # hdr_straight_landmarks.set_data_dtype('uint32')
             img = Nifti1Image(data_straight_landmarks, None, hdr_straight_landmarks)
             save(img, 'tmp.landmarks_straight.nii.gz')
             sct.printv('.. File created: tmp.landmarks_straight.nii.gz', verbose)
 
-            crop_landmarks = 1
+            # JULIEN
+            crop_landmarks = 0
             safety_pad = 1
             if crop_landmarks == 1:
                 # Crop landmarks (for faster computation)
@@ -772,8 +784,8 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation curve --> straight
             sct.printv("\nEstimate b-spline transformation: curve --> straight...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_straight_crop.nii.gz '
-                                     'tmp.landmarks_curved_crop.nii.gz '
+                                     'tmp.landmarks_straight.nii.gz '
+                                     'tmp.landmarks_curved.nii.gz '
                                      'tmp.curve2straight_rigid.txt '
                                      'tmp.warp_curve2straight.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
@@ -784,14 +796,16 @@ class SpinalCordStraightener(object):
                                      ' 0',
                                      verbose=verbose)
 
-            # # remove padding for straight labels
-            # if crop == 1:
-            #     ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
-            #                  output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
-            #                  verbose=verbose).crop()
-            #     pass
-            # else:
-            #     sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
+            # JULIEN
+            # remove padding for straight labels
+            crop = 1
+            if crop == 1:
+                ImageCropper(input_file="tmp.landmarks_straight.nii.gz",
+                             output_file="tmp.landmarks_straight_crop.nii.gz", dim=[0, 1, 2], bmax=True,
+                             verbose=verbose).crop()
+                pass
+            else:
+                sct.run("cp tmp.landmarks_straight.nii.gz tmp.landmarks_straight_crop.nii.gz", verbose)
 
             # Concatenate rigid and non-linear transformations...
             sct.printv("\nConcatenate rigid and non-linear transformations...", verbose)
@@ -800,8 +814,8 @@ class SpinalCordStraightener(object):
             # Estimate b-spline transformation straight --> curve
             sct.printv("\nEstimate b-spline transformation: straight --> curve...", verbose)
             status, output = sct.run('isct_ANTSLandmarksBSplineTransform '
-                                     'tmp.landmarks_curved_crop.nii.gz '
-                                     'tmp.landmarks_straight_crop.nii.gz '
+                                     'tmp.landmarks_curved.nii.gz '
+                                     'tmp.landmarks_straight.nii.gz '
                                      'tmp.straight2curve_rigid.txt '
                                      'tmp.warp_straight2curve.nii.gz ' +
                                      self.bspline_meshsize + ' ' +
@@ -867,14 +881,14 @@ class SpinalCordStraightener(object):
         # Generate output file (in current folder)
         # TODO: do not uncompress the warping field, it is too time consuming!
         sct.printv("\nGenerate output file (in current folder)...", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", "warp_curve2straight.nii.gz", verbose)
-        sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", "warp_straight2curve.nii.gz", verbose)
+        sct.generate_output_file(path_tmp + "/tmp.curve2straight.nii.gz", self.path_output + "warp_curve2straight.nii.gz", verbose)
+        sct.generate_output_file(path_tmp + "/tmp.straight2curve.nii.gz", self.path_output + "warp_straight2curve.nii.gz", verbose)
         if fname_output == '':
             fname_straight = sct.generate_output_file(path_tmp + "/tmp.anat_rigid_warp.nii.gz",
-                                                      file_anat + "_straight" + ext_anat, verbose)
+                                                      self.path_output + file_anat + "_straight" + ext_anat, verbose)
         else:
             fname_straight = sct.generate_output_file(path_tmp+'/tmp.anat_rigid_warp.nii.gz',
-                                                      fname_output, verbose)  # straightened anatomic
+                                                      self.path_output + fname_output, verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:
@@ -886,11 +900,17 @@ class SpinalCordStraightener(object):
         sct.printv("Maximum x-y error = " + str(round(self.max_distance_straightening, 2)) + " mm", verbose, "bold")
         sct.printv("Accuracy of straightening (MSE) = " + str(round(self.mse_straightening, 2)) +
                    " mm", verbose, "bold")
+
         # display elapsed time
         elapsed_time = time.time() - start_time
         sct.printv("\nFinished! Elapsed time: " + str(int(round(elapsed_time))) + "s", verbose)
         sct.printv("\nTo view results, type:", verbose)
-        sct.printv("fslview " + fname_straight + " &\n", verbose, "info")
+        sct.printv("fslview " + fname_straight + " &\n", verbose, 'info')
+
+        # output QC image
+        if qc:
+            from msct_image import Image
+            Image(fname_straight).save_quality_control(plane='sagittal', n_slices=1)
 
 
 def get_parser():
@@ -920,10 +940,15 @@ def get_parser():
                       default_value=30)
     parser.add_option(name="-o",
                       type_value="file_output",
-                      description="output file",
+                      description="straightened file",
                       mandatory=False,
                       default_value='',
-                      example="out.nii.gz")
+                      example="data_straight.nii.gz")
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Output folder (all outputs will go there).",
+                      mandatory=False,
+                      default_value='')
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="Final interpolation.",
@@ -947,13 +972,13 @@ def get_parser():
                       description="Crop option. 0: no crop, 1: crop around landmarks.",
                       mandatory=False,
                       example=['0', '1'],
-                      default_value=1)
+                      default_value='1')
     parser.add_option(name="-v",
                       type_value="multiple_choice",
                       description="Verbose. 0: nothing, 1: basic, 2: extended.",
                       mandatory=False,
                       example=['0', '1', '2'],
-                      default_value=1)
+                      default_value='1')
 
     parser.add_option(name="-params",
                       type_value=[[','], 'str'],
@@ -961,7 +986,7 @@ def get_parser():
                                   "\nall_labels : 0,1. Default = 1"
                                   "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
                                   "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
-                                  "Default=5x5x10"
+                                  "Default=3x3x5"
                                   "\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. "
                                   "Default=3"
                                   "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
@@ -971,6 +996,13 @@ def get_parser():
                                   "improve warping field of straightening. Default=150.",
                       mandatory=False,
                       example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
+
+    parser.add_option(name='-qc',
+                      type_value='multiple_choice',
+                      description='Output images for quality control.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value='1')
 
     parser.add_option(name="-cpu-nb",
                       type_value="int",
@@ -1001,6 +1033,10 @@ if __name__ == "__main__":
         sc_straight.interpolation_warp = str(arguments["-x"])
     if "-o" in arguments:
         sc_straight.output_filename = str(arguments["-o"])
+    if '-ofolder' in arguments:
+        sc_straight.path_output = arguments['-ofolder']
+    else:
+        sc_straight.path_output = ''
     if "-a" in arguments:
         sc_straight.algo_fitting = str(arguments["-a"])
     if "-f" in arguments:
@@ -1009,6 +1045,8 @@ if __name__ == "__main__":
         sc_straight.verbose = int(arguments["-v"])
     if "-cpu-nb" in arguments:
         sc_straight.cpu_number = int(arguments["-cpu-nb"])
+    if '-qc' in arguments:
+        sc_straight.qc = int(arguments['-qc'])
 
     if "-params" in arguments:
         params_user = arguments['-params']

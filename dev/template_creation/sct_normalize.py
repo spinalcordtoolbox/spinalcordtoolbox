@@ -43,7 +43,7 @@ from scipy.interpolate import splrep,splev
 from scipy import ndimage
 from msct_smooth import smoothing_window
 
-
+from sct_image import Image
 
 def main():
 
@@ -101,7 +101,7 @@ def main():
    ## [Process 1] Command for extracting center of mass for each slice of the centerline file if provided
        sct.printv('\nOpen centerline...',verbose)
        print '\nGet dimensions of input centerline...'
-       nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_centerline)
+       nx, ny, nz, nt, px, py, pz, pt = Image(fname_centerline).dim
        print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
        print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
        file_c = nibabel.load(fname_centerline)
@@ -129,7 +129,7 @@ def main():
    ## [Process 2] Process for defining the middle vertical line as reference for normalizing the intensity of the image
    if fname_centerline == '':
        print '\nGet dimensions of input image...'
-       nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname)
+       nx, ny, nz, nt, px, py, pz, pt = Image(fname).dim
        print '.. matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz)
        print '.. voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm'
        z_centerline = [iz for iz in range(0, nz, 1)]

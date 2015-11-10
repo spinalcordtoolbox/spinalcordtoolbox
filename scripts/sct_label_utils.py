@@ -168,6 +168,55 @@ class ProcessLabels(object):
         cross_coordinates = sorted(cross_coordinates, key=lambda obj: obj.value)
         return cross_coordinates
 
+    # JULIEN <<<<<<
+    # OLD IMPLEMENTATION:
+    # def cross(self):
+    #     """
+    #     create a cross.
+    #     :return:
+    #     """
+    #     image_output = Image(self.image_input, self.verbose)
+    #     nx, ny, nz, nt, px, py, pz, pt = Image(self.image_input.absolutepath).dim
+    #
+    #     coordinates_input = self.image_input.getNonZeroCoordinates()
+    #     d = self.cross_radius  # cross radius in pixel
+    #     dx = d / px  # cross radius in mm
+    #     dy = d / py
+    #
+    #     # for all points with non-zeros neighbors, force the neighbors to 0
+    #     for coord in coordinates_input:
+    #         image_output.data[coord.x][coord.y][coord.z] = 0  # remove point on the center of the spinal cord
+    #         image_output.data[coord.x][coord.y + dy][
+    #             coord.z] = coord.value * 10 + 1  # add point at distance from center of spinal cord
+    #         image_output.data[coord.x + dx][coord.y][coord.z] = coord.value * 10 + 2
+    #         image_output.data[coord.x][coord.y - dy][coord.z] = coord.value * 10 + 3
+    #         image_output.data[coord.x - dx][coord.y][coord.z] = coord.value * 10 + 4
+    #
+    #         # dilate cross to 3x3
+    #         if self.dilate:
+    #             image_output.data[coord.x - 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x][coord.y + dy - 1][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y + dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y + dy][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x][coord.y + dy + 1][coord.z] = \
+    #                 image_output.data[coord.x - 1][coord.y + dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y + dy][coord.z] = \
+    #                 image_output.data[coord.x][coord.y + dy][coord.z]
+    #             image_output.data[coord.x + dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx][coord.y - 1][coord.z] = \
+    #                 image_output.data[coord.x + dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x + dx + 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x + dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx][coord.y + 1][coord.z] = \
+    #                 image_output.data[coord.x + dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x + dx - 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x + dx][coord.y][coord.z]
+    #             image_output.data[coord.x - 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x][coord.y - dy - 1][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y - dy - 1][coord.z] = image_output.data[coord.x + 1][coord.y - dy][coord.z] = \
+    #                 image_output.data[coord.x + 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x][coord.y - dy + 1][coord.z] = \
+    #                 image_output.data[coord.x - 1][coord.y - dy + 1][coord.z] = image_output.data[coord.x - 1][coord.y - dy][coord.z] = \
+    #                 image_output.data[coord.x][coord.y - dy][coord.z]
+    #             image_output.data[coord.x - dx - 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx][coord.y - 1][coord.z] = \
+    #                 image_output.data[coord.x - dx + 1][coord.y - 1][coord.z] = image_output.data[coord.x - dx + 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x - dx + 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx][coord.y + 1][coord.z] = \
+    #                 image_output.data[coord.x - dx - 1][coord.y + 1][coord.z] = image_output.data[coord.x - dx - 1][coord.y][coord.z] = \
+    #                 image_output.data[coord.x - dx][coord.y][coord.z]
+    #
+    #     return image_output
+    # >>>>>>>>>
     def cross(self):
         """
         create a cross.
@@ -190,6 +239,7 @@ class ProcessLabels(object):
             output_image.data[round(coord.x), round(coord.y), round(coord.z)] = coord.value
 
         return output_image
+    # >>>
 
     def plan(self, width, offset=0, gap=1):
         """
@@ -290,7 +340,7 @@ class ProcessLabels(object):
     def labelize_from_disks(self):
         """
         This function creates an image with regions labelized depending on values from reference.
-        Typically, user inputs an segmentation image, and labels with disks position, and this function produces
+        Typically, user inputs a segmentation image, and labels with disks position, and this function produces
         a segmentation image with vertebral levels labelized.
         Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
         """
@@ -576,6 +626,8 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param_default = Param()
+
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Utility function for labels. Choose your process.')
