@@ -32,8 +32,8 @@ class Param:
         self.fname_out = ''
         self.new_size = ''
         self.new_size_type = ''
-        self.interpolation = 'trilinear'
-        self.x_to_order = {'nn': 0, 'trilinear': 1, 'spline': 2}
+        self.interpolation = 'linear'
+        self.x_to_order = {'nn': 0, 'linear': 1, 'spline': 2}
         self.mode = 'reflect'  # How to fill the points outside the boundaries of the input, possible options: constant, nearest, reflect or wrap
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
         self.file_suffix = '_resampled'  # output suffix
@@ -93,7 +93,7 @@ def resample():
     sct.printv('  ' + str(px_new) + ' x ' + str(py_new) + ' x ' + str(pz_new)+ ' x ' + str(pt)+'mm', param.verbose)
 
     zooms = (px, py, pz)  # input_im.hdr.get_zooms()[:3]
-    affine = input_im.hdr.get_base_affine()
+    affine = input_im.hdr.get_qform()  # get_base_affine()
     new_zooms = (px_new, py_new, pz_new)
 
     if type(param.interpolation) == int:
@@ -102,7 +102,7 @@ def resample():
         order = param.x_to_order[param.interpolation]
     else:
         order = 1
-        sct.printv('WARNING: wrong input for the interpolation. Using default value = trilinear', param.verbose, 'warning')
+        sct.printv('WARNING: wrong input for the interpolation. Using default value = linear', param.verbose, 'warning')
 
     new_data, new_affine = dp_iso.reslice(input_im.data, affine, zooms, new_zooms, mode=param.mode, order=order)
 
@@ -118,6 +118,11 @@ def resample():
 
     new_im.hdr = input_im.hdr
     new_im.hdr.set_zooms(zooms_to_set)
+
+    # Set the new sform and qform:
+    new_im.hdr.set_sform(new_affine)
+    new_im.hdr.set_qform(new_affine)
+
     new_im.save()
 
     # to view results

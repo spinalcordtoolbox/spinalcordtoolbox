@@ -50,14 +50,15 @@ class Param:
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.zsubsample = '0.25'
+        self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
 
 
 # get default parameters
-step1 = Paramreg(step='1', type='seg', algo='slicereg', metric='MeanSquares', iter='10')
-step2 = Paramreg(step='2', type='im', algo='syn', metric='MI', iter='3')
-# step1 = Paramreg()
-paramreg = ParamregMultiStep([step1, step2])
+step1 = Paramreg(step='1', type='seg', algo='slicereg2d_translation')
+step2 = Paramreg(step='2', type='seg', algo='bsplinesyn', metric='MeanSquares', iter='5', smooth='1')
+step3 = Paramreg(step='3', type='im', algo='syn', metric='CC', iter='3')
+paramreg = ParamregMultiStep([step1, step2, step3])
 
 
 def get_parser():
@@ -80,11 +81,11 @@ def get_parser():
                       mandatory=True,
                       default_value='',
                       example="anat_labels.nii.gz")
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder.",
                       mandatory=False,
-                      default_value='./')
+                      default_value='')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Path to MNI-Poly-AMU template.",
@@ -92,17 +93,23 @@ def get_parser():
                       default_value=param.path_template)
     parser.add_option(name="-p",
                       type_value=[[':'], 'str'],
-                      description="""Parameters for registration (see sct_register_multimodal). Default:\n--\nstep=1\ntype=""" +
-                                  paramreg.steps['1'].type + """\nalgo=""" + paramreg.steps[
-                                      '1'].algo + """\nmetric=""" + paramreg.steps['1'].metric + """\npoly=""" +
-                                  paramreg.steps['1'].poly + """\n--\nstep=2\ntype=""" + paramreg.steps[
-                                      '2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" +
-                                  paramreg.steps['2'].metric + """\niter=""" + paramreg.steps[
-                                      '2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" +
-                                  paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps[
-                                      '2'].gradStep + """\n--""",
+                      description='Parameters for registration (see sct_register_multimodal). Default: \
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
+                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
+                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
+    parser.add_option(name="-param-straighten",
+                      type_value='str',
+                      description="""Parameters for straightening (see sct_straighten_spinalcord).""",
+                      mandatory=False,
+                      default_value='',
+                      example="-params bspline_meshsize=3x3x5")
+    parser.add_option(name="-cpu-nb",
+                      type_value="int",
+                      description="Number of CPU used for straightening. 0: no multiprocessing. By default, uses all the available cores.",
+                      mandatory=False,
+                      example="8")
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="""Remove temporary files.""",
@@ -125,31 +132,30 @@ def main():
     parser = get_parser()
     param = Param()
 
-    if param.debug:
-        print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_data = '/Users/julien/data/temp/sct_example_data/t2/t2.nii.gz'
-        fname_landmarks = '/Users/julien/data/temp/sct_example_data/t2/labels.nii.gz'
-        fname_seg = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'
-        path_output = './'
-        path_template = param.path_template
-        remove_temp_files = 0
-        verbose = 2
-    else:
-        arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse(sys.argv[1:])
 
-        # get arguments
-        fname_data = arguments['-i']
-        fname_seg = arguments['-s']
-        fname_landmarks = arguments['-l']
-        path_output = arguments['-o']
-        path_template = arguments['-t']
-        remove_temp_files = int(arguments['-r'])
-        verbose = int(arguments['-v'])
-        if '-p' in arguments:
-            paramreg_user = arguments['-p']
-            # update registration parameters
-            for paramStep in paramreg_user:
-                paramreg.addStep(paramStep)
+    # get arguments
+    fname_data = arguments['-i']
+    fname_seg = arguments['-s']
+    fname_landmarks = arguments['-l']
+    if '-ofolder' in arguments:
+        path_output = arguments['-ofolder']
+    else:
+        path_output = ''
+    path_template = arguments['-t']
+    remove_temp_files = int(arguments['-r'])
+    verbose = int(arguments['-v'])
+    if '-param-straighten' in arguments:
+        param.param_straighten = arguments['-param-straighten']
+    if 'cpu-nb' in arguments:
+        arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
+    else:
+        arg_cpu = ''
+    if '-p' in arguments:
+        paramreg_user = arguments['-p']
+        # update registration parameters
+        for paramStep in paramreg_user:
+            paramreg.addStep(paramStep)
 
     # initialize other parameters
     file_template = param.file_template
@@ -246,15 +252,14 @@ def main():
 
     # smooth segmentation (jcohenadad, issue #613)
     sct.printv('\nSmooth segmentation...', verbose)
-    # sct.run('fslmaths '+ftmp_seg+' -kernel sphere 3 -fmean '+add_suffix(ftmp_seg, '_smooth'))
     sct.run('sct_maths -i '+ftmp_seg+' -smooth 1.5 -o '+add_suffix(ftmp_seg, '_smooth'))
     ftmp_seg = add_suffix(ftmp_seg, '_smooth')
 
     # resample data to 1mm isotropic
     sct.printv('\nResample data to 1mm isotropic...', verbose)
     sct.run('sct_resample -i '+ftmp_data+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_data, '_1mm'))
-    sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
     ftmp_data = add_suffix(ftmp_data, '_1mm')
+    sct.run('sct_resample -i '+ftmp_seg+' -mm 1.0x1.0x1.0 -x linear -o '+add_suffix(ftmp_seg, '_1mm'))
     ftmp_seg = add_suffix(ftmp_seg, '_1mm')
     # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling with neighrest neighbour can make them disappear. Therefore a more clever approach is required.
     resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
@@ -278,7 +283,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -r 0 -v '+str(verbose), verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
@@ -302,18 +307,26 @@ def main():
     # Create crosses for the template labels and get coordinates
     sct.printv('\nCreate a 15 mm cross for the template labels...', verbose)
     template_image = Image(ftmp_template_label)
-    coordinates_input = template_image.getNonZeroCoordinates()
-    landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    coordinates_input = template_image.getNonZeroCoordinates(sorting='value')
+    # jcohenadad, issue #628 <<<<<
+    # landmark_template = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    landmark_template = coordinates_input
+    # >>>>>
     if verbose == 2:
+        # TODO: assign cross to image before saving
         template_image.setFileName(add_suffix(ftmp_template_label, '_cross'))
         template_image.save(type='minimize_int')
 
     # Create crosses for the input labels into straight space and get coordinates
     sct.printv('\nCreate a 15 mm cross for the input labels...', verbose)
     label_straight_image = Image(ftmp_label)
-    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()
-    landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    coordinates_input = label_straight_image.getCoordinatesAveragedByValue()  # landmarks are sorted by value
+    # jcohenadad, issue #628 <<<<<
+    # landmark_straight = ProcessLabels.get_crosses_coordinates(coordinates_input, gapxy=15)
+    landmark_straight = coordinates_input
+    # >>>>>
     if verbose == 2:
+        # TODO: assign cross to image before saving
         label_straight_image.setFileName(add_suffix(ftmp_label, '_cross'))
         label_straight_image.save(type='minimize_int')
 
@@ -333,9 +346,11 @@ def main():
     import msct_register_landmarks
     # for some reason, the moving and fixed points are inverted between ITK transform and our python-based transform.
     # and for another unknown reason, x and y dimensions have a negative sign (at least for translation and center of rotation).
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = \
-            msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=False)
-
+    if verbose == 2:
+        show_transfo = True
+    else:
+        show_transfo = False
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = msct_register_landmarks.getRigidTransformFromLandmarks(points_moving, points_fixed, constraints='translation-scaling-z', show=show_transfo)
     # writing rigid transformation file
     text_file = open("straight2templateAffine.txt", "w")
     text_file.write("#Insight Transform File V1.0\n")
@@ -350,19 +365,17 @@ def main():
                                                            -points_moving_barycenter[1],
                                                            points_moving_barycenter[2]))
     text_file.close()
-    
+
     # Concatenate transformations: curve --> straight --> affine
     sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt -d template.nii -o warp_curve2straightAffine.nii.gz')
 
-    # Apply affine transformation
+    # Apply transformation
     sct.printv('\nApply transformation...', verbose)
     sct.run('sct_apply_transfo -i '+ftmp_data+' -o '+add_suffix(ftmp_data, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz')
-    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_data = add_suffix(ftmp_data, '_straightAffine')
+    sct.run('sct_apply_transfo -i '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straightAffine')+' -d '+ftmp_template+' -w warp_curve2straightAffine.nii.gz -x linear')
     ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
-    # sct.run('sct_apply_transfo -i data_rpi.nii -o data_rpi_straight2templateAffine.nii -d template.nii -w warp_curve2straightAffine.nii.gz')
-    # sct.run('sct_apply_transfo -i segmentation_rpi.nii.gz -o segmentation_rpi_straight2templateAffine.nii.gz -d template.nii -w warp_curve2straightAffine.nii.gz -x linear')
 
     # threshold and binarize
     sct.printv('\nBinarize segmentation...', verbose)
@@ -428,6 +441,7 @@ def main():
     sct.printv('\nConcatenate transformations: anat --> template...', verbose)
     sct.run('sct_concat_transfo -w warp_curve2straightAffine.nii.gz,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
     # sct.run('sct_concat_transfo -w warp_curve2straight.nii.gz,straight2templateAffine.txt,'+','.join(warp_forward)+' -d template.nii -o warp_anat2template.nii.gz', verbose)
+    sct.printv('\nConcatenate transformations: template --> anat...', verbose)
     warp_inverse.reverse()
     sct.run('sct_concat_transfo -w '+','.join(warp_inverse)+',-straight2templateAffine.txt,warp_straight2curve.nii.gz -d data.nii -o warp_template2anat.nii.gz', verbose)
 

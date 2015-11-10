@@ -29,14 +29,15 @@ sct_label_vertebrae -i t2.nii.gz -seg t2_seg.nii.gz -initcenter 7
 # create labels at C2 and T2 vertebral levels
 sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -level 2,9
 # register to template
-sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=2,metric=MeanSquares
+# tips: here we used only iter=1 for the third step for faster processing. 
+sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0
 # warp template and white matter atlas
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
-# compute average cross-sectional area between C2 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 2:4
-# --> mean CSA: 76.9820942682 +/- 0.91043855252
+# compute average cross-sectional area between C3 and C4 levels
+sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 3:4
+# --> mean CSA: 78.2412869322 +/- 0.72521896375
 # go back to root folder
 cd ..
 
@@ -73,7 +74,7 @@ cd ..
 # ----------
 cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
-sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -p step=1,iter=0 -x nn
+sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline -o t2_seg_reg_centerline.nii.gz
 # segment mt1
@@ -115,7 +116,7 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.4559152852
+# --> MTR = 34.0778913455
 cd ..
 
 
@@ -144,8 +145,8 @@ fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lig
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
-# --> 17, right lateral corticospinal tract:    0.778699600834
-# --> 2, left lateral corticospinal tract:    0.765193423187
+# --> 17, right lateral corticospinal tract:    0.783654617705
+# --> 2, left lateral corticospinal tract:    0.767101879797
 cd ..
 
 
