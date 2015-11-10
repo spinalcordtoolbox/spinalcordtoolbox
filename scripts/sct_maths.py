@@ -24,6 +24,7 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
+    param = Param()
 
     # Initialize the parser
     parser = Parser(__file__)
@@ -120,8 +121,11 @@ def get_parser():
                       mandatory=False,
                       example='0.5')
     parser.add_option(name='-denoise',
-                      type_value='int',
-                      description='Non-local means adaptative denoising from P. Coupe et al algorithm.',
+                      type_value=[[','], 'str'],
+                      description='Non-local means adaptative denoising from P. Coupe et al. Separate with ",". Example: v=3,f=1,h=0.05.\n'
+                        'v:  similar patches in the non-local means are searched for locally, inside a cube of side 2*v+1 centered at each voxel of interest. Default: v=3\n'
+                        'f:  the size of the block to be used (2*f+1)x(2*f+1)x(2*f+1) in the blockwise non-local means implementation. Default: f=1\n'
+                        'h:  the standard deviation of rician noise in the input image, expressed as a ratio of the maximum intensity in the image. The higher, the more aggressive the denoising. Default: h=0.01',
                       mandatory=False,
                       example="")
     parser.usage.addSection("\nMisc")
@@ -243,7 +247,18 @@ def main(args = None):
         data_out = erode(data, arguments['-erode'])
 
     elif '-denoise' in arguments:
-        data_out = denoise_ornlm(data)
+        # parse denoising arguments
+        v, f, h = 3, 1, 0.01  # default arguments
+        list_denoise = arguments['-denoise']
+        for i in list_denoise:
+            if 'v' in i:
+                v = int(i.split('=')[1])
+            if 'f' in i:
+                f = int(i.split('=')[1])
+            if 'h' in i:
+                h = float(i.split('=')[1])
+        data_out = denoise_ornlm(data, v, f, h)
+    # if no flag is set
     else:
         data_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
@@ -393,7 +408,7 @@ def concatenate_along_4th_dimension(data1, data2):
     return concatenate((data1, data2), axis=3)
 
 
-def denoise_ornlm(data_in, v=3, f=1, h=0.01):
+def denoise_ornlm(data_in, v=3, f=1, h=0.05):
     from commands import getstatusoutput
     from sys import path
     # append python path for importing module

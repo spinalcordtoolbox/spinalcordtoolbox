@@ -55,6 +55,18 @@ def get_parser():
                       mandatory=False,
                       default_value='',
                       example='t2_seg_labeled.nii.gz')
+    parser.add_option(name="-denoise",
+                      type_value="multiple_choice",
+                      description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
+    parser.add_option(name="-laplacian",
+                      type_value="multiple_choice",
+                      description="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description="Remove temporary files.",
@@ -102,6 +114,8 @@ def main(args=None):
         initcenter = arguments['-initcenter']
     verbose = int(arguments['-v'])
     remove_tmp_files = int(arguments['-r'])
+    denoise = int(arguments['-denoise'])
+    laplacian = int(arguments['-laplacian'])
 
     # create temporary folder
     printv('\nCreate temporary folder...', verbose)
@@ -133,7 +147,7 @@ def main(args=None):
 
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
-    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0')  # here using all_labels=0 because of issue #610
+    run('sct_straighten_spinalcord -i data.nii -c segmentation.nii.gz -r 0 -params all_labels=0,bspline_meshsize=3x3x5 -qc 0')  # here using all_labels=0 because of issue #610
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -151,10 +165,20 @@ def main(args=None):
     init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
     printv('.. '+str(init_disc), verbose)
 
+    # denoise data
+    if denoise:
+        printv('\nDenoise data...', verbose)
+        run('sct_maths -i data_straight.nii -denoise h=0.05 -o data_straight.nii')
+
+    # apply laplacian filtering
+    if laplacian:
+        printv('\nApply Laplacian filter...', verbose)
+        run('sct_maths -i data_straight.nii -laplace 1 -o data_straight.nii')
+
     # detect vertebral levels on straight spinal cord
     vertebral_detection('data_straight.nii', 'segmentation_straight.nii.gz', init_disc, verbose)
 
-    # un-straighten spinal cord
+    # un-straighten labelled spinal cord
     printv('\nUn-straighten labeling...', verbose)
     run('sct_apply_transfo -i segmentation_straight_labeled.nii.gz -d segmentation.nii.gz -w warp_straight2curve.nii.gz -o segmentation_labeled.nii.gz -x nn')
 
@@ -189,7 +213,7 @@ def main(args=None):
 # ==========================================================================================
 def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
-    shift_AP = 15  # shift the centerline towards the spine (in mm).
+    shift_AP = 17  # shift the centerline towards the spine (in mm).
     size_AP = 4  # window size in AP direction (=y) in mm
     size_RL = 7  # window size in RL direction (=x) in mm
     size_IS = 7  # window size in RL direction (=z) in mm
@@ -211,14 +235,11 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
 
     # open anatomical volume
     img = Image(fname)
+    data = img.data
 
     # smooth data
     from scipy.ndimage.filters import gaussian_filter
-    data = gaussian_filter(img.data, [3, 1, 0], output=None, mode="reflect")
-
-    # printv('\nDenoise data...', verbose)
-    # from sct_maths import denoise_ornlm
-    # data = denoise_ornlm(img.data)
+    data = gaussian_filter(data, [3, 1, 0], output=None, mode="reflect")
 
     # get dimension
     nx, ny, nz, nt, px, py, pz, pt = img.dim
@@ -295,6 +316,7 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
         # I_corr = np.zeros((length_z_corr))
         I_corr = np.zeros((length_z_corr, len(length_y_corr)))
         ind_y = 0
+        allzeros = 0
         for iy in length_y_corr:
             # loop across range of z defined by template distance
             ind_I = 0
@@ -317,9 +339,12 @@ def vertebral_detection(fname, fname_seg, init_disc, verbose):
                 if np.any(data_chunk1d):
                     I_corr[ind_I][ind_y] = np.corrcoef(data_chunk1d, pattern1d)[0, 1]
                 else:
-                    printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
+                    allzeros = 1
+                    # printv('.. WARNING: iz='+str(iz)+': Data only contains zero. Set correlation to 0.', verbose)
                 ind_I = ind_I + 1
             ind_y = ind_y + 1
+        if allzeros:
+            printv('.. WARNING: Data contained zero. We are probably at the edge.', verbose)
 
         # adjust correlation with Gaussian function centered at 'approx_distance_to_next_disc'
         gaussian_window = gaussian(length_z_corr, std=length_z_corr/gaussian_std_factor)
@@ -531,9 +556,9 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
     if verbose == 2:
         import matplotlib.pyplot as plt
 
-    size_AP_mirror = 2
-    searching_window = range(-14, 15)
-    fig_local_adjustment = 4
+    size_AP_mirror = 1
+    searching_window = range(-9, 13)
+    fig_local_adjustment = 4  # fig number
     thr_corr = 0.15  # arbitrary-- should adjust based on large dataset
     gaussian_std_factor = 3  # the larger, the more weighting towards central value. This value is arbitrary-- should adjust based on large dataset
 
@@ -578,12 +603,12 @@ def local_adjustment(xc, yc, current_z, current_disc, data, size_RL, shift_AP, s
         # keep peak with maximum correlation
         ind_peak = ind_peak[np.argmax(I_corr_adj[ind_peak])]
         printv('.... Peak found: '+str(ind_peak)+' (correlation = '+str(I_corr_adj[ind_peak])+')', verbose)
-        # check if correlation is high enough
+        # check if correlation is too low
         if I_corr_adj[ind_peak] < thr_corr:
             printv('.... WARNING: Correlation is too low. Using initial current_z provided.', verbose)
             adjusted_z = current_z
         else:
-            adjusted_z = int(current_z + round(searching_window[ind_peak]/2))
+            adjusted_z = int(current_z + round(searching_window[ind_peak]/2)) + 1
             printv('.... Update init_z position to: '+str(adjusted_z), verbose)
     if verbose == 2:
         # display peak

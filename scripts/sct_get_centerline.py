@@ -388,7 +388,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # Delete temporary files
     if remove_tmp_files == 1:
         print '\nRemove temporary files...'
-        sct.run('rm -rf '+path_tmp)
+        sct.run('rm -rf '+path_tmp, error_exit='warning')
 
     # print number of warnings
     print '\nNumber of warnings: '+str(warning_count)+' (if >10, you should probably reduce the gap and/or increase the kernel size'
@@ -985,107 +985,102 @@ class SCAD(Algorithm):
         sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red", self.verbose, "info")
 
 
-class GetCenterlineScript(BaseScript):
-    def __init__(self):
-        super(GetCenterlineScript, self).__init__()
-
-    @staticmethod
-    def get_parser():
-        """
-        :return: Returns the parser with the command line documentation contained in it.
-        """
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('''This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .''')
-        parser.add_option(name="-i",
-                          type_value='file',
-                          description="Image to get centerline from.",
-                          mandatory=True,
-                          example="t2.nii.gz")
-        parser.usage.addSection("Execution Option")
-        parser.add_option(name="-method",
-                          type_value="multiple_choice",
-                          description="Method to get the centerline:\n"
+def get_parser():
+    """
+    :return: Returns the parser with the command line documentation contained in it.
+    """
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('''This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .''')
+    parser.add_option(name="-i",
+                      type_value='file',
+                      description="Image to get centerline from.",
+                      mandatory=True,
+                      example="t2.nii.gz")
+    parser.usage.addSection("Execution Option")
+    parser.add_option(name="-method",
+                      type_value="multiple_choice",
+                      description="Method to get the centerline:\n"
 "auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n"
 "point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n"
 "labels: Fit spline function across labels. Requires a couple of points along the cord.",
-                          mandatory=True,
-                          example=['auto', 'point', 'labels'])
-        parser.usage.addSection("General options")
-        parser.add_option(name="-o",
-                          type_value="string",
-                          description="Centerline file name (result file name)",
-                          mandatory=False,
-                          example="out.nii.gz")
-        parser.add_option(name="-r",
-                          type_value="multiple_choice",
-                          description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
-                          mandatory=False,
-                          default_value="0",
-                          example=['0', '1'])
-        parser.add_option(name="-v",
-                          type_value="multiple_choice",
-                          description="1: display on, 0: display off (default)",
-                          mandatory=False,
-                          example=["0", "1", "2"],
-                          default_value="1")
-        parser.add_option(name="-h",
-                          type_value=None,
-                          description="display this help",
-                          mandatory=False)
+                      mandatory=True,
+                      example=['auto', 'point', 'labels'])
+    parser.usage.addSection("General options")
+    parser.add_option(name="-o",
+                      type_value="string",
+                      description="Centerline file name (result file name)",
+                      mandatory=False,
+                      example="out.nii.gz")
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="1: display on, 0: display off (default)",
+                      mandatory=False,
+                      example=["0", "1", "2"],
+                      default_value="1")
+    parser.add_option(name="-h",
+                      type_value=None,
+                      description="display this help",
+                      mandatory=False)
 
-        parser.usage.addSection("Automatic method options")
-        parser.add_option(name="-t",
-                          type_value="multiple_choice",
-                          description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n"
-                                      "For dMRI use t1, for T2* or MT use t2",
-                          mandatory=False,
-                          example=['t1', 't2'])
-        parser.add_option(name="-radius",
-                          type_value="int",
-                          description="Approximate radius of spinal cord to help the algorithm",
-                          mandatory=False,
-                          default_value="4",
-                          example="4")
-        parser.add_option(name="-sym_exp",
-                          type_value="int",
-                          description="Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.",
-                          mandatory=False,
-                          default_value="10")
-        parser.add_option(name="-sym",
-                          type_value="multiple_choice",
-                          description="Uses right-left symmetry of the image to improve accuracy.",
-                          mandatory=False,
-                          default_value="0",
-                          example=['0', '1'])
+    parser.usage.addSection("Automatic method options")
+    parser.add_option(name="-t",
+                      type_value="multiple_choice",
+                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n"
+                                  "For dMRI use t1, for T2* or MT use t2",
+                      mandatory=False,
+                      example=['t1', 't2'])
+    parser.add_option(name="-radius",
+                      type_value="int",
+                      description="Approximate radius of spinal cord to help the algorithm",
+                      mandatory=False,
+                      default_value="4",
+                      example="4")
+    parser.add_option(name="-sym_exp",
+                      type_value="int",
+                      description="Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.",
+                      mandatory=False,
+                      default_value="10")
+    parser.add_option(name="-sym",
+                      type_value="multiple_choice",
+                      description="Uses right-left symmetry of the image to improve accuracy.",
+                      mandatory=False,
+                      default_value="0",
+                      example=['0', '1'])
 
-        parser.usage.addSection("Point method options")
-        parser.add_option(name="-p",
-                          type_value='file',
-                          description="Binary image with a point inside the spinal cord.",
-                          mandatory=False,
-                          example="t2_point.nii.gz")
-        parser.add_option(name="-g",
-                          type_value="int",
-                          description="Gap between slices for registration. Higher is faster but less robust.",
-                          mandatory=False,
-                          default_value=4,
-                          example="4")
-        parser.add_option(name="-k",
-                          type_value="int",
-                          description="Kernel size for gaussian mask. Higher is more robust but less accurate.",
-                          mandatory=False,
-                          default_value=4,
-                          example="4")
+    parser.usage.addSection("Point method options")
+    parser.add_option(name="-p",
+                      type_value='file',
+                      description="Binary image with a point inside the spinal cord.",
+                      mandatory=False,
+                      example="t2_point.nii.gz")
+    parser.add_option(name="-g",
+                      type_value="int",
+                      description="Gap between slices for registration. Higher is faster but less robust.",
+                      mandatory=False,
+                      default_value=4,
+                      example="4")
+    parser.add_option(name="-k",
+                      type_value="int",
+                      description="Kernel size for gaussian mask. Higher is more robust but less accurate.",
+                      mandatory=False,
+                      default_value=4,
+                      example="4")
 
-        parser.usage.addSection("Label method options")
-        parser.add_option(name="-l",
-                          type_value=[[','], 'file'],
-                          description="Binary image with several points (5 to 10) along the spinal cord.",
-                          mandatory=False,
-                          example="t2_labels.nii.gz")
+    parser.usage.addSection("Label method options")
+    parser.add_option(name="-l",
+                      type_value=[[','], 'file'],
+                      description="Binary image with several points (5 to 10) along the spinal cord.",
+                      mandatory=False,
+                      example="t2_labels.nii.gz")
 
-        return parser
+    return parser
 
 
 if __name__ == "__main__":
@@ -1098,7 +1093,7 @@ if __name__ == "__main__":
     rm_tmp_files = param_default.remove_temp_files
 
     # get parser info
-    parser = GetCenterlineScript.get_parser()
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     method = arguments["-method"]
     fname_in = arguments["-i"]

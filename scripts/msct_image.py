@@ -326,6 +326,7 @@ class Image(object):
         for value, list_coord in groups.iteritems():
             averaged_coordinates.append(sum(list_coord) / float(len(list_coord)))
 
+        averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
     # crop the image in order to keep only voxels in the mask, therefore the mask's slices must be squares or rectangles of the same size
@@ -585,6 +586,168 @@ class Image(object):
                                range(len(coordi_pix_tmp))]
 
             return coordi_pix_list
+
+    def get_slice(self, plane='sagittal', index=None, seg=None):
+        """
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+        :return slice, slice_seg: ndarrays of the selected slices
+        """
+        copy_rpi = Image(self)
+        copy_rpi.change_orientation('RPI')
+        if seg is not None:
+            seg.change_orientation('RPI')
+        nx, ny, nz, nt, px, py, pz, pt = self.dim
+        slice = None
+        slice_seg = None
+        if plane == 'sagittal':
+            if index is None:
+                slice = copy_rpi.data[int(round(nx/2)), :, :]
+                if seg is not None:
+                    slice_seg = seg.data[int(round(nx/2)), :, :]
+            else:
+                assert index < nx, 'Index larger than image dimension.'
+                slice = copy_rpi.data[index, :, :]
+                if seg is not None:
+                    slice_seg = seg.data[index, :, :]
+
+        elif plane == 'coronal':
+            if index is None:
+                slice = copy_rpi.data[:, int(round(ny/2)), :]
+                if seg is not None:
+                    slice_seg = seg.data[:, int(round(ny/2)), :]
+            else:
+                assert index < ny, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, index, :]
+                if seg is not None:
+                    slice_seg = seg.data[:, index, :]
+
+        elif plane == 'axial' or plane == 'transverse':
+            if index is None:
+                slice = copy_rpi.data[:, :, int(round(nz/2))]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, int(round(nz/2))]
+            else:
+                assert index < nz, 'Index larger than image dimension.'
+                slice = copy_rpi.data[:, :, index]
+                if seg is not None:
+                    slice_seg = seg.data[:, :, index]
+        else:
+            from sct_utils import printv
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+
+        return (slice, slice_seg)
+
+    #
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red'):
+        """
+        Save a slice of self in the specified plan.
+
+        :param plane: 'sagittal', 'coronal' or 'axial'. default = 'sagittal'
+
+        :param index: index of the slice to save (if none, middle slice in the given direction/plan)
+
+        :param format: format to be saved in. default = '.png'
+
+        :param suffix: suffix to add to the image file name.
+
+        :param seg: segmentation to add in transparency to the image to save. Type Image.
+
+        :param thr: threshold to apply to the segmentation
+
+        :param col: colormap description : 'red', 'red-yellow', or 'blue-cyan'
+
+        :return filename_png: file name of the saved image
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        from math import sqrt
+        if type(index) is not list:
+            index = [index]
+
+        slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
+
+        if seg is not None:
+            import matplotlib.colors as col
+            color_white = col.colorConverter.to_rgba('white', alpha=0.0)
+            if cmap_col == 'red-yellow':
+                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
+                color_yellow = col.colorConverter.to_rgba('yellow', alpha=0.8)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_yellow, color_red], N=256)
+            elif cmap_col == 'blue-cyan':
+                color_blue = col.colorConverter.to_rgba('blue', alpha=0.7)
+                color_cyan = col.colorConverter.to_rgba('cyan', alpha=0.8)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_blue, color_cyan], N=256)
+            else:
+                color_red = col.colorConverter.to_rgba('red', alpha=0.7)
+                cmap_seg = col.LinearSegmentedColormap.from_list('cmap_seg', [color_white, color_red], N=256)
+
+        n_lines = int(sqrt(len(slice_list)))
+        n_col = int(len(slice_list)/n_lines)
+        n_lines += 1
+
+        try:
+            fig = plt.figure(figsize=(n_lines*10, n_col*20))
+            for i, slices in enumerate(slice_list):
+                slice_im, slice_seg = slices
+                plot = fig.add_subplot(n_lines, n_col, i+1)
+                plot.imshow(slice_im, cmap=cm.gray, interpolation='nearest')
+                if index[i] is None:
+                    title = 'mid slice'
+                else:
+                    title = 'slice '+str(index[i])
+                plot.set_title(title)
+                if seg is not None:
+                    slice_seg[slice_seg < thr] = 0
+                    plot.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
+                plt.axis('off')
+
+            # plt.imshow(slice, cmap=cm.gray, interpolation='nearest')
+            # if seg is not None:
+            #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
+            # plt.axis('off')
+            filename_png = self.file_name + suffix + format
+            plt.savefig(filename_png, bbox_inches='tight')
+        except RuntimeError, e:
+            from sct_utils import printv
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
+        return filename_png
+
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', verbose=1):
+        from sct_utils import printv
+        nx, ny, nz, nt, px, py, pz, pt = self.dim
+        if plane == 'sagittal':
+            max_n_slices = nx
+        elif plane == 'coronal':
+            max_n_slices = ny
+        elif plane == 'axial' or plane == 'transverse':
+            max_n_slices = nz
+        else:
+            max_n_slices = None
+            printv('ERROR: wrong plan input to save slice. Please choose "sagittal", "coronal" or "axial"', self.verbose, type='error')
+
+        if n_slices > max_n_slices:
+            index_list = range(max_n_slices)
+        elif n_slices == 1:
+            index_list = [int(round(max_n_slices/2))]
+        else:
+            gap = max_n_slices/n_slices
+            index_list = [((i+1)*gap)-1 for i in range(n_slices)]
+        index_list.sort()
+        try:
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format)
+            info_str = 'QC output image: ' + filename_image_png
+            if seg is not None:
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format)
+                info_str += ' & ' + filename_gmseg_image_png
+            printv(info_str, verbose, 'info')
+        except RuntimeError, e:
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
+
 
 
 def find_zmin_zmax(fname):
