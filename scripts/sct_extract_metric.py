@@ -95,6 +95,8 @@ def main():
     ml_clusters = param.ml_clusters
     adv_param = param.adv_param
     adv_param_user = ''
+    clustered_labels = []
+    matching_cluster_labels = []
 
     # Parameters for debug mode
     if param.debug:
@@ -266,6 +268,9 @@ def main():
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
+    data[np.isinf(data)] = 0.0
+    data[np.isnan(data)] = 0.0
+    data[np.isposinf(data)] = np.nanmax(data)
 
     # Get dimensions of data
     sct.printv('\nGet dimensions of data...', verbose)
@@ -295,18 +300,24 @@ def main():
         if fname_normalizing_label:  # if the "normalization" option was selected,
             normalizing_label[0] = remove_slices(normalizing_label[0], slices_of_interest)
 
+    if method == 'map':
+        # get clustered labels
+        clustered_labels, matching_cluster_labels = get_clustered_labels(ml_clusters, labels, label_id_user, average_all_labels, verbose)
+
     # if user wants to get unique value across labels, then combine all labels together
     if average_all_labels == 1:
         sum_labels_user = np.sum(labels[label_id_user])  # sum the labels selected by user
         if method == 'ml' or method == 'map':  # in case the maximum likelihood and the average across different labels are wanted
+
+            # merge labels
             labels_tmp = np.empty([nb_labels_total - len(label_id_user) + 1], dtype=object)
             labels = np.delete(labels, label_id_user)  # remove the labels selected by user
-            labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp
-            # variable
+            labels_tmp[0] = sum_labels_user  # put the sum of the labels selected by user in first position of the tmp variable
             for i_label in range(1, len(labels_tmp)):
                 labels_tmp[i_label] = labels[i_label-1]  # fill the temporary array with the values of the non-selected labels
             labels = labels_tmp  # replace the initial labels value by the updated ones (with the summed labels)
             del labels_tmp  # delete the temporary labels
+
         else:  # in other cases than the maximum likelihood, we can remove other labels (not needed for estimation)
             labels = np.empty(1, dtype=object)
             labels[0] = sum_labels_user  # we create a new label array that includes only the summed labels
@@ -326,20 +337,16 @@ def main():
         elif normalization_method == 'whole':  # case: the user wants to normalize after estimations in the whole labels
             metric_mean_norm_label, metric_std_norm_label = extract_metric_within_tract(data, normalizing_label, method, param.verbose)  # mean and std are lists
 
-    # identify cluster for each tract (for use with robust ML)
-    ml_clusters_array = get_clusters(ml_clusters, labels)
-
     # extract metrics within labels
     sct.printv('\nExtract metric within labels...', verbose)
-    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, ml_clusters_array, adv_param)  # mean and std are lists
+    metric_mean, metric_std = extract_metric_within_tract(data, labels, method, verbose, clustered_labels, matching_cluster_labels, adv_param)  # mean and std are lists
 
     if fname_normalizing_label and normalization_method == 'whole':  # case: user wants to normalize after estimations in the whole labels
         metric_mean, metric_std = np.divide(metric_mean, metric_mean_norm_label), np.divide(metric_std, metric_std_norm_label)
 
     # update label name if average
     if average_all_labels == 1:
-        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the
-        # labels selected by the user if the average tag was asked
+        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the labels selected by the user if the average tag was asked
         label_id_user = [0]  # update "label_id_user" to select the "averaged" label (which is in first position)
 
     metric_mean = metric_mean[label_id_user]
@@ -350,7 +357,7 @@ def main():
     for i in range(0, metric_mean.size):
         sct.printv(str(label_id_user[i])+', '+str(label_name[label_id_user[i]])+':    '+str(metric_mean[i])+' +/- '+str(metric_std[i]), 1, 'info')
 
-    # save and display metrics
+    # save metrics
     save_metrics(label_id_user, label_name, slices_of_interest, metric_mean, metric_std, fname_output, fname_data,
                  method, fname_normalizing_label, actual_vert_levels, warning_vert_levels)
 
@@ -707,7 +714,7 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
 #=======================================================================================================================
 # Extract metric within labels
 #=======================================================================================================================
-def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', adv_param=[]):
+def extract_metric_within_tract(data, labels, method, verbose, clustered_labels=[], matching_cluster_labels=[], adv_param=[]):
     """
     :data: (nx,ny,nz) numpy array
     :labels: nlabel tuple of (nx,ny,nz) array
@@ -733,7 +740,8 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
     # ind_positive_data = data > -9999999999  # data > 0
     ind_positive = ind_positive_labels  # & ind_positive_data
     data1d = data[ind_positive]
-    labels2d = np.empty([nb_labels, len(data1d)], dtype=float)
+    nb_vox = len(data1d)
+    labels2d = np.empty([nb_labels, nb_vox], dtype=float)
     for i in range(0, nb_labels):
         labels2d[i] = labels[i][ind_positive]
 
@@ -744,39 +752,36 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
     # plt.imshow(data[:,:,3])
     # plt.show()
 
-    # clear memory
-    del data, labels
-
     # Display number of non-zero values
-    sct.printv('  Number of non-null voxels: '+str(len(data1d)), verbose=verbose)
+    sct.printv('  Number of non-null voxels: '+str(nb_vox), verbose=verbose)
 
     # initialization
     metric_mean = np.empty([nb_labels], dtype=object)
     metric_std = np.empty([nb_labels], dtype=object)
-    nb_vox = len(data1d)
 
     # Estimation with 3-class maximum likelihood
     if method == 'map':
         sct.printv('Estimation maximum likelihood within clustered labels...', verbose=verbose)
-        y = data1d  # [nb_vox x 1]
-        x = labels2d.T  # [nb_vox x nb_labels]
-        # construct matrix with clusters of tracts
-        ml_clusters_unique = np.unique(np.sort(ml_clusters))
-        nb_clusters = len(ml_clusters_unique)
-        sct.printv('  Number of clusters: '+str(nb_clusters), verbose=verbose)
-        # initialize cluster matrix
-        x_cluster = np.zeros([nb_vox, nb_clusters])
-        # loop across clusters
-        for i_cluster in ml_clusters_unique:
-            # find tracts belonging to cluster
-            index_tracts_in_cluster = np.where(ml_clusters == i_cluster)[0]
-            # sum tracts and append to matrix
-            x_cluster[:, i_cluster] = x[:, index_tracts_in_cluster].sum(axis=1)
-        x = x_cluster
-        # estimate values using ML
+
+        nb_clusters = len(clustered_labels)
+
+        #  Select non-zero values in the union of the clustered labels
+        clustered_labels_sum = np.sum(clustered_labels)
+        ind_positive_clustered_labels = clustered_labels_sum > ALMOST_ZERO  # labels_sum > ALMOST_ZERO
+
+        y = data[ind_positive_clustered_labels]  # [nb_vox x 1]
+        # create matrix X to use ML and estimate beta_0
+        x = np.zeros([len(y), nb_clusters])
+        for i_cluster in range(0, nb_clusters):
+            x[:, i_cluster] = clustered_labels[i_cluster][ind_positive_clustered_labels]
+
+        # estimate values using ML for each cluster
         beta = np.dot( np.linalg.pinv(np.dot(x.T, x)), np.dot(x.T, y) )  # beta = (Xt . X)-1 . Xt . y
         # display results
         sct.printv('  Estimated beta per cluster: '+str(beta), verbose=verbose)
+
+    # clear memory
+    del data, labels
 
     # Estimation with weighted average (also works for binary)
     if method == 'wa' or method == 'bin' or method == 'wath':
@@ -807,15 +812,15 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
     # Estimation with maximum a posteriori (map)
     if method == 'map':
         # perc_var_label = int(adv_param[0])^2  # variance within label, in percentage of the mean (mean is estimated using cluster-based ML)
-        var_label = int(adv_param[0])^2  # variance within label
-        var_noise = int(adv_param[1])^2  # variance of the noise (assumed Gaussian)
+        var_label = int(adv_param[0]) ^ 2  # variance within label
+        var_noise = int(adv_param[1]) ^ 2  # variance of the noise (assumed Gaussian)
 
         y = data1d  # [nb_vox x 1]
         x = labels2d.T  # [nb_vox x nb_labels]
         # construct beta0
         beta0 = np.zeros(nb_labels)
         for i_cluster in range(nb_clusters):
-            beta0[np.where(ml_clusters == i_cluster)[0]] = beta[i_cluster]
+            beta0[np.where(np.asarray(matching_cluster_labels) == i_cluster)[0]] = beta[i_cluster]
         # construct covariance matrix (variance between tracts). For simplicity, we set it to be the identity.
         Rlabel = np.diag(np.ones(nb_labels))
         # Vlabel =  np.diag(np.ones(nb_labels) * var_label)
@@ -835,26 +840,61 @@ def extract_metric_within_tract(data, labels, method, verbose, ml_clusters='', a
 
     return metric_mean, metric_std
 
-
-#=======================================================================================================================
-def get_clusters(ml_clusters, labels):
+# ======================================================================================================================
+def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbose):
     """
-    identify cluster for each tract (for use with robust ML)
-    :ml_clusters: clusters in form: 0:29,30,31
-    :labels: effective labels (can be less than nb_labels if user asked to group some labels)
-    :return: ml_clusters_array: tracts in form [0, 0, 0, ... 1, 2]
+    Cluster labels according to selected options (labels and averaging).
+    :ml_clusters: clusters in form: '0:29,30,31'
+    :labels: all labels data
+    :labels_user: label IDs selected by the user
+    :averaging_flag: flag -a (0 or 1)
+    :return: clustered_labels: labels summed by clustered
     """
-    all_clusters = ml_clusters.split(',')
-    nb_labels = len(labels)
-    ml_clusters_array = np.zeros(nb_labels)
-    nb_clusters = len(all_clusters)
-    index_label = 0
-    for i_cluster in range(nb_clusters-1, 0, -1):
-        ml_clusters_array[nb_labels-index_label-1] = i_cluster
-        index_label = index_label + 1
 
-    return ml_clusters_array
+    # get the label IDs included in each cluster
+    clusters_list = ml_clusters.split(',')
+    nb_clusters = len(clusters_list)
+    clusters_all_labels = []
+    for cluster in clusters_list:
+        limits = cluster.split(':')
+        clusters_all_labels.append(range(int(limits[0]), int(limits[-1])+1))
 
+    # find matching between labels and clusters in the label id list selected by the user
+    matching_cluster_label_id_user = np.zeros(len(labels_user), dtype=int)
+    for i_label in range(0, len(labels_user)):
+        for i_cluster in range(0, nb_clusters):
+            if labels_user[i_label] in clusters_all_labels[i_cluster]:
+                matching_cluster_label_id_user[i_label] = i_cluster
+
+    # reorganize the cluster according to the averaging flag chosen
+    if averaging_flag:
+        matching_cluster_label_id_unique = np.unique(matching_cluster_label_id_user)
+        if matching_cluster_label_id_unique.size != 1:
+            merged_cluster = []
+            for i_cluster in matching_cluster_label_id_unique:
+                merged_cluster = merged_cluster + clusters_all_labels[i_cluster]
+            clusters_all_labels = list(np.delete(np.asarray(clusters_all_labels), matching_cluster_label_id_unique))
+            clusters_all_labels.insert(matching_cluster_label_id_unique[0], merged_cluster)
+    nb_clusters = len(clusters_all_labels)
+    sct.printv('  Number of clusters: '+str(nb_clusters), verbose=verbose)
+
+    # sum labels within each cluster
+    clustered_labels = np.empty([nb_clusters], dtype=object)  # labels(nb_labels_total, x, y, z)
+    for i_cluster in range(0, nb_clusters):
+        clustered_labels[i_cluster] = np.sum(labels[clusters_all_labels[i_cluster]])
+
+    # find matching between labels and clusters in the whole label id list
+    matching_cluster_label_id = np.zeros(len(labels), dtype=int)
+    for i_label in range(0, len(labels)):
+        for i_cluster in range(0, nb_clusters):
+            if i_label in clusters_all_labels[i_cluster]:
+                matching_cluster_label_id[i_label] = i_cluster
+    if averaging_flag:
+        cluster_averaged_labels = matching_cluster_label_id[labels_user]
+        matching_cluster_label_id = list(np.delete(np.asarray(matching_cluster_label_id), labels_user))
+        matching_cluster_label_id.insert(0, cluster_averaged_labels[0])  # because the average of labels will be placed in the first position
+
+    return clustered_labels, matching_cluster_label_id
 
 
 #=======================================================================================================================
