@@ -290,7 +290,7 @@ def main():
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels:
         slices_of_interest, actual_vert_levels, warning_vert_levels = \
-            get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling)
+            get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling, verbose)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest:
@@ -346,7 +346,7 @@ def main():
 
     # update label name if average
     if average_all_labels == 1:
-        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the labels selected by the user if the average tag was asked
+        label_name[0] = 'AVERAGED: '+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the labels selected by the user if the average tag was asked
         label_id_user = [0]  # update "label_id_user" to select the "averaged" label (which is in first position)
 
     metric_mean = metric_mean[label_id_user]
@@ -420,9 +420,9 @@ def read_label_file(path_info_label, file_info_label):
 #=======================================================================================================================
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
 
-    sct.printv('\nFind slices corresponding to vertebral levels...', param.verbose)
+    sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -491,7 +491,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     # Extract vertebral labeling data size X, Y, Z
     [vx, vy, vz] = data_vertebral_labeling.shape
 
-    sct.printv('  Check consistency of data size...', param.verbose)
+    sct.printv('  Check consistency of data size...', verbose)
 
     # Initialisation of check error flag
     exit_program = 0
@@ -516,7 +516,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     else:
         print '    OK!'
 
-    sct.printv('  Find slices corresponding to vertebral levels...', param.verbose)
+    sct.printv('  Find slices corresponding to vertebral levels...', verbose)
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
     X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vertebral_labeling == vert_levels_list[0]).nonzero()
     # Record the bottom and top slices of this level
@@ -539,7 +539,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         slice_max = slice_max_top
 
     # display info
-    sct.printv('    '+str(slice_min)+':'+str(slice_max), param.verbose)
+    sct.printv('    '+str(slice_min)+':'+str(slice_max), verbose)
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
     # to the top slice
