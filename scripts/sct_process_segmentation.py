@@ -403,16 +403,16 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
     csa = np.zeros(max_z_index-min_z_index+1)
     # csa = [0.0 for i in xrange(0, max_z_index-min_z_index+1)]
 
-    for iz in xrange(0, len(z_centerline)):
+    for iz in xrange(min_z_index, max_z_index+1):
 
         # compute the vector normal to the plane
-        normal = normalize(np.array([x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]]))
+        normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
         # compute the angle between the normal vector of the plane and the vector z
         angle = np.arccos(np.dot(normal, [0, 0, 1]))
 
         # compute the number of voxels, assuming the segmentation is coded for partial volume effect between 0 and 1.
-        number_voxels = np.sum(data_seg[:, :, iz+min_z_index])
+        number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz] = number_voxels * px * py * np.cos(angle)
