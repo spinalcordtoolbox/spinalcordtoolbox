@@ -528,21 +528,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
-
-#=======================================================================================================================
-# create text file info_label.txt
-#=======================================================================================================================
-def create_info_label(file_name, path_folder, fname_seg):
-
-    os.chdir(path_folder)
-    file_info_label = open(file_name, 'w')
-    file_info_label.write('# Spinal cord segmentation\n')
-    file_info_label.write('# ID, name, file\n')
-    file_info_label.write('0, mean CSA, '+fname_seg)
-    file_info_label.close()
-    os.chdir('..')
-
-
 #=======================================================================================================================
 # b_spline_centerline
 #=======================================================================================================================
