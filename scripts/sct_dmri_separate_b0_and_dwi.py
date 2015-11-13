@@ -23,6 +23,7 @@ import numpy
 import sct_utils as sct
 from msct_image import Image
 from sct_image import split_data, concat_data
+from msct_parser import Parser
 # import glob
 # from sct_average_data_across_dimension import average_data_across_dimension
 
@@ -314,6 +315,72 @@ EXAMPLE
     #Exit Program
     sys.exit(2)
 
+def get_parser():
+    # Initialize parser
+    param = Param()
+    param_default = Param()
+    parser = Parser(__file__)
+
+    # Mandatory arguments
+    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset.")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Diffusion data',
+                      mandatory=True,
+                      example='dmri.nii.gz')
+    parser.add_option(name='-b',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=False,
+                      example='bvecs.txt',
+                      deprecated_by='-bvec')
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='bvecs file',
+                      mandatory=True,
+                      example='bvecs.txt')
+
+    # Optional arguments
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description='average b=0 and DWI data.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.average))
+    parser.add_option(name='-m',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False,
+                      deprecated_by='-bval')
+    parser.add_option(name='-bval',
+                      type_value='file',
+                      description='bvals file. Used to identify low b-values (in case different from 0).',
+                      mandatory=False)
+    parser.add_option(name='-o',
+                      type_value='output_folder',
+                      description='Output folder.',
+                      mandatory=False,
+                      default_value='./',
+                      deprecated_by='-ofolder')
+    parser.add_option(name='-ofolder',
+                      type_value='output_folder',
+                      description='Output folder.',
+                      mandatory=False,
+                      default_value='./')
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='Verbose.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.verbose))
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description='remove temporary files.',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.remove_tmp_files))
+
+    return parser
 
 # START PROGRAM
 # ==========================================================================================
@@ -322,4 +389,7 @@ if __name__ == "__main__":
     param = Param()
     param_default = Param()
     # call main function
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
     main()
