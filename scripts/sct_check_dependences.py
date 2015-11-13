@@ -32,6 +32,7 @@ import getopt
 import importlib
 
 import sct_utils as sct
+from msct_parser import Parser
 
 
 class bcolors:
@@ -60,17 +61,12 @@ def main():
     print
 
     # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hlc')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-        elif opt in ('-c'):
-            complete_test = 1
-        elif opt in ('-l'):
-            create_log_file = 1
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    if '-c' in arguments:
+        complete_test = 1
+    if '-log' in arguments:
+        create_log_file = 1
 
     # use variable "verbose" when calling sct.run for more clarity
     verbose = complete_test
@@ -312,31 +308,23 @@ def check_package_version(installed, required, package_name):
         return False
 
 
-# Print usage
 # ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Check the installation and environment variables of the toolbox and its dependences.
-
-USAGE
-  """+os.path.basename(__file__)+"""
-
-OPTIONAL ARGUMENTS
-  -c                complete test.
-  -l                generate log file.
-  -h                print help.
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -l\n"""
-
-    # exit program
-    sys.exit(2)
-
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Check the installation and environment variables of the toolbox and its dependences.')
+    parser.add_option(name="-c",
+                      description="Complete test.",
+                      mandatory=False)
+    parser.add_option(name="-log",
+                      description="Generate log file.",
+                      mandatory=False)
+    parser.add_option(name="-l",
+                      type_value=None,
+                      description="Generate log file.",
+                      deprecated_by="-log",
+                      mandatory=False)
+    return parser
 
 
 # START PROGRAM
