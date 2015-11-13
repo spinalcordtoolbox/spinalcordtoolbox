@@ -358,6 +358,54 @@ def non_zero_coord(data):
         list_coordinates = [(X[i], Y[i]) for i in range(0, len(X))]
     return list_coordinates
 
+
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized)'
+                                 'If only one image is inputted, it will be only thinned')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="First Image on which you want to find the skeleton",
+                      mandatory=True,
+                      example='t2star_manual_gmseg.nii.gz')
+    parser.add_option(name="-r",
+                      type_value="file",
+                      description="Second Image on which you want to find the skeleton",
+                      mandatory=False,
+                      default_value=None,
+                      example='t2star_manual_gmseg.nii.gz')
+    parser.add_option(name="-thinning",
+                      type_value="multiple_choice",
+                      description="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1'])
+    parser.add_option(name="-t",
+                      type_value=None,
+                      description="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
+                      deprecated_by="-thinning",
+                      mandatory=False)
+    parser.add_option(name="-resampling",
+                      type_value="float",
+                      description="pixel size in mm to resample to",
+                      mandatory=False,
+                      default_value=0.1,
+                      example=0.5)
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Name of the output file",
+                      mandatory=False,
+                      default_value='hausdorff_distance.txt',
+                      example='my_hausdorff_dist.txt')
+    parser.add_option(name="-v",
+                      type_value="int",
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      default_value=0,
+                      example='1')
+    return parser
+
 ########################################################################################################################
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
@@ -369,46 +417,7 @@ if __name__ == "__main__":
         print '\n*** WARNING: DEBUG MODE ON ***\n'
     else:
         param_default = Param()
-
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized)'
-                                     'If only one image is inputted, it will be only thinned')
-        parser.add_option(name="-i",
-                          type_value="file",
-                          description="First Image on which you want to find the skeleton",
-                          mandatory=True,
-                          example='t2star_manual_gmseg.nii.gz')
-        parser.add_option(name="-r",
-                          type_value="file",
-                          description="Second Image on which you want to find the skeleton",
-                          mandatory=False,
-                          default_value=None,
-                          example='t2star_manual_gmseg.nii.gz')
-        parser.add_option(name="-t",
-                          type_value="multiple_choice",
-                          description="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1'])
-        parser.add_option(name="-resampling",
-                          type_value="float",
-                          description="pixel size in mm to resample to",
-                          mandatory=False,
-                          default_value=0.1,
-                          example=0.5)
-        parser.add_option(name="-o",
-                          type_value="str",
-                          description="Name of the output file",
-                          mandatory=False,
-                          default_value='hausdorff_distance.txt',
-                          example='my_hausdorff_dist.txt')
-        parser.add_option(name="-v",
-                          type_value="int",
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                          mandatory=False,
-                          default_value=0,
-                          example='1')
+        parser = get_parser()
 
         arguments = parser.parse(sys.argv[1:])
         input_fname = arguments["-i"]
