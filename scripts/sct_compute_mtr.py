@@ -117,7 +117,7 @@ def main():
 def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Check the installation and environment variables of the toolbox and its dependences.')
+    parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Image without MT pulse (MT0)",
