@@ -190,7 +190,7 @@ def main():
         # TODO: check integrity of input
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
+    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label, method)
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
@@ -366,7 +366,7 @@ def main():
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_info_label, file_info_label):
+def read_label_file(path_info_label, file_info_label, method=''):
 
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
@@ -380,7 +380,15 @@ def read_label_file(path_info_label, file_info_label):
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
 
-    # separate header from (every line starting with "#")
+    # In case the method 'ml' or 'map' was selected, check if the White matter atlas was provided by the user
+    if method in ['ml', 'map']:
+        # look at first line
+        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        info_label_title = header_lines[0].split('-')[0].strip()
+        if '# White matter atlas' not in info_label_title:
+            sct.printv("ERROR: You selected the method \'"+method+"\' but you did not provide the White matter atlas. You provided the "+info_label_title+". Please provide the White matter atlas to use the method \'"+method+"\'.", type='error' )
+
+    # remove header lines (every line starting with "#")
     lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
 
     # read each line
