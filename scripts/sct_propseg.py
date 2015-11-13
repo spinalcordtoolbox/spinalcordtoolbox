@@ -202,7 +202,12 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
     # Helping options
     if "-init-centerline" in arguments:
-        cmd += " -init-centerline " + str(arguments["-init-centerline"])
+        # need to make sure that the centerline that is provided has only one point per slice. So we generate a new
+        # "centerline" using sct_process_segmentation. Related to issue #544
+        input_centerline = str(arguments["-init-centerline"])
+        temp_centerline = sct.add_suffix(arguments["-init-centerline"], '_centerline')
+        sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline -o ' + temp_centerline)
+        cmd += " -init-centerline " + temp_centerline
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
