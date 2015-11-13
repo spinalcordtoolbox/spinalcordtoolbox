@@ -22,7 +22,7 @@ TRAINING_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine
 TEST_SOURCE_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/data/'
 TEST_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/labels/'
 WORK_DIRECTORY = 'data'
-IMAGE_SIZE = 53
+IMAGE_SIZE = 60
 NUM_CHANNELS = 1
 PIXEL_DEPTH = 255
 NUM_LABELS = 10
@@ -84,86 +84,41 @@ def main(argv=None):  # pylint: disable=unused-argument
     validation_data_node = tf.constant(validation_data)
     test_data_node = tf.constant(test_data)
 
-    # The variables below hold all the trainable weights. They are passed an
-    # initial value which will be assigned when when we call:
-    # {tf.initialize_all_variables().run()}
-    convA1_weights = tf.Variable(tf.truncated_normal([3, 3, NUM_CHANNELS, 64],  # 3x3 filter, depth 64.
-                                stddev=0.1, seed=SEED))
-    convA1_biases = tf.Variable(tf.zeros([64]))
-    convA2_weights = tf.Variable(tf.truncated_normal([3, 3, 64, 64],  # 3x3 filter, depth 64.
-                                stddev=0.1, seed=SEED))
-    convA2_biases = tf.Variable(tf.zeros([64]))
+    depth = 4
+    num_features = 64
+    num_features_init = NUM_CHANNELS
+    num_classes = 2
+    weights_contraction = []
+    weights_expansion = []
+    upconv_weights = []
 
-    convB1_weights = tf.Variable(tf.truncated_normal([3, 3, 64, 128],  # 3x3 filter, depth 128.
-                                stddev=0.1, seed=SEED))
-    convB1_biases = tf.Variable(tf.zeros([128]))
-    convB2_weights = tf.Variable(tf.truncated_normal([3, 3, 128, 128],  # 3x3 filter, depth 128.
-                                stddev=0.1, seed=SEED))
-    convB2_biases = tf.Variable(tf.zeros([128]))
+    # contraction
+    for i in range(depth):
+        weights_contraction[i] = {'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
+                                  'bias1': tf.Variable(tf.zeros([num_features])),
+                                  'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
+                                  'bias2': tf.Variable(tf.zeros([num_features]))}
+        num_features_init = num_features
+        num_features = num_features_init * 2
 
-    convC1_weights = tf.Variable(tf.truncated_normal([3, 3, 128, 256],  # 3x3 filter, depth 256.
-                                stddev=0.1, seed=SEED))
-    convC1_biases = tf.Variable(tf.zeros([256]))
-    convC2_weights = tf.Variable(tf.truncated_normal([3, 3, 256, 256],  # 3x3 filter, depth 256.
-                                stddev=0.1, seed=SEED))
-    convC2_biases = tf.Variable(tf.zeros([256]))
+    weights_bottom_layer = {'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
+                            'bias1': tf.Variable(tf.zeros([num_features])),
+                            'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
+                            'bias2': tf.Variable(tf.zeros([num_features]))}
 
-    convD1_weights = tf.Variable(tf.truncated_normal([3, 3, 256, 512],  # 3x3 filter, depth 512.
-                                stddev=0.1, seed=SEED))
-    convD1_biases = tf.Variable(tf.zeros([512]))
-    convD2_weights = tf.Variable(tf.truncated_normal([3, 3, 512, 512],  # 3x3 filter, depth 512.
-                                stddev=0.1, seed=SEED))
-    convD2_biases = tf.Variable(tf.zeros([512]))
+    # expansion
+    num_features_init = num_features
+    num_features = num_features_init / 2
+    for i in range(depth):
+        upconv_weights[i] = tf.Variable(tf.truncated_normal([2, 2, num_features_init, num_features], stddev=0.1, seed=SEED))
+        weights_expansion[i] = {'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
+                                'bias1': tf.Variable(tf.zeros([num_features])),
+                                'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
+                                'bias2': tf.Variable(tf.zeros([num_features]))}
+        num_features_init = num_features
+        num_features = num_features_init / 2
 
-    convE1_weights = tf.Variable(tf.truncated_normal([3, 3, 512, 1024],  # 3x3 filter, depth 1024.
-                                stddev=0.1, seed=SEED))
-    convE1_biases = tf.Variable(tf.zeros([1024]))
-    convE2_weights = tf.Variable(tf.truncated_normal([3, 3, 1024, 1024],  # 3x3 filter, depth 1024.
-                                stddev=0.1, seed=SEED))
-    convE2_biases = tf.Variable(tf.zeros([1024]))
-
-    upconvEF_weights = tf.Variable(tf.truncated_normal([2, 2, 1024, 512],  # 2x2 filter, depth 512.
-                                stddev=0.1, seed=SEED))
-
-    convF1_weights = tf.Variable(tf.truncated_normal([3, 3, 1024, 512],  # 3x3 filter, depth 512.
-                                stddev=0.1, seed=SEED))
-    convF1_biases = tf.Variable(tf.zeros([512]))
-    convF2_weights = tf.Variable(tf.truncated_normal([3, 3, 512, 512],  # 3x3 filter, depth 512.
-                                stddev=0.1, seed=SEED))
-    convF2_biases = tf.Variable(tf.zeros([512]))
-
-    upconvFG_weights = tf.Variable(tf.truncated_normal([2, 2, 512, 256],  # 2x2 filter, depth 256.
-                                stddev=0.1, seed=SEED))
-
-    convG1_weights = tf.Variable(tf.truncated_normal([3, 3, 512, 256],  # 3x3 filter, depth 256.
-                                stddev=0.1, seed=SEED))
-    convG1_biases = tf.Variable(tf.zeros([256]))
-    convG2_weights = tf.Variable(tf.truncated_normal([3, 3, 256, 256],  # 3x3 filter, depth 256.
-                                stddev=0.1, seed=SEED))
-    convG2_biases = tf.Variable(tf.zeros([256]))
-
-    upconvGH_weights = tf.Variable(tf.truncated_normal([2, 2, 256, 128],  # 2x2 filter, depth 128.
-                                stddev=0.1, seed=SEED))
-
-    convH1_weights = tf.Variable(tf.truncated_normal([3, 3, 256, 128],  # 3x3 filter, depth 128.
-                                stddev=0.1, seed=SEED))
-    convH1_biases = tf.Variable(tf.zeros([128]))
-    convH2_weights = tf.Variable(tf.truncated_normal([3, 3, 128, 128],  # 3x3 filter, depth 128.
-                                stddev=0.1, seed=SEED))
-    convH2_biases = tf.Variable(tf.zeros([128]))
-
-    upconvHI_weights = tf.Variable(tf.truncated_normal([2, 2, 128, 64],  # 2x2 filter, depth 64.
-                                stddev=0.1, seed=SEED))
-
-    convI1_weights = tf.Variable(tf.truncated_normal([3, 3, 128, 64],  # 3x3 filter, depth 64.
-                                stddev=0.1, seed=SEED))
-    convI1_biases = tf.Variable(tf.zeros([64]))
-    convI2_weights = tf.Variable(tf.truncated_normal([3, 3, 64, 64],  # 3x3 filter, depth 64.
-                                stddev=0.1, seed=SEED))
-    convI2_biases = tf.Variable(tf.zeros([64]))
-
-    finalconv_weights = tf.Variable(tf.truncated_normal([1, 1, 64, 2],  # 2x2 filter, depth 64.
-                                stddev=0.1, seed=SEED))
+    finalconv_weights = tf.Variable(tf.truncated_normal([1, 1, num_features, num_classes], stddev=0.1, seed=SEED))
 
     # We will replicate the model structure for the training subgraph, as well
     # as the evaluation subgraphs, while sharing the trainable parameters.
@@ -176,101 +131,43 @@ def main(argv=None):  # pylint: disable=unused-argument
         # Max pooling. The kernel size spec {ksize} also follows the layout of
         # the data. Here we have a pooling window of 2, and a stride of 2.
 
-        # contraction A
-        convA1 = tf.nn.conv2d(data, convA1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluA1 = tf.nn.relu(tf.nn.bias_add(convA1, convA1_biases))
-        convA2 = tf.nn.conv2d(reluA1, convA2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluA2 = tf.nn.relu(tf.nn.bias_add(convA2, convA2_biases))
+        # contraction
+        data_temp = data
+        relu_results = []
+        for i in range(depth):
+            conv = tf.nn.conv2d(data_temp, weights_contraction[i]['conv1'], strides=[1, 1, 1, 1], padding='SAME')
+            relu = tf.nn.relu(tf.nn.bias_add(conv, weights_contraction[i]['bias1']))
+            conv = tf.nn.conv2d(relu, weights_contraction[i]['conv2'], strides=[1, 1, 1, 1], padding='SAME')
+            relu = tf.nn.relu(tf.nn.bias_add(conv, weights_contraction[i]['bias2']))
+            relu_results.append(relu)
 
-        pool = tf.nn.max_pool(reluA2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+            data_temp = tf.nn.max_pool(relu, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
-        # contraction B
-        convB1 = tf.nn.conv2d(pool, convB1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluB1 = tf.nn.relu(tf.nn.bias_add(convB1, convB1_biases))
-        convB2 = tf.nn.conv2d(reluB1, convB2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluB2 = tf.nn.relu(tf.nn.bias_add(convB2, convB2_biases))
+        # convolution of bottom layer
+        conv = tf.nn.conv2d(data_temp, weights_bottom_layer['conv1'], strides=[1, 1, 1, 1], padding='SAME')
+        relu = tf.nn.relu(tf.nn.bias_add(conv, weights_bottom_layer['bias1']))
+        conv = tf.nn.conv2d(relu, weights_bottom_layer['conv2'], strides=[1, 1, 1, 1], padding='SAME')
+        relu = tf.nn.relu(tf.nn.bias_add(conv, weights_bottom_layer['bias2']))
 
-        pool = tf.nn.max_pool(reluB2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+        # expansion
+        for i in range(depth):
+            # up-convolution:
+            # 2x2 convolution with upsampling by a factor 2, then concatenation
+            resample = relu.repeat(2, axis=1).repeat(2, axis=2)
+            upconv = tf.nn.conv2d(resample, upconv_weights[i], strides=[1, 1, 1, 1], padding='SAME')
+            b_min = (relu_results[depth-i-1].shape[1] - upconv.shape[1]) / 2 - 1
+            b_max = b_min + upconv.shape[1] + 1
+            upconv_concat = tf.concat(concat_dim=0, values=[relu_results[depth-i-1][:, b_min:b_max, b_min:b_max, :], upconv])
 
-        # contraction C
-        convC1 = tf.nn.conv2d(pool, convC1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluC1 = tf.nn.relu(tf.nn.bias_add(convC1, convC1_biases))
-        convC2 = tf.nn.conv2d(reluC1, convC2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluC2 = tf.nn.relu(tf.nn.bias_add(convC2, convC2_biases))
+            # expansion F
+            conv = tf.nn.conv2d(upconv_concat, weights_expansion[i]['conv1'], strides=[1, 1, 1, 1], padding='SAME')
+            relu = tf.nn.relu(tf.nn.bias_add(conv, weights_expansion[i]['bias1']))
+            conv = tf.nn.conv2d(relu, weights_expansion[i]['conv2'], strides=[1, 1, 1, 1], padding='SAME')
+            relu = tf.nn.relu(tf.nn.bias_add(conv, weights_expansion[i]['bias2']))
 
-        pool = tf.nn.max_pool(reluC2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
-        # contraction D
-        convD1 = tf.nn.conv2d(pool, convD1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluD1 = tf.nn.relu(tf.nn.bias_add(convD1, convD1_biases))
-        convD2 = tf.nn.conv2d(reluD1, convD2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluD2 = tf.nn.relu(tf.nn.bias_add(convD2, convD2_biases))
-
-        pool = tf.nn.max_pool(reluD2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-
-        # contraction E
-        convE1 = tf.nn.conv2d(pool, convE1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluE1 = tf.nn.relu(tf.nn.bias_add(convE1, convE1_biases))
-        convE2 = tf.nn.conv2d(reluE1, convE2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluE2 = tf.nn.relu(tf.nn.bias_add(convE2, convE2_biases))
-
-        # up-convolution:
-        # 2x2 convolution with upsampling by a factor 2, then concatenation
-        resample = reluE2.repeat(2, axis=1).repeat(2, axis=2)
-        upconv = tf.nn.conv2d(resample, upconvEF_weights, strides=[1, 1, 1, 1], padding='SAME')
-        b_min = (reluD2.shape[1] - upconv.shape[1]) / 2 - 1
-        b_max = b_min + upconv.shape[1] + 1
-        upconv_concat = tf.concat(concat_dim=0, values=[reluD2[:, b_min:b_max, b_min:b_max, :], upconv])
-
-        # expansion F
-        convF1 = tf.nn.conv2d(upconv_concat, convF1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluF1 = tf.nn.relu(tf.nn.bias_add(convF1, convF1_biases))
-        convF2 = tf.nn.conv2d(reluF1, convF2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluF2 = tf.nn.relu(tf.nn.bias_add(convF2, convF2_biases))
-
-        # up-convolution
-        resample = reluF2.repeat(2, axis=1).repeat(2, axis=2)
-        upconv = tf.nn.conv2d(resample, upconvFG_weights, strides=[1, 1, 1, 1], padding='SAME')
-        b_min = (reluC2.shape[1] - upconv.shape[1]) / 2 - 1
-        b_max = b_min + upconv.shape[1] + 1
-        upconv_concat = tf.concat(concat_dim=0, values=[reluC2[:, b_min:b_max, b_min:b_max, :], upconv])
-
-        # expansion G
-        convG1 = tf.nn.conv2d(upconv_concat, convG1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluG1 = tf.nn.relu(tf.nn.bias_add(convG1, convG1_biases))
-        convG2 = tf.nn.conv2d(reluG1, convG2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluG2 = tf.nn.relu(tf.nn.bias_add(convG2, convG2_biases))
-
-        # up-convolution
-        resample = reluG2.repeat(2, axis=1).repeat(2, axis=2)
-        upconv = tf.nn.conv2d(resample, upconvGH_weights, strides=[1, 1, 1, 1], padding='SAME')
-        b_min = (reluB2.shape[1] - upconv.shape[1]) / 2 - 1
-        b_max = b_min + upconv.shape[1] + 1
-        upconv_concat = tf.concat(concat_dim=0, values=[reluB2[:, b_min:b_max, b_min:b_max, :], upconv])
-
-        # expansion H
-        convH1 = tf.nn.conv2d(upconv_concat, convH1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluH1 = tf.nn.relu(tf.nn.bias_add(convH1, convH1_biases))
-        convH2 = tf.nn.conv2d(reluH1, convH2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluH2 = tf.nn.relu(tf.nn.bias_add(convH2, convH2_biases))
-
-        # up-convolution
-        resample = reluH2.repeat(2, axis=1).repeat(2, axis=2)
-        upconv = tf.nn.conv2d(resample, upconvHI_weights, strides=[1, 1, 1, 1], padding='SAME')
-        b_min = (reluA2.shape[1]-upconv.shape[1])/2-1
-        b_max = b_min + upconv.shape[1] + 1
-        upconv_concat = tf.concat(concat_dim=0, values=[reluA2[:, b_min:b_max, b_min:b_max, :], upconv])
-
-        # expansion I
-        convI1 = tf.nn.conv2d(upconv_concat, convI1_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluI1 = tf.nn.relu(tf.nn.bias_add(convI1, convI1_biases))
-        convI2 = tf.nn.conv2d(reluI1, convI2_weights, strides=[1, 1, 1, 1], padding='SAME')
-        reluI2 = tf.nn.relu(tf.nn.bias_add(convI2, convI2_biases))
-
-        finalconv = tf.nn.conv2d(reluI2, finalconv_weights, strides=[1, 1, 1, 1], padding='SAME')
+        finalconv = tf.nn.conv2d(relu, finalconv_weights, strides=[1, 1, 1, 1], padding='SAME')
 
         return finalconv
-
 
     # Training computation: logits + cross-entropy loss.
     logits = model(train_data_node, True)
