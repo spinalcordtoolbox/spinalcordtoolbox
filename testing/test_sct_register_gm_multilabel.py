@@ -37,7 +37,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-d']) and os.path.isfile(dict_param_with_path['-w']) and os.path.isfile(dict_param_with_path['-gm']) and os.path.isfile(dict_param_with_path['-wm'])):
+    if not (os.path.isfile(dict_param_with_path['-d']) and os.path.isfile(dict_param_with_path['-w']) and os.path.isfile(dict_param_with_path['-gm']) and os.path.isfile(dict_param_with_path['-wm']) and os.path.isfile(dict_param_with_path['-ref'][0] and os.path.isfile(dict_param_with_path['-ref'][1]))):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'diff_dc_gm': float('nan'), 'dice_wm': float('nan'), 'diff_dc_wm': float('nan'), 'hausdorff': float('nan'), 'diff_hd': float('nan'), 'med_dist': float('nan'), 'diff_md': float('nan')}, index=[path_data])
