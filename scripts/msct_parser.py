@@ -506,6 +506,9 @@ Version: """ + str(self.get_sct_version())
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
 
+        if len(self.arguments)+1 in self.section:
+            self.arguments_string += self.section[len(self.arguments)+1] + '\n'
+
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
             type_value = ''
