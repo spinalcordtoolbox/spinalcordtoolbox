@@ -620,7 +620,6 @@ class ProcessLabels(object):
 class Param:
     def __init__(self):
         self.verbose = '1'
-        self.remove_tmp_files = '1'
 
 
 # PARSER
@@ -662,6 +661,12 @@ def get_parser():
                       mandatory=False,
                       example="1,5,2,6:3,7,2,1:3,7,9,32")
     parser.add_option(name="-r",
+                      type_value="file",
+                      description="reference volume for label removing.",
+                      deprecated=1,
+                      deprecated_by='-ref',
+                      mandatory=False)
+    parser.add_option(name="-ref",
                       type_value="file",
                       description="reference volume for label removing.",
                       mandatory=False)
