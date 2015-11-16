@@ -31,7 +31,7 @@ import numpy as np
 import sct_utils as sct
 from sct_image import get_orientation, set_orientation
 from msct_image import Image
-
+from msct_parser import Parser
 
 
 # get path of the toolbox
@@ -75,26 +75,15 @@ class Color:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user):
     # Initialization to defaults parameters
-    fname_data = ''  # data is empty by default
-    path_label = ''  # empty by default
-    method = param.method # extraction mode by default
-    labels_of_interest = param.labels_of_interest
-    slices_of_interest = param.slices_of_interest
-    vertebral_levels = param.vertebral_levels
-    average_all_labels = param.average_all_labels
-    fname_output = param.fname_output
     fname_vertebral_labeling = param.fname_vertebral_labeling
-    fname_normalizing_label = ''  # optional then default is empty
-    normalization_method = ''  # optional then default is empty
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
     flag_h = 0
     ml_clusters = param.ml_clusters
     adv_param = param.adv_param
-    adv_param_user = ''
     clustered_labels = []
     matching_cluster_labels = []
 
@@ -112,42 +101,6 @@ def main():
         average_all_labels = 1
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:p:v:w:z:') # define flags
-        except getopt.GetoptError as err: # check if the arguments are defined
-            print str(err) # error
-            usage() # display usage
-        if not opts:
-            usage()
-        for opt, arg in opts: # explore flags
-            if opt in '-a':
-                average_all_labels = 1
-            elif opt in '-f':
-                path_label = os.path.abspath(arg)  # save path of labels folder
-            elif opt == '-h':  # help option
-                flag_h = 1
-            elif opt in '-i':
-                fname_data = arg
-            elif opt in '-l':
-                labels_of_interest = arg
-            elif opt in '-m':  # method for metric extraction
-                method = arg
-            elif opt in '-n':  # filename of the label by which the user wants to normalize
-                fname_normalizing_label = arg
-            elif opt in '-o': # output option
-                fname_output = arg  # fname of output file
-            elif opt in '-p':
-                adv_param_user = arg
-            elif opt in '-v':
-                # vertebral levels option, if the user wants to average the metric across specific vertebral levels
-                 vertebral_levels = arg
-            elif opt in '-w':
-                # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
-                normalization_method = arg
-            elif opt in '-z':  # slices numbers option
-                slices_of_interest = arg # save labels numbers
 
     # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
     if fname_data == '' or path_label == '' or flag_h:
@@ -983,6 +936,142 @@ List of labels in: """+file_label+""":
     sys.exit(2)
 
 
+def get_parser():
+
+    param_default = Param()
+
+    # read the .txt files referencing the labels
+    if param_default.path_label != '':
+        file_label = param_default.path_label + '/' + param_default.file_info_label
+        sct.check_file_exist(file_label, 0)
+        default_info_label = open(file_label, 'r')
+        label_references = default_info_label.read()
+    else:
+        label_references = ''
+
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='File to extract metrics from.',
+                      mandatory=True,
+                      example='fmri.nii.gz')
+    parser.add_option(name='-f',
+                      type_value='folder',
+                      description='Folder including labels to extract the metric from.',
+                      mandatory=True,
+                      example='$SCT_DIR/data/template')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description="""Label number to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tract in folder '/atlas'. Default = all labels.
+You can also select labels using 1:3 to get labels 1,2,3.
+Following shortcuts are also available for the folder label "atlas/":
+ -l sc: extract in the spinal cord cord
+ -l wm: extract in the white matter
+ -l gm: extract in the gray matter""",
+                      mandatory=False,
+                      default_value=param_default.labels_of_interest)
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description="""Method to extract metrics.
+ml: maximum likelihood (only use with well-defined regions and low noise)
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+wa: weighted average
+wath: weighted average (only consider values >0.5)
+bin: binarize mask (threshold=0.5)""",
+                      example=['ml', 'map', 'wa', 'wath', 'bin'],
+                      mandatory=False,
+                      default_value=param_default.method)
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description="""Method to extract metrics.
+ml: maximum likelihood (only use with well-defined regions and low noise)
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+wa: weighted average
+wath: weighted average (only consider values >0.5)
+bin: binarize mask (threshold=0.5)""",
+                      example=['ml', 'map', 'wa', 'wath', 'bin'],
+                      mandatory=False,
+                      default_value=param_default.method,
+                      deprecated_by='-method')
+    parser.add_option(name='-p',
+                      type_value='str',
+                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+#1: standard deviation of metrics across labels
+#2: standard deviation of the noise (assumed Gaussian)""",
+                      mandatory=False,
+                      example=param_default.adv_param[0]+','+param_default.adv_param[1])
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='File containing the results of metrics extraction.',
+                      mandatory=False,
+                      default_value=param_default.fname_output)
+    parser.add_option(name='-a',
+                      type_value=None,
+                      description='Average all selected labels.',
+                      mandatory=False)
+    parser.add_option(name='-vert',
+                      type_value='str',
+                      description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9',
+                      default_value=param_default.vertebral_levels)
+    parser.add_option(name='-v',
+                      type_value='str',
+                      description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9',
+                      deprecated_by='-vert',
+                      default_value=param_default.vertebral_levels)
+    parser.add_option(name='-z',
+                      type_value='str',
+                      description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
+                      mandatory=False,
+                      example='5:23',
+                      default_value=param_default.slices_of_interest)
+    parser.add_option(name='-norm-file',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False)
+    parser.add_option(name='-n',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False,
+                      deprecated_by='-norm-file')
+    parser.add_option(name='-norm-method',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False)
+    parser.add_option(name='-w',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False,
+                      deprecated_by='-norm-method')
+
+    str_section = """\n
+To list template labels:
+""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/template
+
+To list white matter atlas labels:
+""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/atlas
+
+To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
+""" + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
+    if label_references != '':
+        str_section += """
+List of labels in: """ + file_label + """:
+==========
+""" + label_references + """
+=========="""
+
+    parser.usage.addSection(str_section)
+
+    return parser
+
 #=======================================================================================================================
 # Start program
 #=======================================================================================================================
@@ -990,5 +1079,30 @@ if __name__ == "__main__":
     param_default = Param()
     param = Param()
     color = Color()
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    # Initialization to defaults parameters
+    fname_data = arguments['-i']
+    path_label = ''
+    if '-l' in arguments:
+        path_label = arguments['-l']
+    method = arguments['-method']
+    labels_of_interest = arguments['-l']
+    slices_of_interest = arguments['-z']
+    vertebral_levels = arguments['-vert']
+    average_all_labels = param.average_all_labels
+    if '-a' in arguments:
+        average_all_labels = 1
+    fname_output = arguments['-o']
+    fname_normalizing_label = ''
+    if '-norm-file' in arguments:
+        fname_normalizing_label = arguments['-norm-file']
+    normalization_method = ''
+    if '-norm-method' in arguments:
+        normalization_method = arguments['-norm-method']
+    adv_param_user = arguments['-p']
+
     # call main function
-    main()
+    main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user)
