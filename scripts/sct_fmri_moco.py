@@ -373,7 +373,7 @@ def get_parser():
                       description="""Verbose.""",
                       mandatory=False,
                       default_value='1',
-                      example=['0', '1'])
+                      example=['0', '1', '2'])
 
     return parser
 
@@ -393,7 +393,9 @@ if __name__ == "__main__":
         param.fname_mask = arguments['-m']
     param.group_size = arguments['-g']
     path_out = arguments['-ofolder']
-    param_user = arguments['-p']
+    param_user = ''
+    if '-p' in arguments:
+        param_user = arguments['-p']
     param.interp = arguments['-x']
     param.remove_tmp_files = arguments['-r']
     param.verbose = arguments['-v']
