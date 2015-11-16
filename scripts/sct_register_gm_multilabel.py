@@ -21,6 +21,7 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
+        self.output_folder = './'
         self.verbose = 1
         self.remove_tmp = 1
         self.qc = 1
@@ -41,7 +42,7 @@ class MultiLabelRegistration:
         self.fname_target = fname_target
         self.fname_warp_template2target = fname_warp_template
 
-        self.path_new_template = './label_wm_corrected_multilabel/'
+        self.path_new_template = 'label_wm_corrected_multilabel/'
 
     def register(self):
         # accentuate separation WM/GM
@@ -90,13 +91,17 @@ class MultiLabelRegistration:
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         os.chdir('..')
 
-        sct.run('cp -r '+tmp_dir+'label  '+self.path_new_template)
-        sct.generate_output_file(tmp_dir+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz', './warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz')
-        sct.generate_output_file(tmp_dir+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz', './warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz')
+        sct.run('cp -r '+tmp_dir+'label  '+self.param.output_folder+self.path_new_template)
+
+        sct.generate_output_file(tmp_dir+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz', self.param.output_folder+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz')
+        sct.generate_output_file(tmp_dir+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz', self.param.output_folder+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz')
 
         sct.printv('fslview '+fname_target+' '+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
 
-    def validation(self, fname_manual_gmseg, fname_sc_seg):
+    def validation(self, fname_manual_gmseg, fname_sc_seg, param=None):
+        if param is None:
+            param = Param()
+
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
         path_sc_seg, file_sc_seg, ext_sc_seg = sct.extract_fname(fname_sc_seg)
 
@@ -245,9 +250,8 @@ class MultiLabelRegistration:
         dice_fic.close()
         os.chdir('..')
 
-        sct.generate_output_file(tmp_dir+hd_name, './'+hd_name)
-        sct.generate_output_file(tmp_dir+dice_name, './'+dice_name)
-
+        sct.generate_output_file(tmp_dir+hd_name, self.param.output_folder+hd_name)
+        sct.generate_output_file(tmp_dir+dice_name, self.param.output_folder+dice_name)
 
 
 def thr_im(im, low_thr, high_thr):
@@ -288,11 +292,17 @@ def get_parser():
                       mandatory=True,
                       example='warp_template2t2star.nii.gz')
 
+    parser.usage.addSection('OUTPUT OTIONS')
     parser.add_option(name="-ref",
                       type_value=[[','], 'file'],
                       description='Manual gray matter segmentation, and segmentation of the spinal cord on the target image. (In this order, separated by "," without white space.',
                       mandatory=False,
                       example='t2star_manual_gmseg.nii.gz,t2star_seg.nii.gz')
+    parser.add_option(name="-ofolder",
+                      type_value="folder_creation",
+                      description="Path to an output folder",
+                      mandatory=False,
+                      example='multilabel_registration/')
 
     parser.usage.addSection('MISC')
     parser.add_option(name='-qc',
@@ -332,6 +342,8 @@ if __name__ == "__main__":
 
     if '-ref' in arguments:
         fname_manual_gmseg, fname_sc_seg = arguments['-ref']
+    if '-ofolder' in arguments:
+        ml_param.output_folder = sct.slash_at_the_end(arguments['-ofolder'], 1)
     if '-qc' in arguments:
         ml_param.qc = int(arguments['-qc'])
     if '-r' in arguments:
@@ -339,7 +351,7 @@ if __name__ == "__main__":
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
 
-    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target)
+    ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
     # ml_reg.register()
     if fname_manual_gmseg is not None:
-        ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
+        ml_reg.validation(fname_manual_gmseg, fname_sc_seg, param=ml_param)
