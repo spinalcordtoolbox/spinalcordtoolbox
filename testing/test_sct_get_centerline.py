@@ -33,7 +33,7 @@ def test(path_data='', parameters=''):
     folder_data = 't2/'
     file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz', 't2_centerline_labels.nii.gz', 't2_seg_manual.nii.gz']
 
-    parser = sct_get_centerline.GetCenterlineScript.get_parser()
+    parser = sct_get_centerline.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     contrast = dict_param['-t']
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
