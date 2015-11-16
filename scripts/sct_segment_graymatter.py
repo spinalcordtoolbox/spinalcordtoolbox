@@ -212,7 +212,7 @@ class FullGmSegmentation:
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
         if compute_ratio:
-            self.ratio_name = self.compute_ratio()
+            self.ratio_name = self.compute_ratio(type=compute_ratio)
 
         os.chdir('..')
 
@@ -254,10 +254,17 @@ class FullGmSegmentation:
         self.res_names['corrected_wm_seg'] = tmp_res_names[2]
 
     # ------------------------------------------------------------------------------------------------------------------
-    def compute_ratio(self):
+    def compute_ratio(self, type='slice'):
+        from numpy import mean, nonzero
+        from math import isnan
         ratio_dir =  'ratio/'
         sct.run('mkdir '+ratio_dir)
-
+        if type == 'level':
+            assert self.preprocessed.level_fname is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
+            levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.level_fname).data]
+            levels_ratio = {}
+            for l in levels:
+                levels_ratio[l] = []
         gm_seg = 'res_gmseg.nii.gz'
         wm_seg = 'res_wmseg.nii.gz'
         sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
@@ -284,11 +291,18 @@ class FullGmSegmentation:
         gm_csa.close()
         wm_csa.close()
 
+        ratio.write(type+' #, ratio GM/WM \n')
         for gm_line, wm_line in zip(gm_lines, wm_lines):
             i, gm_area = gm_line.split(',')
             j, wm_area = wm_line.split(',')
             assert i == j
-            ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
+            if type == 'level':
+                levels_ratio[levels[int(i)]].append(float(gm_area)/float(wm_area))
+            else:
+                ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
+        if type == 'level':
+            for l, ratio_list in sorted(levels_ratio.items()):
+                ratio.write(str(l)+','+str(mean(ratio_list))+'\n')
 
         ratio.close()
         os.chdir('..')
@@ -445,8 +459,11 @@ def get_parser():
                       default_value='prob',
                       example=['binary', 'prob'])
     parser.add_option(name="-ratio",
-                      description="Compute GM/WM ratio",
-                      mandatory=False)
+                      type_value='multiple_choice',
+                      description="Compute GM/WM ratio by slice or by vertebral level (average across levels)",
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', 'slice', 'level'])
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -521,7 +538,10 @@ if __name__ == "__main__":
             param.target_means = arguments["-means"]
 
         if "-ratio" in arguments:
-            compute_ratio = True
+            if arguments["-ratio"] == '0':
+                compute_ratio = False
+            else:
+                compute_ratio = arguments["-ratio"]
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
