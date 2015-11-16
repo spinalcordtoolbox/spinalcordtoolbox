@@ -366,16 +366,15 @@ class Parser:
                 else:
                     self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
 
-        if dictionary:
-            # check if all mandatory arguments are provided by the user
-            for option in [opt for opt in self.options if self.options[opt].mandatory]:
-                if option not in dictionary:
-                    self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
+        # check if all mandatory arguments are provided by the user
+        for option in [opt for opt in self.options if self.options[opt].mandatory]:
+            if option not in dictionary:
+                self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
 
-            # check if optional arguments with default values are all in the dictionary. If not, add them.
-            for option in [opt for opt in self.options if not self.options[opt].mandatory]:
-                if option not in dictionary and self.options[option].default_value:
-                    dictionary[option] = self.options[option].default_value
+        # check if optional arguments with default values are all in the dictionary. If not, add them.
+        for option in [opt for opt in self.options if not self.options[opt].mandatory]:
+            if option not in dictionary and self.options[option].default_value:
+                dictionary[option] = self.options[option].default_value
 
         # return a dictionary with each option name as a key and the input as the value
         return dictionary
