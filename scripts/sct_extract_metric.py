@@ -1086,11 +1086,15 @@ if __name__ == "__main__":
     # Initialization to defaults parameters
     fname_data = arguments['-i']
     path_label = ''
-    if '-l' in arguments:
-        path_label = arguments['-l']
+    if '-f' in arguments:
+        path_label = arguments['-f']
     method = arguments['-method']
-    labels_of_interest = arguments['-l']
-    slices_of_interest = arguments['-z']
+    labels_of_interest = ''
+    if '-l' in arguments:
+        labels_of_interest = arguments['-l']
+    slices_of_interest = ''
+    if '-z' in arguments:
+        slices_of_interest = arguments['-z']
     vertebral_levels = arguments['-vert']
     average_all_labels = param.average_all_labels
     if '-a' in arguments:
@@ -1102,7 +1106,9 @@ if __name__ == "__main__":
     normalization_method = ''
     if '-norm-method' in arguments:
         normalization_method = arguments['-norm-method']
-    adv_param_user = arguments['-p']
+    adv_param_user = ''
+    if '-p' in arguments:
+        adv_param_user = arguments['-p']
 
     # call main function
     main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user)
