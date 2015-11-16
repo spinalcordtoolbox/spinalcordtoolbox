@@ -7,7 +7,6 @@
 # License: see the LICENSE.TXT
 # ==========================================================================================
 
-import gzip
 import sys
 import os
 
@@ -15,6 +14,7 @@ import tensorflow.python.platform
 import numpy
 import tensorflow as tf
 
+import sct_utils as sct
 from msct_image import Image
 
 TRAINING_SOURCE_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/training/data/'
@@ -58,6 +58,7 @@ def error_rate(predictions, labels):
 
 def main(argv=None):  # pylint: disable=unused-argument
 
+    # Extracting datasets
     train_data = extract_data(TRAINING_SOURCE_DATA)
     train_labels = extract_data(TRAINING_LABELS_DATA)
     test_data = extract_data(TEST_SOURCE_DATA)
@@ -70,6 +71,25 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_labels = train_labels[VALIDATION_SIZE:]
     num_epochs = NUM_EPOCHS
     train_size = train_labels.shape[0]
+
+    # Setting U-net parameters
+    depth = 4
+    num_features = 64
+    num_features_init = NUM_CHANNELS
+    num_classes = 2
+    weights_contraction = []
+    weights_expansion = []
+    upconv_weights = []
+
+    # Make sure image size corresponds to requirements
+    # "select the input tile size such that all 2x2 max-pooling operationsare applied to a
+    # layer with an even x- and y-size."
+    image_size_temp = IMAGE_SIZE
+    for i in range(depth):
+        if (image_size_temp - 4) % 2 != 0:
+            sct.printv('ERROR: image size must satisfy requirements (select the input tile size such that all 2x2 '
+                       'max-pooling operationsare applied to a layer with an even x- and y-size.)', type='error')
+        image_size_temp = (image_size_temp - 4) / 2
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
@@ -84,14 +104,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     validation_data_node = tf.constant(validation_data)
     test_data_node = tf.constant(test_data)
 
-    depth = 4
-    num_features = 64
-    num_features_init = NUM_CHANNELS
-    num_classes = 2
-    weights_contraction = []
-    weights_expansion = []
-    upconv_weights = []
-
+    # Setting variables that will be optimized
     # contraction
     for i in range(depth):
         weights_contraction[i] = {'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
