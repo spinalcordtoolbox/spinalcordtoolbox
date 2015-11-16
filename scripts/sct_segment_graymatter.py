@@ -212,6 +212,7 @@ class FullGmSegmentation:
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
         if compute_ratio:
+            sct.printv('\nComputing ratio GM/WM ...', verbose=self.param.verbose, type='normal')
             self.ratio_name = self.compute_ratio(type=compute_ratio)
 
         os.chdir('..')
@@ -259,12 +260,12 @@ class FullGmSegmentation:
         from math import isnan
         ratio_dir =  'ratio/'
         sct.run('mkdir '+ratio_dir)
-        if type == 'level':
+        if type is not 'slice':
             assert self.preprocessed.level_fname is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
             levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.level_fname).data]
-            levels_ratio = {}
+            csa_gm_wm_by_level = {}
             for l in levels:
-                levels_ratio[l] = []
+                csa_gm_wm_by_level[l] = []
         gm_seg = 'res_gmseg.nii.gz'
         wm_seg = 'res_wmseg.nii.gz'
         sct.run('cp '+self.res_names['gm_seg']+' '+ratio_dir+gm_seg)
@@ -291,18 +292,40 @@ class FullGmSegmentation:
         gm_csa.close()
         wm_csa.close()
 
-        ratio.write(type+' #, ratio GM/WM \n')
+        ratio.write(type+' , ratio GM/WM \n')
         for gm_line, wm_line in zip(gm_lines, wm_lines):
             i, gm_area = gm_line.split(',')
             j, wm_area = wm_line.split(',')
             assert i == j
-            if type == 'level':
-                levels_ratio[levels[int(i)]].append(float(gm_area)/float(wm_area))
+            if type is not 'slice':
+                csa_gm_wm_by_level[levels[int(i)]].append((float(gm_area), float(wm_area)))
             else:
                 ratio.write(i+','+str(float(gm_area)/float(wm_area))+'\n')
         if type == 'level':
-            for l, ratio_list in sorted(levels_ratio.items()):
-                ratio.write(str(l)+','+str(mean(ratio_list))+'\n')
+            for l, gm_wm_list in sorted(csa_gm_wm_by_level.items()):
+                csa_gm_list = []
+                csa_wm_list = []
+                for gm, wm in gm_wm_list:
+                    csa_gm_list.append(gm)
+                    csa_wm_list.append(wm)
+                csa_gm = mean(csa_gm_list)
+                csa_wm = mean(csa_wm_list)
+                ratio.write(str(l)+','+str(csa_gm/csa_wm)+'\n')
+        elif type is not 'slice':
+            li, lf = type.split(':')
+            level_str_to_int = {'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7, 'T1': 8, 'T2': 9}
+            li = level_str_to_int[li]
+            lf = level_str_to_int[lf]
+            csa_gm_list = []
+            csa_wm_list = []
+            for l in range(li, lf+1):
+                gm_wm_list = csa_gm_wm_by_level[l]
+                for gm, wm in gm_wm_list:
+                    csa_gm_list.append(gm)
+                    csa_wm_list.append(wm)
+            csa_gm = mean(csa_gm_list)
+            csa_wm = mean(csa_wm_list)
+            ratio.write(type+','+str(csa_gm/csa_wm)+'\n')
 
         ratio.close()
         os.chdir('..')
@@ -464,6 +487,12 @@ def get_parser():
                       mandatory=False,
                       default_value='0',
                       example=['0', 'slice', 'level'])
+    parser.add_option(name="-ratio-level",
+                      type_value='str',
+                      description="Compute GM/WM ratio across several vertebral levels.",
+                      mandatory=False,
+                      default_value='0',
+                      example='C2:C4')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Output folder",
@@ -536,12 +565,19 @@ if __name__ == "__main__":
             param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
             param.target_means = arguments["-means"]
-
         if "-ratio" in arguments:
             if arguments["-ratio"] == '0':
                 compute_ratio = False
             else:
                 compute_ratio = arguments["-ratio"]
+        if "-ratio-level" in arguments:
+            if arguments["-ratio-level"] == '0':
+                compute_ratio = False
+            else:
+                if ':' in arguments["-ratio-level"]:
+                    compute_ratio = arguments["-ratio-level"]
+                else:
+                    sct.printv('WARNING: -ratio-level function should be used with a range of vertebral levels (for ex: "C2:C5"). Ignoring option.', 1, 'warning')
         if "-res-type" in arguments:
             param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
