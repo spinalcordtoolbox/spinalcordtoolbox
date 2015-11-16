@@ -36,7 +36,7 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area between C3 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template -l 3:4
+sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -l 3:4
 # --> mean CSA: 78.2412869322 +/- 0.72521896375
 # go back to root folder
 cd ..
