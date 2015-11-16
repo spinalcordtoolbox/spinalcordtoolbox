@@ -24,6 +24,7 @@ from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, split_data, concat_data
 # from sct_average_data_across_dimension import average_data_across_dimension
+from msct_parser import Parser
 
 
 class Param:
@@ -51,12 +52,10 @@ class Param:
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(path_out, param_user):
 
     # initialization
     start_time = time.time()
-    path_out = '.'
-    param_user = ''
 
     # reducing the number of CPU used for moco (see issue #201)
     os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = "1"
@@ -312,51 +311,72 @@ def fmri_moco(param):
     # status, output = sct.run(cmd, param.verbose)
 
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Motion correction of fMRI data. Some robust features include:
+def get_parser():
+    param_default = Param()
+    parser = Parser(__file__)
+    parser.usage.set_description("""Motion correction of fMRI data. Some robust features include:
   - group-wise (-g)
   - slice-wise regularized along z using polynomial function (-p)
     For more info about the method, type: isct_antsSliceRegularizedRegistration
   - masking (-m)
-  - iterative averaging of target volume
+  - iterative averaging of target volume""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='4D data',
+                      mandatory=True,
+                      example='fmri.nii.gz')
+    parser.add_option(name='-g',
+                      type_value='int',
+                      description='Group nvols successive fMRI volumes for more robustness.',
+                      mandatory=False,
+                      default_value=param.group_size)
+    parser.add_option(name='-m',
+                      type_value='image_nifti',
+                      description='Binary mask to limit voxels considered by the registration metric.',
+                      mandatory=False)
+    parser.add_option(name="-p",
+                      type_value='str',
+                      description="""ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
+1) degree of polynomial function used for regularization along Z.
+   For no regularization set to 0.
+2) smoothing kernel size (in mm).
+3) gradient step. The higher the more deformation allowed.
+4) metric: {MI,MeanSquares}.
+   If you find very large deformations, switching to MeanSquares can help.""",
+                      mandatory=False,
+                      example=param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3])
+    parser.add_option(name='-ofolder',
+                      type_value='folder_creation',
+                      description='Output path.',
+                      mandatory=False,
+                      default_value='./')
+    parser.add_option(name='-o',
+                      type_value='folder_creation',
+                      description='Output path.',
+                      mandatory=False,
+                      default_value='./',
+                      deprecated_by='-o')
+    parser.add_option(name="-x",
+                      type_value="multiple_choice",
+                      description="""Final interpolation.""",
+                      mandatory=False,
+                      default_value='linear',
+                      example=['nn', 'linear', 'spline'])
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description="""Remove temporary files.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value="multiple_choice",
+                      description="""Verbose.""",
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
 
-USAGE
-  """+os.path.basename(__file__)+""" -i <fmri>
+    return parser
 
-MANDATORY ARGUMENTS
-  -i <fmri>        4D data
-
-OPTIONAL ARGUMENTS
-  -g <nvols>       group nvols successive fMRI volumes for more robustness. Default="""+str(param.group_size)+"""
-  -m <mask>        binary mask to limit voxels considered by the registration metric.
-  -p <param>       parameters for registration.
-                   ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma. Default="""+param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3]+"""
-                     1) degree of polynomial function used for regularization along Z.
-                        For no regularization set to 0.
-                     2) smoothing kernel size (in mm).
-                     3) gradient step. The higher the more deformation allowed.
-                     4) metric: {MI,MeanSquares}.
-                        If you find very large deformations, switching to MeanSquares can help.
-  -o <path_out>    Output path.
-  -x {nn,linear,spline}  Final Interpolation. Default="""+str(param_default.interp)+"""
-  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
-  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
-  -h               help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i fmri.nii.gz\n"""
-
-    #Exit Program
-    sys.exit(2)
 
 #=======================================================================================================================
 # Start program
@@ -364,4 +384,18 @@ EXAMPLE
 if __name__ == "__main__":
     param = Param()
     param_default = Param()
-    main()
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    param.fname_data = arguments['-i']
+    if '-m' in arguments:
+        param.fname_mask = arguments['-m']
+    param.group_size = arguments['-g']
+    path_out = arguments['-ofolder']
+    param_user = arguments['-p']
+    param.interp = arguments['-x']
+    param.remove_tmp_files = arguments['-r']
+    param.verbose = arguments['-v']
+
+    main(path_out, param_user)
