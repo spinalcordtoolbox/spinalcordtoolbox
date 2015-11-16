@@ -430,7 +430,7 @@ def get_orientation(im, filename=False):
 
 # set_orientation
 # ==========================================================================================
-def set_orientation(im, orientation, data_inversion=False, filename=False):
+def set_orientation(im, orientation, data_inversion=False, filename=False, fname_out=''):
     """
     Set orientation on image
     :param im: either Image object or file name. Carefully set param filename.
@@ -439,11 +439,15 @@ def set_orientation(im, orientation, data_inversion=False, filename=False):
     :param filename:
     :return:
     """
-    if filename:
+
+    if fname_out:
+        pass
+    elif filename:
         path, fname, ext = extract_fname(im)
         fname_out = fname+'_'+orientation+ext
     else:
         fname_out = im.file_name+'_'+orientation+im.ext
+
     if not data_inversion:
         from sct_utils import run
         if filename:
