@@ -352,6 +352,6 @@ if __name__ == "__main__":
         ml_param.verbose = int(arguments['-v'])
 
     ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
-    # ml_reg.register()
+    ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg, param=ml_param)
