@@ -995,7 +995,7 @@ def get_parser():
     parser = Parser(__file__)
     parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
     parser.add_option(name='-i',
-                      type_value='file',
+                      type_value='image_nifti',
                       description='Image to get centerline from.',
                       mandatory=True,
                       example='t2.nii.gz')
