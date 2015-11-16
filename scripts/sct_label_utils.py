@@ -711,8 +711,8 @@ def main(args=None):
     vertebral_levels = None
     input_verbose = '1'
     input_fname_output = arguments["-o"]
-    if "-r" in arguments:
-        input_fname_ref = arguments["-r"]
+    if "-ref" in arguments:
+        input_fname_ref = arguments["-ref"]
     if "-x" in arguments:
         input_coordinates = arguments["-x"]
     if "-c" in arguments:
