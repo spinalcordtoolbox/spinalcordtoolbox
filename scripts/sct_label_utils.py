@@ -663,7 +663,6 @@ def get_parser():
     parser.add_option(name="-r",
                       type_value="file",
                       description="reference volume for label removing.",
-                      deprecated=1,
                       deprecated_by='-ref',
                       mandatory=False)
     parser.add_option(name="-ref",

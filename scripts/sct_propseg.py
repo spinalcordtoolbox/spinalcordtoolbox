@@ -39,7 +39,6 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
-                      deprecated=1,
                       deprecated_by="-contrast",
                       example=['t1','t2'])
     parser.add_option(name="-contrast",
