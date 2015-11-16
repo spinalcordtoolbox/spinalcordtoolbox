@@ -90,12 +90,22 @@ class Tsnr:
         sct.printv('fslview '+fname_tsnr+' &\n', self.param.verbose, 'info')
 
 
+def get_parser():
+    parser = Parser(__file__)
+    parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
+    parser.add_option(name='-i',
+                      type_value='file',
+                      description='fMRI data',
+                      mandatory=True,
+                      example='fmri.nii.gz')
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='verbose',
+                      mandatory=False,
+                      example=['0', '1'])
+    return parser
 
-########################################################################################################################
-######-------------------------------------------------  MAIN   --------------------------------------------------######
-########################################################################################################################
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     param = Param()
 
     if param.debug:
@@ -103,25 +113,12 @@ if __name__ == "__main__":
     else:
         param_default = Param()
 
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
-        parser.add_option(name="-i",
-                          type_value="file",
-                          description="fMRI data",
-                          mandatory=True,
-                          example='fmri.nii.gz')
-        parser.add_option(name="-v",
-                          type_value="multiple_choice",
-                          description="verbose",
-                          mandatory=False,
-                          example=['0', '1'])
-
+        parser = get_parser()
         arguments = parser.parse(sys.argv[1:])
-        input_fmri = arguments["-i"]
+        input_fmri = arguments['-i']
 
-        if "-v" in arguments:
-            param.verbose = int(arguments["-v"])
+        if '-v' in arguments:
+            param.verbose = int(arguments['-v'])
 
         tsnr = Tsnr(param=param, fmri=input_fmri)
         tsnr.compute()
