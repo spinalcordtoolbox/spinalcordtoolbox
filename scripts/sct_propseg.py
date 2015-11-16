@@ -39,8 +39,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
+                      deprecated=1,
+                      deprecated_by="-contrast",
                       example=['t1','t2'])
-
+    parser.add_option(name="-contrast",
+                      type_value="multiple_choice",
+                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+                      mandatory=True,
+                      example=['t1','t2'])
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -158,10 +164,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    contrast_type = arguments["-t"]
+    contrast_type = arguments["-contrast"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
+    cmd = "isct_propseg" + " -i " + input_filename + " -contrast " + contrast_type
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
