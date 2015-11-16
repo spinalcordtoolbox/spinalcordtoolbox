@@ -223,7 +223,6 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     return x_centerline_fit, y_centerline_fit
 
 
-
 def polynome_centerline(x_centerline,y_centerline,z_centerline):
     """Fit polynomial function through centerline"""
     
@@ -233,41 +232,14 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
     
-    #Fit centerline in the Z-Y plane using polynomial function
+    # Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
     
     
-    return x_centerline_fit,y_centerline_fit
-
-
-def usage():
-    print 'USAGE: \n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Flatten the spinal cord in the sagittal plane (to make nice pictures).\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <source> -c <centerline>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <source>       input volume.\n' \
-        '  -c                centerline.\n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param_default.interp)+'\n' \
-        '  -d <deg>          degree of fitting polynome. Default='+str(param_default.deg_poly)+'\n' \
-        '  -r {0, 1}         remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -h                help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  sct_flatten_sagittal -i t2.nii.gz -c centerline.nii.gz\n'
-    sys.exit(2)
+    return x_centerline_fit, y_centerline_fit
 
 
 def get_parser():
