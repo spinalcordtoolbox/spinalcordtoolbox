@@ -19,7 +19,7 @@ class Param:
         self.verbose = 1
 
         self.path_output = './'
-        self.size_crop = 50
+        self.size_crop = 57
 
 
 def main(path_input, fname_seg, path_output, size_crop, remove_tmp_files, verbose):
@@ -30,7 +30,7 @@ def main(path_input, fname_seg, path_output, size_crop, remove_tmp_files, verbos
     crop_image_around_segmentation(fname_in, fname_seg, path_output, size_crop, remove_tmp_files, verbose)
 
 
-def crop_image_around_segmentation(fname_in, fname_seg, path_output, size_crop, remove_tmp_files, verbose):
+def crop_image_around_segmentation(fname_in, fname_seg, path_output_im, path_output_seg, size_crop, remove_tmp_files, verbose):
     # 1. Resample to 1mm^3 isotropic
     fname_in_resampled = sct.add_suffix(fname_in, 'r')
     sct.run('sct_resample -i ' + fname_in + ' -mm 1x1x1 -o ' + fname_in_resampled)
@@ -60,8 +60,8 @@ def crop_image_around_segmentation(fname_in, fname_seg, path_output, size_crop, 
 
     # 5. Create a square mask around the spinal cord centerline
     fname_mask_box = 'mask_box.nii.gz'
-    sct.run('sct_create_mask -i ' + fname_in + ' -m centerline,' + fname_centerline + ' -s ' + size_crop +
-            ' -o ' + fname_mask_box + ' -f box')
+    sct.run('sct_create_mask -i ' + fname_in + ' -m centerline,' + fname_centerline + ' -s ' + str(size_crop) +
+            ' -o ' + fname_mask_box + ' -f box -e 1')
 
     # 6. Crop image around the spinal cord and create a stack of square images
     sct.printv('Cropping around mask and stacking slices...')
@@ -76,6 +76,12 @@ def crop_image_around_segmentation(fname_in, fname_seg, path_output, size_crop, 
     sct.run('sct_image -i ' + fname_stack_image + ' -split z')
     fname_stack_seg = sct.add_suffix(fname_seg, '_stack')
     sct.run('sct_image -i ' + fname_stack_seg + ' -split z')
+
+    # 8. Move all images to output folders
+    path_fname, file_fname, ext_fname = sct.extract_fname(fname_stack_image)
+    sct.run('mv ' + file_fname + '_* ' + path_output_im)
+    path_fname, file_fname, ext_fname = sct.extract_fname(fname_stack_seg)
+    sct.run('mv ' + file_fname + '_* ' + path_output_seg)
 
 
 def get_parser():
@@ -98,9 +104,15 @@ def get_parser():
                       mandatory=True,
                       example='t2_seg.nii.gz')
     parser.usage.addSection('General options')
-    parser.add_option(name='-ofolder',
+    parser.add_option(name='-ofolder-im',
                       type_value='folder_creation',
-                      description='Output folder',
+                      description='Output folder for images',
+                      mandatory=False,
+                      example='./',
+                      default_value=param.path_output)
+    parser.add_option(name='-ofolder-seg',
+                      type_value='folder_creation',
+                      description='Output folder for segmentation',
                       mandatory=False,
                       example='./',
                       default_value=param.path_output)
@@ -135,9 +147,10 @@ if __name__ == '__main__':
 
     fname_in = arguments['-i']
     fname_seg = arguments['-seg']
-    path_output = arguments['-ofolder']
+    path_output_im = arguments['-ofolder-im']
+    path_output_seg = arguments['-ofolder-seg']
     size_crop = arguments['-size']
     remove_tmp_files = arguments['-r']
     verbose = arguments['-v']
 
-    crop_image_around_segmentation(fname_in, fname_seg, path_output, size_crop, remove_tmp_files, verbose)
+    crop_image_around_segmentation(fname_in, fname_seg, path_output_im, path_output_seg, size_crop, remove_tmp_files, verbose)
