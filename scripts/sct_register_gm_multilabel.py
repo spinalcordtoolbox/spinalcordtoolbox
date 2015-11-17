@@ -293,16 +293,24 @@ def get_parser():
                       example='warp_template2t2star.nii.gz')
 
     parser.usage.addSection('OUTPUT OTIONS')
-    parser.add_option(name="-ref",
-                      type_value=[[','], 'file'],
-                      description='Manual gray matter segmentation, and segmentation of the spinal cord on the target image. (In this order, separated by "," without white space.',
-                      mandatory=False,
-                      example='t2star_manual_gmseg.nii.gz,t2star_seg.nii.gz')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="Path to an output folder",
                       mandatory=False,
                       example='multilabel_registration/')
+
+    parser.usage.addSection('VALIDATION: Use both option for validation.')
+    parser.add_option(name="-manual-gm",
+                      type_value='file',
+                      description='Manual gray matter segmentation on the target image. ',
+                      mandatory=False,
+                      example='t2star_manual_gmseg.nii.gz')
+    parser.add_option(name="-sc",
+                      type_value='file',
+                      description='Spinal cord segmentation on the target image. ',
+                      mandatory=False,
+                      example='t2star_seg.nii.gz')
+
 
     parser.usage.addSection('MISC')
     parser.add_option(name='-qc',
@@ -340,8 +348,10 @@ if __name__ == "__main__":
     fname_manual_gmseg = None
     fname_sc_seg = None
 
-    if '-ref' in arguments:
-        fname_manual_gmseg, fname_sc_seg = arguments['-ref']
+    if '-manual-gm' in arguments:
+        fname_manual_gmseg = arguments['-manual-gm']
+    if '-sc' in arguments:
+        fname_sc_seg = arguments['-sc']
     if '-ofolder' in arguments:
         ml_param.output_folder = sct.slash_at_the_end(arguments['-ofolder'], 1)
     if '-qc' in arguments:
@@ -350,6 +360,9 @@ if __name__ == "__main__":
         ml_param.remove_tmp = int(arguments['-r'])
     if '-v' in arguments:
         ml_param.verbose = int(arguments['-v'])
+
+    if (fname_manual_gmseg is not None and fname_sc_seg is None) or (fname_manual_gmseg is None and fname_sc_seg is not None):
+        sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
     ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
     ml_reg.register()
