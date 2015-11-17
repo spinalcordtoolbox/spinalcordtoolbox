@@ -99,7 +99,7 @@ def test(path_data, parameters=''):
         hd_lines = hd.readlines()
         hd.close()
 
-        hd_start = hd_lines.index('#Slice, HD, HD diff, MD, MD diff')
+        hd_start = hd_lines.index('#Slice, HD, HD diff, MD, MD diff\n')
         hd_lines = hd_lines[hd_start+1:]
 
         hausdorff_list = []
