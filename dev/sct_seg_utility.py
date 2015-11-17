@@ -56,7 +56,7 @@ def crop_image_around_segmentation(fname_in, fname_seg, path_output_im, path_out
 
     # 4. Extract centerline from segmentation
     fname_centerline = sct.add_suffix(fname_seg, '_centerline')
-    sct.run('sct_process_segmentation -i ' + fname_seg + ' -p centerline -o ' + fname_centerline)
+    sct.run('sct_process_segmentation -i ' + fname_seg + ' -p centerline') # -o ' + fname_centerline)
 
     # 5. Create a square mask around the spinal cord centerline
     fname_mask_box = 'mask_box.nii.gz'
