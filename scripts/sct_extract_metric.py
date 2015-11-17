@@ -224,7 +224,7 @@ def main():
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            im_label = set_orientation(Image(path_label+label_file[i_label]), 'RPI', fname_out=path_tmp+'label_i_RPI.nii')
+            im_label = set_orientation(Image(path_label+label_file[i_label]), 'RPI', fname_out=path_tmp+'label_'+str(i_label)+'_RPI.nii')
             labels[i_label] = im_label.data
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
