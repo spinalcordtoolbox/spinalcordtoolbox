@@ -15,6 +15,7 @@
 import commands
 import sys
 import os
+import time
 from pandas import DataFrame
 import sct_register_gm_multilabel
 from msct_image import Image
@@ -40,7 +41,7 @@ def test(path_data, parameters=''):
     if not (os.path.isfile(dict_param_with_path['-d']) and os.path.isfile(dict_param_with_path['-w']) and os.path.isfile(dict_param_with_path['-gm']) and os.path.isfile(dict_param_with_path['-wm']) and os.path.isfile(dict_param_with_path['-manual-gm']) and os.path.isfile(dict_param_with_path['-sc'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
-        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'diff_dc_gm': float('nan'), 'dice_wm': float('nan'), 'diff_dc_wm': float('nan'), 'hausdorff': float('nan'), 'diff_hd': float('nan'), 'med_dist': float('nan'), 'diff_md': float('nan')}, index=[path_data])
+        return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'diff_dc_gm': float('nan'), 'dice_wm': float('nan'), 'diff_dc_wm': float('nan'), 'hausdorff': float('nan'), 'diff_hd': float('nan'), 'med_dist': float('nan'), 'diff_md': float('nan'), 'duration [s]': float('nan')}, index=[path_data])
 
     import time, random
     subject_folder = path_data.split('/')
@@ -52,7 +53,9 @@ def test(path_data, parameters=''):
     param_with_path += ' -ofolder ' + path_output
 
     cmd = 'sct_register_gm_multilabel ' + param_with_path
+    time_start = time.time()
     status, output = sct.run(cmd, 0)
+    duration = time.time() - time_start
 
 
     # initialization of results: must be NaN if test fails
@@ -128,7 +131,7 @@ def test(path_data, parameters=''):
                       'Hausdorff distance: '+str(result_hausdorff)+'\n'
 
     # transform results into Pandas structure
-    results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'diff_dc_gm': result_diff_dc_gm, 'dice_wm': result_dice_wm, 'diff_dc_wm': result_diff_dc_wm, 'hausdorff': result_hausdorff, 'diff_hd': result_diff_hd, 'med_dist': result_median_dist, 'diff_md': result_diff_md}, index=[path_data])
+    results = DataFrame(data={'status': status, 'output': output, 'dice_gm': result_dice_gm, 'diff_dc_gm': result_diff_dc_gm, 'dice_wm': result_dice_wm, 'diff_dc_wm': result_diff_dc_wm, 'hausdorff': result_hausdorff, 'diff_hd': result_diff_hd, 'med_dist': result_median_dist, 'diff_md': result_diff_md, 'duration [s]': duration}, index=[path_data])
 
     return status, output, results
 
