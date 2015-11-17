@@ -22,14 +22,13 @@ TRAINING_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine
 TEST_SOURCE_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/data/'
 TEST_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/labels/'
 WORK_DIRECTORY = 'data'
-IMAGE_SIZE = 100
+IMAGE_SIZE = 80
 NUM_CHANNELS = 1
-PIXEL_DEPTH = 255
 NUM_LABELS = 2
 VALIDATION_SIZE = 50  # Size of the validation set.
-SEED = 66478  # Set to None for random seed.
+SEED = 66478  # Set to None for random seed. or 66478
 BATCH_SIZE = 35
-NUM_EPOCHS = 10
+NUM_EPOCHS = 100
 
 
 class UNetModel:
@@ -108,11 +107,10 @@ class UNetModel:
         for i in range(self.depth):
             # up-convolution:
             # 2x2 convolution with upsampling by a factor 2, then concatenation
-            resample = tf.image.resize_bilinear(relu, tf.mul(tf.shape(relu), tf.constant([1, 2, 2, 1])))
+            resample = tf.image.resize_images(relu, image_size_temp[-1] * 2, image_size_temp[-1] * 2)
             upconv = tf.nn.conv2d(resample, self.upconv_weights[i], strides=[1, 1, 1, 1], padding='SAME')
             image_size_temp.append(image_size_temp[-1] * 2)
-            b_min = (image_size_temp[self.depth-i] * 2 - image_size_temp[-1]) / 2 - 1
-            upconv_concat = tf.concat(concat_dim=3, values=[tf.slice(relu_results[self.depth-i-1], [0, b_min, b_min, 0], [-1, image_size_temp[self.depth-i] * 2, image_size_temp[self.depth-i] * 2, -1]), upconv])
+            upconv_concat = tf.concat(concat_dim=3, values=[tf.slice(relu_results[self.depth-i-1], [0, 0, 0, 0], [-1, image_size_temp[self.depth-i] * 2, image_size_temp[self.depth-i] * 2, -1]), upconv])
 
             # expansion
             conv = tf.nn.conv2d(upconv_concat, self.weights_expansion[i]['conv1'], strides=[1, 1, 1, 1], padding='SAME')
@@ -121,7 +119,7 @@ class UNetModel:
             relu = tf.nn.relu(tf.nn.bias_add(conv, self.weights_expansion[i]['bias2']))
 
         finalconv = tf.nn.conv2d(relu, self.finalconv_weights, strides=[1, 1, 1, 1], padding='SAME')
-        final_result = tf.reshape(finalconv, tf.TensorShape([BATCH_SIZE * image_size_temp[-1] * image_size_temp[-1], NUM_LABELS]))
+        final_result = tf.reshape(finalconv, tf.TensorShape([finalconv.get_shape().as_list()[0] * image_size_temp[-1] * image_size_temp[-1], NUM_LABELS]))
 
         return final_result
 
@@ -142,6 +140,7 @@ def extract_data(path_data, offset_size=0):
             data_image = im_data.data
         else:
             data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
+            data_image = (data_image - numpy.min(data_image)) / (numpy.max(data_image) - numpy.min(data_image))
         if data is None:
             data = numpy.expand_dims(data_image, axis=0)
         else:
@@ -172,22 +171,25 @@ def extract_label(path_data, offset_size=0):
         else:
             data = numpy.concatenate((data, numpy.expand_dims(data_image, axis=0)), axis=0)
     data = numpy.expand_dims(data, axis=3)
+    data = numpy.concatenate((1-data, data), axis=3)
     print data.shape
     return data.astype(numpy.float32)
 
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
-    return 100.0 - (
-        100.0 *
-        numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) /
-        predictions.shape[0])
+    # Dice coefficients between two numpy arrays
+    im1 = numpy.asarray(predictions).astype(numpy.bool)
+    im2 = numpy.asarray(labels).astype(numpy.bool)
+    intersection = numpy.logical_and(im1, im2)
+    return 100. - 100. * 2. * intersection.sum() / (im1.sum() + im2.sum())
+    # return 100.0 - (100.0 * numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) / predictions.shape[0])
 
 
 def main(argv=None):  # pylint: disable=unused-argument
 
     # Setting U-net parameters
-    depth = 2
+    depth = 3
 
     # Make sure image size corresponds to requirements
     # "select the input tile size such that all 2x2 max-pooling operationsare applied to a
@@ -212,9 +214,11 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Extracting datasets
     train_data = extract_data(TRAINING_SOURCE_DATA)
-    train_labels = extract_data(TRAINING_LABELS_DATA, offset_images)
+    train_labels = extract_label(TRAINING_LABELS_DATA, offset_images)
     test_data = extract_data(TEST_SOURCE_DATA)
-    test_labels = extract_data(TEST_LABELS_DATA, offset_images)
+    test_labels = extract_label(TEST_LABELS_DATA, offset_images)
+    test_labels = numpy.reshape(test_labels, [test_labels.shape[0] * test_labels.shape[1] * test_labels.shape[2], NUM_LABELS])
+
 
     # Generate a validation set.
     validation_data = train_data[:VALIDATION_SIZE, :, :, :]
@@ -246,13 +250,16 @@ def main(argv=None):  # pylint: disable=unused-argument
     # controls the learning rate decay.
     batch = tf.Variable(0)
     # Decay once per epoch, using an exponential schedule starting at 0.01.
-    learning_rate = tf.train.exponential_decay(0.01,  # Base learning rate.
+    learning_rate = tf.train.exponential_decay(0.001,  # Base learning rate.
                                                batch * BATCH_SIZE,  # Current index into the dataset.
                                                train_size,  # Decay step.
                                                0.95,  # Decay rate.
                                                staircase=True)
     # Use simple gradient descent for the optimization.
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=batch)
+    # learning_rate = 0.001
+    #optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=batch)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=batch)
+    #optimizer = tf.train.MomentumOptimizer(learning_rate).minimize(loss, global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
     train_prediction = tf.nn.softmax(logits)
@@ -266,6 +273,10 @@ def main(argv=None):  # pylint: disable=unused-argument
         tf.initialize_all_variables().run()
         print 'Initialized!'
         # Loop through training steps.
+        number_of_step = int(num_epochs * train_size / BATCH_SIZE)
+        print 'Number of step = ' + str(number_of_step)
+        timer_training = sct.Timer(number_of_step)
+        timer_training.start()
         for step in xrange(int(num_epochs * train_size / BATCH_SIZE)):
             # Compute the offset of the current minibatch in the data.
             # Note that we could use better randomization across epochs.
@@ -279,14 +290,22 @@ def main(argv=None):  # pylint: disable=unused-argument
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
             if step % 100 == 0:
-                print 'Epoch %.2f' % (float(step) * BATCH_SIZE / train_size)
+                print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
+                timer_training.iterations_done(step)
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
                 print 'Minibatch error: %.1f%%' % error_rate(predictions, batch_labels)
                 print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels)
-                sys.stdout.flush()
+            elif step % 10 == 0:
+                print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
+                timer_training.iterations_done(step)
+                print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
         # Finally print the result!
         test_error = error_rate(test_prediction.eval(), test_labels)
         print 'Test error: %.1f%%' % test_error
+        timer_training.printTotalTime()
+
+        import pickle
+        pickle.dump(unet, open("unet-model.p", "wb"))
 
 
 if __name__ == '__main__':
