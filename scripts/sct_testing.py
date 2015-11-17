@@ -159,7 +159,7 @@ def fill_functions():
     functions.append('sct_maths')
     functions.append('sct_process_segmentation')
     functions.append('sct_propseg')
-    functions.append('sct_register_gm_multilabel')
+    # functions.append('sct_register_gm_multilabel')
     functions.append('sct_register_multimodal')
     functions.append('sct_register_to_template')
     functions.append('sct_resample')
