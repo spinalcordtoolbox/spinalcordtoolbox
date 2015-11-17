@@ -268,7 +268,9 @@ def main(argv=None):  # pylint: disable=unused-argument
     test_prediction = tf.nn.softmax(unet.model(test_data_node))
 
     # Create a local session to run this computation.
-    with tf.Session() as s:
+    import multiprocessing as mp
+    number_of_cores = mp.cpu_count()
+    with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=number_of_cores, intra_op_parallelism_threads=number_of_cores)) as s:
         # Run all the initializers to prepare the trainable parameters.
         tf.initialize_all_variables().run()
         print 'Initialized!'
