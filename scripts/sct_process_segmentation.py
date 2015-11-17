@@ -415,7 +415,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
-        csa[iz] = number_voxels * px * py * np.cos(angle)
+        csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
 
     if smoothing_param:
         from msct_smooth import smoothing_window
