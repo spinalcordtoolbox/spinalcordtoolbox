@@ -256,6 +256,7 @@ def main():
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
+    data[np.isneginf(data)] = 0.0
     data[data < 0.0] = 0.0
     data[np.isnan(data)] = 0.0
     data[np.isposinf(data)] = np.nanmax(data)
