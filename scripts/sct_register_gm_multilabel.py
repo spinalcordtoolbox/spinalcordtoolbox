@@ -21,6 +21,8 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
+        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
+
         self.output_folder = './'
         self.verbose = 1
         self.remove_tmp = 1
@@ -86,7 +88,7 @@ class MultiLabelRegistration:
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
 
         # Register multilabel images together
-        sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -p step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1') #TODO: complete params
+        sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -p '+self.param.param_reg) #TODO: complete params
         sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+',warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         os.chdir('..')
@@ -96,17 +98,14 @@ class MultiLabelRegistration:
         sct.generate_output_file(tmp_dir+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz', self.param.output_folder+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz')
         sct.generate_output_file(tmp_dir+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz', self.param.output_folder+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz')
 
-        sct.printv('fslview '+fname_target+' '+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
+        sct.printv('fslview '+fname_target+' '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
 
-    def validation(self, fname_manual_gmseg, fname_sc_seg, param=None):
-        if param is None:
-            param = Param()
-
+    def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
         path_sc_seg, file_sc_seg, ext_sc_seg = sct.extract_fname(fname_sc_seg)
 
-        im_new_template_gm = Image(self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz')
-        im_new_template_wm = Image(self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz')
+        im_new_template_gm = Image(self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz')
+        im_new_template_wm = Image(self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz')
 
         im_new_template_gm = thr_im(im_new_template_gm, self.param.thr, self.param.thr)
         im_new_template_wm = thr_im(im_new_template_wm, self.param.thr, self.param.thr)
@@ -292,6 +291,12 @@ def get_parser():
                       mandatory=True,
                       example='warp_template2t2star.nii.gz')
 
+    parser.add_option(name="-p",
+                      type_value="str",
+                      description="Parameters for the multimodal registration between multilabel images",
+                      mandatory=False,
+                      example='step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1')
+
     parser.usage.addSection('OUTPUT OTIONS')
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -348,6 +353,8 @@ if __name__ == "__main__":
     fname_manual_gmseg = None
     fname_sc_seg = None
 
+    if '-p' in arguments:
+        ml_param.param_reg = arguments['-p']
     if '-manual-gm' in arguments:
         fname_manual_gmseg = arguments['-manual-gm']
     if '-sc' in arguments:
@@ -367,4 +374,4 @@ if __name__ == "__main__":
     ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
     ml_reg.register()
     if fname_manual_gmseg is not None:
-        ml_reg.validation(fname_manual_gmseg, fname_sc_seg, param=ml_param)
+        ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
