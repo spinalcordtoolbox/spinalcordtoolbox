@@ -76,7 +76,7 @@ cd mt
 # bring T2 segmentation in MT space to help segmentation (no optimization)
 sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # extract centerline
-sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline -o t2_seg_reg_centerline.nii.gz
+sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mt1
 sct_propseg -i mt1.nii.gz -t t2 -init-centerline t2_seg_reg_centerline.nii.gz
 # check results
@@ -116,7 +116,19 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.0778913455
+# --> MTR = 34.1270288275
+# Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
+# For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # left
+# --> mean CSA +/- STD: 5.04738058145 +/- 0.420587719074 mm^2
+sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # right
+# --> mean CSA +/- STD: 4.79736052518 +/- 0.479421673286 mm^2
+# If you want to get the CSA of the left dorsal column made of the fasciculus cuneatus and the fasciculus gracilis, you need to add them before:
+sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
+# And then you can compute its CSA:
+sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
+# --> mean CSA +/- STD: 9.74672392403 +/- 0.42769686646 mm^2
+
 cd ..
 
 
