@@ -206,7 +206,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
         # "centerline" using sct_process_segmentation. Related to issue #544
         input_centerline = str(arguments["-init-centerline"])
         temp_centerline = sct.add_suffix(arguments["-init-centerline"], '_centerline')
-        sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline -o ' + temp_centerline)
+        sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline')
         cmd += " -init-centerline " + temp_centerline
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
