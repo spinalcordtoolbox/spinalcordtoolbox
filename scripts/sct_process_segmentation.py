@@ -31,7 +31,6 @@ from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
 
-
 # DEFAULT PARAMETERS
 class Param:
     ## The constructor
