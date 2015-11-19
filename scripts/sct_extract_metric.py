@@ -989,6 +989,6 @@ List of labels in: """+file_label+""":
 if __name__ == "__main__":
     param_default = Param()
     param = Param()
-    #color = Color()
+    color = Color()
     # call main function
     main()
