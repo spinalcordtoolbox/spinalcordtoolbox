@@ -496,8 +496,11 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
             from sct_extract_metric import get_slices_matching_with_vertebral_levels
 
+            # convert the vertebral labeling file to RPI orientation
+            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
+
             # get the slices corresponding to the vertebral levels
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(Image(path_data+file_csa_volume).data, vert_levels, Image(fname_vertebral_labeling).data, 1)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
 
         sct.printv('Average CSA across slices...', type='info')
 
