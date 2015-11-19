@@ -33,22 +33,22 @@ def test(path_data='', parameters=''):
     folder_data = 't2/'
     file_data = ['t2.nii.gz', 't2_centerline_init.nii.gz', 't2_centerline_labels.nii.gz', 't2_seg_manual.nii.gz']
 
-    parser = sct_get_centerline.GetCenterlineScript.get_parser()
+    parser = sct_get_centerline.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
     contrast = dict_param['-t']
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-c'])):
+    if not (os.path.isfile(dict_param_with_path['-i'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan'), 'dist_max': float('nan')}, index=[path_data])
 
     cmd = 'sct_get_centerline '+param_with_path
     status, output = sct.run(cmd, 0)
-    scad_centerline = Image("centerline.nii.gz")
-    manual_seg = (contrast +'_seg_manual.nii.gz')
+    scad_centerline = Image(contrast+"_centerline.nii.gz")
+    manual_seg = Image(path_data + folder_data + contrast +'_seg_manual.nii.gz')
 
     max_distance = 0
     standard_deviation = 0
@@ -95,7 +95,6 @@ def test(path_data='', parameters=''):
 
     except Exception, e:
         sct.printv("Exception found while testing scad integrity")
-        sct.printv(e.message, type="error")
         output = e.message
 
     result_mse, result_dist_max = rmse, max_distance
