@@ -418,6 +418,9 @@ def read_label_file(path_info_label, file_info_label, method=''):
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
 def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
+    
+    # TODO: use sct_utils instead (jcohenadad)
+    color = Color()
 
     sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
 
@@ -986,6 +989,6 @@ List of labels in: """+file_label+""":
 if __name__ == "__main__":
     param_default = Param()
     param = Param()
-    color = Color()
+    #color = Color()
     # call main function
     main()
