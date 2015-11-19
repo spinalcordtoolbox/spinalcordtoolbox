@@ -197,7 +197,7 @@ class Image(object):
         self.data = type_build(self.data)
         self.hdr.set_data_dtype(type)
 
-    def save(self, type='', verbose=1):
+    def save(self, type='', squeeze_data=True,  verbose=1):
         """
         Write an image in a nifti file
         :param type:    if not set, the image is saved in the same type as input data
@@ -221,8 +221,9 @@ class Image(object):
         from sct_utils import printv
         from numpy import squeeze
         from os import path, remove
-        # remove singleton
-        self.data = squeeze(self.data)
+        if squeeze_data:
+            # remove singleton
+            self.data = squeeze(self.data)
         if type != '':
             self.changeType(type)
         # update header

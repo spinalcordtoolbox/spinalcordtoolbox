@@ -74,8 +74,12 @@ class MultiLabelRegistration:
         # Create temporary folder and put files in it
         tmp_dir = sct.tmp_create()
 
-        sct.run('cp '+fname_target+' '+tmp_dir+file_target+ext_target)
-        sct.run('cp '+fname_warp_template+' '+tmp_dir+file_warp_template+ext_warp_template)
+        # sct.run('cp '+fname_target+' '+tmp_dir+file_target+ext_target)
+        # sct.run('cp '+fname_warp_template+' '+tmp_dir+file_warp_template+ext_warp_template)
+
+        from sct_convert import convert
+        convert(fname_target, tmp_dir+file_target+ext_target)
+        convert(fname_warp_template, tmp_dir+file_warp_template+ext_warp_template, squeeze_data=0)
 
         os.chdir(tmp_dir)
         # TODO assert RPI, if not, change orientation
@@ -372,6 +376,6 @@ if __name__ == "__main__":
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
     ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
-    ml_reg.register()
+    # ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)
