@@ -19,6 +19,7 @@ import sys
 import commands
 import subprocess
 import re
+import time
 
 # TODO: under run(): add a flag "ignore error" for isct_ComposeMultiTransform
 # TODO: check if user has bash or t-schell for fsloutput definition
@@ -159,6 +160,66 @@ def checkRAM(os,verbose=1):
             #print 'Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 )
 
         return ram_total
+
+
+class Timer:
+    def __init__(self, number_of_iteration=1):
+        self.start_timer = 0
+        self.time_list = []
+        self.total_number_of_iteration = number_of_iteration
+        self.number_of_iteration_done = 0
+        self.is_started = False
+
+    def start(self):
+        self.start_timer = time.time()
+        self.is_started = True
+
+    def add_iteration(self, num_iteration_done=1):
+        self.number_of_iteration_done += num_iteration_done
+        self.time_list.append(time.time() - self.start_timer)
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def iterations_done(self, total_num_iterations_done):
+        if total_num_iterations_done != 0:
+            self.number_of_iteration_done = total_num_iterations_done
+            self.time_list.append(time.time() - self.start_timer)
+            remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+            time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+            remaining_time = remaining_iterations * time_one_iteration
+            hours, rem = divmod(remaining_time, 3600)
+            minutes, seconds = divmod(rem, 60)
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def stop(self):
+        self.time_list.append(time.time() - self.start_timer)
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        self.is_started = False
+
+    def printRemainingTime(self):
+        remaining_iterations = self.total_number_of_iteration - self.number_of_iteration_done
+        time_one_iteration = self.time_list[-1] / self.number_of_iteration_done
+        remaining_time = remaining_iterations * time_one_iteration
+        hours, rem = divmod(remaining_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+
+    def printTotalTime(self):
+        hours, rem = divmod(self.time_list[-1], 3600)
+        minutes, seconds = divmod(rem, 60)
+        if self.is_started:
+            printv('Remaining time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
+        else:
+            printv('Total time: {:0>2}:{:0>2}:{:05.2f}'.format(int(hours), int(minutes), seconds))
 
 
 #=======================================================================================================================
