@@ -40,6 +40,7 @@ class Param:
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
         self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
+        self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
@@ -63,7 +64,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:e:v:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -77,12 +78,14 @@ def main():
                 param.fname_data = arg
             elif opt in '-m':
                 param.method = arg
-            elif opt in ('-o'):
+            elif opt in '-o':
                 param.fname_out = arg
             elif opt in '-r':
                 param.remove_tmp_files = int(arg)
             elif opt in '-s':
                 param.size = int(arg)
+            elif opt in '-e':
+                param.even = int(arg)
             elif opt in '-v':
                 param.verbose = int(arg)
 
@@ -213,7 +216,7 @@ def create_mask():
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
-        mask2d = create_mask2d(center, param.shape, param.size, nx, ny)
+        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, param.even)
         # Write NIFTI volumes
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
@@ -274,17 +277,23 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny):
+def create_mask2d(center, shape, size, nx, ny, even=0):
 
     # initialize 2d grid
     xx, yy = numpy.mgrid[:nx, :ny]
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    radius = round(float(size+1)/2)  # add 1 because the radius includes the center.
+    if even != 0:
+        radius = int(size / 2)
+    else:
+        radius = round(float(size + 1) / 2)  # add 1 because the radius includes the center.
 
     if shape == 'box':
-        mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
+        if even != 0:
+            mask2d[xc - radius:xc + radius, yc - radius:yc + radius] = 1
+        else:
+            mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
@@ -323,7 +332,8 @@ OPTIONAL ARGUMENTS
                      center: mask is created at center of FOV. In that case, "val" is not required.
                      centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
   -s <size>        size in voxel. Odd values are better (for mask to be symmetrical). Default="""+str(param_default.size)+"""
-                   If shape=gaussian, size corresponds to "sigma". 
+                   If shape=gaussian, size corresponds to "sigma".
+  -e {0,1}         0: box size is odd. 1: box size is even.
   -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param_default.shape)+"""
   -o <output>      name of output mask. Default is "mask_INPUTFILE".
   -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
