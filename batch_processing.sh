@@ -123,9 +123,8 @@ sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -l 2:5 -t labe
 # --> mean CSA +/- STD: 5.04738058145 +/- 0.420587719074 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # right
 # --> mean CSA +/- STD: 4.79736052518 +/- 0.479421673286 mm^2
-# If you want to get the CSA of the left dorsal column made of the fasciculus cuneatus and the fasciculus gracilis, you need to add them before:
+# Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
-# And then you can compute its CSA:
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
 # --> mean CSA +/- STD: 9.74672392403 +/- 0.42769686646 mm^2
 
