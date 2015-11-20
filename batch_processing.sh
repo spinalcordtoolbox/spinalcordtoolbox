@@ -3,6 +3,8 @@
 # Example of commands to process multi-parametric data of the spinal cord
 # For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
 # N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
+#
+# tested with v2.1_beta17
 
 
 # download example data (errsm_30)
@@ -37,7 +39,8 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -l 3:4
-# --> mean CSA: 78.2412869322 +/- 0.72521896375
+# --> Mean CSA: 78.2403253855 +/- 0.722315716375 mm^2
+
 # go back to root folder
 cd ..
 
@@ -116,18 +119,17 @@ fslview mtr.nii.gz -b 0,100 mt0mt1.nii.gz -b 0,1200 label/template/MNI-Poly-AMU_
 # >>>>>>>>>>
 # extract MTR within the white matter
 sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
-# --> MTR = 34.1270288275
+# --> MTR = 34.1270294493
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
 sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # left
-# --> mean CSA +/- STD: 5.04738058145 +/- 0.420587719074 mm^2
+# --> Mean CSA: 5.04738066335 +/- 0.420587529988 mm^2
 sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # right
-# --> mean CSA +/- STD: 4.79736052518 +/- 0.479421673286 mm^2
+# --> Mean CSA: 4.79736063018 +/- 0.479421869486 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
 sct_process_segmentation -i left_dorsal_column.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz
-# --> mean CSA +/- STD: 9.74672392403 +/- 0.42769686646 mm^2
-
+# --> Mean CSA: 9.74672398599 +/- 0.427696321242 mm^2
 cd ..
 
 
@@ -156,8 +158,8 @@ fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lig
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -m map
-# --> 17, right lateral corticospinal tract:    0.783654617705
-# --> 2, left lateral corticospinal tract:    0.767101879797
+# --> 17, right lateral corticospinal tract:    0.77712512581
+# --> 2, left lateral corticospinal tract:    0.776386763673
 cd ..
 
 
