@@ -641,7 +641,7 @@ class Image(object):
         return (slice, slice_seg)
 
     #
-    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red'):
+    def save_plane(self, plane='sagittal', index=None, format='.png', suffix='', seg=None, thr=0, cmap_col='red', path_output='./'):
         """
         Save a slice of self in the specified plan.
 
@@ -664,11 +664,12 @@ class Image(object):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
         from math import sqrt
+        from sct_utils import slash_at_the_end
         if type(index) is not list:
             index = [index]
 
         slice_list = [self.get_slice(plane=plane, index=i, seg=seg) for i in index]
-
+        path_output = slash_at_the_end(path_output, 1)
         if seg is not None:
             import matplotlib.colors as col
             color_white = col.colorConverter.to_rgba('white', alpha=0.0)
@@ -708,15 +709,15 @@ class Image(object):
             # if seg is not None:
             #     plt.imshow(slice_seg, cmap=cmap_seg, interpolation='nearest')
             # plt.axis('off')
-            filename_png = self.file_name + suffix + format
-            plt.savefig(filename_png, bbox_inches='tight')
+            fname_png = path_output + self.file_name + suffix + format
+            plt.savefig(fname_png, bbox_inches='tight')
         except RuntimeError, e:
             from sct_utils import printv
             printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
             printv(str(e), self.verbose, type='warning')
-        return filename_png
+        return fname_png
 
-    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', verbose=1):
+    def save_quality_control(self, plane='sagittal', n_slices=1, seg=None, thr=0, cmap_col='red', format='.png', path_output='./', verbose=1):
         from sct_utils import printv
         nx, ny, nz, nt, px, py, pz, pt = self.dim
         if plane == 'sagittal':
@@ -737,14 +738,16 @@ class Image(object):
             gap = max_n_slices/n_slices
             index_list = [((i+1)*gap)-1 for i in range(n_slices)]
         index_list.sort()
-
-        filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format)
-        info_str = 'QC output image: ' + filename_image_png
-        if seg is not None:
-            filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format)
-            info_str += ' & ' + filename_gmseg_image_png
-
-        printv(info_str, verbose, 'info')
+        try:
+            filename_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane', index=index_list, format=format, path_output=path_output)
+            info_str = 'QC output image: ' + filename_image_png
+            if seg is not None:
+                filename_gmseg_image_png = self.save_plane(plane=plane, suffix='_'+plane+'_plane_seg', index=index_list, seg=seg, thr=thr, cmap_col=cmap_col, format=format, path_output=path_output)
+                info_str += ' & ' + filename_gmseg_image_png
+            printv(info_str, verbose, 'info')
+        except RuntimeError, e:
+            printv('WARNING: your device does not seem to have display feature', self.verbose, type='warning')
+            printv(str(e), self.verbose, type='warning')
 
 
 
