@@ -806,31 +806,11 @@ class TargetSegmentationPairwise:
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
                     mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target]
 
-                    print mean_seg_by_level
-                    print 'type : ', type(mean_seg_by_level)
-
+                    # saving images to check results of normalisation
                     Image(param=np.asarray(mean_seg_by_level), absolutepath='mean_seg_by_level.nii.gz').save()
                     Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved.nii.gz').save()
 
                     target_metric = extract_metric_from_dic(self.target, seg_to_use=mean_seg_by_level, metric=method, save=True, output='metric_in_target.txt')
-
-                    # metric averaged overall
-                    '''
-                    print 'USE AVERAGED TARGET METRIC'
-                    target_metric = [np.mean(target_metric.values(), axis=0) for i in range(len(self.target))]
-                    '''
-                    # metric averaged by level
-                    '''
-                    target_metric_by_level = {}
-                    for target_slice in self.target:
-                        slice_metric = target_metric[target_slice.id]
-                        if target_slice.level in target_metric_by_level.keys():
-                            target_metric_by_level[target_slice.level].append(slice_metric)
-                        else:
-                            target_metric_by_level[target_slice.level] = [slice_metric]
-                    for l, metric in target_metric_by_level.items():
-                        target_metric_by_level[l] = np.mean(metric, axis=0)
-                    '''
 
                 else:
                     sct.printv('WARNING: No mean value of the white matter and gray matter intensity were provided, nor the target vertebral levels to estimate them\n'
@@ -842,9 +822,13 @@ class TargetSegmentationPairwise:
 
             if type(target_metric) == type({}): # if target_metric is a dictionary
                 differences = [m[1]-m[0] for m in target_metric.values()]
-                lim_diff = np.median(differences) - np.std(differences)
+                diff_med = np.median(differences)
+                diff_std = np.std(differences)
+                # contrast_type = diff_med /np.abs(diff_med)  # if 1: GM bright, WM dark ; if -1: GM dark, WM bright
+                lim_diff = np.abs(diff_med - diff_std)
             else:
                 differences = [0]
+                diff_med = 0
                 lim_diff = 0
 
             # normalizing
@@ -852,18 +836,13 @@ class TargetSegmentationPairwise:
                 i = 0
                 for target_slice in self.target:
                     old_image = target_slice.im_M
-                    '''
-                    if self.model.param.target_means is None and self.model.param.use_levels:
-                        wm_mean, gm_mean, wm_std, gm_std = target_metric_by_level[target_slice.level]
-                        print 'USE MEAN BY LEVEL OF THE TARGET METRIC'
-                    else:
-                    '''
+
                     wm_metric, gm_metric, wm_std, gm_std = target_metric[target_slice.id]
-                    if gm_metric-wm_metric < lim_diff:
-                        print 'CORRECTING WM VALUE FOR SLICE ', i
-                        wm_metric = gm_metric-np.median(differences)
+                    if np.abs(gm_metric-wm_metric) < lim_diff:
+                        wm_metric = gm_metric-diff_med  # np.median(differences)  # if med>0: GM bright, WM dark ; if med<0: GM dark, WM bright
+                    old_image[old_image < 0.0001] = 0  # put at 0 the background
                     new_image = (old_image - wm_metric)*(dic_gm_mean - dic_wm_mean)/(gm_metric - wm_metric) + dic_wm_mean
-                    new_image[old_image < 1] = 0  # put a 0 the min background
+                    new_image[old_image < 0.0001] = 0  # put at 0 the background
 
                     target_slice.im_M = new_image
                     Image(param=new_image, absolutepath='target_slice'+str(i)+'_mean_normalized.ni.gz').save()

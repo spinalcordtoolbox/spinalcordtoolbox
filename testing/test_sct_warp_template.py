@@ -32,6 +32,7 @@ def test(path_data):
         ' -s 0 '+ \
         ' -o label'+ \
         ' -t '+path_data+folder_data[1]+ \
+        ' -qc 0'+ \
         ' -v 1'
 
     # return
