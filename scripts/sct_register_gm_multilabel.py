@@ -376,6 +376,6 @@ if __name__ == "__main__":
         sct.printv(parser.usage.generate(error='ERROR: you need to specify both arguments : -manual-gm and -sc.'))
 
     ml_reg = MultiLabelRegistration(fname_gm, fname_wm, path_template, fname_warp_template, fname_target, param=ml_param)
-    # ml_reg.register()
+    ml_reg.register()
     if fname_manual_gmseg is not None:
         ml_reg.validation(fname_manual_gmseg, fname_sc_seg)

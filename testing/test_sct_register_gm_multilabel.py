@@ -95,9 +95,9 @@ def test(path_data, parameters=''):
         result_diff_dc_gm = mean(gm_diff_list)
 
         # Extracting hausdorff distance results
-        hd = open(hausdorff_fname, 'r')
-        hd_lines = hd.readlines()
-        hd.close()
+        hd_file = open(hausdorff_fname, 'r')
+        hd_lines = hd_file.readlines()
+        hd_file.close()
 
         hd_start = hd_lines.index('#Slice, HD, HD diff, MD, MD diff\n')
         hd_lines = hd_lines[hd_start+1:]
