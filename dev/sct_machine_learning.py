@@ -17,10 +17,16 @@ import tensorflow as tf
 import sct_utils as sct
 from msct_image import Image
 
-TRAINING_SOURCE_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/training/data/'
-TRAINING_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/training/labels/'
-TEST_SOURCE_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/data/'
-TEST_LABELS_DATA = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/test/labels/'
+try:
+   import cPickle as pickle
+except:
+   import pickle
+
+path_data = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/'
+TRAINING_SOURCE_DATA = path_data+'training/data/'
+TRAINING_LABELS_DATA = path_data+'training/labels/'
+TEST_SOURCE_DATA = path_data+'test/data/'
+TEST_LABELS_DATA = path_data+'test/labels/'
 WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 80
 NUM_CHANNELS = 1
@@ -28,7 +34,7 @@ NUM_LABELS = 2
 VALIDATION_SIZE = 50  # Size of the validation set.
 SEED = 66478  # Set to None for random seed. or 66478
 BATCH_SIZE = 35
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 class UNetModel:
@@ -72,6 +78,19 @@ class UNetModel:
             num_features = num_features_init / 2
 
         self.finalconv_weights = tf.Variable(tf.truncated_normal([1, 1, num_features * 2, self.num_classes], stddev=0.1, seed=SEED))
+
+    def save_parameters(self, fname_out=''):
+        pickle.dump(self.weights_contraction, open("unet-model-weights_contraction.p", "wb"))
+        pickle.dump(self.weights_bottom_layer, open("unet-model-weights_bottom_layer.p", "wb"))
+        pickle.dump(self.upconv_weights, open("unet-model-upconv_weights.p", "wb"))
+        pickle.dump(self.weights_expansion, open("unet-model-weights_expansion.p", "wb"))
+        pickle.dump(self.finalconv_weights, open("unet-model-finalconv_weights.p", "wb"))
+        if not fname_out:
+            fname_out = 'unet-model.gz'
+        sct.run('gzip unet-model-*  > ' + fname_out)
+
+    def load_parameters(self, fname_in):
+        print 'out'
 
     def model(self, data, train=False):
         """The Model definition.
@@ -150,14 +169,16 @@ def extract_data(path_data, offset_size=0):
     return data.astype(numpy.float32)
 
 
-def extract_label(path_data, offset_size=0):
+def extract_label(path_data, segmentation_image_size=0):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
+    offset_size = (IMAGE_SIZE - segmentation_image_size) / 2
+    number_pixel = segmentation_image_size * segmentation_image_size
     ignore_list = ['.DS_Store']
     print 'Extracting', path_data
 
-    data = None
+    data, weights = None, None
     for fname_im in os.listdir(path_data):
         if fname_im in ignore_list:
             continue
@@ -166,24 +187,30 @@ def extract_label(path_data, offset_size=0):
             data_image = im_data.data
         else:
             data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
+        number_of_segpixels = numpy.count_nonzero(data_image)
+        weights_image = data_image * number_of_segpixels / number_pixel + (1 - data_image) * (
+        number_pixel - number_of_segpixels) / number_pixel
         if data is None:
             data = numpy.expand_dims(data_image, axis=0)
+            weights = numpy.expand_dims(weights_image, axis=0)
         else:
             data = numpy.concatenate((data, numpy.expand_dims(data_image, axis=0)), axis=0)
+            weights = numpy.concatenate((weights, numpy.expand_dims(weights_image, axis=0)), axis=0)
     data = numpy.expand_dims(data, axis=3)
     data = numpy.concatenate((1-data, data), axis=3)
     print data.shape
-    return data.astype(numpy.float32)
+    return data.astype(numpy.float32), weights.astype(numpy.float32)
 
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
     # Dice coefficients between two numpy arrays
-    im1 = numpy.asarray(predictions).astype(numpy.bool)
-    im2 = numpy.asarray(labels).astype(numpy.bool)
-    intersection = numpy.logical_and(im1, im2)
-    return 100. - 100. * 2. * intersection.sum() / (im1.sum() + im2.sum())
-    # return 100.0 - (100.0 * numpy.sum(numpy.argmax(predictions, 1) == numpy.argmax(labels, 1)) / predictions.shape[0])
+    # im1 = numpy.asarray(predictions[:, 1]).astype(numpy.bool)
+    # im2 = numpy.asarray(labels[:, 1]).astype(numpy.bool)
+    # intersection = numpy.logical_and(im1, im2)
+
+    # return 100. - 100. * 2. * intersection.sum() / (im1.sum() + im2.sum())
+    return 100.0 - (100.0 * numpy.sum(numpy.argmax(predictions[:, 1]) == numpy.argmax(labels[:, 1])) / predictions.shape[0])
 
 
 def main(argv=None):  # pylint: disable=unused-argument
@@ -214,18 +241,18 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Extracting datasets
     train_data = extract_data(TRAINING_SOURCE_DATA)
-    train_labels = extract_label(TRAINING_LABELS_DATA, offset_images)
+    train_labels_init, train_labels_w = extract_label(TRAINING_LABELS_DATA, segmentation_image_size)
     test_data = extract_data(TEST_SOURCE_DATA)
-    test_labels = extract_label(TEST_LABELS_DATA, offset_images)
+    test_labels, test_labels_weights = extract_label(TEST_LABELS_DATA, segmentation_image_size)
     test_labels = numpy.reshape(test_labels, [test_labels.shape[0] * test_labels.shape[1] * test_labels.shape[2], NUM_LABELS])
 
 
     # Generate a validation set.
     validation_data = train_data[:VALIDATION_SIZE, :, :, :]
-    validation_labels = train_labels[:VALIDATION_SIZE]
+    validation_labels = train_labels_init[:VALIDATION_SIZE]
     validation_labels = numpy.reshape(validation_labels, [validation_labels.shape[0] * validation_labels.shape[1] * validation_labels.shape[2], NUM_LABELS])
     train_data = train_data[VALIDATION_SIZE:, :, :, :]
-    train_labels = train_labels[VALIDATION_SIZE:]
+    train_labels = train_labels_init[VALIDATION_SIZE:]
     #train_labels = numpy.reshape(train_labels, [train_labels.shape[0] * train_labels.shape[1] * train_labels.shape[2], train_labels.shape[3]])
     num_epochs = NUM_EPOCHS
     train_size = train_labels.shape[0]
@@ -235,6 +262,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # training step using the {feed_dict} argument to the Run() call below.
     train_data_node = tf.placeholder(tf.float32, shape=(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
     train_labels_node = tf.placeholder(tf.float32, shape=(BATCH_SIZE * segmentation_image_size * segmentation_image_size, NUM_LABELS))
+    train_labels_weights = tf.placeholder(tf.float32, shape=(BATCH_SIZE * segmentation_image_size * segmentation_image_size))
     # For the validation and test data, we'll just hold the entire dataset in
     # one constant node.
     validation_data_node = tf.constant(validation_data)
@@ -244,7 +272,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Training computation: logits + cross-entropy loss.
     logits = unet.model(train_data_node, True)
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, train_labels_node))
+    loss = tf.reduce_mean(tf.mul(train_labels_weights, tf.nn.softmax_cross_entropy_with_logits(logits, train_labels_node)))
 
     # Optimizer: set up a variable that's incremented once per batch and
     # controls the learning rate decay.
@@ -268,6 +296,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     test_prediction = tf.nn.softmax(unet.model(test_data_node))
 
     # Create a local session to run this computation.
+    saver = tf.train.Saver()
+
     import multiprocessing as mp
     number_of_cores = mp.cpu_count()
     with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=number_of_cores, intra_op_parallelism_threads=number_of_cores)) as s:
@@ -286,12 +316,14 @@ def main(argv=None):  # pylint: disable=unused-argument
             batch_data = train_data[offset:(offset + BATCH_SIZE), :, :, :]
             batch_labels = train_labels[offset:(offset + BATCH_SIZE)]
             batch_labels = numpy.reshape(batch_labels, [batch_labels.shape[0] * batch_labels.shape[1] * batch_labels.shape[2], NUM_LABELS])
+            batch_labels_weights = train_labels_w[offset:(offset + BATCH_SIZE)]
+            batch_labels_weights = numpy.reshape(batch_labels_weights, [batch_labels_weights.shape[0] * batch_labels_weights.shape[1] * batch_labels_weights.shape[2]])
             # This dictionary maps the batch data (as a numpy array) to the
             # node in the graph is should be fed to.
-            feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels}
+            feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            if step % 100 == 0:
+            if step != 0 and step % 100 == 0:
                 print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
                 timer_training.iterations_done(step)
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
@@ -306,8 +338,7 @@ def main(argv=None):  # pylint: disable=unused-argument
         print 'Test error: %.1f%%' % test_error
         timer_training.printTotalTime()
 
-        import pickle
-        pickle.dump(unet, open("unet-model.p", "wb"))
+        saver.save(s, 'model.ckpt')
 
 
 if __name__ == '__main__':
