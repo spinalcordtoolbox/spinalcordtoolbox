@@ -242,7 +242,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # set_orientation(im_seg, 'RPI')
     # im_seg.setFileName(fname_segmentation_orient)
     # im_seg.save()
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz')
+    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -282,7 +282,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
 
     if verbose == 2:
             import matplotlib.pyplot as plt
