@@ -452,14 +452,14 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
                                           'level available \n--> Selected the lowest vertebral level available: '+\
               str(int(vert_levels_list[0])) + color.end
 
-    if vert_levels_list[0] > max_vert_level_available:
+    if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
         warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
         print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
-                                          'level available --> Selected the highest vertebral level available: ' + \
+                                          'level available \n--> Selected the highest vertebral level available: ' + \
               str(int(vert_levels_list[1])) + color.end
 
     if vert_levels_list[0] not in vertebral_levels_available:
