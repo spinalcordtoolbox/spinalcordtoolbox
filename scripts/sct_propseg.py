@@ -166,7 +166,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     contrast_type = arguments["-contrast"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + input_filename + " -contrast " + contrast_type
+    cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
