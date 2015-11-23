@@ -44,6 +44,7 @@ class Param:
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
+        self.offset = '0,0'
 
 
 # main
@@ -64,7 +65,7 @@ def main():
     else:
         # Check input parameters
         try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:e:v:')
+            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:e:v:k:')
         except getopt.GetoptError:
             usage()
         if not opts:
@@ -88,6 +89,8 @@ def main():
                 param.even = int(arg)
             elif opt in '-v':
                 param.verbose = int(arg)
+            elif opt in '-k':
+                param.offset = arg
 
     # run main program
     create_mask()
@@ -278,6 +281,10 @@ def create_line(fname, coord, nz):
 # create_mask2d
 # ==========================================================================================
 def create_mask2d(center, shape, size, nx, ny, even=0):
+    # extract offset
+    offset = param.offset.split(',')
+    offset[0] = int(offset[0])
+    offset[1] = int(offset[1])
 
     # initialize 2d grid
     xx, yy = numpy.mgrid[:nx, :ny]
@@ -291,16 +298,16 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
 
     if shape == 'box':
         if even != 0:
-            mask2d[xc - radius:xc + radius, yc - radius:yc + radius] = 1
+            mask2d[xc + offset[0] - radius:xc + offset[0] + radius, yc + offset[1] - radius:yc + offset[1] + radius] = 1
         else:
-            mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
+            mask2d[xc + offset[0] - radius:xc + offset[0] + radius+1, yc + offset[1] - radius:yc + offset[1] + radius+1] = 1
 
     elif shape == 'cylinder':
-        mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
+        mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx-xc)**2)/(2*(sigma**2)) + ((yy-yc)**2)/(2*(sigma**2))))
+        mask2d = numpy.exp(-(((xx+offset[0]-xc)**2)/(2*(sigma**2)) + ((yy+offset[1]-yc)**2)/(2*(sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)
