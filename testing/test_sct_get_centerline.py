@@ -27,7 +27,7 @@ import sct_get_centerline
 def test(path_data='', parameters=''):
 
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -t t2 -method auto'
+        parameters = '-i t2/t2.nii.gz -contrast t2 -method auto'
 
     # parameters
     folder_data = 't2/'
@@ -35,7 +35,7 @@ def test(path_data='', parameters=''):
 
     parser = sct_get_centerline.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
-    contrast = dict_param['-t']
+    contrast = dict_param['-contrast']
     dict_param_with_path = parser.add_path_to_file(dict_param, path_data, input_file=True)
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
