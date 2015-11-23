@@ -95,23 +95,23 @@ def main(args):
 
         if '-i' in arguments:
             fname_segmentation = arguments['-i']
-        elif '-prc' in arguments:
+        if '-prc' in arguments:
             name_process = arguments['-prc']
-        elif '-method' in arguments:
+        if '-method' in arguments:
             name_method = arguments['-method']
-        elif '-lvl' in arguments:
+        if '-lvl' in arguments:
             vert_lev = arguments['-lvl']
-        elif '-r' in arguments:
+        if '-r' in arguments:
             remove_temp_files = arguments['-r']
-        elif '-s' in arguments:
+        if '-s' in arguments:
             smoothing_param = arguments['-s']
-        elif '-t' in arguments:
+        if '-t' in arguments:
             path_to_template = arguments['-t']
-        elif '-v' in arguments:
+        if '-v' in arguments:
             verbose = arguments['-v']
-        elif '-z' in arguments:
+        if '-z' in arguments:
             verbose = arguments['-z']
-        elif '-a' in arguments:
+        if '-a' in arguments:
             param.algo_fitting = arguments['-a']
 
         # Check input parameters
