@@ -22,7 +22,7 @@ try:
 except:
    import pickle
 
-path_data = '/Users/benjamindeleener/data/ismrm16_template/humanSpine_03_DTI/'
+path_data = '/Users/benjamindeleener/data/spinal_cord_segmentation_data/'
 TRAINING_SOURCE_DATA = path_data+'training/data/'
 TRAINING_LABELS_DATA = path_data+'training/labels/'
 TEST_SOURCE_DATA = path_data+'test/data/'
@@ -31,10 +31,10 @@ WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 80
 NUM_CHANNELS = 1
 NUM_LABELS = 2
-VALIDATION_SIZE = 50  # Size of the validation set.
-SEED = 66478  # Set to None for random seed. or 66478
-BATCH_SIZE = 35
-NUM_EPOCHS = 50
+VALIDATION_SIZE = 1000  # Size of the validation set.
+SEED = None  # Set to None for random seed. or 66478
+BATCH_SIZE = 5000
+NUM_EPOCHS = 25
 
 
 class UNetModel:
@@ -147,11 +147,16 @@ def extract_data(path_data, offset_size=0):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
+    from sys import stdout
     ignore_list = ['.DS_Store']
     print 'Extracting', path_data
+    cr = '\r'
 
-    data = None
-    for fname_im in os.listdir(path_data):
+    data = []
+    images_folder = os.listdir(path_data)
+    for i, fname_im in enumerate(images_folder):
+        stdout.write(cr)
+        stdout.write(str(i) + '/' + str(len(images_folder)))
         if fname_im in ignore_list:
             continue
         im_data = Image(path_data + fname_im)
@@ -160,11 +165,10 @@ def extract_data(path_data, offset_size=0):
         else:
             data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
             data_image = (data_image - numpy.min(data_image)) / (numpy.max(data_image) - numpy.min(data_image))
-        if data is None:
-            data = numpy.expand_dims(data_image, axis=0)
-        else:
-            data = numpy.concatenate((data, numpy.expand_dims(data_image, axis=0)), axis=0)
-    data = numpy.expand_dims(data, axis=3)
+        data.append(numpy.expand_dims(data_image, axis=0))
+
+    data_stack = numpy.concatenate(data, axis=0)
+    data = numpy.expand_dims(data_stack, axis=3)
     print data.shape
     return data.astype(numpy.float32)
 
@@ -173,13 +177,18 @@ def extract_label(path_data, segmentation_image_size=0):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
+    from sys import stdout
+    cr = '\r'
     offset_size = (IMAGE_SIZE - segmentation_image_size) / 2
     number_pixel = segmentation_image_size * segmentation_image_size
     ignore_list = ['.DS_Store']
     print 'Extracting', path_data
 
-    data, weights = None, None
-    for fname_im in os.listdir(path_data):
+    data, weights = [], []
+    images_folder = os.listdir(path_data)
+    for i, fname_im in enumerate(images_folder):
+        stdout.write(cr)
+        stdout.write(str(i) + '/' + str(len(images_folder)))
         if fname_im in ignore_list:
             continue
         im_data = Image(path_data + fname_im)
@@ -188,18 +197,16 @@ def extract_label(path_data, segmentation_image_size=0):
         else:
             data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
         number_of_segpixels = numpy.count_nonzero(data_image)
-        weights_image = data_image * number_of_segpixels / number_pixel + (1 - data_image) * (
-        number_pixel - number_of_segpixels) / number_pixel
-        if data is None:
-            data = numpy.expand_dims(data_image, axis=0)
-            weights = numpy.expand_dims(weights_image, axis=0)
-        else:
-            data = numpy.concatenate((data, numpy.expand_dims(data_image, axis=0)), axis=0)
-            weights = numpy.concatenate((weights, numpy.expand_dims(weights_image, axis=0)), axis=0)
-    data = numpy.expand_dims(data, axis=3)
+        weights_image = data_image * number_of_segpixels / number_pixel + (1 - data_image) * (number_pixel - number_of_segpixels) / number_pixel
+        data.append(numpy.expand_dims(data_image, axis=0))
+        weights.append(numpy.expand_dims(weights_image, axis=0))
+
+    data_stack = numpy.concatenate(data, axis=0)
+    weights_stack = numpy.concatenate(weights, axis=0)
+    data = numpy.expand_dims(data_stack, axis=3)
     data = numpy.concatenate((1-data, data), axis=3)
     print data.shape
-    return data.astype(numpy.float32), weights.astype(numpy.float32)
+    return data.astype(numpy.float32), weights_stack.astype(numpy.float32)
 
 
 def error_rate(predictions, labels):
@@ -233,7 +240,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     for i in range(depth):
         image_size_temp *= 2
     segmentation_image_size = image_size_temp
-    offset_images = (IMAGE_SIZE - segmentation_image_size) / 2
+    #offset_images = (IMAGE_SIZE - segmentation_image_size) / 2
 
     sct.printv('Original image size = ' + str(IMAGE_SIZE))
     sct.printv('Image size at bottom layer = ' + str(image_size_bottom))
@@ -323,13 +330,13 @@ def main(argv=None):  # pylint: disable=unused-argument
             feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            if step != 0 and step % 100 == 0:
+            if step != 0 and step % (number_of_step/10) == 0:
                 print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
                 timer_training.iterations_done(step)
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
                 print 'Minibatch error: %.1f%%' % error_rate(predictions, batch_labels)
                 print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels)
-            elif step % 10 == 0:
+            elif step % (number_of_step/100) == 0:
                 print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
                 timer_training.iterations_done(step)
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
