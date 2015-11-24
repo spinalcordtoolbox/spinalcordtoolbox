@@ -46,6 +46,11 @@ def get_parser():
                       description='Pad 3d image. Specify padding as: "x,y,z" (in voxel)',
                       mandatory=False,
                       example='0,0,1')
+    parser.add_option(name="-pad-asym",
+                      type_value="str",
+                      description='Pad 3d image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel)',
+                      mandatory=False,
+                      example='0,0,5,10,1,1')
     parser.add_option(name="-copy-header",
                       type_value="file",
                       description='Copy the header of the input image (specified in -i) to the destination image (specified here)',
@@ -124,7 +129,12 @@ def main(args = None):
         # TODO: check input is 3d
         padx, pady, padz = arguments["-pad"].split(',')
         padx, pady, padz = int(padx), int(pady), int(padz)
-        im_out = [pad_image(im_in[0], padding_x=padx, padding_y=pady, padding_z=padz)]
+        im_out = [pad_image(im_in[0], pad_x_i=padx, pad_x_f=padx, pad_y_i=pady, pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
+    elif "-pad-asym" in arguments:
+        # TODO: check input is 3d
+        padxi, padxf, padyi, padyf, padzi, padzf = arguments["-pad-asym"].split(',')
+        padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
+        im_out = [pad_image(im_in[0], pad_x_i=padxi, pad_x_f=padxf, pad_y_i=padyi, pad_y_f=padyf, pad_z_i=padzi, pad_z_f=padzf)]
 
     elif "-copy-header" in arguments:
         im_dest = Image(arguments["-copy-header"])
@@ -193,40 +203,33 @@ def main(args = None):
         printv('An error occurred in sct_image...', verbose, "error")
 
 
-def pad_image(im, padding_x=0, padding_y=0, padding_z=0):
+def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
     from numpy import zeros, dot
     nx, ny, nz, nt, px, py, pz, pt = im.dim
-    padding_x, padding_y, padding_z = int(padding_x), int(padding_y), int(padding_z)
-    padded_data = zeros((nx+2*padding_x, ny+2*padding_y, nz+2*padding_z))
+    pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
 
-    if padding_x == 0:
-        padxi = None
-        padxf = None
-    else:
-        padxi=padding_x
-        padxf=-padding_x
+    padded_data = zeros((nx+pad_x_i+pad_x_f, ny+pad_y_i+pad_y_f, nz+pad_z_i+pad_z_f))
 
-    if padding_y == 0:
-        padyi = None
-        padyf = None
-    else:
-        padyi = padding_y
-        padyf = -padding_y
+    if pad_x_f == 0:
+        pad_x_f = None
+    elif pad_x_f > 0:
+        pad_x_f *= -1
+    if pad_y_f == 0:
+        pad_y_f = None
+    elif pad_y_f > 0:
+        pad_y_f *= -1
+    if pad_z_f == 0:
+        pad_z_f = None
+    elif pad_z_f > 0:
+        pad_z_f *= -1
 
-    if padding_z == 0:
-        padzi = None
-        padzf = None
-    else:
-        padzi = padding_z
-        padzf = -padding_z
-
-    padded_data[padxi:padxf, padyi:padyf, padzi:padzf] = im.data
+    padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
     im_out = im.copy()
     im_out.data = padded_data  # done after the call of the function
     im_out.setFileName(im_out.file_name+'_pad'+im_out.ext)
 
     # adapt the origin in the sform and qform matrix
-    new_origin = dot(im_out.hdr.get_qform(), [-padding_x, -padding_y, -padding_z, 1])
+    new_origin = dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
 
     im_out.hdr.structarr['qoffset_x'] = new_origin[0]
     im_out.hdr.structarr['qoffset_y'] = new_origin[1]
