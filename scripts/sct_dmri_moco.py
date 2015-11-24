@@ -494,7 +494,7 @@ def get_parser():
                                   '2) smoothing kernel size (in mm).\n'
                                   '3) gradient step. The higher the more deformation allowed.\n'
                                   '4) metric: {MI,MeanSquares}. If you find very large deformations, switching to MeanSquares can help.\n',
-                      default_value=param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3],
+                      default_value=param_default.param,
                       mandatory=False,
                       example=['2,1,0.5,MeanSquares'])
     parser.add_option(name='-p',
