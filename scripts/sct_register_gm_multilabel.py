@@ -86,6 +86,10 @@ class MultiLabelRegistration:
         im_automatic_ml.save()
         im_template_ml.save()
 
+        # sct.run('sct_create_mask -i '+name+' -mcenterline,'+name+' -f box -s '+size)
+        # status, output_crop = sct.run('sct_crop_image -i '+name+' -m '+mask)
+        #TODO get dim from output_crop
+
         fname_automatic_ml_smooth = file_automatic_ml+'_smooth'+ext_automatic_ml
         sct.run('sct_maths -i '+fname_automatic_ml+' -smooth '+str(self.param.smooth)+','+str(self.param.smooth)+',0 -o '+fname_automatic_ml_smooth)
         fname_automatic_ml = fname_automatic_ml_smooth
@@ -93,6 +97,10 @@ class MultiLabelRegistration:
 
         # Register multilabel images together
         sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -p '+self.param.param_reg) #TODO: complete params
+
+        # TODO pad back warping fields : sct_image -i warp -pad-asym dimxi,dimxf, ...
+        # TODO with dimxf = dimx -cropxf -1, dimxi = cropxi
+
         sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+',warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         os.chdir('..')
