@@ -159,8 +159,8 @@ def main():
         arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
     else:
         arg_cpu = ''
-    if '-p' in arguments:
-        paramreg_user = arguments['-p']
+    if '-param' in arguments:
+        paramreg_user = arguments['-param']
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
