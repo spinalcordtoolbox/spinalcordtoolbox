@@ -246,9 +246,8 @@ def extract_label(path_data, segmentation_image_size=0, list_images=None, verbos
 
 def savePredictions(predictions, path_output, list_images, segmentation_image_size):
     number_of_images = len(list_images)
-    predictions.to_list()
-    predictions = numpy.reshape(predictions, [number_of_images * segmentation_image_size * segmentation_image_size, NUM_LABELS])
-    predictions = predictions[:, 1]
+    predictions = numpy.reshape(predictions, [number_of_images, segmentation_image_size, segmentation_image_size, NUM_LABELS])
+    predictions = predictions[:, :, :, 1]
     for i, pref in enumerate(predictions):
         im_pred = Image(pref)
         im_pred.setFileName(path_output+sct.add_suffix(list_images[i], '_pred'))
@@ -387,7 +386,6 @@ def main(argv=None):  # pylint: disable=unused-argument
                 validation_labels_b = numpy.reshape(validation_labels_b, [validation_labels_b.shape[0] * validation_labels_b.shape[1] * validation_labels_b.shape[2], NUM_LABELS])
                 validation_data_node = tf.constant(validation_data_b)
                 validation_prediction = tf.nn.softmax(unet.model(validation_data_node))
-                savePredictions(validation_prediction, '/Users/benjamindeleener/data/output/', validation_data, segmentation_image_size)
                 print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels_b)
             else:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
