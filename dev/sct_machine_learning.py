@@ -34,7 +34,7 @@ NUM_CHANNELS = 1
 NUM_LABELS = 2
 VALIDATION_SIZE = 500  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
-BATCH_SIZE = 500
+BATCH_SIZE = 100
 NUM_EPOCHS = 5
 
 
@@ -191,7 +191,7 @@ def extract_data(path_data, offset_size=0, list_images=None, verbose=1):
         return data.astype(numpy.float32)
 
 
-def extract_label(path_data, segmentation_image_size=0, list_images = None, verbose=1):
+def extract_label(path_data, segmentation_image_size=0, list_images=None, verbose=1):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
@@ -242,6 +242,17 @@ def extract_label(path_data, segmentation_image_size=0, list_images = None, verb
             stdout.write(cr)
             print data.shape
         return data.astype(numpy.float32), weights_stack.astype(numpy.float32)
+
+
+def savePredictions(predictions, path_output, list_images, segmentation_image_size):
+    number_of_images = len(list_images)
+    predictions.to_list()
+    predictions = numpy.reshape(predictions, [number_of_images * segmentation_image_size * segmentation_image_size, NUM_LABELS])
+    predictions = predictions[:, 1]
+    for i, pref in enumerate(predictions):
+        im_pred = Image(pref)
+        im_pred.setFileName(path_output+sct.add_suffix(list_images[i], '_pred'))
+        im_pred.save()
 
 
 def error_rate(predictions, labels):
@@ -365,7 +376,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            if step != 0 and step % 10 == 0:
+            if i != 0 and i % 1 == 0:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
                 del batch_data
                 del batch_labels_weights
@@ -376,6 +387,7 @@ def main(argv=None):  # pylint: disable=unused-argument
                 validation_labels_b = numpy.reshape(validation_labels_b, [validation_labels_b.shape[0] * validation_labels_b.shape[1] * validation_labels_b.shape[2], NUM_LABELS])
                 validation_data_node = tf.constant(validation_data_b)
                 validation_prediction = tf.nn.softmax(unet.model(validation_data_node))
+                savePredictions(validation_prediction, '/Users/benjamindeleener/data/output/', validation_data, segmentation_image_size)
                 print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels_b)
             else:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
@@ -393,7 +405,21 @@ def main(argv=None):  # pylint: disable=unused-argument
         print 'Test error: %.1f%%' % test_error
         timer_training.printTotalTime()
 
-        saver.save(s, 'model.ckpt')
+        save_path = saver.save(s, 'model.ckpt')
+        print "Model saved in file: ", save_path
+
+
+def applySegmentationML(fname_model):
+    # Add ops to save and restore all the variables.
+    saver = tf.train.Saver()
+
+    # Later, launch the model, use the saver to restore variables from disk, and
+    # do some work with the model.
+    with tf.Session() as sess:
+        # Restore variables from disk.
+        saver.restore(sess, fname_model)
+        print "Model restored."
+        # Do some work with the model
 
 
 if __name__ == '__main__':
