@@ -27,6 +27,7 @@ from sct_image import get_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, concat_data
+from msct_parser import Parser
 
 
 # DEFAULT PARAMETERS
@@ -35,8 +36,8 @@ class Param:
         self.debug = 0
         self.fname_data = ''
         self.fname_out = ''
-        self.method_list = ['coord', 'point', 'centerline', 'center']
-        self.method = 'center'  # default method
+        self.process_list = ['coord', 'point', 'centerline', 'center']
+        self.process = 'center'  # default method
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
         self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
@@ -55,36 +56,32 @@ def main():
         # get path of the testing data
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         param.fname_data = path_sct_data+'/mt/mt1.nii.gz'
-        param.method = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
+        param.process = 'point,'+path_sct_data+'/mt/mt1_point.nii.gz' #'centerline,/Users/julien/data/temp/sct_example_data/t2/t2_centerlinerpi.nii.gz'  #coord,68x69'
         param.shape = 'cylinder'
         param.size = 20
         param.remove_tmp_files = 1
         param.verbose = 1
     else:
         # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hf:i:m:o:r:s:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in '-f':
-                param.shape = arg
-            elif opt in '-i':
-                param.fname_data = arg
-            elif opt in '-m':
-                param.method = arg
-            elif opt in ('-o'):
-                param.fname_out = arg
-            elif opt in '-r':
-                param.remove_tmp_files = int(arg)
-            elif opt in '-s':
-                param.size = int(arg)
-            elif opt in '-v':
-                param.verbose = int(arg)
+        parser = get_parser()
+        arguments = parser.parse(sys.argv[1:])
+
+        param.fname_data = arguments['-i']
+
+        if '-process' in arguments:
+            param.process = arguments['-process']
+            if param.process[0] not in param.process_list:
+                sct.printv(parser.usage.generate(error='ERROR: Process '+param.process[0]+' is not recognized.'))
+        if '-size' in arguments:
+            param.size = arguments['-size']
+        if '-f' in arguments:
+            param.shape = arguments['-f']
+        if '-o' in arguments:
+            param.fname_out = arguments['-o']
+        if '-r' in arguments:
+            param.remove_tmp_files = arguments['-r']
+        if '-v' in arguments:
+            param.verbose = arguments['-v']
 
     # run main program
     create_mask()
@@ -93,34 +90,15 @@ def main():
 # create_mask
 #=======================================================================================================================
 def create_mask():
-
     fsloutput = 'export FSLOUTPUTTYPE=NIFTI; '  # for faster processing, all outputs are in NIFTI
 
-    # display usage if a mandatory argument is not provided
-    if param.fname_data == '' or param.method == '':
-        sct.printv('\nERROR: All mandatory arguments are not provided. See usage (add -h).\n', 1, 'error')
-
     # parse argument for method
-    method_list = param.method.replace(' ', '').split(',')  # remove spaces and parse with comma
-    # method_list = param.method.split(',')  # parse with comma
-    method_type = method_list[0]
-
-    # check existence of method type
-    if not method_type in param.method_list:
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Method "'+method_type+'" is not recognized. See usage (add -h).\n', 1, 'error')
-
+    method_type = param.process[0]
     # check method val
     if not method_type == 'center':
-        method_val = method_list[1]
-    del method_list
-
-    # check existence of shape
-    if not param.shape in param.shape_list:
-        sct.printv('\nERROR in '+os.path.basename(__file__)+': Shape "'+param.shape+'" is not recognized. See usage (add -h).\n', 1, 'error')
+        method_val = param.process[1]
 
     # check existence of input files
-    sct.printv('\ncheck existence of input files...', param.verbose)
-    sct.check_file_exist(param.fname_data, param.verbose)
     if method_type == 'centerline':
         sct.check_file_exist(method_val, param.verbose)
 
@@ -129,11 +107,6 @@ def create_mask():
     ori = get_orientation(param.fname_data, filename=True)
     if not ori == 'RPI':
         sct.printv('\nERROR in '+os.path.basename(__file__)+': Orientation of input image should be RPI. Use sct_image -setorient to put your image in RPI.\n', 1, 'error')
-
-    # display input parameters
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  data ..................'+param.fname_data, param.verbose)
-    sct.printv('  method ................'+method_type, param.verbose)
 
     # Extract path/file/extension
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
@@ -299,43 +272,71 @@ def create_mask2d(center, shape, size, nx, ny):
 
     return mask2d
 
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Create mask along z direction.')
+    parser.add_option(name='-i',
+                      type_value='file',
+                      description='Image to create mask on. Only used to get header. Must be 3D.',
+                      mandatory=True,
+                      example='data.nii.gz')
+    parser.add_option(name='-process',
+                      type_value=[[','], 'str'],
+                      description='Process to generate mask and associated value.'
+                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
+                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz'
+                                  '   center: mask is created at center of FOV. In that case, "val" is not required.'
+                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      mandatory=True,
+                      default_value=param_default.process,
+                      example=['centerline,data_centerline.nii.gz'])
+    parser.add_option(name='-m',
+                      type_value=None,
+                      description='Process to generate mask and associated value.'
+                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
+                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz'
+                                  '   center: mask is created at center of FOV. In that case, "val" is not required.'
+                                  '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
+                      mandatory=False,
+                      deprecated_by='-process')
+    parser.add_option(name='-size',
+                      type_value='int',
+                      description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
+                      mandatory=False,
+                      default_value=param_default.size,
+                      example=['45'])
+    parser.add_option(name='-s',
+                      type_value=None,
+                      description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
+                      mandatory=False,
+                      deprecated_by='-size')
+    parser.add_option(name='-f',
+                      type_value='multiple_choice',
+                      description='Shape of the mask.',
+                      mandatory=False,
+                      default_value=param_default.shape,
+                      example=param.shape_list)
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='Name of output mask.',
+                      mandatory=False,
+                      example=['data.nii'])
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
 
-DESCRIPTION
-  Create mask along z direction.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <data> -m <method,val> -s <size>
-
-MANDATORY ARGUMENTS
-  -i <data>        image to create mask on. Only used to get header. Must be 3D.
-
-OPTIONAL ARGUMENTS
-  -m <method,val>  method to generate mask and associated value. Default="""+str(param_default.method)+"""
-                     coord: X,Y coordinate of center of mask. E.g.: coord,20x15
-                     point: volume that contains a single point. E.g.: point,label.nii.gz
-                     center: mask is created at center of FOV. In that case, "val" is not required.
-                     centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii
-  -s <size>        size in voxel. Odd values are better (for mask to be symmetrical). Default="""+str(param_default.size)+"""
-                   If shape=gaussian, size corresponds to "sigma". 
-  -f {box,cylinder,gaussian}  shape of the mask. Default="""+str(param_default.shape)+"""
-  -o <output>      name of output mask. Default is "mask_INPUTFILE".
-  -r {0,1}         remove temporary files. Default="""+str(param_default.remove_tmp_files)+"""
-  -v {0,1}         verbose. Default="""+str(param_default.verbose)+"""
-  -h               help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i dwi_mean.nii -m coord,35x42 -s 20 -f box\n"""
-
-    # exit program
-    sys.exit(2)
-
+    return parser
 
 #=======================================================================================================================
 # Start program
