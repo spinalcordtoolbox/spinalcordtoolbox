@@ -38,7 +38,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=True,
+                      mandatory=False,
                       deprecated=1,
                       deprecated_by="-contrast",
                       example=['t1','t2'])
@@ -167,7 +167,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     contrast_type = arguments["-contrast"]
 
     # Building the command
-    cmd = "isct_propseg" + " -i " + input_filename + " -contrast " + contrast_type
+    cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
 
     if "-ofolder" in arguments:
         folder_output = arguments["-ofolder"]
