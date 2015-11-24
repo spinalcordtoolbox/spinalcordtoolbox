@@ -213,12 +213,17 @@ if __name__ == "__main__":
                       mandatory=False,
                       default_value=str(param_default.warp_spinal_levels),
                       example=['0', '1'])
-    parser.add_option(name="-o",
+    parser.add_option(name="-ofolder",
                       type_value="folder_creation",
                       description="name of output folder.",
                       mandatory=False,
                       default_value=param_default.folder_out,
                       example="label")
+    parser.add_option(name="-o",
+                      type_value=None,
+                      description="name of output folder.",
+                      mandatory=False,
+                      deprecated_by='-ofolder')
     parser.add_option(name="-t",
                       type_value="folder",
                       description="Specify path to template data.",
@@ -243,7 +248,7 @@ if __name__ == "__main__":
     fname_transfo = arguments["-w"]
     warp_atlas = int(arguments["-a"])
     warp_spinal_levels = int(arguments["-s"])
-    folder_out = arguments["-o"]
+    folder_out = arguments["-ofolder"]
     path_template = arguments["-t"]
     verbose = int(arguments["-v"])
     qc = int(arguments["-qc"])
