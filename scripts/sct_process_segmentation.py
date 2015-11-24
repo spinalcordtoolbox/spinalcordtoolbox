@@ -157,8 +157,9 @@ def main():
         sct.printv('\nDone!', param.verbose)
         sct.printv('Output CSA volume: '+param.file_csa_volume, param.verbose, 'info')
         if slices or vert_lev:
-            sct.printv('Output CSA file (averaged): csa_mean.txt', param.verbose, 'info')
-        sct.printv('Output CSA file (all slices): '+param.fname_csa+'\n', param.verbose, 'info')
+            sct.printv('Output file of the mean CSA: csa_mean.txt', param.verbose, 'info')
+            sct.printv('Output file of the volume between the selected slices: volume.txt', param.verbose, 'info')
+        sct.printv('Output file of CSA for each slice: '+param.fname_csa+'\n', param.verbose, 'info')
 
     if name_process == 'length':
         result_length = compute_length(fname_segmentation, remove_temp_files, verbose=verbose)
@@ -389,7 +390,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
     # # Extract min and max index in Z direction
     X, Y, Z = (data_seg > 0).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
-    # Xp, Yp = (data_seg[:, :, 0] >= 0).nonzero()  # X and Y range
 
     # extract centerline and smooth it
     x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', algo_fitting=algo_fitting, type_window=type_window, window_length=window_length, verbose=verbose)
@@ -400,7 +400,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     # Empty arrays in which CSA for each z slice will be stored
     csa = np.zeros(max_z_index-min_z_index+1)
-    # csa = [0.0 for i in xrange(0, max_z_index-min_z_index+1)]
 
     for iz in xrange(min_z_index, max_z_index+1):
 
@@ -488,8 +487,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
             sct.printv('\nERROR: Path to template is missing. See usage.\n', 1, 'error')
-            sys.exit(2)
-
 
         elif vert_levels and fname_vertebral_labeling:
 
@@ -500,6 +497,9 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
             # get the slices corresponding to the vertebral levels
             slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+
+        elif not vert_levels:
+            vert_levels_list = []
 
         sct.printv('Average CSA across slices...', type='info')
 
@@ -522,8 +522,17 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
 
         # write result into output file
-        save_metrics([0], [file_data], slices, [mean_CSA], [std_CSA], path_data + 'csa_mean.txt', path_data+file_csa_volume,
-                 'weighted-average across slices', '', warning_vert_levels=warning)
+        save_metrics([0], [file_data], slices, [mean_CSA], [std_CSA], path_data + 'csa_mean.txt', path_data+file_csa_volume, 'nb_voxels x px x py x cos(theta) slice-by-slice (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+
+        # compute volume between the selected slices
+        sct.printv('Compute the volume in between the selected slices...', type='info')
+        nb_vox = np.sum(data_seg[:, :, slices_list])
+        volume = nb_vox*px*py*pz
+        sct.printv('Volume in between the selected slices: '+str(volume)+' mm^3', type='info')
+
+        # write result into output file
+        save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
+
 
     # Remove temporary files
     if remove_temp_files:
@@ -656,6 +665,9 @@ MANDATORY ARGUMENTS
                           slice and then geometrically adjusting using centerline orientation. Outputs:
                           - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),
                           - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).
+                          - if flags -z or -l were used, also outputs:
+                            - csa_mean.txt: text file giving averaged CSA across the selected slices or vertebral levels
+                            - volume.txt: text file giving the volume included in between the selected slices or vertebral levels
 
 OPTIONAL ARGUMENTS
   -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
