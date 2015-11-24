@@ -283,10 +283,10 @@ def get_parser():
                       example='data.nii.gz')
     parser.add_option(name='-process',
                       type_value=[[','], 'str'],
-                      description='Process to generate mask and associated value.'
-                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15'
-                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz'
-                                  '   center: mask is created at center of FOV. In that case, "val" is not required.'
+                      description='Process to generate mask and associated value.\n'
+                                  '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
+                                  '   point: volume that contains a single point. E.g.: point,label.nii.gz\n'
+                                  '   center: mask is created at center of FOV. In that case, "val" is not required.\n'
                                   '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
                       mandatory=True,
                       default_value=param_default.process,
