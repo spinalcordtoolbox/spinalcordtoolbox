@@ -13,6 +13,7 @@ import os
 import tensorflow.python.platform
 import numpy
 import tensorflow as tf
+from random import shuffle
 
 import sct_utils as sct
 from msct_image import Image
@@ -31,10 +32,10 @@ WORK_DIRECTORY = 'data'
 IMAGE_SIZE = 80
 NUM_CHANNELS = 1
 NUM_LABELS = 2
-VALIDATION_SIZE = 1000  # Size of the validation set.
+VALIDATION_SIZE = 500  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
-BATCH_SIZE = 5000
-NUM_EPOCHS = 25
+BATCH_SIZE = 500
+NUM_EPOCHS = 5
 
 
 class UNetModel:
@@ -143,37 +144,54 @@ class UNetModel:
         return final_result
 
 
-def extract_data(path_data, offset_size=0):
+def extract_data(path_data, offset_size=0, list_images=None, verbose=1):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
     from sys import stdout
     ignore_list = ['.DS_Store']
-    print 'Extracting', path_data
+    if verbose == 1:
+        print 'Extracting', path_data
     cr = '\r'
 
     data = []
+    list_data = []
     images_folder = os.listdir(path_data)
-    for i, fname_im in enumerate(images_folder):
-        stdout.write(cr)
-        stdout.write(str(i) + '/' + str(len(images_folder)))
-        if fname_im in ignore_list:
-            continue
-        im_data = Image(path_data + fname_im)
-        if offset_size == 0:
-            data_image = im_data.data
-        else:
-            data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
-            data_image = (data_image - numpy.min(data_image)) / (numpy.max(data_image) - numpy.min(data_image))
-        data.append(numpy.expand_dims(data_image, axis=0))
+    if list_images is None:
+        for i, fname_im in enumerate(images_folder):
+            if verbose == 1:
+                stdout.write(cr)
+                stdout.write(str(i) + '/' + str(len(images_folder)))
+            if fname_im in ignore_list:
+                continue
+            list_data.append(fname_im)
 
-    data_stack = numpy.concatenate(data, axis=0)
-    data = numpy.expand_dims(data_stack, axis=3)
-    print data.shape
-    return data.astype(numpy.float32)
+        if verbose == 1:
+            stdout.write(cr)
+            print 'Done.        '
+        return list_data
+    else:
+        for i, fname_im in enumerate(list_images):
+            if verbose == 1:
+                stdout.write(cr)
+                stdout.write(str(i) + '/' + str(len(list_images)))
+            im_data = Image(path_data + fname_im)
+            if offset_size == 0:
+                data_image = im_data.data
+            else:
+                data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
+                data_image = (data_image - numpy.min(data_image)) / (numpy.max(data_image) - numpy.min(data_image))
+            data.append(numpy.expand_dims(data_image, axis=0))
+
+        data_stack = numpy.concatenate(data, axis=0)
+        data = numpy.expand_dims(data_stack, axis=3)
+        if verbose == 1:
+            stdout.write(cr)
+            print data.shape
+        return data.astype(numpy.float32)
 
 
-def extract_label(path_data, segmentation_image_size=0):
+def extract_label(path_data, segmentation_image_size=0, list_images = None, verbose=1):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     """
@@ -182,42 +200,64 @@ def extract_label(path_data, segmentation_image_size=0):
     offset_size = (IMAGE_SIZE - segmentation_image_size) / 2
     number_pixel = segmentation_image_size * segmentation_image_size
     ignore_list = ['.DS_Store']
-    print 'Extracting', path_data
+    if verbose == 1:
+        print 'Extracting', path_data
 
     data, weights = [], []
+    list_data = []
     images_folder = os.listdir(path_data)
-    for i, fname_im in enumerate(images_folder):
-        stdout.write(cr)
-        stdout.write(str(i) + '/' + str(len(images_folder)))
-        if fname_im in ignore_list:
-            continue
-        im_data = Image(path_data + fname_im)
-        if offset_size == 0:
-            data_image = im_data.data
-        else:
-            data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
-        number_of_segpixels = numpy.count_nonzero(data_image)
-        weights_image = data_image * number_of_segpixels / number_pixel + (1 - data_image) * (number_pixel - number_of_segpixels) / number_pixel
-        data.append(numpy.expand_dims(data_image, axis=0))
-        weights.append(numpy.expand_dims(weights_image, axis=0))
+    if list_images is None:
+        for i, fname_im in enumerate(images_folder):
+            if verbose == 1:
+                stdout.write(cr)
+                stdout.write(str(i) + '/' + str(len(images_folder)))
+            if fname_im in ignore_list:
+                continue
+            list_data.append(fname_im)
 
-    data_stack = numpy.concatenate(data, axis=0)
-    weights_stack = numpy.concatenate(weights, axis=0)
-    data = numpy.expand_dims(data_stack, axis=3)
-    data = numpy.concatenate((1-data, data), axis=3)
-    print data.shape
-    return data.astype(numpy.float32), weights_stack.astype(numpy.float32)
+        if verbose == 1:
+            stdout.write(cr)
+            print 'Done.        '
+        return list_data
+    else:
+        for i, fname_im in enumerate(list_images):
+            if verbose == 1:
+                stdout.write(cr)
+                stdout.write(str(i) + '/' + str(len(list_images)))
+            im_data = Image(path_data + fname_im)
+            if offset_size == 0:
+                data_image = im_data.data
+            else:
+                data_image = im_data.data[offset_size:-offset_size, offset_size:-offset_size]
+            number_of_segpixels = numpy.count_nonzero(data_image)
+            weights_image = data_image * number_of_segpixels / number_pixel + (1 - data_image) * (number_pixel - number_of_segpixels) / number_pixel
+            data.append(numpy.expand_dims(data_image, axis=0))
+            weights.append(numpy.expand_dims(weights_image, axis=0))
+
+        data_stack = numpy.concatenate(data, axis=0)
+        weights_stack = numpy.concatenate(weights, axis=0)
+        data = numpy.expand_dims(data_stack, axis=3)
+        data = numpy.concatenate((1-data, data), axis=3)
+        if verbose == 1:
+            stdout.write(cr)
+            print data.shape
+        return data.astype(numpy.float32), weights_stack.astype(numpy.float32)
 
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
     # Dice coefficients between two numpy arrays
-    # im1 = numpy.asarray(predictions[:, 1]).astype(numpy.bool)
-    # im2 = numpy.asarray(labels[:, 1]).astype(numpy.bool)
-    # intersection = numpy.logical_and(im1, im2)
+    predictions = predictions[:, 1]
+    predictions[predictions >= 0.5] = 1
+    predictions[predictions < 0.5] = 0
+    im1 = numpy.asarray(predictions).astype(numpy.bool)
+    labels = labels[:, 1]
+    labels[labels >= 0.5] = 1
+    labels[labels < 0.5] = 0
+    im2 = numpy.asarray(labels).astype(numpy.bool)
+    intersection = numpy.logical_and(im1, im2)
 
-    # return 100. - 100. * 2. * intersection.sum() / (im1.sum() + im2.sum())
-    return 100.0 - (100.0 * numpy.sum(numpy.argmax(predictions[:, 1]) == numpy.argmax(labels[:, 1])) / predictions.shape[0])
+    return 100. - 100. * 2. * intersection.sum() / (im1.sum() + im2.sum())
 
 
 def main(argv=None):  # pylint: disable=unused-argument
@@ -240,29 +280,25 @@ def main(argv=None):  # pylint: disable=unused-argument
     for i in range(depth):
         image_size_temp *= 2
     segmentation_image_size = image_size_temp
-    #offset_images = (IMAGE_SIZE - segmentation_image_size) / 2
+    # offset_images = (IMAGE_SIZE - segmentation_image_size) / 2
 
     sct.printv('Original image size = ' + str(IMAGE_SIZE))
     sct.printv('Image size at bottom layer = ' + str(image_size_bottom))
     sct.printv('Image size of output = ' + str(segmentation_image_size))
 
     # Extracting datasets
-    train_data = extract_data(TRAINING_SOURCE_DATA)
-    train_labels_init, train_labels_w = extract_label(TRAINING_LABELS_DATA, segmentation_image_size)
-    test_data = extract_data(TEST_SOURCE_DATA)
-    test_labels, test_labels_weights = extract_label(TEST_LABELS_DATA, segmentation_image_size)
-    test_labels = numpy.reshape(test_labels, [test_labels.shape[0] * test_labels.shape[1] * test_labels.shape[2], NUM_LABELS])
+    list_data = extract_data(TRAINING_SOURCE_DATA)
+    list_labels = extract_label(TRAINING_LABELS_DATA)
+    list_test_data = extract_data(TEST_SOURCE_DATA)
+    list_test_labels = extract_label(TEST_LABELS_DATA)
 
-
-    # Generate a validation set.
-    validation_data = train_data[:VALIDATION_SIZE, :, :, :]
-    validation_labels = train_labels_init[:VALIDATION_SIZE]
-    validation_labels = numpy.reshape(validation_labels, [validation_labels.shape[0] * validation_labels.shape[1] * validation_labels.shape[2], NUM_LABELS])
-    train_data = train_data[VALIDATION_SIZE:, :, :, :]
-    train_labels = train_labels_init[VALIDATION_SIZE:]
-    #train_labels = numpy.reshape(train_labels, [train_labels.shape[0] * train_labels.shape[1] * train_labels.shape[2], train_labels.shape[3]])
+    # Generate a validation set
+    validation_data = list_data[:VALIDATION_SIZE]
+    validation_labels = list_labels[:VALIDATION_SIZE]
+    list_data = list_data[VALIDATION_SIZE:]
+    list_labels = list_labels[VALIDATION_SIZE:]
     num_epochs = NUM_EPOCHS
-    train_size = train_labels.shape[0]
+    train_size = len(list_labels)
 
     # This is where training samples and labels are fed to the graph.
     # These placeholder nodes will be fed a batch of training data at each
@@ -270,10 +306,8 @@ def main(argv=None):  # pylint: disable=unused-argument
     train_data_node = tf.placeholder(tf.float32, shape=(BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS))
     train_labels_node = tf.placeholder(tf.float32, shape=(BATCH_SIZE * segmentation_image_size * segmentation_image_size, NUM_LABELS))
     train_labels_weights = tf.placeholder(tf.float32, shape=(BATCH_SIZE * segmentation_image_size * segmentation_image_size))
-    # For the validation and test data, we'll just hold the entire dataset in
-    # one constant node.
-    validation_data_node = tf.constant(validation_data)
-    test_data_node = tf.constant(test_data)
+    # For the validation and test data, we'll just hold the entire dataset in one constant node.
+
 
     unet = UNetModel(IMAGE_SIZE, depth)
 
@@ -298,9 +332,6 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Predictions for the minibatch, validation set and test set.
     train_prediction = tf.nn.softmax(logits)
-    # We'll compute them only once in a while by calling their {eval()} method.
-    validation_prediction = tf.nn.softmax(unet.model(validation_data_node))
-    test_prediction = tf.nn.softmax(unet.model(test_data_node))
 
     # Create a local session to run this computation.
     saver = tf.train.Saver()
@@ -310,36 +341,53 @@ def main(argv=None):  # pylint: disable=unused-argument
     with tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=number_of_cores, intra_op_parallelism_threads=number_of_cores)) as s:
         # Run all the initializers to prepare the trainable parameters.
         tf.initialize_all_variables().run()
-        print 'Initialized!'
-        # Loop through training steps.
+        print '\nShuffling batches!'
         number_of_step = int(num_epochs * train_size / BATCH_SIZE)
+        steps = range(number_of_step)
+        shuffle(steps)
+        print 'Initialized!'
         print 'Number of step = ' + str(number_of_step)
         timer_training = sct.Timer(number_of_step)
         timer_training.start()
-        for step in xrange(int(num_epochs * train_size / BATCH_SIZE)):
+        # Loop through training steps.
+        for i, step in enumerate(steps):
+            print 'Epoch ' + str(round(float(i) * BATCH_SIZE / train_size, 2)) + ' %'
+            timer_training.iterations_done(i)
             # Compute the offset of the current minibatch in the data.
             # Note that we could use better randomization across epochs.
             offset = (step * BATCH_SIZE) % (train_size - BATCH_SIZE)
-            batch_data = train_data[offset:(offset + BATCH_SIZE), :, :, :]
-            batch_labels = train_labels[offset:(offset + BATCH_SIZE)]
+            batch_data = extract_data(TRAINING_SOURCE_DATA, list_images=list_data[offset:(offset + BATCH_SIZE)], verbose=0)
+            batch_labels, batch_labels_weights = extract_label(TRAINING_LABELS_DATA, segmentation_image_size, list_labels[offset:(offset + BATCH_SIZE)], verbose=0)
             batch_labels = numpy.reshape(batch_labels, [batch_labels.shape[0] * batch_labels.shape[1] * batch_labels.shape[2], NUM_LABELS])
-            batch_labels_weights = train_labels_w[offset:(offset + BATCH_SIZE)]
             batch_labels_weights = numpy.reshape(batch_labels_weights, [batch_labels_weights.shape[0] * batch_labels_weights.shape[1] * batch_labels_weights.shape[2]])
             # This dictionary maps the batch data (as a numpy array) to the
             # node in the graph is should be fed to.
             feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            if step != 0 and step % (number_of_step/10) == 0:
-                print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
-                timer_training.iterations_done(step)
+            if step != 0 and step % 10 == 0:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
+                del batch_data
+                del batch_labels_weights
                 print 'Minibatch error: %.1f%%' % error_rate(predictions, batch_labels)
-                print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels)
-            elif step % (number_of_step/100) == 0:
-                print 'Epoch ' + str(round(float(step) * BATCH_SIZE / train_size, 2)) + ' %'
-                timer_training.iterations_done(step)
+                del batch_labels
+                validation_data_b = extract_data(TRAINING_SOURCE_DATA, list_images=validation_data, verbose=0)
+                validation_labels_b, validation_labels_weights = extract_label(TRAINING_LABELS_DATA, segmentation_image_size, validation_labels, verbose=0)
+                validation_labels_b = numpy.reshape(validation_labels_b, [validation_labels_b.shape[0] * validation_labels_b.shape[1] * validation_labels_b.shape[2], NUM_LABELS])
+                validation_data_node = tf.constant(validation_data_b)
+                validation_prediction = tf.nn.softmax(unet.model(validation_data_node))
+                print 'Validation error: %.1f%%' % error_rate(validation_prediction.eval(), validation_labels_b)
+            else:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
+                del batch_data
+                del batch_labels
+                del batch_labels_weights
+
+        test_data = extract_data(TEST_SOURCE_DATA, list_images=list_test_data, verbose=0)
+        test_labels, test_labels_weights = extract_label(TEST_LABELS_DATA, segmentation_image_size, list_test_labels, verbose=0)
+        test_labels = numpy.reshape(test_labels, [test_labels.shape[0] * test_labels.shape[1] * test_labels.shape[2], NUM_LABELS])
+        test_data_node = tf.constant(test_data)
+        test_prediction = tf.nn.softmax(unet.model(test_data_node))
         # Finally print the result!
         test_error = error_rate(test_prediction.eval(), test_labels)
         print 'Test error: %.1f%%' % test_error
