@@ -130,6 +130,55 @@ def resample():
     sct.printv('fslview '+param.fname_out+' &', param.verbose, 'info')
 
 
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
+                      mandatory=True,
+                      example='dwi.nii.gz')
+    parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
+                            'Please choose only one of the 3 options.')
+    parser.add_option(name="-f",
+                      type_value="str",
+                      description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
+                                  "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
+                      mandatory=False,
+                      example='0.5x0.5x1')
+    parser.add_option(name="-mm",
+                      type_value="str",
+                      description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
+                      mandatory=False)
+                      # example='0.1x0.1x5')
+    parser.add_option(name="-vox",
+                      type_value="str",
+                      description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
+                      mandatory=False)
+                      # example='50x50x20')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-x",
+                      type_value='multiple_choice',
+                      description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
+                                  "You can also choose the order of the spline using an integer from 3 to 5.",
+                      mandatory=False,
+                      default_value='linear',
+                      example=['nn', 'linear', 'spline', '3', '4', '5'])
+
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description="Output file name",
+                      mandatory=False,
+                      example='dwi_resampled.nii.gz')
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
+                      mandatory=False,
+                      default_value=1,
+                      example=['0', '1', '2'])
+    return parser
+
 # ======================================================================================================================
 # Start program
 # ======================================================================================================================
@@ -148,53 +197,7 @@ if __name__ == "__main__":
         param.remove_tmp_files = 0
         param.verbose = 1
     else:
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
-        parser.add_option(name="-i",
-                          type_value="file",
-                          description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
-                          mandatory=True,
-                          example='dwi.nii.gz')
-        parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
-                                'Please choose only one of the 3 options.')
-        parser.add_option(name="-f",
-                          type_value="str",
-                          description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
-                                      "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
-                          mandatory=False,
-                          example='0.5x0.5x1')
-        parser.add_option(name="-mm",
-                          type_value="str",
-                          description="Resampling size in mm in each dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False)
-                          # example='0.1x0.1x5')
-        parser.add_option(name="-vox",
-                          type_value="str",
-                          description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
-                          mandatory=False)
-                          # example='50x50x20')
-        parser.usage.addSection('MISC')
-        parser.add_option(name="-x",
-                          type_value='multiple_choice',
-                          description="Interpolation. nn (nearest neighbor : spline of order 0), linear (spline of order 1), or spline (cubic spline: order 2).\n"
-                                      "You can also choose the order of the spline using an integer from 3 to 5.",
-                          mandatory=False,
-                          default_value='linear',
-                          example=['nn', 'linear', 'spline', '3', '4', '5'])
-
-        parser.add_option(name="-o",
-                          type_value="file_output",
-                          description="Output file name",
-                          mandatory=False,
-                          example='dwi_resampled.nii.gz')
-        parser.add_option(name="-v",
-                          type_value='multiple_choice',
-                          description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
-                          mandatory=False,
-                          default_value=1,
-                          example=['0', '1', '2'])
-
+        parser = get_parser()
         arguments = parser.parse(sys.argv[1:])
         param.fname_data = arguments["-i"]
         arg = 0
