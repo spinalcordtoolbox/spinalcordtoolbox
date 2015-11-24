@@ -69,7 +69,7 @@ def main():
         param.fname_data = arguments['-i']
 
         if '-p' in arguments:
-            param.process = arguments['-process']
+            param.process = arguments['-p']
             if param.process[0] not in param.process_list:
                 sct.printv(parser.usage.generate(error='ERROR: Process '+param.process[0]+' is not recognized.'))
         if '-size' in arguments:
