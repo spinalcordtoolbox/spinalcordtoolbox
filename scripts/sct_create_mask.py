@@ -68,7 +68,7 @@ def main():
 
         param.fname_data = arguments['-i']
 
-        if '-process' in arguments:
+        if '-p' in arguments:
             param.process = arguments['-process']
             if param.process[0] not in param.process_list:
                 sct.printv(parser.usage.generate(error='ERROR: Process '+param.process[0]+' is not recognized.'))
@@ -281,7 +281,7 @@ def get_parser():
                       description='Image to create mask on. Only used to get header. Must be 3D.',
                       mandatory=True,
                       example='data.nii.gz')
-    parser.add_option(name='-process',
+    parser.add_option(name='-p',
                       type_value=[[','], 'str'],
                       description='Process to generate mask and associated value.\n'
                                   '   coord: X,Y coordinate of center of mask. E.g.: coord,20x15\n'
@@ -299,7 +299,7 @@ def get_parser():
                                   '   center: mask is created at center of FOV. In that case, "val" is not required.'
                                   '   centerline: volume that contains centerline. E.g.: centerline,my_centerline.nii',
                       mandatory=False,
-                      deprecated_by='-process')
+                      deprecated_by='-p')
     parser.add_option(name='-size',
                       type_value='int',
                       description='Size in voxel. Odd values are better (for mask to be symmetrical). If shape=gaussian, size corresponds to "sigma"',
