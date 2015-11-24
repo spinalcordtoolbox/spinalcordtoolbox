@@ -13,6 +13,7 @@ import getopt
 import sys
 import time
 import commands
+from msct_parser import Parser
 # get path of the toolbox
 status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 # append path that contains scripts, to be able to load modules
@@ -52,28 +53,23 @@ class param:
 # START MAIN
 # ==========================================================================================
 def main():
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    if '-d' in arguments:
+        param.download = int(arguments['-d'])
+    if '-p' in arguments:
+        param.path_data = arguments['-p']
+    if '-f' in arguments:
+        param.function_to_test = arguments['-f']
+    if '-r' in arguments:
+        param.remove_tmp_file = int(arguments['-r'])
+
     # path_data = param.path_data
     function_to_test = param.function_to_test
     # function_to_avoid = param.function_to_avoid
     remove_tmp_file = param.remove_tmp_file
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'h:d:p:f:r:a:')
-    except getopt.GetoptError:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-            sys.exit(0)
-        if opt == '-d':
-            param.download = int(arg)
-        if opt == '-p':
-            param.path_data = arg
-        if opt == '-f':
-            function_to_test = arg
-        if opt == '-r':
-            remove_tmp_file = int(arg)
 
     start_time = time.time()
 
@@ -264,34 +260,33 @@ def test_function(script_name):
     # return
     return status
 
-
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  Crash test for functions of the Spinal Cord Toolbox.
-
-USAGE
-  python """+os.path.basename(__file__)+"""
-
-OPTIONAL ARGUMENTS
-  -f <script_name>      test this specific script (do not add extension).
-  -d {0,1}              download testing data. Default="""+str(param.download)+"""
-  -p <path_data>        path to testing data. Default="""+str(param.path_data)+"""
-                        NB: no need to set if using "-d 1"
-  -r {0,1}              remove temp files. Default="""+str(param.remove_tmp_file)+"""
-  -h                    help. Show this message
-
-EXAMPLE
-  python """+os.path.basename(__file__)+""" \n"""
-
-    # exit program
-    sys.exit(2)
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Crash test for functions of the Spinal Cord Toolbox.')
+    parser.add_option(name="-f",
+                      type_value="str",
+                      description="Test this specific script (do not add extension).",
+                      mandatory=False,
+                      example='sct_propseg')
+    parser.add_option(name="-d",
+                      type_value="multiple_choice",
+                      description="Test this specific script (do not add extension).",
+                      mandatory=False,
+                      default_value=param.download,
+                      example=['0', '1'])
+    parser.add_option(name="-p",
+                      type_value="folder",
+                      description='Path to testing data. NB: no need to set if using "-d 1"',
+                      mandatory=False,
+                      default_value=param.path_data)
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    return parser
 
 
 if __name__ == "__main__":
