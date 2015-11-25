@@ -686,7 +686,7 @@ def get_parser():
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-t',
-                      type_value='multiple_choice',
+                      type_value='folder',
                       description='Path to warped template. Default: ./label/template. Only use with flag -l',
                       mandatory=False,
                       default_value='./label/template',
