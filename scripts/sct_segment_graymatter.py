@@ -423,12 +423,18 @@ def get_parser():
                       example='sc_seg.nii.gz')
     parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
                             'Choose one of them')
-    parser.add_option(name="-l",
+    parser.add_option(name="-vert",
                       type_value="file",
                       description="Image containing level labels for the target"
                                   "If -l is used, no need to provide t2 data",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz')
+    parser.add_option(name="-l",
+                      type_value=None,
+                      description="Image containing level labels for the target"
+                                  "If -l is used, no need to provide t2 data",
+                      mandatory=False,
+                      deprecated_by='-vert')
     parser.add_option(name="-t2",
                       type_value=[[','], 'file'],
                       description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
@@ -553,8 +559,8 @@ if __name__ == "__main__":
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
-        if "-l" in arguments:
-            input_level_fname = arguments["-l"]
+        if "-vert" in arguments:
+            input_level_fname = arguments["-vert"]
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:

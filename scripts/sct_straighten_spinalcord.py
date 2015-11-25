@@ -932,12 +932,17 @@ def get_parser():
                       description="centerline or segmentation.",
                       mandatory=True,
                       example="centerline.nii.gz")
-    parser.add_option(name="-p",
+    parser.add_option(name="-pad",
                       type_value="int",
                       description="amount of padding for generating labels.",
                       mandatory=False,
                       example="30",
                       default_value=30)
+    parser.add_option(name="-p",
+                      type_value=None,
+                      description="amount of padding for generating labels.",
+                      mandatory=False,
+                      deprecated_by='-pad')
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="straightened file",
@@ -980,7 +985,7 @@ def get_parser():
                       example=['0', '1', '2'],
                       default_value='1')
 
-    parser.add_option(name="-params",
+    parser.add_option(name="-param",
                       type_value=[[','], 'str'],
                       description="Parameters for spinal cord straightening. Separate arguments with ','."
                                   "\nall_labels : 0,1. Default = 1"
@@ -996,6 +1001,22 @@ def get_parser():
                                   "improve warping field of straightening. Default=150.",
                       mandatory=False,
                       example="algo_fitting=nurbs,bspline_meshsize=5x5x12,algo_landmark_rigid=xy")
+    parser.add_option(name="-params",
+                      type_value=None,
+                      description="Parameters for spinal cord straightening. Separate arguments with ','."
+                                  "\nall_labels : 0,1. Default = 1"
+                                  "\nalgo_fitting: {hanning,nurbs} algorithm for curve fitting. Default=hanning"
+                                  "\nbspline_meshsize: <int>x<int>x<int> size of mesh for B-Spline registration. "
+                                  "Default=3x3x5"
+                                  "\nbspline_numberOfLevels: <int> number of levels for BSpline interpolation. "
+                                  "Default=3"
+                                  "\nbspline_order: <int> Order of BSpline for interpolation. Default=2"
+                                  "\nalgo_landmark_rigid {rigid,xy,translation,translation-xy,rotation,rotation-xy} "
+                                  "constraints on landmark-based rigid pre-registration"
+                                  "\nleftright_width: <int> Width of padded image in left-right direction. Can be set "
+                                  "improve warping field of straightening. Default=150.",
+                      mandatory=False,
+                      deprecated_by='-param')
 
     parser.add_option(name='-qc',
                       type_value='multiple_choice',
