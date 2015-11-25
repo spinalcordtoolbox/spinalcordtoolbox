@@ -22,7 +22,7 @@ def test(data_path):
     file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
 
     # define command
-    cmd = 'sct_label_utils -i ' + data_path + folder_data[0] + file_data[0] + ' -p create -x 1,1,1,1:2,2,2,2'
+    cmd = 'sct_label_utils -i ' + data_path + folder_data[0] + file_data[0] + ' -p create -coord 1,1,1,1:2,2,2,2'
     status, output = commands.getstatusoutput(cmd)
 
     # if command ran without error, test integrity
