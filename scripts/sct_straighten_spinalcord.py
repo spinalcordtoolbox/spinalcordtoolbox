@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
 
     # assigning variables to arguments
     input_filename = arguments["-i"]
-    centerline_file = arguments["-c"]
+    centerline_file = arguments["-s"]
 
     sc_straight = SpinalCordStraightener(input_filename, centerline_file)
 
