@@ -39,7 +39,8 @@ def test(path_data):
         cmd = 'sct_dice_coefficient -i ' + path_data + folder_data + file_data[1] + ' -d ' + file_data[1]
         status, output = commands.getstatusoutput(cmd)
         # parse output and compare to acceptable threshold
-        if float(output.split('3D Dice coefficient = ')[1]) < dice_threshold:
+        dice = float(output.split('3D Dice coefficient = ')[1].split('\n')[0])
+        if dice < dice_threshold:
             status = 99
 
     return status, output
