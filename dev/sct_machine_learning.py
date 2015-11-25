@@ -17,6 +17,7 @@ from random import shuffle
 
 import sct_utils as sct
 from msct_image import Image
+import math
 
 try:
    import cPickle as pickle
@@ -34,7 +35,7 @@ NUM_CHANNELS = 1
 NUM_LABELS = 2
 VALIDATION_SIZE = 500  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
-BATCH_SIZE = 500
+BATCH_SIZE = 256
 NUM_EPOCHS = 10
 
 
@@ -53,32 +54,32 @@ class UNetModel:
         # Setting variables that will be optimized
         # contraction
         for i in range(self.depth):
-            self.weights_contraction.append({'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
-                                             'bias1': tf.Variable(tf.zeros([num_features])),
-                                             'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
-                                             'bias2': tf.Variable(tf.zeros([num_features]))})
+            self.weights_contraction.append({'conv1': tf.Variable(tf.random_normal([3, 3, num_features_init, num_features], stddev=math.sqrt(2/(9*num_features_init)), seed=SEED)),
+                                             'bias1': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features)))),
+                                             'conv2': tf.Variable(tf.random_normal([3, 3, num_features, num_features], stddev=math.sqrt(2/(9*num_features)), seed=SEED)),
+                                             'bias2': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features))))})
             num_features_init = num_features
             num_features = num_features_init * 2
 
         self.weights_bottom_layer = {
-            'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
-            'bias1': tf.Variable(tf.zeros([num_features])),
-            'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
-            'bias2': tf.Variable(tf.zeros([num_features]))}
+            'conv1': tf.Variable(tf.random_normal([3, 3, num_features_init, num_features], stddev=math.sqrt(2/(9*num_features_init)), seed=SEED)),
+            'bias1': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features)))),
+            'conv2': tf.Variable(tf.random_normal([3, 3, num_features, num_features], stddev=math.sqrt(2/(9*num_features)), seed=SEED)),
+            'bias2': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features))))}
 
         # expansion
         num_features_init = num_features
         num_features = num_features_init / 2
         for i in range(depth):
-            self.upconv_weights.append(tf.Variable(tf.truncated_normal([2, 2, num_features_init, num_features], stddev=0.1, seed=SEED)))
-            self.weights_expansion.append({'conv1': tf.Variable(tf.truncated_normal([3, 3, num_features_init, num_features], stddev=0.1, seed=SEED)),
-                                           'bias1': tf.Variable(tf.zeros([num_features])),
-                                           'conv2': tf.Variable(tf.truncated_normal([3, 3, num_features, num_features], stddev=0.1, seed=SEED)),
-                                           'bias2': tf.Variable(tf.zeros([num_features]))})
+            self.upconv_weights.append(tf.Variable(tf.random_normal([2, 2, num_features_init, num_features], stddev=math.sqrt(2/(9*num_features_init)), seed=SEED)))
+            self.weights_expansion.append({'conv1': tf.Variable(tf.random_normal([3, 3, num_features_init, num_features], stddev=math.sqrt(2/(9*num_features_init)), seed=SEED)),
+                                           'bias1': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features)))),
+                                           'conv2': tf.Variable(tf.random_normal([3, 3, num_features, num_features], stddev=math.sqrt(2/(9*num_features)), seed=SEED)),
+                                           'bias2': tf.Variable(tf.random_normal([num_features], stddev=math.sqrt(2/(9*num_features))))})
             num_features_init = num_features
             num_features = num_features_init / 2
 
-        self.finalconv_weights = tf.Variable(tf.truncated_normal([1, 1, num_features * 2, self.num_classes], stddev=0.1, seed=SEED))
+        self.finalconv_weights = tf.Variable(tf.random_normal([1, 1, num_features * 2, self.num_classes], stddev=math.sqrt(2/(9*num_features*2)), seed=SEED))
 
     def save_parameters(self, fname_out=''):
         pickle.dump(self.weights_contraction, open("unet-model-weights_contraction.p", "wb"))
@@ -329,15 +330,15 @@ def main(argv=None):  # pylint: disable=unused-argument
     # controls the learning rate decay.
     batch = tf.Variable(0)
     # Decay once per epoch, using an exponential schedule starting at 0.01.
-    learning_rate = tf.train.exponential_decay(0.001,  # Base learning rate.
+    learning_rate = tf.train.exponential_decay(0.01,  # Base learning rate.
                                                batch * BATCH_SIZE,  # Current index into the dataset.
                                                train_size,  # Decay step.
                                                0.95,  # Decay rate.
                                                staircase=True)
+
     # Use simple gradient descent for the optimization.
-    # learning_rate = 0.001
-    #optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=batch)
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=batch)
+    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=batch)
+    #optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=batch)
     #optimizer = tf.train.MomentumOptimizer(learning_rate).minimize(loss, global_step=batch)
 
     # Predictions for the minibatch, validation set and test set.
