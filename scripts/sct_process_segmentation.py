@@ -95,8 +95,8 @@ def main(args):
 
         if '-i' in arguments:
             fname_segmentation = arguments['-i']
-        if '-prc' in arguments:
-            name_process = arguments['-prc']
+        if '-p' in arguments:
+            name_process = arguments['-p']
         if '-method' in arguments:
             name_method = arguments['-method']
         if '-lvl' in arguments:
@@ -697,17 +697,6 @@ def get_parser():
                       description='Spinal Cord segmentation',
                       mandatory=True,
                       example='seg.nii.gz')
-    parser.add_option(name='-prc',
-                      type_value='multiple_choice',
-                      description='type of process to be performed:\n'
-                                  '- centerline: extract centerline as binary file.\n'
-                                  '- length: compute length of the segmentation.\n'
-                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
-                                  '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
-                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
-                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
-                      mandatory=True,
-                      example=['centerline', 'length', 'csa'])
     parser.add_option(name='-p',
                       type_value='multiple_choice',
                       description='type of process to be performed:\n'
@@ -718,7 +707,6 @@ def get_parser():
                                   '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
                                   '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
                       mandatory=True,
-                      deprecated_by='-prc',
                       example=['centerline', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
     parser.add_option(name='-s',
