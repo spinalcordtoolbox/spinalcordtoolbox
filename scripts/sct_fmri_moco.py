@@ -72,50 +72,6 @@ def main(path_out, param_user):
         param.verbose = 1
         param.group_size = 3
         #param_user = '2,1,0.5'
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hi:g:m:o:p:r:v:x:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ('-g'):
-                param.group_size = int(arg)
-            elif opt in ('-i'):
-                param.fname_data = arg
-            elif opt in ('-m'):
-                param.fname_mask = arg
-            elif opt in ('-o'):
-                path_out = arg
-            elif opt in ('-p'):
-                param_user = arg
-            elif opt in ('-r'):
-                param.remove_tmp_files = int(arg)
-            elif opt in ('-v'):
-                param.verbose = int(arg)
-            elif opt in ('-x'):
-                param.interp = arg
-
-    # display usage if a mandatory argument is not provided
-    if param.fname_data == '':
-        sct.printv('ERROR: All mandatory arguments are not provided. See usage.', 1, 'error')
-
-    # check existence of input files
-    sct.printv('\nCheck file existence...', param.verbose)
-    sct.check_file_exist(param.fname_data, param.verbose)
-    if not param.fname_mask == '':
-        sct.check_file_exist(param.fname_mask, param.verbose)
-
-    # parse argument for param
-    if not param_user == '':
-        param.param = param_user.replace(' ', '').split(',')  # remove spaces and parse with comma
-        # TODO: check integrity of input
-        # param.param = [i for i in range(len(param_user))]
-        del param_user
 
     sct.printv('\nInput parameters:', param.verbose)
     sct.printv('  input file ............'+param.fname_data, param.verbose)
@@ -334,9 +290,9 @@ def get_parser():
                       type_value='image_nifti',
                       description='Binary mask to limit voxels considered by the registration metric.',
                       mandatory=False)
-    parser.add_option(name="-p",
+    parser.add_option(name="-param",
                       type_value='str',
-                      description="""ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
+                      description="""Parameters. ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
 1) degree of polynomial function used for regularization along Z.
    For no regularization set to 0.
 2) smoothing kernel size (in mm).
@@ -345,6 +301,17 @@ def get_parser():
    If you find very large deformations, switching to MeanSquares can help.""",
                       mandatory=False,
                       example=param_default.param[0]+','+param_default.param[1]+','+param_default.param[2]+','+param_default.param[3])
+    parser.add_option(name="-p",
+                      type_value=None,
+                      description="""ALL ITEMS MUST BE LISTED IN ORDER. Separate with comma.
+1) degree of polynomial function used for regularization along Z.
+   For no regularization set to 0.
+2) smoothing kernel size (in mm).
+3) gradient step. The higher the more deformation allowed.
+4) metric: {MI,MeanSquares}.
+   If you find very large deformations, switching to MeanSquares can help.""",
+                      mandatory=False,
+                      deprecated_by='-param')
     parser.add_option(name='-ofolder',
                       type_value='folder_creation',
                       description='Output path.',
@@ -355,7 +322,7 @@ def get_parser():
                       description='Output path.',
                       mandatory=False,
                       default_value='./',
-                      deprecated_by='-o')
+                      deprecated_by='-ofolder')
     parser.add_option(name="-x",
                       type_value="multiple_choice",
                       description="""Final interpolation.""",
@@ -394,8 +361,8 @@ if __name__ == "__main__":
     param.group_size = arguments['-g']
     path_out = arguments['-ofolder']
     param_user = ''
-    if '-p' in arguments:
-        param_user = arguments['-p']
+    if '-param' in arguments:
+        param_user = arguments['-param']
     param.interp = arguments['-x']
     param.remove_tmp_files = arguments['-r']
     param.verbose = arguments['-v']
