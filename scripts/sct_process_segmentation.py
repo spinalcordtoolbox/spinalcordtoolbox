@@ -49,10 +49,10 @@ class Param:
         self.name_method = 'counting_z_plane'  # for compute_CSA
         self.slices = ''
         self.vertebral_levels = ''
-        self.path_to_template = './label/template'
         self.type_window = 'hanning'  # for smooth_centerline @sct_straighten_spinalcord
         self.window_length = 50  # for smooth_centerline @sct_straighten_spinalcord
         self.algo_fitting = 'hanning'  # nurbs, hanning
+        self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
 
 
 # MAIN
@@ -83,8 +83,8 @@ def main(args):
     figure_fit = param.figure_fit
     slices = param.slices
     vert_lev = param.vertebral_levels
-    path_to_template = param.path_to_template
-    
+    fname_vertebral_labeling = param.fname_vertebral_labeling
+
     # Parameters for debug mode
     if param.debug:
         fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
@@ -106,7 +106,7 @@ def main(args):
         if '-s' in arguments:
             smoothing_param = arguments['-s']
         if '-t' in arguments:
-            path_to_template = arguments['-t']
+            fname_vertebral_labeling = arguments['-t']
         if '-v' in arguments:
             verbose = arguments['-v']
         if '-z' in arguments:
@@ -116,7 +116,7 @@ def main(args):
 
         # Check input parameters
         try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:b:l:r:s:t:f:o:v:z:a:')
+             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
         except getopt.GetoptError:
             usage()
         for opt, arg in opts :
@@ -156,7 +156,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_lev, path_to_template, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
+        compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, param.file_csa_volume, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
         sct.printv('Output CSA volume: '+param.file_csa_volume, param.verbose, 'info')
@@ -246,7 +246,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
     # set_orientation(im_seg, 'RPI')
     # im_seg.setFileName(fname_segmentation_orient)
     # im_seg.save()
-    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz')
+    sct.run('sct_image -i segmentation.nii.gz -setorient RPI -o segmentation_RPI.nii.gz', verbose)
 
     # Open segmentation volume
     sct.printv('\nOpen segmentation volume...', verbose)
@@ -286,7 +286,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
         data[X[k], Y[k], Z[k]] = 0
 
     # extract centerline and smooth it
-    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv,y_centerline_deriv,z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
+    x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = smooth_centerline('segmentation_RPI.nii.gz', type_window = type_window, window_length = window_length, algo_fitting = algo_fitting, verbose = verbose)
 
     if verbose == 2:
             import matplotlib.pyplot as plt
@@ -359,7 +359,7 @@ def extract_centerline(fname_segmentation, remove_temp_files, verbose = 0, algo_
 
 # compute_csa
 # ==========================================================================================
-def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, step, smoothing_param, figure_fit, slices, vert_levels, path_to_template, algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
+def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, file_csa_volume, slices, vert_levels, fname_vertebral_labeling='', algo_fitting = 'hanning', type_window = 'hanning', window_length = 80):
 
     # Extract path, file and extension
     fname_segmentation = os.path.abspath(fname_segmentation)
@@ -406,19 +406,19 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     csa = np.zeros(max_z_index-min_z_index+1)
     # csa = [0.0 for i in xrange(0, max_z_index-min_z_index+1)]
 
-    for iz in xrange(0, len(z_centerline)):
+    for iz in xrange(min_z_index, max_z_index+1):
 
         # compute the vector normal to the plane
-        normal = normalize(np.array([x_centerline_deriv[iz], y_centerline_deriv[iz], z_centerline_deriv[iz]]))
+        normal = normalize(np.array([x_centerline_deriv[iz-min_z_index], y_centerline_deriv[iz-min_z_index], z_centerline_deriv[iz-min_z_index]]))
 
         # compute the angle between the normal vector of the plane and the vector z
         angle = np.arccos(np.dot(normal, [0, 0, 1]))
 
         # compute the number of voxels, assuming the segmentation is coded for partial volume effect between 0 and 1.
-        number_voxels = sum(sum(data_seg[:, :, iz+min_z_index]))
+        number_voxels = np.sum(data_seg[:, :, iz])
 
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
-        csa[iz] = number_voxels * px * py * np.cos(angle)
+        csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
 
     if smoothing_param:
         from msct_smooth import smoothing_window
@@ -474,7 +474,7 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     # get orientation of the input data
     im_seg_original = Image('segmentation.nii.gz')
     orientation = im_seg_original.orientation
-    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+param.file_csa_volume)
+    sct.run('sct_image -i csa_volume_RPI.nii.gz -setorient '+orientation+' -o '+file_csa_volume)
 
     # come back to parent folder
     os.chdir('..')
@@ -483,67 +483,56 @@ def compute_csa(fname_segmentation, name_method, verbose, remove_temp_files, ste
     sct.printv('\nGenerate output files...', verbose)
     copyfile(path_tmp+'csa.txt', path_data+param.fname_csa)
     # sct.generate_output_file(path_tmp+'csa.txt', path_data+param.fname_csa)  # extension already included in param.fname_csa
-    sct.generate_output_file(path_tmp+param.file_csa_volume, path_data+param.file_csa_volume)  # extension already included in name_output
+    sct.generate_output_file(path_tmp+file_csa_volume, path_data+file_csa_volume)  # extension already included in name_output
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
+        from sct_extract_metric import save_metrics
 
-        if vert_levels and not path_to_template:
+        warning = ''
+        if vert_levels and not fname_vertebral_labeling:
             sct.printv('\nERROR: Path to template is missing. See usage.\n', 1, 'error')
             sys.exit(2)
-        elif vert_levels and path_to_template:
-            abs_path_to_template = os.path.abspath(path_to_template)
 
-        # go back to tmp folder
-        os.chdir(path_tmp)
 
-        # create temporary folder
-        sct.printv('\nCreate temporary folder to average csa...', verbose)
-        path_tmp_extract_metric = sct.slash_at_the_end('label_temp', 1)
-        sct.run('mkdir '+path_tmp_extract_metric, verbose)
+        elif vert_levels and fname_vertebral_labeling:
 
-        # Copying output CSA volume in the temporary folder
-        sct.printv('\nCopy data to tmp folder...', verbose)
-        sct.run('cp ../'+param.file_csa_volume+' '+path_tmp_extract_metric)
+            from sct_extract_metric import get_slices_matching_with_vertebral_levels
 
-        # create file info_label
-        # path_fname_seg, file_fname_seg, ext_fname_seg = sct.extract_fname(param.file_csa_volume)
-        create_info_label('info_label.txt', path_tmp_extract_metric, param.file_csa_volume)
+            # convert the vertebral labeling file to RPI orientation
+            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
-        # average CSA
-        if slices:
-            # here we use os.system to display result
-            os.system("sct_extract_metric -i "+path_data+param.file_csa_volume+" -f "+path_tmp_extract_metric+" -m wa -o ../csa_mean.txt -z "+slices)
-        if vert_levels:
-            sct.run('cp -R '+abs_path_to_template+' .')
-            # here we use os.system to display result
-            os.system('sct_extract_metric -i '+path_data+param.file_csa_volume+' -f '+path_tmp_extract_metric+' -m wa -o ../csa_mean.txt -v '+vert_levels)
+            # get the slices corresponding to the vertebral levels
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
 
-        os.chdir('..')
+        sct.printv('Average CSA across slices...', type='info')
 
-        # Remove temporary files
-        print('\nRemove temporary folder used to average CSA...')
-        sct.run('rm -rf '+path_tmp_extract_metric, error_exit='warning')
+        # parse the selected slices
+        slices_lim = slices.strip().split(':')
+        slices_list = range(int(slices_lim[0]), int(slices_lim[1])+1)
+
+        CSA_for_selected_slices = []
+        # Read the file csa.txt and get the CSA for the selected slices
+        with open(path_data+param.fname_csa) as openfile:
+            for line in openfile:
+                line_split = line.strip().split(',')
+                if int(line_split[0]) in slices_list:
+                    CSA_for_selected_slices.append(float(line_split[1]))
+
+        # average the CSA
+        mean_CSA = np.mean(np.asarray(CSA_for_selected_slices))
+        std_CSA = np.std(np.asarray(CSA_for_selected_slices))
+
+        sct.printv('Mean CSA: '+str(mean_CSA)+' +/- '+str(std_CSA)+' mm^2', type='info')
+
+        # write result into output file
+        save_metrics([0], [file_data], slices, [mean_CSA], [std_CSA], path_data + 'csa_mean.txt', path_data+file_csa_volume,
+                 'weighted-average across slices', '', warning_vert_levels=warning)
 
     # Remove temporary files
     if remove_temp_files:
         print('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
-
-
-#=======================================================================================================================
-# create text file info_label.txt
-#=======================================================================================================================
-def create_info_label(file_name, path_folder, fname_seg):
-
-    os.chdir(path_folder)
-    file_info_label = open(file_name, 'w')
-    file_info_label.write('# Spinal cord segmentation\n')
-    file_info_label.write('# ID, name, file\n')
-    file_info_label.write('0, mean CSA, '+fname_seg)
-    file_info_label.close()
-    os.chdir('..')
-
 
 #=======================================================================================================================
 # b_spline_centerline
@@ -679,7 +668,10 @@ OPTIONAL ARGUMENTS
                           You can also select specific slices using commas. Example: 0,2,3,5,12
   -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
                           Example: 2:9 for C2 to T2.
-  -t <path_template>    Path to warped template. Default: ./label/template. Only use with flag -l
+  -t <vertebral_labeling_file>    Path to the vertebral labeling file warped to the space of the input (flag -i).
+                                  Should be file \"MNI-Poly-AMU_level.nii.gz\" in the folder \"label/template\" once you
+                                  have registered all the template items with sct_warp_template.
+                                  Default: './label/template/MNI-Poly-AMU_level.nii.gz'. Only use with flag -l
   -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
   -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
   -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
