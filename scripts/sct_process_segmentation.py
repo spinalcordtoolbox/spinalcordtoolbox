@@ -103,8 +103,8 @@ def main(args):
             vert_lev = arguments['-vert']
         if '-r' in arguments:
             remove_temp_files = arguments['-r']
-        if '-s' in arguments:
-            smoothing_param = arguments['-s']
+        if '-size' in arguments:
+            smoothing_param = arguments['-size']
         if '-t' in arguments:
             fname_vertebral_labeling = arguments['-t']
         if '-v' in arguments:
@@ -123,28 +123,17 @@ def main(args):
             if opt in ('-f'):
                 figure_fit = int(arg)
 
-    # display usage if a mandatory argument is not provided
-    if fname_segmentation == '' or name_process == '':
-        usage()
-
-    # display usage if the requested process is not available
-    if name_process not in processes:
-        usage()
-
     # display usage if incorrect method
     if name_process == 'csa' and (name_method not in method_CSA):
-        usage()
-    
+        sct.printv(parser.usage.generate(error='ERROR: wrong method for CSA process'))
+
     # display usage if no method provided
     if name_process == 'csa' and method_CSA == '':
-        usage() 
+        sct.printv(parser.usage.generate(error='ERROR: no method for CSA process'))
 
     # update fields
     param.verbose = verbose
 
-    # check existence of input files
-    sct.check_file_exist(fname_segmentation)
-    
     # print arguments
     print '\nCheck parameters:'
     print '.. segmentation file:             '+fname_segmentation
@@ -646,57 +635,6 @@ def edge_detection(f):
     return mag
 
 
-# Print usage
-# ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  This function performs various types of processing from the spinal cord segmentation:
-
-USAGE
-  """+os.path.basename(__file__)+"""  -i <segmentation> -p <process>
-
-MANDATORY ARGUMENTS
-  -i <segmentation>     spinal cord segmentation (e.g., use sct_segmentation_propagation)
-  -p <process>          type of process to be performed:
-                        - centerline: extract centerline as binary file.
-                        - length: compute length of the segmentation
-                        - csa: computes cross-sectional area by counting pixels in each
-                          slice and then geometrically adjusting using centerline orientation. Outputs:
-                          - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),
-                          - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).
-                          - if flags -z or -l were used, also outputs:
-                            - csa_mean.txt: text file giving averaged CSA across the selected slices or vertebral levels
-                            - volume.txt: text file giving the volume included in between the selected slices or vertebral levels
-
-OPTIONAL ARGUMENTS
-  -s <window_smooth>    Window size (in mm) for smoothing CSA. 0 for no smoothing. Default="""+str(param_default.smoothing_param)+"""
-  -z <zmin:zmax>        Slice range to compute the CSA across (requires \"-p csa\").
-                          Example: 5:23. First slice is 0.
-                          You can also select specific slices using commas. Example: 0,2,3,5,12
-  -l <lmin:lmax>        Vertebral levels to compute the CSA across (requires \"-p csa\").
-                          Example: 2:9 for C2 to T2.
-  -t <vertebral_labeling_file>    Path to the vertebral labeling file warped to the space of the input (flag -i).
-                                  Should be file \"MNI-Poly-AMU_level.nii.gz\" in the folder \"label/template\" once you
-                                  have registered all the template items with sct_warp_template.
-                                  Default: './label/template/MNI-Poly-AMU_level.nii.gz'. Only use with flag -l
-  -r {0,1}              Remove temporary files. Default="""+str(param_default.remove_temp_files)+"""
-  -v {0,1}              Verbose. Default="""+str(param_default.verbose)+"""
-  -a {hanning,nurbs}    Algorithm for curve fitting. Default="""+str(param_default.algo_fitting)+"""
-  -h                    Help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa\n
-  To compute CSA across vertebral levels C2 to C4:
-  """+os.path.basename(__file__)+""" -i binary_segmentation.nii.gz -p csa -t label/template -l 2:4\n"""
-
-    # exit program
-    sys.exit(2)
-
 def get_parser():
     """
     :return: Returns the parser with the command line documentation contained in it.
@@ -721,11 +659,16 @@ def get_parser():
                       mandatory=True,
                       example=['centerline', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-s',
+    parser.add_option(name='-size',
                       type_value='int',
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
                       mandatory=False,
                       default_value=50)
+    parser.add_option(name='-s',
+                      type_value=None,
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      deprecated_by='-size')
     parser.add_option(name='-z',
                       type_value='string',
                       description= 'Slice range to compute the CSA across (requires \"-p csa\").',
