@@ -97,7 +97,7 @@ def test(path_data='', parameters=''):
             ' -w ' + path_output + 'warp_anat2template.nii.gz' +
             ' -o ' + path_output + 'test_anat2template.nii.gz -x nn', verbose)
         # compute dice coefficient between template segmentation warped into anat and segmentation from anat
-        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-s'] + ' ' + path_output + 'test_template2anat.nii.gz'
+        cmd = 'sct_dice_coefficient -i ' + dict_param_with_path['-s'] + ' -d ' + path_output + 'test_template2anat.nii.gz'
         status1, output1 = sct.run(cmd, verbose)
         # parse output and compare to acceptable threshold
         dice_template2anat = float(output1.split('3D Dice coefficient = ')[1])
@@ -105,7 +105,7 @@ def test(path_data='', parameters=''):
             status1 = 99
         # compute dice coefficient between segmentation from anat warped into template and template segmentation
         # N.B. here we use -bmax because the FOV of the anat is smaller than the template
-        cmd = 'sct_dice_coefficient ' + dict_param_with_path['-t'] + filename_template + ' ' + path_output + 'test_anat2template.nii.gz -bmax'
+        cmd = 'sct_dice_coefficient -i ' + dict_param_with_path['-t'] + filename_template + ' -d ' + path_output + 'test_anat2template.nii.gz -bmax'
         status2, output2 = sct.run(cmd, verbose)
         # parse output and compare to acceptable threshold
         dice_anat2template = float(output2.split('3D Dice coefficient = ')[1])

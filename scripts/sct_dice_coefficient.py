@@ -13,7 +13,6 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 
-#TODO: change name to sct_dice_coefficient
 
 def get_parser():
     parser = Parser(__file__)
