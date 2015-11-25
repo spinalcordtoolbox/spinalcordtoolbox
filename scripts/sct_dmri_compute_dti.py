@@ -34,7 +34,7 @@ def get_parser():
 
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('Threshold image using Otsu algorithm.')
+    parser.usage.set_description('Compute Diffusion Tensor Images (DTI).')
     parser.add_option(name="-i",
                       type_value="file",
                       description="Input 4d file.",
