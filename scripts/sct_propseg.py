@@ -41,9 +41,9 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=False,
                       deprecated=1,
-                      deprecated_by="-contrast",
+                      deprecated_by="-c",
                       example=['t1','t2'])
-    parser.add_option(name="-contrast",
+    parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    contrast_type = arguments["-contrast"]
+    contrast_type = arguments["-c"]
 
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
@@ -212,14 +212,6 @@ if __name__ == "__main__":
 
     # Helping options
     if "-init-centerline" in arguments:
-        # JULIEN 2015-11-22 issue #673 <<<<<
-        # # need to make sure that the centerline that is provided has only one point per slice. So we generate a new
-        # # "centerline" using sct_process_segmentation. Related to issue #544
-        # input_centerline = str(arguments["-init-centerline"])
-        # temp_centerline = sct.add_suffix(arguments["-init-centerline"], '_centerline')
-        # sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline')
-        # cmd += " -init-centerline " + temp_centerline
-        # >>>>>
         cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])

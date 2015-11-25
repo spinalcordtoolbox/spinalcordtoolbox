@@ -483,7 +483,7 @@ def smooth_minimal_path(img, nb_pixels=1):
     """
 
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-
+    from scipy.ndimage.filters import gaussian_filter
     raw_orientation = img.change_orientation()
 
     img.data = gaussian_filter(img.data, [nb_pixels/px, nb_pixels/py, 0])
@@ -1016,6 +1016,14 @@ def get_parser():
                       mandatory=True,
                       example='t2.nii.gz')
     parser.usage.addSection('Execution Option')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='Method to get the centerline:\n'
+'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
+'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
+'labels: Fit spline function across labels. Requires a couple of points along the cord.',
+                      mandatory=True,
+                      example=['auto', 'point', 'labels'])
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description='Method to get the centerline:\n'
@@ -1023,6 +1031,7 @@ def get_parser():
 'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
 'labels: Fit spline function across labels. Requires a couple of points along the cord.',
                       mandatory=True,
+                      deprecated_by='-p',
                       example=['auto', 'point', 'labels'])
     parser.usage.addSection('General options')
     parser.add_option(name='-o',
@@ -1053,31 +1062,38 @@ def get_parser():
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
                       mandatory=False,
+                      deprecated_by='-c',
+                      example=['t1', 't2'])
+    parser.add_option(name='-c',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
+                      mandatory=False,
                       example=['t1', 't2'])
     parser.add_option(name='-t',
                       type_value='multiple_choice',
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
+                      deprecated_by='-c',
+                      mandatory=True,
+                      example=['t1', 't2'])
+    parser.add_option(name="-radius",
+                      type_value="int",
+                      description="Approximate radius of spinal cord to help the algorithm",
                       mandatory=False,
-                      example=['t1', 't2'],
-                      deprecated_by='-contrast')
-    parser.add_option(name='-smooth_vesselness',
-                      type_value='multiple_choice',
-                      description='Smoothing of the vesselness image',
+                      default_value="4",
+                      example="4")    
+    parser.add_option(name="-smooth_vesselness",
+                      type_value="multiple_choice",
+                      description="Smoothing of the vesselness image",
                       mandatory=False,
-                      default_value='0',
+                      default_value="0",
                       example=['0', '1'])
-    parser.add_option(name='-radius',
-                      type_value='int',
-                      description='Approximate radius of spinal cord to help the algorithm',
-                      mandatory=False,
-                      default_value='4',
-                      example='4')
     parser.add_option(name='-sym_exp',
                       type_value='int',
                       description='Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.',
                       mandatory=False,
-                      default_value='10')
+                      default_value=10)
     parser.add_option(name='-sym',
                       type_value='multiple_choice',
                       description='Uses right-left symmetry of the image to improve accuracy.',
@@ -1091,18 +1107,12 @@ def get_parser():
                       description='Binary image with a point inside the spinal cord.',
                       mandatory=False,
                       example='t2_point.nii.gz')
-    parser.add_option(name='-p',
-                      type_value='file',
-                      description='Binary image with a point inside the spinal cord.',
-                      mandatory=False,
-                      example='t2_point.nii.gz',
-                      deprecated_by='-point')
-    parser.add_option(name='-g',
-                      type_value='int',
-                      description='Gap between slices for registration. Higher is faster but less robust.',
+    parser.add_option(name="-g",
+                      type_value="int",
+                      description="Gap between slices for registration. Higher is faster but less robust.",
                       mandatory=False,
                       default_value=4,
-                      example='4')
+                      example="4")    
     parser.add_option(name='-k',
                       type_value='int',
                       description='Kernel size for gaussian mask. Higher is more robust but less accurate.',
@@ -1132,7 +1142,7 @@ if __name__ == '__main__':
     # get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    method = arguments['-method']
+    method = arguments['-p']
     fname_in = arguments['-i']
     if '-o' in arguments:
         output_file_name = arguments['-o']
@@ -1150,9 +1160,9 @@ if __name__ == '__main__':
 
     elif method == 'point':
         if '-point' in arguments:
-            fname_point = arguments['-p']
+            fname_point = arguments['-point']
         else:
-            sct.printv('ERROR: Needs input point (option -p).', 1, 'error')
+            sct.printv('ERROR: Needs input point (option -point).', 1, 'error')
         if '-g' in arguments:
             gap = arguments['-g']
         if '-k' in arguments:
@@ -1161,7 +1171,7 @@ if __name__ == '__main__':
 
     elif method == 'auto':
         try:
-            contrast = arguments['-contrast']
+            contrast = arguments['-c']
         except Exception, e:
             sct.printv('The method automatic requires a contrast type to be defined', type='error')
         im = Image(fname_in)
