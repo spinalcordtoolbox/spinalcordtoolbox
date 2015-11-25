@@ -75,10 +75,10 @@ if __name__ == "__main__":
 
     if '-bin' in arguments:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run('sct_maths -i '+fname_input1+' -bin '+fname_input1_bin)
+        sct.run('sct_maths -i '+fname_input1+' -bin -o '+fname_input1_bin)
         fname_input1 = fname_input1_bin
         fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run('sct_maths -i '+fname_input2+' -bin '+fname_input2_bin)
+        sct.run('sct_maths -i '+fname_input2+' -bin -o '+fname_input2_bin)
         fname_input2 = fname_input2_bin
 
     cmd = 'isct_dice_coefficient '+fname_input1+' '+fname_input2
@@ -96,7 +96,8 @@ if __name__ == "__main__":
         cmd += ' -o '+arguments['o']
 
     verbose = arguments['-v']
-    cmd += ' -v '+verbose
+    if verbose == '0':
+        cmd += ' -v '
 
-    sct.run(cmd, verbose)
-    sct.printv('\nDone!', verbose)
+    status, output = sct.run(cmd, verbose)
+    sct.printv(output, verbose)
