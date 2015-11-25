@@ -316,7 +316,7 @@ if __name__ == "__main__":
     centerline_fitting = arguments['-f']
     interp = arguments['-x']
     remove_temp_files = arguments['-r']
-    verbose = arguments['-v']
+    verbose = int(arguments['-v'])
 
     # call main function
     main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose)

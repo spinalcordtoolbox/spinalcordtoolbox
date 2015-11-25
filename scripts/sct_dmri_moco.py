@@ -129,9 +129,9 @@ def main():
         if '-ofolder' in arguments:
             path_out = arguments['-ofolder']
         if '-r' in arguments:
-            param.remove_tmp_files = arguments['-r']
+            param.remove_tmp_files = int(arguments['-r'])
         if '-v' in arguments:
-            param.verbose = arguments['-v']
+            param.verbose = int(arguments['-v'])
 
         '''
             # Some old options that wasn't in the doc ...
