@@ -369,12 +369,17 @@ def get_parser():
                       description="First Image on which you want to find the skeleton",
                       mandatory=True,
                       example='t2star_manual_gmseg.nii.gz')
-    parser.add_option(name="-r",
+    parser.add_option(name="-d",
                       type_value="file",
                       description="Second Image on which you want to find the skeleton",
                       mandatory=False,
                       default_value=None,
                       example='t2star_manual_gmseg.nii.gz')
+    parser.add_option(name="-r",
+                      type_value=None,
+                      description="Second Image on which you want to find the skeleton",
+                      mandatory=False,
+                      deprecated_by='-d')
     parser.add_option(name="-thinning",
                       type_value="multiple_choice",
                       description="Thinning : find the skeleton of the binary images using the Zhang-Suen algorithm (1984) and use it to compute the hausdorff's distance",
@@ -425,10 +430,10 @@ if __name__ == "__main__":
         output_fname = 'hausdorff_distance.txt'
         resample_to = 0.1
 
-        if "-r" in arguments:
-            input_second_fname = arguments["-r"]
-        if "-t" in arguments:
-            param.thinning = bool(int(arguments["-t"]))
+        if "-d" in arguments:
+            input_second_fname = arguments["-d"]
+        if "-thinning" in arguments:
+            param.thinning = bool(int(arguments["-thinning"]))
         if "-resampling" in arguments:
             resample_to = arguments["-resampling"]
         if "-o" in arguments:

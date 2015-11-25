@@ -38,7 +38,8 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=True,
+                      mandatory=False,
+                      deprecated=1,
                       deprecated_by="-contrast",
                       example=['t1','t2'])
     parser.add_option(name="-contrast",
@@ -207,14 +208,6 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
     # Helping options
     if "-init-centerline" in arguments:
-        # JULIEN 2015-11-22 issue #673 <<<<<
-        # # need to make sure that the centerline that is provided has only one point per slice. So we generate a new
-        # # "centerline" using sct_process_segmentation. Related to issue #544
-        # input_centerline = str(arguments["-init-centerline"])
-        # temp_centerline = sct.add_suffix(arguments["-init-centerline"], '_centerline')
-        # sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline')
-        # cmd += " -init-centerline " + temp_centerline
-        # >>>>>
         cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])

@@ -91,7 +91,7 @@ def get_parser():
                       description="Path to MNI-Poly-AMU template.",
                       mandatory=False,
                       default_value=param.path_template)
-    parser.add_option(name="-p",
+    parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
                       \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
@@ -99,6 +99,14 @@ def get_parser():
                       \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
                       mandatory=False,
                       example="step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=5,shrink=2:step=3,type=im,algo=syn,metric=MI,iter=5,shrink=1,gradStep=0.3")
+    parser.add_option(name="-p",
+                      type_value=None,
+                      description='Parameters for registration (see sct_register_multimodal). Default: \
+                      \n--\nstep=1\ntype=' + paramreg.steps['1'].type + '\nalgo=' + paramreg.steps['1'].algo + '\nmetric=' + paramreg.steps['1'].metric + '\npoly=' + paramreg.steps['1'].poly + """
+                      \n--\nstep=2\ntype=""" + paramreg.steps['2'].type + """\nalgo=""" + paramreg.steps['2'].algo + """\nmetric=""" + paramreg.steps['2'].metric + """\niter=""" + paramreg.steps['2'].iter + """\nshrink=""" + paramreg.steps['2'].shrink + """\nsmooth=""" + paramreg.steps['2'].smooth + """\ngradStep=""" + paramreg.steps['2'].gradStep + """
+                      \n--\nstep=3\ntype=""" + paramreg.steps['3'].type + """\nalgo=""" + paramreg.steps['3'].algo + """\nmetric=""" + paramreg.steps['3'].metric + """\niter=""" + paramreg.steps['3'].iter + """\nshrink=""" + paramreg.steps['3'].shrink + """\nsmooth=""" + paramreg.steps['3'].smooth + """\ngradStep=""" + paramreg.steps['3'].gradStep + '\n',
+                      mandatory=False,
+                      deprecated_by='-param')
     parser.add_option(name="-param-straighten",
                       type_value='str',
                       description="""Parameters for straightening (see sct_straighten_spinalcord).""",
@@ -151,8 +159,8 @@ def main():
         arg_cpu = ' -cpu-nb '+arguments['-cpu-nb']
     else:
         arg_cpu = ''
-    if '-p' in arguments:
-        paramreg_user = arguments['-p']
+    if '-param' in arguments:
+        paramreg_user = arguments['-param']
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)
