@@ -88,9 +88,9 @@ if __name__ == "__main__":
     if '-b' in arguments:
         bounding_box = ' '.join(arguments['-b'])
         cmd += ' -b '+bounding_box
-    if '-bmax' in arguments and arguments['-bmax'] == '0':
+    if '-bmax' in arguments and arguments['-bmax'] == '1':
         cmd += ' -bmax'
-    if '-bzmax' in arguments and arguments['-bzmax'] == '0':
+    if '-bzmax' in arguments and arguments['-bzmax'] == '1':
         cmd += ' -bzmax'
     if '-o' in arguments:
         cmd += ' -o '+arguments['o']

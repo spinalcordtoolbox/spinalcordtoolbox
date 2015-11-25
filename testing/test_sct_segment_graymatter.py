@@ -82,7 +82,10 @@ def test(path_data, parameters=''):
             if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:
-                gm_dice.append(float(dc))
+                try:
+                    gm_dice.append(float(dc))
+                except ValueError:
+                    gm_dice.append(float(dc[:-4]))
         result_dice_gm = mean(gm_dice)
 
         # extracting dice on WM
@@ -95,7 +98,10 @@ def test(path_data, parameters=''):
             if line is not wm_dice_lines[-1]:
                 dc = dc[:-1]
             if n_slice not in null_slices:
-                wm_dice.append(float(dc))
+                try:
+                    wm_dice.append(float(dc))
+                except ValueError:
+                    wm_dice.append(float(dc[:-4]))
         result_dice_wm = mean(wm_dice)
 
         # Extracting hausdorff distance results
