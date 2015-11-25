@@ -15,7 +15,8 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 
-if __name__ == "__main__":
+
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
@@ -160,7 +161,10 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",
                       mandatory=False)
+    return parser
 
+if __name__ == "__main__":
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
