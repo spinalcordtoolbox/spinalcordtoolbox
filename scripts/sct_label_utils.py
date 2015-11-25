@@ -674,6 +674,12 @@ def get_parser():
                       type_value=[[':'], 'Coordinate'],
                       description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
                       mandatory=False,
+                      deprecated_by='-coord',
+                      example="1,5,2,6:3,7,2,1:3,7,9,32")
+    parser.add_option(name="-coord",
+                      type_value=[[':'], 'Coordinate'],
+                      description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
+                      mandatory=False,
                       example="1,5,2,6:3,7,2,1:3,7,9,32")
     parser.add_option(name="-r",
                       type_value="file",
@@ -737,8 +743,8 @@ def main(args=None):
     input_fname_output = arguments["-o"]
     if "-ref" in arguments:
         input_fname_ref = arguments["-ref"]
-    if "-x" in arguments:
-        input_coordinates = arguments["-x"]
+    if "-coord" in arguments:
+        input_coordinates = arguments["-coord"]
     if "-cross" in arguments:
         input_cross_radius = arguments["-cross"]
     if "-d" in arguments:
