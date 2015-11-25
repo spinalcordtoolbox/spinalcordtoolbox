@@ -81,9 +81,9 @@ def main():
         if '-o' in arguments:
             param.fname_out = arguments['-o']
         if '-r' in arguments:
-            param.remove_tmp_files = arguments['-r']
+            param.remove_tmp_files = int(arguments['-r'])
         if '-v' in arguments:
-            param.verbose = arguments['-v']
+            param.verbose = int(arguments['-v'])
 
     # run main program
     create_mask()
