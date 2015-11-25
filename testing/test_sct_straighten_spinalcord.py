@@ -81,7 +81,7 @@ def test(path_data='', parameters=''):
         cmd = 'sct_dice_coefficient -i '+path_output+'tmp_seg_straight_curved.nii.gz -d ' + dict_param_with_path['-c']
         status2, output2 = sct.run(cmd, 0)
         # parse output and compare to acceptable threshold
-        result_dice = float(output2.split('3D Dice coefficient = ')[1])
+        result_dice = float(output2.split('3D Dice coefficient = ')[1].split('\n')[0])
         th_dice = 0.95
         if result_dice < th_dice:
             status = 99
