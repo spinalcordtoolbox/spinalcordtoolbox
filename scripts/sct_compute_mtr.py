@@ -59,8 +59,8 @@ def main():
         parser = get_parser()
         arguments = parser.parse(sys.argv[1:])
 
-        fname_mt0 = arguments['-i']
-        fname_mt1 = arguments['-j']
+        fname_mt0 = arguments['-mt0']
+        fname_mt1 = arguments['-mt1']
         remove_tmp_files = int(arguments['-r'])
         verbose = int(arguments['-v'])
 
@@ -118,16 +118,26 @@ def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Compute magnetization transfer ratio (MTR). Output is given in percentage.')
-    parser.add_option(name="-i",
+    parser.add_option(name="-mt0",
                       type_value="file",
                       description="Image without MT pulse (MT0)",
                       mandatory=True,
                       example='mt0.nii.gz')
-    parser.add_option(name="-j",
+    parser.add_option(name="-i",
+                      type_value=None,
+                      description="Image without MT pulse (MT0)",
+                      mandatory=False,
+                      deprecated_by='-mt0')
+    parser.add_option(name="-mt1",
                       type_value="file",
                       description="Image with MT pulse (MT1)",
                       mandatory=True,
                       example='mt1.nii.gz')
+    parser.add_option(name="-j",
+                      type_value=None,
+                      description="Image with MT pulse (MT1)",
+                      mandatory=False,
+                      deprecated_by="-mt1")
     parser.add_option(name="-r",
                       type_value="multiple_choice",
                       description='Remove temporary files.',
