@@ -439,7 +439,7 @@ if __name__ == "__main__":
         if "-o" in arguments:
             output_fname = arguments["-o"]
         if "-v" in arguments:
-            param.verbose = arguments["-v"]
+            param.verbose = int(arguments["-v"])
 
         tmp_dir = 'tmp_' + time.strftime("%y%m%d%H%M%S")
         sct.run('mkdir ' + tmp_dir)

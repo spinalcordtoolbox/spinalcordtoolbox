@@ -57,9 +57,9 @@ def main():
     if '-smooth' in arguments:
         sigma = arguments['-smooth']
     if '-r' in arguments:
-        remove_temp_files = arguments['-r']
+        remove_temp_files = int(arguments['-r'])
     if '-v' in arguments:
-        verbose = arguments['-v']
+        verbose = int(arguments['-v'])
 
     # Display arguments
     print '\nCheck input arguments...'

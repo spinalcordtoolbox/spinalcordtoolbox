@@ -266,9 +266,9 @@ def main(args=None):
     if "-x" in arguments:
         transform.interp = arguments["-x"]
     if "-r" in arguments:
-        transform.remove_temp_files = arguments["-r"]
+        transform.remove_temp_files = int(arguments["-r"])
     if "-v" in arguments:
-        transform.verbose = arguments["-v"]
+        transform.verbose = int(arguments["-v"])
 
     transform.apply()
 

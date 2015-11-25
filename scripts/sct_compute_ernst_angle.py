@@ -130,7 +130,7 @@ if __name__ == "__main__":
     if "-tr" in arguments :
         input_tr=arguments["-tr"]
     if "-v" in arguments :
-        verbose=arguments["-v"]
+        verbose=int(arguments["-v"])
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
