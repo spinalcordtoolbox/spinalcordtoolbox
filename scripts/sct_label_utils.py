@@ -725,8 +725,8 @@ def main(args=None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    input_filename = arguments["-i"]
-    process_type = arguments["-p"]
+    input_filename = arguments['-i']
+    process_type = arguments['-p']
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
@@ -746,7 +746,7 @@ def main(args=None):
     if "-vert" in arguments:
         vertebral_levels = arguments["-vert"]
     if "-v" in arguments:
-        input_verbose = arguments["-v"]
+        input_verbose = int(arguments["-v"])
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
     processor.process(process_type)
 

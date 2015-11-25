@@ -371,8 +371,8 @@ if __name__ == "__main__":
     if '-ofolder' in arguments:
         path_out = arguments['-ofolder']
     if '-v' in arguments:
-        verbose = arguments['-v']
+        verbose = int(arguments['-v'])
     if '-r' in arguments:
-        remove_tmp_files = arguments['-r']
+        remove_tmp_files = int(arguments['-r'])
 
     main(fname_data, fname_bvecs, fname_bvals, path_out, average, verbose, remove_tmp_files)
