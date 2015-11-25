@@ -927,11 +927,16 @@ def get_parser():
                       description="input image.",
                       mandatory=True,
                       example="t2.nii.gz")
-    parser.add_option(name="-c",
+    parser.add_option(name="-s",
                       type_value="image_nifti",
                       description="centerline or segmentation.",
                       mandatory=True,
                       example="centerline.nii.gz")
+    parser.add_option(name="-c",
+                      type_value=None,
+                      description="centerline or segmentation.",
+                      mandatory=False,
+                      deprecated_by='-s')
     parser.add_option(name="-pad",
                       type_value="int",
                       description="amount of padding for generating labels.",
