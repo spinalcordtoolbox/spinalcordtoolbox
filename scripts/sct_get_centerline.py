@@ -938,7 +938,6 @@ class SCAD(Algorithm):
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
-
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
         self.output_debug_file(img, self.minimum_path_data, 'minimal_path')
@@ -1075,7 +1074,7 @@ def get_parser():
                       type_value='multiple_choice',
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
-                      deprecated_by='-contrast',
+                      deprecated_by='-c',
                       mandatory=True,
                       example=['t1', 't2'])
     parser.add_option(name="-radius",
@@ -1177,20 +1176,20 @@ if __name__ == '__main__':
             sct.printv('The method automatic requires a contrast type to be defined', type='error')
         im = Image(fname_in)
         scad = SCAD(im, contrast=contrast)
-        if "-o" in arguments:
-            scad.output_filename = arguments["-o"]
-        if "-r" in arguments:
-            scad.rm_tmp_file = int(arguments["-r"])
-        if "-sym" in arguments:
-            scad.enable_symmetry = int(arguments["-sym"])
-        if "-sym_exp" in arguments:
-            scad.symmetry_exponent = int(arguments["-sym_exp"])
-        if "-radius" in arguments:
-            scad.spinalcord_radius = int(arguments["-radius"])
-        if "-smooth_vesselness" in arguments:
-            scad.smooth_vesselness = int(arguments["-smooth_vesselness"])
-        if "-v" in arguments:
-            scad.verbose = int(arguments["-v"])
+        if '-o' in arguments:
+            scad.output_filename = arguments['-o']
+        if '-r' in arguments:
+            scad.rm_tmp_file = int(arguments['-r'])
+        if '-sym' in arguments:
+            scad.enable_symmetry = int(arguments['-sym'])
+        if '-sym_exp' in arguments:
+            scad.symmetry_exponent = int(arguments['-sym_exp'])
+        if '-radius' in arguments:
+            scad.spinalcord_radius = int(arguments['-radius'])
+        if '-smooth_vesselness' in arguments:
+            scad.smooth_vesselness = int(arguments['-smooth_vesselness'])
+        if '-v' in arguments:
+            scad.verbose = int(arguments['-v'])
         scad.execute()
 
 
