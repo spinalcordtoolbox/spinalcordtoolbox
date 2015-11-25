@@ -1053,8 +1053,8 @@ if __name__ == "__main__":
     # Handling optional arguments
     if "-r" in arguments:
         sc_straight.remove_temp_files = int(arguments["-r"])
-    if "-p" in arguments:
-        sc_straight.padding = int(arguments["-p"])
+    if "-pad" in arguments:
+        sc_straight.padding = int(arguments["-pad"])
     if "-x" in arguments:
         sc_straight.interpolation_warp = str(arguments["-x"])
     if "-o" in arguments:
@@ -1074,8 +1074,8 @@ if __name__ == "__main__":
     if '-qc' in arguments:
         sc_straight.qc = int(arguments['-qc'])
 
-    if "-params" in arguments:
-        params_user = arguments['-params']
+    if "-param" in arguments:
+        params_user = arguments['-param']
         # update registration parameters
         for param in params_user:
             param_split = param.split('=')
