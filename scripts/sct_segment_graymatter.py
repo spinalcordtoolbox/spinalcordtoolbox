@@ -363,24 +363,24 @@ class FullGmSegmentation:
 
         # Compute Dice coefficient
         try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient '+ref_gmseg+' '+gm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+ref_gmseg+' -d '+gm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_gmseg = sct.extract_fname(ref_gmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+gm_seg+','+ref_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_ref_gmseg+' -thr 0.1 -o '+corrected_ref_gmseg)
             sct.run('sct_maths -i '+corrected_ref_gmseg+' -bin -o '+corrected_ref_gmseg)
-            status_gm, output_gm = sct.run('sct_dice_coefficient '+corrected_ref_gmseg+' '+gm_seg+'  -2d-slices 2', error_exit='warning')
+            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+corrected_ref_gmseg+' -d '+gm_seg+'  -2d-slices 2', error_exit='warning')
 
         try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient '+ref_wmseg+' '+wm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+ref_wmseg+' -d '+wm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_wmseg = sct.extract_fname(ref_wmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+wm_seg+','+ref_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_ref_wmseg+' -thr 0.1 -o '+corrected_ref_wmseg)
             sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin -o '+corrected_ref_wmseg)
-            status_wm, output_wm = sct.run('sct_dice_coefficient '+corrected_ref_wmseg+' '+wm_seg+'  -2d-slices 2', error_exit='warning')
+            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+corrected_ref_wmseg+' -d '+wm_seg+'  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
         dice_fic = open('../'+dice_name, 'w')
