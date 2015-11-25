@@ -736,7 +736,7 @@ def main(args=None):
     if "-level" in arguments:
         vertebral_levels = arguments["-level"]
     if "-v" in arguments:
-        input_verbose = arguments["-v"]
+        input_verbose = int(arguments["-v"])
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
     processor.process(process_type)
 
