@@ -20,16 +20,16 @@ cd sct_example_data
 # ===========================================================================================
 cd t2
 # spinal cord segmentation
-sct_propseg -i t2.nii.gz -contrast t2 -mesh -max-deformation 4 -init 130
+sct_propseg -i t2.nii.gz -c t2 -mesh -max-deformation 4 -init 130
 # tips: we use "-max-deformation 4" otherwise the segmentation does not cover the whole spinal cord
 # tips: we use "-init 130" to start propagation closer to a region which would otherwise give poor segmentation (try it with and without the parameter).
 # tips: we use "-mesh" to get the mesh of the segmentation, which can be viewed using MITKWORKBENCH
 # check your results:
 fslview t2 -b 0,800 t2_seg -l Red -t 0.5 &
 # vertebral labeling. Here we use the fact that the FOV is centered at C7.
-sct_label_vertebrae -i t2.nii.gz -seg t2_seg.nii.gz -initcenter 7
+sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -initcenter 7
 # create labels at C2 and T2 vertebral levels
-sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -level 2,9
+sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
 # register to template
 # tips: here we used only iter=1 for the third step for faster processing. 
 sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0
@@ -38,7 +38,7 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 # check results
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area and volume between C3 and C4 levels
-sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -l 3:4
+sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
 # --> Mean CSA: 78.2997424349 +/- 0.652378703122 mm^2
 # --> Volume (in volume.txt): 2437.0 mm^3
 
@@ -50,7 +50,7 @@ cd ..
 # ----------
 cd t1
 # spinal cord segmentation
-sct_propseg -i t1.nii.gz -contrast t1
+sct_propseg -i t1.nii.gz -c t1
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
 # create mask around spinal cord (for cropping)
@@ -82,11 +82,11 @@ sct_register_multimodal -i ../t2/t2_seg.nii.gz -d mt1.nii.gz -identity 1 -x nn
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mt1
-sct_propseg -i mt1.nii.gz -contrast t2 -init-centerline t2_seg_reg_centerline.nii.gz
+sct_propseg -i mt1.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz
 # check results
 fslview mt1 -b 0,800 mt1_seg.nii.gz -l Red -t 0.5 &
 # create mask around spinal cord for faster registration
-sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -size 51 -f box -o mask_mt1.nii.gz
+sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 51 -f box -o mask_mt1.nii.gz
 ## use centerline to create mask encompassing the spinal cord (will be used for improved registration of mt0 on mt1)
 #sct_create_mask -i mt1.nii.gz -m centerline,mt1_seg.nii.gz -s 60 -f cylinder
 # crop data
@@ -98,7 +98,7 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -param step=1,type=im,a
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # register template (in T2 space) to mt1
 # tips: here we only rely on the segmentation (not the image), because the close proximity of the cord with the spine can induce inaccuracies in the registration on some slices.
-sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
+sct_register_multimodal -i ../t2/template2anat.nii.gz -d mt1_crop.nii.gz -iseg ../t2/t2_seg.nii.gz -dseg mt1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3 -z 3
 # concat transfo
 sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_template2anat2mt1_crop.nii.gz -d mtr.nii.gz -o warp_template2mt.nii.gz
 # warp template (to get vertebral labeling)
@@ -108,7 +108,7 @@ sct_warp_template -d mtr.nii.gz -w warp_template2mt.nii.gz
 # add mt1 and mt0 to increase GM/WM contrast
 sct_maths -i mt0_reg.nii.gz -add mt1_crop.nii.gz -o mt0mt1.nii.gz
 # segment GM
-sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -l label/template/MNI-Poly-AMU_level.nii.gz
+sct_segment_graymatter -i mt0mt1.nii.gz -s mt1_seg_crop.nii.gz -vert label/template/MNI-Poly-AMU_level.nii.gz
 # register WM template to WMseg
 sct_register_multimodal -i label/template/MNI-Poly-AMU_WM.nii.gz -d mt0mt1_wmseg.nii.gz -param step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=3
 # concat transfo
@@ -123,9 +123,9 @@ sct_extract_metric -i mtr.nii.gz -f label/atlas/ -l wm -m map
 # --> MTR = 34.1270294493
 # Once we have register the WM atlas to the subject, we can compute the cross-sectional area (CSA) of specific pathways.
 # For example, we can compare the CSA of the left corticospinal tract (CST) to the right CST averaged across the vertebral levels C2 to C5:
-sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # left
+sct_process_segmentation -i label/atlas/WMtract__02.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # left
 # --> Mean CSA: 5.04738066335 +/- 0.420587529988 mm^2
-sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -l 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # right
+sct_process_segmentation -i label/atlas/WMtract__17.nii.gz -p csa -vert 2:5 -t label/template/MNI-Poly-AMU_level.nii.gz  # right
 # --> Mean CSA: 4.79736063018 +/- 0.479421869486 mm^2
 # Get CSA of the left dorsal column (fasciculus cuneatus + fasciculus gracilis)
 sct_maths -i label/atlas/WMtract__00.nii.gz -add label/atlas/WMtract__01.nii.gz -o left_dorsal_column.nii.gz
@@ -138,17 +138,17 @@ cd ..
 # ----------
 cd dmri
 # create mask to help moco
-sct_create_mask -i dmri.nii.gz -m coord,110x20 -size 60 -f cylinder
+sct_create_mask -i dmri.nii.gz -p coord,110x20 -size 60 -f cylinder
 # motion correction
 sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -g 3 -m mask_dmri.nii.gz -param 2,2,1,MeanSquares -thr 0
 # detect approximate spinal cord centerline
-sct_get_centerline -method auto -i dwi_moco_mean.nii.gz -contrast t1 -sym 1
+sct_get_centerline -p auto -i dwi_moco_mean.nii.gz -c t1 -sym 1
 # fine segmentation with propseg
-sct_propseg -i dwi_moco_mean.nii.gz -contrast t1 -init-centerline dwi_moco_mean_centerline.nii.gz
+sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline dwi_moco_mean_centerline.nii.gz
 # check segmentation
 fslview dwi_moco_mean -b 0,300 dwi_moco_mean_seg -l Red -t 0.5 & 
 # register template to dwi: here we use the template register to the MT to get the correction of the internal structure
-sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -p step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
+sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d dwi_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg dwi_moco_mean_seg.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
 # concatenate transfo: the first warping field contains : warp template -> anat ; warp anat --> MT ; warp correction of the internal structure 
 sct_concat_transfo -w ../mt/warp_template2mt_corrected.nii.gz,warp_template2anat_reg2dwi_moco_mean.nii.gz -d dwi_moco_mean.nii.gz -o warp_template2dmri.nii.gz
 # warp template and white matter atlas
@@ -177,7 +177,7 @@ sct_register_multimodal -i ../t2/t2_seg.nii.gz -d fmri_moco_mean.nii.gz -param s
 # extract centerline
 sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
 # segment mean fMRI volume
-sct_propseg -i fmri_moco_mean.nii.gz -contrast t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
+sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerline.nii.gz -radius 5 -max-deformation 4
 # tips: we use the T2 segmentation to help with fMRI segmentation
 # tips: we use "-radius 5" otherwise the segmentation is too small
 # tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
