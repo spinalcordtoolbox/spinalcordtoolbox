@@ -179,6 +179,24 @@ def main():
                                     "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
                                     "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                                     "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                      deprecated_by='-param',
+                      mandatory=False,
+                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
+    parser.add_option(name="-param",
+                      type_value=[[':'],'str'],
+                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+                                  "step: <int> Step number (starts at 1).\ntype: {im,seg} type of data used for registration.\n"
+                                  "algo: Default="+paramreg.steps['1'].algo+"\n"
+                                    "  global registration: {rigid,  affine,  syn,  bsplinesyn}\n"
+                                    "  Slice By Slice registration: {slicereg: regularized translations (see: goo.gl/Sj3ZeU),  slicereg2d_translation: regularized using moving average (Hanning window), slicereg2d_rigid, slicereg2d_pointwise: registration based on the Center of Mass of each slice (use only with type:Seg. Designed for centerlines)}\n" # , slicereg2d_affine, slicereg2d_bsplinesyn, slicereg2d_syn
+                                    "metric: {CC,MI,MeanSquares}. Default="+paramreg.steps['1'].metric+"\n"
+                                    "iter: <int> Number of iterations. Default="+paramreg.steps['1'].iter+"\n"
+                                    "shrink: <int> Shrink factor (only for SyN). Default="+paramreg.steps['1'].shrink+"\n"
+                                    "smooth: <int> Smooth factor (only for SyN). Default="+paramreg.steps['1'].smooth+"\n"
+                                    "gradStep: <float> Gradient step. Default="+paramreg.steps['1'].gradStep+"\n"
+                                    "poly: <int> Polynomial degree (only for slicereg). Default="+paramreg.steps['1'].poly+"\n"
+                                    "window_length: <int> Size of Hanning window for smoothing along z for slicereg2d_x algo.Default="+paramreg.steps['1'].window_length+"\n"  # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
+                                    "detect_outlier: <int> Factor for outlier detection based on median. Default="+paramreg.steps['1'].detect_outlier, # , slicereg2d_affine, slicereg2d_syn and slicereg2d_bsplinesyn.
                       mandatory=False,
                       example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
     parser.add_option(name="-identity",
@@ -224,8 +242,8 @@ def main():
     if "-m" in arguments:
         fname_mask = arguments['-m']
     padding = arguments['-z']
-    if "-p" in arguments:
-        paramreg_user = arguments['-p']
+    if "-param" in arguments:
+        paramreg_user = arguments['-param']
         # update registration parameters
         for paramStep in paramreg_user:
             paramreg.addStep(paramStep)

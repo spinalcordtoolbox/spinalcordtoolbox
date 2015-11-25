@@ -30,6 +30,8 @@ from sct_image import get_orientation, set_orientation
 from sct_straighten_spinalcord import smooth_centerline
 from msct_image import Image
 from shutil import move, copyfile
+from msct_parser import Parser
+
 
 # DEFAULT PARAMETERS
 class Param:
@@ -55,7 +57,11 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(args):
+
+    parser = get_parser()
+    arguments = parser.parse(args)
+
 
     # Initialization
     path_script = os.path.dirname(__file__)
@@ -86,38 +92,36 @@ def main():
         verbose = 1
         remove_temp_files = 0
     else:
+
+        if '-i' in arguments:
+            fname_segmentation = arguments['-i']
+        if '-p' in arguments:
+            name_process = arguments['-p']
+        if '-method' in arguments:
+            name_method = arguments['-method']
+        if '-vert' in arguments:
+            vert_lev = arguments['-vert']
+        if '-r' in arguments:
+            remove_temp_files = arguments['-r']
+        if '-s' in arguments:
+            smoothing_param = arguments['-s']
+        if '-t' in arguments:
+            fname_vertebral_labeling = arguments['-t']
+        if '-v' in arguments:
+            verbose = arguments['-v']
+        if '-z' in arguments:
+            verbose = arguments['-z']
+        if '-a' in arguments:
+            param.algo_fitting = arguments['-a']
+
         # Check input parameters
         try:
              opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
         except getopt.GetoptError:
             usage()
-        if not opts:
-            usage()
         for opt, arg in opts :
-            if opt == '-h':
-                usage()
-            elif opt in ("-i"):
-                fname_segmentation = arg
-            elif opt in ("-p"):
-                name_process = arg
-            elif opt in("-m"):
-                name_method = arg
-            elif opt in('-l'):
-                vert_lev = arg
-            elif opt in('-r'):
-                remove_temp_files = int(arg)
-            elif opt in ('-s'):
-                smoothing_param = int(arg)
-            elif opt in ('-f'):
+            if opt in ('-f'):
                 figure_fit = int(arg)
-            elif opt in ('-t'):
-                fname_vertebral_labeling = arg
-            elif opt in ('-v'):
-                verbose = int(arg)
-            elif opt in ('-z'):
-                slices = arg
-            elif opt in ('-a'):
-                param.algo_fitting = str(arg)
 
     # display usage if a mandatory argument is not provided
     if fname_segmentation == '' or name_process == '':
@@ -693,6 +697,95 @@ EXAMPLE
     # exit program
     sys.exit(2)
 
+def get_parser():
+    """
+    :return: Returns the parser with the command line documentation contained in it.
+    """
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Spinal Cord segmentation',
+                      mandatory=True,
+                      example='seg.nii.gz')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='type of process to be performed:\n'
+                                  '- centerline: extract centerline as binary file.\n'
+                                  '- length: compute length of the segmentation.\n'
+                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
+                                  '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
+                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
+                      mandatory=True,
+                      example=['centerline', 'length', 'csa'])
+    parser.usage.addSection('Optional Arguments')
+    parser.add_option(name='-s',
+                      type_value='int',
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      default_value=50)
+    parser.add_option(name='-z',
+                      type_value='string',
+                      description= 'Slice range to compute the CSA across (requires \"-p csa\").',
+                      mandatory=False,
+                      example='5:23')
+    parser.add_option(name='-l',
+                      type_value='string',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      deprecated_by='-vert',
+                      example='2:9')
+    parser.add_option(name='-vert',
+                      type_value='string',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9')
+    parser.add_option(name='-t',
+                      type_value='multiple_choice',
+                      description='Path to warped template. Default: ./label/template. Only use with flag -l',
+                      mandatory=False,
+                      default_value='./label/template',
+                      example='./label/template')
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      deprecated_by='-method',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description= 'Algorithm for curve fitting.',
+                      mandatory=False,
+                      default_value='hanning',
+                      example=['hanning', 'nurbs'])
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='1: display on, 0: display off (default)',
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    parser.add_option(name='-h',
+                      type_value=None,
+                      description='display this help',
+                      mandatory=False)
+
+    return parser
+
 
 # START PROGRAM
 # =========================================================================================
@@ -701,4 +794,4 @@ if __name__ == "__main__":
     param = Param()
     param_default = Param()
     # call main function
-    main()
+    main(sys.argv[1:])

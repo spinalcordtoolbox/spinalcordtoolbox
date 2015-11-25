@@ -39,6 +39,12 @@ def get_parser():
                       type_value="file",
                       description="Segmentation or centerline of the spinal cord.",
                       mandatory=True,
+                      deprecated_by='-s',
+                      example="t2_seg.nii.gz")
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Segmentation or centerline of the spinal cord.",
+                      mandatory=True,
                       example="t2_seg.nii.gz")
     parser.add_option(name="-initz",
                       type_value=[[','], 'int'],
@@ -102,7 +108,7 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     fname_in = arguments["-i"]
-    fname_seg = arguments['-seg']
+    fname_seg = arguments['-s']
     # contrast = arguments['-t']
     if '-o' in arguments:
         fname_out = arguments["-o"]

@@ -267,9 +267,9 @@ def create_mask2d(center, shape, size, nx, ny, even=0):
 
     if shape == 'box':
         if even != 0:
-            mask2d[xc + offset[0] - radius:xc + offset[0] + radius, yc + offset[1] - radius:yc + offset[1] + radius] = 1
+            mask2d[xc - radius:xc + radius, yc - radius:yc + radius] = 1
         else:
-            mask2d[xc + offset[0] - radius:xc + offset[0] + radius+1, yc + offset[1] - radius:yc + offset[1] + radius+1] = 1
+            mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
 
     elif shape == 'cylinder':
         mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
