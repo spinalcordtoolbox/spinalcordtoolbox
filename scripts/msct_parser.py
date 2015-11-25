@@ -397,7 +397,7 @@ class Parser:
                             option[i] = path_to_add + value
                         dictionary[key] = option
                     else:
-                        dictionary[key] = path_to_add + option
+                        dictionary[key] = str(path_to_add) + str(option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
