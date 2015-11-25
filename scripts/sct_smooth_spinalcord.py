@@ -53,7 +53,7 @@ def main():
     arguments = parser.parse(sys.argv[1:])
 
     fname_anat = arguments['-i']
-    fname_centerline = arguments['-c']
+    fname_centerline = arguments['-s']
     if '-smooth' in arguments:
         sigma = arguments['-smooth']
     if '-r' in arguments:

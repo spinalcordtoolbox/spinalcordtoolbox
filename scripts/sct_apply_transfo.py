@@ -264,8 +264,8 @@ def main(args=None):
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
-    if "-c" in arguments:
-        transform.crop = arguments["-c"]
+    if "-crop" in arguments:
+        transform.crop = arguments["-crop"]
     if "-o" in arguments:
         transform.output_filename = arguments["-o"]
     if "-x" in arguments:

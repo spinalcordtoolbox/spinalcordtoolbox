@@ -309,7 +309,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
     fname_anat = arguments['-i']
-    fname_centerline = arguments['-c']
+    fname_centerline = arguments['-s']
     degree_poly = arguments['-d']
     centerline_fitting = arguments['-f']
     interp = arguments['-x']
