@@ -26,6 +26,7 @@ from sct_image import get_orientation, set_orientation
 from sct_convert import convert
 from msct_image import Image
 from sct_image import copy_header, split_data, concat_data
+from scipy.ndimage.filters import gaussian_filter
 
 
 class Param:
@@ -482,7 +483,7 @@ def smooth_minimal_path(img, nb_pixels=1):
     """
 
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    from scipy.ndimage.filters import gaussian_filter
+
     raw_orientation = img.change_orientation()
 
     img.data = gaussian_filter(img.data, [nb_pixels/px, nb_pixels/py, 0])
@@ -721,7 +722,7 @@ class SymmetryDetector(Algorithm):
 
 
 class SCAD(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file=0,output_filename=None, debug=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 3):
+    def __init__(self, input_image, contrast=None, verbose=1, rm_tmp_file=0,output_filename=None, debug=0, vesselness_provided=0, minimum_path_exponent=100, enable_symmetry=0, symmetry_exponent=0, spinalcord_radius = 3, smooth_vesselness = 0):
         """
         Constructor for the automatic spinal cord detection
         :param output_filename: Name of the result file of the centerline detection. Must contain the extension (.nii / .nii.gz)
@@ -751,6 +752,7 @@ class SCAD(Algorithm):
         self.enable_symmetry = enable_symmetry
         self.symmetry_exponent = symmetry_exponent
         self.spinalcord_radius = spinalcord_radius
+        self.smooth_vesselness = smooth_vesselness
 
         # attributes used in the algorithm
         self.raw_orientation = None
@@ -917,6 +919,19 @@ class SCAD(Algorithm):
             self.output_debug_file(img, self.raw_symmetry, 'body_symmetry')
             img.change_orientation()
 
+        if self.smooth_vesselness:
+            from msct_image import change_data_orientation
+            img.data = gaussian_filter(img.data, [10,10, 1])
+            self.output_debug_file(img, img.data, "raw_smooth")
+            normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
+            # normalized_data = normalize_array_histogram(img.data)
+            img.data = np.multiply(img.data, change_data_orientation(normalised_symmetry, self.raw_orientation, "RPI"))
+            img.file_name = "symmetry_x_rawsmoothed"
+            raw_file_name = img.file_name + img.ext
+            img.change_orientation(self.raw_orientation)
+            img.save()
+            self._contrast = "t1"
+
         # vesselness filter
         if not self.vesselness_provided:
             sct.run('isct_vesselness -i '+raw_file_name+' -t ' + self._contrast+' -radius '+str(self.spinalcord_radius))
@@ -943,12 +958,13 @@ class SCAD(Algorithm):
         # normalise symmetry values between 0 and 1
         if self.enable_symmetry:
             normalised_symmetry = normalize_array_histogram(self.raw_symmetry)
-            self.output_debug_file(img, self.smoothed_min_path.data, 'minimal_path_smooth')
+            self.output_debug_file(img, self.smoothed_min_path.data, "normalized_symmetry")
 
         # multiply normalised symmetry data with the minimum path result
             from msct_image import change_data_orientation
-            self.spine_detect_data = np.multiply(self.smoothed_min_path.data, change_data_orientation(np.power(normalised_symmetry, self.symmetry_exponent), self.raw_orientation, 'RPI'))
-            self.output_debug_file(img, self.spine_detect_data, 'symmetry_x_min_path')
+            rpi_normalized_sym = change_data_orientation(np.power(normalised_symmetry, self.symmetry_exponent), self.raw_orientation, "RPI")
+            self.spine_detect_data = np.multiply(self.smoothed_min_path.data, rpi_normalized_sym)
+            self.output_debug_file(img, self.spine_detect_data, "symmetry_x_min_path")
             # extract the centerline from the minimal path image
             self.centerline_with_outliers = get_centerline(self.spine_detect_data, self.spine_detect_data.shape)
         else:
@@ -1045,6 +1061,12 @@ def get_parser():
                       mandatory=False,
                       example=['t1', 't2'],
                       deprecated_by='-contrast')
+    parser.add_option(name='-smooth_vesselness',
+                      type_value='multiple_choice',
+                      description='Smoothing of the vesselness image',
+                      mandatory=False,
+                      default_value='0',
+                      example=['0', '1'])
     parser.add_option(name='-radius',
                       type_value='int',
                       description='Approximate radius of spinal cord to help the algorithm',
@@ -1154,6 +1176,8 @@ if __name__ == '__main__':
             scad.symmetry_exponent = int(arguments['-sym_exp'])
         if '-radius' in arguments:
             scad.spinalcord_radius = int(arguments['-radius'])
+        if '-smooth_vesselness' in arguments:
+            scad.smooth_vesselness = int(arguments['-smooth_vesselness'])
         if '-v' in arguments:
             scad.verbose = int(arguments['-v'])
         scad.execute()

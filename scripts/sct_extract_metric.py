@@ -143,7 +143,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
         # TODO: check integrity of input
 
     # Extract label info
-    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label)
+    label_id, label_name, label_file = read_label_file(path_label, param.file_info_label, method)
     nb_labels_total = len(label_id)
 
     # check consistency of label input parameter.
@@ -168,36 +168,24 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
     # If orientation is not RPI, change to RPI
     if orientation_data != 'RPI':
         sct.printv('\nCreate temporary folder to change the orientation of the NIFTI files into RPI...', verbose)
-        path_tmp = sct.slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
-        sct.create_folder(path_tmp)
+        path_tmp = sct.tmp_create()
         # change orientation and load data
         sct.printv('\nChange image orientation and load it...', verbose)
-        im_orient = set_orientation(input_im, 'RPI')
-        # im_orient.setFileName(path_tmp+'orient_data.nii')
-        # im_orient.save()
+        im_orient = set_orientation(input_im, 'RPI', fname_out=path_tmp+'metric_RPI.nii')
         data = im_orient.data
         # Do the same for labels
         sct.printv('\nChange labels orientation and load them...', verbose)
         labels = np.empty([nb_labels_total], dtype=object)  # labels(nb_labels_total, x, y, z)
         for i_label in range(0, nb_labels_total):
-            im_label = Image(path_label+label_file[i_label])
-            im_label = set_orientation(im_label, 'RPI')
-            # im_label.setFileName(path_tmp+'orient_'+label_file[i_label])
-            # im_label.save()
+            im_label = set_orientation(Image(path_label+label_file[i_label]), 'RPI', fname_out=path_tmp+'label_'+str(i_label)+'_RPI.nii')
             labels[i_label] = im_label.data
         if fname_normalizing_label:  # if the "normalization" option is wanted,
             normalizing_label = np.empty([1], dtype=object)  # choose this kind of structure so as to keep easily the
             # compatibility with the rest of the code (dimensions: (1, x, y, z))
-            im_normalizing_label = Image(fname_normalizing_label)
-            im_normalizing_label = set_orientation(im_normalizing_label, 'RPI')
-            # im_normalizing_label.setFileName(path_tmp+'orient_normalizing_volume.nii')
-            # im_normalizing_label.save()
+            im_normalizing_label = set_orientation(Image(fname_normalizing_label), 'RPI', fname_out=path_tmp+'normalizing_label_RPI.nii')
             normalizing_label[0] = im_normalizing_label.data
         if vertebral_levels:  # if vertebral levels were selected,
-            im_vertebral_labeling = Image(fname_vertebral_labeling)
-            im_vertebral_labeling = set_orientation(im_vertebral_labeling, 'RPI')
-            # im_vertebral_labeling.setFileName(path_tmp+'orient_vertebral_labeling.nii.gz')
-            # im_vertebral_labeling.save()
+            im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
             data_vertebral_labeling = im_vertebral_labeling.data
         # Remove the temporary folder used to change the NIFTI files orientation into RPI
         sct.printv('\nRemove the temporary folder...', verbose)
@@ -221,7 +209,8 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
 
     # Change metric data type into floats for future manipulations (normalization)
     data = np.float64(data)
-    data[np.isinf(data)] = 0.0
+    data[np.isneginf(data)] = 0.0
+    data[data < 0.0] = 0.0
     data[np.isnan(data)] = 0.0
     data[np.isposinf(data)] = np.nanmax(data)
 
@@ -243,7 +232,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
     # Update the flag "slices_of_interest" according to the vertebral levels selected by user (if it's the case)
     if vertebral_levels:
         slices_of_interest, actual_vert_levels, warning_vert_levels = \
-            get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling)
+            get_slices_matching_with_vertebral_levels(data, vertebral_levels, data_vertebral_labeling, verbose)
 
     # select slice of interest by cropping data and labels
     if slices_of_interest:
@@ -299,7 +288,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
 
     # update label name if average
     if average_all_labels == 1:
-        label_name[0] = 'AVERAGED'+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the labels selected by the user if the average tag was asked
+        label_name[0] = 'AVERAGED: '+' -'.join(label_name[i] for i in label_id_user)  # concatenate the names of the labels selected by the user if the average tag was asked
         label_id_user = [0]  # update "label_id_user" to select the "averaged" label (which is in first position)
 
     metric_mean = metric_mean[label_id_user]
@@ -319,7 +308,7 @@ def main(fname_data, path_label, method, labels_of_interest, slices_of_interest,
 #=======================================================================================================================
 # Read label.txt file which is located inside label folder
 #=======================================================================================================================
-def read_label_file(path_info_label, file_info_label):
+def read_label_file(path_info_label, file_info_label, method=''):
 
     # file name of info_label.txt
     fname_label = path_info_label+file_info_label
@@ -333,7 +322,15 @@ def read_label_file(path_info_label, file_info_label):
     # Extract all lines in file.txt
     lines = [lines for lines in f.readlines() if lines.strip()]
 
-    # separate header from (every line starting with "#")
+    # In case the method 'ml' or 'map' was selected, check if the White matter atlas was provided by the user
+    if method in ['ml', 'map']:
+        # look at first line
+        header_lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] == '#']
+        info_label_title = header_lines[0].split('-')[0].strip()
+        if '# White matter atlas' not in info_label_title:
+            sct.printv("ERROR: You selected the method \'"+method+"\' but you did not provide the White matter atlas. You provided the "+info_label_title+". Please provide the White matter atlas to use the method \'"+method+"\'.", type='error' )
+
+    # remove header lines (every line starting with "#")
     lines = [lines[i] for i in range(0, len(lines)) if lines[i][0] != '#']
 
     # read each line
@@ -373,9 +370,12 @@ def read_label_file(path_info_label, file_info_label):
 #=======================================================================================================================
 # Return the slices of the input image corresponding to the vertebral levels given as argument
 #=======================================================================================================================
-def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling):
+def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, data_vertebral_labeling, verbose=1):
+    
+    # TODO: use sct_utils instead (jcohenadad)
+    color = Color()
 
-    sct.printv('\nFind slices corresponding to vertebral levels...', param.verbose)
+    sct.printv('\nFind slices corresponding to vertebral levels...', verbose)
 
     # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
     vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
@@ -405,14 +405,14 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
                                           'level available \n--> Selected the lowest vertebral level available: '+\
               str(int(vert_levels_list[0])) + color.end
 
-    if vert_levels_list[0] > max_vert_level_available:
+    if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
         warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
         print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
-                                          'level available --> Selected the highest vertebral level available: ' + \
+                                          'level available \n--> Selected the highest vertebral level available: ' + \
               str(int(vert_levels_list[1])) + color.end
 
     if vert_levels_list[0] not in vertebral_levels_available:
@@ -444,7 +444,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     # Extract vertebral labeling data size X, Y, Z
     [vx, vy, vz] = data_vertebral_labeling.shape
 
-    sct.printv('  Check consistency of data size...', param.verbose)
+    sct.printv('  Check consistency of data size...', verbose)
 
     # Initialisation of check error flag
     exit_program = 0
@@ -469,7 +469,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
     else:
         print '    OK!'
 
-    sct.printv('  Find slices corresponding to vertebral levels...', param.verbose)
+    sct.printv('  Find slices corresponding to vertebral levels...', verbose)
     # Extract the X, Y, Z positions of voxels belonging to the first vertebral level
     X_bottom_level, Y_bottom_level, Z_bottom_level = (data_vertebral_labeling == vert_levels_list[0]).nonzero()
     # Record the bottom and top slices of this level
@@ -492,7 +492,7 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
         slice_max = slice_max_top
 
     # display info
-    sct.printv('    '+str(slice_min)+':'+str(slice_max), param.verbose)
+    sct.printv('    '+str(slice_min)+':'+str(slice_max), verbose)
 
     # Return the slice numbers in the right format ("-1" because the function "remove_slices", which runs next, add 1
     # to the top slice
