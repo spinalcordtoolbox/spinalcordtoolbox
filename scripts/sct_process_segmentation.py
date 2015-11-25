@@ -99,8 +99,8 @@ def main(args):
             name_process = arguments['-p']
         if '-method' in arguments:
             name_method = arguments['-method']
-        if '-lvl' in arguments:
-            vert_lev = arguments['-lvl']
+        if '-vert' in arguments:
+            vert_lev = arguments['-vert']
         if '-r' in arguments:
             remove_temp_files = arguments['-r']
         if '-s' in arguments:
@@ -723,9 +723,9 @@ def get_parser():
                       type_value='string',
                       description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
                       mandatory=False,
-                      deprecated_by='-lvl',
+                      deprecated_by='-vert',
                       example='2:9')
-    parser.add_option(name='-lvl',
+    parser.add_option(name='-vert',
                       type_value='string',
                       description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
                       mandatory=False,
