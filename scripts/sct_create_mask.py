@@ -41,9 +41,11 @@ class Param:
         self.shape_list = ['cylinder', 'box', 'gaussian']
         self.shape = 'cylinder'  # default shape
         self.size = 41  # in voxel. if gaussian, size corresponds to sigma.
+        self.even = 0
         self.file_prefix = 'mask_'  # output prefix
         self.verbose = 1
         self.remove_tmp_files = 1
+        self.offset = '0,0'
 
 
 # main
@@ -186,7 +188,7 @@ def create_mask():
     file_mask = 'data_mask'
     for iz in range(nz):
         center = numpy.array([cx[iz], cy[iz]])
-        mask2d = create_mask2d(center, param.shape, param.size, nx, ny)
+        mask2d = create_mask2d(center, param.shape, param.size, nx, ny, param.even)
         # Write NIFTI volumes
         img = nibabel.Nifti1Image(mask2d, None, hdr)
         nibabel.save(img, (file_mask+str(iz)+'.nii'))
@@ -247,24 +249,34 @@ def create_line(fname, coord, nz):
 
 # create_mask2d
 # ==========================================================================================
-def create_mask2d(center, shape, size, nx, ny):
+def create_mask2d(center, shape, size, nx, ny, even=0):
+    # extract offset
+    offset = param.offset.split(',')
+    offset[0] = int(offset[0])
+    offset[1] = int(offset[1])
 
     # initialize 2d grid
     xx, yy = numpy.mgrid[:nx, :ny]
     mask2d = numpy.zeros((nx, ny))
     xc = center[0]
     yc = center[1]
-    radius = round(float(size+1)/2)  # add 1 because the radius includes the center.
+    if even != 0:
+        radius = int(size / 2)
+    else:
+        radius = round(float(size + 1) / 2)  # add 1 because the radius includes the center.
 
     if shape == 'box':
-        mask2d[xc-radius:xc+radius+1, yc-radius:yc+radius+1] = 1
+        if even != 0:
+            mask2d[xc + offset[0] - radius:xc + offset[0] + radius, yc + offset[1] - radius:yc + offset[1] + radius] = 1
+        else:
+            mask2d[xc + offset[0] - radius:xc + offset[0] + radius+1, yc + offset[1] - radius:yc + offset[1] + radius+1] = 1
 
     elif shape == 'cylinder':
-        mask2d = ((xx-xc)**2 + (yy-yc)**2 <= radius**2)*1
+        mask2d = ((xx+offset[0]-xc)**2 + (yy+offset[1]-yc)**2 <= radius**2)*1
 
     elif shape == 'gaussian':
         sigma = float(radius)
-        mask2d = numpy.exp(-(((xx-xc)**2)/(2*(sigma**2)) + ((yy-yc)**2)/(2*(sigma**2))))
+        mask2d = numpy.exp(-(((xx+offset[0]-xc)**2)/(2*(sigma**2)) + ((yy+offset[1]-yc)**2)/(2*(sigma**2))))
 
     # import matplotlib.pyplot as plt
     # plt.imshow(mask2d)
