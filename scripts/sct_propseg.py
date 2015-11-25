@@ -40,9 +40,9 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=False,
                       deprecated=1,
-                      deprecated_by="-contrast",
+                      deprecated_by="-c",
                       example=['t1','t2'])
-    parser.add_option(name="-contrast",
+    parser.add_option(name="-c",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
@@ -164,7 +164,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    contrast_type = arguments["-contrast"]
+    contrast_type = arguments["-c"]
 
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
