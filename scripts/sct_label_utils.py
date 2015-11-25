@@ -641,11 +641,11 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-    parser.add_option(name='-p',
-                      type_value='str',
+    parser.add_option(name="-t",
+                      type_value="str",
                       description="""process:
 - add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-c"
+- cross: create a cross. Must use flag "-cross"
 - create: create labels. Must use flag "-x" to list labels
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
@@ -654,12 +654,13 @@ def get_parser():
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
-                      example='create')
-    parser.add_option(name='-t',
-                      type_value='str',
+                      deprecated_by='-p',
+                      example="create")
+    parser.add_option(name="-p",
+                      type_value="str",
                       description="""process:
 - add: add label to an existing image (-i).
-- cross: create a cross. Must use flag "-c"
+- cross: create a cross. Must use flag "-cross"
 - create: create labels. Must use flag "-x" to list labels
 - cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
 - display-voxel: display all labels in file
@@ -667,8 +668,8 @@ def get_parser():
 - label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
-                      mandatory=False,
-                      deprecated_by='-p')
+                      mandatory=True,
+                      example="create")
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
                       description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
@@ -677,7 +678,6 @@ def get_parser():
     parser.add_option(name="-r",
                       type_value="file",
                       description="reference volume for label removing.",
-                      deprecated=1,
                       deprecated_by='-ref',
                       mandatory=False)
     parser.add_option(name="-ref",
@@ -687,12 +687,22 @@ def get_parser():
     parser.add_option(name="-c",
                       type_value="int",
                       description="cross radius in mm (default=5mm).",
+                      deprecated_by='-cross',
+                      mandatory=False)
+    parser.add_option(name="-cross",
+                      type_value="int",
+                      description="cross radius in mm (default=5mm).",
                       mandatory=False)
     parser.add_option(name="-d",
                       type_value=None,
-                      description="dilatation bool for cross generation ('-c' option).",
+                      description="dilatation bool for cross generation ('-cross' option).",
                       mandatory=False)
     parser.add_option(name="-level",
+                      type_value=[[','], 'int'],
+                      description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
+                      deprecated_by='-vert',
+                      mandatory=False)
+    parser.add_option(name="-vert",
                       type_value=[[','], 'int'],
                       description='Vertebral levels to make labels from. Labels will be positioned at the mid-vertebrae. Separate with ","',
                       mandatory=False)
@@ -729,12 +739,12 @@ def main(args=None):
         input_fname_ref = arguments["-ref"]
     if "-x" in arguments:
         input_coordinates = arguments["-x"]
-    if "-c" in arguments:
-        input_cross_radius = arguments["-c"]
+    if "-cross" in arguments:
+        input_cross_radius = arguments["-cross"]
     if "-d" in arguments:
         input_dilate = arguments["-d"]
-    if "-level" in arguments:
-        vertebral_levels = arguments["-level"]
+    if "-vert" in arguments:
+        vertebral_levels = arguments["-vert"]
     if "-v" in arguments:
         input_verbose = int(arguments["-v"])
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref, cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates, verbose=input_verbose, vertebral_levels=vertebral_levels)
