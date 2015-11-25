@@ -641,8 +641,8 @@ def get_parser():
                       mandatory=False,
                       example="t2_labels_cross.nii.gz",
                       default_value="labels.nii.gz")
-    parser.add_option(name="-t",
-                      type_value="str",
+    parser.add_option(name='-p',
+                      type_value='str',
                       description="""process:
 - add: add label to an existing image (-i).
 - cross: create a cross. Must use flag "-c"
@@ -654,7 +654,21 @@ def get_parser():
 - MSE: compute Mean Square Error between labels input and reference input "-r"
 - remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
                       mandatory=True,
-                      example="create")
+                      example='create')
+    parser.add_option(name='-t',
+                      type_value='str',
+                      description="""process:
+- add: add label to an existing image (-i).
+- cross: create a cross. Must use flag "-c"
+- create: create labels. Must use flag "-x" to list labels
+- cubic-to-point: transform each volume of labels by value into a discrete single voxel label.
+- display-voxel: display all labels in file
+- increment: increment labels from top to bottom (in z direction, assumes RPI orientation)
+- label-vertebrae: Create labels that are centered at the mid-vertebral levels. These could be used for template registration. To specify vertebral levels use flag 'level', otherwise all levels will be generated.
+- MSE: compute Mean Square Error between labels input and reference input "-r"
+- remove: remove labels. Must use flag "-r"\n- remove-symm: remove labels both in input and ref file. Must use flag "-r" and must provide two output names. """,
+                      mandatory=False,
+                      deprecated_by='-p')
     parser.add_option(name="-x",
                       type_value=[[':'], 'Coordinate'],
                       description="""labels x,y,z,v. Use ":" if you have multiple labels.\nx: x-coordinates\ny: y-coordinates\nz: z-coordinates\nv: value of label""",
@@ -701,8 +715,8 @@ def main(args=None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    input_filename = arguments["-i"]
-    process_type = arguments["-t"]
+    input_filename = arguments['-i']
+    process_type = arguments['-p']
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
