@@ -1017,6 +1017,14 @@ def get_parser():
                       mandatory=True,
                       example='t2.nii.gz')
     parser.usage.addSection('Execution Option')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='Method to get the centerline:\n'
+'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
+'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
+'labels: Fit spline function across labels. Requires a couple of points along the cord.',
+                      mandatory=True,
+                      example=['auto', 'point', 'labels'])
     parser.add_option(name='-method',
                       type_value='multiple_choice',
                       description='Method to get the centerline:\n'
@@ -1024,6 +1032,7 @@ def get_parser():
 'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
 'labels: Fit spline function across labels. Requires a couple of points along the cord.',
                       mandatory=True,
+                      deprecated_by='-p',
                       example=['auto', 'point', 'labels'])
     parser.usage.addSection('General options')
     parser.add_option(name='-o',
@@ -1050,6 +1059,13 @@ def get_parser():
 
     parser.usage.addSection('Automatic method options')
     parser.add_option(name='-contrast',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
+                      mandatory=False,
+                      deprecated_by='-c',
+                      example=['t1', 't2'])
+    parser.add_option(name='-c',
                       type_value='multiple_choice',
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
@@ -1092,11 +1108,6 @@ def get_parser():
                       description='Binary image with a point inside the spinal cord.',
                       mandatory=False,
                       example='t2_point.nii.gz')
-    parser.add_option(name='-p',
-                      type_value='file',
-                      description='Binary image with a point inside the spinal cord.',
-                      mandatory=False,
-                      example='t2_point.nii.gz')
     parser.add_option(name="-g",
                       type_value="int",
                       description="Gap between slices for registration. Higher is faster but less robust.",
@@ -1132,7 +1143,7 @@ if __name__ == '__main__':
     # get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    method = arguments['-method']
+    method = arguments['-p']
     fname_in = arguments['-i']
     if '-o' in arguments:
         output_file_name = arguments['-o']
@@ -1150,9 +1161,9 @@ if __name__ == '__main__':
 
     elif method == 'point':
         if '-point' in arguments:
-            fname_point = arguments['-p']
+            fname_point = arguments['-point']
         else:
-            sct.printv('ERROR: Needs input point (option -p).', 1, 'error')
+            sct.printv('ERROR: Needs input point (option -point).', 1, 'error')
         if '-g' in arguments:
             gap = arguments['-g']
         if '-k' in arguments:
@@ -1161,7 +1172,7 @@ if __name__ == '__main__':
 
     elif method == 'auto':
         try:
-            contrast = arguments['-contrast']
+            contrast = arguments['-c']
         except Exception, e:
             sct.printv('The method automatic requires a contrast type to be defined', type='error')
         im = Image(fname_in)
