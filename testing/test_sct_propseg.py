@@ -24,7 +24,7 @@ def test(path_data):
 
     # define command
     cmd = 'sct_propseg -i ' + path_data + folder_data + file_data[0] \
-        + ' -contrast t2' \
+        + ' -c t2' \
         + ' -mesh'\
         + ' -cross'\
         + ' -centerline-binary'\
