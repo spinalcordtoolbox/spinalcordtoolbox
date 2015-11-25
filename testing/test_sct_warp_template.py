@@ -30,7 +30,7 @@ def test(path_data):
         ' -w '+path_data+folder_data[0]+file_data[1]+ \
         ' -a 0 '+ \
         ' -s 0 '+ \
-        ' -o label'+ \
+        ' -ofolder label'+ \
         ' -t '+path_data+folder_data[1]+ \
         ' -qc 0'+ \
         ' -v 1'
