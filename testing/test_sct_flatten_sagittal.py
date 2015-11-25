@@ -23,7 +23,7 @@ def test(data_path):
 
     # define command
     cmd = 'sct_flatten_sagittal -i ' + data_path + folder_data + file_data[0] \
-          + ' -c ' + data_path + folder_data + file_data[1]
+          + ' -s ' + data_path + folder_data + file_data[1]
 
     # return
     #return sct.run(cmd, 0)
