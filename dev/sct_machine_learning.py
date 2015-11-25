@@ -34,8 +34,8 @@ NUM_CHANNELS = 1
 NUM_LABELS = 2
 VALIDATION_SIZE = 500  # Size of the validation set.
 SEED = None  # Set to None for random seed. or 66478
-BATCH_SIZE = 100
-NUM_EPOCHS = 5
+BATCH_SIZE = 500
+NUM_EPOCHS = 10
 
 
 class UNetModel:
@@ -375,7 +375,7 @@ def main(argv=None):  # pylint: disable=unused-argument
             feed_dict = {train_data_node: batch_data, train_labels_node: batch_labels, train_labels_weights: batch_labels_weights}
             # Run the graph and fetch some of the nodes.
             _, l, lr, predictions = s.run([optimizer, loss, learning_rate, train_prediction], feed_dict=feed_dict)
-            if i != 0 and i % 1 == 0:
+            if i != 0 and i % 10 == 0:
                 print 'Minibatch loss: %.3f, learning rate: %.6f' % (l, lr)
                 del batch_data
                 del batch_labels_weights
