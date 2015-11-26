@@ -191,7 +191,7 @@ def main():
 
    # Straighten the spinal cord
     print '\nStraighten the spinal cord...'
-    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -qc 0 -x spline -v '+str(verbose))
+    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline -v '+str(verbose))
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
