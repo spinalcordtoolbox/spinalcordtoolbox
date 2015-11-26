@@ -1,7 +1,7 @@
 set(CMAKE_C_COMPILER "gcc")
 set(CMAKE_CXX_COMPILER "g++")
 
-project(sct_dice_coefficient)
+project(isct_dice_coefficient)
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "RELEASE" FORCE)
 set(CMAKE_INCLUDE_PATH ${ITK_DIR}/include/ITK-4.7)
@@ -41,7 +41,7 @@ INCLUDE(${ITK_USE_FILE})
 aux_source_directory(. SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(sct_dice_coefficient
+TARGET_LINK_LIBRARIES(isct_dice_coefficient
 ITKCommon
 ITKIOImageBase
 ITKIONIFTI

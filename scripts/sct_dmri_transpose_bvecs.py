@@ -40,18 +40,24 @@ def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Transpose bvecs file (if necessary) to get nx3 structure.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Input bvecs file.",
+    parser.add_option(name='-bvec',
+                      type_value='file',
+                      description='Input bvecs file.',
                       mandatory=True,
-                      example="bvecs.txt")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Output bvecs file. By default input file is overwritten.",
+                      example='bvecs.txt')
+    parser.add_option(name='-i',
+                      type_value='file',
+                      description='Input bvecs file.',
                       mandatory=False,
-                      example="bvecs_t.txt")
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
+                      example='bvecs.txt',
+                      deprecated_by='-bvec')
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='Output bvecs file. By default input file is overwritten.',
+                      mandatory=False,
+                      example='bvecs_t.txt')
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
                       description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
                       mandatory=False,
                       default_value='1',
@@ -61,7 +67,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args = None):
+def main(args=None):
 
     if not args:
         args = sys.argv[1:]
@@ -69,7 +75,7 @@ def main(args = None):
     # Get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    fname_in = arguments['-i']
+    fname_in = arguments['-bvec']
     if '-o' in arguments:
         fname_out = arguments['-o']
     else:
