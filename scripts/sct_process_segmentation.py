@@ -55,13 +55,108 @@ class Param:
         self.fname_vertebral_labeling = './label/template/MNI-Poly-AMU_level.nii.gz'
 
 
+def get_parser():
+    """
+    :return: Returns the parser with the command line documentation contained in it.
+    """
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Spinal Cord segmentation',
+                      mandatory=True,
+                      example='seg.nii.gz')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='type of process to be performed:\n'
+                                  '- centerline: extract centerline as binary file.\n'
+                                  '- length: compute length of the segmentation.\n'
+                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
+                                  '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
+                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
+                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
+                      mandatory=True,
+                      example=['centerline', 'length', 'csa'])
+    parser.usage.addSection('Optional Arguments')
+    parser.add_option(name='-size',
+                      type_value='int',
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      default_value=50)
+    parser.add_option(name='-s',
+                      type_value=None,
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      deprecated_by='-size')
+    parser.add_option(name='-z',
+                      type_value='str',
+                      description= 'Slice range to compute the CSA across (requires \"-p csa\").',
+                      mandatory=False,
+                      example='5:23')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      deprecated_by='-vert',
+                      example='2:9')
+    parser.add_option(name='-vert',
+                      type_value='str',
+                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9')
+    parser.add_option(name='-t',
+                      type_value='folder',
+                      description='Vertebral labeling file. Only use with flag -vert',
+                      mandatory=False,
+                      default_value='label/template/MNI-Poly-AMU_level.nii.gz',
+                      example='label/template/MNI-Poly-AMU_level.nii.gz')
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      deprecated_by='-method',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description='Method to compute CSA',
+                      mandatory=False,
+                      default_value='counting_z_plane',
+                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name='-a',
+                      type_value='multiple_choice',
+                      description= 'Algorithm for curve fitting.',
+                      mandatory=False,
+                      default_value='hanning',
+                      example=['hanning', 'nurbs'])
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='1: display on, 0: display off (default)',
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    parser.add_option(name='-h',
+                      type_value=None,
+                      description='display this help',
+                      mandatory=False)
+
+    return parser
+
+
+
 # MAIN
 # ==========================================================================================
 def main(args):
 
     parser = get_parser()
     arguments = parser.parse(args)
-
 
     # Initialization
     path_script = os.path.dirname(__file__)
@@ -473,7 +568,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         warning = ''
         if vert_levels and not fname_vertebral_labeling:
-            sct.printv('\nERROR: Path to template is missing. See usage.\n', 1, 'error')
+            sct.printv('\nERROR: Vertebral labeling file is missing. See usage.\n', 1, 'error')
 
         elif vert_levels and fname_vertebral_labeling:
 
@@ -629,100 +724,6 @@ def edge_detection(f):
    
     return mag
 
-
-def get_parser():
-    """
-    :return: Returns the parser with the command line documentation contained in it.
-    """
-    # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='Spinal Cord segmentation',
-                      mandatory=True,
-                      example='seg.nii.gz')
-    parser.add_option(name='-p',
-                      type_value='multiple_choice',
-                      description='type of process to be performed:\n'
-                                  '- centerline: extract centerline as binary file.\n'
-                                  '- length: compute length of the segmentation.\n'
-                                  '- csa: computes cross-sectional area by counting pixels in each.\n'
-                                  '  slice and then geometrically adjusting using centerline orientation. Outputs:\n'
-                                  '  - csa.txt: text file with z (1st column) and CSA in mm^2 (2nd column),\n'
-                                  '  - csa_volume.nii.gz: segmentation where each slice\'s value is equal to the CSA (mm^2).\n',
-                      mandatory=True,
-                      example=['centerline', 'length', 'csa'])
-    parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-size',
-                      type_value='int',
-                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
-                      mandatory=False,
-                      default_value=50)
-    parser.add_option(name='-s',
-                      type_value=None,
-                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
-                      mandatory=False,
-                      deprecated_by='-size')
-    parser.add_option(name='-z',
-                      type_value='str',
-                      description= 'Slice range to compute the CSA across (requires \"-p csa\").',
-                      mandatory=False,
-                      example='5:23')
-    parser.add_option(name='-l',
-                      type_value='str',
-                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
-                      mandatory=False,
-                      deprecated_by='-vert',
-                      example='2:9')
-    parser.add_option(name='-vert',
-                      type_value='str',
-                      description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
-                      mandatory=False,
-                      example='2:9')
-    parser.add_option(name='-t',
-                      type_value='folder',
-                      description='Path to warped template. Default: ./label/template. Only use with flag -vert',
-                      mandatory=False,
-                      default_value='./label/template',
-                      example='./label/template')
-    parser.add_option(name='-m',
-                      type_value='multiple_choice',
-                      description='Method to compute CSA',
-                      mandatory=False,
-                      default_value='counting_z_plane',
-                      deprecated_by='-method',
-                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
-    parser.add_option(name='-method',
-                      type_value='multiple_choice',
-                      description='Method to compute CSA',
-                      mandatory=False,
-                      default_value='counting_z_plane',
-                      example=['counting_ortho_plane', 'counting_z_plane', 'ellipse_ortho_plane', 'ellipse_z_plane'])
-    parser.add_option(name='-r',
-                      type_value='multiple_choice',
-                      description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name='-a',
-                      type_value='multiple_choice',
-                      description= 'Algorithm for curve fitting.',
-                      mandatory=False,
-                      default_value='hanning',
-                      example=['hanning', 'nurbs'])
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='1: display on, 0: display off (default)',
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    parser.add_option(name='-h',
-                      type_value=None,
-                      description='display this help',
-                      mandatory=False)
-
-    return parser
 
 
 # START PROGRAM
