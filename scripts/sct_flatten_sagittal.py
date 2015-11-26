@@ -26,6 +26,7 @@ from sct_utils import fsloutput
 from sct_image import get_orientation, set_orientation
 from msct_image import Image
 from sct_image import split_data, concat_data
+from msct_parser import Parser
 
 
 ## Default parameters
@@ -36,21 +37,14 @@ class Param:
         self.interp = 'sinc'  # final interpolation
         self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
         self.remove_temp_files = 1  # remove temporary files
+        self.verbose = 1
 
 
 
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
-    
-    # Initialization
-    fname_anat = ''
-    fname_centerline = ''
-    centerline_fitting = 'polynome'
-    remove_temp_files = param.remove_temp_files
-    interp = param.interp
-    degree_poly = param.deg_poly
+def main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose):
     
     # extract path of the script
     path_script = os.path.dirname(__file__)+'/'
@@ -61,38 +55,6 @@ def main():
         status, path_sct_data = commands.getstatusoutput('echo $SCT_TESTING_DATA_DIR')
         fname_anat = path_sct_data+'/t2/t2.nii.gz'
         fname_centerline = path_sct_data+'/t2/t2_seg.nii.gz'
-    else:
-        # Check input param
-        try:
-            opts, args = getopt.getopt(sys.argv[1:],'hi:c:r:d:f:s:')
-        except getopt.GetoptError as err:
-            print str(err)
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ('-i'):
-                fname_anat = arg
-            elif opt in ('-c'):
-                fname_centerline = arg
-            elif opt in ('-r'):
-                remove_temp_files = int(arg)
-            elif opt in ('-d'):
-                degree_poly = int(arg)
-            elif opt in ('-f'):
-                centerline_fitting = str(arg)
-            elif opt in ('-s'):
-                interp = str(arg)
-    
-    # display usage if a mandatory argument is not provided
-    if fname_anat == '' or fname_centerline == '':
-        usage()
-    
-    # check existence of input files
-    sct.check_file_exist(fname_anat)
-    sct.check_file_exist(fname_centerline)
     
     # extract path/file/extension
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
@@ -157,7 +119,7 @@ def main():
     del data
     
     # Fit the centerline points with the kind of curve given as argument of the script and return the new smoothed coordinates
-    if centerline_fitting == 'splines':
+    if centerline_fitting == 'nurbs':
         try:
             x_centerline_fit, y_centerline_fit = b_spline_centerline(x_centerline,y_centerline,z_centerline)
         except ValueError:
@@ -247,35 +209,6 @@ def main():
     print 'fslview '+file_anat+ext_anat+' '+file_anat+'_flatten'+ext_anat+' &\n'
 
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print 'USAGE: \n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Flatten the spinal cord in the sagittal plane (to make nice pictures).\n' \
-        '\n' \
-        'USAGE\n' \
-        '  '+os.path.basename(__file__)+' -i <source> -c <centerline>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <source>       input volume.\n' \
-        '  -c                centerline.\n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -s {nearestneighbour, trilinear, sinc}       final interpolation. Default='+str(param_default.interp)+'\n' \
-        '  -d <deg>          degree of fitting polynome. Default='+str(param_default.deg_poly)+'\n' \
-        '  -r {0, 1}         remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -h                help. Show this message.\n' \
-        '\n'\
-        'EXAMPLE:\n' \
-        '  sct_flatten_sagittal -i t2.nii.gz -c centerline.nii.gz\n'
-    sys.exit(2)
-
 def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     """Give a better fitting of the centerline than the method 'spline_centerline' using b-splines"""
 
@@ -290,7 +223,6 @@ def b_spline_centerline(x_centerline, y_centerline, z_centerline):
     return x_centerline_fit, y_centerline_fit
 
 
-
 def polynome_centerline(x_centerline,y_centerline,z_centerline):
     """Fit polynomial function through centerline"""
     
@@ -300,14 +232,71 @@ def polynome_centerline(x_centerline,y_centerline,z_centerline):
     polyx = numpy.poly1d(coeffsx)
     x_centerline_fit = numpy.polyval(polyx, z_centerline)
     
-    #Fit centerline in the Z-Y plane using polynomial function
+    # Fit centerline in the Z-Y plane using polynomial function
     print '\nFit centerline in the Z-Y plane using polynomial function...'
     coeffsy = numpy.polyfit(z_centerline, y_centerline, deg=5)
     polyy = numpy.poly1d(coeffsy)
     y_centerline_fit = numpy.polyval(polyy, z_centerline)
     
     
-    return x_centerline_fit,y_centerline_fit
+    return x_centerline_fit, y_centerline_fit
+
+
+def get_parser():
+    param_default = Param()
+    parser = Parser(__file__)
+    parser.usage.set_description("""Flatten the spinal cord in the sagittal plane (to make nice pictures).""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Input volume.',
+                      mandatory=True,
+                      example='t2.nii.gz')
+    parser.add_option(name='-s',
+                      type_value='image_nifti',
+                      description='Centerline.',
+                      mandatory=True,
+                      example='centerline.nii.gz')
+    parser.add_option(name='-c',
+                      type_value=None,
+                      description='Centerline.',
+                      mandatory=False,
+                      deprecated_by='-s')
+    parser.add_option(name='-x',
+                      type_value='multiple_choice',
+                      description='Final interpolation.',
+                      mandatory=False,
+                      example=['nearestneighbour', 'trilinear', 'sinc'],
+                      default_value=str(param_default.interp))
+    parser.add_option(name='-d',
+                      type_value='int',
+                      description='Degree of fitting polynome.',
+                      mandatory=False,
+                      default_value=param_default.deg_poly)
+    parser.add_option(name='-f',
+                      type_value='multiple_choice',
+                      description='Fitting algorithm.',
+                      mandatory=False,
+                      example=['polynome', 'nurbs'],
+                      default_value='nurbs')
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description='Removes the temporary folder and debug folder used for the algorithm at the end of execution',
+                      mandatory=False,
+                      default_value=str(param_default.remove_temp_files),
+                      example=['0', '1'])
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='1: display on, 0: display off (default)',
+                      mandatory=False,
+                      example=['0', '1'],
+                      default_value=str(param_default.verbose))
+    parser.add_option(name='-h',
+                      type_value=None,
+                      description='Display this help',
+                      mandatory=False)
+
+    return parser
+
 
 #=======================================================================================================================
 # Start program
@@ -316,5 +305,16 @@ if __name__ == "__main__":
     # initialize parameters
     param = Param()
     param_default = Param()
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+    fname_anat = arguments['-i']
+    fname_centerline = arguments['-s']
+    degree_poly = arguments['-d']
+    centerline_fitting = arguments['-f']
+    interp = arguments['-x']
+    remove_temp_files = arguments['-r']
+    verbose = int(arguments['-v'])
+
     # call main function
-    main()
+    main(fname_anat, fname_centerline, degree_poly, centerline_fitting, interp, remove_temp_files, verbose)
