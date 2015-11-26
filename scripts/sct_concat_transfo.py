@@ -19,6 +19,7 @@ import os
 import getopt
 import commands
 import sct_utils as sct
+from msct_parser import Parser
 
 # DEFAULT PARAMETERS
 class Param:
@@ -47,34 +48,21 @@ def main():
         verbose = 1
     else:
         # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'hw:d:o:v:')
-        except getopt.GetoptError:
-            usage()
-        if not opts:
-            usage()
-        for opt, arg in opts:
-            if opt == '-h':
-                usage()
-            elif opt in ('-w'):
-                fname_warp_list = arg
-            elif opt in ('-d'):
-                fname_dest = arg
-            elif opt in ('-o'):
-                fname_warp_final = arg
-            elif opt in ('-v'):
-                verbose = int(arg)
+        parser = get_parser()
+        arguments = parser.parse(sys.argv[1:])
 
-    # display usage if a mandatory argument is not provided
-    if fname_warp_list == '' or fname_dest == '':
-        usage()
+        fname_dest = arguments['-d']
+        fname_warp_list = arguments['-w']
+
+        if '-o' in arguments:
+            fname_warp_final = arguments['-o']
+        verbose = int(arguments['-v'])
+
 
     # Parse list of warping fields
     sct.printv('\nParse list of transformations...', verbose)
     use_inverse = []
     fname_warp_list_invert = []
-    fname_warp_list = fname_warp_list.replace(' ', '')  # remove spaces
-    fname_warp_list = fname_warp_list.split(",")  # parse with comma
     for i in range(len(fname_warp_list)):
         # Check if inverse matrix is specified with '-' at the beginning of file name
         if fname_warp_list[i].find('-') == 0:
@@ -112,37 +100,34 @@ def main():
     print ''
 
 
-# Print usage
 # ==========================================================================================
-def usage():
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and B->C to yield A->C, then you have to input warping fields like that: A->B,B->C.')
+    parser.add_option(name="-d",
+                      type_value="file",
+                      description="Destination image.",
+                      mandatory=True,
+                      example='mt.nii.gz')
+    parser.add_option(name="-w",
+                      type_value=[[','], 'file'],
+                      description='List of affine matrix or warping fields separated with "," N.B. if you want to use the inverse matrix, add "-" before matrix file name.',
+                      mandatory=True,
+                      example='warp_template2anat.nii.gz,warp_anat2mt.nii.gz')
+    parser.add_option(name="-o",
+                      type_value="file_output",
+                      description='Name of output warping field.',
+                      mandatory=False,
+                      example='warp_template2mt.nii.gz')
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
 
-DESCRIPTION
-  Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs).
-  N.B. Order of input warping fields is important. For example, if you want to concatenate: A->B and
-  B->C to yield A->C, then you have to input warping fields like that: A->B,B->C
-
-USAGE
-  """+os.path.basename(__file__)+""" -w <warp_list> -d <dest>
-
-MANDATORY ARGUMENTS
-  -w <warp_list>        list of affine matrix or warping fields separated with ","
-                        N.B. if you want to use the inverse matrix, add "-" before matrix file name.
-  -d <dest>             destination image
-
-OPTIONAL ARGUMENTS
-  -o <warp_final>       name of output warping field
-  -h                    help. Show this message
-
-EXAMPLE
-  """+os.path.basename(__file__)+""" -w warp_AtoB.nii.gz,warp_BtoC.nii.gz -d t1.nii.gz -o warp_AtoC.nii.gz\n"""
-
-    # exit program
-    sys.exit(2)
-
+    return parser
 
 
 #=======================================================================================================================
