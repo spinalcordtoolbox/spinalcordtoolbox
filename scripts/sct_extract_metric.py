@@ -31,7 +31,7 @@ import numpy as np
 import sct_utils as sct
 from sct_image import get_orientation, set_orientation
 from msct_image import Image
-
+from msct_parser import Parser
 
 
 # get path of the toolbox
@@ -72,29 +72,161 @@ class Color:
         self.end = '\033[0m'
 
 
+def get_parser():
+
+    param_default = Param()
+
+    # read the .txt files referencing the labels
+    if param_default.path_label != '':
+        file_label = param_default.path_label + '/' + param_default.file_info_label
+        sct.check_file_exist(file_label, 0)
+        default_info_label = open(file_label, 'r')
+        label_references = default_info_label.read()
+    else:
+        label_references = ''
+
+    parser = Parser(__file__)
+    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with 'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels. The labels should be in the same space coordinates as the input image.""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='File to extract metrics from.',
+                      mandatory=True,
+                      example='fmri.nii.gz')
+    parser.add_option(name='-f',
+                      type_value='folder',
+                      description='Folder including labels to extract the metric from.',
+                      mandatory=True,
+                      example='$SCT_DIR/data/template')
+    parser.add_option(name='-l',
+                      type_value='str',
+                      description="""Label number to extract the metric from. Example: 1,3 for left fasciculus cuneatus and left ventral spinocerebellar tract in folder '/atlas'. Default = all labels.
+You can also select labels using 1:3 to get labels 1,2,3.
+Following shortcuts are also available for the folder label "atlas/":
+ -l sc: extract in the spinal cord cord
+ -l wm: extract in the white matter
+ -l gm: extract in the gray matter""",
+                      mandatory=False,
+                      default_value=param_default.labels_of_interest)
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description="""Method to extract metrics.
+ml: maximum likelihood (only use with well-defined regions and low noise)
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+wa: weighted average
+wath: weighted average (only consider values >0.5)
+bin: binarize mask (threshold=0.5)""",
+                      example=['ml', 'map', 'wa', 'wath', 'bin'],
+                      mandatory=False,
+                      default_value=param_default.method)
+    parser.add_option(name='-m',
+                      type_value='multiple_choice',
+                      description="""Method to extract metrics.
+ml: maximum likelihood (only use with well-defined regions and low noise)
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
+  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
+wa: weighted average
+wath: weighted average (only consider values >0.5)
+bin: binarize mask (threshold=0.5)""",
+                      mandatory=False,
+                      default_value=param_default.method,
+                      deprecated_by='-method')
+    parser.add_option(name='-param',
+                      type_value='str',
+                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+#1: standard deviation of metrics across labels
+#2: standard deviation of the noise (assumed Gaussian)""",
+                      mandatory=False,
+                      example=param_default.adv_param[0]+','+param_default.adv_param[1])
+    parser.add_option(name='-p',
+                      type_value=None,
+                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
+#1: standard deviation of metrics across labels
+#2: standard deviation of the noise (assumed Gaussian)""",
+                      mandatory=False,
+                      deprecated_by='-param')
+    parser.add_option(name='-o',
+                      type_value='file_output',
+                      description='File containing the results of metrics extraction.',
+                      mandatory=False,
+                      default_value=param_default.fname_output)
+    parser.add_option(name='-a',
+                      type_value=None,
+                      description='Average all selected labels.',
+                      mandatory=False)
+    parser.add_option(name='-vert',
+                      type_value='str',
+                      description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9',
+                      default_value=param_default.vertebral_levels)
+    parser.add_option(name='-v',
+                      type_value='str',
+                      description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
+                      mandatory=False,
+                      example='2:9',
+                      deprecated_by='-vert')
+    parser.add_option(name='-z',
+                      type_value='str',
+                      description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
+                      mandatory=False,
+                      example='5:23',
+                      default_value=param_default.slices_of_interest)
+    parser.add_option(name='-norm-file',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False)
+    parser.add_option(name='-n',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False,
+                      deprecated_by='-norm-file')
+    parser.add_option(name='-norm-method',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False)
+    parser.add_option(name='-w',
+                      type_value='image_nifti',
+                      description='Filename of the label by which the user wants to normalize',
+                      mandatory=False,
+                      deprecated_by='-norm-method')
+
+    str_section = """\n
+To list template labels:
+""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/template
+
+To list white matter atlas labels:
+""" + os.path.basename(__file__) + """ -f $SCT_DIR/data/atlas
+
+To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
+""" + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
+    if label_references != '':
+        str_section += """
+List of labels in: """ + file_label + """:
+==========
+""" + label_references + """
+=========="""
+
+    parser.usage.addSection(str_section)
+
+    return parser
+
+
+
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-def main():
+def main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user):
     # Initialization to defaults parameters
-    fname_data = ''  # data is empty by default
-    path_label = ''  # empty by default
-    method = param.method # extraction mode by default
-    labels_of_interest = param.labels_of_interest
-    slices_of_interest = param.slices_of_interest
-    vertebral_levels = param.vertebral_levels
-    average_all_labels = param.average_all_labels
-    fname_output = param.fname_output
     fname_vertebral_labeling = param.fname_vertebral_labeling
-    fname_normalizing_label = ''  # optional then default is empty
-    normalization_method = ''  # optional then default is empty
     actual_vert_levels = None  # variable used in case the vertebral levels asked by the user don't correspond exactly to the vertebral levels available in the metric data
     warning_vert_levels = None  # variable used to warn the user in case the vertebral levels he asked don't correspond exactly to the vertebral levels available in the metric data
     verbose = param.verbose
     flag_h = 0
     ml_clusters = param.ml_clusters
     adv_param = param.adv_param
-    adv_param_user = ''
     clustered_labels = []
     matching_cluster_labels = []
 
@@ -112,54 +244,6 @@ def main():
         average_all_labels = 1
         fname_normalizing_label = ''  #path_sct+'/testing/data/errsm_23/mt/label/template/MNI-Poly-AMU_CSF.nii.gz'
         normalization_method = ''  #'whole'
-    else:
-        # Check input parameters
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], 'haf:i:l:m:n:o:p:v:w:z:') # define flags
-        except getopt.GetoptError as err: # check if the arguments are defined
-            print str(err) # error
-            usage() # display usage
-        if not opts:
-            usage()
-        for opt, arg in opts: # explore flags
-            if opt in '-a':
-                average_all_labels = 1
-            elif opt in '-f':
-                path_label = os.path.abspath(arg)  # save path of labels folder
-            elif opt == '-h':  # help option
-                flag_h = 1
-            elif opt in '-i':
-                fname_data = arg
-            elif opt in '-l':
-                labels_of_interest = arg
-            elif opt in '-m':  # method for metric extraction
-                method = arg
-            elif opt in '-n':  # filename of the label by which the user wants to normalize
-                fname_normalizing_label = arg
-            elif opt in '-o': # output option
-                fname_output = arg  # fname of output file
-            elif opt in '-p':
-                adv_param_user = arg
-            elif opt in '-v':
-                # vertebral levels option, if the user wants to average the metric across specific vertebral levels
-                 vertebral_levels = arg
-            elif opt in '-w':
-                # method used for the normalization by the metric estimation into the normalizing label (see flag -n): 'sbs' for slice-by-slice or 'whole' for normalization after estimation in the whole labels
-                normalization_method = arg
-            elif opt in '-z':  # slices numbers option
-                slices_of_interest = arg # save labels numbers
-
-    # Display usage with tract parameters by default in case files aren't chosen in arguments inputs
-    if fname_data == '' or path_label == '' or flag_h:
-        param.path_label = path_label
-        usage()
-
-    # Check existence of data file
-    sct.printv('\ncheck existence of input files...', verbose)
-    sct.check_file_exist(fname_data)
-    sct.check_folder_exist(path_label)
-    if fname_normalizing_label:
-        sct.check_folder_exist(fname_normalizing_label)
 
     # add slash at the end
     path_label = sct.slash_at_the_end(path_label, 1)
@@ -167,16 +251,13 @@ def main():
     # Find path to the vertebral labeling file if vertebral levels were specified by the user
     if vertebral_levels:
         if slices_of_interest:  # impossible to select BOTH specific slices and specific vertebral levels
-            print '\nERROR: You cannot select BOTH vertebral levels AND slice numbers.'
-            usage()
+            sct.printv(parser.usage.generate(error='ERROR: You cannot select BOTH vertebral levels AND slice numbers.'))
         else:
             fname_vertebral_labeling_list = sct.find_file_within_folder(fname_vertebral_labeling, path_label + '..')
             if len(fname_vertebral_labeling_list) > 1:
-                print color.red + 'ERROR: More than one file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
-                sys.exit(2)
+                sct.printv(parser.usage.generate(error='ERROR: More than one file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             elif len(fname_vertebral_labeling_list) == 0:
-                print color.red + 'ERROR: No file named \'' + fname_vertebral_labeling + ' were found in ' + path_label + '. Exit program.' + color.end
-                sys.exit(2)
+                sct.printv(parser.usage.generate(error='ERROR: No file named "' + fname_vertebral_labeling + '" were found in ' + path_label + '. Exit program.'))
             else:
                 fname_vertebral_labeling = os.path.abspath(fname_vertebral_labeling_list[0])
 
@@ -452,14 +533,14 @@ def get_slices_matching_with_vertebral_levels(metric_data, vertebral_levels, dat
                                           'level available \n--> Selected the lowest vertebral level available: '+\
               str(int(vert_levels_list[0])) + color.end
 
-    if vert_levels_list[0] > max_vert_level_available:
+    if vert_levels_list[1] > max_vert_level_available:
         vert_levels_list[1] = max_vert_level_available
         warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
                        'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
         # warning to write it later in the .txt output file
 
         print color.yellow + 'WARNING: the top vertebral level you selected is higher to the highest ' \
-                                          'level available --> Selected the highest vertebral level available: ' + \
+                                          'level available \n--> Selected the highest vertebral level available: ' + \
               str(int(vert_levels_list[1])) + color.end
 
     if vert_levels_list[0] not in vertebral_levels_available:
@@ -627,19 +708,14 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 #=======================================================================================================================
 def check_method(method, fname_normalizing_label, normalization_method):
     if (method != 'wa') & (method != 'ml') & (method != 'bin') & (method != 'wath') & (method != 'map'):
-        print '\nERROR: Method "' + method + '" is not correct. See help. Exit program.\n'
-        sys.exit(2)
+        sct.printv(parser.usage.generate(error='ERROR: Method "' + method + '" is not correct. See help. Exit program.\n'))
 
     if normalization_method and not fname_normalizing_label:
-        print color.red + '\nERROR: You selected a normalization method (' + color.bold + str(normalization_method) \
-              + color.end + color.red + ') but you didn\'t selected any label to be used for the normalization.' \
-              + color.end
-        usage()
+        sct.printv(parser.usage.generate(error='ERROR: You selected a normalization method ('+ str(normalization_method)+ ') but you didn\'t selected any label to be used for the normalization.'))
 
     if fname_normalizing_label and normalization_method != 'sbs' and normalization_method != 'whole':
-        print color.red + '\nERROR: The normalization method you selected is incorrect:' + color.bold + \
-              str(normalization_method) + color.end
-        usage()
+        sct.printv(parser.usage.generate(error='\nERROR: The normalization method you selected is incorrect:'+str(normalization_method)))
+
 
 
 #=======================================================================================================================
@@ -654,40 +730,38 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
         # Check if label chosen is in the right format
         for char in labels_of_interest:
             if not char in '0123456789,:scwmg':
-                sct.printv('\nERROR: ' + labels_of_interest + ' is not the correct format to select labels.\n Exit program.\n', type='error')
-                usage()
+                sct.printv(parser.usage.generate(error='\nERROR: ' + labels_of_interest + ' is not the correct format to select labels.\n Exit program.\n'))
 
         # if spinal cord was selected, need all 32 labels from folder atlas
         if labels_of_interest == 'sc':
             if nb_labels < 32 and (method == 'ml' or method == 'map'):
-                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
                            ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
-                usage()
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
+
             if nb_labels < 31 and (method != 'ml' and method != 'map'):
-                sct.printv('\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
+                sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the all spinal cord using the method '+method+' but your atlas folder containing'
                            ' the labels only contains '+nb_labels+' labels. You need all 30 white matter tracts and the gray matter from the folder /atlas of'
-                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 30).\nExit program.\n\n', type='error')
-                usage()
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 30).\nExit program.\n\n'))
+
             else:
                 list_label_id = range(0, 31)
                 average_labels = 1
 
         elif labels_of_interest == 'gm':
             if nb_labels < 32 and (method == 'ml' or method == 'map'):
-                sct.printv('\nERROR: You\'ve asked to extract metric in the gray matter using the method '+method+' but your atlas folder containing'
+                sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the gray matter using the method '+method+' but your atlas folder containing'
                            ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
-                usage()
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
             else:
                 list_label_id = [30]
 
         elif labels_of_interest == 'wm':
             if nb_labels < 32 and (method == 'ml' or method == 'map'):
-                sct.printv('\nERROR: You\'ve asked to extract metric in the white matter using the method '+method+' but your atlas folder containing'
+                sct.printv(parser.usage.generate(error='\nERROR: You\'ve asked to extract metric in the white matter using the method '+method+' but your atlas folder containing'
                            ' the labels only contains '+nb_labels+' labels. You need all 32 labels from the folder /atlas of'
-                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n', type='error')
-                usage()
+                            ' the SpinalCordToolbox (files WMtract_XX, with XX from 00 to 31).\nExit program.\n\n'))
+
             else:
                 list_label_id = range(0, 30)
                 average_labels = 1
@@ -695,8 +769,8 @@ def check_labels(labels_of_interest, nb_labels, average_labels, method):
         elif ':' in labels_of_interest:
             label_ids_range = [int(x) for x in labels_of_interest.split(':')]
             if len(label_ids_range)>2:
-                sct.printv('\nERROR: label IDs selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n', type='error')
-                usage()
+                sct.printv(parser.usage.generate(error='\nERROR: label IDs selection must be in format X:Y, with X and Y between 0 and 31.\nExit program.\n\n'))
+
             else:
                 label_ids_range.sort()
                 list_label_id = [int(x) for x in range(label_ids_range[0], label_ids_range[1]+1)]
@@ -897,91 +971,6 @@ def get_clustered_labels(ml_clusters, labels, labels_user, averaging_flag, verbo
     return clustered_labels, matching_cluster_label_id
 
 
-#=======================================================================================================================
-# Usage
-#=======================================================================================================================
-def usage():
-
-    # read the .txt files referencing the labels
-    if param.path_label != '':
-        file_label = param.path_label+'/'+param.file_info_label
-        sct.check_file_exist(file_label, 0)
-        default_info_label = open(file_label, 'r')
-        label_references = default_info_label.read()
-    else:
-        label_references = ''
-
-    # display help
-    print """
-"""+os.path.basename(__file__)+"""
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>
-
-DESCRIPTION
-  This program extracts metrics (e.g., DTI or MTR) within labels. The labels are generated with
-  'sct_warp_template'. The label folder contains a file (info_label.txt) that describes all labels.
-  The labels should be in the same space coordinates as the input image.
-
-USAGE
-  """+os.path.basename(__file__)+""" -i <data> -f <folder_label>
-
-MANDATORY ARGUMENTS
-  -i <data>             file to extract metrics from
-  -f <folder_label>     folder including labels to extract the metric from.
-
-OPTIONAL ARGUMENTS
-  -l <label_id>         Label number to extract the metric from. Example: 1,3 for left fasciculus
-                        cuneatus and left ventral spinocerebellar tract in folder '/atlas'.
-                        Default = all labels.
-                        You can also select labels using 1:3 to get labels 1,2,3.
-                        Following shortcuts are also available for the folder label "atlas/":
-                        -l sc: extract in the spinal cord cord
-                        -l wm: extract in the white matter
-                        -l gm: extract in the gray matter
-  -m <method>           method to extract metrics. Default = """+param_default.method+"""
-                          ml: maximum likelihood (only use with well-defined regions and low noise)
-                              N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
-                          map: maximum a posteriori. Mean priors are estimated by maximum likelihood
-                               within three clusters (white matter, gray matter and CSF). Tract and 
-                               noise variance are set with flag -p.
-                               N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS!
-                          wa: weighted average
-                          wath: weighted average (only consider values >0.5)
-                          bin: binarize mask (threshold=0.5)
-  -p <param>            advanced parameters for the 'map' method.
-                          All items must be listed (separated with comma). Default="""+param_default.adv_param[0]+','+param_default.adv_param[1]+"""
-                          #1: standard deviation of metrics across labels
-                          #2: standard deviation of the noise (assumed Gaussian)
-  -a                    average all selected labels.
-  -o <output>           File containing the results of metrics extraction.
-                        Default = """+param_default.fname_output+"""
-  -v <vmin:vmax>        Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.
-  -z <zmin:zmax>        Slice range to estimate the metric from. First slice is 0. Example: 5:23
-                        You can also select specific slices using commas. Example: 0,2,3,5,12
-  -h                    help. Show this message
-
-EXAMPLE
-  To list template labels:
-    """+os.path.basename(__file__)+""" -f $SCT_DIR/data/template
-
-  To list white matter atlas labels:
-    """+os.path.basename(__file__)+""" -f $SCT_DIR/data/atlas
-
-  To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
-    """+os.path.basename(__file__)+""" -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
-
-    # display list of labels
-    if label_references != '':
-        print """
-List of labels in: """+file_label+""":
-==========
-"""+label_references+"""
-=========="""
-    print
-
-    #Exit program
-    sys.exit(2)
-
 
 #=======================================================================================================================
 # Start program
@@ -990,5 +979,37 @@ if __name__ == "__main__":
     param_default = Param()
     param = Param()
     color = Color()
+
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
+
+    # Initialization to defaults parameters
+    fname_data = arguments['-i']
+    path_label = arguments['-f']
+    labels_of_interest = ''
+    vertebral_levels = ''
+
+    if '-l' in arguments:
+        labels_of_interest = arguments['-l']
+    method = arguments['-method']
+    adv_param_user = ''
+    if '-param' in arguments:
+        adv_param_user = arguments['-param']
+    slices_of_interest = ''
+    if '-z' in arguments:
+        slices_of_interest = arguments['-z']
+    if '-vert' in arguments:
+        vertebral_levels = arguments['-vert']
+    average_all_labels = param.average_all_labels
+    if '-a' in arguments:
+        average_all_labels = 1
+    fname_output = arguments['-o']
+    fname_normalizing_label = ''
+    if '-norm-file' in arguments:
+        fname_normalizing_label = arguments['-norm-file']
+    normalization_method = ''
+    if '-norm-method' in arguments:
+        normalization_method = arguments['-norm-method']
+
     # call main function
-    main()
+    main(fname_data, path_label, method, labels_of_interest, slices_of_interest, vertebral_levels, average_all_labels, fname_output, fname_normalizing_label, normalization_method, adv_param_user)

@@ -68,15 +68,7 @@ class ErnstAngle:
         plt.show()
 
 
-
-#=======================================================================================================================
-# Start program
-#=======================================================================================================================
-if __name__ == "__main__":
-    # initialize parameters
-    param = Param()
-    param_default = Param()
-
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('Function to get the Ernst Angle. For examples of T1 values, see Stikov et al. MRM 2015. Example in the white matter at 3T: 850ms.')
@@ -96,15 +88,32 @@ if __name__ == "__main__":
                       mandatory=False,
                       example='2000')
     parser.add_option(name="-d",
-                      type_value='int',
+                      type_value=None,
                       description="Display option. The graph isn't display if 0.  ",
-                      mandatory=False,
-                      example='0')
+                      deprecated_by="-v",
+                      mandatory=False)
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="Name of the output graph of the Ernst angle.",
                       mandatory=False,
                       example="ernst_angle.png")
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
+    return parser
+
+#=======================================================================================================================
+# Start program
+#=======================================================================================================================
+if __name__ == "__main__":
+    # initialize parameters
+    param = Param()
+    param_default = Param()
+
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     input_t1 = arguments["-t1"]
@@ -112,7 +121,7 @@ if __name__ == "__main__":
     input_tr_min=500
     input_tr_max=3500
     input_tr=None
-    input_display=1
+    verbose=1
     if "-o" in arguments:
         input_fname_output = arguments["-o"]
     if "-b" in arguments:
@@ -120,18 +129,18 @@ if __name__ == "__main__":
         input_tr_max = arguments["-b"][1]
     if "-tr" in arguments :
         input_tr=arguments["-tr"]
-    if "-d" in arguments :
-        input_display=arguments["-d"]
+    if "-v" in arguments :
+        verbose=int(arguments["-v"])
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
-        sct.printv("\nValue of the Ernst Angle with T1="+str(graph.t1)+"ms and TR="+str(input_tr)+"ms :",type='info')
+        sct.printv("\nValue of the Ernst Angle with T1="+str(graph.t1)+"ms and TR="+str(input_tr)+"ms :",verbose=verbose,type='info')
         sct.printv(str(graph.getErnstAngle(input_tr)))
         if input_tr>input_tr_max:
             input_tr_max=input_tr+500
         elif input_tr<input_tr_min:
             input_tr_min=input_tr-500
-    if input_display :
+    if verbose == 2 :
         graph.draw(input_tr_min, input_tr_max)
 
 

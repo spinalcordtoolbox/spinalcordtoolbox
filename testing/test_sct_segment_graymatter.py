@@ -28,7 +28,7 @@ sys.path.append(path_sct + '/scripts')
 def test(path_data, parameters=''):
 
     if not parameters:
-        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -l mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
+        parameters = '-i mt/mt0.nii.gz -s mt/mt0_seg.nii.gz -vert mt/label/template/MNI-Poly-AMU_level.nii.gz -normalize 1 -ref mt/mt0_manual_gmseg.nii.gz -qc 0'
 
     parser = sct_segment_graymatter.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -36,7 +36,7 @@ def test(path_data, parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-l']) and os.path.isfile(dict_param_with_path['-ref'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s']) and os.path.isfile(dict_param_with_path['-vert']) and os.path.isfile(dict_param_with_path['-ref'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'dice_gm': float('nan'), 'dice_wm': float('nan'), 'hausdorff': float('nan'), 'med_dist': float('nan')}, index=[path_data])
@@ -82,7 +82,10 @@ def test(path_data, parameters=''):
             if dc == '0' or dc == 'nan':
                 null_slices.append(n_slice)
             else:
-                gm_dice.append(float(dc))
+                try:
+                    gm_dice.append(float(dc))
+                except ValueError:
+                    gm_dice.append(float(dc[:-4]))
         result_dice_gm = mean(gm_dice)
 
         # extracting dice on WM
@@ -95,7 +98,10 @@ def test(path_data, parameters=''):
             if line is not wm_dice_lines[-1]:
                 dc = dc[:-1]
             if n_slice not in null_slices:
-                wm_dice.append(float(dc))
+                try:
+                    wm_dice.append(float(dc))
+                except ValueError:
+                    wm_dice.append(float(dc[:-4]))
         result_dice_wm = mean(wm_dice)
 
         # Extracting hausdorff distance results

@@ -16,6 +16,7 @@
 - INST: no more dependence with c3d
 - OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
 - OPT: **sct_registration_to_template**: improved accuracy
+- REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
 
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)

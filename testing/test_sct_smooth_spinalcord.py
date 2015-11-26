@@ -27,8 +27,8 @@ def test(path_data):
     # define command
     cmd = 'sct_smooth_spinalcord' \
         ' -i '+path_data+folder_data+file_data[0]+ \
-        ' -c '+path_data+folder_data+file_data[1]+ \
-        ' -s 5'
+        ' -s '+path_data+folder_data+file_data[1]+ \
+        ' -smooth 5'
 
     # return
     #return sct.run(cmd, 0)
