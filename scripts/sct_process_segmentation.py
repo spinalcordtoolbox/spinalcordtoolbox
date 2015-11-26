@@ -85,43 +85,35 @@ def main(args):
     vert_lev = param.vertebral_levels
     fname_vertebral_labeling = param.fname_vertebral_labeling
 
-    # Parameters for debug mode
-    if param.debug:
-        fname_segmentation = '/Users/julien/data/temp/sct_example_data/t2/t2_seg.nii.gz'  #path_sct+'/testing/data/errsm_23/t2/t2_segmentation_PropSeg.nii.gz'
-        name_process = 'csa'
-        verbose = 1
-        remove_temp_files = 0
-    else:
+    if '-i' in arguments:
+        fname_segmentation = arguments['-i']
+    if '-p' in arguments:
+        name_process = arguments['-p']
+    if '-method' in arguments:
+        name_method = arguments['-method']
+    if '-vert' in arguments:
+        vert_lev = arguments['-vert']
+    if '-r' in arguments:
+        remove_temp_files = arguments['-r']
+    if '-size' in arguments:
+        smoothing_param = arguments['-size']
+    if '-t' in arguments:
+        fname_vertebral_labeling = arguments['-t']
+    if '-v' in arguments:
+        verbose = arguments['-v']
+    if '-z' in arguments:
+        verbose = arguments['-z']
+    if '-a' in arguments:
+        param.algo_fitting = arguments['-a']
 
-        if '-i' in arguments:
-            fname_segmentation = arguments['-i']
-        if '-p' in arguments:
-            name_process = arguments['-p']
-        if '-method' in arguments:
-            name_method = arguments['-method']
-        if '-vert' in arguments:
-            vert_lev = arguments['-vert']
-        if '-r' in arguments:
-            remove_temp_files = arguments['-r']
-        if '-size' in arguments:
-            smoothing_param = arguments['-size']
-        if '-t' in arguments:
-            fname_vertebral_labeling = arguments['-t']
-        if '-v' in arguments:
-            verbose = arguments['-v']
-        if '-z' in arguments:
-            verbose = arguments['-z']
-        if '-a' in arguments:
-            param.algo_fitting = arguments['-a']
-
-        # Check input parameters
-        try:
-             opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
-        except getopt.GetoptError:
-            usage()
-        for opt, arg in opts :
-            if opt in ('-f'):
-                figure_fit = int(arg)
+    # # Check input parameters
+    # try:
+    #      opts, args = getopt.getopt(sys.argv[1:], 'hi:p:m:l:r:s:t:f:v:z:a:')
+    # except getopt.GetoptError:
+    #     usage()
+    # for opt, arg in opts :
+    #     if opt in ('-f'):
+    #         figure_fit = int(arg)
 
     # display usage if incorrect method
     if name_process == 'csa' and (name_method not in method_CSA):
@@ -145,6 +137,7 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
+        print vert_lev
         compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, param.file_csa_volume, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
@@ -475,6 +468,7 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
+        print "HOLA!"
         from sct_extract_metric import save_metrics
 
         warning = ''
@@ -525,7 +519,8 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         # write result into output file
         save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
-
+    else:
+        print "NOOOOO!"
 
     # Remove temporary files
     if remove_temp_files:
@@ -670,24 +665,24 @@ def get_parser():
                       mandatory=False,
                       deprecated_by='-size')
     parser.add_option(name='-z',
-                      type_value='string',
+                      type_value='str',
                       description= 'Slice range to compute the CSA across (requires \"-p csa\").',
                       mandatory=False,
                       example='5:23')
     parser.add_option(name='-l',
-                      type_value='string',
+                      type_value='str',
                       description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
                       mandatory=False,
                       deprecated_by='-vert',
                       example='2:9')
     parser.add_option(name='-vert',
-                      type_value='string',
+                      type_value='str',
                       description= 'Vertebral levels to compute the CSA across (requires \"-p csa\"). Example: 2:9 for C2 to T2.',
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-t',
                       type_value='folder',
-                      description='Path to warped template. Default: ./label/template. Only use with flag -l',
+                      description='Path to warped template. Default: ./label/template. Only use with flag -vert',
                       mandatory=False,
                       default_value='./label/template',
                       example='./label/template')
