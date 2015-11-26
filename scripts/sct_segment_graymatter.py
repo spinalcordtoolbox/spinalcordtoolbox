@@ -396,7 +396,7 @@ class FullGmSegmentation:
 
         # Compute Hausdorff distance
         hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
-        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -r '+ref_gmseg+' -t 1 -o '+hd_name+' -v '+str(self.param.verbose))
+        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -d '+ref_gmseg+' -thinning 1 -o '+hd_name+' -v '+str(self.param.verbose))
         sct.run('mv ./' + hd_name + ' ../')
 
         os.chdir('..')
