@@ -1035,7 +1035,7 @@ def get_parser():
                       example=['auto', 'point', 'labels'])
     parser.usage.addSection('General options')
     parser.add_option(name='-o',
-                      type_value='string',
+                      type_value='str',
                       description='Centerline file name (result file name)',
                       mandatory=False,
                       example='out.nii.gz')
