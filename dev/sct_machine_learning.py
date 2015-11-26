@@ -27,7 +27,7 @@ try:
 except:
    import pickle
 
-path_data = '/Users/benjamindeleener/data/spinal_cord_segmentation_data/'
+path_data = '/Users/neuropoly/data/machine_learning/spinal_cord_segmentation_data/'
 output_path = ''
 TRAINING_SOURCE_DATA = path_data+'training/data/'
 TRAINING_LABELS_DATA = path_data+'training/labels/'
@@ -46,7 +46,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', '/tmp/unet_train',
                            """Directory where to write event logs """
                            """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 10000000, """Number of batches to run.""")
+tf.app.flags.DEFINE_integer('max_steps', 100000, """Number of batches to run.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
 
@@ -445,6 +445,8 @@ def main(argv=None):  # pylint: disable=unused-argument
             test_error = error_rate(test_prediction.eval(), test_labels)
             sct.printv('Test error: ' + str(test_error))
             timer_training.printTotalTime()
+
+            savePredictions(result_test_prediction, output_path, list_test_data, segmentation_image_size)
 
             save_path = saver.save(s, output_path + 'model.ckpt')
             sct.printv('Model saved in file: ' + save_path)
