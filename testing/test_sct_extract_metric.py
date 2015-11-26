@@ -27,7 +27,7 @@ def test(path_data):
         ' -i '+path_data+folder_data[0]+file_data[0]+ \
         ' -f '+path_data+folder_data[0]+folder_data[1]+ \
         ' -l 2,17 '+ \
-        ' -m wath '+ \
+        ' -method wath '+ \
         ' -v 1:3'+ \
         ' -o quantif_'+file_data[0]+'.txt' \
         ' -v 1'

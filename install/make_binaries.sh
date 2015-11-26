@@ -9,7 +9,7 @@ SCT_DIR_LOCAL=${PWD%/*}
 echo ${SCT_DIR_LOCAL}
 
 # program list
-PROGRAM_LIST="isct_vesselness isct_propseg sct_change_nifti_pixel_type isct_crop_image sct_detect_spinalcord sct_dice_coefficient sct_hausdorff_distance sct_modif_header isct_orientation3d isct_bsplineapproximator" #
+PROGRAM_LIST="isct_vesselness isct_propseg sct_change_nifti_pixel_type isct_crop_image sct_detect_spinalcord isct_dice_coefficient sct_hausdorff_distance sct_modif_header isct_orientation3d isct_bsplineapproximator" #
 
 PATH_BIN_SCT=osx
 unamestr=`uname`
