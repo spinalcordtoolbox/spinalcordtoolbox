@@ -29,7 +29,6 @@ from sct_image import copy_header, split_data, concat_data
 from scipy.ndimage.filters import gaussian_filter
 
 
-
 class Param:
    ## The constructor
    def __init__(self):
@@ -43,9 +42,9 @@ class Param:
         self.output_file_name = ''
         self.schedule_file = 'flirtsch/schedule_TxTy.sch'
         self.gap = 4  # default gap between co-registered slices.
-        self.gaussian_kernel = 4 # gaussian kernel for creating gaussian mask from center point.
-        self.deg_poly = 10 # maximum degree of polynomial function for fitting centerline.
-        self.remove_tmp_files = 1 # remove temporary files
+        self.gaussian_kernel = 4  # gaussian kernel for creating gaussian mask from center point.
+        self.deg_poly = 10  # maximum degree of polynomial function for fitting centerline.
+        self.remove_tmp_files = 1  # remove temporary files
 
 
 def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4, remove_tmp_files=1):
@@ -98,7 +97,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # create temporary folder
     print('\nCreate temporary folder...')
-    path_tmp = 'tmp.'+strftime("%y%m%d%H%M%S")
+    path_tmp = 'tmp.'+strftime('%y%m%d%H%M%S')
     sct.create_folder(path_tmp)
     print '\nCopy input data...'
     sct.run('cp '+fname_anat+ ' '+path_tmp+'/tmp.anat'+ext_anat)
@@ -155,23 +154,23 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     mask2d = exp(-(((xx-x_init)**2)/(2*(sigma**2)) + ((yy-y_init)**2)/(2*(sigma**2))))
 
     # Save mask to 2d file
-    file_mask_split = ['tmp.mask_orient_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mask_split = ['tmp.mask_orient_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
     nii_mask2d = Image('tmp.anat_orient_Z0000.nii')
     nii_mask2d.data = mask2d
     nii_mask2d.setFileName(file_mask_split[z_init]+'.nii')
     nii_mask2d.save()
 
     # initialize variables
-    file_mat = ['tmp.mat_Z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv = ['tmp.mat_inv_Z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_mat = ['tmp.mat_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv = ['tmp.mat_inv_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mat_inv_cumul = ['tmp.mat_inv_cumul_Z'+str(z).zfill(4) for z in range(0, nz, 1)]
 
     # create identity matrix for initial transformation matrix
     fid = open(file_mat_inv_cumul[z_init], 'w')
-    fid.write('%i %i %i %i\n' %(1, 0, 0, 0) )
-    fid.write('%i %i %i %i\n' %(0, 1, 0, 0) )
-    fid.write('%i %i %i %i\n' %(0, 0, 1, 0) )
-    fid.write('%i %i %i %i\n' %(0, 0, 0, 1) )
+    fid.write('%i %i %i %i\n' % (1, 0, 0, 0))
+    fid.write('%i %i %i %i\n' % (0, 1, 0, 0))
+    fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
+    fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
     fid.close()
 
     # initialize centerline: give value corresponding to initial point
@@ -195,17 +194,20 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
             z_centerline.reverse()
 
         # initialization before looping
-        z_dest = z_init # point given by user
+        z_dest = z_init  # point given by user
         z_src = z_dest + slice_gap_signed
 
-        # continue looping if 0 < z < nz
-        while 0 <= z_src and z_src <= nz-1:
+        # continue looping if 0 <= z < nz
+        while 0 <= z_src < nz:
 
             # print current z:
             print 'z='+str(z_src)+':'
 
             # estimate transformation
-            sct.run(fsloutput+'flirt -in '+file_anat_split[z_src]+' -ref '+file_anat_split[z_dest]+' -schedule '+file_schedule+ ' -verbose 0 -omat '+file_mat[z_src]+' -cost normcorr -forcescaling -inweight '+file_mask_split[z_dest]+' -refweight '+file_mask_split[z_dest])
+            sct.run(fsloutput+'flirt -in '+file_anat_split[z_src]+' -ref '+file_anat_split[z_dest]+' -schedule ' +
+                    file_schedule + ' -verbose 0 -omat ' + file_mat[z_src] +
+                    ' -cost normcorr -forcescaling -inweight ' + file_mask_split[z_dest] +
+                    ' -refweight '+file_mask_split[z_dest])
 
             # display transfo
             status, output = sct.run('cat '+file_mat[z_src])
@@ -260,7 +262,7 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     # calculate RMSE
     rmse = linalg.norm(x_centerline_fit-x_centerline)/sqrt( len(x_centerline) )
     # calculate max absolute error
-    max_abs = max( abs(x_centerline_fit-x_centerline) )
+    max_abs = max(abs(x_centerline_fit-x_centerline))
     print '.. RMSE (in mm): '+str(rmse*px)
     print '.. Maximum absolute error (in mm): '+str(max_abs*px)
 
@@ -306,10 +308,10 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     for iz in range(0, nz, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' %(1, 0, 0, x_centerline_fit_full[iz]-x_init) )
-        fid.write('%i %i %i %f\n' %(0, 1, 0, y_centerline_fit_full[iz]-y_init) )
-        fid.write('%i %i %i %i\n' %(0, 0, 1, 0) )
-        fid.write('%i %i %i %i\n' %(0, 0, 0, 1) )
+        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz]-x_init))
+        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz]-y_init))
+        fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
+        fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
         fid.close()
         # compute forward cumulative fitted transformation matrix
         sct.run('convert_xfm -omat '+file_mat_cumul_fit[iz]+' -inverse '+file_mat_inv_cumul_fit[iz])
@@ -325,10 +327,10 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
     for iz in range(0, nz, 1):
         # compute inverse cumulative fitted transformation matrix
         fid = open(file_mat_inv_cumul_fit[iz], 'w')
-        fid.write('%i %i %i %f\n' %(1, 0, 0, x_centerline_fit_full[iz]-x_init) )
-        fid.write('%i %i %i %f\n' %(0, 1, 0, y_centerline_fit_full[iz]-y_init) )
-        fid.write('%i %i %i %i\n' %(0, 0, 1, 0) )
-        fid.write('%i %i %i %i\n' %(0, 0, 0, 1) )
+        fid.write('%i %i %i %f\n' % (1, 0, 0, x_centerline_fit_full[iz]-x_init))
+        fid.write('%i %i %i %f\n' % (0, 1, 0, y_centerline_fit_full[iz]-y_init))
+        fid.write('%i %i %i %i\n' % (0, 0, 1, 0))
+        fid.write('%i %i %i %i\n' % (0, 0, 0, 1))
         fid.close()
 
     # write polynomial coefficients
@@ -337,9 +339,9 @@ def get_centerline_from_point(input_image, point_file, gap=4, gaussian_kernel=4,
 
     # apply transformations to data
     print '\nApply fitted transformation matrices...'
-    file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_mask_split_fit = ['tmp.mask_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
-    file_point_split_fit = ['tmp.point_orient_fit_z'+str(z).zfill(4) for z in range(0,nz,1)]
+    file_anat_split_fit = ['tmp.anat_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_mask_split_fit = ['tmp.mask_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
+    file_point_split_fit = ['tmp.point_orient_fit_z'+str(z).zfill(4) for z in range(0, nz, 1)]
     for iz in range(0, nz, 1):
         # forward cumulative transformation to data
         sct.run(fsloutput+'flirt -in '+file_anat_split[iz]+' -ref '+file_anat_split[iz]+' -applyxfm -init '+file_mat_cumul_fit[iz]+' -out '+file_anat_split_fit[iz])
@@ -405,7 +407,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     path, file, ext = sct.extract_fname(fname_in)
 
     # create temporary folder
-    path_tmp = sct.slash_at_the_end('tmp.'+strftime("%y%m%d%H%M%S"), 1)
+    path_tmp = sct.slash_at_the_end('tmp.'+strftime('%y%m%d%H%M%S'), 1)
     sct.run('mkdir '+path_tmp)
 
     # Copying input data to tmp folder
@@ -430,7 +432,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
        for i in range(0, len(list_fname_labels)):
             orientation_file_temp = get_orientation(file_labels[i], filename=True)
             if orientation_file_0 != orientation_file_temp :
-                print "ERROR: The files ", fname_in, " and ", file_labels[i], " are not in the same orientation. Use sct_image -setorient to change the orientation of a file."
+                print 'ERROR: The files ', fname_in, ' and ', file_labels[i], ' are not in the same orientation. Use sct_image -setorient to change the orientation of a file.'
                 sys.exit(2)
             file_temp = load(file_labels[i])
             data_temp = file_temp.get_data()
@@ -447,7 +449,7 @@ def get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_n
     # Rename files after processing
     if output_file_name != None:
        output_file_name = output_file_name
-    else : output_file_name = "generated_centerline.nii.gz"
+    else : output_file_name = 'generated_centerline.nii.gz'
 
     os.rename(fname_output, output_file_name)
     path_binary, file_binary, ext_binary = sct.extract_fname(output_file_name)
@@ -481,7 +483,7 @@ def smooth_minimal_path(img, nb_pixels=1):
     """
 
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-
+    from scipy.ndimage.filters import gaussian_filter
     raw_orientation = img.change_orientation()
 
     img.data = gaussian_filter(img.data, [nb_pixels/px, nb_pixels/py, 0])
@@ -525,7 +527,7 @@ def symmetry_detector_right_left(data, cropped_xy=0):
     for iz in range(0, np.size(slice_p[1])):
         corr1 = slice_p[:, iz]
         corr2 = slice_p_reversed[:, iz]
-        cross_corr[:, iz] = np.double(np.correlate(corr1, corr2, "full"))
+        cross_corr[:, iz] = np.double(np.correlate(corr1, corr2, 'full'))
         max_value = np.max(cross_corr[:, iz])
         if max_value == 0:
             cross_corr[:, iz] = 0
@@ -627,7 +629,6 @@ def get_minimum_path_nii(fname):
 
 def ind2sub(array_shape, ind):
     """
-
     :param array_shape: shape of the array
     :param ind: index number
     :return: coordinates equivalent to the index number for a given array shape
@@ -659,7 +660,7 @@ def get_centerline(data, dim):
 
 
 class SymmetryDetector(Algorithm):
-    def __init__(self, input_image, contrast=None, verbose=0, direction="lr", nb_sections=1, crop_xy=1):
+    def __init__(self, input_image, contrast=None, verbose=0, direction='lr', nb_sections=1, crop_xy=1):
         super(SymmetryDetector, self).__init__(input_image)
         self._contrast = contrast
         self._verbose = verbose
@@ -741,7 +742,7 @@ class SCAD(Algorithm):
         super(SCAD, self).__init__(input_image, produce_output=produce_output)
         self._contrast = contrast
         self._verbose = verbose
-        self.output_filename = input_image.file_name + "_centerline.nii.gz"
+        self.output_filename = input_image.file_name + '_centerline.nii.gz'
         if output_filename is not None:
             self.output_filename = output_filename
         self.rm_tmp_file = rm_tmp_file
@@ -798,7 +799,7 @@ class SCAD(Algorithm):
         """
         import time
         from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
+        path_tmp = slash_at_the_end('scad_output_'+time.strftime('%y%m%d%H%M%S'), 1)
         sct.run('mkdir '+path_tmp, self.verbose)
         # getting input image header
         img = self.input_image.copy()
@@ -806,39 +807,39 @@ class SCAD(Algorithm):
         # saving body symmetry
         img.data = self.raw_symmetry
         img.change_orientation(self.raw_orientation)
-        img.file_name += "body_symmetry"
+        img.file_name += 'body_symmetry'
         img.save()
 
         # saving minimum paths
         img.data = self.minimum_path_data
         img.change_orientation(self.raw_orientation)
-        img.file_name = "min_path"
+        img.file_name = 'min_path'
         img.save()
         img.data = self.J1_min_path
         img.change_orientation(self.raw_orientation)
-        img.file_name = "J1_min_path"
+        img.file_name = 'J1_min_path'
         img.save()
         img.data = self.J2_min_path
         img.change_orientation(self.raw_orientation)
-        img.file_name = "J2_min_path"
+        img.file_name = 'J2_min_path'
         img.save()
 
         # saving minimum path powered
         img.data = self.minimum_path_powered
         img.change_orientation(self.raw_orientation)
-        img.file_name = "min_path_powered_"+str(self.minimum_path_exponent)
+        img.file_name = 'min_path_powered_'+str(self.minimum_path_exponent)
         img.save()
 
         # saving smoothed min path
         img = self.smoothed_min_path.copy()
         img.change_orientation(self.raw_orientation)
-        img.file_name = "min_path_power_"+str(self.minimum_path_exponent)+"_smoothed"
+        img.file_name = 'min_path_power_'+str(self.minimum_path_exponent)+'_smoothed'
         img.save()
 
         # save symmetry_weighted_minimal_path
         img.data = self.spine_detect_data
         img.change_orientation(self.raw_orientation)
-        img.file_name = "symmetry_weighted_minimal_path"
+        img.file_name = 'symmetry_weighted_minimal_path'
         img.save()
 
     def output_debug_file(self, img, data, file_name):
@@ -871,15 +872,15 @@ class SCAD(Algorithm):
         if self.produce_output:
             import time
             from sct_utils import slash_at_the_end
-            folder = slash_at_the_end('scad_output_'+time.strftime("%y%m%d%H%M%S"), 1)
+            folder = slash_at_the_end('scad_output_'+time.strftime('%y%m%d%H%M%S'), 1)
             sct.run('mkdir '+folder, self.verbose)
             self.debug_folder = os.path.abspath(folder)
-            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder)+"/raw.nii.gz")
+            conv.convert(str(self.input_image.absolutepath), str(self.debug_folder)+'/raw.nii.gz')
 
     def create_temporary_path(self):
         import time
         from sct_utils import slash_at_the_end
-        path_tmp = slash_at_the_end('tmp.'+time.strftime("%y%m%d%H%M%S"), 1)
+        path_tmp = slash_at_the_end('tmp.'+time.strftime('%y%m%d%H%M%S'), 1)
         sct.run('mkdir '+path_tmp, self.verbose)
         return path_tmp
 
@@ -887,8 +888,8 @@ class SCAD(Algorithm):
         print 'Execution of the SCAD algorithm in '+str(os.getcwd())
 
         original_name = self.input_image.file_name
-        vesselness_file_name = "imageVesselNessFilter.nii.gz"
-        raw_file_name = "raw.nii"
+        vesselness_file_name = 'imageVesselNessFilter.nii.gz'
+        raw_file_name = 'raw.nii'
 
         # self.setup_debug_folder()
 
@@ -915,7 +916,7 @@ class SCAD(Algorithm):
             sym = SymmetryDetector(raw_file_name, self.contrast, crop_xy=0)
             self.raw_symmetry = sym.execute()
             img.change_orientation(self.raw_orientation)
-            self.output_debug_file(img, self.raw_symmetry, "body_symmetry")
+            self.output_debug_file(img, self.raw_symmetry, 'body_symmetry')
             img.change_orientation()
 
         if self.smooth_vesselness:
@@ -933,27 +934,26 @@ class SCAD(Algorithm):
 
         # vesselness filter
         if not self.vesselness_provided:
-            sct.run('isct_vesselness -i '+raw_file_name+' -t ' + self._contrast+" -radius "+str(self.spinalcord_radius))
+            sct.run('isct_vesselness -i '+raw_file_name+' -t ' + self._contrast+' -radius '+str(self.spinalcord_radius))
 
         # load vesselness filter data and perform minimum path on it
         img = Image(vesselness_file_name)
-
         img.change_orientation()
         self.minimum_path_data, self.J1_min_path, self.J2_min_path = get_minimum_path(img.data, invert=1, debug=1)
-        self.output_debug_file(img, self.minimum_path_data, "minimal_path")
-        self.output_debug_file(img, self.J1_min_path, "J1_minimal_path")
-        self.output_debug_file(img, self.J2_min_path, "J2_minimal_path")
+        self.output_debug_file(img, self.minimum_path_data, 'minimal_path')
+        self.output_debug_file(img, self.J1_min_path, 'J1_minimal_path')
+        self.output_debug_file(img, self.J2_min_path, 'J2_minimal_path')
 
         # Apply an exponent to the minimum path
         self.minimum_path_powered = np.power(self.minimum_path_data, self.minimum_path_exponent)
-        self.output_debug_file(img, self.minimum_path_powered, "minimal_path_power_"+str(self.minimum_path_exponent))
+        self.output_debug_file(img, self.minimum_path_powered, 'minimal_path_power_'+str(self.minimum_path_exponent))
 
         # Saving in Image since smooth_minimal_path needs pixel dimensions
         img.data = self.minimum_path_powered
 
         # smooth resulting minimal path
         self.smoothed_min_path = smooth_minimal_path(img)
-        self.output_debug_file(img, self.smoothed_min_path.data, "minimal_path_smooth")
+        self.output_debug_file(img, self.smoothed_min_path.data, 'minimal_path_smooth')
 
         # normalise symmetry values between 0 and 1
         if self.enable_symmetry:
@@ -970,26 +970,26 @@ class SCAD(Algorithm):
         else:
             # extract the centerline from the minimal path image
             self.centerline_with_outliers = get_centerline(self.smoothed_min_path.data, self.smoothed_min_path.data.shape)
-        self.output_debug_file(img, self.centerline_with_outliers, "centerline_with_outliers")
+        self.output_debug_file(img, self.centerline_with_outliers, 'centerline_with_outliers')
 
         # saving centerline with outliers to have
         img.data = self.centerline_with_outliers
         img.change_orientation()
-        img.file_name = "centerline_with_outliers"
+        img.file_name = 'centerline_with_outliers'
         img.save()
 
         # use a b-spline to smooth out the centerline
-        x, y, z, dx, dy, dz = smooth_centerline("centerline_with_outliers.nii.gz")
+        x, y, z, dx, dy, dz = smooth_centerline('centerline_with_outliers.nii.gz')
 
         # save the centerline
         nx, ny, nz, nt, px, py, pz, pt = img.dim
         img.data = np.zeros((nx, ny, nz))
-        for i in range(0, np.size(x)-1):
+        for i in range(0, np.size(x)):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
-        self.output_debug_file(img, img.data, "centerline")
+        self.output_debug_file(img, img.data, 'centerline')
         img.change_orientation(self.raw_orientation)
-        img.file_name = "centerline"
+        img.file_name = 'centerline'
         img.save()
 
         # copy back centerline
@@ -999,8 +999,8 @@ class SCAD(Algorithm):
             import shutil
             shutil.rmtree(self.path_tmp)
 
-        print "To view the output with FSL :"
-        sct.printv("fslview "+self.input_image.absolutepath+" "+self.output_filename+" -l Red", self.verbose, "info")
+        print 'To view the output with FSL :'
+        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red', self.verbose, 'info')
 
 
 def get_parser():
@@ -1009,105 +1009,128 @@ def get_parser():
     """
     # Initialize the parser
     parser = Parser(__file__)
-    parser.usage.set_description('''This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .''')
-    parser.add_option(name="-i",
-                      type_value='file',
-                      description="Image to get centerline from.",
+    parser.usage.set_description("""This program is used to get the centerline of the spinal cord of a subject by using one of the three methods describe in the -method flag .""")
+    parser.add_option(name='-i',
+                      type_value='image_nifti',
+                      description='Image to get centerline from.',
                       mandatory=True,
-                      example="t2.nii.gz")
-    parser.usage.addSection("Execution Option")
-    parser.add_option(name="-method",
-                      type_value="multiple_choice",
-                      description="Method to get the centerline:\n"
-"auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n"
-"point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n"
-"labels: Fit spline function across labels. Requires a couple of points along the cord.",
+                      example='t2.nii.gz')
+    parser.usage.addSection('Execution Option')
+    parser.add_option(name='-p',
+                      type_value='multiple_choice',
+                      description='Method to get the centerline:\n'
+'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
+'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
+'labels: Fit spline function across labels. Requires a couple of points along the cord.',
                       mandatory=True,
                       example=['auto', 'point', 'labels'])
-    parser.usage.addSection("General options")
-    parser.add_option(name="-o",
-                      type_value="string",
-                      description="Centerline file name (result file name)",
+    parser.add_option(name='-method',
+                      type_value='multiple_choice',
+                      description='Method to get the centerline:\n'
+'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
+'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
+'labels: Fit spline function across labels. Requires a couple of points along the cord.',
+                      mandatory=True,
+                      deprecated_by='-p',
+                      example=['auto', 'point', 'labels'])
+    parser.usage.addSection('General options')
+    parser.add_option(name='-o',
+                      type_value='str',
+                      description='Centerline file name (result file name)',
                       mandatory=False,
-                      example="out.nii.gz")
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description= "Removes the temporary folder and debug folder used for the algorithm at the end of execution",
+                      example='out.nii.gz')
+    parser.add_option(name='-r',
+                      type_value='multiple_choice',
+                      description= 'Removes the temporary folder and debug folder used for the algorithm at the end of execution',
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
+    parser.add_option(name='-v',
+                      type_value='multiple_choice',
+                      description='1: display on, 0: display off (default)',
                       mandatory=False,
-                      example=["0", "1", "2"],
-                      default_value="1")
-    parser.add_option(name="-h",
+                      example=['0', '1', '2'],
+                      default_value='1')
+    parser.add_option(name='-h',
                       type_value=None,
-                      description="display this help",
+                      description='display this help',
                       mandatory=False)
 
-    parser.usage.addSection("Automatic method options")
-    parser.add_option(name="-t",
-                      type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n"
-                                  "For dMRI use t1, for T2* or MT use t2",
+    parser.usage.addSection('Automatic method options')
+    parser.add_option(name='-contrast',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
                       mandatory=False,
+                      deprecated_by='-c',
+                      example=['t1', 't2'])
+    parser.add_option(name='-c',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
+                      mandatory=False,
+                      example=['t1', 't2'])
+    parser.add_option(name='-t',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
+                      deprecated_by='-c',
+                      mandatory=True,
                       example=['t1', 't2'])
     parser.add_option(name="-radius",
                       type_value="int",
                       description="Approximate radius of spinal cord to help the algorithm",
                       mandatory=False,
                       default_value="4",
-                      example="4")
+                      example="4")    
     parser.add_option(name="-smooth_vesselness",
                       type_value="multiple_choice",
                       description="Smoothing of the vesselness image",
                       mandatory=False,
                       default_value="0",
                       example=['0', '1'])
-    parser.add_option(name="-sym_exp",
-                      type_value="int",
-                      description="Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.",
+    parser.add_option(name='-sym_exp',
+                      type_value='int',
+                      description='Weight symmetry value (only use with flag -sym). Minimum weight: 0, maximum weight: 100.',
                       mandatory=False,
-                      default_value="10")
-    parser.add_option(name="-sym",
-                      type_value="multiple_choice",
-                      description="Uses right-left symmetry of the image to improve accuracy.",
+                      default_value=10)
+    parser.add_option(name='-sym',
+                      type_value='multiple_choice',
+                      description='Uses right-left symmetry of the image to improve accuracy.',
                       mandatory=False,
-                      default_value="0",
+                      default_value='0',
                       example=['0', '1'])
 
-    parser.usage.addSection("Point method options")
-    parser.add_option(name="-p",
+    parser.usage.addSection('Point method options')
+    parser.add_option(name='-point',
                       type_value='file',
-                      description="Binary image with a point inside the spinal cord.",
+                      description='Binary image with a point inside the spinal cord.',
                       mandatory=False,
-                      example="t2_point.nii.gz")
+                      example='t2_point.nii.gz')
     parser.add_option(name="-g",
                       type_value="int",
                       description="Gap between slices for registration. Higher is faster but less robust.",
                       mandatory=False,
                       default_value=4,
-                      example="4")
-    parser.add_option(name="-k",
-                      type_value="int",
-                      description="Kernel size for gaussian mask. Higher is more robust but less accurate.",
+                      example="4")    
+    parser.add_option(name='-k',
+                      type_value='int',
+                      description='Kernel size for gaussian mask. Higher is more robust but less accurate.',
                       mandatory=False,
                       default_value=4,
-                      example="4")
+                      example='4')
 
-    parser.usage.addSection("Label method options")
-    parser.add_option(name="-l",
+    parser.usage.addSection('Label method options')
+    parser.add_option(name='-l',
                       type_value=[[','], 'file'],
-                      description="Binary image with several points (5 to 10) along the spinal cord.",
+                      description='Binary image with several points (5 to 10) along the spinal cord.',
                       mandatory=False,
-                      example="t2_labels.nii.gz")
+                      example='t2_labels.nii.gz')
 
     return parser
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     param = Param()
     param_default = Param()
 
@@ -1119,54 +1142,54 @@ if __name__ == "__main__":
     # get parser info
     parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
-    method = arguments["-method"]
-    fname_in = arguments["-i"]
-    if "-o" in arguments:
-        output_file_name = arguments["-o"]
-    if "-v" in arguments:
-        verbose = int(arguments["-v"])
-    if "-r" in arguments:
-        rm_tmp_files = int(arguments["-r"])
+    method = arguments['-p']
+    fname_in = arguments['-i']
+    if '-o' in arguments:
+        output_file_name = arguments['-o']
+    if '-v' in arguments:
+        verbose = int(arguments['-v'])
+    if '-r' in arguments:
+        rm_tmp_files = int(arguments['-r'])
 
-    if method == "labels":
-        if "-l" in arguments:
-            list_fname_labels = arguments["-l"]
+    if method == 'labels':
+        if '-l' in arguments:
+            list_fname_labels = arguments['-l']
         else:
             sct.printv('ERROR: Needs input label (option -l).', 1, 'error')
         get_centerline_from_labels(fname_in, list_fname_labels, param, output_file_name, rm_tmp_files)
 
-    elif method == "point":
-        if "-p" in arguments:
-            fname_point = arguments["-p"]
+    elif method == 'point':
+        if '-point' in arguments:
+            fname_point = arguments['-point']
         else:
-            sct.printv('ERROR: Needs input point (option -p).', 1, 'error')
-        if "-g" in arguments:
-            gap = arguments["-g"]
-        if "-k" in arguments:
-            gaussian_kernel = arguments["-k"]
+            sct.printv('ERROR: Needs input point (option -point).', 1, 'error')
+        if '-g' in arguments:
+            gap = arguments['-g']
+        if '-k' in arguments:
+            gaussian_kernel = arguments['-k']
         get_centerline_from_point(fname_in, fname_point, gap, gaussian_kernel, rm_tmp_files)
 
-    elif method == "auto":
+    elif method == 'auto':
         try:
-            contrast = arguments["-t"]
+            contrast = arguments['-c']
         except Exception, e:
-            sct.printv("The method automatic requires a contrast type to be defined", type="error")
+            sct.printv('The method automatic requires a contrast type to be defined', type='error')
         im = Image(fname_in)
         scad = SCAD(im, contrast=contrast)
-        if "-o" in arguments:
-            scad.output_filename = arguments["-o"]
-        if "-r" in arguments:
-            scad.rm_tmp_file = int(arguments["-r"])
-        if "-sym" in arguments:
-            scad.enable_symmetry = int(arguments["-sym"])
-        if "-sym_exp" in arguments:
-            scad.symmetry_exponent = int(arguments["-sym_exp"])
-        if "-radius" in arguments:
-            scad.spinalcord_radius = int(arguments["-radius"])
-        if "-smooth_vesselness" in arguments:
-            scad.smooth_vesselness = int(arguments["-smooth_vesselness"])
-        if "-v" in arguments:
-            scad.verbose = int(arguments["-v"])
+        if '-o' in arguments:
+            scad.output_filename = arguments['-o']
+        if '-r' in arguments:
+            scad.rm_tmp_file = int(arguments['-r'])
+        if '-sym' in arguments:
+            scad.enable_symmetry = int(arguments['-sym'])
+        if '-sym_exp' in arguments:
+            scad.symmetry_exponent = int(arguments['-sym_exp'])
+        if '-radius' in arguments:
+            scad.spinalcord_radius = int(arguments['-radius'])
+        if '-smooth_vesselness' in arguments:
+            scad.smooth_vesselness = int(arguments['-smooth_vesselness'])
+        if '-v' in arguments:
+            scad.verbose = int(arguments['-v'])
         scad.execute()
 
 

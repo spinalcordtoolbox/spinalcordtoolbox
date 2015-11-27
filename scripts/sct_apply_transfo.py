@@ -51,12 +51,17 @@ def get_parser():
                       description="warping field",
                       mandatory=True,
                       example="warp1.nii.gz,warp2.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="int",
+    parser.add_option(name="-crop",
+                      type_value="multiple_choice",
                       description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
                       mandatory=False,
                       default_value='0',
                       example=['0','1','2'])
+    parser.add_option(name="-c",
+                      type_value=None,
+                      description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
+                      mandatory=False,
+                      deprecated_by='-crop')
     parser.add_option(name="-o",
                       type_value="file_output",
                       description="registered source.",
@@ -259,16 +264,16 @@ def main(args=None):
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, warp=warp_filename)
 
-    if "-c" in arguments:
-        transform.crop = arguments["-c"]
+    if "-crop" in arguments:
+        transform.crop = arguments["-crop"]
     if "-o" in arguments:
         transform.output_filename = arguments["-o"]
     if "-x" in arguments:
         transform.interp = arguments["-x"]
     if "-r" in arguments:
-        transform.remove_temp_files = arguments["-r"]
+        transform.remove_temp_files = int(arguments["-r"])
     if "-v" in arguments:
-        transform.verbose = arguments["-v"]
+        transform.verbose = int(arguments["-v"])
 
     transform.apply()
 

@@ -27,7 +27,7 @@ def test(path_data='', parameters=''):
 
     file_init_label_vertebrae = 'init_label_vertebrae.txt'
     if not parameters:
-        parameters = '-i t2/t2.nii.gz -seg t2/t2_seg.nii.gz -o t2_seg_labeled.nii.gz'
+        parameters = '-i t2/t2.nii.gz -s t2/t2_seg.nii.gz -o t2_seg_labeled.nii.gz'
 
     parser = sct_label_vertebrae.get_parser()
     dict_param = parser.parse(parameters.split(), check_file_exist=False)
@@ -35,7 +35,7 @@ def test(path_data='', parameters=''):
     param_with_path = parser.dictionary_to_string(dict_param_with_path)
 
     # Check if input files exist
-    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-seg'])):
+    if not (os.path.isfile(dict_param_with_path['-i']) and os.path.isfile(dict_param_with_path['-s'])):
         status = 200
         output = 'ERROR: the file(s) provided to test function do not exist in folder: ' + path_data
         return status, output, DataFrame(data={'status': status, 'output': output, 'mse': float('nan')}, index=[path_data])
@@ -61,7 +61,7 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
         from sct_label_utils import ProcessLabels
         from numpy import linalg

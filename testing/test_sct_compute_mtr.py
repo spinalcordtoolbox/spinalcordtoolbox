@@ -29,8 +29,8 @@ def test(data_path):
     file_data = ['mt0.nii.gz', 'mt1.nii.gz', 'mt1_seg.nii.gz']
 
     # define command
-    cmd = 'sct_compute_mtr -i ' + data_path + folder_data + file_data[0] \
-          + ' -j ' + data_path + folder_data + file_data[1] + ' -r 0'
+    cmd = 'sct_compute_mtr -mt0 ' + data_path + folder_data + file_data[0] \
+          + ' -mt1 ' + data_path + folder_data + file_data[1] + ' -r 0'
     output += '\n====================================================================================================\n'+cmd+'\n====================================================================================================\n\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
     status += s
