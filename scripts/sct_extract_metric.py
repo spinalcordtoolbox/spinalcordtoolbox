@@ -656,7 +656,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
     # CSV format, header lines start with "#"
 
     # Save metric in a .txt file
-    print '\nWrite results in ' + fname_output + '...'
+    sct.printv('\nWrite results in ' + fname_output + '...')
 
     # Write mode of file
     fid_metric = open(fname_output, 'w')
@@ -700,6 +700,7 @@ def save_metrics(ind_labels, label_name, slices_of_interest, metric_mean, metric
 
     # Close file .txt
     fid_metric.close()
+    sct.printv('\tDone.')
 
 
 
