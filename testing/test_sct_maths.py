@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Test function sct_fmri_moco
+# Test function sct_maths
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>

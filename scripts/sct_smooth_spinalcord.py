@@ -27,6 +27,7 @@ from nibabel import load, Nifti1Image, save
 from scipy import ndimage
 from copy import copy
 from sct_convert import convert
+from msct_parser import Parser
 
 class Param:
     ## The constructor
@@ -48,32 +49,17 @@ def main():
     verbose = param.verbose
     start_time = time.time()
 
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
 
-    # Check input param
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hi:c:r:s:v:')
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-    if not opts:
-        usage()
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-        elif opt in ('-c'):
-            fname_centerline = arg
-        elif opt in ('-i'):
-            fname_anat = arg
-        elif opt in ('-r'):
-            remove_temp_files = arg
-        elif opt in ('-s'):
-            sigma = arg
-        elif opt in ('-v'):
-            verbose = int(arg)
-
-    # Display usage if a mandatory argument is not provided
-    if fname_anat == '' or fname_centerline == '':
-        usage()
+    fname_anat = arguments['-i']
+    fname_centerline = arguments['-s']
+    if '-smooth' in arguments:
+        sigma = arguments['-smooth']
+    if '-r' in arguments:
+        remove_temp_files = int(arguments['-r'])
+    if '-v' in arguments:
+        verbose = int(arguments['-v'])
 
     # Display arguments
     print '\nCheck input arguments...'
@@ -81,11 +67,6 @@ def main():
     print '  Centerline ........................ ' + fname_centerline
     print '  FWHM .............................. '+str(sigma)
     print '  Verbose ........................... '+str(verbose)
-
-    # Check existence of input files
-    print('\nCheck existence of input files...')
-    sct.check_file_exist(fname_anat, verbose)
-    sct.check_file_exist(fname_centerline, verbose)
 
     # Check that input is 3D:
     from msct_image import Image
@@ -210,7 +191,7 @@ def main():
 
    # Straighten the spinal cord
     print '\nStraighten the spinal cord...'
-    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -c centerline_rpi.nii -qc 0 -x spline -v '+str(verbose))
+    sct.run('sct_straighten_spinalcord -i anat_rpi.nii -s centerline_rpi.nii -qc 0 -x spline -v '+str(verbose))
 
     # Smooth the straightened image along z
     print '\nSmooth the straightened image along z...'
@@ -241,36 +222,49 @@ def main():
     sct.printv('fslview '+file_anat+' '+file_anat+'_smooth &\n', verbose, 'info')
 
 
+def get_parser():
+    # Initialize the parser
+    parser = Parser(__file__)
+    parser.usage.set_description('Smooth the spinal cord along its centerline. Steps are:\n'
+                                 '1) Spinal cord is straightened (using centerline),\n'
+                                 '2) a Gaussian kernel is applied in the superior-inferior direction,\n'
+                                 '3) then cord is de-straightened as originally.\n')
+    parser.add_option(name="-i",
+                      type_value="file",
+                      description="Image to smooth",
+                      mandatory=True,
+                      example='data.nii.gz')
+    parser.add_option(name="-s",
+                      type_value="file",
+                      description="Spinal cord centerline or segmentation",
+                      mandatory=True,
+                      example='data_centerline.nii.gz')
+    parser.add_option(name="-c",
+                      type_value=None,
+                      description="Spinal cord centerline or segmentation",
+                      mandatory=False,
+                      deprecated_by='-s')
+    parser.add_option(name="-smooth",
+                      type_value="int",
+                      description="Sigma of the smoothing Gaussian kernel (in voxel).",
+                      mandatory=False,
+                      default_value=3,
+                      example='2')
+    parser.usage.addSection('MISC')
+    parser.add_option(name="-r",
+                      type_value="multiple_choice",
+                      description='Remove temporary files.',
+                      mandatory=False,
+                      default_value='1',
+                      example=['0', '1'])
+    parser.add_option(name="-v",
+                      type_value='multiple_choice',
+                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
+                      mandatory=False,
+                      example=['0', '1', '2'],
+                      default_value='1')
 
-#=======================================================================================================================
-# usage
-#=======================================================================================================================
-def usage():
-    print '\n' \
-        ''+os.path.basename(__file__)+'\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  Smooth the spinal cord along its centerline. Steps are: 1) Spinal cord is straightened (using\n' \
-        '  centerline), 2) a Gaussian kernel is applied in the superior-inferior direction, 3) then cord is\n' \
-        '  de-straightened as originally.\n' \
-        '\n' \
-        'USAGE\n' \
-        '  sct_smooth_spinalcord -i <image> -c <centerline/segmentation>\n' \
-        '\n' \
-        'MANDATORY ARGUMENTS\n' \
-        '  -i <image>        input image to smooth.\n' \
-        '  -c <centerline>   spinal cord centerline or segmentation.\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=3.' \
-        '  -r {0,1}          remove temporary files. Default='+str(param_default.remove_temp_files)+'\n' \
-        '  -v {0,1,2}        verbose. 0: nothing, 1: small, 2: extended, 3: fig. Default='+str(param_default.verbose)+'\n' \
-        '  -h                help. Show this message.\n' \
-        '\n'
-
-    sys.exit(2)
+    return parser
 
 
 #=======================================================================================================================

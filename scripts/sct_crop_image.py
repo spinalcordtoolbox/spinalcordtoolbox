@@ -260,10 +260,8 @@ class ImageCropper(object):
         print 'fslview '+path_out+file_out+ext_out+' &'
         print
 
-
-if __name__ == "__main__":
-
-    # Initialize parser
+def get_parser():
+        # Initialize parser
     parser = Parser(__file__)
 
     # Mandatory arguments
@@ -364,7 +362,10 @@ if __name__ == "__main__":
                       description="maximize the cropping of the image (provide -dim if you want to specify the dimensions)",
                       deprecated_by="-bmax",
                       mandatory=False)
+    return parser
 
+if __name__ == "__main__":
+    parser = get_parser()
     # Fetching script arguments
     arguments = parser.parse(sys.argv[1:])
 
