@@ -197,7 +197,7 @@ def main(args):
     if '-v' in arguments:
         verbose = arguments['-v']
     if '-z' in arguments:
-        verbose = arguments['-z']
+        slices = arguments['-z']
     if '-a' in arguments:
         param.algo_fitting = arguments['-a']
 
@@ -563,7 +563,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
-        print "HOLA!"
         from sct_extract_metric import save_metrics
 
         warning = ''
@@ -614,12 +613,10 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         # write result into output file
         save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
-    else:
-        print "NOOOOO!"
 
     # Remove temporary files
     if remove_temp_files:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
 
 #=======================================================================================================================
