@@ -367,7 +367,7 @@ class Parser:
                     self.usage.error("ERROR: argument "+arg+" does not exist. See documentation.")
 
         # check if all mandatory arguments are provided by the user
-        for option in [opt for opt in self.options if self.options[opt].mandatory]:
+        for option in [opt for opt in self.options if self.options[opt].mandatory and self.options[opt].deprecated_by is None]:
             if option not in dictionary:
                 self.usage.error('ERROR: ' + option + ' is a mandatory argument.\n')
 
@@ -397,7 +397,7 @@ class Parser:
                             option[i] = path_to_add + value
                         dictionary[key] = option
                     else:
-                        dictionary[key] = path_to_add + option
+                        dictionary[key] = str(path_to_add) + str(option)
             else:
                 sct.printv("ERROR: the option you provided is not contained in this parser. Please check the dictionary", verbose=1, type='error')
 
@@ -505,6 +505,9 @@ Version: """ + str(self.get_sct_version())
                     description += " Deprecated argument!"
                 line = ["  "+opt+" "+type_value, self.align(description)]
                 self.arguments_string += self.tab(line) + '\n'
+
+        if len(self.arguments)+1 in self.section:
+            self.arguments_string += self.section[len(self.arguments)+1] + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:

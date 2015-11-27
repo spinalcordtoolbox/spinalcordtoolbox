@@ -15,7 +15,8 @@ from msct_parser import Parser
 import sys
 import sct_utils as sct
 
-if __name__ == "__main__":
+
+def get_parser():
     # Initialize the parser
     parser = Parser(__file__)
     parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
@@ -38,9 +39,15 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
     parser.add_option(name="-t",
                       type_value="multiple_choice",
                       description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
+                      mandatory=False,
+                      deprecated=1,
+                      deprecated_by="-c",
+                      example=['t1','t2'])
+    parser.add_option(name="-c",
+                      type_value="multiple_choice",
+                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
                       mandatory=True,
                       example=['t1','t2'])
-
     parser.usage.addSection("General options")
     parser.add_option(name="-ofolder",
                       type_value="folder_creation",
@@ -154,11 +161,14 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
                       type_value="float",
                       description="trade-off between distance of most promising point and feature strength, default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results.",
                       mandatory=False)
+    return parser
 
+if __name__ == "__main__":
+    parser = get_parser()
     arguments = parser.parse(sys.argv[1:])
 
     input_filename = arguments["-i"]
-    contrast_type = arguments["-t"]
+    contrast_type = arguments["-c"]
 
     # Building the command
     cmd = "isct_propseg" + " -i " + input_filename + " -t " + contrast_type
@@ -202,12 +212,7 @@ If the segmentation fails at some location (e.g. due to poor contrast between sp
 
     # Helping options
     if "-init-centerline" in arguments:
-        # need to make sure that the centerline that is provided has only one point per slice. So we generate a new
-        # "centerline" using sct_process_segmentation. Related to issue #544
-        input_centerline = str(arguments["-init-centerline"])
-        temp_centerline = sct.add_suffix(arguments["-init-centerline"], '_centerline')
-        sct.run('sct_process_segmentation -i ' + input_centerline + ' -p centerline')
-        cmd += " -init-centerline " + temp_centerline
+        cmd += " -init-centerline " + str(arguments["-init-centerline"])
     if "-init" in arguments:
         cmd += " -init " + str(arguments["-init"])
     if "-init-mask" in arguments:
