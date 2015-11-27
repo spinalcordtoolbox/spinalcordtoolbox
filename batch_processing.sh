@@ -142,12 +142,7 @@ sct_create_mask -i dmri.nii.gz -p coord,110x20 -size 60 -f cylinder
 # motion correction
 sct_dmri_moco -i dmri.nii.gz -bvec bvecs.txt -g 3 -m mask_dmri.nii.gz -param 2,2,1,MeanSquares -thr 0
 # detect approximate spinal cord centerline
-# TEMPORARY FIX: <<<<<
-# sct_get_centerline -p auto -i dwi_moco_mean.nii.gz -c t1 -sym 1
-sct_register_multimodal -i ../t2/t2_seg.nii.gz -d dwi_moco_mean.nii.gz -identity 1 -x nn
-sct_process_segmentation -i t2_seg_reg.nii.gz -p centerline
-mv t2_seg_reg_centerline.nii.gz dwi_moco_mean_centerline.nii.gz
-# >>>>>
+sct_get_centerline -p auto -i dwi_moco_mean.nii.gz -c t1
 # fine segmentation with propseg
 sct_propseg -i dwi_moco_mean.nii.gz -c t1 -init-centerline dwi_moco_mean_centerline.nii.gz
 # check segmentation
