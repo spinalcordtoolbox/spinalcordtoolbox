@@ -27,8 +27,8 @@ def test(data_path):
 
     # method coord
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
-          + ' -m coord,15x17' \
-          + ' -s 10' \
+          + ' -p coord,15x17' \
+          + ' -size 10' \
           + ' -r 0'
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
@@ -38,8 +38,8 @@ def test(data_path):
 
     # method point
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
-          + ' -m point,' + data_path + folder_data[0] + file_data[1] \
-          + ' -s 10' \
+          + ' -p point,' + data_path + folder_data[0] + file_data[1] \
+          + ' -size 10' \
           + ' -r 0'
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
@@ -49,8 +49,8 @@ def test(data_path):
 
     # method center
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
-          + ' -m center' \
-          + ' -s 10' \
+          + ' -p center' \
+          + ' -size 10' \
           + ' -r 0'
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
@@ -60,8 +60,8 @@ def test(data_path):
 
     # method centerline
     cmd = 'sct_create_mask -i ' + data_path + folder_data[0] + file_data[0] \
-          + ' -m centerline,' + data_path + folder_data[0] + file_data[2] \
-          + ' -s 10' \
+          + ' -p centerline,' + data_path + folder_data[0] + file_data[2] \
+          + ' -size 10' \
           + ' -r 0'
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)
@@ -71,8 +71,8 @@ def test(data_path):
 
     # method center on 4d data
     cmd = 'sct_create_mask -i ' + data_path + folder_data[1] + file_data[3] \
-          + ' -m center' \
-          + ' -s 10' \
+          + ' -p center' \
+          + ' -size 10' \
           + ' -r 0'
     output += cmd+'\n'  # copy command
     s, o = commands.getstatusoutput(cmd)

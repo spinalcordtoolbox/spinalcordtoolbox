@@ -257,7 +257,12 @@ def get_absolute_path(fname):
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
 def check_file_exist(fname, verbose=1):
-    if os.path.isfile(fname):
+    if fname[0] == '-':
+        # fname should be a warping field that will be inverted, ignore the "-"
+        fname_to_test = fname[1:]
+    else:
+        fname_to_test = fname
+    if os.path.isfile(fname_to_test):
         if verbose:
             printv('  OK: '+fname, verbose, 'normal')
         pass

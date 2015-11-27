@@ -363,24 +363,24 @@ class FullGmSegmentation:
 
         # Compute Dice coefficient
         try:
-            status_gm, output_gm = sct.run('sct_dice_coefficient '+ref_gmseg+' '+gm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+ref_gmseg+' -d '+gm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_gmseg = sct.extract_fname(ref_gmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+gm_seg+','+ref_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_ref_gmseg+' -thr 0.1 -o '+corrected_ref_gmseg)
             sct.run('sct_maths -i '+corrected_ref_gmseg+' -bin -o '+corrected_ref_gmseg)
-            status_gm, output_gm = sct.run('sct_dice_coefficient '+corrected_ref_gmseg+' '+gm_seg+'  -2d-slices 2', error_exit='warning')
+            status_gm, output_gm = sct.run('sct_dice_coefficient -i '+corrected_ref_gmseg+' -d '+gm_seg+'  -2d-slices 2', error_exit='warning')
 
         try:
-            status_wm, output_wm = sct.run('sct_dice_coefficient '+ref_wmseg+' '+wm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+ref_wmseg+' -d '+wm_seg+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_ref_wmseg = sct.extract_fname(ref_wmseg)[1]+'_in_res_space'+ext
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+wm_seg+','+ref_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_ref_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_ref_wmseg+' -thr 0.1 -o '+corrected_ref_wmseg)
             sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin -o '+corrected_ref_wmseg)
-            status_wm, output_wm = sct.run('sct_dice_coefficient '+corrected_ref_wmseg+' '+wm_seg+'  -2d-slices 2', error_exit='warning')
+            status_wm, output_wm = sct.run('sct_dice_coefficient -i '+corrected_ref_wmseg+' -d '+wm_seg+'  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
         dice_fic = open('../'+dice_name, 'w')
@@ -396,7 +396,7 @@ class FullGmSegmentation:
 
         # Compute Hausdorff distance
         hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
-        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -r '+ref_gmseg+' -t 1 -o '+hd_name+' -v '+str(self.param.verbose))
+        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -d '+ref_gmseg+' -thinning 1 -o '+hd_name+' -v '+str(self.param.verbose))
         sct.run('mv ./' + hd_name + ' ../')
 
         os.chdir('..')
@@ -423,12 +423,18 @@ def get_parser():
                       example='sc_seg.nii.gz')
     parser.usage.addSection('STRONGLY RECOMMENDED ARGUMENTS\n'
                             'Choose one of them')
-    parser.add_option(name="-l",
+    parser.add_option(name="-vert",
                       type_value="file",
                       description="Image containing level labels for the target"
                                   "If -l is used, no need to provide t2 data",
                       mandatory=False,
                       example='MNI-Poly-AMU_level_IRP.nii.gz')
+    parser.add_option(name="-l",
+                      type_value=None,
+                      description="Image containing level labels for the target"
+                                  "If -l is used, no need to provide t2 data",
+                      mandatory=False,
+                      deprecated_by='-vert')
     parser.add_option(name="-t2",
                       type_value=[[','], 'file'],
                       description="T2 data associated to the input image : used to register the template on the T2star and get the vertebral levels\n"
@@ -553,8 +559,8 @@ if __name__ == "__main__":
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
-        if "-l" in arguments:
-            input_level_fname = arguments["-l"]
+        if "-vert" in arguments:
+            input_level_fname = arguments["-vert"]
         if "-use-levels" in arguments:
             param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:

@@ -7,12 +7,16 @@
 - NEW: **sct_label_vertebrae**: can automatically label vertebral levels given an anatomical scan, a centerline and few prior info.
 - NEW: **sct_segment_graymatter**: segment spinal cord gray matter using multi-atlas approach from Asman et al.
 - NEW: **sct_register_graymatter**: improve registration to the template using gray matter segmentation
-- NEW: no more dependence with FSL
-- NEW: no more dependence with c3d
+- NEW: **sct_process_segmentation**: feature to estimate CSA based on labels
 - NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
 - NEW: added "-qc" flag to some functions to output png images for quality control.
 - BUG: **install_patch**: now possible to install as non-admin (issues #380, #434)
+- BUG: **sct_extract_metric**: fix the case when averaging labels from different clusters with method map
+- INST: no more dependence with FSL
+- INST: no more dependence with c3d
 - OPT: **sct_straighten_spinalcord**: improved accuracy (issues #371, #425, #452, #472)
+- OPT: **sct_registration_to_template**: improved accuracy
+- REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
 
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
