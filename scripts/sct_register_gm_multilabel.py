@@ -86,22 +86,27 @@ class MultiLabelRegistration:
         im_automatic_ml.save()
         im_template_ml.save()
 
-        # sct.run('sct_create_mask -i '+name+' -mcenterline,'+name+' -f box -s '+size)
-        # status, output_crop = sct.run('sct_crop_image -i '+name+' -m '+mask)
-        #TODO get dim from output_crop
+        nx, ny, nz, nt, px, py, pz, pt = im_automatic_ml.dim
+        size_mask = int(22.5/px)
+        fname_mask = 'square_mask.nii.gz'
+        sct.run('sct_create_mask -i '+fname_automatic_ml+' -p centerline,'+fname_automatic_ml+' -f box -size '+str(size_mask)+' -o '+fname_mask)
 
-        fname_automatic_ml_smooth = file_automatic_ml+'_smooth'+ext_automatic_ml
+        fname_automatic_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_automatic_ml, fname_mask)
+        fname_template_ml, xi, xf, yi, yf, zi, zf = crop_im(fname_template_ml, fname_mask)
+
+        fname_automatic_ml_smooth = sct.add_suffix(fname_automatic_ml, '_smooth')
         sct.run('sct_maths -i '+fname_automatic_ml+' -smooth '+str(self.param.smooth)+','+str(self.param.smooth)+',0 -o '+fname_automatic_ml_smooth)
         fname_automatic_ml = fname_automatic_ml_smooth
+
         path_automatic_ml, file_automatic_ml, ext_automatic_ml = sct.extract_fname(fname_automatic_ml)
+        path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -p '+self.param.param_reg) #TODO: complete params
+        sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg) #TODO: complete params
+        fname_warp_multilabel = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
+        fname_warp_multilabel = pad_im(fname_warp_multilabel, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
-        # TODO pad back warping fields : sct_image -i warp -pad-asym dimxi,dimxf, ...
-        # TODO with dimxf = dimx -cropxf -1, dimxi = cropxi
-
-        sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+',warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
+        sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel+' -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         os.chdir('..')
 
@@ -271,6 +276,46 @@ def thr_im(im, low_thr, high_thr):
     return im
 
 
+def crop_im(fname_im, fname_mask):
+    fname_im_crop = sct.add_suffix(fname_im, '_crop')
+    status, output_crop = sct.run('sct_crop_image -i '+fname_im+' -m '+fname_mask+' -o '+fname_im_crop)
+    output_list = output_crop.split('\n')
+    xi, xf, yi, yf, zi, zf = 0, 0, 0, 0, 0, 0
+    for line in output_list:
+        if 'Dimension 0' in line:
+            dim, i, xi, xf = line.split(' ')
+        if 'Dimension 1' in line:
+            dim, i, yi, yf = line.split(' ')
+        if 'Dimension 2' in line:
+            dim, i, zi, zf = line.split(' ')
+    return fname_im_crop, int(xi), int(xf), int(yi), int(yf), int(zi), int(zf)
+
+
+def pad_im(fname_im, nx_full, ny_full, nz_full,  xi, xf, yi, yf, zi, zf):
+    fname_im_pad = sct.add_suffix(fname_im, '_pad')
+    pad_xi = str(xi)
+    pad_xf = str(nx_full-(xf+1))
+    pad_yi = str(yi)
+    pad_yf = str(ny_full-(yf+1))
+    pad_zi = str(zi)
+    pad_zf = str(nz_full-(zf+1))
+    pad = ','.join([pad_xi, pad_xf, pad_yi, pad_yf, pad_zi, pad_zf])
+    if len(Image(fname_im).data.shape) == 5:
+        status, output = sct.run('sct_image -i '+fname_im+' -mcs')
+        s = 'Created file(s):\n-->'
+        output_fnames = output[output.find(s)+len(s):].split('\n')[0].split("'")
+        fname_comp_list = [output_fnames[i] for i in range(1, len(output_fnames), 2)]
+        fname_comp_pad_list = []
+        for fname_comp in fname_comp_list:
+            fname_comp_pad = sct.add_suffix(fname_comp, '_pad')
+            sct.run('sct_image -i '+fname_comp+' -pad-asym '+pad+' -o '+fname_comp_pad)
+            fname_comp_pad_list.append(fname_comp_pad)
+        components = ','.join(fname_comp_pad_list)
+        sct.run('sct_image -i '+components+' -omc -o '+fname_im_pad)
+    else:
+        sct.run('sct_image -i '+fname_im+' -pad-asym '+pad+' -o '+fname_im_pad)
+    return fname_im_pad
+
 
 ########################################################################################################################
 def get_parser():
@@ -303,7 +348,7 @@ def get_parser():
                       mandatory=True,
                       example='warp_template2t2star.nii.gz')
 
-    parser.add_option(name="-p",
+    parser.add_option(name="-param",
                       type_value="str",
                       description="Parameters for the multimodal registration between multilabel images",
                       mandatory=False,

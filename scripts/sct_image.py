@@ -123,6 +123,7 @@ def main(args = None):
 
     # Open file(s)
     im_in = [Image(fn) for fn in fname_in]
+    squeeze = True #squeeze dimension when saving image
 
     # run command
     if "-pad" in arguments:
@@ -174,6 +175,7 @@ def main(args = None):
             if im.data.shape != im_in[0].data.shape:
                 printv(parser.usage.generate(error='ERROR: -omc inputs need to have all the same shapes'))
         im_out = [multicomponent_merge(im_in)]
+        squeeze = False
     else:
         im_out = None
         printv(parser.usage.generate(error='ERROR: you need to specify an operation to do on the input image'))
@@ -183,7 +185,7 @@ def main(args = None):
         printv('\nGenerate output files...', verbose)
         if len(im_out) == 1:
             im_out[0].setFileName(fname_out) if fname_out is not None else None
-            im_out[0].save()
+            im_out[0].save(squeeze_data=squeeze)
         else:
             for i, im in enumerate(im_out):
                 if fname_out is not None:
