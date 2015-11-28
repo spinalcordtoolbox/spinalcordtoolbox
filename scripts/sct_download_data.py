@@ -79,9 +79,10 @@ def main(args=None):
     zf = zipfile.ZipFile(tmp_file)
     zf.extractall()
 
-    # rename folder
-    printv('Rename folder...', verbose)
-    rename(data_name+'-master', data_name)
+    # if downloaded from GitHub, need to remove the "-master" suffix
+    if 'master.zip' in url:
+        printv('Rename folder...', verbose)
+        rename(data_name+'-master', data_name)
 
     # remove zip file
     printv('Remove temporary file...', verbose)
