@@ -45,7 +45,7 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.path_template = path_sct+'/data/template'
+        self.path_template = path_sct+'/data'
         self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
         self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
@@ -88,9 +88,15 @@ def get_parser():
                       default_value='')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Path to MNI-Poly-AMU template.",
+                      description="Path to template.",
                       mandatory=False,
                       default_value=param.path_template)
+    parser.add_option(name='-c',
+                      type_value='multiple_choice',
+                      description='Contrast to use for registration.',
+                      mandatory=False,
+                      default_value='t2',
+                      example=['t1', 't2'])
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
@@ -151,6 +157,7 @@ def main():
     else:
         path_output = ''
     path_template = arguments['-t']
+    contrast_template = arguments['-c']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     if '-param-straighten' in arguments:
