@@ -30,32 +30,17 @@ cd t1
 sct_propseg -i t1.nii.gz -c t1
 # check results
 fslview t1 -b 0,800 t1_seg -l Red -t 0.5 &
-# vertebral labeling. Here we use the fact that the axial slice #146 is located at the C5/C6 disc
-sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -initz 146,5
+# vertebral labeling. Here we use the fact that the axial slice #146 is located at the C4/C5 disc
+sct_label_vertebrae -i t1.nii.gz -s t1_seg.nii.gz -initz 146,4
 # create labels at C2 and T2 vertebral levels
 sct_label_utils -i t1_seg_labeled.nii.gz -p label-vertebrae -vert 2,9
 # register to template
 # tips: here we used only iter=1 for the third step for faster processing.
-sct_register_to_template -i t1.nii.gz -s t1_seg.nii.gz -l labels.nii.gz -t $SCT_PAM50/template -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0
+sct_register_to_template -i t1.nii.gz -s t1_seg.nii.gz -l labels.nii.gz -t $SCT_PAM50 -c t1 -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=3,shrink=1,metric=MeanSquares:step=3,type=im,algo=syn,metric=CC,iter=1 -r 0
 # warp template and white matter atlas
-sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -t $SCT_PAM50 -a 0
-
-
-# create mask around spinal cord (for cropping)
-sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 61 -f box -o mask_t1.nii.gz
-# crop t1 and t1_seg (for faster registration)
-sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz -o t1_crop.nii.gz
-sct_crop_image -i t1_seg.nii.gz -m mask_t1.nii.gz -o t1_seg_crop.nii.gz
-# register to template
-
-sct_register_multimodal -i ../t2/label/template/MNI-Poly-AMU_T1.nii.gz -iseg ../t2/label/template/MNI-Poly-AMU_cord.nii.gz -d t1_crop.nii.gz -dseg t1_seg_crop.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,iter=3,gradStep=0.2,metric=CC
-# concatenate transformations
-sct_concat_transfo -w ../t2/warp_template2anat.nii.gz,warp_MNI-Poly-AMU_T12t1_crop.nii.gz -d t1.nii.gz -o warp_template2t1.nii.gz
-sct_concat_transfo -w warp_t1_crop2MNI-Poly-AMU_T1.nii.gz,../t2/warp_anat2template.nii.gz -d $SCT_PAM50/template/MNI-Poly-AMU_T1.nii.gz -o warp_t12template.nii.gz
-# warp template
-sct_warp_template -d t1.nii.gz -w warp_template2t1.nii.gz -t $SCT_PAM50 -a 0
+sct_warp_template -d t1.nii.gz -w warp_template2anat.nii.gz -t $SCT_PAM50 -a 0 -qc 0
 # check results
-fslview t1.nii.gz label/template/MNI-Poly-AMU_T1.nii.gz -b 10,1500 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
+fslview t1.nii.gz label/template/PAM50_T1.nii.gz -b 10,1500 label/template/PAM50_level.nii.gz -l MGH-Cortical -t 0.5 label/template/PAM50_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/PAM50_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 cd ..
 
 # display ending time:
