@@ -17,6 +17,7 @@ import sys
 import os
 import commands
 import time
+from glob import glob
 import sct_utils as sct
 from sct_utils import add_suffix
 from sct_image import set_orientation
@@ -45,10 +46,11 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
+        self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
         self.path_template = path_sct+'/data'
-        self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
+        # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
-        self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -156,7 +158,7 @@ def main():
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    path_template = arguments['-t']
+    path_template = sct.slash_at_the_end(arguments['-t'], 1)
     contrast_template = arguments['-c']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
@@ -173,23 +175,37 @@ def main():
             paramreg.addStep(paramStep)
 
     # initialize other parameters
-    file_template = param.file_template
     file_template_label = param.file_template_label
-    file_template_seg = param.file_template_seg
     output_type = param.output_type
     zsubsample = param.zsubsample
     # smoothing_sigma = param.smoothing_sigma
+
+    # capitalize letters for contrast
+    if contrast_template == 't1':
+        contrast_template = 'T1'
+    elif contrast_template == 't2':
+        contrast_template = 'T2'
+
+    # retrieve file_template based on contrast
+    fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
+    # TODO: make sure there is only one file -- check if file is there otherwise it crashes
+    fname_template = fname_template_list[0]
+
+    # retrieve file_template_seg
+    fname_template_seg_list = glob(path_template+param.folder_template+'*cord.nii.gz')
+    # TODO: make sure there is only one file
+    fname_template_seg = fname_template_seg_list[0]
 
     # start timer
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template)
+    path_template = os.path.abspath(path_template+param.folder_template)
 
     # get fname of the template + template objects
-    fname_template = sct.slash_at_the_end(path_template, 1)+file_template
+    # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
     fname_template_label = sct.slash_at_the_end(path_template, 1)+file_template_label
-    fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
+    # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
     sct.printv('\nCheck template files...')
