@@ -106,7 +106,7 @@ def get_parser():
                       mandatory=False,
                       example='2:9')
     parser.add_option(name='-t',
-                      type_value='folder',
+                      type_value='image_nifti',
                       description='Vertebral labeling file. Only use with flag -vert',
                       mandatory=False,
                       default_value='label/template/MNI-Poly-AMU_level.nii.gz',
@@ -197,7 +197,7 @@ def main(args):
     if '-v' in arguments:
         verbose = arguments['-v']
     if '-z' in arguments:
-        verbose = arguments['-z']
+        slices = arguments['-z']
     if '-a' in arguments:
         param.algo_fitting = arguments['-a']
 
@@ -232,7 +232,6 @@ def main(args):
         sct.printv('fslview '+fname_segmentation+' '+fname_output+' -l Red &\n', param.verbose, 'info')
 
     if name_process == 'csa':
-        print vert_lev
         compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_param, figure_fit, param.file_csa_volume, slices, vert_lev, fname_vertebral_labeling, algo_fitting = param.algo_fitting, type_window= param.type_window, window_length=param.window_length)
 
         sct.printv('\nDone!', param.verbose)
@@ -563,7 +562,6 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
     # average csa across vertebral levels or slices if asked (flag -z or -l)
     if slices or vert_levels:
-        print "HOLA!"
         from sct_extract_metric import save_metrics
 
         warning = ''
@@ -572,13 +570,14 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         elif vert_levels and fname_vertebral_labeling:
 
-            from sct_extract_metric import get_slices_matching_with_vertebral_levels
-
+            # from sct_extract_metric import get_slices_matching_with_vertebral_levels
+            sct.printv('\tSelected vertebral levels... '+vert_levels)
             # convert the vertebral labeling file to RPI orientation
             im_vertebral_labeling = set_orientation(Image(fname_vertebral_labeling), 'RPI', fname_out=path_tmp+'vertebral_labeling_RPI.nii')
 
             # get the slices corresponding to the vertebral levels
-            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+            # slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels(data_seg, vert_levels, im_vertebral_labeling.data, 1)
+            slices, vert_levels_list, warning = get_slices_matching_with_vertebral_levels_based_centerline(vert_levels, im_vertebral_labeling.data, x_centerline_fit, y_centerline_fit, z_centerline)
 
         elif not vert_levels:
             vert_levels_list = []
@@ -614,13 +613,93 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
 
         # write result into output file
         save_metrics([0], [file_data], slices, [volume], [np.nan], path_data + 'volume.txt', path_data+file_data, 'nb_voxels x px x py x pz (in mm^3)', '', actual_vert=vert_levels_list, warning_vert_levels=warning)
-    else:
-        print "NOOOOO!"
 
     # Remove temporary files
     if remove_temp_files:
-        print('\nRemove temporary files...')
+        sct.printv('\nRemove temporary files...')
         sct.run('rm -rf '+path_tmp, error_exit='warning')
+
+
+# ======================================================================================================================
+# Find min and max slices corresponding to vertebral levels based on the fitted centerline coordinates
+# ======================================================================================================================
+def get_slices_matching_with_vertebral_levels_based_centerline(vertebral_levels, vertebral_labeling_data, x_centerline_fit, y_centerline_fit, z_centerline):
+
+    # Convert the selected vertebral levels chosen into a 2-element list [start_level end_level]
+    vert_levels_list = [int(x) for x in vertebral_levels.split(':')]
+
+    # If only one vertebral level was selected (n), consider as n:n
+    if len(vert_levels_list) == 1:
+        vert_levels_list = [vert_levels_list[0], vert_levels_list[0]]
+
+    # Check if there are only two values [start_level, end_level] and if the end level is higher than the start level
+    if (len(vert_levels_list) > 2) or (vert_levels_list[0] > vert_levels_list[1]):
+        sct.printv('\nERROR:  "' + vertebral_levels + '" is not correct. Enter format "1:4". Exit program.\n', type='error')
+
+    # Extract the vertebral levels available in the metric image
+    vertebral_levels_available = np.array(list(set(vertebral_labeling_data[vertebral_labeling_data > 0])))
+
+    # Check if the vertebral levels selected are available
+    warning=[]  # list of strings gathering the potential following warning(s) to be written in the output .txt file
+    min_vert_level_available = min(vertebral_levels_available)  # lowest vertebral level available
+    max_vert_level_available = max(vertebral_levels_available)  # highest vertebral level available
+    if vert_levels_list[0] < min_vert_level_available:
+        vert_levels_list[0] = min_vert_level_available
+        warning.append('WARNING: the bottom vertebral level you selected is lower to the lowest level available --> '
+                       'Selected the lowest vertebral level available: ' + str(int(vert_levels_list[0])))  # record the
+                       # warning to write it later in the .txt output file
+        sct.printv('WARNING: the bottom vertebral level you selected is lower to the lowest ' \
+                                          'level available \n--> Selected the lowest vertebral level available: '+\
+              str(int(vert_levels_list[0])), type='warning')
+
+    if vert_levels_list[1] > max_vert_level_available:
+        vert_levels_list[1] = max_vert_level_available
+        warning.append('WARNING: the top vertebral level you selected is higher to the highest level available --> '
+                       'Selected the highest vertebral level available: ' + str(int(vert_levels_list[1])))  # record the
+        # warning to write it later in the .txt output file
+
+        sct.printv('WARNING: the top vertebral level you selected is higher to the highest ' \
+                                          'level available \n--> Selected the highest vertebral level available: ' + \
+              str(int(vert_levels_list[1])), type='warning')
+
+    if vert_levels_list[0] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[0]  # relative distance
+        distance_min_among_negative_value = min(abs(distance[distance < 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[0] = vertebral_levels_available[distance == distance_min_among_negative_value]  # element
+        # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the bottom vertebral level you selected is not available --> Selected the nearest '
+                       'inferior level available: ' + str(int(vert_levels_list[0])))
+        sct.printv('WARNING: the bottom vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest inferior level available: '+str(int(vert_levels_list[0])), type='warning')  # record the
+        # warning to write it later in the .txt output file
+
+    if vert_levels_list[1] not in vertebral_levels_available:
+        distance = vertebral_levels_available - vert_levels_list[1]  # relative distance
+        distance_min_among_positive_value = min(abs(distance[distance > 0]))  # minimal distance among the negative
+        # relative distances
+        vert_levels_list[1] = vertebral_levels_available[distance == distance_min_among_positive_value]  # element
+        # of the initial list corresponding to this minimal distance
+        warning.append('WARNING: the top vertebral level you selected is not available --> Selected the nearest superior'
+                       ' level available: ' + str(int(vert_levels_list[1])))  # record the warning to write it later in the .txt output file
+
+        sct.printv('WARNING: the top vertebral level you selected is not available \n--> Selected the ' \
+                             'nearest superior level available: ' + str(int(vert_levels_list[1])), type='warning')
+
+    # Find slices included in the vertebral levels wanted by the user
+    sct.printv('\tFind slices corresponding to vertebral levels based on the centerline...')
+    nz = len(z_centerline)
+    matching_slices_centerline_vert_labeling = []
+    for i_z in range(0, nz):
+        # if the centerline is in the vertebral levels asked by the user, record the slice number
+        if vertebral_labeling_data[np.round(x_centerline_fit[i_z]), np.round(y_centerline_fit[i_z]), z_centerline[i_z]] in range(vert_levels_list[0], vert_levels_list[1]+1):
+            matching_slices_centerline_vert_labeling.append(z_centerline[i_z])
+
+    # now, find the min and max slices that are included in the vertebral levels
+    slices = str(min(matching_slices_centerline_vert_labeling))+':'+str(max(matching_slices_centerline_vert_labeling))
+    sct.printv('\t'+slices)
+
+    return slices, vert_levels_list, warning
 
 #=======================================================================================================================
 # b_spline_centerline
