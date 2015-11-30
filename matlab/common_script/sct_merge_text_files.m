@@ -1,10 +1,7 @@
 
-function sct_tools_merge_text_files(text_files, output,transpose)
-% sct_tools_merge_text_files('fsems_*.bvec', output, transpose?)
+function sct_tools_merge_text_files(list_text, output,transpose)
+% sct_tools_merge_text_files({'fsems_D9d3_X01.scheme','fsems_D15d8_X01.scheme'}, output, transpose?)
 dbstop if error
-list_text=dir(text_files);
-list_text={list_text.name};
-list_text=sort_nat(list_text);
 
 % =========================================================================
 % DON'T CHANGE BELOW
