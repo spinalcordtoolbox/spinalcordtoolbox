@@ -1000,7 +1000,7 @@ class SCAD(Algorithm):
             shutil.rmtree(self.path_tmp)
 
         print 'To view the output with FSL :'
-        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red', self.verbose, 'info')
+        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red &', self.verbose, 'info')
 
 
 def get_parser():

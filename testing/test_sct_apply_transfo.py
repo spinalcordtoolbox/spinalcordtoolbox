@@ -19,7 +19,7 @@ from time import sleep
 def test(data_path):
 
     # parameters
-    folder_data = [ 'template/', 't2/', 'dmri/']
+    folder_data = [ 'template/template/', 't2/', 'dmri/']
     file_data = ['MNI-Poly-AMU_T2.nii.gz', 't2.nii.gz', 'warp_template2anat.nii.gz', 'dmri.nii.gz']
 
     output = ''
