@@ -36,12 +36,12 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = path_sct+'/data/'
+        self.path_template = path_sct+'/data'
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
         self.file_info_label = 'info_label.txt'
-        self.warp_template = 1
+        # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
         self.list_labels_nn = ['MNI-Poly-AMU_level.nii.gz', 'MNI-Poly-AMU_CSF.nii.gz', 'MNI-Poly-AMU_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
@@ -56,38 +56,18 @@ class WarpTemplate:
     def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose, qc):
 
         # Initialization
-        self.fname_src = ''
-        self.fname_transfo = ''
-        self.folder_out = param.folder_out
-        self.path_template = param.path_template
+        self.fname_src = fname_src
+        self.fname_transfo = fname_transfo
+        self.warp_atlas = warp_atlas
+        self.warp_spinal_levels = warp_spinal_levels
+        self.folder_out = folder_out
+        self.path_template = path_template
         self.folder_template = param.folder_template
         self.folder_atlas = param.folder_atlas
         self.folder_spinal_levels = param.folder_spinal_levels
-        self.warp_template = param.warp_template
-        self.warp_atlas = param.warp_atlas
-        self.warp_spinal_levels = param.warp_spinal_levels
-        self.verbose = param.verbose
-        self.qc = param.qc
+        self.verbose = verbose
+        self.qc = qc
         start_time = time.time()
-
-
-        # Parameters for debug mode
-        if param.debug:
-            print '\n*** WARNING: DEBUG MODE ON ***\n'
-            fname_src = path_sct+'/testing/sct_testing_data/data/mt/mtr.nii.gz'
-            fname_transfo = path_sct+'/testing/sct_testing_data/data/mt/warp_template2mt.nii.gz'
-            warp_atlas = 1
-            warp_spinal_levels = 1
-            verbose = 1
-        else:
-            self.fname_src = fname_src
-            self.fname_transfo = fname_transfo
-            self.warp_atlas = warp_atlas
-            self.warp_spinal_levels = warp_spinal_levels
-            self.folder_out = folder_out
-            self.path_template = path_template
-            self.verbose = verbose
-            self.qc = qc
 
         # Check file existence
         sct.printv('\nCheck file existence...', self.verbose)
@@ -118,9 +98,8 @@ class WarpTemplate:
         sct.run('mkdir '+self.folder_out)
 
         # Warp template objects
-        if self.warp_template == 1:
-            sct.printv('\nWarp template objects...', self.verbose)
-            warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+        sct.printv('\nWarp template objects...', self.verbose)
+        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
 
         # Warp atlas
         if self.warp_atlas == 1:

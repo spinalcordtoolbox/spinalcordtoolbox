@@ -428,7 +428,7 @@ def dmri_moco(param):
 
 
     # generate b0_moco_mean and dwi_moco_mean
-    cmd = 'sct_dmri_separate_b0_and_dwi -i '+file_data+param.suffix+ext_data+' -b bvecs.txt -a 1'
+    cmd = 'sct_dmri_separate_b0_and_dwi -i '+file_data+param.suffix+ext_data+' -bvec bvecs.txt -a 1'
     if not param.fname_bvals == '':
         cmd = cmd+' -m '+param.fname_bvals
     sct.run(cmd, param.verbose)
