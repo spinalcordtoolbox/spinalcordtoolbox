@@ -61,7 +61,7 @@ def test(path_data='', parameters=''):
 
     if status == 0:
         # extract center of vertebral labels
-        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -t label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
+        sct.run('sct_label_utils -i t2_seg_labeled.nii.gz -p label-vertebrae -o t2_seg_labeled_center.nii.gz', verbose=0)
         # open labels
         from sct_label_utils import ProcessLabels
         from numpy import linalg
