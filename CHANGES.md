@@ -18,6 +18,13 @@
 - OPT: **sct_registration_to_template**: improved accuracy
 - REF: harmonization of flags. Most flags from v2.0 still work but a message of deprecation is sent.
 
+##2.1_beta20 (2015-11-30)
+- fixed compatibility with new PAM50 template
+
+##2.1_beta19 (2015-11-25)
+- harmonized flags
+- **sct_process_segmentation**: now computes volume
+
 ##2.0.6 (2015-06-30)
 - BUG: **sct_process_segmentation**: fixed bug of output file location (issue #395)
 
