@@ -23,7 +23,7 @@ import os.path
 
 def test(path_data='', parameters=''):
     verbose = 0
-    filename_template = 'MNI-Poly-AMU_cord.nii.gz'
+    filename_template = 'template/MNI-Poly-AMU_cord.nii.gz'
     dice_threshold = 0.85
 
     if not parameters:

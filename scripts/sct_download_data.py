@@ -49,7 +49,7 @@ def main(args=None):
     verbose = 1
     dict_url = {'sct_example_data': 'https://github.com/neuropoly/sct_example_data/archive/master.zip',
                 'sct_testing_data': 'https://github.com/neuropoly/sct_testing_data/archive/master.zip',
-                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/spinalcordtoolbox/PAM50.zip'}
+                'PAM50': 'https://dl.dropboxusercontent.com/u/20592661/sct/PAM50.zip'}
     tmp_file = 'tmp.data.zip'
 
     # check user arguments
@@ -79,9 +79,10 @@ def main(args=None):
     zf = zipfile.ZipFile(tmp_file)
     zf.extractall()
 
-    # rename folder
-    printv('Rename folder...', verbose)
-    rename(data_name+'-master', data_name)
+    # if downloaded from GitHub, need to remove the "-master" suffix
+    if 'master.zip' in url:
+        printv('Rename folder...', verbose)
+        rename(data_name+'-master', data_name)
 
     # remove zip file
     printv('Remove temporary file...', verbose)
