@@ -984,7 +984,7 @@ class SCAD(Algorithm):
         # save the centerline
         nx, ny, nz, nt, px, py, pz, pt = img.dim
         img.data = np.zeros((nx, ny, nz))
-        for i in range(0, np.size(x)-1):
+        for i in range(0, np.size(x)):
             img.data[int(x[i]), int(y[i]), int(z[i])] = 1
 
         self.output_debug_file(img, img.data, 'centerline')
@@ -1000,7 +1000,7 @@ class SCAD(Algorithm):
             shutil.rmtree(self.path_tmp)
 
         print 'To view the output with FSL :'
-        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red', self.verbose, 'info')
+        sct.printv('fslview '+self.input_image.absolutepath+' '+self.output_filename+' -l Red &', self.verbose, 'info')
 
 
 def get_parser():

@@ -52,7 +52,7 @@ def get_parser():
                       mandatory=True,
                       example="warp1.nii.gz,warp2.nii.gz")
     parser.add_option(name="-crop",
-                      type_value="int",
+                      type_value="multiple_choice",
                       description="Crop Reference. 0 : no reference. 1 : sets background to 0. 2 : use normal background",
                       mandatory=False,
                       default_value='0',
