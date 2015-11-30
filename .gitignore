@@ -21,3 +21,8 @@ spinalcordtoolbox_v*
 dev/atlas/create_atlas/WMtracts_outputs
 dev/atlas/validate_atlas/tmp.*
 
+scripts/.idea/misc.xml
+scripts/.idea/modules.xml
+scripts/.idea/scripts.iml
+scripts/.idea/vcs.xml
+scripts/.idea/workspace.xml
