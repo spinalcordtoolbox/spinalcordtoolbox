@@ -4,7 +4,7 @@
 # For information about acquisition parameters, see: https://dl.dropboxusercontent.com/u/20592661/publications/Fonov_NIMG14_MNI-Poly-AMU.pdf
 # N.B. The parameters are set for these type of data. With your data, parameters might be slightly different.
 #
-# tested with v2.1_beta19
+# tested with v2.1_beta21
 
 
 # download example data (errsm_30)
@@ -39,8 +39,8 @@ sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz
 fslview t2.nii.gz -b 0,800 label/template/MNI-Poly-AMU_T2.nii.gz -b 0,4000 label/template/MNI-Poly-AMU_level.nii.gz -l MGH-Cortical -t 0.5 label/template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &
 # compute average cross-sectional area and volume between C3 and C4 levels
 sct_process_segmentation -i t2_seg.nii.gz -p csa -t label/template/MNI-Poly-AMU_level.nii.gz -vert 3:4
-# --> Mean CSA: 78.2403253855 +/- 0.722315716375 mm^2
-# --> Volume (in volume.txt): 2514.0 mm^3
+# --> Mean CSA: 78.2997424349 +/- 0.652378703122 mm^2
+# --> Volume (in volume.txt): 2437.0 mm^3
 
 # go back to root folder
 cd ..
@@ -159,8 +159,8 @@ fslview dwi_moco_mean -b 0,300 label/template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lig
 sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # compute FA within right and left lateral corticospinal tracts from slices 1 to 3 using maximum a posteriori
 sct_extract_metric -i dti_FA.nii.gz -f label/atlas/ -l 2,17 -z 1:3 -method map
-# --> 17, right lateral corticospinal tract:    0.782079195489
-# --> 2, left lateral corticospinal tract:    0.770558823421
+# --> 17, right lateral corticospinal tract:    0.780527684999
+# --> 2, left lateral corticospinal tract:    0.773460376585
 cd ..
 
 
@@ -182,7 +182,7 @@ sct_propseg -i fmri_moco_mean.nii.gz -c t2 -init-centerline t2_seg_reg_centerlin
 # tips: we use "-radius 5" otherwise the segmentation is too small
 # tips: we use "-max-deformation 4" to prevent the propagation from stopping at the edge
 # check segmentation
-fslview fmri_moco_mean fmri_moco_mean_seg -l Red -t 0.5 &
+fslview fmri_moco_mean -b 0,1000 fmri_moco_mean_seg -l Red -t 0.5 &
 # here segmentation slightly failed due to the close proximity of susceptibility artifact --> use file "fmri_moco_mean_seg_modif.nii.gz"
 # register template to fmri: here we use the template register to the MT to get the correction of the internal structure
 sct_register_multimodal -i ../mt/template2anat_reg.nii.gz -d fmri_moco_mean.nii.gz -iseg ../mt/mt1_seg.nii.gz -dseg fmri_moco_mean_seg_modif.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5
