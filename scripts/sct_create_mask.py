@@ -155,7 +155,7 @@ def create_mask():
         fname_point = method_val
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
-        status, output = sct.run('sct_label_utils -i '+fname_point+' -t display-voxel', param.verbose)
+        status, output = sct.run('sct_label_utils -i '+fname_point+' -p display-voxel', param.verbose)
         # parse to get coordinate
         coord = output[output.find('Position=')+10:-17].split(',')
 
@@ -235,7 +235,7 @@ def create_line(fname, coord, nz):
     # set all voxels to zero
     sct.run('sct_maths -i line.nii -mul 0 -o line.nii', param.verbose)
 
-    cmd = 'sct_label_utils -i line.nii -o line.nii -t add -x '
+    cmd = 'sct_label_utils -i line.nii -o line.nii -p add -coord '
     for iz in range(nz):
         if iz == nz-1:
             cmd += str(int(coord[0]))+','+str(int(coord[1]))+','+str(iz)+',1'

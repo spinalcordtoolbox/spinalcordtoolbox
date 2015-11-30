@@ -17,6 +17,7 @@ import sys
 import os
 import commands
 import time
+from glob import glob
 import sct_utils as sct
 from sct_utils import add_suffix
 from sct_image import set_orientation
@@ -45,10 +46,11 @@ class Param:
         # self.gradientStep = '0.5'
         # self.metric = 'MI'
         self.verbose = 1  # verbose
-        self.path_template = path_sct+'/data/template'
-        self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
+        self.folder_template = 'template/'  # folder where template files are stored (MNI-Poly-AMU_T2.nii.gz, etc.)
+        self.path_template = path_sct+'/data'
+        # self.file_template = 'MNI-Poly-AMU_T2.nii.gz'
         self.file_template_label = 'landmarks_center.nii.gz'
-        self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
+        # self.file_template_seg = 'MNI-Poly-AMU_cord.nii.gz'
         self.zsubsample = '0.25'
         self.param_straighten = ''
         # self.smoothing_sigma = 5  # Smoothing along centerline to improve accuracy and remove step effects
@@ -88,9 +90,15 @@ def get_parser():
                       default_value='')
     parser.add_option(name="-t",
                       type_value="folder",
-                      description="Path to MNI-Poly-AMU template.",
+                      description="Path to template.",
                       mandatory=False,
                       default_value=param.path_template)
+    parser.add_option(name='-c',
+                      type_value='multiple_choice',
+                      description='Contrast to use for registration.',
+                      mandatory=False,
+                      default_value='t2',
+                      example=['t1', 't2'])
     parser.add_option(name="-param",
                       type_value=[[':'], 'str'],
                       description='Parameters for registration (see sct_register_multimodal). Default: \
@@ -150,7 +158,8 @@ def main():
         path_output = arguments['-ofolder']
     else:
         path_output = ''
-    path_template = arguments['-t']
+    path_template = sct.slash_at_the_end(arguments['-t'], 1)
+    contrast_template = arguments['-c']
     remove_temp_files = int(arguments['-r'])
     verbose = int(arguments['-v'])
     if '-param-straighten' in arguments:
@@ -166,23 +175,37 @@ def main():
             paramreg.addStep(paramStep)
 
     # initialize other parameters
-    file_template = param.file_template
     file_template_label = param.file_template_label
-    file_template_seg = param.file_template_seg
     output_type = param.output_type
     zsubsample = param.zsubsample
     # smoothing_sigma = param.smoothing_sigma
+
+    # capitalize letters for contrast
+    if contrast_template == 't1':
+        contrast_template = 'T1'
+    elif contrast_template == 't2':
+        contrast_template = 'T2'
+
+    # retrieve file_template based on contrast
+    fname_template_list = glob(path_template+param.folder_template+'*'+contrast_template+'.nii.gz')
+    # TODO: make sure there is only one file -- check if file is there otherwise it crashes
+    fname_template = fname_template_list[0]
+
+    # retrieve file_template_seg
+    fname_template_seg_list = glob(path_template+param.folder_template+'*cord.nii.gz')
+    # TODO: make sure there is only one file
+    fname_template_seg = fname_template_seg_list[0]
 
     # start timer
     start_time = time.time()
 
     # get absolute path - TO DO: remove! NEVER USE ABSOLUTE PATH...
-    path_template = os.path.abspath(path_template)
+    path_template = os.path.abspath(path_template+param.folder_template)
 
     # get fname of the template + template objects
-    fname_template = sct.slash_at_the_end(path_template, 1)+file_template
+    # fname_template = sct.slash_at_the_end(path_template, 1)+file_template
     fname_template_label = sct.slash_at_the_end(path_template, 1)+file_template_label
-    fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
+    # fname_template_seg = sct.slash_at_the_end(path_template, 1)+file_template_seg
 
     # check file existence
     sct.printv('\nCheck template files...')
@@ -291,7 +314,7 @@ def main():
 
     # straighten segmentation
     sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -c '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
+    sct.run('sct_straighten_spinalcord -i '+ftmp_seg+' -s '+ftmp_seg+' -o '+add_suffix(ftmp_seg, '_straight')+' -qc 0 -r 0 -v '+str(verbose)+' '+param.param_straighten+arg_cpu, verbose)
     # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
     # re-define warping field using non-cropped space (to avoid issue #367)
     sct.run('sct_concat_transfo -w warp_straight2curve.nii.gz -d '+ftmp_data+' -o warp_straight2curve.nii.gz')
@@ -300,7 +323,7 @@ def main():
     # --------------------------------------------------------------------------------
     # Remove unused label on template. Keep only label present in the input label image
     sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-    sct.run('sct_label_utils -t remove -i '+ftmp_template_label+' -o '+ftmp_template_label+' -r '+ftmp_label)
+    sct.run('sct_label_utils -p remove -i '+ftmp_template_label+' -o '+ftmp_template_label+' -r '+ftmp_label)
 
     # Dilating the input label so they can be straighten without losing them
     sct.printv('\nDilating input labels using 3vox ball radius')
@@ -455,8 +478,8 @@ def main():
 
     # Apply warping fields to anat and template
     if output_type == 1:
-        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -c 1', verbose)
-        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -c 1', verbose)
+        sct.run('sct_apply_transfo -i template.nii -o template2anat.nii.gz -d data.nii -w warp_template2anat.nii.gz -crop 1', verbose)
+        sct.run('sct_apply_transfo -i data.nii -o anat2template.nii.gz -d template.nii -w warp_anat2template.nii.gz -crop 1', verbose)
 
     # come back to parent folder
     os.chdir('..')
@@ -508,7 +531,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels
-    sct.run('sct_label_utils -i '+fname_dest+' -t create -x '+label_new_list+' -v 1 -o '+fname_output)
+    sct.run('sct_label_utils -i '+fname_dest+' -p create -coord '+label_new_list+' -v 1 -o '+fname_output)
 
 
 # START PROGRAM
