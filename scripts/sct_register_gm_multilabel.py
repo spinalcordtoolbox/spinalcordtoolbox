@@ -103,19 +103,26 @@ class MultiLabelRegistration:
 
         # Register multilabel images together
         sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg) #TODO: complete params
-        fname_warp_multilabel = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
-        fname_warp_multilabel = pad_im(fname_warp_multilabel, nx, ny, nz, xi, xf, yi, yf, zi, zf)
+        fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
+        fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
+        fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
+        fname_warp_multilabel_auto2template = pad_im(fname_warp_multilabel_auto2template, nx, ny, nz, xi, xf, yi, yf, zi, zf)
 
-        sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel+' -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
+        sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel_template2auto+' -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
+
+        if self.param.qc:
+            visualize_warp(self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
+
         os.chdir('..')
 
         sct.run('cp -r '+tmp_dir+'label  '+self.param.output_folder+self.path_new_template)
 
-        sct.generate_output_file(tmp_dir+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz', self.param.output_folder+'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz')
-        sct.generate_output_file(tmp_dir+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz', self.param.output_folder+'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz')
+        sct.generate_output_file(tmp_dir+fname_warp_multilabel_template2auto, self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
+        sct.generate_output_file(tmp_dir+fname_warp_multilabel_auto2template, self.param.output_folder+'warp_automatic_seg_multilabel2template_multilabel.nii.gz')
 
         sct.printv('fslview '+fname_target+' '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
+
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -315,6 +322,42 @@ def pad_im(fname_im, nx_full, ny_full, nz_full,  xi, xf, yi, yf, zi, zf):
     else:
         sct.run('sct_image -i '+fname_im+' -pad-asym '+pad+' -o '+fname_im_pad)
     return fname_im_pad
+
+
+def visualize_warp(fname_warp, fname_grid=None, step=3):
+    if fname_grid is None:
+        from numpy import zeros
+        im_warp = Image(fname_warp)
+        status, out = sct.run('fslhd '+fname_warp)
+        dim1 = 'dim1           '
+        dim2 = 'dim2           '
+        dim3 = 'dim3           '
+        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
+        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
+        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
+        sq = zeros((step, step))
+        sq[step-1] = 1
+        sq[:, step-1] = 1
+        dat = zeros((nx, ny, nz))
+        for i in range(0, dat.shape[0], step):
+            for j in range(0, dat.shape[1], step):
+                for k in range(dat.shape[2]):
+                    if dat[i:i+step, j:j+step, k].shape == (step, step):
+                        dat[i:i+step, j:j+step, k] = sq
+        fname_grid = 'grid_'+str(step)+'.nii.gz'
+        im_grid = Image(param=dat)
+        grid_hdr = im_warp.hdr
+        im_grid.hdr = grid_hdr
+        im_grid.setFileName(fname_grid)
+        im_grid.save()
+        fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
+        sct.run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
+        fname_grid = fname_grid_resample
+    path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
+    grid_warped = path_warp+sct.add_suffix(fname_grid, '_'+file_warp)
+    sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
+
+
 
 
 ########################################################################################################################
