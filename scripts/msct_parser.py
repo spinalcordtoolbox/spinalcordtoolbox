@@ -683,12 +683,12 @@ class DocSourceForge:
         if optional:
             self.arguments_string += '\n\nOPTIONAL ARGUMENTS  |` `\n--------------------|---\n'
             for opt in optional:
-                self.arguments_string += '`'
-                # check if section description has to been displayed
-                if self.arguments[opt].order in self.section:
-                    self.arguments_string += self.section[self.arguments[opt].order] + '\n'
-                # display argument
                 if not self.arguments[opt].deprecated_rm and not self.arguments[opt].deprecated and self.arguments[opt].deprecated_by is None:
+                    self.arguments_string += '`'
+                    # check if section description has to been displayed
+                    if self.arguments[opt].order in self.section:
+                        self.arguments_string += self.section[self.arguments[opt].order] + '\n'
+                    # display argument
                     type_value = self.refactor_type_value(opt)
                     line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
                     self.arguments_string += self.tab(line) + '\n'
