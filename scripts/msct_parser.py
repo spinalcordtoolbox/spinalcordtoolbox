@@ -628,6 +628,7 @@ class DocSourceForge:
     # Constructor
     def __init__(self, parser, file):
         self.file = file
+        self.parser = parser
         self.header = ''
         self.version = ''
         self.usage = ''
@@ -687,9 +688,10 @@ class DocSourceForge:
                 if self.arguments[opt].order in self.section:
                     self.arguments_string += self.section[self.arguments[opt].order] + '\n'
                 # display argument
-                type_value = self.refactor_type_value(opt)
-                line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
-                self.arguments_string += self.tab(line) + '\n'
+                if not self.arguments[opt].deprecated_rm and not self.arguments[opt].deprecated and self.arguments[opt].deprecated_by is None:
+                    type_value = self.refactor_type_value(opt)
+                    line = ["  "+opt+" "+type_value+'`', '|'+self.arguments[opt].description]
+                    self.arguments_string += self.tab(line) + '\n'
 
     def refactor_type_value(self, opt):
         if self.arguments[opt].type_value is None:
@@ -717,6 +719,7 @@ class DocSourceForge:
 
     def generate(self, error=None):
         self.set_header()
+        self.set_description(self.parser.usage.description[2+len('description'):])
         self.set_arguments()
         self.set_usage()
         self.set_example()
