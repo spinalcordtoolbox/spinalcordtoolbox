@@ -1,10 +1,10 @@
-% sct_tuto
+% sct_intro
 %% add spinalcordtoolbox scripts to your Matlab path
 pathtool
 
-%% load an MRI data
-input_fname='t2.nii.gz';
-nii=load_nii(input_fname);
+%%
+fname='t2.nii.gz';
+nii=load_nii(fname);
 %% get a slice:
 img=squeeze(nii.img(floor(end/2),:,:)); % rigth click on squeeze --> help
 %% display
@@ -17,9 +17,9 @@ axis image
 nii.img(floor(end/2),:,:)=0;
 
 %% save image
-[basename, path, ext]=sct_tool_remove_extension(input_fname,0)
+[basename, path, ext]=sct_tool_remove_extension(fname,0)
 output_fname=[basename, '_processed']
-save_nii(nii,output_fname) % OR save_nii_v2(nii.img,output_fname,input_fname)
+save_nii(nii,output_fname)
 
 %% display image
 cmd=['fslview ' output_fname]
