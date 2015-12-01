@@ -13,7 +13,6 @@ import sys, os, time
 from msct_parser import Parser
 from msct_image import Image
 import sct_utils as sct
-#TODO: add remove tmp
 
 class Param:
     def __init__(self):
@@ -119,9 +118,12 @@ class MultiLabelRegistration:
         sct.generate_output_file(tmp_dir+fname_warp_multilabel_auto2template, self.param.output_folder+'warp_automatic_seg_multilabel2template_multilabel.nii.gz')
 
         if self.param.qc:
-            visualize_warp(self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
+            visualize_warp(self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz', rm_tmp=self.param.remove_tmp)
 
         sct.printv('fslview '+fname_target+' '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
+
+        if self.param.remove_tmp:
+            sct.run('rm -rf '+tmp_dir, error_exit='warning')
 
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
@@ -275,6 +277,9 @@ class MultiLabelRegistration:
 
         sct.generate_output_file(tmp_dir+hd_name, self.param.output_folder+hd_name)
         sct.generate_output_file(tmp_dir+dice_name, self.param.output_folder+dice_name)
+
+        if self.param.remove_tmp:
+            sct.run('rm -rf '+tmp_dir, error_exit='warning')
 
 
 def thr_im(im, low_thr, high_thr):
@@ -458,8 +463,8 @@ if __name__ == "__main__":
     fname_manual_gmseg = None
     fname_sc_seg = None
 
-    if '-p' in arguments:
-        ml_param.param_reg = arguments['-p']
+    if '-param' in arguments:
+        ml_param.param_reg = arguments['-param']
     if '-manual-gm' in arguments:
         fname_manual_gmseg = arguments['-manual-gm']
     if '-sc' in arguments:
