@@ -1030,7 +1030,7 @@ def get_parser():
 'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
 'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
 'labels: Fit spline function across labels. Requires a couple of points along the cord.',
-                      mandatory=True,
+                      mandatory=False,
                       deprecated_by='-p',
                       example=['auto', 'point', 'labels'])
     parser.usage.addSection('General options')
@@ -1075,7 +1075,7 @@ def get_parser():
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
                       deprecated_by='-c',
-                      mandatory=True,
+                      mandatory=False,
                       example=['t1', 't2'])
     parser.add_option(name="-radius",
                       type_value="int",
