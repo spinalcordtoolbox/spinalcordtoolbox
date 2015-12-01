@@ -111,15 +111,15 @@ class MultiLabelRegistration:
         sct.run('sct_concat_transfo -w '+file_warp_template+ext_warp_template+','+fname_warp_multilabel_template2auto+' -d '+file_target+ext_target+' -o warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
         sct.run('sct_warp_template -d '+fname_target+' -w warp_template2'+file_target+'_wm_corrected_multilabel.nii.gz')
 
-        if self.param.qc:
-            visualize_warp(self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
-
         os.chdir('..')
 
         sct.run('cp -r '+tmp_dir+'label  '+self.param.output_folder+self.path_new_template)
 
         sct.generate_output_file(tmp_dir+fname_warp_multilabel_template2auto, self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
         sct.generate_output_file(tmp_dir+fname_warp_multilabel_auto2template, self.param.output_folder+'warp_automatic_seg_multilabel2template_multilabel.nii.gz')
+
+        if self.param.qc:
+            visualize_warp(self.param.output_folder+'warp_template_multilabel2automatic_seg_multilabel.nii.gz')
 
         sct.printv('fslview '+fname_target+' '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_GM.nii.gz -l Red-Yellow -b 0.5,1 '+self.param.output_folder+self.path_new_template+'template/MNI-Poly-AMU_WM.nii.gz -l Blue-Lightblue -b 0.5,1 &', 1, 'info')
 
@@ -203,17 +203,17 @@ class MultiLabelRegistration:
         # Compute Dice coefficient
         # --- DC old template
         try:
-            status_old_gm, output_old_gm = sct.run('sct_dice_coefficient '+file_manual_gmseg+ext_manual_gmseg+' '+fname_old_template_gm+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_old_gm, output_old_gm = sct.run('sct_dice_coefficient -i '+file_manual_gmseg+ext_manual_gmseg+' -d '+fname_old_template_gm+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_manual_gmseg = file_manual_gmseg+'_in_old_template_space'+ext_manual_gmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_old_template_gm+','+file_manual_gmseg+ext_manual_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
             sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin -o '+corrected_manual_gmseg)
-            status_old_gm, output_old_gm = sct.run('sct_dice_coefficient '+corrected_manual_gmseg+' '+fname_old_template_gm+'  -2d-slices 2', error_exit='warning')
+            status_old_gm, output_old_gm = sct.run('sct_dice_coefficient -i '+corrected_manual_gmseg+' -d '+fname_old_template_gm+'  -2d-slices 2', error_exit='warning')
 
         try:
-            status_old_wm, output_old_wm = sct.run('sct_dice_coefficient '+fname_manual_wmseg+' '+fname_old_template_wm+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_old_wm, output_old_wm = sct.run('sct_dice_coefficient -i '+fname_manual_wmseg+' -d '+fname_old_template_wm+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             path_manual_wmseg, file_manual_wmseg, ext_manual_wmseg = sct.extract_fname(fname_manual_wmseg)
@@ -221,21 +221,21 @@ class MultiLabelRegistration:
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_old_template_wm+','+fname_manual_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
             sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin -o '+corrected_manual_wmseg)
-            status_old_wm, output_old_wm = sct.run('sct_dice_coefficient '+corrected_manual_wmseg+' '+fname_old_template_wm+'  -2d-slices 2', error_exit='warning')
+            status_old_wm, output_old_wm = sct.run('sct_dice_coefficient -i '+corrected_manual_wmseg+' -d '+fname_old_template_wm+'  -2d-slices 2', error_exit='warning')
 
         # --- DC new template
         try:
-            status_new_gm, output_new_gm = sct.run('sct_dice_coefficient '+file_manual_gmseg+ext_manual_gmseg+' '+fname_new_template_gm+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_new_gm, output_new_gm = sct.run('sct_dice_coefficient -i '+file_manual_gmseg+ext_manual_gmseg+' -d '+fname_new_template_gm+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             corrected_manual_gmseg = file_manual_gmseg+'_in_new_template_space'+ext_manual_gmseg
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_new_template_gm+','+file_manual_gmseg+ext_manual_gmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_gmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_manual_gmseg+' -thr 0.1 -o '+corrected_manual_gmseg)
             sct.run('sct_maths -i '+corrected_manual_gmseg+' -bin -o '+corrected_manual_gmseg)
-            status_new_gm, output_new_gm = sct.run('sct_dice_coefficient '+corrected_manual_gmseg+' '+fname_new_template_gm+'  -2d-slices 2', error_exit='warning')
+            status_new_gm, output_new_gm = sct.run('sct_dice_coefficient -i '+corrected_manual_gmseg+' -d '+fname_new_template_gm+'  -2d-slices 2', error_exit='warning')
 
         try:
-            status_new_wm, output_new_wm = sct.run('sct_dice_coefficient '+fname_manual_wmseg+' '+fname_new_template_wm+' -2d-slices 2', error_exit='warning', raise_exception=True)
+            status_new_wm, output_new_wm = sct.run('sct_dice_coefficient -i '+fname_manual_wmseg+' -d '+fname_new_template_wm+' -2d-slices 2', error_exit='warning', raise_exception=True)
         except Exception:
             # put the result and the reference in the same space using a registration with ANTs with no iteration:
             path_manual_wmseg, file_manual_wmseg, ext_manual_wmseg = sct.extract_fname(fname_manual_wmseg)
@@ -243,7 +243,7 @@ class MultiLabelRegistration:
             sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI['+fname_new_template_wm+','+fname_manual_wmseg+',1,16] -o [reg_ref_to_res,'+corrected_manual_wmseg+'] -n BSpline[3] -c 0 -f 1 -s 0')
             sct.run('sct_maths -i '+corrected_manual_wmseg+' -thr 0.1 -o '+corrected_manual_wmseg)
             sct.run('sct_maths -i '+corrected_manual_wmseg+' -bin -o '+corrected_manual_wmseg)
-            status_new_wm, output_new_wm = sct.run('sct_dice_coefficient '+corrected_manual_wmseg+' '+fname_new_template_wm+'  -2d-slices 2', error_exit='warning')
+            status_new_wm, output_new_wm = sct.run('sct_dice_coefficient -i '+corrected_manual_wmseg+' -d '+fname_new_template_wm+'  -2d-slices 2', error_exit='warning')
 
         dice_name = 'dice_multilabel_reg.txt'
         dice_fic = open(dice_name, 'w')
@@ -324,11 +324,13 @@ def pad_im(fname_im, nx_full, ny_full, nz_full,  xi, xf, yi, yf, zi, zf):
     return fname_im_pad
 
 
-def visualize_warp(fname_warp, fname_grid=None, step=3):
+def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     if fname_grid is None:
         from numpy import zeros
+        tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
         status, out = sct.run('fslhd '+fname_warp)
+        os.chdir(tmp_dir)
         dim1 = 'dim1           '
         dim2 = 'dim2           '
         dim3 = 'dim3           '
@@ -352,10 +354,13 @@ def visualize_warp(fname_warp, fname_grid=None, step=3):
         im_grid.save()
         fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
         sct.run('sct_resample -i '+fname_grid+' -f 3x3x1 -x nn -o '+fname_grid_resample)
-        fname_grid = fname_grid_resample
+        fname_grid = tmp_dir+fname_grid_resample
+        os.chdir('..')
     path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-    grid_warped = path_warp+sct.add_suffix(fname_grid, '_'+file_warp)
+    grid_warped = path_warp+sct.extract_fname(fname_grid)[1]+'_'+file_warp+ext_warp
     sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
+    if rm_tmp:
+        sct.run('rm -rf '+tmp_dir, error_exit='warning')
 
 
 
