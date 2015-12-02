@@ -31,14 +31,18 @@ class Preprocessing:
         self.original_sc_seg = 'target_sc_seg.nii.gz'
         self.resample_to = 0.3
 
+        self.tmp_dir = tmp_dir
+        self.denoising = denoising
+
         if level_fname is not None:
             t2_data = None
             level_fname_nii = check_file_to_niigz(level_fname)
             if level_fname_nii:
-                level_path, level_file_name, level_ext = sct.extract_fname(level_fname_nii)
-                sct.run('cp ' + level_fname_nii + ' ' + tmp_dir + '/' + level_file_name + level_ext)
+                path_level, file_level, ext_level = sct.extract_fname(level_fname_nii)
+                self.fname_level = file_level + ext_level
+                sct.run('cp ' + level_fname_nii + ' ' + tmp_dir + '/' + self.fname_level)
         else:
-            level_path = level_file_name = level_ext = None
+            self.fname_level  = None
 
         if t2_data is not None:
             self.t2 = 't2.nii.gz'
@@ -47,15 +51,20 @@ class Preprocessing:
         else:
             self.t2 = self.t2_seg = self.t2_landmarks = None
 
-        sct.run('cp ' + target_fname + ' ' + tmp_dir + '/' + self.original_target)
-        sct.run('cp ' + sc_seg_fname + ' ' + tmp_dir + '/' + self.original_sc_seg)
-        if t2_data is not None:
-            sct.run('cp ' + t2_data[0] + ' ' + tmp_dir + '/' + self.t2)
-            sct.run('cp ' + t2_data[1] + ' ' + tmp_dir + '/' + self.t2_seg)
-            sct.run('cp ' + t2_data[2] + ' ' + tmp_dir + '/' + self.t2_landmarks)
+        # processes:
+        self.copy_to_tmp(target_fname=target_fname, sc_seg_fname=sc_seg_fname, t2_data=t2_data)
 
+    def copy_to_tmp(self, target_fname, sc_seg_fname, t2_data=None):
+        sct.run('cp ' + target_fname + ' ' + self.tmp_dir + '/' + self.original_target)
+        sct.run('cp ' + sc_seg_fname + ' ' + self.tmp_dir + '/' + self.original_sc_seg)
+        if self.t2 is not None:
+            sct.run('cp ' + t2_data[0] + ' ' + self.tmp_dir + '/' + self.t2)
+            sct.run('cp ' + t2_data[1] + ' ' + self.tmp_dir + '/' + self.t2_seg)
+            sct.run('cp ' + t2_data[2] + ' ' + self.tmp_dir + '/' + self.t2_landmarks)
+
+    def process(self):
         # preprocessing
-        os.chdir(tmp_dir)
+        os.chdir(self.tmp_dir)
         im_target = Image(self.original_target)
         im_sc_seg = Image(self.original_sc_seg)
         self.original_header = im_target.hdr
@@ -77,7 +86,7 @@ class Preprocessing:
 
         # denoising (optional)
         im_target = Image(self.t2star)
-        if denoising:
+        if self.denoising:
             from sct_maths import denoise_ornlm
             im_target.data = denoise_ornlm(im_target.data)
             im_target.save()
@@ -108,14 +117,12 @@ class Preprocessing:
 
         self.square_mask, self.processed_target = crop_t2_star(self.t2star, self.sc_seg, box_size=box_size)
 
-        self.level_fname = None
-        if t2_data is not None:
-            self.level_fname = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
-        elif level_fname is not None:
-            self.level_fname = level_file_name + level_ext
-            level_orientation = get_orientation(self.level_fname, filename=True)
+        if self.t2 is not None:
+            self.fname_level = compute_level_file(self.t2star, self.sc_seg, self.t2, self.t2_seg, self.t2_landmarks)
+        elif self.fname_level is not None:
+            level_orientation = get_orientation(self.fname_level, filename=True)
             if level_orientation != 'IRP':
-                self.level_fname = set_orientation(self.level_fname, 'IRP', filename=True)
+                self.fname_level = set_orientation(self.fname_level, 'IRP', filename=True)
 
         os.chdir('..')
 
@@ -189,11 +196,12 @@ class FullGmSegmentation:
     def segmentation_pipeline(self):
         sct.printv('\nDoing target pre-processing ...', verbose=self.param.verbose, type='normal')
         self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
+        self.preprocessed.process()
 
         os.chdir(self.tmp_dir)
 
-        if self.preprocessed.level_fname is not None:
-            self.level_to_use = self.preprocessed.level_fname
+        if self.preprocessed.fname_level is not None:
+            self.level_to_use = self.preprocessed.fname_level
         else:
             self.level_to_use = None
 
@@ -261,8 +269,8 @@ class FullGmSegmentation:
         ratio_dir =  'ratio/'
         sct.run('mkdir '+ratio_dir)
         if type is not 'slice':
-            assert self.preprocessed.level_fname is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
-            levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.level_fname).data]
+            assert self.preprocessed.fname_level is not None, 'No vertebral level information, you cannot compute GM/WM ratio per vertebral level.'
+            levels = [int(round(mean(dat[nonzero(dat)]), 0)) if not isnan(mean(dat[nonzero(dat)])) else 0 for dat in Image(self.preprocessed.fname_level).data]
             csa_gm_wm_by_level = {}
             for l in levels:
                 csa_gm_wm_by_level[l] = []
