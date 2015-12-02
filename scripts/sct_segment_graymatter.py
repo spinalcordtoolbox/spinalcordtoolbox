@@ -27,7 +27,7 @@ class Preprocessing:
     def __init__(self, target_fname, sc_seg_fname, tmp_dir='', t2_data=None, level_fname=None, denoising=True):
 
         # initiate de file names and copy the files into the temporary directory
-        self.original_t2star = 'target.nii.gz'
+        self.original_target = 'target.nii.gz'
         self.original_sc_seg = 'target_sc_seg.nii.gz'
         self.resample_to = 0.3
 
@@ -47,7 +47,7 @@ class Preprocessing:
         else:
             self.t2 = self.t2_seg = self.t2_landmarks = None
 
-        sct.run('cp ' + target_fname + ' ' + tmp_dir + '/' + self.original_t2star)
+        sct.run('cp ' + target_fname + ' ' + tmp_dir + '/' + self.original_target)
         sct.run('cp ' + sc_seg_fname + ' ' + tmp_dir + '/' + self.original_sc_seg)
         if t2_data is not None:
             sct.run('cp ' + t2_data[0] + ' ' + tmp_dir + '/' + self.t2)
@@ -56,32 +56,32 @@ class Preprocessing:
 
         # preprocessing
         os.chdir(tmp_dir)
-        t2star_im = Image(self.original_t2star)
-        sc_seg_im = Image(self.original_sc_seg)
-        self.original_header = t2star_im.hdr
-        self.original_orientation = t2star_im.orientation
+        im_target = Image(self.original_target)
+        im_sc_seg = Image(self.original_sc_seg)
+        self.original_header = im_target.hdr
+        self.original_orientation = im_target.orientation
         index_x = self.original_orientation.find('R') if 'R' in self.original_orientation else self.original_orientation.find('L')
         index_y = self.original_orientation.find('P') if 'P' in self.original_orientation else self.original_orientation.find('A')
         index_z = self.original_orientation.find('I') if 'I' in self.original_orientation else self.original_orientation.find('S')
 
         # resampling of the images
-        nx, ny, nz, nt, px, py, pz, pt = t2star_im.dim
+        nx, ny, nz, nt, px, py, pz, pt = im_target.dim
 
         pix_dim = [px, py, pz]
         self.original_px = pix_dim[index_x]
         self.original_py = pix_dim[index_y]
 
         if round(self.original_px, 2) != self.resample_to or round(self.original_py, 2) != self.resample_to:
-            self.t2star = resample_image(self.original_t2star, npx=self.resample_to, npy=self.resample_to)
+            self.t2star = resample_image(self.original_target, npx=self.resample_to, npy=self.resample_to)
             self.sc_seg = resample_image(self.original_sc_seg, binary=True, npx=self.resample_to, npy=self.resample_to)
 
         # denoising (optional)
-        t2star_im = Image(self.t2star)
+        im_target = Image(self.t2star)
         if denoising:
             from sct_maths import denoise_ornlm
-            t2star_im.data = denoise_ornlm(t2star_im.data)
-            t2star_im.save()
-            self.t2star = t2star_im.file_name + t2star_im.ext
+            im_target.data = denoise_ornlm(im_target.data)
+            im_target.save()
+            self.t2star = im_target.file_name + im_target.ext
 
         box_size = int(22.5/self.resample_to)
 
