@@ -1,6 +1,6 @@
 # CHANGES TO RELEASE
 
-##2.1 (TBD)
+##2.1 (2015-12-01)
 - NEW: **sct_testing**: test SCT functions and their integrity
 - NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
 - NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
