@@ -6,7 +6,6 @@
 - NEW: **sct_get_centerline -method auto**: uses advanced image processing methods for finding the spinal cord centerline automatically on any type of contrast. This script should be followed by sct_propseg for finer cord segmentation.
 - NEW: **sct_label_vertebrae**: can automatically label vertebral levels given an anatomical scan, a centerline and few prior info.
 - NEW: **sct_segment_graymatter**: segment spinal cord gray matter using multi-atlas approach from Asman et al.
-- NEW: **sct_register_graymatter**: improve registration to the template using gray matter segmentation
 - NEW: **sct_process_segmentation**: feature to estimate CSA based on labels
 - NEW: **sct_label_utils**: new functionality for creating labels based on vertebral labeling
 - NEW: added "-qc" flag to some functions to output png images for quality control.
