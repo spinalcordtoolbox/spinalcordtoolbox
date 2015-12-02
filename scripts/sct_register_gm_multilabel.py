@@ -20,7 +20,7 @@ class Param:
         self.gap = (100, 200)
         self.smooth = 0.8
 
-        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares,step=2,algo=syn,metric=MeanSquares,iter=2:step=3,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
+        self.param_reg = 'step=1,algo=slicereg,metric=MeanSquares:step=2,algo=bsplinesyn,metric=MeanSquares,iter=5,smooth=1'
 
         self.output_folder = './'
         self.verbose = 1
