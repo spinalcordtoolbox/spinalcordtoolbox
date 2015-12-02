@@ -101,7 +101,18 @@ class MultiLabelRegistration:
         path_template_ml, file_template_ml, ext_template_ml = sct.extract_fname(fname_template_ml)
 
         # Register multilabel images together
-        sct.run('sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg) #TODO: complete params
+        cmd_reg = 'sct_register_multimodal -i '+fname_template_ml+' -d '+fname_automatic_ml+' -param '+self.param.param_reg
+        if 'pointwise' in self.param.param_reg:
+            fname_template_ml_seg = sct.add_suffix(fname_template_ml, '_bin')
+            sct.run('sct_maths -i '+fname_template_ml+' -bin -o '+fname_template_ml_seg)
+
+            fname_automatic_ml_seg = sct.add_suffix(fname_automatic_ml, '_bin')
+            sct.run('sct_maths -i '+fname_automatic_ml+' -thr 50 -o '+fname_automatic_ml_seg)
+            sct.run('sct_maths -i '+fname_automatic_ml_seg+' -bin -o '+fname_automatic_ml_seg)
+
+            cmd_reg += ' -iseg '+fname_template_ml_seg+' -dseg '+fname_automatic_ml_seg
+
+        sct.run(cmd_reg)
         fname_warp_multilabel_template2auto = 'warp_'+file_template_ml+'2'+file_automatic_ml+'.nii.gz'
         fname_warp_multilabel_auto2template = 'warp_'+file_automatic_ml+'2'+file_template_ml+'.nii.gz'
         fname_warp_multilabel_template2auto = pad_im(fname_warp_multilabel_template2auto, nx, ny, nz, xi, xf, yi, yf, zi, zf)
@@ -124,7 +135,6 @@ class MultiLabelRegistration:
 
         if self.param.remove_tmp:
             sct.run('rm -rf '+tmp_dir, error_exit='warning')
-
 
     def validation(self, fname_manual_gmseg, fname_sc_seg):
         path_manual_gmseg, file_manual_gmseg, ext_manual_gmseg = sct.extract_fname(fname_manual_gmseg)
@@ -163,8 +173,6 @@ class MultiLabelRegistration:
 
         fname_manual_wmseg = 'target_manual_wmseg.nii.gz'
         sct.run('sct_maths -i '+file_sc_seg+ext_sc_seg+' -sub '+file_manual_gmseg+ext_manual_gmseg+' -o '+fname_manual_wmseg)
-
-        # TODO: Hausdorff GM with old/new_template : output HD/MD new template and diff
 
         # Compute Hausdorff distance
         status, output_old_hd = sct.run('sct_compute_hausdorff_distance -i '+fname_old_template_gm+' -r '+file_manual_gmseg+ext_manual_gmseg+' -t 1  -v 1')
@@ -366,8 +374,6 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     sct.run('sct_apply_transfo -i '+fname_grid+' -d '+fname_grid+' -w '+fname_warp+' -o '+grid_warped)
     if rm_tmp:
         sct.run('rm -rf '+tmp_dir, error_exit='warning')
-
-
 
 
 ########################################################################################################################
