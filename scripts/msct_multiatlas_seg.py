@@ -35,27 +35,26 @@ class SegmentationParam:
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
 
         self.debug = 0
-        self.path_model = path_sct+'/data/gm_model' # None  # '/Volumes/folder_shared/greymattersegmentation/data_asman/dictionary'
-        self.todo_model = 'load'  # 'compute'
-        self.new_model_dir = './gm_model'
-        self.output_path = ''
-        self.reg = ['Affine']  # default is Affine  TODO : REMOVE THAT PARAM WHEN REGISTRATION IS OPTIMIZED
-        self.reg_metric = 'MI'
-        self.target_denoising = True
-        self.target_normalization = True
-        self.target_means = None
-        self.first_reg = False
-        self.use_levels = True
-        self.weight_gamma = 2.5
-        self.equation_id = 1
-        self.weight_label_fusion = False
-        self.mode_weight_similarity = False
-        self.z_regularisation = False
-        self.res_type = 'prob'
-        self.dev = False
-        self.qc = 0
-        self.verbose = 1
-        self.remove_tmp = 1
+        self.path_model = path_sct+'/data/gm_model'  # model_param
+        self.todo_model = 'load'  # 'compute'   # model_param
+        self.new_model_dir = './gm_model'  # model_param
+        self.output_path = ''  # SEG
+        self.reg = ['Affine']  # model_param
+        self.reg_metric = 'MI'  # model_param
+        self.target_denoising = True  # seg_param
+        self.target_normalization = True  # seg_param
+        self.target_means = None  #   seg_param
+        self.use_levels = True  # model_param
+        self.weight_gamma = 2.5  # model_param
+        self.equation_id = 1  # model_param
+        self.weight_label_fusion = False  # model_param
+        self.mode_weight_similarity = False  # model_param
+        self.z_regularisation = False  # seg_param
+        self.res_type = 'prob'  # seg_param
+        self.dev = False  # seg_param
+        self.qc = 0  # SEG
+        self.verbose = 1  # both
+        self.remove_tmp = 1  # seg_param
 
     def __repr__(self):
         s = ''
@@ -68,7 +67,6 @@ class SegmentationParam:
         s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***\n'
         s += 'target_normalization: ' + str(self.target_normalization) + '\n'
         s += 'target_means: ' + str(self.target_means) + '\n'
-        s += 'first_reg: ' + str(self.first_reg) + '\n'
         s += 'use_levels: ' + str(self.use_levels) + '\n'
         s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
         s += 'equation_id: ' + str(self.equation_id) + '\n'
@@ -681,9 +679,6 @@ class TargetSegmentationPairwise:
         if levels_image is not None and self.model.param.use_levels:
             self.load_level(levels_image)
 
-        if self.model.param.first_reg:
-            self.first_reg()
-
         self.target_pairwise_registration()
 
         if self.model.param.target_normalization:
@@ -755,32 +750,6 @@ class TargetSegmentationPairwise:
         elif isinstance(level_image, str):
             self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image.upper()))
 
-    # ------------------------------------------------------------------------------------------------------------------
-    def first_reg(self):
-        """
-        Do a registration of rhe target image on the mean spinal cord segmentation to hhelp the target registration
-        WARNING: DOESN'T IMPROVE THE GM SEGMENTATION RESULT
-
-        :return None: the target moved image is set in the function
-        """
-        mean_sc_seg = (np.asarray(self.model.pca.mean_image) > 0).astype(int)
-        Image(param=self.model.pca.mean_image, absolutepath='mean_image.nii.gz').save(type='minimize')
-        # save_image(self.model.pca.mean_image, 'mean_image')
-        for i, target_slice in enumerate(self.target):
-            moving_target_seg = (np.asarray(target_slice.im) > 0).astype(int)
-            transfo = 'BSplineSyN'
-            transfo_name = transfo + '_first_reg_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
-
-            apply_ants_transfo(mean_sc_seg, moving_target_seg, binary=True, apply_transfo=False, transfo_type=transfo, transfo_name=transfo_name, metric=self.model.param.reg_metric)
-            moved_target_slice = apply_ants_transfo(mean_sc_seg, target_slice.im, binary=False, search_reg=False, transfo_type=transfo, transfo_name=transfo_name, metric=self.model.param.reg_metric)
-
-            target_slice.set(im_m=moved_target_slice)
-            target_slice.reg_to_M.append((transfo, transfo_name))
-
-            Image(param=target_slice.im, absolutepath='slice' + str(target_slice.id) + '_original_im.nii.gz').save(type='minimize')
-            Image(param=target_slice.im_M, absolutepath='slice' + str(target_slice.id) + '_moved_im.nii.gz').save(type='minimize')
-            # save_image(target_slice.im, 'slice' + str(target_slice.id) + '_original_im')
-            # save_image(target_slice.im_M, 'slice' + str(target_slice.id) + '_moved_im')
 
     # ------------------------------------------------------------------------------------------------------------------
     def target_normalization(self, method='median'):
@@ -938,10 +907,7 @@ class TargetSegmentationPairwise:
             # Registration target --> model space
             mean_dic_im = self.model.pca.mean_image
             for i, target_slice in enumerate(self.target):
-                if not self.model.param.first_reg:
-                    moving_target_slice = target_slice.im
-                else:
-                    moving_target_slice = target_slice.im_M
+                moving_target_slice = target_slice.im
                 for transfo in self.model.dictionary.coregistration_transfos:
                     transfo_name = transfo + '_transfo_target2model_space_slice_' + str(i) + find_ants_transfo_name(transfo)[0]
                     target_slice.reg_to_M.append((transfo, transfo_name))
