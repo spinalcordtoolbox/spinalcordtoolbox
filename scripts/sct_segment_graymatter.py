@@ -17,7 +17,7 @@ import getopt
 from msct_parser import *
 from msct_image import Image, get_dimension
 import random
-from msct_multiatlas_seg import ModelParam, Model, SegmentationParam, GMsegSupervisedMethod
+from msct_multiatlas_seg import ModelParam, Model, SegmentationParam, SupervisedSegmentationMethod
 from msct_gmseg_utils import *
 from sct_image import set_orientation, get_orientation, orientation,pad_image
 import shutil
@@ -331,7 +331,7 @@ class FullGmSegmentation:
             self.level_to_use = None
 
         sct.printv('\nDoing target gray matter segmentation ...', verbose=self.seg_param.verbose, type='normal')
-        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.seg_param)
+        self.gm_seg = SupervisedSegmentationMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.seg_param)
 
         sct.printv('\nDoing result post-processing ...', verbose=self.seg_param.verbose, type='normal')
         self.post_processing()
