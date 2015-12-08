@@ -30,25 +30,43 @@ import commands
 from math import exp
 
 
-class SegmentationParam:
+class ModelParam:
     def __init__(self):
         status, path_sct = commands.getstatusoutput('echo $SCT_DIR')
-
-        self.debug = 0
         self.path_model = path_sct+'/data/gm_model'  # model_param
         self.todo_model = 'load'  # 'compute'   # model_param
         self.new_model_dir = './gm_model'  # model_param
-        self.output_path = ''  # SEG
         self.reg = ['Affine']  # model_param
         self.reg_metric = 'MI'  # model_param
+        self.use_levels = True  # model_param
+        self.weight_gamma = 2.5  # model_param
+        self.weight_label_fusion = False  # model_param
+        self.mode_weight_similarity = False  # model_param
+        self.equation_id = 1  # model_param
+        self.verbose = 1  # both
+
+
+    def __repr__(self):
+        s = ''
+        s += 'path_model: ' + str(self.path_model) + '\n'
+        s += 'todo_model: ' + str(self.todo_model) + '\n'
+        s += 'new_model_dir: ' + str(self.new_model_dir) + '  *** only used if todo_model=compute ***\n'
+        s += 'reg: ' + str(self.reg) + '\n'
+        s += 'reg_metric: ' + str(self.reg_metric) + '\n'
+        s += 'use_levels: ' + str(self.use_levels) + '\n'
+        s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
+        s += 'weight_label_fusion: ' + str(self.weight_label_fusion) + '\n'
+        s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
+        s += 'equation_id: ' + str(self.equation_id) + '\n'
+
+
+class SegmentationParam:
+    def __init__(self):
+        self.debug = 0
+        self.output_path = ''  # SEG
         self.target_denoising = True  # seg_param
         self.target_normalization = True  # seg_param
         self.target_means = None  #   seg_param
-        self.use_levels = True  # model_param
-        self.weight_gamma = 2.5  # model_param
-        self.equation_id = 1  # model_param
-        self.weight_label_fusion = False  # model_param
-        self.mode_weight_similarity = False  # model_param
         self.z_regularisation = False  # seg_param
         self.res_type = 'prob'  # seg_param
         self.dev = False  # seg_param
@@ -58,20 +76,10 @@ class SegmentationParam:
 
     def __repr__(self):
         s = ''
-        s += 'path_model: ' + str(self.path_model) + '\n'
-        s += 'todo_model: ' + str(self.todo_model) + '\n'
-        s += 'new_model_dir: ' + str(self.new_model_dir) + '  *** only used if todo_model=compute ***\n'
         s += 'output_path: ' + str(self.output_path) + '\n'
-        s += 'reg: ' + str(self.reg) + '\n'
-        s += 'reg_metric: ' + str(self.reg_metric) + '\n'
         s += 'target_denoising: ' + str(self.target_denoising) + ' ***WARNING: used in sct_segment_gray_matter not in msct_multiatlas_seg***\n'
         s += 'target_normalization: ' + str(self.target_normalization) + '\n'
         s += 'target_means: ' + str(self.target_means) + '\n'
-        s += 'use_levels: ' + str(self.use_levels) + '\n'
-        s += 'weight_gamma: ' + str(self.weight_gamma) + '\n'
-        s += 'equation_id: ' + str(self.equation_id) + '\n'
-        s += 'weight_label_fusion: ' + str(self.weight_label_fusion) + '\n'
-        s += 'mode_weight_similarity: ' + str(self.mode_weight_similarity) + '\n'
         s += 'z_regularisation: ' + str(self.z_regularisation) + '\n'
         s += 'res_type: ' + str(self.res_type) + '\n'
         s += 'qc: ' + str(self.qc) + '\n'
@@ -98,7 +106,7 @@ class ModelDictionary:
         :param dic_param: dictionary parameters, type: Param
         """
         if dic_param is None:
-            self.param = SegmentationParam()
+            self.param = ModelParam()
         else:
             self.param = dic_param
 
@@ -395,7 +403,7 @@ class Model:
         :param k: Amount of variability to keep in the PCA reduced space, type: float
         """
         if model_param is None:
-            self.param = SegmentationParam()
+            self.param = ModelParam()
         else:
             self.param = model_param
 
@@ -657,7 +665,7 @@ class TargetSegmentationPairwise:
 
         - computation of the resulting target segmentation by label fusion of their segmentation
     """
-    def __init__(self, model, target_image=None, levels_image=None, epsilon=None):
+    def __init__(self, model, target_image=None, levels_image=None, epsilon=None, seg_param=None):
         """
         Target gray matter segmentation constructor
 
@@ -667,6 +675,7 @@ class TargetSegmentationPairwise:
 
         """
         self.model = model
+        self.param = seg_param if seg_param is not None else SegmentationParam()
 
         # Initialization of the target image
         if len(target_image.data.shape) == 3:
@@ -681,42 +690,42 @@ class TargetSegmentationPairwise:
 
         self.target_pairwise_registration()
 
-        if self.model.param.target_normalization:
+        if self.param.target_normalization:
             self.target_normalization(method='median')  # 'mean')
 
         # TODO: remove after testing:
         Image(param=np.asarray([target_slice.im_M for target_slice in self.target]), absolutepath='target_moved_after_normalization.nii.gz').save()
 
-        sct.printv('\nProjecting the target image in the reduced common space ...', model.param.verbose, 'normal')
+        sct.printv('\nProjecting the target image in the reduced common space ...', self.param.verbose, 'normal')
         # coord_projected_target is a list of all the coord of the target's projected slices
         self.coord_projected_target = model.pca.project([target_slice.im_M for target_slice in self.target])
 
-        sct.printv('\nComputing the similarities between the target and the model slices ...', model.param.verbose, 'normal')
+        sct.printv('\nComputing the similarities between the target and the model slices ...', self.param.verbose, 'normal')
         if levels_image is not None and self.model.param.use_levels:
             self.beta = self.model.compute_beta(self.coord_projected_target, target_levels=np.asarray([target_slice.level for target_slice in self.target]), tau=self.model.tau)
         else:
             self.beta = self.model.compute_beta(self.coord_projected_target, tau=self.model.tau)
 
-        sct.printv('\nSelecting the dictionary slices most similar to the target ...', model.param.verbose, 'normal')
+        sct.printv('\nSelecting the dictionary slices most similar to the target ...', self.param.verbose, 'normal')
         self.selected_k_slices = self.model.select_k_slices(self.beta)
         self.save_selected_slices(target_image.file_name[:-3])
 
-        if self.model.param.verbose == 2:
+        if self.param.verbose == 2:
             self.plot_projected_dic(nb_modes=3, to_highlight=None)  # , to_highlight='all')  # , to_highlight=(6, self.selected_k_slices[6]))
 
-        sct.printv('\nComputing the result gray matter segmentation ...', model.param.verbose, 'normal')
+        sct.printv('\nComputing the result gray matter segmentation ...', self.param.verbose, 'normal')
         if self.model.param.weight_label_fusion:
             use_beta = self.beta
         else:
             use_beta = None
-        self.model.label_fusion(self.target, self.selected_k_slices, beta=use_beta, type=self.model.param.res_type)
+        self.model.label_fusion(self.target, self.selected_k_slices, beta=use_beta, type=self.param.res_type)
 
-        if self.model.param.z_regularisation:
-            sct.printv('\nRegularisation of the segmentation along the Z axis ...', model.param.verbose, 'normal')
+        if self.param.z_regularisation:
+            sct.printv('\nRegularisation of the segmentation along the Z axis ...', self.param.verbose, 'normal')
             self.z_regularisation_2d_iteration()
 
         sct.printv('\nRegistering the result gray matter segmentation back into the target original space...',
-                   model.param.verbose, 'normal')
+                   self.param.verbose, 'normal')
         self.target_pairwise_registration(inverse=True)
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -737,7 +746,7 @@ class TargetSegmentationPairwise:
                 try:
                     self.target[i_level_slice].set(level=int(round(sum(nz_val)/len(nz_val))))
                 except ZeroDivisionError:
-                            sct.printv('WARNING: No level label for slice ' + str(i_level_slice) + ' of target', self.model.param.verbose, 'warning')
+                            sct.printv('WARNING: No level label for slice ' + str(i_level_slice) + ' of target', self.param.verbose, 'warning')
                             self.target[i_level_slice].set(level=0)
             '''
             for i_level_slice, level_slice in enumerate(level_image.data):
@@ -745,7 +754,7 @@ class TargetSegmentationPairwise:
                     l = int(round(np.mean(level_slice[level_slice > 0])))
                     self.target[i_level_slice].set(level=l)
                 except Exception, e:
-                    sct.printv('WARNING: ' + str(e) + '\nNo level label for slice ' + str(i_level_slice) + ' of target', self.model.param.verbose, 'warning')
+                    sct.printv('WARNING: ' + str(e) + '\nNo level label for slice ' + str(i_level_slice) + ' of target', self.param.verbose, 'warning')
                     self.target[i_level_slice].set(level=0)
         elif isinstance(level_image, str):
             self.target[0].set(level=get_key_from_val(self.model.dictionary.level_label, level_image.upper()))
@@ -757,7 +766,7 @@ class TargetSegmentationPairwise:
         Normalization of the target using the intensity values of the mean dictionary image
         :return None: the target image is modified
         """
-        sct.printv('Linear target normalization using '+method+' ...', self.model.param.verbose, 'normal')
+        sct.printv('Linear target normalization using '+method+' ...', self.param.verbose, 'normal')
 
         if method == 'mean' or method == 'median':
             dic_metrics = extract_metric_from_dic(self.model.dictionary.slices, metric=method, save=True)
@@ -770,7 +779,7 @@ class TargetSegmentationPairwise:
             dic_gm_mean = np.mean(gm_metrics)
 
             # getting the mean values of WM and GM in the target
-            if self.model.param.target_means is None:
+            if self.param.target_means is None:
                 if self.model.param.use_levels:
                     seg_averages_by_level = self.model.dictionary.mean_seg_by_level(type='binary')[0]
                     mean_seg_by_level = [seg_averages_by_level[self.model.dictionary.level_label[target_slice.level]] for target_slice in self.target]
@@ -783,11 +792,11 @@ class TargetSegmentationPairwise:
 
                 else:
                     sct.printv('WARNING: No mean value of the white matter and gray matter intensity were provided, nor the target vertebral levels to estimate them\n'
-                               'The target will not be normalized.', self.model.param.verbose, 'warning')
-                    self.model.param.target_normalization = False
+                               'The target will not be normalized.', self.param.verbose, 'warning')
+                    self.param.target_normalization = False
                     target_metric = None
             else:
-                target_metric = [(self.model.param.target_means[0], self.model.param.target_means[1], 0, 0) for i in range(len(self.target))]
+                target_metric = [(self.param.target_means[0], self.param.target_means[1], 0, 0) for i in range(len(self.target))]
 
             if type(target_metric) == type({}): # if target_metric is a dictionary
                 differences = [m[1]-m[0] for m in target_metric.values()]
@@ -922,7 +931,7 @@ class TargetSegmentationPairwise:
                 moving_gm_seg_slice = target_slice.gm_seg_M
 
                 for transfo in target_slice.reg_to_M:
-                    if self.model.param.res_type == 'binary':
+                    if self.param.res_type == 'binary':
                         bin = True
                     else:
                         bin = False
@@ -959,8 +968,8 @@ class TargetSegmentationPairwise:
             adjacent_wm_seg = np.asarray(adjacent_wm_seg)
             adjacent_gm_seg = np.asarray(adjacent_gm_seg)
 
-            new_wm_seg = compute_majority_vote_mean_seg(adjacent_wm_seg, type=self.model.param.res_type, threshold=0.50001)
-            new_gm_seg = compute_majority_vote_mean_seg(adjacent_gm_seg, type=self.model.param.res_type)  # , threshold=0.4999)
+            new_wm_seg = compute_majority_vote_mean_seg(adjacent_wm_seg, type=self.param.res_type, threshold=0.50001)
+            new_gm_seg = compute_majority_vote_mean_seg(adjacent_gm_seg, type=self.param.res_type)  # , threshold=0.4999)
 
             target_slice.set(wm_seg_m=new_wm_seg)
             target_slice.set(gm_seg_m=new_gm_seg)
@@ -1010,7 +1019,7 @@ sct_Image
     def __init__(self, target_fname, level_fname, model, gm_seg_param=None):
         # build the appearance model
         self.model = model
-
+        self.param = gm_seg_param
         sct.printv('\nConstructing target image ...', verbose=gm_seg_param.verbose, type='normal')
         # construct target image
         self.target_image = Image(target_fname)
@@ -1024,19 +1033,19 @@ sct_Image
             else:
                 level_im = Image(level_fname)
         else:
-            gm_seg_param.use_levels = False
+            self.param.use_levels = False
 
         # TARGET PAIRWISE SEGMENTATION
         if level_im is not None:
-            self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image, levels_image=level_im)
+            self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image, levels_image=level_im, seg_param=self.param)
         else:
-            self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image)
+            self.target_seg_methods = TargetSegmentationPairwise(self.model, target_image=self.target_image, seg_param=self.param)
 
         # get & save the result gray matter segmentation
-        # if gm_seg_param.output_name == '':
+        # if self.param.output_name == '':
         suffix = ''
-        if self.model.param.dev:
-            suffix += '_' + gm_seg_param.res_type
+        if self.param.dev:
+            suffix += '_' + self.param.res_type
             for transfo in self.model.dictionary.coregistration_transfos:
                 suffix += '_' + transfo
             if self.model.param.use_levels:
@@ -1053,9 +1062,9 @@ sct_Image
         ext = sct.extract_fname(target_fname)[2]
         '''
         else:
-            name_res_wmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_wmseg'
-            name_res_gmseg = ''.join(sct.extract_fname(gm_seg_param.output_name)[:-1]) + '_gmseg'
-            ext = sct.extract_fname(gm_seg_param.output_name)[2]
+            name_res_wmseg = ''.join(sct.extract_fname(self.param.output_name)[:-1]) + '_wmseg'
+            name_res_gmseg = ''.join(sct.extract_fname(self.param.output_name)[:-1]) + '_gmseg'
+            ext = sct.extract_fname(self.param.output_name)[2]
         '''
         if len(self.target_seg_methods.target) == 1: # if target is 2D (1 SLICE)
             self.res_wm_seg = Image(param=np.asarray(self.target_seg_methods.target[0].wm_seg), absolutepath=name_res_wmseg + ext)
@@ -1093,13 +1102,14 @@ sct_Image
 ########################################################################################################################
 
 if __name__ == "__main__":
-    param = SegmentationParam()
+    model_param = ModelParam()
+    seg_param = SegmentationParam()
     input_target_fname = None
     input_level_fname = None
-    if param.debug:
+    if seg_param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_input = param.path_model + "/errsm_34.nii.gz"
-        fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
+        fname_input = model_param.path_model + "/errsm_34.nii.gz"
+        fname_input = model_param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
         param_default = SegmentationParam()
 
@@ -1113,7 +1123,7 @@ if __name__ == "__main__":
                                       "if -i isn't used, only the model is computed/loaded",
                           mandatory=False,
                           example='t2star.nii.gz')
-        parser.add_option(name="-o",
+        parser.add_option(name="-ofolder",
                           type_value="str",
                           description="output name for the results",
                           mandatory=False,
@@ -1188,33 +1198,34 @@ if __name__ == "__main__":
 
         if "-i" in arguments:
             input_target_fname = arguments["-i"]
-        if "-o" in arguments:
-            param.output_path = arguments["-o"]
+        if "-ofolder" in arguments:
+            seg_param.output_path = arguments["-ofolder"]
         if "-model" in arguments:
-            param.path_model = arguments["-model"]
+            model_param.path_model = arguments["-model"]
         if "-todo-model" in arguments:
-            param.todo_model = arguments["-todo-model"]
+            model_param.todo_model = arguments["-todo-model"]
         if "-reg" in arguments:
-            param.reg = arguments["-reg"]
+            model_param.reg = arguments["-reg"]
         if "-l" in arguments:
             input_level_fname = arguments["-l"]
         if "-weight" in arguments:
-            param.weight_gamma = arguments["-weight"]
+            model_param.weight_gamma = arguments["-weight"]
         if "-use-levels" in arguments:
-            param.use_levels = bool(int(arguments["-use-levels"]))
+            model_param.use_levels = bool(int(arguments["-use-levels"]))
         if "-denoising" in arguments:
-            param.target_denoising = bool(int(arguments["-denoising"]))
+            seg_param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
-            param.target_normalization = bool(int(arguments["-normalize"]))
+            seg_param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
-            param.target_means = arguments["-means"]
+            seg_param.target_means = arguments["-means"]
         if "-res-type" in arguments:
-            param.res_type = arguments["-res-type"]
+            seg_param.res_type = arguments["-res-type"]
         if "-v" in arguments:
-            param.verbose = int(arguments["-v"])
+            seg_param.verbose = int(arguments["-v"])
+            model_param.verbose = int(arguments["-v"])
 
-    model = Model(model_param=param, k=0.8)
+    model = Model(model_param=model_param, k=0.8)
     if input_target_fname is not None:
-        gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, model, gm_seg_param=param)
-        if param.verbose == 2:
+        gm_seg_method = GMsegSupervisedMethod(input_target_fname, input_level_fname, model, gm_seg_param=seg_param)
+        if seg_param.verbose == 2:
             gm_seg_method.show()
