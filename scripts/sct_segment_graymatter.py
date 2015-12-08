@@ -17,7 +17,7 @@ import getopt
 from msct_parser import *
 from msct_image import Image, get_dimension
 import random
-from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
+from msct_multiatlas_seg import ModelParam, Model, SegmentationParam, GMsegSupervisedMethod
 from msct_gmseg_utils import *
 from sct_image import set_orientation, get_orientation, orientation,pad_image
 import shutil
@@ -256,11 +256,12 @@ class Preprocessing:
 
 class FullGmSegmentation:
 
-    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, param=None):
-        self.param = param
-        sct.printv('\nBuilding the appearance model...', verbose=self.param.verbose, type='normal')
+    def __init__(self, target_fname, sc_seg_fname, t2_data, level_fname, ref_gm_seg=None, model=None, compute_ratio=False, model_param=None, seg_param=None):
+        self.model_param = model_param
+        self.seg_param = seg_param
+        sct.printv('\nBuilding the appearance model...', verbose=self.seg_param.verbose, type='normal')
         if model is None:
-            self.model = Model(model_param=self.param, k=0.8)
+            self.model = Model(model_param=self.model_param, k=0.8)
         else:
             self.model = model
         self.target_fname = check_file_to_niigz(target_fname)
@@ -287,16 +288,16 @@ class FullGmSegmentation:
 
         # Generate output files:
         for res_fname in self.res_names.values():
-            sct.generate_output_file(self.tmp_dir+res_fname, self.param.output_path+res_fname)
+            sct.generate_output_file(self.tmp_dir+res_fname, self.seg_param.output_path+res_fname)
         if self.ref_gm_seg_fname is not None:
-            sct.generate_output_file(self.tmp_dir+self.dice_name, self.param.output_path+self.dice_name)
-            sct.generate_output_file(self.tmp_dir+self.hausdorff_name, self.param.output_path+self.hausdorff_name)
+            sct.generate_output_file(self.tmp_dir+self.dice_name, self.seg_param.output_path+self.dice_name)
+            sct.generate_output_file(self.tmp_dir+self.hausdorff_name, self.seg_param.output_path+self.hausdorff_name)
         if compute_ratio:
-            sct.generate_output_file(self.tmp_dir+self.ratio_name, self.param.output_path+self.ratio_name)
+            sct.generate_output_file(self.tmp_dir+self.ratio_name, self.seg_param.output_path+self.ratio_name)
 
         after = time.time()
         sct.printv('Done! (in ' + str(after-before) + ' sec) \nTo see the result, type :')
-        if self.param.res_type == 'binary':
+        if self.seg_param.res_type == 'binary':
             wm_col = 'Red'
             gm_col = 'Blue'
             b = '0,1'
@@ -304,22 +305,22 @@ class FullGmSegmentation:
             wm_col = 'Blue-Lightblue'
             gm_col = 'Red-Yellow'
             b = '0.3,1'
-        sct.printv('fslview ' + self.target_fname + ' '+self.param.output_path+self.res_names['wm_seg']+' -l '+wm_col+' -t 0.4 -b '+b+' '+self.param.output_path+self.res_names['gm_seg']+' -l '+gm_col+' -t 0.4  -b '+b+' &', param.verbose, 'info')
+        sct.printv('fslview ' + self.target_fname + ' '+self.seg_param.output_path+self.res_names['wm_seg']+' -l '+wm_col+' -t 0.4 -b '+b+' '+self.seg_param.output_path+self.res_names['gm_seg']+' -l '+gm_col+' -t 0.4  -b '+b+' &', self.seg_param.verbose, 'info')
 
-        if self.param.qc:
+        if self.seg_param.qc:
             # output QC image
             im = Image(self.target_fname)
-            im_gmseg = Image(self.param.output_path+self.res_names['gm_seg'])
-            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.param.output_path)
+            im_gmseg = Image(self.seg_param.output_path+self.res_names['gm_seg'])
+            im.save_quality_control(plane='axial', n_slices=5, seg=im_gmseg, thr=float(b.split(',')[0]), cmap_col='red-yellow', path_output=self.seg_param.output_path)
 
-        if self.param.remove_tmp:
-            sct.printv('Remove temporary folder ...', self.param.verbose, 'normal')
+        if self.seg_param.remove_tmp:
+            sct.printv('Remove temporary folder ...', self.seg_param.verbose, 'normal')
             sct.run('rm -rf '+self.tmp_dir)
 
     # ------------------------------------------------------------------------------------------------------------------
     def segmentation_pipeline(self):
-        sct.printv('\nDoing target pre-processing ...', verbose=self.param.verbose, type='normal')
-        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.param.target_denoising)
+        sct.printv('\nDoing target pre-processing ...', verbose=self.seg_param.verbose, type='normal')
+        self.preprocessed = Preprocessing(self.target_fname, self.sc_seg_fname, tmp_dir=self.tmp_dir, t2_data=self.t2_data, level_fname=self.level_fname, denoising=self.seg_param.target_denoising)
         self.preprocessed.process()
 
         os.chdir(self.tmp_dir)
@@ -329,10 +330,10 @@ class FullGmSegmentation:
         else:
             self.level_to_use = None
 
-        sct.printv('\nDoing target gray matter segmentation ...', verbose=self.param.verbose, type='normal')
-        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.param)
+        sct.printv('\nDoing target gray matter segmentation ...', verbose=self.seg_param.verbose, type='normal')
+        self.gm_seg = GMsegSupervisedMethod(self.preprocessed.processed_target, self.level_to_use, self.model, gm_seg_param=self.seg_param)
 
-        sct.printv('\nDoing result post-processing ...', verbose=self.param.verbose, type='normal')
+        sct.printv('\nDoing result post-processing ...', verbose=self.seg_param.verbose, type='normal')
         self.post_processing()
 
         if self.ref_gm_seg_fname is not None:
@@ -340,11 +341,11 @@ class FullGmSegmentation:
             ref_gmseg = 'ref_gmseg.nii.gz'
             sct.run('cp ' + self.ref_gm_seg_fname + ' ' + self.tmp_dir + '/' + ref_gmseg)
             os.chdir(self.tmp_dir)
-            sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.param.verbose, type='normal')
+            sct.printv('Computing Dice coefficient and Hausdorff distance ...', verbose=self.seg_param.verbose, type='normal')
             self.dice_name, self.hausdorff_name = self.validation(ref_gmseg)
 
         if compute_ratio:
-            sct.printv('\nComputing ratio GM/WM ...', verbose=self.param.verbose, type='normal')
+            sct.printv('\nComputing ratio GM/WM ...', verbose=self.seg_param.verbose, type='normal')
             self.ratio_name = self.compute_ratio(type=compute_ratio)
 
         os.chdir('..')
@@ -369,13 +370,13 @@ class FullGmSegmentation:
             target_path, target_name, target_ext = sct.extract_fname(self.target_fname)
             res_name = target_name + res_im.file_name[len(sct.extract_fname(self.preprocessed.processed_target)[1]):] + '.nii.gz'
 
-            if self.param.res_type == 'binary':
+            if self.seg_param.res_type == 'binary':
                 bin = True
             else:
                 bin = False
             old_res_name = resample_image(res_fname_original_space+ext, npx=self.preprocessed.original_px, npy=self.preprocessed.original_py, binary=bin)
 
-            if self.param.res_type == 'prob':
+            if self.seg_param.res_type == 'prob':
                 # sct.run('fslmaths ' + old_res_name + ' -thr 0.05 ' + old_res_name)
                 sct.run('sct_maths -i ' + old_res_name + ' -thr 0.05 -o ' + old_res_name)
 
@@ -486,7 +487,7 @@ class FullGmSegmentation:
         sct.run('sct_maths -i '+self.preprocessed.original_sc_seg+' -sub '+ref_gmseg+' -o '+ref_wmseg)
 
         # Binarize results if it was probabilistic results
-        if self.param.res_type == 'prob':
+        if self.seg_param.res_type == 'prob':
             sct.run('sct_maths -i '+gm_seg+' -thr 0.5 -o '+gm_seg)
             sct.run('sct_maths -i '+wm_seg+' -thr 0.4999 -o '+wm_seg)
             sct.run('sct_maths -i '+gm_seg+' -bin -o '+gm_seg)
@@ -513,9 +514,9 @@ class FullGmSegmentation:
             sct.run('sct_maths -i '+corrected_ref_wmseg+' -bin -o '+corrected_ref_wmseg)
             status_wm, output_wm = sct.run('sct_dice_coefficient -i '+corrected_ref_wmseg+' -d '+wm_seg+'  -2d-slices 2', error_exit='warning')
 
-        dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
+        dice_name = 'dice_' + sct.extract_fname(self.target_fname)[1] + '_' + self.seg_param.res_type + '.txt'
         dice_fic = open('../'+dice_name, 'w')
-        if self.param.res_type == 'prob':
+        if self.seg_param.res_type == 'prob':
             dice_fic.write('WARNING : the probabilistic segmentations were binarized with a threshold at 0.5 to compute the dice coefficient \n')
         dice_fic.write('\n--------------------------------------------------------------\n'
                        'Dice coefficient on the Gray Matter segmentation:\n')
@@ -526,8 +527,8 @@ class FullGmSegmentation:
         dice_fic.close()
 
         # Compute Hausdorff distance
-        hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.param.res_type + '.txt'
-        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -d '+ref_gmseg+' -thinning 1 -o '+hd_name+' -v '+str(self.param.verbose))
+        hd_name = 'hd_' + sct.extract_fname(self.target_fname)[1] + '_' + self.seg_param.res_type + '.txt'
+        sct.run('sct_compute_hausdorff_distance -i '+gm_seg+' -d '+ref_gmseg+' -thinning 1 -o '+hd_name+' -v '+str(self.seg_param.verbose))
         sct.run('mv ./' + hd_name + ' ../')
 
         os.chdir('..')
@@ -538,44 +539,42 @@ class FullGmSegmentation:
 # ------------------------------------------------------  MAIN ------------------------------------------------------- #
 ########################################################################################################################
 if __name__ == "__main__":
-    param = SegmentationParam()
+    model_param = ModelParam()
+    seg_param = SegmentationParam()
     input_target_fname = None
     input_sc_seg_fname = None
     input_t2_data = None
     input_level_fname = None
     input_ref_gm_seg = None
     compute_ratio = False
-    if param.debug:
+    if seg_param.debug:
         print '\n*** WARNING: DEBUG MODE ON ***\n'
-        fname_input = param.path_model + "/errsm_34.nii.gz"
-        fname_input = param.path_model + "/errsm_34_seg_in.nii.gz"
+        fname_input = model_param.path_model + "/errsm_34.nii.gz"
+        fname_input = model_param.path_model + "/errsm_34_seg_in.nii.gz"
     else:
-        param_default = SegmentationParam()
-
         parser = get_parser()
-
         arguments = parser.parse(sys.argv[1:])
         input_target_fname = arguments["-i"]
         input_sc_seg_fname = arguments["-s"]
         if "-model" in arguments:
-            param.path_model = arguments["-model"]
-        param.todo_model = 'load'
-        param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
+            model_param.path_model = arguments["-model"]
+        model_param.todo_model = 'load'
+        seg_param.output_path = sct.slash_at_the_end(arguments["-ofolder"], slash=1)
 
         if "-t2" in arguments:
             input_t2_data = arguments["-t2"]
         if "-vert" in arguments:
             input_level_fname = arguments["-vert"]
         if "-use-levels" in arguments:
-            param.use_levels = bool(int(arguments["-use-levels"]))
+            model_param.use_levels = bool(int(arguments["-use-levels"]))
         if "-weight" in arguments:
-            param.weight_gamma = arguments["-weight"]
+            model_param.weight_gamma = arguments["-weight"]
         if "-denoising" in arguments:
-            param.target_denoising = bool(int(arguments["-denoising"]))
+            seg_param.target_denoising = bool(int(arguments["-denoising"]))
         if "-normalize" in arguments:
-            param.target_normalization = bool(int(arguments["-normalize"]))
+            seg_param.target_normalization = bool(int(arguments["-normalize"]))
         if "-means" in arguments:
-            param.target_means = arguments["-means"]
+            seg_param.target_means = arguments["-means"]
         if "-ratio" in arguments:
             if arguments["-ratio"] == '0':
                 compute_ratio = False
@@ -590,16 +589,17 @@ if __name__ == "__main__":
                 else:
                     sct.printv('WARNING: -ratio-level function should be used with a range of vertebral levels (for ex: "C2:C5"). Ignoring option.', 1, 'warning')
         if "-res-type" in arguments:
-            param.res_type = arguments["-res-type"]
+            seg_param.res_type = arguments["-res-type"]
         if "-ref" in arguments:
             input_ref_gm_seg = arguments["-ref"]
-        param.verbose = int(arguments["-v"])
-        param.qc = int(arguments["-qc"])
-        param.remove_tmp = int(arguments["-r"])
+        seg_param.verbose = int(arguments["-v"])
+        model_param.verbose = int(arguments["-v"])
+        seg_param.qc = int(arguments["-qc"])
+        seg_param.remove_tmp = int(arguments["-r"])
 
         if input_level_fname is None and input_t2_data is None:
-            param.use_levels = False
-            param.weight_gamma = 0
+            model_param.use_levels = False
+            model_param.weight_gamma = 0
 
-    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, param=param)
+    gmsegfull = FullGmSegmentation(input_target_fname, input_sc_seg_fname, input_t2_data, input_level_fname, ref_gm_seg=input_ref_gm_seg, compute_ratio=compute_ratio, model_param=model_param, seg_param=seg_param)
     gmsegfull.segment()
