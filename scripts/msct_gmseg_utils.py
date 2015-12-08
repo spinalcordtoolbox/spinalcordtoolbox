@@ -986,7 +986,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
 
     """
     import time
-    from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
+    from msct_multiatlas_seg import Model, SegmentationParam, SupervisedSegmentationMethod
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
