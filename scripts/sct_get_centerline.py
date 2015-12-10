@@ -1055,20 +1055,19 @@ def get_parser():
                       type_value=None,
                       description='display this help',
                       mandatory=False)
-
     parser.usage.addSection('Automatic method options')
+    parser.add_option(name='-c',
+                      type_value='multiple_choice',
+                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
+                                  'For dMRI use t1, for T2* or MT use t2',
+                      mandatory=False,
+                      example=['t1', 't2'])
     parser.add_option(name='-contrast',
                       type_value='multiple_choice',
                       description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
                                   'For dMRI use t1, for T2* or MT use t2',
                       mandatory=False,
                       deprecated_by='-c',
-                      example=['t1', 't2'])
-    parser.add_option(name='-c',
-                      type_value='multiple_choice',
-                      description='type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark.\n'
-                                  'For dMRI use t1, for T2* or MT use t2',
-                      mandatory=False,
                       example=['t1', 't2'])
     parser.add_option(name='-t',
                       type_value='multiple_choice',
