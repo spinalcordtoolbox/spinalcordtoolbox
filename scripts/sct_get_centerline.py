@@ -1021,7 +1021,7 @@ def get_parser():
                       description='Method to get the centerline:\n'
 'auto: Uses vesselness filtering + minimal path + body symmetry. Fully automatic.\n'
 'point: Uses slice-by-slice registration. Requires point inside the cord. Requires FSL flirt.\n'
-'labels: Fit spline function across labels. Requires a couple of points along the cord.',
+'labels: To use if you want to complete an existing centerline/segmentation : fit spline function across labels. Requires a couple of points along the cord. The -i file should be an uncomplete segmentation of SC or centerline, the -l file should be labels where there is a gap in the segentation/centerline.',
                       mandatory=True,
                       example=['auto', 'point', 'labels'])
     parser.add_option(name='-method',
