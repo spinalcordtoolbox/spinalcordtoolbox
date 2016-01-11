@@ -495,9 +495,9 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
 
+    sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
         from msct_smooth import smoothing_window
-        sct.printv('\nSmooth CSA across slices...', verbose)
         sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
         csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
         # display figure
@@ -513,6 +513,9 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
             plt.show()
         # update variable
         csa = csa_smooth
+    else:
+        sct.printv('.. No smoothing!', verbose)
+
 
     # Create output text file
     sct.printv('\nWrite text file...', verbose)
