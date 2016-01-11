@@ -79,11 +79,6 @@ def get_parser():
                       mandatory=True,
                       example=['centerline', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-size',
-                      type_value='int',
-                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
-                      mandatory=False,
-                      default_value=50)
     parser.add_option(name='-s',
                       type_value=None,
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
@@ -130,6 +125,11 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    parser.add_option(name='-size',
+                      type_value='int',
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name='-a',
                       type_value='multiple_choice',
                       description= 'Algorithm for curve fitting.',
