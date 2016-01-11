@@ -41,7 +41,7 @@ class Param:
         self.verbose = 1  # verbose
         self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
-        self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
+        self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.file_csa_volume = 'csa_volume.nii.gz'
