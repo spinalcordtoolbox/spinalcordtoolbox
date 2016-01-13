@@ -41,7 +41,7 @@ class Param:
         self.verbose = 1  # verbose
         self.step = 1  # step of discretized plane in mm default is min(x_scale,py)
         self.remove_temp_files = 1
-        self.smoothing_param = 50  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
+        self.smoothing_param = 0  # window size (in mm) for smoothing CSA along z. 0 for no smoothing.
         self.figure_fit = 0
         self.fname_csa = 'csa.txt'  # output name for txt CSA
         self.file_csa_volume = 'csa_volume.nii.gz'
@@ -79,11 +79,6 @@ def get_parser():
                       mandatory=True,
                       example=['centerline', 'length', 'csa'])
     parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-size',
-                      type_value='int',
-                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
-                      mandatory=False,
-                      default_value=50)
     parser.add_option(name='-s',
                       type_value=None,
                       description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
@@ -130,6 +125,11 @@ def get_parser():
                       mandatory=False,
                       default_value='1',
                       example=['0', '1'])
+    parser.add_option(name='-size',
+                      type_value='int',
+                      description='Window size (in mm) for smoothing CSA. 0 for no smoothing.',
+                      mandatory=False,
+                      default_value=0)
     parser.add_option(name='-a',
                       type_value='multiple_choice',
                       description= 'Algorithm for curve fitting.',
@@ -495,9 +495,9 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
         # compute CSA, by scaling with voxel size (in mm) and adjusting for oblique plane
         csa[iz-min_z_index] = number_voxels * px * py * np.cos(angle)
 
+    sct.printv('\nSmooth CSA across slices...', verbose)
     if smoothing_param:
         from msct_smooth import smoothing_window
-        sct.printv('\nSmooth CSA across slices...', verbose)
         sct.printv('.. Hanning window: '+str(smoothing_param)+' mm', verbose)
         csa_smooth = smoothing_window(csa, window_len=smoothing_param/pz, window='hanning', verbose=0)
         # display figure
@@ -513,6 +513,9 @@ def compute_csa(fname_segmentation, verbose, remove_temp_files, step, smoothing_
             plt.show()
         # update variable
         csa = csa_smooth
+    else:
+        sct.printv('.. No smoothing!', verbose)
+
 
     # Create output text file
     sct.printv('\nWrite text file...', verbose)
