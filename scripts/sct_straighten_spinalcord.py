@@ -971,12 +971,6 @@ def get_parser():
                       mandatory=False,
                       example=['0', '1'],
                       default_value='1')
-    parser.add_option(name="-a",
-                      type_value="multiple_choice",
-                      description="Algorithm for curve fitting.",
-                      mandatory=False,
-                      example=["hanning", "nurbs"],
-                      default_value="hanning")
     parser.add_option(name="-f",
                       type_value="multiple_choice",
                       description="Crop option. 0: no crop, 1: crop around landmarks.",
@@ -1063,8 +1057,6 @@ if __name__ == "__main__":
         sc_straight.path_output = arguments['-ofolder']
     else:
         sc_straight.path_output = ''
-    if "-a" in arguments:
-        sc_straight.algo_fitting = str(arguments["-a"])
     if "-f" in arguments:
         sc_straight.crop = int(arguments["-f"])
     if "-v" in arguments:
