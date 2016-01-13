@@ -814,32 +814,43 @@ class TargetSegmentationPairwise:
                 target_metric = [(self.param.target_means[0], self.param.target_means[1], 0, 0) for i in range(len(self.target_slices))]
 
             if type(target_metric) == type({}): # if target_metric is a dictionary
-                differences = [m[1]-m[0] for m in target_metric.values()]
-                diff_med = np.median(differences)
-                diff_std = np.std(differences)
+                val_differences = [m[1]-m[0] for m in target_metric.values()]
+                val_std = [np.median([m[2],m[3]]) for m in target_metric.values()]
+                val_diff_med = np.median(val_differences)
+                val_diff_std = np.std(val_differences)
+
+                val_std_med =np.median(val_std)
+
                 # contrast_type = diff_med /np.abs(diff_med)  # if 1: GM bright, WM dark ; if -1: GM dark, WM bright
-                lim_diff = np.abs(diff_med - diff_std)
+                lim_diff = np.abs(val_diff_med - val_diff_std)
             else:
-                differences = [0]
-                diff_med = 0
+                val_differences = [0]
+                val_diff_med = 0
+                val_std_med = 0
                 lim_diff = 0
 
             # normalizing
             if target_metric is not None:
-                i = 0
-                for target_slice in self.target_slices:
-                    old_image = target_slice.im_M
+                if val_diff_med < val_std_med:
+                    # If the difference GM-WM is smaller than the std of the values in GM and WM, the contrast isn't sharp enough to use this normalization method
+                    # recall function with method min-max
+                    sct.printv('WARNING: The contrast between GM and WM is too small to use the normalization based on median WM-GM values estimated with a pre-registration of the GM template, it will be replaced by a linear normalization using minimum/maximum intensity values', self.param.verbose, 'warning')
+                    self.target_normalization(method='min-max')
+                else:
+                    i = 0
+                    for target_slice in self.target_slices:
+                        old_image = target_slice.im_M
 
-                    wm_metric, gm_metric, wm_std, gm_std = target_metric[target_slice.id]
-                    if np.abs(gm_metric-wm_metric) < lim_diff:
-                        wm_metric = gm_metric-diff_med  # np.median(differences)  # if med>0: GM bright, WM dark ; if med<0: GM dark, WM bright
-                    old_image[old_image < 0.0001] = 0  # put at 0 the background
-                    new_image = (old_image - wm_metric)*(dic_gm_mean - dic_wm_mean)/(gm_metric - wm_metric) + dic_wm_mean
-                    new_image[old_image < 0.0001] = 0  # put at 0 the background
+                        wm_metric, gm_metric, wm_std, gm_std = target_metric[target_slice.id]
+                        if np.abs(gm_metric-wm_metric) < lim_diff:
+                            wm_metric = gm_metric-val_diff_med  # np.median(differences)  # if med>0: GM bright, WM dark ; if med<0: GM dark, WM bright
+                        old_image[old_image < 0.0001] = 0  # put at 0 the background
+                        new_image = (old_image - wm_metric)*(dic_gm_mean - dic_wm_mean)/(gm_metric - wm_metric) + dic_wm_mean
+                        new_image[old_image < 0.0001] = 0  # put at 0 the background
 
-                    target_slice.im_M = new_image
-                    Image(param=new_image, absolutepath='target_slice'+str(i)+'_mean_normalized.ni.gz').save()
-                    i += 1
+                        target_slice.im_M = new_image
+                        Image(param=new_image, absolutepath='target_slice'+str(i)+'_mean_normalized.ni.gz').save()
+                        i += 1
 
         if method == 'min-max':
             min_sum = 0
