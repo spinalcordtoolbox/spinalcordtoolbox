@@ -294,8 +294,7 @@ def main():
 
     # create temporary folder
     sct.printv('\nCreate temporary folder...', verbose)
-    path_tmp = 'tmp.'+time.strftime("%y%m%d%H%M%S")
-    status, output = sct.run('mkdir '+path_tmp, verbose)
+    path_tmp = sct.tmp_create()
 
     # copy files to temporary folder
     from sct_convert import convert
