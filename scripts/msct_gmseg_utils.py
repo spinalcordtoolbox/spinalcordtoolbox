@@ -24,6 +24,50 @@ import sct_utils as sct
 from msct_parser import Parser
 from sct_image import set_orientation, get_orientation
 
+def get_parser():
+    parser = Parser(__file__)
+    parser.usage.set_description('Utility functions for the gray matter segmentation')
+    parser.add_option(name="-crop",
+                      type_value="folder",
+                      description="Path to the folder containing all your subjects' data "
+                                  "to be croped as preprocessing",
+                      mandatory=False,
+                      example='dictionary/')
+    parser.add_option(name="-loocv",
+                      type_value=[[','], 'str'],# "folder",
+                      description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by \":\" without white space "
+                                  "dictionary-by-slice/,dictionary3d/,denoising,registration_type,metric,use_levels,weight,eq_id,mode_weighted_similarity,weighted_label_fusion"
+                                  "If you use denoising, the di-by-slice should be denoised, no need to change the 3d-dic.",
+                      # dic_path_original, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion
+                      mandatory=False,
+                      example='dic_by_slice/,dic_3d/,1,Rigid:Affine,MI,1,2.5,1,0,0')
+    parser.add_option(name="-error-map",
+                      type_value="folder",
+                      description="Path to a dictionary folder to compute the error map on",
+                      mandatory=False,
+                      example='dictionary/')
+    parser.add_option(name="-save-dic-by-slice",
+                      type_value="folder",
+                      description="Path to a dictionary folder to be saved by slice",
+                      mandatory=False,
+                      example='dictionary/')
+    parser.add_option(name="-hausdorff",
+                      type_value="folder",
+                      description="Path to a folder with various loocv results",
+                      mandatory=False,
+                      example='dictionary/')
+    parser.add_option(name="-preprocess",
+                      type_value="folder",
+                      description="Path to a dictionary folder of data to be pre-processed. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
+                      mandatory=False,
+                      example='dictionary/')
+    parser.add_option(name="-gmseg-to-wmseg",
+                      type_value=[[','], 'file'],
+                      description="Gray matter segmentation image and spinal cord segmentation image",
+                      mandatory=False,
+                      example='manual_gmseg.nii.gz,sc_seg.nii.gz')
+    return parser
+
 
 class Slice:
     """
@@ -942,7 +986,7 @@ def leave_one_out_by_subject(dic_path, dic_3d, denoising=True, reg='Affine', met
 
     """
     import time
-    from msct_multiatlas_seg import Model, SegmentationParam, GMsegSupervisedMethod
+    from msct_multiatlas_seg import Model, SegmentationParam, SupervisedSegmentationMethod
     from sct_segment_graymatter import FullGmSegmentation
     init = time.time()
 
@@ -1470,70 +1514,29 @@ def compute_level_similarities(data_path):
     level_file.close()
     os.chdir('..')
 
+
 if __name__ == "__main__":
-        # Initialize the parser
-        parser = Parser(__file__)
-        parser.usage.set_description('Utility functions for the gray matter segmentation')
-        parser.add_option(name="-crop",
-                          type_value="folder",
-                          description="Path to the folder containing all your subjects' data "
-                                      "to be croped as preprocessing",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-loocv",
-                          type_value=[[','], 'str'],# "folder",
-                          description="Path to a dictionary folder to do 'Leave One Out Validation' on. If you want to do several registrations, separate them by \":\" without white space "
-                                      "dictionary-by-slice/,dictionary3d/,denoising,registration_type,metric,use_levels,weight,eq_id,mode_weighted_similarity,weighted_label_fusion"
-                                      "If you use denoising, the di-by-slice should be denoised, no need to change the 3d-dic.",
-                          # dic_path_original, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion
-                          mandatory=False,
-                          example='dic_by_slice/,dic_3d/,1,Rigid:Affine,MI,1,2.5,1,0,0')
-        parser.add_option(name="-error-map",
-                          type_value="folder",
-                          description="Path to a dictionary folder to compute the error map on",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-save-dic-by-slice",
-                          type_value="folder",
-                          description="Path to a dictionary folder to be saved by slice",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-hausdorff",
-                          type_value="folder",
-                          description="Path to a folder with various loocv results",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-preprocess",
-                          type_value="folder",
-                          description="Path to a dictionary folder of data to be pre-processed. Each subject folder should contain a t2star image, a GM manual segmentation, a spinal cord segmentationand and a level label image ",
-                          mandatory=False,
-                          example='dictionary/')
-        parser.add_option(name="-gmseg-to-wmseg",
-                          type_value=[[','], 'file'],
-                          description="Gray matter segmentation image and spinal cord segmentation image",
-                          mandatory=False,
-                          example='manual_gmseg.nii.gz,sc_seg.nii.gz')
+    parser = get_parser()
+    arguments = parser.parse(sys.argv[1:])
 
-        arguments = parser.parse(sys.argv[1:])
-
-        if "-crop" in arguments:
-            crop_t2_star_pipeline(arguments['-crop'])
-        if "-loocv" in arguments:
-            dic_path, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion = arguments['-loocv']
-            leave_one_out_by_subject(dic_path, dic_3d, denoising=bool(int(denoising)), reg=reg, metric=metric, weight=float(weight), eq=int(eq), mode_weighted_sim=bool(int(mode_weighted_sim)), weighted_label_fusion=bool(int(weighted_label_fusion)))
-        if "-error-map" in arguments:
-            compute_error_map_by_level(arguments['-error-map'])
-        if "-hausdorff" in arguments:
-            compute_hausdorff_dist_on_loocv_results(arguments['-hausdorff'])
-        if "-save-dic-by-slice" in arguments:
-            save_by_slice(arguments['-save-dic-by-slice'])
-        if "-preprocess" in arguments:
-            dataset_preprocessing(arguments['-preprocess'])
-        if "-gmseg-to-wmseg" in arguments:
-            gmseg = arguments['-gmseg-to-wmseg'][0]
-            gmseg_im = Image(gmseg)
-            scseg = arguments['-gmseg-to-wmseg'][1]
-            scseg_im = Image(scseg)
-            inverse_gmseg_to_wmseg(gmseg_im, scseg_im, sct.extract_fname(gmseg)[1])
+    if "-crop" in arguments:
+        crop_t2_star_pipeline(arguments['-crop'])
+    if "-loocv" in arguments:
+        dic_path, dic_3d, denoising, reg, metric, use_levels, weight, eq, mode_weighted_sim, weighted_label_fusion = arguments['-loocv']
+        leave_one_out_by_subject(dic_path, dic_3d, denoising=bool(int(denoising)), reg=reg, metric=metric, weight=float(weight), eq=int(eq), mode_weighted_sim=bool(int(mode_weighted_sim)), weighted_label_fusion=bool(int(weighted_label_fusion)))
+    if "-error-map" in arguments:
+        compute_error_map_by_level(arguments['-error-map'])
+    if "-hausdorff" in arguments:
+        compute_hausdorff_dist_on_loocv_results(arguments['-hausdorff'])
+    if "-save-dic-by-slice" in arguments:
+        save_by_slice(arguments['-save-dic-by-slice'])
+    if "-preprocess" in arguments:
+        dataset_preprocessing(arguments['-preprocess'])
+    if "-gmseg-to-wmseg" in arguments:
+        gmseg = arguments['-gmseg-to-wmseg'][0]
+        gmseg_im = Image(gmseg)
+        scseg = arguments['-gmseg-to-wmseg'][1]
+        scseg_im = Image(scseg)
+        inverse_gmseg_to_wmseg(gmseg_im, scseg_im, sct.extract_fname(gmseg)[1])
 
 
