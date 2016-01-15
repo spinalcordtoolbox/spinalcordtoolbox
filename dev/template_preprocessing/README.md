@@ -72,9 +72,9 @@ Step-by-step procedure (to do for each contrast):
 
 * Convert the DICOM to NIFTI (e.g., using dcm2nii, output file name: data.nii.gz)
 * Change orientation to RPI
-  * ``sct_orientation –i data.nii.gz –s RPI -o data_RPI.nii.gz``
+  * ``sct_image -i data.nii.gz -o data_RPI.nii.gz -setorient RPI``
 * Open data_RPI.nii.gz in fslview and create a mask (cmd+c), which indicates the following anatomical landmarks:
-  * Landmark value 1: labels_vertebral_1.png (rostral pons)
+  * Landmark value 1: labels_vertebral_1.png (rostral pons). If not available, don't add this label.
   * Landmark value 2: labels_vertebral_2.png (ponto-medullary junction)
   * Landmark value 3-20: labels_vertebral_3-20.png (vertebral levels from C2-C3 to T12-L1)
     * value 3: C2-C3,
@@ -82,7 +82,11 @@ Step-by-step procedure (to do for each contrast):
     * value 8: C7-T1
     * value 9: T1-T2, ...
     * value 20: T12-L1
+    * value 21: L1-L2
+    * value 22: L2-L3
 * Save the mask under: ``labels_vertebral.nii.gz`` (cmd+s).
+* Use the following command to get label coordinates and keep them for later (see below, the LIST_OF_LABELS field).
+  * ``sct_label_utils -i labels_vertebral.nii.gz -p display-voxel`
 * Crop **data_RPI.nii.gz** slightly above the brainstem and slightly below L2-L3.
   * ``sct_crop_image –i data_RPI.nii.gz –dim 2 XXX -o data_RPI_crop.nii.gz``
 * Report where you are cropping the image in the file **crop.txt** using this format:
