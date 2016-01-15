@@ -1,5 +1,10 @@
 # CHANGES TO RELEASE
 
+##2.1.1 (2016-01-15)
+- BUG: **sct_resample**: fixed issue #691
+- OPT: **sct_segment_graymatter**: improved robustness of normalization
+- OPT: **sct_process_segmentation**: default parameter does not smooth CSA results anymore
+
 ##2.1 (2015-12-01)
 - NEW: **sct_testing**: test SCT functions and their integrity
 - NEW: **sct_maths**: performs basic operations on images. Similar to fslmaths.
