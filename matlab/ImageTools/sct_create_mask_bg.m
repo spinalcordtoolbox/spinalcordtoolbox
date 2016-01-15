@@ -1,7 +1,7 @@
 function sct_create_mask_bg(fname,threshold)
 A=load_untouch_nii(fname);
 
-if ~exist(threshold,'var'), threshold=0.3; end
+if ~exist('threshold','var'), threshold=0.3; end
 
 mask=false(size(A.img));
 for iz=1:size(A.img,3)
