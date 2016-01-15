@@ -152,7 +152,7 @@ def test_function(function, folder_dataset, parameters='', nb_cpu=None, verbose=
 
     try:
         async_results = pool.map_async(function_launcher, data_and_params).get(9999999)
-            # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
+        # results = process_results(async_results.get(9999999), subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
         pool.close()
         pool.join()  # waiting for all the jobs to be done
         results = process_results(async_results, subjects_name, function, folder_dataset, parameters)  # get the sorted results once all jobs are finished
