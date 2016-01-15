@@ -93,6 +93,7 @@ Step-by-step procedure (to do for each contrast):
   * zmin_anatomic,zmax_anatomic  (e.g.: 15,623 if you are cropping between slices 15 and 623).
     * If there is a need to crop along y axis (as for some data from marseille that present artefacts) please specify as follow: 
       * zmin_anatomic,zmax_anatomic,ymin_anatomic, ymax_anatomic (e.g.: 15,623,30,200 if you are adding a crop along y axis between slices 30 and 200).
+  * If there is no need to crop the image, put the minimum z (=0) and maximum z (=number of slices-1)
 * From the cropped image ``data_RPI_crop.nii.gz``, create a label file ``centerline_propseg_RPI.nii.gz`` that will be used to initiate the segmentation of propseg. 
   * Open ``data_RPI_crop.nii.gz`` with flsview and create a mask (cmd+c).
   * Put labels of value 1 at the center of the cord all along the spinal cord, approximately every 30 slices. Note that you need to put a label at the first slice (z=0) and at the last slice (z=nz) as this file will be used for the straightening of the image.
