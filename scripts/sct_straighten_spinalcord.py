@@ -1022,7 +1022,7 @@ def get_parser():
                       description='Output images for quality control.',
                       mandatory=False,
                       example=['0', '1'],
-                      default_value='1')
+                      default_value='0')
 
     parser.add_option(name="-cpu-nb",
                       type_value="int",
@@ -1080,7 +1080,7 @@ if __name__ == "__main__":
             elif param_split[0] == 'bspline_order':
                 sc_straight.bspline_order = param_split[1]
             elif param_split[0] == 'algo_landmark_rigid':
-                sct.printv('ERROR: This feature (use_continuous_labels) is deprecated.', 1, 'error')
+                sct.printv('ERROR: This feature (algo_landmark_rigid) is deprecated.', 1, 'error')
             elif param_split[0] == 'all_labels':
                 sc_straight.all_labels = int(param_split[1])
             elif param_split[0] == 'use_continuous_labels':
