@@ -34,4 +34,4 @@ if ~keepext
     list=cellfun(@(x) sct_tool_remove_extension(x,1),list,'UniformOutput',false);
 end
 
-if length(list)==1, list=list{1}; end
+%if length(list)==1, list=list{1}; end

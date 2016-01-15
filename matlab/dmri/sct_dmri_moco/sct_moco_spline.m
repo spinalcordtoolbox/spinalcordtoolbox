@@ -108,19 +108,19 @@ drawnow;
 
 
 function M_motion_t_smooth = spline(T,M_motion_t,smoothness,Tout)
-M_motion_t_smooth=smoothn_x(T,M_motion_t,Tout,smoothness,1);
+% M_motion_t_smooth=smoothn_x(T,M_motion_t,Tout,smoothness,1);
 
-% 
-% %% Fit: 'sct_moco_spline'.
-% [xData, yData] = prepareCurveData( T, M_motion_t );
-% % Set up fittype and options.
-% ft = fittype( 'smoothingspline' );
-% opts = fitoptions( ft );
-% opts.SmoothingParam = smoothness;
-% 
-% % Fit model to data.
-% [fitresult, gof] = fit( xData, yData, ft, opts );
-% M_motion_t = feval(fitresult,T);
+
+%% Fit: 'sct_moco_spline'.
+[xData, yData] = prepareCurveData( T, M_motion_t );
+% Set up fittype and options.
+ft = fittype( 'smoothingspline' );
+opts = fitoptions( ft );
+opts.SmoothingParam = smoothness;
+
+% Fit model to data.
+[fitresult, gof] = fit( xData, yData, ft, opts );
+M_motion_t_smooth = feval(fitresult,Tout);
 % 
 % 
 % 
