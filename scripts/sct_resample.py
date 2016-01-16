@@ -57,7 +57,7 @@ def resample():
     path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     path_out, file_out, ext_out = '', file_data, ext_data
     if param.fname_out != '':
-        file_out = sct.extract_fname(param.fname_out)[1]
+        path_out, file_out, ext_out = sct.extract_fname(param.fname_out)
     else:
         file_out += param.file_suffix
     param.fname_out = path_out+file_out+ext_out
