@@ -42,6 +42,7 @@ class ModelParam:
         self.weight_gamma = 2.5  # model_param
         self.weight_label_fusion = False  # model_param
         self.mode_weight_similarity = False  # model_param
+        self.k = 0.8 # percentage of variability explained in the kept eigenvectors (PCA modes)
         self.equation_id = 1  # model_param
         self.verbose = 1  # both
 
@@ -394,13 +395,11 @@ class Model:
     Model used by the supervised gray matter segmentation method
 
     """
-    def __init__(self, model_param=None, k=0.8):
+    def __init__(self, model_param=None):
         """
         Model constructor
 
         :param model_param: model parameters, type: Param
-
-        :param k: Amount of variability to keep in the PCA reduced space, type: float
         """
         if model_param is None:
             self.param = ModelParam()
@@ -411,7 +410,6 @@ class Model:
         self.dictionary = ModelDictionary(dic_param=self.param)
 
         self.pca = None
-        self.k = k
         self.epsilon = round(1.0/self.dictionary.J, 4)/2
         self.tau = 0
 
@@ -426,7 +424,7 @@ class Model:
     # ------------------------------------------------------------------------------------------------------------------
     def compute_model(self):
         sct.printv('\nCreating a reduced common space (using a PCA) ...', self.param.verbose, 'normal')
-        self.pca = PCA(np.asarray(self.dictionary.slices), k=self.k)
+        self.pca = PCA(np.asarray(self.dictionary.slices), k=self.param.k, verbose=self.param.verbose)
         self.pca.save_data(self.param.new_model_dir)
         # updating the dictionary mean_image
         self.dictionary.mean_image = self.pca.mean_image
@@ -438,7 +436,7 @@ class Model:
     def load_model(self):
         sct.printv('\nLoading a reduced common space (using a PCA) ...', self.param.verbose, 'normal')
         pca_data = pickle.load(gzip.open(self.param.path_model + '/pca_data.pklz', 'rb'))
-        self.pca = PCA(np.asarray(self.dictionary.slices), mean_vect=pca_data[0], eig_pairs=pca_data[1], k=self.k)
+        self.pca = PCA(np.asarray(self.dictionary.slices), mean_vect=pca_data[0], eig_pairs=pca_data[1], k=self.param.k, verbose=self.param.verbose)
         # updating the dictionary mean_image
         self.dictionary.mean_image = self.pca.mean_image
         self.tau = pickle.load(open(self.param.path_model + '/tau_levels_'+str(self.param.use_levels)+'.txt', 'r'))  # if protocol was 2 : 'rb'
