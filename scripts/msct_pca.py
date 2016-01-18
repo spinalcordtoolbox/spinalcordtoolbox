@@ -113,8 +113,6 @@ class PCA:
             # eigpairs consist of a list of tuple (eigenvalue, eigenvector) already sorted by decreasing eigenvalues
             self.eig_pairs = eig_pairs
 
-        # --> The eigenvectors are the modes of the PCA
-
         # STEP 5
         self.k = k  # type: float
         self.kept_modes, self.kept_eigenval = self.select_kept_modes(modes_to_ignore=0)
@@ -122,6 +120,22 @@ class PCA:
         sct.printv('\n\n-------> IN PCA : ', self.verbose, 'normal')
         sct.printv('\n-> kept_modes:' + str(self.kept_modes), self.verbose, 'normal')
         sct.printv('\n-> kept_eigenval:' + str(len(self.kept_eigenval)), self.verbose, 'normal')
+
+        # --> The eigenvectors are the modes of the PCA
+        if self.verbose == 2:
+            eig_val = [pair[0] for pair in self.eig_pairs]
+            eig_val = 100*np.asarray(eig_val)/float(np.sum(eig_val))
+            n = 100
+            index = range(n)
+            eig_val_to_plot = np.cumsum(eig_val[:n])
+            width = 0.5
+            plt.figure()
+            plt.bar(index, eig_val_to_plot, width, color='b')
+            plt.axvline(len(self.kept_eigenval), color='r')
+            plt.ylabel('Eigenvalues (in %)')
+            plt.axis([-1, n, 0, max(eig_val_to_plot)+10])
+            plt.plot()
+            plt.show()
 
         # dataset_coord is a matrix of len(self.kept_eigenval) rows and J columns,
         # each columns correspond to a vector projection of an image from the dictionary
